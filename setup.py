@@ -35,5 +35,6 @@ setuptools.setup(
     install_requires=[
         "jax==0.2.7",
         "jaxlib==0.1.57",
+        "numpy==1.19.4",
     ],
 )
