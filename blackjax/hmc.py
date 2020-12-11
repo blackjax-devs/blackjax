@@ -1,5 +1,5 @@
 """Public API for the HMC Kernel"""
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple, Optional, Union
 
 import jax
 import jax.numpy as jnp
@@ -69,9 +69,9 @@ def new_states(position: jax.pytree, logpdf: Callable):
 
 
 def new_parameters(
-    inv_mass_matrix: Array,
     step_size: float = 1e-3,
     num_integration_steps: int = 30,
+    inv_mass_matrix: Optional[Array] = None,
 ) -> HMCParameters:
     """Create a new set of parameters.
 
@@ -80,17 +80,8 @@ def new_parameters(
     perform some checks.
 
     """
-    try:
-        step_size = float(step_size)
-    except ValueError:
-        raise ValueError(f"Could not convert `step_size` to float: {step_size}")
-
-    try:
-        num_integration_steps = int(num_integration_steps)
-    except ValueError:
-        raise ValueError(
-            f"Could not convert `num_integration_steps` to int {num_integration_steps}"
-        )
+    step_size = float(step_size)
+    num_integration_steps = int(num_integration_steps)
 
     return HMCParameters(step_size, inv_mass_matrix, num_integration_steps)
 
@@ -106,6 +97,13 @@ def kernel(logpdf: Callable, parameters: HMCParameters) -> Callable:
     modular and re-usable building blocks.
 
     """
+    if not parameters.inv_mass_matrix:
+        raise ValueError(
+            "Expected a value for `inv_mass_matrix`,"
+            " got None. Please specify a value when initializing"
+            " the parameters or run the window adaptation."
+        )
+
     potential_fn = lambda x: -logpdf(x)
     step_size, inv_mass_matrix, num_integration_steps = parameters
 

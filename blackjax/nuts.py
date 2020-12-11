@@ -3,7 +3,7 @@
 My only question here is: do we expose both recursive and iterative NUTS?
 
 """
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple, Optional, Union
 
 import jax
 import jax.numpy as jnp
@@ -28,20 +28,10 @@ new_states = blackjax.hmc.new_states
 
 
 def new_parameters(
-    inv_mass_matrix: Array, step_size: float = 1e-3, max_tree_depth=10
+    step_size: float = 1e-3, max_tree_depth=10, inv_mass_matrix: Optional[Array] = None
 ) -> NUTSParameters:
-    try:
-        step_size = float(step_size)
-    except ValueError:
-        raise ValueError(f"Could not convert `step_size` to float: {step_size}")
-
-    try:
-        max_tree_depth = int(max_tree_depth)
-    except ValueError:
-        raise ValueError(
-            f"Could not convert `num_integration_steps` to int {max_tree_depth}"
-        )
-
+    step_size = float(step_size)
+    max_tree_depth = int(max_tree_depth)
     return NUTSParameters(step_size, inv_mass_matrix, max_tree_depth)
 
 
@@ -52,6 +42,13 @@ def kernel(logpdf: Callable, parameters: NUTSParameters) -> Callable:
     kernel defined in `hmc.py`.
 
     """
+    if not parameters.inv_mass_matrix:
+        raise ValueError(
+            "Expected a value for `inv_mass_matrix`,"
+            " got None. Please specify a value when initializing"
+            " the parameters or run the window adaptation."
+        )
+
     potential_fn = lambda x: -logpdf(x)
     step_size, inv_mass_matrix, max_tree_depth = parameters
 
