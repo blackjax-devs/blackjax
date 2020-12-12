@@ -3,7 +3,7 @@
 My only question here is: do we expose both recursive and iterative NUTS?
 
 """
-from typing import Callable, NamedTuple, Optional, Union
+from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -19,20 +19,13 @@ Array = Union[np.array, jnp.DeviceArray]
 
 
 class NUTSParameters(NamedTuple):
-    step_size: float
-    inv_mass_matrix: Array
-    max_tree_depth: int
+    """This could also be a dataclass that checks type with __post_init__"""
+    step_size: float = 1e-3
+    max_tree_depth: int = 100
+    inv_mass_matrix: Array = None
 
 
 new_states = blackjax.hmc.new_states
-
-
-def new_parameters(
-    step_size: float = 1e-3, max_tree_depth=10, inv_mass_matrix: Optional[Array] = None
-) -> NUTSParameters:
-    step_size = float(step_size)
-    max_tree_depth = int(max_tree_depth)
-    return NUTSParameters(step_size, inv_mass_matrix, max_tree_depth)
 
 
 def kernel(logpdf: Callable, parameters: NUTSParameters) -> Callable:
@@ -42,19 +35,21 @@ def kernel(logpdf: Callable, parameters: NUTSParameters) -> Callable:
     kernel defined in `hmc.py`.
 
     """
-    if not parameters.inv_mass_matrix:
+    potential_fn = lambda x: -logpdf(x)
+    step_size, inv_mass_matrix, max_tree_depth = parameters
+
+    if not inv_mass_matrix:
         raise ValueError(
             "Expected a value for `inv_mass_matrix`,"
             " got None. Please specify a value when initializing"
             " the parameters or run the window adaptation."
         )
 
-    potential_fn = lambda x: -logpdf(x)
-    step_size, inv_mass_matrix, max_tree_depth = parameters
-
-    momentum_generator, kinetic_energy_fn = metrics.gaussian_euclidean(inv_mass_matrix)
+    momentum_generator, kinetic_energy_fn, u_turn_fn = metrics.gaussian_euclidean(
+        inv_mass_matrix
+    )
     integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
-    proposal = proposals.nuts(integrator, step_size, max_tree_depth)
+    proposal = proposals.nuts(integrator, u_turn_fn, step_size, max_tree_depth)
     kernel = base.hmc(proposal, momentum_generator, kinetic_energy_fn, potential_fn)
 
     return kernel

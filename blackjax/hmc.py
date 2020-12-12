@@ -1,5 +1,5 @@
 """Public API for the HMC Kernel"""
-from typing import Callable, NamedTuple, Optional, Union
+from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -14,9 +14,10 @@ Array = Union[np.array, jnp.DeviceArray]
 
 
 class HMCParameters(NamedTuple):
-    step_size: float
-    inv_mass_matrix: Array
-    num_integration_steps: int
+    """This could also be a dataclass that checks type with __post_init__"""
+    step_size: float = 1e-3
+    num_integration_steps: int = 30
+    inv_mass_matrix: Array = None
 
 
 def new_states(position: jax.pytree, logpdf: Callable):
@@ -68,24 +69,6 @@ def new_states(position: jax.pytree, logpdf: Callable):
     return base.HMCState(position, potential_energy, potential_energy_grad)
 
 
-def new_parameters(
-    step_size: float = 1e-3,
-    num_integration_steps: int = 30,
-    inv_mass_matrix: Optional[Array] = None,
-) -> HMCParameters:
-    """Create a new set of parameters.
-
-    Wrapping this in a function is convenient. It gives us more leeway on the
-    parameters' internal representation, allows us to provide defaults and to
-    perform some checks.
-
-    """
-    step_size = float(step_size)
-    num_integration_steps = int(num_integration_steps)
-
-    return HMCParameters(step_size, inv_mass_matrix, num_integration_steps)
-
-
 def kernel(logpdf: Callable, parameters: HMCParameters) -> Callable:
     """Build a HMC kernel.
 
@@ -97,17 +80,17 @@ def kernel(logpdf: Callable, parameters: HMCParameters) -> Callable:
     modular and re-usable building blocks.
 
     """
-    if not parameters.inv_mass_matrix:
+    potential_fn = lambda x: -logpdf(x)
+    step_size, inv_mass_matrix, num_integration_steps = parameters
+
+    if not inv_mass_matrix:
         raise ValueError(
             "Expected a value for `inv_mass_matrix`,"
             " got None. Please specify a value when initializing"
             " the parameters or run the window adaptation."
         )
 
-    potential_fn = lambda x: -logpdf(x)
-    step_size, inv_mass_matrix, num_integration_steps = parameters
-
-    momentum_generator, kinetic_energy_fn = metrics.gaussian_euclidean(inv_mass_matrix)
+    momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(inv_mass_matrix)
     integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
     proposal = proposals.hmc(integrator, step_size, num_integration_steps)
     kernel = base.hmc(proposal, momentum_generator, kinetic_energy_fn, potential_fn)
