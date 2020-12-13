@@ -112,7 +112,7 @@ def window_adaptation(
             rng_key,
             kernel_factory,
             initial_state,
-            init_parameters,
+            initial_parameters,
         )
         da_state = dual_averaging_init(step_size)
 
