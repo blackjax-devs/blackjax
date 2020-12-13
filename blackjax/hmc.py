@@ -14,7 +14,17 @@ Array = Union[np.array, jnp.DeviceArray]
 
 
 class HMCParameters(NamedTuple):
-    """This could also be a dataclass that checks type with __post_init__"""
+    """This could also be a dataclass that checks type with __post_init__
+
+    The only issue with this is that dataclasses are not registered as
+    pytrees automatically (https://github.com/google/jax/issues/2371), which
+    means you would not be able to vmap through parameters, which is useful
+    when sampling from chains that have been independently warmed up.
+
+    I believe the best solution is still to initialize the parameters with
+    a function that checks for the values.
+
+    """
     step_size: float = 1e-3
     num_integration_steps: int = 30
     inv_mass_matrix: Array = None
@@ -81,7 +91,7 @@ def kernel(logpdf: Callable, parameters: HMCParameters) -> Callable:
 
     """
     potential_fn = lambda x: -logpdf(x)
-    step_size, inv_mass_matrix, num_integration_steps = parameters
+    step_size, num_integration_steps, inv_mass_matrix = parameters
 
     if not inv_mass_matrix:
         raise ValueError(
