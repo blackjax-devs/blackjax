@@ -1,16 +1,17 @@
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
-from typing import Callable, NamedTuple
+from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
-import jax.numpy as jnp
 
 __all__ = ["velocity_verlet"]
 
+PyTree = Union[Dict, List, Tuple]
+
 
 class IntegratorState(NamedTuple):
-    position: jnp.DeviceArray
-    momentum: jnp.DeviceArray
-    log_prob_grad: float
+    position: PyTree
+    momentum: PyTree
+    log_prob_grad: PyTree
 
 
 def velocity_verlet(potential_fn: Callable, kinetic_energy_fn: Callable) -> Callable:
