@@ -27,11 +27,12 @@ from jax.tree_util import tree_flatten
 __all__ = ["gaussian_euclidean"]
 
 PyTree = Union[Dict, List, Tuple]
+EuclideanKineticEnergy = Callable[[PyTree], float]
 
 
 def gaussian_euclidean(
     inverse_mass_matrix: jnp.DeviceArray,
-) -> Tuple[Callable, Callable]:
+) -> Tuple[Callable, EuclideanKineticEnergy]:
     r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum.
 
     The gaussian euclidean metric is a euclidean metric further characterized
@@ -65,7 +66,7 @@ def gaussian_euclidean(
             momentum = jnp.multiply(std, mass_matrix_sqrt)
             return treedef.unflatten(momentum)
 
-        def kinetic_energy(momentum: PyTree) -> float:
+        def kinetic_energy(momentum: PyTree, *_) -> float:
             momentum, _ = tree_flatten(momentum)
             velocity = jnp.multiply(inverse_mass_matrix, momentum)
             return 0.5 * jnp.dot(velocity, momentum)
@@ -82,7 +83,7 @@ def gaussian_euclidean(
             momentum = jnp.dot(std, mass_matrix_sqrt)
             return treedef.unflatten(momentum)
 
-        def kinetic_energy(momentum: PyTree) -> float:
+        def kinetic_energy(momentum: PyTree, *_) -> float:
             momentum, _ = tree_flatten(momentum)
             velocity = jnp.matmul(inverse_mass_matrix, momentum)
             return 0.5 * jnp.dot(velocity, momentum)
