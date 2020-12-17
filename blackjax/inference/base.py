@@ -145,7 +145,7 @@ def hmc(
 
         position, potential_energy, potential_energy_grad = state
         momentum = momentum_generator(key_momentum, position)
-        energy = potential_energy + kinetic_energy(momentum)
+        energy = potential_energy + kinetic_energy(momentum, position)
 
         proposal, proposal_info = proposal_generator(
             key_integrator, HMCProposalState(position, momentum, potential_energy_grad)
@@ -154,7 +154,9 @@ def hmc(
 
         flipped_momentum = -1.0 * new_momentum
         new_potential_energy = potential_fn(new_position)
-        new_energy = new_potential_energy + kinetic_energy(flipped_momentum)
+        new_energy = new_potential_energy + kinetic_energy(
+            flipped_momentum, new_position
+        )
         new_state = HMCState(
             new_position, new_potential_energy, new_potential_energy_grad
         )

@@ -3,6 +3,8 @@ from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
 
+from blackjax.inference.metrics import EuclideanKineticEnergy
+
 __all__ = ["velocity_verlet"]
 
 PyTree = Union[Dict, List, Tuple]
@@ -14,7 +16,9 @@ class IntegratorState(NamedTuple):
     log_prob_grad: PyTree
 
 
-def velocity_verlet(potential_fn: Callable, kinetic_energy_fn: Callable) -> Callable:
+def velocity_verlet(
+    potential_fn: Callable, kinetic_energy_fn: EuclideanKineticEnergy
+) -> Callable:
     """The velocity Verlet (or Verlet-Störmer) integrator.
 
     The velocity Verlet is a two-stage palindromic integrator [1]_ of the form
