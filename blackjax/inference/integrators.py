@@ -54,8 +54,8 @@ def velocity_verlet(
     b1 = 0.5
     a2 = 1 - 2 * a1
 
-    potential_grad_fn = jax.jit(jax.grad(potential_fn))
-    kinetic_energy_grad_fn = jax.jit(jax.grad(kinetic_energy_fn))
+    potential_grad_fn = jax.grad(potential_fn)
+    kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
         position, momentum, log_prob_grad = state
