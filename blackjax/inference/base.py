@@ -152,7 +152,7 @@ def hmc(
         )
         new_position, new_momentum, new_potential_energy_grad = proposal
 
-        flipped_momentum = -1.0 * new_momentum
+        flipped_momentum = jax.tree_util.tree_multimap(lambda m: -1.0 * m, new_momentum)
         new_potential_energy = potential_fn(new_position)
         new_energy = new_potential_energy + kinetic_energy(
             flipped_momentum, new_position

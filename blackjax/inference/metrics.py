@@ -68,6 +68,7 @@ def gaussian_euclidean(
 
         def kinetic_energy(momentum: PyTree, *_) -> float:
             momentum, _ = tree_flatten(momentum)
+            momentum = jnp.array(momentum)
             velocity = jnp.multiply(inverse_mass_matrix, momentum)
             return 0.5 * jnp.dot(velocity, momentum)
 
@@ -85,6 +86,7 @@ def gaussian_euclidean(
 
         def kinetic_energy(momentum: PyTree, *_) -> float:
             momentum, _ = tree_flatten(momentum)
+            momentum = jnp.array(momentum)
             velocity = jnp.matmul(inverse_mass_matrix, momentum)
             return 0.5 * jnp.dot(velocity, momentum)
 

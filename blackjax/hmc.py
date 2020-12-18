@@ -80,7 +80,7 @@ def kernel(potential_fn: Callable, parameters: HMCParameters) -> Callable:
     """
     step_size, num_integration_steps, inv_mass_matrix, divergence_threshold = parameters
 
-    if not inv_mass_matrix:
+    if inv_mass_matrix is None:
         raise ValueError(
             "Expected a value for `inv_mass_matrix`,"
             " got None. Please specify a value when initializing"
