@@ -10,7 +10,7 @@ import blackjax.inference.integrators as integrators
 import blackjax.inference.metrics as metrics
 import blackjax.inference.proposals as proposals
 
-Array = Union[np.array, jnp.DeviceArray]
+Array = Union[np.ndarray, jnp.DeviceArray]
 PyTree = Union[Dict, List, Tuple]
 
 
