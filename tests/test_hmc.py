@@ -31,7 +31,11 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     return states
 
 
-def test_hmc():
+inv_mass_matrices = [np.array([1.0, 1.0]), np.array([[1.0, 0.0], [0.0, 1.0]])]
+
+
+@pytest.mark.parametrize("inv_mass_matrix", inv_mass_matrices)
+def test_hmc(inv_mass_matrix):
     """Test the HMC kernel.
 
     This is a very simple sanity-check.
@@ -47,12 +51,12 @@ def test_hmc():
     initial_state = hmc.new_states(initial_position, potential)
 
     params = hmc.HMCParameters(
-        num_integration_steps=90, step_size=1e-3, inv_mass_matrix=np.array([1.0, 1.0])
+        num_integration_steps=90, step_size=1e-3, inv_mass_matrix=inv_mass_matrix
     )
     kernel = hmc.kernel(potential, params)
 
     rng_key = jax.random.PRNGKey(19)
-    states = inference_loop(rng_key, kernel, initial_state, 10_000)
+    states = inference_loop(rng_key, kernel, initial_state, 20_000)
 
     coefs_samples = states.position["coefs"][5000:]
     scale_samples = states.position["scale"][5000:]
