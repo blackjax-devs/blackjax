@@ -22,7 +22,7 @@ from typing import Callable, Dict, List, Tuple, Union
 import jax
 import jax.numpy as jnp
 import jax.scipy as jscipy
-from jax.tree_util import tree_flatten
+from jax.flatten_util import ravel_pytree
 
 __all__ = ["gaussian_euclidean"]
 
@@ -61,13 +61,13 @@ def gaussian_euclidean(
         mass_matrix_sqrt = jnp.sqrt(jnp.reciprocal(inverse_mass_matrix))
 
         def momentum_generator(rng_key: jax.random.PRNGKey, position: PyTree) -> PyTree:
-            _, treedef = tree_flatten(position)
+            _, unravel_fn = ravel_pytree(position)
             std = jax.random.normal(rng_key, shape)
             momentum = jnp.multiply(std, mass_matrix_sqrt)
-            return treedef.unflatten(momentum)
+            return unravel_fn(momentum)
 
         def kinetic_energy(momentum: PyTree, *_) -> float:
-            momentum, _ = tree_flatten(momentum)
+            momentum, _ = ravel_pytree(momentum)
             momentum = jnp.array(momentum)
             velocity = jnp.multiply(inverse_mass_matrix, momentum)
             return 0.5 * jnp.dot(velocity, momentum)
@@ -83,13 +83,13 @@ def gaussian_euclidean(
         )
 
         def momentum_generator(rng_key: jax.random.PRNGKey, position: PyTree) -> PyTree:
-            _, treedef = tree_flatten(position)
+            _, unravel_fn = ravel_pytree(position)
             std = jax.random.normal(rng_key, shape)
             momentum = jnp.dot(std, mass_matrix_sqrt)
-            return treedef.unflatten(momentum)
+            return unravel_fn(momentum)
 
         def kinetic_energy(momentum: PyTree, *_) -> float:
-            momentum, _ = tree_flatten(momentum)
+            momentum, _ = ravel_pytree(momentum)
             momentum = jnp.array(momentum)
             velocity = jnp.matmul(inverse_mass_matrix, momentum)
             return 0.5 * jnp.dot(velocity, momentum)
@@ -99,5 +99,5 @@ def gaussian_euclidean(
     else:
         raise ValueError(
             "The mass matrix has the wrong number of dimensions:"
-            f" expected 1 or 2, got {jnp.dim(inverse_mass_matrix)}."
+            f" expected 1 or 2, got {jnp.ndim(inverse_mass_matrix)}."
         )
