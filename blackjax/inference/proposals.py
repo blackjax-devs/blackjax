@@ -42,7 +42,7 @@ HMCProposalState = IntegratorState
 class HMCProposalInfo(NamedTuple):
     step_size: float
     num_integration_steps: int
-    traversed_states: IntegratorState  # intermediate + last state
+    trajectory: IntegratorState  # intermediate + last state
 
 
 def hmc(
@@ -59,10 +59,10 @@ def hmc(
             state = integrator(state, step_size)
             return state, state
 
-        new_state, traversed_states = jax.lax.scan(
+        new_state, trajectory = jax.lax.scan(
             one_step, initial_state, jnp.arange(num_integration_steps)
         )
-        info = HMCProposalInfo(step_size, num_integration_steps, traversed_states)
+        info = HMCProposalInfo(step_size, num_integration_steps, trajectory)
 
         return new_state, info
 
