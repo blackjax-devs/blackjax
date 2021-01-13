@@ -13,7 +13,8 @@ PyTree = Union[Dict, List, Tuple]
 class IntegratorState(NamedTuple):
     position: PyTree
     momentum: PyTree
-    log_prob_grad: PyTree
+    potential_energy: float
+    potential_energy_grad: PyTree
 
 
 def velocity_verlet(
@@ -54,16 +55,16 @@ def velocity_verlet(
     b1 = 0.5
     a2 = 1 - 2 * a1
 
-    potential_grad_fn = jax.grad(potential_fn)
+    potential_grad_fn = jax.value_and_grad(potential_fn)
     kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
-        position, momentum, log_prob_grad = state
+        position, momentum, _, potential_energy_grad = state
 
         momentum = jax.tree_util.tree_multimap(
-            lambda momentum, log_prob_grad: momentum - b1 * step_size * log_prob_grad,
+            lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
             momentum,
-            log_prob_grad,
+            potential_energy_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
@@ -73,13 +74,15 @@ def velocity_verlet(
             kinetic_grad,
         )
 
-        log_prob_grad = potential_grad_fn(position)
+        potential_energy, potential_energy_grad = potential_grad_fn(position)
         momentum = jax.tree_util.tree_multimap(
-            lambda momentum, log_prob_grad: momentum - b1 * step_size * log_prob_grad,
+            lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
             momentum,
-            log_prob_grad,
+            potential_energy_grad,
         )
 
-        return IntegratorState(position, momentum, log_prob_grad)
+        return IntegratorState(
+            position, momentum, potential_energy, potential_energy_grad
+        )
 
     return one_step

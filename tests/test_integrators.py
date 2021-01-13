@@ -105,9 +105,11 @@ def test_integrator(example, integrator, do_jit_compile):
 
     q = example["q_init"]
     p = example["p_init"]
-    initial_state = integrators.IntegratorState(q, p, jax.grad(potential)(q))
+    initial_state = integrators.IntegratorState(
+        q, p, potential(q), jax.grad(potential)(q)
+    )
     final_state = jax.lax.fori_loop(
-        0, example["num_steps"], lambda i, state: step(state, step_size), initial_state
+        0, example["num_steps"], lambda _, state: step(state, step_size), initial_state
     )
 
     # We make sure that the particle moved from its initial position.
