@@ -59,7 +59,6 @@ class HMCInfo(NamedTuple):
 
 
 def hmc(
-    potential_fn: Callable,
     proposal_generator: Callable,
     momentum_generator: Callable,
     kinetic_energy: Callable,
@@ -148,17 +147,20 @@ def hmc(
         energy = potential_energy + kinetic_energy(momentum, position)
 
         proposal, proposal_info = proposal_generator(
-            key_integrator, HMCProposalState(position, momentum, potential_energy_grad)
+            key_integrator,
+            HMCProposalState(
+                position, momentum, potential_energy, potential_energy_grad
+            ),
         )
-        new_position, new_momentum, new_potential_energy_grad = proposal
 
-        flipped_momentum = jax.tree_util.tree_multimap(lambda m: -1.0 * m, new_momentum)
-        new_potential_energy = potential_fn(new_position)
-        new_energy = new_potential_energy + kinetic_energy(
-            flipped_momentum, new_position
+        flipped_momentum = jax.tree_util.tree_multimap(
+            lambda m: -1.0 * m, proposal.momentum
+        )
+        new_energy = proposal.potential_energy + kinetic_energy(
+            flipped_momentum, proposal.position
         )
         new_state = HMCState(
-            new_position, new_potential_energy, new_potential_energy_grad
+            proposal.position, proposal.potential_energy, proposal.potential_energy_grad
         )
 
         delta_energy = energy - new_energy
