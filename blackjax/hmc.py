@@ -21,8 +21,8 @@ class HMCParameters(NamedTuple):
     divergence_threshold: int = 1000
 
 
-def new_states(position: PyTree, potential_fn: Callable) -> base.HMCState:
-    """Create chain states from positions.
+def new_state(position: PyTree, potential_fn: Callable) -> base.HMCState:
+    """Create a chain state from a position.
 
     The HMC kernel works with states that contain the current chain position
     and its associated potential energy and derivative of the potential energy.
@@ -47,7 +47,7 @@ def new_states(position: PyTree, potential_fn: Callable) -> base.HMCState:
     We can compute the initial state for each of the 4 chain as follows:
 
         >>> import jax
-        >>> jax.vmap(new_states, in_axes=(0, None))(init_positions, potential_fn)
+        >>> jax.vmap(new_state, in_axes=(0, None))(init_positions, potential_fn)
 
     Parameters
     ----------

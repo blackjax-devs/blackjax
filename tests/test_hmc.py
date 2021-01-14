@@ -48,7 +48,7 @@ def test_hmc(inv_mass_matrix):
     potential = lambda x: conditioned_potential(**x)
 
     initial_position = {"scale": 0.5, "coefs": 2.0}
-    initial_state = hmc.new_states(initial_position, potential)
+    initial_state = hmc.new_state(initial_position, potential)
 
     params = hmc.HMCParameters(
         num_integration_steps=90, step_size=1e-3, inv_mass_matrix=inv_mass_matrix
