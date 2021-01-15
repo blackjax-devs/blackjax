@@ -2,9 +2,8 @@
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
-import jax.numpy as jnp
 
-from blackjax.inference.proposals import HMCProposalInfo, HMCProposalState
+from blackjax.inference.proposals import ProposalInfo, ProposalState
 
 __all__ = ["HMCState", "HMCInfo", "hmc"]
 
@@ -26,43 +25,13 @@ class HMCState(NamedTuple):
 
 
 class HMCInfo(NamedTuple):
-    """Additional information on the HMC transition.
-
-    This additional information can be used for debugging or computing
-    diagnostics.
-
-    acceptance_probability
-        The acceptance probability of the transition, linked to the energy
-        difference between the original and the proposed states.
-    is_accepted
-        Whether the proposed position was accepted or the original position
-        was returned.
-    is_divergent
-        Whether the difference in energy between the original and the new state
-        exceeded the divergence threshold.
-    energy
-        The total energy that corresponds to the returned state.
-    proposal
-        The state proposed by the proposal. Typically includes the position and
-        momentum.
-    proposal_info
-        Information returned by the proposal. Typically includes the step size,
-        number of integration steps and intermediate states.
-    """
-
-    acceptance_probability: float
-    is_accepted: bool
-    is_divergent: bool
-    energy: float
-    proposal: HMCProposalState
-    proposal_info: HMCProposalInfo
+    momentum: PyTree
+    proposal: ProposalInfo
 
 
 def hmc(
-    proposal_generator: Callable,
     momentum_generator: Callable,
-    kinetic_energy: Callable,
-    divergence_threshold: float = 1000.0,
+    proposal_generator: Callable,
 ) -> Callable:
     """Create a Hamiltonian Monte Carlo transition kernel.
 
@@ -138,63 +107,23 @@ def hmc(
         -------
         The next state of the chain and additional information about the current step.
         """
-        key_momentum, key_integrator, key_accept = jax.random.split(rng_key, 3)
+        key_momentum, key_integrator = jax.random.split(rng_key, 2)
 
         position, potential_energy, potential_energy_grad = state
         momentum = momentum_generator(key_momentum, position)
-        energy = potential_energy + kinetic_energy(momentum, position)
-
-        proposal, proposal_info = proposal_generator(
-            key_integrator,
-            HMCProposalState(
-                position, momentum, potential_energy, potential_energy_grad
-            ),
+        augmented_state = ProposalState(
+            position, momentum, potential_energy, potential_energy_grad
         )
 
-        flipped_momentum = jax.tree_util.tree_multimap(
-            lambda m: -1.0 * m, proposal.momentum
+        augmented_proposal, proposal_info = proposal_generator(
+            key_integrator, augmented_state
         )
-        new_energy = proposal.potential_energy + kinetic_energy(
-            flipped_momentum, proposal.position
-        )
-        new_state = HMCState(
-            proposal.position, proposal.potential_energy, proposal.potential_energy_grad
+        proposal = HMCState(
+            augmented_proposal.position,
+            augmented_proposal.potential_energy,
+            augmented_proposal.potential_energy_grad,
         )
 
-        delta_energy = energy - new_energy
-        delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
-        is_divergent = jnp.abs(delta_energy) > divergence_threshold
-
-        p_accept = jnp.clip(jnp.exp(delta_energy), a_max=1)
-        do_accept = jax.random.bernoulli(key_accept, p_accept)
-        accept_state = (
-            new_state,
-            HMCInfo(
-                p_accept,
-                True,
-                is_divergent,
-                new_energy,
-                proposal,
-                proposal_info,
-            ),
-        )
-        reject_state = (
-            state,
-            HMCInfo(
-                p_accept,
-                False,
-                is_divergent,
-                energy,
-                proposal,
-                proposal_info,
-            ),
-        )
-        return jax.lax.cond(
-            do_accept,
-            accept_state,
-            lambda state: state,
-            reject_state,
-            lambda state: state,
-        )
+        return proposal, HMCInfo(augmented_proposal.momentum, proposal_info)
 
     return kernel

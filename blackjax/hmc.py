@@ -97,12 +97,13 @@ def kernel(potential_fn: Callable, parameters: HMCParameters) -> Callable:
         inv_mass_matrix
     )
     integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
-    proposal = proposals.hmc(integrator, step_size, num_integration_steps)
-    kernel = base.hmc(
-        proposal,
-        momentum_generator,
+    proposal = proposals.hmc(
+        integrator,
         kinetic_energy_fn,
+        step_size,
+        num_integration_steps,
         divergence_threshold,
     )
+    kernel = base.hmc(momentum_generator, proposal)
 
     return kernel
