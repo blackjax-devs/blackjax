@@ -93,7 +93,9 @@ def kernel(potential_fn: Callable, parameters: HMCParameters) -> Callable:
             " the parameters or run the window adaptation."
         )
 
-    momentum_generator, kinetic_energy_fn = metrics.gaussian_euclidean(inv_mass_matrix)
+    momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
+        inv_mass_matrix
+    )
     integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
     proposal = proposals.hmc(integrator, step_size, num_integration_steps)
     kernel = base.hmc(

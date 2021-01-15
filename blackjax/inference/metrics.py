@@ -32,7 +32,7 @@ EuclideanKineticEnergy = Callable[[PyTree], float]
 
 def gaussian_euclidean(
     inverse_mass_matrix: jnp.DeviceArray,
-) -> Tuple[Callable, EuclideanKineticEnergy]:
+) -> Tuple[Callable, EuclideanKineticEnergy, Callable]:
     r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum.
 
     The gaussian euclidean metric is a euclidean metric further characterized
@@ -95,4 +95,34 @@ def gaussian_euclidean(
         kinetic_energy_val = 0.5 * jnp.dot(velocity, momentum)
         return kinetic_energy_val
 
-    return momentum_generator, kinetic_energy
+    def is_turning(
+        momentum_left: PyTree, momentum_right: PyTree, momentum_sum: PyTree
+    ) -> bool:
+        """Generalized U-turn criterion.
+
+        Parameters
+        ----------
+        momentum_left
+            Momentum of the leftmost point of the trajectory.
+        momentum_right
+            Momentum of the rightmost point of the trajectory.
+        momentum_sum
+            Sum of the momenta along the trajectory.
+
+        .. [1]: Betancourt, Michael J. "Generalizing the no-U-turn sampler to Riemannian manifolds." arXiv preprint arXiv:1304.1920 (2013).
+        .. [2]: "NUTS misses U-turn, runs in cicles until max depth", Stan Discourse Forum
+                https://discourse.mc-stan.org/t/nuts-misses-u-turns-runs-in-circles-until-max-treedepth/9727/46
+        """
+        m_left, _ = ravel_pytree(momentum_left)
+        m_right, _ = ravel_pytree(momentum_right)
+        m_sum, _ = ravel_pytree(momentum_sum)
+
+        velocity_left = matmul(inverse_mass_matrix, m_left)
+        velocity_right = matmul(inverse_mass_matrix, m_right)
+
+        rho = m_sum - (m_right + m_left) / 2
+        turning_at_left = jnp.dot(velocity_left, rho) <= 0
+        turning_at_right = jnp.dot(velocity_right, rho) <= 0
+        return turning_at_left | turning_at_right
+
+    return momentum_generator, kinetic_energy, is_turning
