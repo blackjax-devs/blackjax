@@ -30,9 +30,10 @@ def new_state(position: PyTree, potential_fn: Callable) -> base.HMCState:
     function is intended to work for one chain, it is possible to use
     `jax.vmap` to compute the initial state of several chains.
 
-
     Note: Potential energy is also known as
-    the joint loglikelihood of the model, priors, and data.
+    the negative joint loglikelihood of the model, priors, and data
+    without the normalizing constant,
+    otherwise known as the negative log posterior density.
 
     Example
     -------
@@ -79,8 +80,6 @@ def kernel(potential_fn: Callable, parameters: HMCParameters) -> Callable:
     ----------
     potential_fn
         A function that returns the potential energy of a chain at a given position.
-        (Potential energy also known as
-        the joint loglikelihood of the model, priors, and data.)
 
     parameters
         A NamedTuple that contains the parameters of the kernel to be built.
