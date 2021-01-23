@@ -29,8 +29,7 @@ jobs:
 
       - name: Run the tests with pytest
         run: |
-          pytest -n 4 tests 
-                - name: Upload coverage to Codecov
+          pytest -n 4 -vv --cov=blackjax --cov-report=xml --cov-report=term tests
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
