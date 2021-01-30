@@ -13,7 +13,7 @@ jobs:
       matrix:
         python-version: [ '3.7', '3.8', '3.9' ]
 
-    name: Set up Python ${{ matrix.python-version }}
+    name: pytest Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v1
       - name: Set up Python ${{ matrix.python-version }}
@@ -29,4 +29,11 @@ jobs:
 
       - name: Run the tests with pytest
         run: |
-          pytest -n 4 tests 
+          pytest -n 4 -vv --cov=blackjax --cov-report=xml --cov-report=term tests
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          env_vars: OS,PYTHON
+          name: codecov-umbrella
+          fail_ci_if_error: false

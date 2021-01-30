@@ -11,6 +11,9 @@ def read(rel_path):
         return fp.read()
 
 
+INSTALL_REQS = read("requirements.txt").splitlines()
+
+
 def get_version(rel_path):
     """Get the package's version number.
 
@@ -32,8 +35,6 @@ setuptools.setup(
     version=get_version("blackjax/__init__.py"),
     description="Flexible and fast inference in Python",
     packages=setuptools.find_packages(),
-    install_requires=[
-        "jax==0.2.7",
-        "jaxlib==0.1.57",
-    ],
+    install_requires=INSTALL_REQS
+   ,
 )

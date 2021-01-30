@@ -100,3 +100,8 @@ ehthumbs.db
 # Apparently both patterns _have_ to be present on my system.
 # Having both is a nice backup, I guess.
 .ipynb_checkpoints
+
+.idea
+.coverage
+coverage.xml
+coverage

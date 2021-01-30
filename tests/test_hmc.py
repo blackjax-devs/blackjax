@@ -62,4 +62,4 @@ def test_hmc(inv_mass_matrix):
     scale_samples = states.position["scale"][5000:]
 
     assert np.mean(scale_samples) == pytest.approx(1, 1e-1)
-    assert np.mean(coefs_samples) == pytest.approx(3, 1e-1)
+    assert np.mean(coefs_samples) == pytest.approx(3, 2e-1)
