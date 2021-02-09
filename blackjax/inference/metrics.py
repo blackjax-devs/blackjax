@@ -63,23 +63,15 @@ def gaussian_euclidean(
     ndim = jnp.ndim(inverse_mass_matrix)
     shape = jnp.shape(inverse_mass_matrix)[:1]
 
-    if ndim == 1:  # diagonal mass matrix
+    if ndim > 2:
+        raise ValueError(
+            "The mass matrix has the wrong number of dimensions:"
+            f" expected 1 or 2, got {jnp.ndim(inverse_mass_matrix)}."
+        )
 
+    elif ndim == 1:  # diagonal mass matrix
         mass_matrix_sqrt = jnp.sqrt(jnp.reciprocal(inverse_mass_matrix))
-
-        def momentum_generator(rng_key: jax.random.PRNGKey, position: PyTree) -> PyTree:
-            _, unravel_fn = ravel_pytree(position)
-            std = jax.random.normal(rng_key, shape)
-            momentum = jnp.multiply(std, mass_matrix_sqrt)
-            return unravel_fn(momentum)
-
-        def kinetic_energy(momentum: PyTree, *_) -> float:
-            momentum, _ = ravel_pytree(momentum)
-            momentum = jnp.array(momentum)
-            velocity = jnp.multiply(inverse_mass_matrix, momentum)
-            return 0.5 * jnp.dot(velocity, momentum)
-
-        return momentum_generator, kinetic_energy
+        dot, matmul = jnp.multiply, jnp.multiply
 
     elif ndim == 2:
 
@@ -88,23 +80,19 @@ def gaussian_euclidean(
         mass_matrix_sqrt = jscipy.linalg.solve_triangular(
             tril_inv, identity, lower=True
         )
+        dot, matmul = jnp.dot, jnp.matmul
 
-        def momentum_generator(rng_key: jax.random.PRNGKey, position: PyTree) -> PyTree:
-            _, unravel_fn = ravel_pytree(position)
-            std = jax.random.normal(rng_key, shape)
-            momentum = jnp.dot(std, mass_matrix_sqrt)
-            return unravel_fn(momentum)
+    def momentum_generator(rng_key: jax.random.PRNGKey, position: PyTree) -> PyTree:
+        _, unravel_fn = ravel_pytree(position)
+        std = jax.random.normal(rng_key, shape)
+        momentum = dot(std, mass_matrix_sqrt)
+        return unravel_fn(momentum)
 
-        def kinetic_energy(momentum: PyTree, *_) -> float:
-            momentum, _ = ravel_pytree(momentum)
-            momentum = jnp.array(momentum)
-            velocity = jnp.matmul(inverse_mass_matrix, momentum)
-            return 0.5 * jnp.dot(velocity, momentum)
+    def kinetic_energy(momentum: PyTree, *_) -> float:
+        momentum, _ = ravel_pytree(momentum)
+        momentum = jnp.array(momentum)
+        velocity = matmul(inverse_mass_matrix, momentum)
+        return 0.5 * jnp.dot(velocity, momentum)
 
-        return momentum_generator, kinetic_energy
+    return momentum_generator, kinetic_energy
 
-    else:
-        raise ValueError(
-            "The mass matrix has the wrong number of dimensions:"
-            f" expected 1 or 2, got {jnp.ndim(inverse_mass_matrix)}."
-        )
