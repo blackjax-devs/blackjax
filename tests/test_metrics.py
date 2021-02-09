@@ -62,3 +62,13 @@ def test_gaussian_euclidean_ndim_2(patch_jax):
     except RecursionError:
         pass
     assert dot.call_count == 1
+
+
+def test_gaussian_euclidean_ndim_3():
+    """Test Gaussian Euclidean Function returns correct function when ndim > 1"""
+    x = jnp.ones(shape=(1,2,3))
+
+    with pytest.raises(ValueError) as e:
+        metrics.gaussian_euclidean(x)
+    assert "The mass matrix has the wrong number of dimensions" in str(e)
+
