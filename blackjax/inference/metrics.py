@@ -95,4 +95,3 @@ def gaussian_euclidean(
         return 0.5 * jnp.dot(velocity, momentum)
 
     return momentum_generator, kinetic_energy
-

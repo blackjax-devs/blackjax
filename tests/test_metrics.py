@@ -52,7 +52,7 @@ def test_gaussian_euclidean_ndim_1(patch_jax):
 def test_gaussian_euclidean_ndim_2(patch_jax):
     """Test Gaussian Euclidean Function returns correct function when ndim > 1"""
     _, dot = patch_jax
-    x = jnp.ones(shape=(2,2))
+    x = jnp.ones(shape=(2, 2))
 
     assert dot.call_count == 0
     momentum, velocity = metrics.gaussian_euclidean(x)
@@ -66,9 +66,8 @@ def test_gaussian_euclidean_ndim_2(patch_jax):
 
 def test_gaussian_euclidean_ndim_3():
     """Test Gaussian Euclidean Function returns correct function when ndim > 1"""
-    x = jnp.ones(shape=(1,2,3))
+    x = jnp.ones(shape=(1, 2, 3))
 
     with pytest.raises(ValueError) as e:
         metrics.gaussian_euclidean(x)
     assert "The mass matrix has the wrong number of dimensions" in str(e)
-
