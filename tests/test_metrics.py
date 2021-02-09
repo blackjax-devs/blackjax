@@ -18,21 +18,6 @@ def patch_jax(monkeypatch):
     return multiply, dot
 
 
-@pytest.mark.xfail
-def test_gaussian_euclidean_ndim_1_temporary(patch_jax):
-    """Tests Gaussian Euclidean Function"""
-    multiply, _ = patch_jax
-    x = jnp.ones(shape=1)
-
-    assert multiply.call_count == 0
-    momentum, velocity = metrics.gaussian_euclidean(x)
-
-    # Hit some recursion issue. Probably because I replaced
-    # multiply with a magicmock
-    momentum(KEY, [1])
-    # assert multiply.call_count == 1
-
-
 def test_gaussian_euclidean_ndim_1(patch_jax):
     """Test Gaussian Euclidean Function returns correct function when ndim is one"""
     multiply, _ = patch_jax
