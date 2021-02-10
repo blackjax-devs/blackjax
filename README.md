@@ -1,4 +1,5 @@
 # BlackJAX
+![CI](https://github.com/blackjax-devs/blackjax/workflows/Run%20tests/badge.svg?branch=master)
 [![codecov](https://codecov.io/gh/blackjax-devs/blackjax/branch/master/graph/badge.svg)](https://codecov.io/gh/blackjax-devs/blackjax)
 
 # How to contribute?
