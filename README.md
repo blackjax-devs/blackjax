@@ -1,4 +1,5 @@
 # BlackJAX
+[![codecov](https://codecov.io/gh/blackjax-devs/blackjax/branch/master/graph/badge.svg)](https://codecov.io/gh/blackjax-devs/blackjax)
 
 # How to contribute?
 
