@@ -160,6 +160,7 @@ def hmc(
             HMCTrajectoryInfo(step_size, num_integration_steps),
         )
 
+        # Problem with weak_type = True in second operand
         return jax.lax.cond(
             do_accept,
             end_state,
@@ -174,17 +175,47 @@ def hmc(
 def iterative_nuts(
     integrator: Callable,
     kinetic_energy: Callable,
-    u_turn_fn: Callable,
-    termination_criterion: Callable,
+    uturn_check_fn: Callable,
     step_size: float,
     max_tree_depth: int = 10,
     divergence_threshold: float = 1000,
 ):
+    """Iterative NUTS proposal."""
+
+    # To generate new proposal we need to
+
     proposal_fn = proposal_generator(kinetic_energy, divergence_threshold)
-    propose = dynamic_multiplicative_expansion(
-        integrator, termination_criterion, proposal_fn, step_size, max_tree_depth
+    (
+        new_criterion_state,
+        update_criterion_state,
+        is_criterion_met,
+    ) = numpyro_uturn_criterion(uturn_check_fn)
+    integrate = dynamic_deterministic_expansion(
+        integrator, proposal_fn, update_criterion_state, is_criterion_met
     )
-    """ Move `propose` from dynamic expansion to here."""
+    expand, do_keep_expanding = dynamic_multiplicative_expansion(
+        integrate,
+        uturn_check_fn,
+        step_size,
+        max_tree_depth,
+    )
+
+    def propose(rng_key, initial_state):
+        flat, unravel_fn = jax.flatten_util.ravel_pytree(initial_state.position)
+        num_dims = jnp.shape(flat)[0]
+        initial_momentum = unravel_fn(jnp.zeros_like(flat))
+
+        proposal = Proposal(initial_state, 0, False)
+        criterion_state = new_criterion_state(num_dims, max_tree_depth)
+        trajectory = Trajectory(initial_state, initial_state, initial_momentum)
+        _, _, proposal, _ = jax.lax.while_loop(
+            do_keep_expanding,
+            expand,
+            (rng_key, trajectory, proposal, criterion_state, False, 0),
+        )
+
+        # Don't forget the proposal info here!
+
     return propose
 
 
@@ -196,24 +227,24 @@ class Trajectory(NamedTuple):
 
 # dynamic geometrical expansion
 def dynamic_multiplicative_expansion(
-    integrator: Callable,
-    termination_criterion: Callable,
-    proposal_generator: Callable,
+    expand_trajectory: Callable,
+    uturn_check_fn: Callable,
     step_size: float,
     max_tree_depth: int = 10,
     rate: int = 2,
-) -> Callable:
-
-    expand_trajectory = dynamic_deterministic_expansion(
-        integrator, proposal_generator, termination_criterion
-    )
-
+) -> Tuple[Callable, Callable]:
     def do_keep_expanding(expansion_state) -> bool:
-        _, _, _, depth, _ = expansion_state
-        return depth < max_tree_depth
+        """Determine whether we need to keep expanding the trajectory."""
+        _, trajectory, _, _, terminated_early, depth = expansion_state
+        is_turning = uturn_check_fn(
+            trajectory.leftmost_state.momentum,
+            trajectory.rightmost_state.momentum,
+            trajectory.momentum_sum,
+        )
+        return (depth < max_tree_depth) & ~terminated_early & ~is_turning
 
     def merge_trajectories(
-        direction, trajectory: Trajectory, new_trajectory: Trajectory
+        direction: int, trajectory: Trajectory, new_trajectory: Trajectory
     ) -> Trajectory:
         leftmost_state, rightmost_state = jax.lax.cond(
             direction > 0,
@@ -234,8 +265,17 @@ def dynamic_multiplicative_expansion(
         return Trajectory(leftmost_state, rightmost_state, momentum_sum)
 
     def expand(expansion_state):
-        """Dynamic expansionm, thus return a proposal along the last state"""
-        rng_key, trajectory, proposal, depth = expansion_state
+        """Expand the current trajectory.
+
+        At each step we draw a direction at random, build a subtrajectory starting
+        from the leftmost or rightmost point of the current trajectory that is
+        twice as long as the current trajectory.
+
+        Once that is done, possibly update the current proposal with that of
+        the subtrajectory.
+
+        """
+        rng_key, trajectory, proposal, termination_state, _, depth = expansion_state
         rng_key, direction_key = jax.random.split(rng_key, 2)
 
         # create new subtrajectory that is twice as long as the current
@@ -248,41 +288,45 @@ def dynamic_multiplicative_expansion(
             trajectory,
             lambda trajectory: trajectory.leftmost_state,
         )
-        subtrajectory, new_proposal, stopped_early = expand_trajectory(
-            rng_key, start_state, direction, rate ** depth, step_size
+        (
+            subtrajectory,
+            new_proposal,
+            termination_state,
+            terminated_early,
+        ) = expand_trajectory(
+            rng_key, start_state, direction, termination_state, rate ** depth, step_size
         )
 
         # merge the subtrajectory to the trajectory
-        # if subtrjectory is diverging or turning we may need to interupt the process.
         new_trajectory = merge_trajectories(direction, trajectory, subtrajectory)
 
         # update the proposal
-        # if subtrajectory is diverging or turning we need to rejects its proposal.
+        # we reject proposals coming from diverging or turning subtrajectories
         maybe_updated_proposal = jax.lax.cond(
-            stopped_early,
+            terminated_early,
             proposal,
             lambda x: x,
             (rng_key, proposal, new_proposal),
-            lambda x: progressive_biaised_sampling(*x),
+            lambda x: progressive_biased_sampling(*x),
         )
 
-        return rng_key, new_trajectory, maybe_updated_proposal, depth + 1
-
-    def propose(rng_key, initial_state):
-        """This may be moved to iterative_nuts."""
-        proposal = Proposal(initial_state, 0, False)
-        trajectory = Trajectory(initial_state, initial_state, 0)
-        _, _, proposal, _ = jax.lax.while_loop(
-            do_keep_expanding,
-            expand,
-            (rng_key, trajectory, proposal, 0),
+        return (
+            rng_key,
+            new_trajectory,
+            maybe_updated_proposal,
+            termination_state,
+            terminated_early,
+            depth + 1,
         )
 
-    return propose
+    return expand, do_keep_expanding
 
 
 def dynamic_deterministic_expansion(
-    integrator, proposal_generator, termination_criterion
+    integrator: Callable,
+    proposal_generator: Callable,
+    update_termination: Callable,
+    is_criterion_met: Callable,
 ):
     """Sample a trajectory and update the proposal sequentially
     until the termination criterion is met.
@@ -300,16 +344,12 @@ def dynamic_deterministic_expansion(
         a function that initializes the proposal state and one that updates it.
 
     """
-    (
-        new_termination_state,
-        update_termination,
-        is_criterion_met,
-    ) = termination_criterion()
 
     def expand(
         rng_key: jax.random.PRNGKey,
         initial_state: IntegratorState,
         direction: int,
+        termination_state,
         max_num_steps: int,
         step_size,
     ):
@@ -368,12 +408,13 @@ def dynamic_deterministic_expansion(
             _, rng_key = jax.random.split(rng_key)
 
             new_state = integrator(state, direction * step_size)
-            new_proposal = proposal_generator(direction, state, trajectory)
+            new_trajectory = append_to_trajectory(direction, trajectory, new_state)
+
+            new_proposal = proposal_generator(direction, new_state, trajectory)
             maybe_updated_proposal = progressive_uniform_sampling(
                 rng_key, proposal, new_proposal
             )
 
-            new_trajectory = append_to_trajectory(direction, trajectory, new_state)
             new_termination_state = update_termination(
                 termination_state, new_trajectory, new_state, step
             )
@@ -392,38 +433,62 @@ def dynamic_deterministic_expansion(
             initial_state,
             Trajectory(initial_state, initial_state, initial_state.momentum),
             Proposal(initial_state, 0, False),
-            new_termination_state(),
+            termination_state,
             0,
         )
 
-        _, trajectory, proposal, _, step = jax.while_cond(
+        _, _, trajectory, proposal, termination_state, step = jax.lax.while_loop(
             do_keep_expanding, add_one_state, initial_expansion_state
         )
 
-        return proposal, trajectory, (step < max_num_steps)
+        return proposal, trajectory, termination_state, (step < max_num_steps)
 
     return expand
 
 
 # -------------------
-#     PROPOSAL
+#     PROPOSALS
 # -------------------
 
 
 class Proposal(NamedTuple):
-    """Proposal
-    Specify how the weight is computed and updated.
-    Also contains traditional ProposalInfo
+    """Proposal for the next chain step.
+
+    state:
+        The trajectory state corresponding to this proposal.
+    weight:
+        The logarithm of the sum of the canonical densities of each state
+        :math:`e^{-H(z)}` along the trajectory.
+    is_diverging
+        Whether a divergence was observed when making one step.
     """
 
     state: IntegratorState
-    weight: float
+    log_weight: float
     is_diverging: bool
 
 
 def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
     def generate(direction, state, trajectory):
-        """Create a new proposal from a new trajectory state."""
+        """Generate a new proposal from a trajectory state.
+
+        Note
+        ----
+        We can optimize things a bit by sacrificing in memory and code
+        complexity: the kinetic energy and the previous states can be carried
+        around instead of being recomputed each time.
+
+        Parameters
+        ----------
+        direction:
+            The direction in which the trajectory was integrated to obtain the
+            new state.
+        state:
+            The new state.
+        trajectory:
+            The trajectory before the state was added.
+
+        """
         previous_state = jax.lax.cond(
             direction > 0,
             trajectory,
@@ -435,13 +500,15 @@ def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
         energy = previous_state.potential_energy + kinetic_energy(
             previous_state.position, previous_state.momentum
         )
-        new_energy = state.state.potential_energy + kinetic_energy(
-            state.position, previous_state.momentum
+        new_energy = state.potential_energy + kinetic_energy(
+            state.position, state.momentum
         )
 
         delta_energy = new_energy - energy
         delta_energy = jnp.where(jnp.isnan(delta_energy), jnp.inf, delta_energy)
         is_diverging = delta_energy > divergence_threshold
+
+        # The log-weight of the new proposal is equal to H(z) - H(z_new)?
         weight = -delta_energy
 
         return Proposal(
@@ -454,13 +521,21 @@ def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
 
 
 def progressive_uniform_sampling(rng_key, proposal, new_proposal):
-    """Update the proposal using biaised sampling."""
-    p_accept = jax.scipy.special.expit(proposal.weight, new_proposal.weight)
+    """Generate a new proposal.
+
+    To avoid keeping the entire trajectory in memory, we only memorize the
+    extreme points and the point that will currently be proposed as a sample.
+    Progressive sampling updates this proposal as the trajectory is being
+    built. This is scheme is equivalent to drawing a sample uniformly at random
+    from the final trajectory.
+
+    """
+    p_accept = jax.scipy.special.expit(new_proposal.log_weight - proposal.log_weight)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
 
     updated_proposal = Proposal(
         new_proposal.state,
-        jnp.logaddexp(proposal.weight, new_proposal.weight),
+        jnp.logaddexp(proposal.log_weight, new_proposal.log_weight),
         new_proposal.is_diverging,
     )
 
@@ -473,15 +548,25 @@ def progressive_uniform_sampling(rng_key, proposal, new_proposal):
     )
 
 
-def progressive_biaised_sampling(rng_key, proposal, new_proposal):
-    """Update the proposal using biaised sampling."""
-    p_accept = jnp.exp(proposal.weight - new_proposal.weight)
+def progressive_biased_sampling(rng_key, proposal, new_proposal):
+    """Generate a new proposal.
+
+    To avoid keeping the entire trajectory in memory, we only memorize the
+    extreme points and the point that will currently be proposed as a sample.
+    Progressive sampling updates this proposal as the trajectory is being
+    built.
+
+    Unlike uniform sampling, biased sampling favors new proposals. It thus
+    biases the transition away from the trajectory's initial state.
+
+    """
+    p_accept = jnp.exp(new_proposal.log_weight - proposal.log_weight)
     p_accept = jnp.clip(p_accept, a_max=1.0)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
 
     updated_proposal = Proposal(
         new_proposal.state,
-        jnp.logaddexp(proposal.weight, new_proposal.weight),
+        jnp.logaddexp(proposal.log_weight, new_proposal.log_weight),
         new_proposal.is_diverging,
     )
 
@@ -509,8 +594,13 @@ class IterativeUTurnState(NamedTuple):
 def numpyro_uturn_criterion(is_turning):
     """Numpyro style dynamic U-Turn criterion."""
 
-    def new_state():
-        pass
+    def new_state(num_dims, max_tree_depth):
+        return IterativeUTurnState(
+            jnp.zeros((max_tree_depth, num_dims)),
+            jnp.zeros((max_tree_depth, num_dims)),
+            0,
+            0,
+        )
 
     def update_criterion_state(
         checkpoints: IterativeUTurnState,
@@ -567,8 +657,8 @@ def numpyro_uturn_criterion(is_turning):
         Does that include the robust U-turn check?
         """
 
-        r = state.momentum
-        r_sum = trajectory.momentum_sum
+        r, _ = jax.flatten_util.ravel_pytree(state.momentum)
+        r_sum, _ = jax.flatten_util.ravel_pytree(trajectory.momentum_sum)
         r_ckpts, r_sum_ckpts, idx_min, idx_max = checkpoints
 
         def _body_fn(state):
