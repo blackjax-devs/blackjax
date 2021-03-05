@@ -190,7 +190,7 @@ def iterative_nuts(
         update_criterion_state,
         is_criterion_met,
     ) = numpyro_uturn_criterion(uturn_check_fn)
-    integrate = dynamic_deterministic_expansion(
+    integrate = dynamic_integration(
         integrator, proposal_fn, update_criterion_state, is_criterion_met
     )
     expand, do_keep_expanding = dynamic_multiplicative_expansion(
@@ -219,13 +219,60 @@ def iterative_nuts(
     return propose
 
 
+# -------------------------------------------------------------------
+#                            TRAJECTORY
+# -------------------------------------------------------------------
+
+# Q: Can I just create a class with `append` and `__add__` methods?
 class Trajectory(NamedTuple):
     leftmost_state: IntegratorState
     rightmost_state: IntegratorState
     momentum_sum: PyTree
 
 
-# dynamic geometrical expansion
+def append_to_trajectory(direction, trajectory, state):
+    """Append a state to the trajectory to form a new trajectory."""
+    leftmost_state, rightmost_state = jax.lax.cond(
+        direction > 0,
+        trajectory,
+        lambda trajectory: (trajectory.leftmost_state, state),
+        trajectory,
+        lambda trajectory: (state, trajectory.rightmost_state),
+    )
+    momentum_sum = jax.tree_util.tree_multimap(
+        jnp.add, trajectory.momentum_sum, state.momentum
+    )
+    return Trajectory(leftmost_state, rightmost_state, momentum_sum)
+
+
+def merge_trajectories(
+    direction: int, trajectory: Trajectory, new_trajectory: Trajectory
+) -> Trajectory:
+    """Merge two trajectories to form a new trajectory."""
+    leftmost_state, rightmost_state = jax.lax.cond(
+        direction > 0,
+        trajectory,
+        lambda trajectory: (
+            trajectory.leftmost_state,
+            new_trajectory.rightmost_state,
+        ),
+        trajectory,
+        lambda trajectory: (
+            new_trajectory.leftmost_state,
+            trajectory.rightmost_state,
+        ),
+    )
+    momentum_sum = jax.tree_util.tree_multimap(
+        jnp.add, trajectory.momentum_sum, new_trajectory.momentum_sum
+    )
+    return Trajectory(leftmost_state, rightmost_state, momentum_sum)
+
+
+# -------------------------------------------------------------------
+#                   TRAJECTORY EXPANSION
+# -------------------------------------------------------------------
+
+
 def dynamic_multiplicative_expansion(
     expand_trajectory: Callable,
     uturn_check_fn: Callable,
@@ -242,27 +289,6 @@ def dynamic_multiplicative_expansion(
             trajectory.momentum_sum,
         )
         return (depth < max_tree_depth) & ~terminated_early & ~is_turning
-
-    def merge_trajectories(
-        direction: int, trajectory: Trajectory, new_trajectory: Trajectory
-    ) -> Trajectory:
-        leftmost_state, rightmost_state = jax.lax.cond(
-            direction > 0,
-            trajectory,
-            lambda trajectory: (
-                trajectory.leftmost_state,
-                new_trajectory.rightmost_state,
-            ),
-            trajectory,
-            lambda trajectory: (
-                new_trajectory.leftmost_state,
-                trajectory.rightmost_state,
-            ),
-        )
-        momentum_sum = jax.tree_util.tree_multimap(
-            jnp.add, trajectory.momentum_sum, new_trajectory.momentum_sum
-        )
-        return Trajectory(leftmost_state, rightmost_state, momentum_sum)
 
     def expand(expansion_state):
         """Expand the current trajectory.
@@ -322,7 +348,7 @@ def dynamic_multiplicative_expansion(
     return expand, do_keep_expanding
 
 
-def dynamic_deterministic_expansion(
+def dynamic_integration(
     integrator: Callable,
     proposal_generator: Callable,
     update_termination: Callable,
@@ -345,7 +371,7 @@ def dynamic_deterministic_expansion(
 
     """
 
-    def expand(
+    def integrate(
         rng_key: jax.random.PRNGKey,
         initial_state: IntegratorState,
         direction: int,
@@ -353,8 +379,8 @@ def dynamic_deterministic_expansion(
         max_num_steps: int,
         step_size,
     ):
-        """Integrate a trajectory and update the proposal sequentially
-        until the termination criterion is met.
+        """Integrate the trajectory starting from `initial_state` and update
+        the proposal sequentially until the termination criterion is met.
 
         Parameters
         ----------
@@ -373,25 +399,14 @@ def dynamic_deterministic_expansion(
 
         """
 
-        def do_keep_expanding(expansion_state):
-            _, state, trajectory, proposal, checkpoints, step = expansion_state
-            is_terminated = is_criterion_met(checkpoints, trajectory, state)
+        # QUESTION: Do we only signal a divergence if the proposal is issued from
+        # a divergent transition (current) or anytime a divergence is detected?
+        def do_keep_integrating(expansion_state):
+            """Decide whether we should continue integrating the trajectory"""
+            _, state, trajectory, proposal, termination_state, step = expansion_state
+            has_terminated = is_criterion_met(termination_state, trajectory, state)
             is_diverging = proposal.is_diverging
-            return (step < max_num_steps) & ~is_terminated & ~is_diverging
-
-        def append_to_trajectory(direction, trajectory, state):
-            """Append a state to the trajectory to form a new trajectory."""
-            leftmost_state, rightmost_state = jax.lax.cond(
-                direction > 0,
-                trajectory,
-                lambda trajectory: (trajectory.leftmost_state, state),
-                trajectory,
-                lambda trajectory: (state, trajectory.rightmost_state),
-            )
-            momentum_sum = jax.tree_util.tree_multimap(
-                jnp.add, trajectory.momentum_sum, state.momentum
-            )
-            return Trajectory(leftmost_state, rightmost_state, momentum_sum)
+            return (step < max_num_steps) & ~has_terminated & ~is_diverging
 
         def add_one_state(expansion_state):
             """We need to compute the delta energy between the last and the new state
@@ -410,6 +425,7 @@ def dynamic_deterministic_expansion(
             new_state = integrator(state, direction * step_size)
             new_trajectory = append_to_trajectory(direction, trajectory, new_state)
 
+            # Q: couldn't we pass `state` instead of `(trajectory, direction)`?
             new_proposal = proposal_generator(direction, new_state, trajectory)
             maybe_updated_proposal = progressive_uniform_sampling(
                 rng_key, proposal, new_proposal
@@ -428,7 +444,7 @@ def dynamic_deterministic_expansion(
                 step + 1,
             )
 
-        initial_expansion_state = (
+        initial_integration_state = (
             rng_key,
             initial_state,
             Trajectory(initial_state, initial_state, initial_state.momentum),
@@ -438,12 +454,12 @@ def dynamic_deterministic_expansion(
         )
 
         _, _, trajectory, proposal, termination_state, step = jax.lax.while_loop(
-            do_keep_expanding, add_one_state, initial_expansion_state
+            do_keep_integrating, add_one_state, initial_integration_state
         )
 
         return proposal, trajectory, termination_state, (step < max_num_steps)
 
-    return expand
+    return integrate
 
 
 # -------------------
