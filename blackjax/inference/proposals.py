@@ -182,19 +182,22 @@ def iterative_nuts(
 ):
     """Iterative NUTS proposal."""
 
-    # To generate new proposal we need to
-
+    # function that generates proposals from a transition between two states
     proposal_fn = proposal_generator(kinetic_energy, divergence_threshold)
+
+    # iterative uturn criterion (here Numpyro's)
     (
         new_criterion_state,
         update_criterion_state,
         is_criterion_met,
     ) = numpyro_uturn_criterion(uturn_check_fn)
-    integrate = dynamic_integration(
+    
+    # function that integrates the trajectory in one direction
+    trajectory_integrator = dynamic_integration(
         integrator, proposal_fn, update_criterion_state, is_criterion_met
     )
     expand, do_keep_expanding = dynamic_multiplicative_expansion(
-        integrate,
+        trajectory_integrator,
         uturn_check_fn,
         step_size,
         max_tree_depth,
@@ -274,12 +277,38 @@ def merge_trajectories(
 
 
 def dynamic_multiplicative_expansion(
-    expand_trajectory: Callable,
+    integrator: Callable,
     uturn_check_fn: Callable,
     step_size: float,
     max_tree_depth: int = 10,
     rate: int = 2,
 ) -> Tuple[Callable, Callable]:
+    """Sample a trajectory and update the proposal sequentially
+    until the termination criterion is met.
+
+    The trajectory is sampled with the following procedure:
+    1. Pick a direction at random
+    2. Integrate `num_step` steps in this direction
+    3. If integration stopped prematurely, do not update proposal
+    4. Else if trajectory is performing a U-turn, return proposal
+    5. Else update proposal, `num_steps = num_steps ** rate` and repeat from (1).
+
+    Parameters
+    ----------
+    integrator
+    uturn_check_fn
+        Function used to check the U-Turn criterion.
+    step_size
+        The step size used by the trajectory integrator.
+    max_tree_depth
+        The maximum number of trajectory expansions until the proposal is
+        returned.
+    rate
+        The rate of the geometrical expansion. Typically 2 in NUTS, hence
+        the mentions to binary trees.
+
+    """
+
     def do_keep_expanding(expansion_state) -> bool:
         """Determine whether we need to keep expanding the trajectory."""
         _, trajectory, _, _, terminated_early, depth = expansion_state
@@ -301,6 +330,8 @@ def dynamic_multiplicative_expansion(
         the subtrajectory.
 
         """
+        # Q: Should this function be aware of all the elements that need to
+        # be passed downstream?
         rng_key, trajectory, proposal, termination_state, _, depth = expansion_state
         rng_key, direction_key = jax.random.split(rng_key, 2)
 
@@ -315,16 +346,16 @@ def dynamic_multiplicative_expansion(
             lambda trajectory: trajectory.leftmost_state,
         )
         (
-            subtrajectory,
+            new_trajectory,
             new_proposal,
             termination_state,
             terminated_early,
-        ) = expand_trajectory(
+        ) = integrator(
             rng_key, start_state, direction, termination_state, rate ** depth, step_size
         )
 
-        # merge the subtrajectory to the trajectory
-        new_trajectory = merge_trajectories(direction, trajectory, subtrajectory)
+        # merge the freshly integrated trajectory to the current trajectory
+        new_trajectory = merge_trajectories(direction, trajectory, new_trajectory)
 
         # update the proposal
         # we reject proposals coming from diverging or turning subtrajectories
@@ -354,7 +385,7 @@ def dynamic_integration(
     update_termination: Callable,
     is_criterion_met: Callable,
 ):
-    """Sample a trajectory and update the proposal sequentially
+    """Integrate a trajectory and update the proposal sequentially
     until the termination criterion is met.
 
     Parameters
