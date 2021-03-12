@@ -33,6 +33,7 @@ import jax
 import jax.numpy as jnp
 
 from blackjax.inference.integrators import IntegratorState
+from blackjax.inference.trajectory import static_integration
 
 __all__ = ["hmc"]
 
@@ -90,47 +91,18 @@ def hmc(
 ) -> Callable:
     """Vanilla HMC proposal running the integrator for a fixed number of steps"""
 
-    def integrate_trajectory(
-        initial_state: IntegratorState,
-    ) -> IntegratorState:
-        """Integrate the trajectory  `num_integration_steps` times starting
-        from `initial_state` in the direction set by the momentum.
-        """
+    trajectory_integrator = static_integration(integrator, step_size, num_integration_steps)
 
-        def one_step(state, _):
-            state = integrator(state, step_size)
-            return state, ()
-
-        end_state, _ = jax.lax.scan(
-            one_step, initial_state, jnp.arange(num_integration_steps)
-        )
-
-        # To guarantee time-reversibility (hence detailed balance) we
-        # need to flip the last state's momentum. If we run the hamiltonian
-        # dynamics starting from the last state with flipped momentum we
-        # should indeed retrieve the initial state (with flipped momentum).
-        flipped_momentum = jax.tree_util.tree_multimap(
-            lambda m: -1.0 * m, end_state.momentum
-        )
-        end_state = IntegratorState(
-            end_state.position,
-            flipped_momentum,
-            end_state.potential_energy,
-            end_state.potential_energy_grad,
-        )
-
-        return end_state
-
-    def accept_endpoint(
+    def maybe_update_proposal(
         rng_key: jax.random.PRNGKey,
-        initial_state: IntegratorState,
-        last_state: IntegratorState,
-    ) -> Tuple[bool, float, bool, float]:
+        initial_state: ProposalState,
+        end_state: IntegratorState,
+    ) -> Tuple[ProposalState, ProposalInfo]:
         initial_energy = initial_state.potential_energy + kinetic_energy(
             initial_state.momentum, initial_state.position
         )
-        energy = last_state.potential_energy + kinetic_energy(
-            last_state.momentum, last_state.position
+        energy = end_state.potential_energy + kinetic_energy(
+            end_state.momentum, end_state.position
         )
 
         delta_energy = initial_energy - energy
@@ -139,17 +111,6 @@ def hmc(
 
         p_accept = jnp.clip(jnp.exp(delta_energy), a_max=1)
         do_accept = jax.random.bernoulli(rng_key, p_accept)
-
-        return do_accept, p_accept, is_diverging, energy
-
-    def propose(
-        rng_key, initial_state: IntegratorState
-    ) -> Tuple[IntegratorState, ProposalInfo]:
-
-        end_state = integrate_trajectory(initial_state)
-        do_accept, p_accept, is_diverging, energy = accept_endpoint(
-            rng_key, initial_state, end_state
-        )
 
         info = ProposalInfo(
             p_accept,
@@ -160,7 +121,6 @@ def hmc(
             HMCTrajectoryInfo(step_size, num_integration_steps),
         )
 
-        # Problem with weak_type = True in second operand
         return jax.lax.cond(
             do_accept,
             end_state,
@@ -168,6 +128,30 @@ def hmc(
             initial_state,
             lambda state: (state, info),
         )
+
+    def propose(
+        rng_key, initial_state: ProposalState
+    ) -> Tuple[ProposalState, ProposalInfo]:
+
+        end_state, _ = trajectory_integrator(initial_state)
+
+        # To guarantee time-reversibility (hence detailed balance) we
+        # need to flip the last state's momentum. If we run the hamiltonian
+        # dynamics starting from the last state with flipped momentum we
+        # should indeed retrieve the initial state (with flipped momentum).
+        flipped_momentum = jax.tree_util.tree_multimap(
+            lambda m: -1.0 * m, end_state.momentum
+        )
+        end_state = ProposalState(
+            end_state.position,
+            flipped_momentum,
+            end_state.potential_energy,
+            end_state.potential_energy_grad,
+        )
+
+        proposal, info = maybe_update_proposal(rng_key, initial_state, end_state)
+
+        return proposal, info
 
     return propose
 
@@ -191,7 +175,7 @@ def iterative_nuts(
         update_criterion_state,
         is_criterion_met,
     ) = numpyro_uturn_criterion(uturn_check_fn)
-    
+
     # function that integrates the trajectory in one direction
     trajectory_integrator = dynamic_integration(
         integrator, proposal_fn, update_criterion_state, is_criterion_met
