@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 import blackjax.hmc as hmc
+import blackjax.nuts as nuts
 
 
 def potential_fn(scale, coefs, preds, x):
@@ -62,4 +63,35 @@ def test_hmc(inv_mass_matrix):
     scale_samples = states.position["scale"][5000:]
 
     assert np.mean(scale_samples) == pytest.approx(1, 1e-1)
-    assert np.mean(coefs_samples) == pytest.approx(3, 2e-1)
+    assert np.mean(coefs_samples) == pytest.approx(3, 1e-1)
+
+
+@pytest.mark.parametrize("inv_mass_matrix", inv_mass_matrices)
+def test_nuts(inv_mass_matrix):
+    """Test the HMC kernel.
+
+    This is a very simple sanity-check.
+    """
+    x_data = np.random.normal(0, 1, size=(1000, 1))
+    y_data = 3 * x_data + np.random.normal(size=x_data.shape)
+    observations = {"x": x_data, "preds": y_data}
+
+    conditioned_potential = ft.partial(potential_fn, **observations)
+    potential = lambda x: conditioned_potential(**x)
+
+    initial_position = {"scale": 0.5, "coefs": 2.0}
+    initial_state = hmc.new_state(initial_position, potential)
+
+    params = nuts.NUTSParameters(
+        step_size=1e-3, max_tree_depth=10, inv_mass_matrix=inv_mass_matrix
+    )
+    kernel = nuts.kernel(potential, params)
+
+    rng_key = jax.random.PRNGKey(19)
+    states = inference_loop(rng_key, kernel, initial_state, 20_000)
+
+    coefs_samples = states.position["coefs"][5000:]
+    scale_samples = states.position["scale"][5000:]
+
+    assert np.mean(scale_samples) == pytest.approx(1, 1e-1)
+    assert np.mean(coefs_samples) == pytest.approx(3, 1e-1)

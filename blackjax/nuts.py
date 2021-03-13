@@ -39,19 +39,25 @@ def kernel(potential_fn: Callable, parameters: NUTSParameters) -> Callable:
     """
     step_size, max_tree_depth, inv_mass_matrix, divergence_threshold = parameters
 
-    if not inv_mass_matrix:
+    if inv_mass_matrix is None:
         raise ValueError(
             "Expected a value for `inv_mass_matrix`,"
             " got None. Please specify a value when initializing"
             " the parameters or run the window adaptation."
         )
 
-    momentum_generator, kinetic_energy_fn, u_turn_fn = metrics.gaussian_euclidean(
+    momentum_generator, kinetic_energy_fn, uturn_check_fn = metrics.gaussian_euclidean(
         inv_mass_matrix
     )
     integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
-    termination_criterion = proposals.numpyro_uturn_criterion
-    proposal = proposals.iterative_nuts(integrator, kinetic_energy_fn, u_turn_fn, termination_criterion, step_size, max_tree_depth, divergence_threshold)
+    proposal = proposals.iterative_nuts(
+        integrator,
+        kinetic_energy_fn,
+        uturn_check_fn,
+        step_size,
+        max_tree_depth,
+        divergence_threshold,
+    )
 
     kernel = base.hmc(momentum_generator, proposal)
 

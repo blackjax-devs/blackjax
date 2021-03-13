@@ -30,6 +30,8 @@ References
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
+import jax.lax as lax
+import jax.dtypes as dtypes
 import jax.numpy as jnp
 
 from blackjax.inference.integrators import IntegratorState
@@ -192,16 +194,17 @@ def iterative_nuts(
         num_dims = jnp.shape(flat)[0]
         initial_momentum = unravel_fn(jnp.zeros_like(flat))
 
-        proposal = Proposal(initial_state, 0, False)
+        proposal = Proposal(initial_state, 0., False)
         criterion_state = new_criterion_state(num_dims, max_tree_depth)
         trajectory = Trajectory(initial_state, initial_state, initial_momentum)
-        _, _, proposal, _ = jax.lax.while_loop(
+        _, _, proposal, _, _, _ = jax.lax.while_loop(
             do_keep_expanding,
             expand,
             (rng_key, trajectory, proposal, criterion_state, False, 0),
         )
 
         # Don't forget the proposal info here!
+        return proposal.state, None
 
     return propose
 
@@ -330,8 +333,8 @@ def dynamic_multiplicative_expansion(
             lambda trajectory: trajectory.leftmost_state,
         )
         (
-            new_trajectory,
             new_proposal,
+            new_trajectory,
             termination_state,
             terminated_early,
         ) = integrator(
@@ -463,7 +466,7 @@ def dynamic_integration(
             rng_key,
             initial_state,
             Trajectory(initial_state, initial_state, initial_state.momentum),
-            Proposal(initial_state, 0, False),
+            Proposal(initial_state, 0., False),
             termination_state,
             0,
         )
@@ -572,10 +575,9 @@ def progressive_uniform_sampling(rng_key, proposal, new_proposal):
 
     return jax.lax.cond(
         do_accept,
-        updated_proposal,
-        lambda x: x,
-        proposal,
-        lambda x: x,
+        lambda _: updated_proposal,
+        lambda _: proposal,
+        operand=None
     )
 
 
@@ -603,10 +605,9 @@ def progressive_biased_sampling(rng_key, proposal, new_proposal):
 
     return jax.lax.cond(
         do_accept,
-        updated_proposal,
-        lambda x: x,
-        proposal,
-        lambda x: x,
+        lambda _: updated_proposal,
+        lambda _: proposal,
+        operand=None
     )
 
 
@@ -647,8 +648,8 @@ def numpyro_uturn_criterion(is_turning):
             step % 2 == 0,
             (r_ckpts, r_sum_ckpts),
             lambda x: (
-                jax.lax.index_update(x[0], ckpt_idx_max, r),
-                jax.lax.index_update(x[1], ckpt_idx_max, r_sum),
+                jax.ops.index_update(x[0], ckpt_idx_max, r),
+                jax.ops.index_update(x[1], ckpt_idx_max, r_sum),
             ),
             (r_ckpts, r_sum_ckpts),
             lambda x: x,
