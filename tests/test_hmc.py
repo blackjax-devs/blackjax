@@ -93,5 +93,6 @@ def test_nuts(inv_mass_matrix):
     coefs_samples = states.position["coefs"][5000:]
     scale_samples = states.position["scale"][5000:]
 
+    print(scale_samples, coefs_samples)
     assert np.mean(scale_samples) == pytest.approx(1, 1e-1)
     assert np.mean(coefs_samples) == pytest.approx(3, 1e-1)

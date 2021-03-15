@@ -30,10 +30,7 @@ References
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
-import jax.lax as lax
-import jax.dtypes as dtypes
 import jax.numpy as jnp
-
 from blackjax.inference.integrators import IntegratorState
 from blackjax.inference.trajectory import static_integration
 
@@ -41,14 +38,12 @@ __all__ = ["hmc"]
 
 
 PyTree = Union[Dict, List, Tuple]
+ProposalState = IntegratorState
 
 
 class HMCTrajectoryInfo(NamedTuple):
     step_size: float
     num_integration_steps: int
-
-
-ProposalState = IntegratorState
 
 
 class ProposalInfo(NamedTuple):
@@ -93,47 +88,13 @@ def hmc(
 ) -> Callable:
     """Vanilla HMC proposal running the integrator for a fixed number of steps"""
 
-    trajectory_integrator = static_integration(integrator, step_size, num_integration_steps)
-
-    def maybe_update_proposal(
-        rng_key: jax.random.PRNGKey,
-        initial_state: ProposalState,
-        end_state: IntegratorState,
-    ) -> Tuple[ProposalState, ProposalInfo]:
-        initial_energy = initial_state.potential_energy + kinetic_energy(
-            initial_state.momentum, initial_state.position
-        )
-        energy = end_state.potential_energy + kinetic_energy(
-            end_state.momentum, end_state.position
-        )
-
-        delta_energy = initial_energy - energy
-        delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
-        is_diverging = jnp.abs(delta_energy) > divergence_threshold
-
-        p_accept = jnp.clip(jnp.exp(delta_energy), a_max=1)
-        do_accept = jax.random.bernoulli(rng_key, p_accept)
-
-        info = ProposalInfo(
-            p_accept,
-            do_accept,
-            is_diverging,
-            energy,
-            end_state,
-            HMCTrajectoryInfo(step_size, num_integration_steps),
-        )
-
-        return jax.lax.cond(
-            do_accept,
-            end_state,
-            lambda state: (state, info),
-            initial_state,
-            lambda state: (state, info),
-        )
+    trajectory_integrator = static_integration(
+        integrator, step_size, num_integration_steps
+    )
 
     def propose(
-        rng_key, initial_state: ProposalState
-    ) -> Tuple[ProposalState, ProposalInfo]:
+        rng_key, initial_state: IntegratorState
+    ) -> Tuple[IntegratorState, ProposalInfo]:
 
         end_state, _ = trajectory_integrator(initial_state)
 
@@ -144,16 +105,54 @@ def hmc(
         flipped_momentum = jax.tree_util.tree_multimap(
             lambda m: -1.0 * m, end_state.momentum
         )
-        end_state = ProposalState(
+        proposal = IntegratorState(
             end_state.position,
             flipped_momentum,
             end_state.potential_energy,
             end_state.potential_energy_grad,
         )
 
-        proposal, info = maybe_update_proposal(rng_key, initial_state, end_state)
+        initial_energy = initial_state.potential_energy + kinetic_energy(
+            initial_state.momentum, initial_state.position
+        )
+        energy = proposal.potential_energy + kinetic_energy(
+            proposal.momentum, proposal.position
+        )
 
-        return proposal, info
+        delta_energy = initial_energy - energy
+        delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
+        is_diverging = jnp.abs(delta_energy) > divergence_threshold
+
+        p_accept = jnp.clip(jnp.exp(delta_energy), a_max=1)
+        do_accept = jax.random.bernoulli(rng_key, p_accept)
+
+        accept_state = (
+            proposal,
+            ProposalInfo(
+                p_accept,
+                True,
+                is_diverging,
+                energy,
+                proposal,
+                HMCTrajectoryInfo(step_size, num_integration_steps),
+            ),
+        )
+
+        reject_state = (
+            initial_state,
+            ProposalInfo(
+                p_accept,
+                False,
+                is_diverging,
+                energy,
+                proposal,
+                HMCTrajectoryInfo(step_size, num_integration_steps),
+            ),
+        )
+
+        return jax.lax.cond(
+            do_accept, lambda _: accept_state, lambda _: reject_state, operand=None
+        )
 
     return propose
 
@@ -194,7 +193,7 @@ def iterative_nuts(
         num_dims = jnp.shape(flat)[0]
         initial_momentum = unravel_fn(jnp.zeros_like(flat))
 
-        proposal = Proposal(initial_state, 0., False)
+        proposal = Proposal(initial_state, 0.0, False)
         criterion_state = new_criterion_state(num_dims, max_tree_depth)
         trajectory = Trajectory(initial_state, initial_state, initial_momentum)
         _, _, proposal, _, _, _ = jax.lax.while_loop(
@@ -390,7 +389,7 @@ def dynamic_integration(
     """
 
     def integrate(
-        rng_key: jax.random.PRNGKey,
+        rng_key: jax.numpy.DeviceArray,
         initial_state: IntegratorState,
         direction: int,
         termination_state,
@@ -466,7 +465,7 @@ def dynamic_integration(
             rng_key,
             initial_state,
             Trajectory(initial_state, initial_state, initial_state.momentum),
-            Proposal(initial_state, 0., False),
+            Proposal(initial_state, 0.0, False),
             termination_state,
             0,
         )
@@ -538,16 +537,16 @@ def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
             state.position, state.momentum
         )
 
-        delta_energy = new_energy - energy
-        delta_energy = jnp.where(jnp.isnan(delta_energy), jnp.inf, delta_energy)
-        is_diverging = delta_energy > divergence_threshold
+        delta_energy = energy - new_energy
+        delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
+        is_diverging = jnp.abs(delta_energy) > divergence_threshold
 
         # The log-weight of the new proposal is equal to H(z) - H(z_new)?
-        weight = -delta_energy
+        log_weight = delta_energy
 
         return Proposal(
             state,
-            weight,
+            log_weight,
             is_diverging,
         )
 
@@ -574,10 +573,7 @@ def progressive_uniform_sampling(rng_key, proposal, new_proposal):
     )
 
     return jax.lax.cond(
-        do_accept,
-        lambda _: updated_proposal,
-        lambda _: proposal,
-        operand=None
+        do_accept, lambda _: updated_proposal, lambda _: proposal, operand=None
     )
 
 
@@ -604,10 +600,7 @@ def progressive_biased_sampling(rng_key, proposal, new_proposal):
     )
 
     return jax.lax.cond(
-        do_accept,
-        lambda _: updated_proposal,
-        lambda _: proposal,
-        operand=None
+        do_accept, lambda _: updated_proposal, lambda _: proposal, operand=None
     )
 
 

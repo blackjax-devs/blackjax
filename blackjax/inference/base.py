@@ -1,9 +1,10 @@
 """Base kernel for the HMC family."""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Callable, Dict, List, NamedTuple, Tuple, Union, Optional
 
 import jax
 
-from blackjax.inference.proposals import ProposalInfo, ProposalState
+from blackjax.inference.proposals import ProposalInfo
+from blackjax.inference.integrators import IntegratorState
 
 __all__ = ["HMCState", "HMCInfo", "hmc"]
 
@@ -26,7 +27,7 @@ class HMCState(NamedTuple):
 
 class HMCInfo(NamedTuple):
     momentum: PyTree
-    proposal: ProposalInfo
+    proposal_info: ProposalInfo
 
 
 def hmc(
@@ -91,7 +92,7 @@ def hmc(
     """
 
     def kernel(
-        rng_key: jax.random.PRNGKey, state: HMCState
+        rng_key: jax.numpy.DeviceArray, state: HMCState
     ) -> Tuple[HMCState, HMCInfo]:
         """Moves the chain by one step using the Hamiltonian dynamics.
 
@@ -111,19 +112,15 @@ def hmc(
 
         position, potential_energy, potential_energy_grad = state
         momentum = momentum_generator(key_momentum, position)
-        augmented_state = ProposalState(
+        augmented_state = IntegratorState(
             position, momentum, potential_energy, potential_energy_grad
         )
 
-        augmented_proposal, proposal_info = proposal_generator(
+        proposal, proposal_info = proposal_generator(
             key_integrator, augmented_state
         )
-        proposal = HMCState(
-            augmented_proposal.position,
-            augmented_proposal.potential_energy,
-            augmented_proposal.potential_energy_grad,
-        )
+        proposal = HMCState(proposal.position, proposal.potential_energy, proposal.potential_energy_grad)
 
-        return proposal, HMCInfo(augmented_proposal.momentum, proposal_info)
+        return proposal, HMCInfo(momentum, proposal_info)
 
     return kernel

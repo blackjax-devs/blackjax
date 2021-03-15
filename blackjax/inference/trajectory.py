@@ -25,7 +25,7 @@ References
 .. [1]: Betancourt, Michael. "A conceptual introduction to Hamiltonian Monte Carlo." arXiv preprint arXiv:1701.02434 (2017).
 
 """
-from typing import Callable
+from typing import Callable, Tuple
 
 import jax
 import jax.numpy as jnp
