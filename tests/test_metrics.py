@@ -1,8 +1,9 @@
 from unittest import mock
 
 import jax.numpy as jnp
-import pytest
 from jax import random
+
+import pytest
 
 from blackjax.inference import metrics
 
@@ -58,7 +59,7 @@ def test_gaussian_euclidean_ndim_3():
 
 
 def test_gaussian_euclidean_dim_1():
-    """Test Gaussian Euclidean Function with ndim"""
+    """Test Gaussian Euclidean Function with ndim 1"""
     inverse_mass_matrix = jnp.asarray([1/4], dtype=DTYPE)
     momentum, kinetic_energy = metrics.gaussian_euclidean(inverse_mass_matrix)
 
@@ -75,3 +76,23 @@ def test_gaussian_euclidean_dim_1():
 
     assert momentum_val == expected_momentum_val
     assert kinetic_energy_val == expected_kinetic_energy_val
+
+
+def test_gaussian_euclidean_dim_2():
+    """Test Gaussian Euclidean Function with ndim 2"""
+    inverse_mass_matrix = jnp.asarray([[1/9, 0], [0,1/4]], dtype=DTYPE)
+    momentum, kinetic_energy = metrics.gaussian_euclidean(inverse_mass_matrix)
+
+    arbitrary_position = jnp.asarray([12345, 23456], dtype=DTYPE)
+    momentum_val = momentum(KEY, arbitrary_position)
+
+    # 2 is square root inverse of 1/4
+    # -0.20584235 is random value returned with random key
+    expected_momentum_val = jnp.asarray([3,2])* jnp.asarray([-0.784766 ,  0.8564448])
+
+    # kinetic_energy_val = kinetic_energy(momentum_val)
+    # velocity = inverse_mass_matrix*momentum_val
+    # expected_kinetic_energy_val = .5 * velocity * momentum_val
+
+    assert pytest.approx(expected_momentum_val, momentum_val)
+    # assert kinetic_energy_val == expected_kinetic_energy_val
