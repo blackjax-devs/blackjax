@@ -88,11 +88,11 @@ def test_gaussian_euclidean_dim_2():
 
     # 2 is square root inverse of 1/4
     # -0.20584235 is random value returned with random key
-    expected_momentum_val = jnp.asarray([3,2])* jnp.asarray([-0.784766 ,  0.8564448])
+    expected_momentum_val = jnp.asarray([3,2])* jnp.asarray([-0.784766,  0.8564448])
 
-    # kinetic_energy_val = kinetic_energy(momentum_val)
-    # velocity = inverse_mass_matrix*momentum_val
-    # expected_kinetic_energy_val = .5 * velocity * momentum_val
+    kinetic_energy_val = kinetic_energy(momentum_val)
+    velocity = jnp.dot(inverse_mass_matrix,momentum_val)
+    expected_kinetic_energy_val = .5 * jnp.matmul(velocity, momentum_val)
 
     assert pytest.approx(expected_momentum_val, momentum_val)
-    # assert kinetic_energy_val == expected_kinetic_energy_val
+    assert kinetic_energy_val == expected_kinetic_energy_val
