@@ -84,8 +84,8 @@ def gaussian_euclidean(
 
     def momentum_generator(rng_key: jax.random.PRNGKey, position: PyTree) -> PyTree:
         _, unravel_fn = ravel_pytree(position)
-        std = jax.random.normal(rng_key, shape)
-        momentum = dot(std, mass_matrix_sqrt)
+        standard_normal_sample = jax.random.normal(rng_key, shape)
+        momentum = dot(standard_normal_sample, mass_matrix_sqrt)
         momentum_unravel = unravel_fn(momentum)
         return momentum_unravel
 
