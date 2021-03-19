@@ -11,9 +11,10 @@ KEY = random.PRNGKey(0)
 DTYPE = "float32"
 
 
-def test_gaussian_euclidean_ndim_3():
-    """Test Gaussian Euclidean Function returns correct function when ndim > 1"""
-    x = jnp.ones(shape=(1, 2, 3))
+@pytest.mark.parametrize("shape", [(), (1,2,3)], ids= lambda x: f"shape {x}")
+def test_gaussian_euclidean_ndim_invalid(shape):
+    """Test Gaussian Euclidean Function returns correct function invalid ndim"""
+    x = jnp.ones(shape=shape)
 
     with pytest.raises(ValueError) as e:
         metrics.gaussian_euclidean(x)
