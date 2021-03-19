@@ -60,13 +60,18 @@ def test_gaussian_euclidean_ndim_3():
 def test_gaussian_euclidean_dim_1():
     """Test Gaussian Euclidean Function with ndim"""
     inverse_mass_matrix = jnp.asarray([1/4], dtype=DTYPE)
-    momentum, velocity = metrics.gaussian_euclidean(inverse_mass_matrix)
+    momentum, kinetic_energy = metrics.gaussian_euclidean(inverse_mass_matrix)
 
     arbitrary_position = jnp.asarray([12345], dtype=DTYPE)
     momentum_val = momentum(KEY, arbitrary_position)
 
     # 2 is square root inverse of 1/4
     # -0.20584235 is random value returned with random key
-    expected_val = 2*-0.20584235
+    expected_momentum_val = 2*-0.20584235
 
-    assert momentum_val == expected_val
+    kinetic_energy_val = kinetic_energy(momentum_val)
+    velocity = inverse_mass_matrix*momentum_val
+    expected_kinetic_energy_val = .5 * velocity * momentum_val
+
+    assert momentum_val == expected_momentum_val
+    assert kinetic_energy_val == expected_kinetic_energy_val

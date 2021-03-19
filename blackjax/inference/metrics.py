@@ -93,6 +93,7 @@ def gaussian_euclidean(
         momentum, _ = ravel_pytree(momentum)
         momentum = jnp.array(momentum)
         velocity = matmul(inverse_mass_matrix, momentum)
-        return 0.5 * jnp.dot(velocity, momentum)
+        kinetic_energy_val = 0.5 * jnp.dot(velocity, momentum)
+        return kinetic_energy_val
 
     return momentum_generator, kinetic_energy
