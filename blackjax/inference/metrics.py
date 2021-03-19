@@ -81,6 +81,7 @@ def gaussian_euclidean(
             "The mass matrix has the wrong number of dimensions:"
             f" expected 1 or 2, got {jnp.ndim(inverse_mass_matrix)}."
         )
+
     def momentum_generator(rng_key: jax.random.PRNGKey, position: PyTree) -> PyTree:
         _, unravel_fn = ravel_pytree(position)
         std = jax.random.normal(rng_key, shape)
