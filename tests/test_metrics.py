@@ -7,7 +7,7 @@ from jax import random
 from blackjax.inference import metrics
 
 KEY = random.PRNGKey(0)
-
+DTYPE = "float32"
 
 @pytest.fixture()
 def patch_jax(monkeypatch):
@@ -55,3 +55,18 @@ def test_gaussian_euclidean_ndim_3():
     with pytest.raises(ValueError) as e:
         metrics.gaussian_euclidean(x)
     assert "The mass matrix has the wrong number of dimensions" in str(e)
+
+
+def test_gaussian_euclidean_dim_1():
+    """Test Gaussian Euclidean Function with ndim"""
+    inverse_mass_matrix = jnp.asarray([1/4], dtype=DTYPE)
+    momentum, velocity = metrics.gaussian_euclidean(inverse_mass_matrix)
+
+    arbitrary_position = jnp.asarray([12345], dtype=DTYPE)
+    momentum_val = momentum(KEY, arbitrary_position)
+
+    # 2 is square root inverse of 1/4
+    # -0.20584235 is random value returned with random key
+    expected_val = 2*-0.20584235
+
+    assert momentum_val == expected_val
