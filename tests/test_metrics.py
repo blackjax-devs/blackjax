@@ -1,9 +1,8 @@
 from unittest import mock
 
 import jax.numpy as jnp
-from jax import random
-
 import pytest
+from jax import random
 
 from blackjax.inference import metrics
 
