@@ -86,7 +86,8 @@ def gaussian_euclidean(
         _, unravel_fn = ravel_pytree(position)
         std = jax.random.normal(rng_key, shape)
         momentum = dot(std, mass_matrix_sqrt)
-        return unravel_fn(momentum)
+        momentum_unravel = unravel_fn(momentum)
+        return momentum_unravel
 
     def kinetic_energy(momentum: PyTree, *_) -> float:
         momentum, _ = ravel_pytree(momentum)
