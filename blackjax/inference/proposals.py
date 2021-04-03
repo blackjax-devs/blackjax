@@ -32,7 +32,7 @@ from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 import jax
 import jax.numpy as jnp
 from blackjax.inference.integrators import IntegratorState
-from blackjax.inference.trajectory import static_integration
+import blackjax.inference.trajectory as trajectory
 
 __all__ = ["hmc"]
 
@@ -86,40 +86,43 @@ def hmc(
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,
 ) -> Callable:
-    """Vanilla HMC proposal running the integrator for a fixed number of steps"""
+    """Vanilla HMC algorithm.
 
-    trajectory_integrator = static_integration(
+    The algorithm integrates the trajectory applying a symplectic integrator
+    `num_integration_steps` times in one direction to get a proposal and
+    uses a Metropolis-Hastings acceptance step.
+
+    """
+    integrate_trajectory = trajectory.static_integration(
         integrator, step_size, num_integration_steps
     )
 
-    def propose(
-        rng_key, initial_state: IntegratorState
-    ) -> Tuple[IntegratorState, ProposalInfo]:
+    def flip_momentum(state):
+        """To guarantee time-reversibility (hence detailed balance) we
+        need to flip the last state's momentum. If we run the hamiltonian
+        dynamics starting from the last state with flipped momentum we
+        should indeed retrieve the initial state (with flipped momentum).
 
-        end_state, _ = trajectory_integrator(initial_state)
-
-        # To guarantee time-reversibility (hence detailed balance) we
-        # need to flip the last state's momentum. If we run the hamiltonian
-        # dynamics starting from the last state with flipped momentum we
-        # should indeed retrieve the initial state (with flipped momentum).
+        """
         flipped_momentum = jax.tree_util.tree_multimap(
-            lambda m: -1.0 * m, end_state.momentum
+            lambda m: -1.0 * m, state.momentum
         )
-        proposal = IntegratorState(
-            end_state.position,
+        return IntegratorState(
+            state.position,
             flipped_momentum,
-            end_state.potential_energy,
-            end_state.potential_energy_grad,
+            state.potential_energy,
+            state.potential_energy_grad,
         )
 
-        initial_energy = initial_state.potential_energy + kinetic_energy(
-            initial_state.momentum, initial_state.position
+    def maybe_update_proposal(rng_key, current_state, new_state):
+        energy = current_state.potential_energy + kinetic_energy(
+            current_state.momentum, current_state.position
         )
-        energy = proposal.potential_energy + kinetic_energy(
-            proposal.momentum, proposal.position
+        new_energy = new_state.potential_energy + kinetic_energy(
+            new_state.momentum, new_state.position
         )
 
-        delta_energy = initial_energy - energy
+        delta_energy = energy - new_energy
         delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
         is_diverging = jnp.abs(delta_energy) > divergence_threshold
 
@@ -127,25 +130,25 @@ def hmc(
         do_accept = jax.random.bernoulli(rng_key, p_accept)
 
         accept_state = (
-            proposal,
+            new_state,
             ProposalInfo(
                 p_accept,
                 True,
                 is_diverging,
                 energy,
-                proposal,
+                new_state,
                 HMCTrajectoryInfo(step_size, num_integration_steps),
             ),
         )
 
         reject_state = (
-            initial_state,
+            current_state,
             ProposalInfo(
                 p_accept,
                 False,
                 is_diverging,
                 energy,
-                proposal,
+                new_state,
                 HMCTrajectoryInfo(step_size, num_integration_steps),
             ),
         )
@@ -154,7 +157,17 @@ def hmc(
             do_accept, lambda _: accept_state, lambda _: reject_state, operand=None
         )
 
-    return propose
+    def generate(
+        rng_key, initial_state: IntegratorState
+    ) -> Tuple[IntegratorState, ProposalInfo]:
+        """Generate a new chain state.
+        """
+        end_state = integrate_trajectory(initial_state)
+        proposal_state = flip_momentum(end_state)
+        new_state, info = maybe_update_proposal(rng_key, initial_state, proposal_state)
+        return new_state, info
+
+    return generate
 
 
 def iterative_nuts(

@@ -17,6 +17,7 @@ distinguish between:
       whole trajectory in memory. We can also update proposals as we sample the
       trajectory; in this progressive scheme we only need to store the
       endpoints of the trajectory and the current proposal.
+
     - dynamic trajectory sampling: we stop sampling when a certain critetion is
       met.
 
@@ -25,7 +26,7 @@ References
 .. [1]: Betancourt, Michael. "A conceptual introduction to Hamiltonian Monte Carlo." arXiv preprint arXiv:1701.02434 (2017).
 
 """
-from typing import Callable, Tuple
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
@@ -47,26 +48,26 @@ def static_integration(
     num_integration_steps: int,
     direction: int = 1,
 ) -> Callable:
-    """Generate a trajectory by integrating in one direction."""
+    """Generate a trajectory by integrating several times in one direction."""
 
     directed_step_size = direction * step_size
 
-    def integrate(initial_state: IntegratorState):
+    def integrate(initial_state: IntegratorState) -> IntegratorState:
         def one_step(state, _):
             state = integrator(state, directed_step_size)
             return state, state
 
-        last_state, states = jax.lax.scan(
+        last_state, _ = jax.lax.scan(
             one_step, initial_state, jnp.arange(num_integration_steps)
         )
 
-        return last_state, states
+        return last_state
 
     return integrate
 
 
 def static_progressive_integration(
-    integrator: Callable,
+    integrator_step: Callable,
     update_proposal: Callable,
     step_size: float,
     num_integration_steps: int,
@@ -75,26 +76,21 @@ def static_progressive_integration(
     """Generate a trajectory by integrating in one direction and updating the
     proposal at each step.
 
-    Returns
-    -------
-    An array that contains all the intermediate proposals.
-
     """
 
     directed_step_size = direction * step_size
 
-    def integrate(rng_key, initial_state: IntegratorState):
+    def integrate(rng_key, initial_state: IntegratorState) -> IntegratorState:
 
         def one_step(integration_step, _):
             rng_key, state, proposal = integration_step
             _, rng_key = jax.random.split(rng_key)
-            new_state = integrator(state, directed_step_size)
+            new_state = integrator_step(state, directed_step_size)
             new_proposal = update_proposal(rng_key, new_state, proposal)
-            return (rng_key, new_state, new_proposal), ()
+            return (rng_key, new_state, new_proposal), new_proposal
 
-        _, states = jax.lax.scan(
+        last_state, _ = jax.lax.scan(
             one_step, (initial_state, initial_state), jnp.arange(num_integration_steps)
         )
-        proposals = states[-1]
 
-        return proposals
+        return last_state[-1]
