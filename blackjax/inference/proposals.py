@@ -181,20 +181,18 @@ def iterative_nuts(
 ):
     """Iterative NUTS proposal."""
 
-    # function that generates proposals from a transition between two states
     proposal_fn = proposal_generator(kinetic_energy, divergence_threshold)
 
-    # iterative uturn criterion (here Numpyro's)
     (
         new_criterion_state,
         update_criterion_state,
         is_criterion_met,
     ) = termination.iterative_uturn_numpyro(uturn_check_fn)
 
-    # function that integrates the trajectory in one direction
     trajectory_integrator = dynamic_integration(
         integrator, proposal_fn, update_criterion_state, is_criterion_met
     )
+
     expand, do_keep_expanding = dynamic_multiplicative_expansion(
         trajectory_integrator,
         uturn_check_fn,
