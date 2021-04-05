@@ -146,7 +146,7 @@ def static_progressive_integration(
 
 def dynamic_progressive_integration(
     integrator: Callable,
-    proposal_generator: Callable,
+    maybe_accept: Callable,
     update_termination: Callable,
     is_criterion_met: Callable,
 ):
@@ -194,6 +194,7 @@ def dynamic_progressive_integration(
             The step size of the symplectic integrator.
 
         """
+        print("max num steps:", max_num_steps)
 
         # QUESTION: Do we only signal a divergence if the proposal is issued from
         # a divergent transition (current) or anytime a divergence is detected?
@@ -220,12 +221,7 @@ def dynamic_progressive_integration(
 
             new_state = integrator(state, direction * step_size)
             new_trajectory = append_to_trajectory(direction, trajectory, new_state)
-
-            new_proposal = proposal_generator(state, new_state)
-            maybe_updated_proposal = mh_step.progressive_uniform_sampling(
-                rng_key, proposal, new_proposal
-            )
-
+            new_proposal = maybe_accept(rng_key, state, proposal, new_state)
             new_termination_state = update_termination(
                 termination_state, new_trajectory, new_state, step
             )
@@ -234,7 +230,7 @@ def dynamic_progressive_integration(
                 rng_key,
                 new_state,
                 new_trajectory,
-                maybe_updated_proposal,
+                new_proposal,
                 new_termination_state,
                 step + 1,
             )
@@ -248,9 +244,18 @@ def dynamic_progressive_integration(
             0,
         )
 
+        integration_state = add_one_state(initial_integration_state)
+        print("integration\n", integration_state[3])
+        print("keep going", do_keep_integrating(integration_state))
+        integration_state = add_one_state(integration_state)
+        print("integration\n", integration_state[3])
+        print("keep going", do_keep_integrating(integration_state))
+
         _, _, trajectory, proposal, termination_state, step = jax.lax.while_loop(
             do_keep_integrating, add_one_state, initial_integration_state
         )
+
+        print("\nFINAL STATE\n", proposal, "\nstep:", step)
 
         return proposal, trajectory, termination_state, (step < max_num_steps)
 
@@ -268,7 +273,7 @@ def dynamic_progressive_integration(
 
 
 def dynamic_multiplicative_expansion(
-    integrator: Callable,
+    trajectory_integrator: Callable,
     uturn_check_fn: Callable,
     step_size: float,
     max_tree_depth: int = 10,
@@ -299,7 +304,6 @@ def dynamic_multiplicative_expansion(
         the mentions to binary trees.
 
     """
-
     def do_keep_expanding(expansion_state) -> bool:
         """Determine whether we need to keep expanding the trajectory."""
         _, trajectory, _, _, terminated_early, depth = expansion_state
@@ -341,9 +345,11 @@ def dynamic_multiplicative_expansion(
             new_trajectory,
             termination_state,
             terminated_early,
-        ) = integrator(
+        ) = trajectory_integrator(
             rng_key, start_state, direction, termination_state, rate ** depth, step_size
         )
+
+        print("\nExit trajectory integrator\n", new_proposal)
 
         # merge the freshly integrated trajectory to the current trajectory
         new_trajectory = merge_trajectories(direction, trajectory, new_trajectory)

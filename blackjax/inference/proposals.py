@@ -132,9 +132,7 @@ def hmc(
             state.potential_energy_grad,
         )
 
-    def generate(
-        rng_key, state: IntegratorState
-    ) -> Tuple[IntegratorState, HMCInfo]:
+    def generate(rng_key, state: IntegratorState) -> Tuple[IntegratorState, HMCInfo]:
         """Generate a new chain state."""
         end_state = integrate_trajectory(state)
         proposal = flip_momentum(end_state)
@@ -148,7 +146,7 @@ def hmc(
             transition_info.is_diverging,
             transition_info.new_energy,
             proposal,
-            HMCTrajectoryInfo(step_size, num_integration_steps)
+            HMCTrajectoryInfo(step_size, num_integration_steps),
         )
 
         return new_state, info
@@ -166,7 +164,6 @@ def iterative_nuts(
 ):
     """Iterative NUTS proposal."""
 
-    proposal_fn = mh_step.proposal_generator(kinetic_energy, divergence_threshold)
     (
         new_criterion_state,
         update_criterion_state,
@@ -174,7 +171,10 @@ def iterative_nuts(
     ) = termination.iterative_uturn_numpyro(uturn_check_fn)
 
     trajectory_integrator = trajectory.dynamic_progressive_integration(
-        integrator, proposal_fn, update_criterion_state, is_criterion_met
+        integrator,
+        mh_step.progressive_uniform_sampling(kinetic_energy, divergence_threshold),
+        update_criterion_state,
+        is_criterion_met,
     )
 
     expand, do_keep_expanding = trajectory.dynamic_multiplicative_expansion(
@@ -192,11 +192,17 @@ def iterative_nuts(
         proposal = Proposal(initial_state, 0.0, 0.0, False)
         criterion_state = new_criterion_state(num_dims, max_tree_depth)
         trajectory = Trajectory(initial_state, initial_state, initial_momentum)
-        _, _, proposal, _, _, _ = jax.lax.while_loop(
+        expand((rng_key, trajectory, proposal, criterion_state, False, 1))
+        _, traj, proposal, _, early, depth = jax.lax.while_loop(
             do_keep_expanding,
             expand,
-            (rng_key, trajectory, proposal, criterion_state, False, 0),
+            (rng_key, trajectory, proposal, criterion_state, False, 1),
         )
+
+        print(proposal)
+        print(traj)
+        print(depth)
+        print(early)
 
         # Don't forget the proposal info here!
         return proposal.state, None

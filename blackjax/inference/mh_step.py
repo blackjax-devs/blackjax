@@ -60,6 +60,7 @@ def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
 
         # The log-weight of the new proposal is equal to H(z) - H(z_new)?
         log_weight = delta_energy
+        print(is_diverging, log_weight)
 
         return Proposal(
             current_state,
@@ -90,7 +91,7 @@ def uniform_sampling(kinetic_energy, divergence_threshold):
     return sample
 
 
-def progressive_uniform_sampling(rng_key, proposal, new_proposal):
+def progressive_uniform_sampling(kinetic_energy, divergence_threshold):
     """Generate a new proposal.
 
     To avoid keeping the entire trajectory in memory, we only memorize the
@@ -100,19 +101,26 @@ def progressive_uniform_sampling(rng_key, proposal, new_proposal):
     from the final trajectory.
 
     """
-    p_accept = jax.scipy.special.expit(new_proposal.log_weight - proposal.log_weight)
-    do_accept = jax.random.bernoulli(rng_key, p_accept)
+    transition = proposal_generator(kinetic_energy, divergence_threshold)
 
-    updated_proposal = Proposal(
-        new_proposal.state,
-        new_proposal.new_energy,
-        jnp.logaddexp(proposal.log_weight, new_proposal.log_weight),
-        new_proposal.is_diverging,
-    )
+    def sample(rng_key, state, proposal, new_state):
+        new_proposal = transition(state, new_state)
 
-    return jax.lax.cond(
-        do_accept, lambda _: updated_proposal, lambda _: proposal, operand=None
-    )
+        p_accept = jax.scipy.special.expit(new_proposal.log_weight - proposal.log_weight)
+        do_accept = jax.random.bernoulli(rng_key, p_accept)
+
+        updated_proposal = Proposal(
+            new_proposal.state,
+            new_proposal.new_energy,
+            jnp.logaddexp(proposal.log_weight, new_proposal.log_weight),
+            new_proposal.is_diverging,
+        )
+
+        return jax.lax.cond(
+            do_accept, lambda _: updated_proposal, lambda _: proposal, operand=None
+        )
+
+    return sample
 
 
 def progressive_biased_sampling(rng_key, proposal, new_proposal):
