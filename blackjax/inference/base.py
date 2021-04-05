@@ -3,7 +3,7 @@ from typing import Callable, Dict, List, NamedTuple, Tuple, Union, Optional
 
 import jax
 
-from blackjax.inference.proposals import ProposalInfo
+from blackjax.inference.proposals import HMCInfo
 from blackjax.inference.integrators import IntegratorState
 
 __all__ = ["HMCState", "HMCInfo", "hmc"]
@@ -23,11 +23,6 @@ class HMCState(NamedTuple):
     position: PyTree
     potential_energy: float
     potential_energy_grad: PyTree
-
-
-class HMCInfo(NamedTuple):
-    momentum: PyTree
-    proposal_info: ProposalInfo
 
 
 def hmc(
@@ -116,11 +111,11 @@ def hmc(
             position, momentum, potential_energy, potential_energy_grad
         )
 
-        proposal, proposal_info = proposal_generator(
+        proposal, info = proposal_generator(
             key_integrator, augmented_state
         )
         proposal = HMCState(proposal.position, proposal.potential_energy, proposal.potential_energy_grad)
 
-        return proposal, HMCInfo(momentum, proposal_info)
+        return proposal, info
 
     return kernel

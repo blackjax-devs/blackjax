@@ -38,7 +38,7 @@ from blackjax.inference.integrators import IntegratorState
 from blackjax.inference.mh_step import Proposal
 from blackjax.inference.trajectory import Trajectory
 
-__all__ = ["hmc"]
+__all__ = ["HMCState", "HMCInfo", "hmc", "iterative_nuts"]
 
 
 PyTree = Union[Dict, List, Tuple]
@@ -50,7 +50,21 @@ class HMCTrajectoryInfo(NamedTuple):
     num_integration_steps: int
 
 
-class ProposalInfo(NamedTuple):
+class HMCState(NamedTuple):
+    """State of the HMC algorithm.
+
+    The HMC algorithm takes one position of the chain and returns another
+    position. In order to make computations more efficient, we also store
+    the current potential energy as well as the current gradient of the
+    potential energy.
+    """
+
+    position: PyTree
+    potential_energy: float
+    potential_energy_grad: PyTree
+
+
+class HMCInfo(NamedTuple):
     """Additional information on the HMC transition.
 
     This additional information can be used for debugging or computing
@@ -75,6 +89,7 @@ class ProposalInfo(NamedTuple):
         number of integration steps and intermediate states.
     """
 
+    momentum: PyTree
     acceptance_probability: float
     is_accepted: bool
     is_divergent: bool
@@ -135,7 +150,8 @@ def hmc(
 
         accept_state = (
             new_state,
-            ProposalInfo(
+            HMCInfo(
+                current_state.momentum,
                 p_accept,
                 True,
                 is_diverging,
@@ -147,7 +163,8 @@ def hmc(
 
         reject_state = (
             current_state,
-            ProposalInfo(
+            HMCInfo(
+                current_state.momentum,
                 p_accept,
                 False,
                 is_diverging,
@@ -163,7 +180,7 @@ def hmc(
 
     def generate(
         rng_key, initial_state: IntegratorState
-    ) -> Tuple[IntegratorState, ProposalInfo]:
+    ) -> Tuple[IntegratorState, HMCInfo]:
         """Generate a new chain state."""
         end_state = integrate_trajectory(initial_state)
         proposal_state = flip_momentum(end_state)
