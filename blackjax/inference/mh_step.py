@@ -25,7 +25,9 @@ class Proposal(NamedTuple):
 
 
 def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
-    def generate(direction, state, trajectory):
+    def generate(
+        current_state: IntegratorState, new_state: IntegratorState
+    ) -> Proposal:
         """Generate a new proposal from a trajectory state.
 
         Note
@@ -45,19 +47,11 @@ def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
             The trajectory before the state was added.
 
         """
-        previous_state = jax.lax.cond(
-            direction > 0,
-            trajectory,
-            lambda x: x.rightmost_state,
-            trajectory,
-            lambda x: x.leftmost_state,
+        energy = current_state.potential_energy + kinetic_energy(
+            current_state.position, current_state.momentum
         )
-
-        energy = previous_state.potential_energy + kinetic_energy(
-            previous_state.position, previous_state.momentum
-        )
-        new_energy = state.potential_energy + kinetic_energy(
-            state.position, state.momentum
+        new_energy = new_state.potential_energy + kinetic_energy(
+            new_state.position, new_state.momentum
         )
 
         delta_energy = energy - new_energy
@@ -68,7 +62,7 @@ def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
         log_weight = delta_energy
 
         return Proposal(
-            state,
+            current_state,
             new_energy,
             log_weight,
             is_diverging,

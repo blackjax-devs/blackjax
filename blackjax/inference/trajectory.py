@@ -221,8 +221,7 @@ def dynamic_progressive_integration(
             new_state = integrator(state, direction * step_size)
             new_trajectory = append_to_trajectory(direction, trajectory, new_state)
 
-            # Q: couldn't we pass `state` instead of `(trajectory, direction)`?
-            new_proposal = proposal_generator(direction, new_state, trajectory)
+            new_proposal = proposal_generator(state, new_state)
             maybe_updated_proposal = mh_step.progressive_uniform_sampling(
                 rng_key, proposal, new_proposal
             )
