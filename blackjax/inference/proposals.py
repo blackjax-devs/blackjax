@@ -113,6 +113,7 @@ def hmc(
     integrate_trajectory = trajectory.static_integration(
         integrator, step_size, num_integration_steps
     )
+    maybe_accept = mh_step.uniform_sampling(kinetic_energy, divergence_threshold)
 
     def flip_momentum(state: IntegratorState) -> IntegratorState:
         """To guarantee time-reversibility (hence detailed balance) we
@@ -131,60 +132,25 @@ def hmc(
             state.potential_energy_grad,
         )
 
-    def maybe_update_proposal(
-        rng_key, current_state: IntegratorState, new_state: IntegratorState
-    ) -> Tuple[IntegratorState, HMCInfo]:
-        energy = current_state.potential_energy + kinetic_energy(
-            current_state.momentum, current_state.position
-        )
-        new_energy = new_state.potential_energy + kinetic_energy(
-            new_state.momentum, new_state.position
-        )
-
-        delta_energy = energy - new_energy
-        delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
-        is_diverging = jnp.abs(delta_energy) > divergence_threshold
-
-        p_accept = jnp.clip(jnp.exp(delta_energy), a_max=1)
-        do_accept = jax.random.bernoulli(rng_key, p_accept)
-
-        accept_state = (
-            new_state,
-            HMCInfo(
-                current_state.momentum,
-                p_accept,
-                True,
-                is_diverging,
-                energy,
-                new_state,
-                HMCTrajectoryInfo(step_size, num_integration_steps),
-            ),
-        )
-
-        reject_state = (
-            current_state,
-            HMCInfo(
-                current_state.momentum,
-                p_accept,
-                False,
-                is_diverging,
-                energy,
-                new_state,
-                HMCTrajectoryInfo(step_size, num_integration_steps),
-            ),
-        )
-
-        return jax.lax.cond(
-            do_accept, lambda _: accept_state, lambda _: reject_state, operand=None
-        )
-
     def generate(
-        rng_key, initial_state: IntegratorState
+        rng_key, state: IntegratorState
     ) -> Tuple[IntegratorState, HMCInfo]:
         """Generate a new chain state."""
-        end_state = integrate_trajectory(initial_state)
-        proposal_state = flip_momentum(end_state)
-        new_state, info = maybe_update_proposal(rng_key, initial_state, proposal_state)
+        end_state = integrate_trajectory(state)
+        proposal = flip_momentum(end_state)
+        new_state, *info = maybe_accept(rng_key, state, proposal)
+        do_accept, p_accept, transition_info = info
+
+        info = HMCInfo(
+            state.momentum,
+            p_accept,
+            do_accept,
+            transition_info.is_diverging,
+            transition_info.new_energy,
+            proposal,
+            HMCTrajectoryInfo(step_size, num_integration_steps)
+        )
+
         return new_state, info
 
     return generate
