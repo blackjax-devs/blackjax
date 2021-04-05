@@ -19,6 +19,7 @@ class Proposal(NamedTuple):
     """
 
     state: IntegratorState
+    energy: float
     log_weight: float
     is_diverging: bool
 
@@ -68,6 +69,7 @@ def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
 
         return Proposal(
             state,
+            new_energy,
             log_weight,
             is_diverging,
         )
@@ -90,6 +92,7 @@ def progressive_uniform_sampling(rng_key, proposal, new_proposal):
 
     updated_proposal = Proposal(
         new_proposal.state,
+        new_proposal.energy,
         jnp.logaddexp(proposal.log_weight, new_proposal.log_weight),
         new_proposal.is_diverging,
     )
@@ -117,6 +120,7 @@ def progressive_biased_sampling(rng_key, proposal, new_proposal):
 
     updated_proposal = Proposal(
         new_proposal.state,
+        new_proposal.energy,
         jnp.logaddexp(proposal.log_weight, new_proposal.log_weight),
         new_proposal.is_diverging,
     )

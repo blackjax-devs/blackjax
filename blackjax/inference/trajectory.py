@@ -244,7 +244,7 @@ def dynamic_progressive_integration(
             rng_key,
             initial_state,
             Trajectory(initial_state, initial_state, initial_state.momentum),
-            Proposal(initial_state, 0.0, False),
+            Proposal(initial_state, 0.0, 0.0, False),
             termination_state,
             0,
         )

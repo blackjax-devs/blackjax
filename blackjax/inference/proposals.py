@@ -29,9 +29,9 @@ References
 """
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
+import blackjax.inference.mh_step as mh_step
 import blackjax.inference.termination as termination
 import blackjax.inference.trajectory as trajectory
-import blackjax.inference.mh_step as mh_step
 import jax
 import jax.numpy as jnp
 from blackjax.inference.integrators import IntegratorState
@@ -79,8 +79,6 @@ class HMCInfo(NamedTuple):
     is_divergent
         Whether the difference in energy between the original and the new state
         exceeded the divergence threshold.
-    energy
-        The total energy that corresponds to the returned state.
     proposal
         The state proposed by the proposal. Typically includes the position and
         momentum.
@@ -116,7 +114,7 @@ def hmc(
         integrator, step_size, num_integration_steps
     )
 
-    def flip_momentum(state):
+    def flip_momentum(state: IntegratorState) -> IntegratorState:
         """To guarantee time-reversibility (hence detailed balance) we
         need to flip the last state's momentum. If we run the hamiltonian
         dynamics starting from the last state with flipped momentum we
@@ -133,7 +131,9 @@ def hmc(
             state.potential_energy_grad,
         )
 
-    def maybe_update_proposal(rng_key, current_state, new_state):
+    def maybe_update_proposal(
+        rng_key, current_state: IntegratorState, new_state: IntegratorState
+    ) -> Tuple[IntegratorState, HMCInfo]:
         energy = current_state.potential_energy + kinetic_energy(
             current_state.momentum, current_state.position
         )
@@ -223,7 +223,7 @@ def iterative_nuts(
         num_dims = jnp.shape(flat)[0]
         initial_momentum = unravel_fn(jnp.zeros_like(flat))
 
-        proposal = Proposal(initial_state, 0.0, False)
+        proposal = Proposal(initial_state, 0.0, 0.0, False)
         criterion_state = new_criterion_state(num_dims, max_tree_depth)
         trajectory = Trajectory(initial_state, initial_state, initial_momentum)
         _, _, proposal, _, _, _ = jax.lax.while_loop(

@@ -107,10 +107,10 @@ def hmc(
 
         position, potential_energy, potential_energy_grad = state
         momentum = momentum_generator(key_momentum, position)
+
         augmented_state = IntegratorState(
             position, momentum, potential_energy, potential_energy_grad
         )
-
         proposal, info = proposal_generator(
             key_integrator, augmented_state
         )
