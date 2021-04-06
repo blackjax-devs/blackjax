@@ -185,14 +185,14 @@ def iterative_nuts(
     )
 
     def propose(rng_key, initial_state):
-        flat, unravel_fn = jax.flatten_util.ravel_pytree(initial_state.position)
+        flat, _ = jax.flatten_util.ravel_pytree(initial_state.position)
         num_dims = jnp.shape(flat)[0]
         criterion_state = new_criterion_state(num_dims, max_tree_depth)
 
-        proposal = Proposal(initial_state, 0., 0., False)
+        proposal = Proposal(initial_state, 0., 0.)
         trajectory = Trajectory(initial_state, initial_state, initial_state.momentum)
 
-        _, traj, proposal, _, early, depth = jax.lax.while_loop(
+        _, _, proposal, _, _, _ = jax.lax.while_loop(
             do_keep_expanding,
             expand,
             (rng_key, trajectory, proposal, criterion_state, False, 1),

@@ -21,7 +21,6 @@ class Proposal(NamedTuple):
     state: IntegratorState
     new_energy: float
     log_weight: float
-    is_diverging: bool
 
 
 def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
@@ -56,16 +55,18 @@ def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
 
         delta_energy = energy - new_energy
         delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
-        is_diverging = jnp.abs(delta_energy) > divergence_threshold
+        is_transition_divergent = jnp.abs(delta_energy) > divergence_threshold
 
         # The log-weight of the new proposal is equal to H(z) - H(z_new)?
         log_weight = delta_energy
 
-        return Proposal(
-            current_state,
-            new_energy,
-            log_weight,
-            is_diverging,
+        return (
+            Proposal(
+                current_state,
+                new_energy,
+                log_weight,
+            ),
+            is_transition_divergent,
         )
 
     return generate
@@ -75,7 +76,7 @@ def uniform_sampling(kinetic_energy, divergence_threshold):
     transition = proposal_generator(kinetic_energy, divergence_threshold)
 
     def sample(rng_key, state, new_state):
-        transition_info = transition(state, new_state)
+        transition_info, _ = transition(state, new_state)
 
         p_accept = jnp.clip(jnp.exp(transition_info.log_weight), a_max=1)
         do_accept = jax.random.bernoulli(rng_key, p_accept)
@@ -84,7 +85,7 @@ def uniform_sampling(kinetic_energy, divergence_threshold):
             do_accept,
             lambda _: (new_state, do_accept, p_accept, transition_info),
             lambda _: (state, do_accept, p_accept, transition_info),
-            operand=None
+            operand=None,
         )
 
     return sample
@@ -103,20 +104,24 @@ def progressive_uniform_sampling(kinetic_energy, divergence_threshold):
     transition = proposal_generator(kinetic_energy, divergence_threshold)
 
     def sample(rng_key, state, proposal, new_state):
-        new_proposal = transition(state, new_state)
+        new_proposal, is_diverging = transition(state, new_state)
 
-        p_accept = jax.scipy.special.expit(new_proposal.log_weight - proposal.log_weight)
+        p_accept = jax.scipy.special.expit(
+            new_proposal.log_weight - proposal.log_weight
+        )
         do_accept = jax.random.bernoulli(rng_key, p_accept)
 
         updated_proposal = Proposal(
             new_proposal.state,
             new_proposal.new_energy,
             jnp.logaddexp(proposal.log_weight, new_proposal.log_weight),
-            new_proposal.is_diverging,
         )
 
         return jax.lax.cond(
-            do_accept, lambda _: updated_proposal, lambda _: proposal, operand=None
+            do_accept,
+            lambda _: (updated_proposal, is_diverging),
+            lambda _: (proposal, is_diverging),
+            operand=None,
         )
 
     return sample
@@ -142,7 +147,6 @@ def progressive_biased_sampling(rng_key, proposal, new_proposal):
         new_proposal.state,
         new_proposal.new_energy,
         jnp.logaddexp(proposal.log_weight, new_proposal.log_weight),
-        new_proposal.is_diverging,
     )
 
     return jax.lax.cond(

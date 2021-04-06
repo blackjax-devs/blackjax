@@ -197,14 +197,13 @@ def dynamic_progressive_integration(
         # a divergent transition (current) or anytime a divergence is detected?
         def do_keep_integrating(expansion_state):
             """Decide whether we should continue integrating the trajectory"""
-            _, state, trajectory, proposal, termination_state, step = expansion_state
+            _, state, trajectory, proposal, termination_state, is_diverging, step = expansion_state
             has_terminated = jax.lax.cond(
                 step == 0,
                 lambda _: False,
                 lambda _: is_criterion_met(termination_state, trajectory, state),
                 operand=None,
             )
-            is_diverging = proposal.is_diverging
             return (step < max_num_steps) & ~has_terminated & ~is_diverging
 
         def add_one_state(expansion_state):
@@ -217,13 +216,16 @@ def dynamic_progressive_integration(
                 trajectory,
                 proposal,
                 termination_state,
+                _,
                 step,
             ) = expansion_state
             _, rng_key = jax.random.split(rng_key)
 
             new_state = integrator(state, direction * step_size)
             new_trajectory = append_to_trajectory(direction, trajectory, new_state)
-            new_proposal = maybe_accept(rng_key, state, proposal, new_state)
+            new_proposal, is_diverging = maybe_accept(
+                rng_key, state, proposal, new_state
+            )
             new_termination_state = update_termination(
                 termination_state, new_trajectory, new_state, step
             )
@@ -234,6 +236,7 @@ def dynamic_progressive_integration(
                 new_trajectory,
                 new_proposal,
                 new_termination_state,
+                is_diverging,
                 step + 1,
             )
 
@@ -241,12 +244,13 @@ def dynamic_progressive_integration(
             rng_key,
             initial_state,
             Trajectory(initial_state, initial_state, initial_state.momentum),
-            Proposal(initial_state, 0.0, 0.0, False),
+            Proposal(initial_state, 0.0, 0.0),
             termination_state,
+            False,
             0,
         )
 
-        _, _, trajectory, proposal, termination_state, step = jax.lax.while_loop(
+        _, _, trajectory, proposal, termination_state, is_diverging, step = jax.lax.while_loop(
             do_keep_integrating, add_one_state, initial_integration_state
         )
 
@@ -304,8 +308,12 @@ def dynamic_multiplicative_expansion(
         is_turning = jax.lax.cond(
             depth == 1,
             lambda _: False,
-            lambda _: uturn_check_fn(trajectory.leftmost_state.momentum, trajectory.rightmost_state.momentum, trajectory.momentum_sum),
-            operand=None
+            lambda _: uturn_check_fn(
+                trajectory.leftmost_state.momentum,
+                trajectory.rightmost_state.momentum,
+                trajectory.momentum_sum,
+            ),
+            operand=None,
         )
         return (depth < max_tree_depth) & ~terminated_early & ~is_turning
 
