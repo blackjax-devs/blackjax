@@ -1,10 +1,22 @@
+# Copyright Contributors to the Numpyro project.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
 
 from blackjax.inference.integrators import IntegratorState
-# from blackjax.inference.proposals import Trajectory
 
 
 class IterativeUTurnState(NamedTuple):
@@ -27,7 +39,7 @@ def iterative_uturn_numpyro(is_turning):
 
     def update_criterion_state(
         checkpoints: IterativeUTurnState,
-        trajectory,  #: Trajectory,
+        trajectory,
         state: IntegratorState,
         step: int,
     ):
@@ -61,15 +73,6 @@ def iterative_uturn_numpyro(is_turning):
         _, num_subtrees = jax.lax.while_loop(
             lambda nc: (nc[0] & 1) != 0, lambda nc: (nc[0] >> 1, nc[1] + 1), (n, 0)
         )
-        # TODO: explore the potential of setting idx_min=0 to allow more turning checks
-        # It will be useful in case: e.g. assume a tree 0 -> 7 is a circle,
-        # subtrees 0 -> 3, 4 -> 7 are half-circles, which two leaves might not
-        # satisfy turning condition;
-        # the full tree 0 -> 7 is a circle, which two leaves might also not satisfy
-        # turning condition;
-        # however, we can check the turning condition of the subtree 0 -> 5, which
-        # likely satisfies turning condition because its trajectory 3/4 of a circle.
-        # XXX: make sure that detailed balance is satisfied if we follow this direction
         idx_min = idx_max - num_subtrees + 1
         return idx_min, idx_max
 
