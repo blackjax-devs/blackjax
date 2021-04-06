@@ -47,10 +47,9 @@ def append_to_trajectory(direction, trajectory, state):
     """Append a state to the trajectory to form a new trajectory."""
     leftmost_state, rightmost_state = jax.lax.cond(
         direction > 0,
-        trajectory,
-        lambda trajectory: (trajectory.leftmost_state, state),
-        trajectory,
-        lambda trajectory: (state, trajectory.rightmost_state),
+        lambda _: (trajectory.leftmost_state, state),
+        lambda _: (state, trajectory.rightmost_state),
+        operand=None,
     )
     momentum_sum = jax.tree_util.tree_multimap(
         jnp.add, trajectory.momentum_sum, state.momentum
@@ -64,16 +63,15 @@ def merge_trajectories(
     """Merge two trajectories to form a new trajectory."""
     leftmost_state, rightmost_state = jax.lax.cond(
         direction > 0,
-        trajectory,
-        lambda trajectory: (
+        lambda _: (
             trajectory.leftmost_state,
             new_trajectory.rightmost_state,
         ),
-        trajectory,
-        lambda trajectory: (
+        lambda _: (
             new_trajectory.leftmost_state,
             trajectory.rightmost_state,
         ),
+        operand=None,
     )
     momentum_sum = jax.tree_util.tree_multimap(
         jnp.add, trajectory.momentum_sum, new_trajectory.momentum_sum
@@ -220,8 +218,10 @@ def dynamic_progressive_integration(
             _, rng_key = jax.random.split(rng_key)
 
             new_state = integrator(state, direction * step_size)
+            print(state.position, new_state.position)
             new_trajectory = append_to_trajectory(direction, trajectory, new_state)
             new_proposal = maybe_accept(rng_key, state, proposal, new_state)
+            print(new_proposal.state)
             new_termination_state = update_termination(
                 termination_state, new_trajectory, new_state, step
             )
@@ -245,6 +245,9 @@ def dynamic_progressive_integration(
         )
 
         integration_state = add_one_state(initial_integration_state)
+        print("integration\n", integration_state[3])
+        print("keep going", do_keep_integrating(integration_state))
+        integration_state = add_one_state(integration_state)
         print("integration\n", integration_state[3])
         print("keep going", do_keep_integrating(integration_state))
         integration_state = add_one_state(integration_state)
