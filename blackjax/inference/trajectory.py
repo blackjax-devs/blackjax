@@ -197,13 +197,7 @@ def dynamic_progressive_integration(
         # a divergent transition (current) or anytime a divergence is detected?
         def do_keep_integrating(expansion_state):
             """Decide whether we should continue integrating the trajectory"""
-            _, state, trajectory, proposal, termination_state, is_diverging, step = expansion_state
-            has_terminated = jax.lax.cond(
-                step == 0,
-                lambda _: False,
-                lambda _: is_criterion_met(termination_state, trajectory, state),
-                operand=None,
-            )
+            _, _, _, _, _, is_diverging, has_terminated, step = expansion_state
             return (step < max_num_steps) & ~has_terminated & ~is_diverging
 
         def add_one_state(expansion_state):
@@ -217,6 +211,7 @@ def dynamic_progressive_integration(
                 proposal,
                 termination_state,
                 _,
+                _,
                 step,
             ) = expansion_state
             _, rng_key = jax.random.split(rng_key)
@@ -229,6 +224,7 @@ def dynamic_progressive_integration(
             new_termination_state = update_termination(
                 termination_state, new_trajectory, new_state, step
             )
+            has_terminated = is_criterion_met(new_termination_state, new_trajectory, new_state)
 
             return (
                 rng_key,
@@ -237,6 +233,7 @@ def dynamic_progressive_integration(
                 new_proposal,
                 new_termination_state,
                 is_diverging,
+                has_terminated,
                 step + 1,
             )
 
@@ -247,10 +244,11 @@ def dynamic_progressive_integration(
             Proposal(initial_state, 0.0, 0.0),
             termination_state,
             False,
+            False,
             0,
         )
 
-        _, _, trajectory, proposal, termination_state, is_diverging, step = jax.lax.while_loop(
+        _, _, trajectory, proposal, termination_state, is_diverging, _, step = jax.lax.while_loop(
             do_keep_integrating, add_one_state, initial_integration_state
         )
 
