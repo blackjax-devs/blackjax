@@ -192,10 +192,10 @@ def iterative_nuts(
         proposal = Proposal(initial_state, 0., 0.)
         trajectory = Trajectory(initial_state, initial_state, initial_state.momentum)
 
-        _, _, proposal, _, _, _ = jax.lax.while_loop(
+        _, _, proposal, _, _, _, _ = jax.lax.while_loop(
             do_keep_expanding,
             expand,
-            (rng_key, trajectory, proposal, criterion_state, False, 1),
+            (rng_key, trajectory, proposal, criterion_state, False, False, 1),
         )
 
         # Don't forget the proposal info here!

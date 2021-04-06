@@ -193,8 +193,6 @@ def dynamic_progressive_integration(
 
         """
 
-        # QUESTION: Do we only signal a divergence if the proposal is issued from
-        # a divergent transition (current) or anytime a divergence is detected?
         def do_keep_integrating(expansion_state):
             """Decide whether we should continue integrating the trajectory"""
             _, _, _, _, _, is_diverging, has_terminated, step = expansion_state
@@ -302,17 +300,7 @@ def dynamic_multiplicative_expansion(
 
     def do_keep_expanding(expansion_state) -> bool:
         """Determine whether we need to keep expanding the trajectory."""
-        _, trajectory, _, _, terminated_early, depth = expansion_state
-        is_turning = jax.lax.cond(
-            depth == 1,
-            lambda _: False,
-            lambda _: uturn_check_fn(
-                trajectory.leftmost_state.momentum,
-                trajectory.rightmost_state.momentum,
-                trajectory.momentum_sum,
-            ),
-            operand=None,
-        )
+        _, trajectory, _, _, terminated_early, is_turning, depth = expansion_state
         return (depth < max_tree_depth) & ~terminated_early & ~is_turning
 
     def expand(expansion_state):
@@ -328,7 +316,7 @@ def dynamic_multiplicative_expansion(
         """
         # Q: Should this function be aware of all the elements that need to
         # be passed downstream?
-        rng_key, trajectory, proposal, termination_state, _, depth = expansion_state
+        rng_key, trajectory, proposal, termination_state, _, _, depth = expansion_state
         rng_key, direction_key = jax.random.split(rng_key, 2)
 
         # create new subtrajectory that is twice as long as the current
@@ -363,12 +351,19 @@ def dynamic_multiplicative_expansion(
             lambda x: mh_step.progressive_biased_sampling(*x),
         )
 
+        is_turning = uturn_check_fn(
+            trajectory.leftmost_state.momentum,
+            trajectory.rightmost_state.momentum,
+            trajectory.momentum_sum,
+        )
+
         return (
             rng_key,
             new_trajectory,
             maybe_updated_proposal,
             termination_state,
             terminated_early,
+            is_turning,
             depth + 1,
         )
 
