@@ -60,7 +60,6 @@ def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
 
         # The log-weight of the new proposal is equal to H(z) - H(z_new)?
         log_weight = delta_energy
-        print(is_diverging, log_weight)
 
         return Proposal(
             current_state,
