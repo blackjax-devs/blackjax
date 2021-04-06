@@ -184,14 +184,24 @@ def iterative_nuts(
         max_tree_depth,
     )
 
-    def propose(rng_key, initial_state):
+    def _initialize(initial_state):
         flat, _ = jax.flatten_util.ravel_pytree(initial_state.position)
         num_dims = jnp.shape(flat)[0]
         criterion_state = new_criterion_state(num_dims, max_tree_depth)
 
-        proposal = Proposal(initial_state, 0., 0.)
+        energy = initial_state.potential_energy + kinetic_energy(
+            initial_state.position, initial_state.momentum
+        )
+        proposal = Proposal(
+            initial_state,
+            energy,
+            0.0,
+        )
         trajectory = Trajectory(initial_state, initial_state, initial_state.momentum)
+        return proposal, trajectory, criterion_state
 
+    def propose(rng_key, initial_state):
+        proposal, trajectory, criterion_state = _initialize(initial_state)
         _, _, proposal, _, _, _, _ = jax.lax.while_loop(
             do_keep_expanding,
             expand,
