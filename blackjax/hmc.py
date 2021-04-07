@@ -8,7 +8,7 @@ import numpy as np
 import blackjax.inference.base as base
 import blackjax.inference.integrators as integrators
 import blackjax.inference.metrics as metrics
-import blackjax.inference.proposals as proposals
+import blackjax.inference.algorithms as algorithms
 
 Array = Union[np.ndarray, jnp.DeviceArray]
 PyTree = Union[Dict, List, Tuple]
@@ -97,7 +97,7 @@ def kernel(potential_fn: Callable, parameters: HMCParameters) -> Callable:
         inv_mass_matrix
     )
     integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
-    proposal = proposals.hmc(
+    proposal = algorithms.hmc(
         integrator,
         kinetic_energy_fn,
         step_size,

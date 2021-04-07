@@ -1,4 +1,3 @@
-"""Metropolis-Hasting Step"""
 from typing import Callable, NamedTuple, Tuple
 
 import jax

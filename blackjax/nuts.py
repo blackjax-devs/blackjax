@@ -1,7 +1,6 @@
 """Public API for the NUTS Kernel"""
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 
@@ -9,7 +8,7 @@ import blackjax.hmc
 import blackjax.inference.base as base
 import blackjax.inference.integrators as integrators
 import blackjax.inference.metrics as metrics
-import blackjax.inference.proposals as proposals
+import blackjax.inference.algorithms as algorithms
 
 Array = Union[np.array, jnp.DeviceArray]
 PyTree = Union[Dict, List, Tuple]
@@ -50,7 +49,7 @@ def kernel(potential_fn: Callable, parameters: NUTSParameters) -> Callable:
         inv_mass_matrix
     )
     integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
-    proposal = proposals.iterative_nuts(
+    proposal = algorithms.iterative_nuts(
         integrator,
         kinetic_energy_fn,
         uturn_check_fn,

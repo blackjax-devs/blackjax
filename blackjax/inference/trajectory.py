@@ -28,11 +28,11 @@ References
 """
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
-import blackjax.inference.mh_step as mh_step
+import blackjax.inference.proposal as proposal
 import jax
 import jax.numpy as jnp
 from blackjax.inference.integrators import IntegratorState
-from blackjax.inference.mh_step import Proposal
+from blackjax.inference.proposal import Proposal
 
 PyTree = Union[Dict, List, Tuple]
 
@@ -144,10 +144,10 @@ def static_progressive_integration(
 
 def dynamic_progressive_integration(
     integrator: Callable,
-    proposal_generator: Callable,
-    proposal_sampler: Callable,
+    kinetic_energy: Callable,
     update_termination: Callable,
     is_criterion_met: Callable,
+    divergence_threshold: float
 ):
     """Integrate a trajectory and update the proposal sequentially
     until the termination criterion is met.
@@ -165,10 +165,12 @@ def dynamic_progressive_integration(
         a function that initializes the proposal state and one that updates it.
 
     """
+    proposal_generator = proposal.proposal_generator(kinetic_energy, divergence_threshold)
+    proposal_sampler = proposal.progressive_uniform_sampling
 
     def integrate(
         rng_key: jax.numpy.DeviceArray,
-        initial_proposal: Proposal,
+        initial_state: IntegratorState,
         direction: int,
         termination_state,
         max_num_steps: int,
@@ -233,7 +235,11 @@ def dynamic_progressive_integration(
                 step + 1,
             )
 
-        initial_state = initial_proposal.state
+        initial_proposal = Proposal(
+            initial_state,
+            initial_state.potential_energy + kinetic_energy(initial_state.position, initial_state.momentum),
+            0.
+        )
         initial_integration_state = (
             rng_key,
             initial_proposal,
@@ -295,6 +301,7 @@ def dynamic_multiplicative_expansion(
         the mentions to binary trees.
 
     """
+    proposal_sampler = proposal.progressive_biased_sampling
 
     def do_keep_expanding(expansion_state) -> bool:
         """Determine whether we need to keep expanding the trajectory."""
@@ -333,7 +340,7 @@ def dynamic_multiplicative_expansion(
             termination_state,
             terminated_early,
         ) = trajectory_integrator(
-            rng_key, proposal, direction, termination_state, rate ** depth, step_size
+            rng_key, start_state, direction, termination_state, rate ** depth, step_size
         )
 
         # merge the freshly integrated trajectory to the current trajectory
@@ -346,7 +353,7 @@ def dynamic_multiplicative_expansion(
             proposal,
             lambda x: x,
             (rng_key, proposal, new_proposal),
-            lambda x: mh_step.progressive_biased_sampling(*x),
+            lambda x: proposal_sampler(*x),
         )
 
         is_turning = uturn_check_fn(

@@ -29,13 +29,13 @@ References
 """
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
-import blackjax.inference.mh_step as mh_step
+import blackjax.inference.proposal as proposal
 import blackjax.inference.termination as termination
 import blackjax.inference.trajectory as trajectory
 import jax
 import jax.numpy as jnp
 from blackjax.inference.integrators import IntegratorState
-from blackjax.inference.mh_step import Proposal
+from blackjax.inference.proposal import Proposal
 from blackjax.inference.trajectory import Trajectory
 
 __all__ = ["HMCState", "HMCInfo", "hmc", "iterative_nuts"]
@@ -113,9 +113,10 @@ def hmc(
     integrate_trajectory = trajectory.static_integration(
         integrator, step_size, num_integration_steps
     )
-    proposal_generator = mh_step.proposal_generator(
+    proposal_generator = proposal.proposal_generator(
         kinetic_energy, divergence_threshold
     )
+    proposal_sampler = proposal.static_binomial_sampling
 
     def compute_energy(state):
         energy = state.potential_energy + kinetic_energy(state.position, state.momentum)
@@ -142,11 +143,9 @@ def hmc(
         """Generate a new chain state."""
         end_state = integrate_trajectory(state)
         end_state = flip_momentum(end_state)
-        proposal = Proposal(state, compute_energy(state), 0.)
+        proposal = Proposal(state, compute_energy(state), 0.0)
         new_proposal, is_diverging = proposal_generator(proposal, end_state)
-        sampled_proposal, *info = mh_step.static_binomial_sampling(
-            rng_key, proposal, new_proposal
-        )
+        sampled_proposal, *info = proposal_sampler(rng_key, proposal, new_proposal)
         do_accept, p_accept = info
 
         info = HMCInfo(
@@ -182,10 +181,10 @@ def iterative_nuts(
 
     trajectory_integrator = trajectory.dynamic_progressive_integration(
         integrator,
-        mh_step.proposal_generator(kinetic_energy, divergence_threshold),
-        mh_step.progressive_uniform_sampling,
+        kinetic_energy,
         update_criterion_state,
         is_criterion_met,
+        divergence_threshold,
     )
 
     expand, do_keep_expanding = trajectory.dynamic_multiplicative_expansion(

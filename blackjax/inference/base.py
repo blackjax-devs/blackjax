@@ -3,7 +3,7 @@ from typing import Callable, Dict, List, NamedTuple, Tuple, Union, Optional
 
 import jax
 
-from blackjax.inference.proposals import HMCInfo
+from blackjax.inference.algorithms import HMCInfo
 from blackjax.inference.integrators import IntegratorState
 
 __all__ = ["HMCState", "HMCInfo", "hmc"]
