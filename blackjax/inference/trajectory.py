@@ -167,7 +167,7 @@ def dynamic_progressive_integration(
 
     def integrate(
         rng_key: jax.numpy.DeviceArray,
-        initial_state: IntegratorState,
+        initial_proposal: Proposal,
         direction: int,
         termination_state,
         max_num_steps: int,
@@ -195,7 +195,7 @@ def dynamic_progressive_integration(
 
         def do_keep_integrating(expansion_state):
             """Decide whether we should continue integrating the trajectory"""
-            _, _, _, _, _, is_diverging, has_terminated, step = expansion_state
+            _, _, _, _, is_diverging, has_terminated, step = expansion_state
             return (step < max_num_steps) & ~has_terminated & ~is_diverging
 
         def add_one_state(expansion_state):
@@ -204,9 +204,8 @@ def dynamic_progressive_integration(
             """
             (
                 rng_key,
-                state,
-                trajectory,
                 proposal,
+                trajectory,
                 termination_state,
                 _,
                 _,
@@ -214,10 +213,10 @@ def dynamic_progressive_integration(
             ) = expansion_state
             _, rng_key = jax.random.split(rng_key)
 
-            new_state = integrator(state, direction * step_size)
+            new_state = integrator(proposal.state, direction * step_size)
             new_trajectory = append_to_trajectory(direction, trajectory, new_state)
             new_proposal, is_diverging = maybe_accept(
-                rng_key, state, proposal, new_state
+                rng_key, proposal, new_state
             )
             new_termination_state = update_termination(
                 termination_state, new_trajectory, new_state, step
@@ -226,27 +225,26 @@ def dynamic_progressive_integration(
 
             return (
                 rng_key,
-                new_state,
-                new_trajectory,
                 new_proposal,
+                new_trajectory,
                 new_termination_state,
                 is_diverging,
                 has_terminated,
                 step + 1,
             )
-
+        
+        initial_state = initial_proposal.state
         initial_integration_state = (
             rng_key,
-            initial_state,
+            initial_proposal,
             Trajectory(initial_state, initial_state, initial_state.momentum),
-            Proposal(initial_state, 0., 0.),
             termination_state,
             False,
             False,
             0,
         )
 
-        _, _, trajectory, proposal, termination_state, is_diverging, _, step = jax.lax.while_loop(
+        _, proposal, trajectory, termination_state, _, _, step = jax.lax.while_loop(
             do_keep_integrating, add_one_state, initial_integration_state
         )
 
@@ -335,7 +333,7 @@ def dynamic_multiplicative_expansion(
             termination_state,
             terminated_early,
         ) = trajectory_integrator(
-            rng_key, start_state, direction, termination_state, rate ** depth, step_size
+            rng_key, proposal, direction, termination_state, rate ** depth, step_size
         )
 
         # merge the freshly integrated trajectory to the current trajectory

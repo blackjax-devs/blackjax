@@ -125,6 +125,7 @@ def hmc(
         flipped_momentum = jax.tree_util.tree_multimap(
             lambda m: -1.0 * m, state.momentum
         )
+        proposal
         return IntegratorState(
             state.position,
             flipped_momentum,
@@ -135,7 +136,7 @@ def hmc(
     def generate(rng_key, state: IntegratorState) -> Tuple[IntegratorState, HMCInfo]:
         """Generate a new chain state."""
         end_state = integrate_trajectory(state)
-        proposal = flip_momentum(end_state)
+        proposal = generate_proposal(end_state)
         new_state, *info = maybe_accept(rng_key, state, proposal)
         do_accept, p_accept, transition_info = info
 
