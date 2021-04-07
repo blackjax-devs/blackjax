@@ -273,7 +273,7 @@ def dynamic_multiplicative_expansion(
     trajectory_integrator: Callable,
     uturn_check_fn: Callable,
     step_size: float,
-    max_tree_depth: int = 10,
+    max_num_iterations: int = 10,
     rate: int = 2,
 ) -> Tuple[Callable, Callable]:
     """Sample a trajectory and update the proposal sequentially
@@ -306,7 +306,7 @@ def dynamic_multiplicative_expansion(
     def do_keep_expanding(expansion_state) -> bool:
         """Determine whether we need to keep expanding the trajectory."""
         _, trajectory, _, _, terminated_early, is_turning, depth = expansion_state
-        return (depth < max_tree_depth) & ~terminated_early & ~is_turning
+        return (depth < max_num_iterations) & ~terminated_early & ~is_turning
 
     def expand(expansion_state):
         """Expand the current trajectory.
