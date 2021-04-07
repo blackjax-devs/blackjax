@@ -97,8 +97,6 @@ def hmc(
         A function that returns a new value for the momentum when called.
     kinetic_energy:
         A function that computes the current state's kinetic energy.
-    potential:
-        The potential function that is being explored, equal to minus the likelihood.
     divergence_threshold:
         The maximum difference in energy between the initial and final state
         after which we consider the transition to be divergent.
