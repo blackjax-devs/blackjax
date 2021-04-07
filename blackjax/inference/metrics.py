@@ -68,7 +68,6 @@ def gaussian_euclidean(
         dot, matmul = jnp.multiply, jnp.multiply
 
     elif ndim == 2:
-
         tril_inv = jscipy.linalg.cholesky(inverse_mass_matrix)
         identity = jnp.identity(shape[0])
         mass_matrix_sqrt = jscipy.linalg.solve_triangular(
