@@ -25,8 +25,7 @@ class Proposal(NamedTuple):
 
 
 def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
-
-    def generate(
+    def new_proposal(
         previous_proposal: Proposal, state: IntegratorState
     ) -> Tuple[Proposal, bool]:
         """Generate a new proposal from a trajectory state.
@@ -60,16 +59,16 @@ def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
             is_transition_divergent,
         )
 
-    return generate
+    return new_proposal
 
 
 # --------------------------------------------------------------------
 #                        STATIC SAMPLING
 # --------------------------------------------------------------------
 
+
 def static_binomial_sampling(rng_key, proposal, new_proposal):
-    """Choose a state between two states.
-    """
+    """Choose a state between two states."""
     p_accept = jnp.clip(jnp.exp(proposal.log_weight), a_max=1)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
 
@@ -80,22 +79,20 @@ def static_binomial_sampling(rng_key, proposal, new_proposal):
         operand=None,
     )
 
+
 # --------------------------------------------------------------------
 #                        PROGRESSIVE SAMPLING
 #
 # To avoid keeping the entire trajectory in memory, we only memorize the
-# extreme points and the point that will currently be proposed as a sample.
-# Progressive sampling updates this proposal as the trajectory is being
-# built.
+# extreme points of the trajectory and the current sample proposal.
+# Progressive sampling updates this proposal as the trajectory is being sampled
+# or built.
 # --------------------------------------------------------------------
 
 
 def progressive_uniform_sampling(rng_key, proposal, new_proposal):
-    """Uniform proposal sampling.
-    """
-    p_accept = jax.scipy.special.expit(
-        new_proposal.log_weight - proposal.log_weight
-    )
+    """Uniform proposal sampling."""
+    p_accept = jax.scipy.special.expit(new_proposal.log_weight - proposal.log_weight)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
 
     updated_proposal = Proposal(
@@ -105,10 +102,7 @@ def progressive_uniform_sampling(rng_key, proposal, new_proposal):
     )
 
     return jax.lax.cond(
-        do_accept,
-        lambda _: updated_proposal,
-        lambda _: proposal,
-        operand=None,
+        do_accept, lambda _: updated_proposal, lambda _: proposal, operand=None
     )
 
 
