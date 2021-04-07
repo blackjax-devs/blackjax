@@ -1,5 +1,5 @@
 """Metropolis-Hasting Step"""
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -11,9 +11,11 @@ class Proposal(NamedTuple):
 
     state:
         The trajectory state corresponding to this proposal.
+    energy:
+        The potential energy corresponding to the state.
     weight:
-        The logarithm of the sum of the canonical densities of each state
-        :math:`e^{-H(z)}` along the trajectory.
+        Weight of the proposal. The logarithm of the sum of the canonical
+        densities of each state :math:`e^{-H(z)}` along the trajectory.
     is_diverging
         Whether a divergence was observed when making one step.
     """
@@ -26,30 +28,21 @@ class Proposal(NamedTuple):
 def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
 
     def generate(
-        proposal: Proposal, new_state: IntegratorState
-    ) -> Proposal:
+        previous_proposal: Proposal, state: IntegratorState
+    ) -> Tuple[Proposal, bool]:
         """Generate a new proposal from a trajectory state.
-
-        Note
-        ----
-        We can optimize things a bit by sacrificing in memory and code
-        complexity: the kinetic energy and the previous states can be carried
-        around instead of being recomputed each time.
 
         Parameters
         ----------
-        direction:
-            The direction in which the trajectory was integrated to obtain the
-            new state.
+        previous_proposal:
+            The previous proposal.
         state:
             The new state.
-        trajectory:
-            The trajectory before the state was added.
 
         """
-        energy = proposal.energy
-        new_energy = new_state.potential_energy + kinetic_energy(
-            new_state.position, new_state.momentum
+        energy = previous_proposal.energy
+        new_energy = state.potential_energy + kinetic_energy(
+            state.position, state.momentum
         )
 
         delta_energy = energy - new_energy
@@ -61,11 +54,11 @@ def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
 
         return (
             Proposal(
-                proposal.state,
+                state,
                 new_energy,
                 log_weight,
             ),
-            is_transition_divergena,
+            is_transition_divergent,
         )
 
     return generate
@@ -75,14 +68,16 @@ def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
 #                        STATIC SAMPLING
 # --------------------------------------------------------------------
 
-def static_uniform_sampling(rng_key, proposal, new_proposal):
-    p_accept = jnp.clip(jnp.exp(transition_info.log_weight), a_max=1)
+def static_binomial_sampling(rng_key, proposal, new_proposal):
+    """Choose a state between two states.
+    """
+    p_accept = jnp.clip(jnp.exp(proposal.log_weight), a_max=1)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
 
     return jax.lax.cond(
         do_accept,
-        lambda _: (new_state, do_accept, p_accept, transition_info),
-        lambda _: (state, do_accept, p_accept, transition_info),
+        lambda _: (new_proposal, do_accept, p_accept),
+        lambda _: (proposal, do_accept, p_accept),
         operand=None,
     )
 

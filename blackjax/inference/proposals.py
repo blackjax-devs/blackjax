@@ -113,7 +113,13 @@ def hmc(
     integrate_trajectory = trajectory.static_integration(
         integrator, step_size, num_integration_steps
     )
-    maybe_accept = mh_step.uniform_sampling(kinetic_energy, divergence_threshold)
+    proposal_generator = mh_step.proposal_generator(
+        kinetic_energy, divergence_threshold
+    )
+
+    def compute_energy(state):
+        energy = state.potential_energy + kinetic_energy(state.position, state.momentum)
+        return energy
 
     def flip_momentum(state: IntegratorState) -> IntegratorState:
         """To guarantee time-reversibility (hence detailed balance) we
@@ -125,7 +131,6 @@ def hmc(
         flipped_momentum = jax.tree_util.tree_multimap(
             lambda m: -1.0 * m, state.momentum
         )
-        proposal
         return IntegratorState(
             state.position,
             flipped_momentum,
@@ -136,21 +141,25 @@ def hmc(
     def generate(rng_key, state: IntegratorState) -> Tuple[IntegratorState, HMCInfo]:
         """Generate a new chain state."""
         end_state = integrate_trajectory(state)
-        proposal = generate_proposal(end_state)
-        new_state, *info = maybe_accept(rng_key, state, proposal)
-        do_accept, p_accept, transition_info = info
+        end_state = flip_momentum(end_state)
+        proposal = Proposal(state, compute_energy(state), 0.)
+        new_proposal, is_diverging = proposal_generator(proposal, end_state)
+        sampled_proposal, *info = mh_step.static_binomial_sampling(
+            rng_key, proposal, new_proposal
+        )
+        do_accept, p_accept = info
 
         info = HMCInfo(
             state.momentum,
             p_accept,
             do_accept,
-            transition_info.is_diverging,
-            transition_info.new_energy,
-            proposal,
+            is_diverging,
+            new_proposal.energy,
+            new_proposal,
             HMCTrajectoryInfo(step_size, num_integration_steps),
         )
 
-        return new_state, info
+        return sampled_proposal.state, info
 
     return generate
 
@@ -173,7 +182,8 @@ def iterative_nuts(
 
     trajectory_integrator = trajectory.dynamic_progressive_integration(
         integrator,
-        mh_step.progressive_uniform_sampling(kinetic_energy, divergence_threshold),
+        mh_step.proposal_generator(kinetic_energy, divergence_threshold),
+        mh_step.progressive_uniform_sampling,
         update_criterion_state,
         is_criterion_met,
     )

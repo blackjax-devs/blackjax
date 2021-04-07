@@ -144,7 +144,8 @@ def static_progressive_integration(
 
 def dynamic_progressive_integration(
     integrator: Callable,
-    maybe_accept: Callable,
+    proposal_generator: Callable,
+    proposal_sampler: Callable,
     update_termination: Callable,
     is_criterion_met: Callable,
 ):
@@ -215,9 +216,8 @@ def dynamic_progressive_integration(
 
             new_state = integrator(proposal.state, direction * step_size)
             new_trajectory = append_to_trajectory(direction, trajectory, new_state)
-            new_proposal, is_diverging = maybe_accept(
-                rng_key, proposal, new_state
-            )
+            new_proposal, is_diverging = proposal_generator(proposal, new_state)
+            sampled_proposal = proposal_sampler(rng_key, proposal, new_proposal)
             new_termination_state = update_termination(
                 termination_state, new_trajectory, new_state, step
             )
@@ -225,14 +225,14 @@ def dynamic_progressive_integration(
 
             return (
                 rng_key,
-                new_proposal,
+                sampled_proposal,
                 new_trajectory,
                 new_termination_state,
                 is_diverging,
                 has_terminated,
                 step + 1,
             )
-        
+
         initial_state = initial_proposal.state
         initial_integration_state = (
             rng_key,
