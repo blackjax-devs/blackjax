@@ -110,15 +110,15 @@ def hmc(
     uses a Metropolis-Hastings acceptance step.
 
     """
-    integrate_trajectory = trajectory.static_integration(
+    build_trajectory = trajectory.static_integration(
         integrator, step_size, num_integration_steps
     )
-    proposal_generator = proposal.proposal_generator(
+    generate_proposal = proposal.proposal_generator(
         kinetic_energy, divergence_threshold
     )
-    proposal_sampler = proposal.static_binomial_sampling
+    sample_proposal = proposal.static_binomial_sampling
 
-    def compute_energy(state):
+    def compute_energy(state: IntegratorState) -> float:
         energy = state.potential_energy + kinetic_energy(state.position, state.momentum)
         return energy
 
@@ -141,11 +141,11 @@ def hmc(
 
     def generate(rng_key, state: IntegratorState) -> Tuple[IntegratorState, HMCInfo]:
         """Generate a new chain state."""
-        end_state = integrate_trajectory(state)
+        end_state = build_trajectory(state)
         end_state = flip_momentum(end_state)
         proposal = Proposal(state, compute_energy(state), 0.0)
-        new_proposal, is_diverging = proposal_generator(proposal, end_state)
-        sampled_proposal, *info = proposal_sampler(rng_key, proposal, new_proposal)
+        new_proposal, is_diverging = generate_proposal(proposal, end_state)
+        sampled_proposal, *info = sample_proposal(rng_key, proposal, new_proposal)
         do_accept, p_accept = info
 
         info = HMCInfo(
@@ -168,7 +168,7 @@ def iterative_nuts(
     kinetic_energy: Callable,
     uturn_check_fn: Callable,
     step_size: float,
-    max_tree_depth: int = 10,
+    max_num_doublings: int = 10,
     divergence_threshold: float = 1000,
 ):
     """Iterative NUTS proposal."""
@@ -191,13 +191,13 @@ def iterative_nuts(
         trajectory_integrator,
         uturn_check_fn,
         step_size,
-        max_tree_depth,
+        max_num_doublings,
     )
 
     def _initialize(initial_state):
         flat, _ = jax.flatten_util.ravel_pytree(initial_state.position)
         num_dims = jnp.shape(flat)[0]
-        criterion_state = new_criterion_state(num_dims, max_tree_depth)
+        criterion_state = new_criterion_state(num_dims, max_num_doublins)
 
         energy = initial_state.potential_energy + kinetic_energy(
             initial_state.position, initial_state.momentum
