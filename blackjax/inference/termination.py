@@ -29,10 +29,12 @@ class IterativeUTurnState(NamedTuple):
 def iterative_uturn_numpyro(is_turning):
     """Numpyro style dynamic U-Turn criterion."""
 
-    def new_state(num_dims, max_tree_depth):
+    def new_state(chain_state, max_num_doublings) -> IterativeUTurnState:
+        flat, _ = jax.flatten_util.ravel_pytree(chain_state.position)
+        num_dims = jnp.shape(flat)[0]
         return IterativeUTurnState(
-            jnp.zeros((max_tree_depth, num_dims)),
-            jnp.zeros((max_tree_depth, num_dims)),
+            jnp.zeros((max_num_doublings, num_dims)),
+            jnp.zeros((max_num_doublings, num_dims)),
             0,
             0,
         )

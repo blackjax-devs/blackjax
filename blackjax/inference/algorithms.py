@@ -30,7 +30,6 @@ References
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
-import jax.numpy as jnp
 
 import blackjax.inference.proposal as proposal
 import blackjax.inference.termination as termination
@@ -119,7 +118,7 @@ def hmc(
     )
     sample_proposal = proposal.static_binomial_sampling
 
-    def compute_energy(state: IntegratorState) -> float:
+    def _compute_energy(state: IntegratorState) -> float:
         energy = state.potential_energy + kinetic_energy(state.position, state.momentum)
         return energy
 
@@ -144,7 +143,7 @@ def hmc(
         """Generate a new chain state."""
         end_state = build_trajectory(state)
         end_state = flip_momentum(end_state)
-        proposal = Proposal(state, compute_energy(state), 0.0)
+        proposal = Proposal(state, _compute_energy(state), 0.0)
         new_proposal, is_diverging = generate_proposal(proposal, end_state)
         sampled_proposal, *info = sample_proposal(rng_key, proposal, new_proposal)
         do_accept, p_accept = info
@@ -195,24 +194,15 @@ def iterative_nuts(
         max_num_doublings,
     )
 
-    def _initialize(initial_state):
-        flat, _ = jax.flatten_util.ravel_pytree(initial_state.position)
-        num_dims = jnp.shape(flat)[0]
-        criterion_state = new_criterion_state(num_dims, max_num_doublings)
+    def _compute_energy(state: IntegratorState) -> float:
+        energy = state.potential_energy + kinetic_energy(state.position, state.momentum)
+        return energy
 
-        energy = initial_state.potential_energy + kinetic_energy(
-            initial_state.position, initial_state.momentum
-        )
-        proposal = Proposal(
-            initial_state,
-            energy,
-            0.0,
-        )
+    def propose(rng_key, initial_state: IntegratorState):
+        criterion_state = new_criterion_state(initial_state, max_num_doublings)
+        proposal = Proposal(initial_state, _compute_energy(initial_state), 0.0)
         trajectory = Trajectory(initial_state, initial_state, initial_state.momentum)
-        return proposal, trajectory, criterion_state
 
-    def propose(rng_key, initial_state):
-        proposal, trajectory, criterion_state = _initialize(initial_state)
         _, _, proposal, _, _, _, _ = jax.lax.while_loop(
             do_keep_expanding,
             expand,
