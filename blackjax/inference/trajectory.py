@@ -28,10 +28,9 @@ References
 """
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
+import blackjax.inference.proposal as proposal
 import jax
 import jax.numpy as jnp
-
-import blackjax.inference.proposal as proposal
 from blackjax.inference.integrators import IntegratorState
 
 PyTree = Union[Dict, List, Tuple]
@@ -200,7 +199,7 @@ def dynamic_progressive_integration(
 
         def do_keep_integrating(expansion_state):
             """Decide whether we should continue integrating the trajectory"""
-            _, _, _, _, is_diverging, has_terminated, step = expansion_state
+            _, step, _, _, _, is_diverging, has_terminated = expansion_state
             return (step < max_num_steps) & ~has_terminated & ~is_diverging
 
         def add_one_state(expansion_state):
@@ -209,12 +208,12 @@ def dynamic_progressive_integration(
             """
             (
                 rng_key,
+                step,
                 proposal,
                 trajectory,
                 termination_state,
                 _,
                 _,
-                step,
             ) = expansion_state
             _, rng_key = jax.random.split(rng_key)
 
@@ -231,26 +230,26 @@ def dynamic_progressive_integration(
 
             return (
                 rng_key,
+                step + 1,
                 sampled_proposal,
                 new_trajectory,
                 new_termination_state,
                 is_diverging,
                 has_terminated,
-                step + 1,
             )
 
         initial_proposal = init_proposal(initial_state)
         initial_integration_state = (
             rng_key,
+            0,
             initial_proposal,
             Trajectory(initial_state, initial_state, initial_state.momentum),
             termination_state,
             False,
             False,
-            0,
         )
 
-        _, proposal, trajectory, termination_state, _, _, step = jax.lax.while_loop(
+        _, step, proposal, trajectory, termination_state, _, _ = jax.lax.while_loop(
             do_keep_integrating, add_one_state, initial_integration_state
         )
 
@@ -288,25 +287,27 @@ def dynamic_multiplicative_expansion(
 
     Parameters
     ----------
-    integrator
+    trajectory_integrator
+        A function that runs the symplectic integrators and returns a new proposal
+        and the integrated trajectory.
     uturn_check_fn
         Function used to check the U-Turn criterion.
     step_size
-        The step size used by the trajectory integrator.
-    max_tree_depth
+        The step size used by the symplectic integrator.
+    max_num_doublings
         The maximum number of trajectory expansions until the proposal is
         returned.
     rate
-        The rate of the geometrical expansion. Typically 2 in NUTS, hence
-        the mentions to binary trees.
+        The rate of the geometrical expansion. Typically 2 in NUTS, this is why
+        the literature often refers to "tree doubling".
 
     """
     proposal_sampler = proposal.progressive_biased_sampling
 
     def do_keep_expanding(expansion_state) -> bool:
         """Determine whether we need to keep expanding the trajectory."""
-        _, trajectory, _, _, terminated_early, is_turning, depth = expansion_state
-        return (depth <= max_num_doublings) & ~terminated_early & ~is_turning
+        _, step, trajectory, _, _, terminated_early, is_turning = expansion_state
+        return (step <= max_num_doublings) & ~terminated_early & ~is_turning
 
     def expand(expansion_state):
         """Expand the current trajectory.
@@ -321,7 +322,7 @@ def dynamic_multiplicative_expansion(
         """
         # Q: Should this function be aware of all the elements that need to
         # be passed downstream?
-        rng_key, trajectory, proposal, termination_state, _, _, depth = expansion_state
+        rng_key, step, proposal, trajectory, termination_state, _, _ = expansion_state
         rng_key, direction_key = jax.random.split(rng_key, 2)
 
         # create new subtrajectory that is twice as long as the current
@@ -340,7 +341,12 @@ def dynamic_multiplicative_expansion(
             termination_state,
             terminated_early,
         ) = trajectory_integrator(
-            rng_key, start_state, direction, termination_state, rate ** depth, step_size
+            rng_key,
+            start_state,
+            direction,
+            termination_state,
+            rate ** step,
+            step_size,
         )
 
         # merge the freshly integrated trajectory to the current trajectory
@@ -348,7 +354,7 @@ def dynamic_multiplicative_expansion(
 
         # update the proposal
         # we reject proposals coming from diverging or turning subtrajectories
-        maybe_updated_proposal = jax.lax.cond(
+        sampled_proposal = jax.lax.cond(
             terminated_early,
             proposal,
             lambda x: x,
@@ -364,12 +370,12 @@ def dynamic_multiplicative_expansion(
 
         return (
             rng_key,
+            step + 1,
+            sampled_proposal,
             new_trajectory,
-            maybe_updated_proposal,
             termination_state,
             terminated_early,
             is_turning,
-            depth + 1,
         )
 
     return expand, do_keep_expanding

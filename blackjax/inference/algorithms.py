@@ -206,7 +206,7 @@ def iterative_nuts(
         _, _, proposal, _, _, _, _ = jax.lax.while_loop(
             do_keep_expanding,
             expand,
-            (rng_key, trajectory, proposal, criterion_state, False, False, 1),
+            (rng_key, 1, proposal, trajectory, criterion_state, False, False),
         )
 
         # Don't forget the proposal info here!
