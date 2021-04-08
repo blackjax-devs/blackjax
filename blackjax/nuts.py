@@ -5,10 +5,10 @@ import jax.numpy as jnp
 import numpy as np
 
 import blackjax.hmc
+import blackjax.inference.algorithms as algorithms
 import blackjax.inference.base as base
 import blackjax.inference.integrators as integrators
 import blackjax.inference.metrics as metrics
-import blackjax.inference.algorithms as algorithms
 
 Array = Union[np.array, jnp.DeviceArray]
 PyTree = Union[Dict, List, Tuple]

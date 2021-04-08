@@ -1,5 +1,5 @@
 """Base kernel for the HMC family."""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union, Optional
+from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
 
@@ -111,10 +111,10 @@ def hmc(
         augmented_state = IntegratorState(
             position, momentum, potential_energy, potential_energy_grad
         )
-        proposal, info = proposal_generator(
-            key_integrator, augmented_state
+        proposal, info = proposal_generator(key_integrator, augmented_state)
+        proposal = HMCState(
+            proposal.position, proposal.potential_energy, proposal.potential_energy_grad
         )
-        proposal = HMCState(proposal.position, proposal.potential_energy, proposal.potential_energy_grad)
 
         return proposal, info
 

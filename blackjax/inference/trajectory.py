@@ -28,9 +28,10 @@ References
 """
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
-import blackjax.inference.proposal as proposal
 import jax
 import jax.numpy as jnp
+
+import blackjax.inference.proposal as proposal
 from blackjax.inference.integrators import IntegratorState
 from blackjax.inference.proposal import Proposal
 
@@ -147,7 +148,7 @@ def dynamic_progressive_integration(
     kinetic_energy: Callable,
     update_termination: Callable,
     is_criterion_met: Callable,
-    divergence_threshold: float
+    divergence_threshold: float,
 ):
     """Integrate a trajectory and update the proposal sequentially
     until the termination criterion is met.
@@ -165,7 +166,9 @@ def dynamic_progressive_integration(
         a function that initializes the proposal state and one that updates it.
 
     """
-    proposal_generator = proposal.proposal_generator(kinetic_energy, divergence_threshold)
+    proposal_generator = proposal.proposal_generator(
+        kinetic_energy, divergence_threshold
+    )
     proposal_sampler = proposal.progressive_uniform_sampling
 
     def integrate(
@@ -223,7 +226,9 @@ def dynamic_progressive_integration(
             new_termination_state = update_termination(
                 termination_state, new_trajectory, new_state, step
             )
-            has_terminated = is_criterion_met(new_termination_state, new_trajectory, new_state)
+            has_terminated = is_criterion_met(
+                new_termination_state, new_trajectory, new_state
+            )
 
             return (
                 rng_key,
@@ -237,8 +242,9 @@ def dynamic_progressive_integration(
 
         initial_proposal = Proposal(
             initial_state,
-            initial_state.potential_energy + kinetic_energy(initial_state.position, initial_state.momentum),
-            0.
+            initial_state.potential_energy
+            + kinetic_energy(initial_state.position, initial_state.momentum),
+            0.0,
         )
         initial_integration_state = (
             rng_key,

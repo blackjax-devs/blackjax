@@ -29,11 +29,12 @@ References
 """
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
+import jax
+import jax.numpy as jnp
+
 import blackjax.inference.proposal as proposal
 import blackjax.inference.termination as termination
 import blackjax.inference.trajectory as trajectory
-import jax
-import jax.numpy as jnp
 from blackjax.inference.integrators import IntegratorState
 from blackjax.inference.proposal import Proposal
 from blackjax.inference.trajectory import Trajectory
@@ -197,7 +198,7 @@ def iterative_nuts(
     def _initialize(initial_state):
         flat, _ = jax.flatten_util.ravel_pytree(initial_state.position)
         num_dims = jnp.shape(flat)[0]
-        criterion_state = new_criterion_state(num_dims, max_num_doublins)
+        criterion_state = new_criterion_state(num_dims, max_num_doublings)
 
         energy = initial_state.potential_energy + kinetic_energy(
             initial_state.position, initial_state.momentum

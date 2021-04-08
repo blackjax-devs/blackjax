@@ -48,7 +48,7 @@ def test_hmc(inv_mass_matrix):
     conditioned_potential = ft.partial(potential_fn, **observations)
     potential = lambda x: conditioned_potential(**x)
 
-    initial_position = {"scale": 1., "coefs": 2.0}
+    initial_position = {"scale": 1.0, "coefs": 2.0}
     initial_state = hmc.new_state(initial_position, potential)
 
     params = hmc.HMCParameters(
@@ -79,7 +79,7 @@ def test_nuts(inv_mass_matrix):
     conditioned_potential = ft.partial(potential_fn, **observations)
     potential = lambda x: conditioned_potential(**x)
 
-    initial_position = {"scale": 1., "coefs": 2.0}
+    initial_position = {"scale": 1.0, "coefs": 2.0}
     initial_state = hmc.new_state(initial_position, potential)
 
     params = nuts.NUTSParameters(

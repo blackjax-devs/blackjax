@@ -2,6 +2,7 @@ from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
+
 from blackjax.inference.integrators import IntegratorState
 
 
