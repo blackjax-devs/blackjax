@@ -25,8 +25,14 @@ class Proposal(NamedTuple):
     log_weight: float
 
 
-def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
-    def new_proposal(
+def proposal_generator(
+    kinetic_energy: Callable, divergence_threshold: float
+) -> Tuple[Callable, Callable]:
+    def init(state: IntegratorState) -> Proposal:
+        energy = state.potential_energy + kinetic_energy(state.position, state.momentum)
+        return Proposal(state, energy, 0.0)
+
+    def update(
         previous_proposal: Proposal, state: IntegratorState
     ) -> Tuple[Proposal, bool]:
         """Generate a new proposal from a trajectory state.
@@ -60,7 +66,7 @@ def proposal_generator(kinetic_energy: Callable, divergence_threshold: float):
             is_transition_divergent,
         )
 
-    return new_proposal
+    return init, update
 
 
 # --------------------------------------------------------------------

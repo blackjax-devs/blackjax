@@ -33,7 +33,6 @@ import jax.numpy as jnp
 
 import blackjax.inference.proposal as proposal
 from blackjax.inference.integrators import IntegratorState
-from blackjax.inference.proposal import Proposal
 
 PyTree = Union[Dict, List, Tuple]
 
@@ -166,10 +165,10 @@ def dynamic_progressive_integration(
         a function that initializes the proposal state and one that updates it.
 
     """
-    proposal_generator = proposal.proposal_generator(
+    init_proposal, generate_proposal = proposal.proposal_generator(
         kinetic_energy, divergence_threshold
     )
-    proposal_sampler = proposal.progressive_uniform_sampling
+    sample_proposal = proposal.progressive_uniform_sampling
 
     def integrate(
         rng_key: jax.numpy.DeviceArray,
@@ -221,8 +220,8 @@ def dynamic_progressive_integration(
 
             new_state = integrator(proposal.state, direction * step_size)
             new_trajectory = append_to_trajectory(direction, trajectory, new_state)
-            new_proposal, is_diverging = proposal_generator(proposal, new_state)
-            sampled_proposal = proposal_sampler(rng_key, proposal, new_proposal)
+            new_proposal, is_diverging = generate_proposal(proposal, new_state)
+            sampled_proposal = sample_proposal(rng_key, proposal, new_proposal)
             new_termination_state = update_termination(
                 termination_state, new_trajectory, new_state, step
             )
@@ -240,12 +239,7 @@ def dynamic_progressive_integration(
                 step + 1,
             )
 
-        initial_proposal = Proposal(
-            initial_state,
-            initial_state.potential_energy
-            + kinetic_energy(initial_state.position, initial_state.momentum),
-            0.0,
-        )
+        initial_proposal = init_proposal(initial_state)
         initial_integration_state = (
             rng_key,
             initial_proposal,
