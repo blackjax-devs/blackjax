@@ -1,9 +1,8 @@
 """Step size adaptation"""
-from typing import NamedTuple, Tuple, Callable
+from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
-
 from blackjax.inference.base import HMCState
 
 __all__ = [
@@ -15,6 +14,7 @@ __all__ = [
 # -------------------------------------------------------------------
 #                        DUAL AVERAGING
 # -------------------------------------------------------------------
+
 
 class DualAveragingState(NamedTuple):
     """State carried through the dual averaging procedure.
@@ -34,9 +34,10 @@ class DualAveragingState(NamedTuple):
         Arbitrary point the values of log_step_size are shrunk towards. Chose
         to be :math:`\\log(10 \\epsilon_0)` where :math:`\\epsilon_0` is chosen
         in this context to be the step size given by the
-        `find_reasonable_step_size` procedure.  
+        `find_reasonable_step_size` procedure.
 
     """
+
     log_step_size: float
     log_step_size_avg: float
     step: int
@@ -46,7 +47,7 @@ class DualAveragingState(NamedTuple):
 
 def dual_averaging(
     t0: int = 10, gamma: float = 0.05, kappa: float = 0.75, target: float = 0.65
-) -> Tuple[Callable, Callable]:
+) -> Tuple[Callable, Callable, Callable]:
     """Tune the step size in order to achieve a desired target acceptance rate.
 
     Let us note :math:`\\epsilon` the current step size, :math:`\\alpha_t` the
@@ -151,6 +152,7 @@ def dual_averaging(
 #                 REASONABLE FIRST STEP SIZE
 # -------------------------------------------------------------------
 
+
 class ReasonableStepSizeState(NamedTuple):
     """State carried through the search for a reasonable first step size.
 
@@ -165,19 +167,15 @@ class ReasonableStepSizeState(NamedTuple):
     step_size
         The current step size in the search.
     """
+
     direction: int
-    previous_direction: int
     step_size: float
+    previous_direction: int
 
 
 def find_reasonable_step_size(
-    rng_key,
-    kernel_generator: Callable[[float, jnp.DeviceArray], Callable],
-    reference_hmc_state: HMCState,
-    inverse_mass_matrix: jnp.DeviceArray,
-    initial_step_size: float = 1.0,
-    target_accept: float = 0.65,
-) -> float:
+    initial_step_size: float, target_accept: float = 0.65
+) -> Tuple[Callable, Callable, Callable, Callable]:
     """Find a reasonable initial step size during warmup.
 
     While the dual averaging scheme is guaranteed to converge to a reasonable
@@ -215,29 +213,29 @@ def find_reasonable_step_size(
             adaptively setting path lengths in Hamiltonian Monte Carlo." Journal
             of Machine Learning Research 15.1 (2014): 1593-1623.
     """
-    fp_limit = jnp.finfo(jax.lax.dtype(initial_step_size))
 
-    def _update(rng_key, search_state: ReasonableStepSizeState) -> ReasonableStepSizeState:
-        """Perform one step of the step size search."""
-        direction, _, step_size = search_state
-        _, rng_key = jax.random.split(rng_key)
+    def init(initial_step_size):
+        return ReasonableStepSizeState(0, 0, initial_step_size)
 
-        step_size = (2.0 ** direction) * step_size
-        kernel = kernel_generator(step_size, inverse_mass_matrix)
-        _, hmc_info = kernel(rng_key, reference_hmc_state)
-
-        new_direction = jnp.where(
-            target_accept < hmc_info.acceptance_probability, 1, -1
-        )
-        return ReasonableStepSizeState(rng_key, new_direction, direction, step_size)
-
-    def _do_continue(search_state: ReasonableStepSizeState) -> bool:
+    def do_continue(rss_state: ReasonableStepSizeState) -> bool:
         """Decides whether the search should continue.
 
         The search stops when it crosses the `target_accept` threshold, i.e.
         when the current direction is opposite to the previous direction.
+
+        Note
+        ----
+        Per JAX's documentation [1]_ the `jnp.finfo` object is cached so we do not
+        occur any performance penalty when calling it repeatedly inside this
+        function.
+
+        Reference
+        ---------
+        .. [1]: jax.numpy.finfo documentation. https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.finfo.html
+
         """
-        _, direction, previous_direction, step_size = search_state
+        direction, previous_direction, step_size = rss_state
+        fp_limit = jnp.finfo(jax.lax.dtype(initial_step_size))
 
         not_too_large = (step_size < fp_limit.max) | (direction <= 0)
         not_too_small = (step_size > fp_limit.tiny) | (direction >= 0)
@@ -247,7 +245,14 @@ def find_reasonable_step_size(
         )
         return is_step_size_not_extreme & has_acceptance_rate_not_crossed_threshold
 
-    _, _, step_size = jax.lax.while_loop(
-        _do_continue, _update, ReasonableStepSizeState(rng_key, 0, 0, initial_step_size)
-    )
-    return step_size
+    def update(rss_state: ReasonableStepSizeState, _, info) -> ReasonableStepSizeState:
+        """Perform one step of the step size search."""
+        direction, step_size, _ = rss_state
+        step_size = (2.0 ** direction) * step_size
+        new_direction = jnp.where(target_accept < info.acceptance_probability, 1, -1)
+        return ReasonableStepSizeState(new_direction, step_size, direction)
+
+    def final(rss_state: ReasonableStepSizeState) -> float:
+        return rss_state.step_size
+
+    return init, update, final, do_continue
