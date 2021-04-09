@@ -1,5 +1,5 @@
 """Step size adaptation"""
-from typing import NamedTuple
+from typing import NamedTuple, Tuple, Callable
 
 import jax
 import jax.numpy as jnp
@@ -116,7 +116,7 @@ def dual_averaging(
         log_step_size_avg: float = 0.0
         return DualAveragingState(log_step_size, log_step_size_avg, step, avg_error, mu)
 
-    def update(p_accept: float, state: DualAveragingState) -> DualAveragingState:
+    def update(da_state: DualAveragingState, _, info) -> DualAveragingState:
         """Update the state of the Dual Averaging adaptive algorithm.
 
         Parameters
@@ -130,7 +130,8 @@ def dual_averaging(
         -------
         The updated state of the dual averaging algorithm.
         """
-        log_step, avg_log_step, step, avg_error, mu = state
+        p_accept = info.acceptance_probability
+        log_step, avg_log_step, step, avg_error, mu = da_state
         reg_step = step + t0
         eta_t = step ** (-kappa)
         avg_error = (1 - (1 / (reg_step))) * avg_error + (target - p_accept) / reg_step
@@ -140,7 +141,10 @@ def dual_averaging(
             log_step_size, log_step_size_avg, step + 1, avg_error, mu
         )
 
-    return init, update
+    def final(da_state: DualAveragingState) -> float:
+        return jnp.exp(da_state.log_step_size_avg)
+
+    return init, update, final
 
 
 # -------------------------------------------------------------------
@@ -166,7 +170,6 @@ class ReasonableStepSizeState(NamedTuple):
     step_size: float
 
 
-@partial(jax.jit, static_argnums=(1,))
 def find_reasonable_step_size(
     rng_key,
     kernel_generator: Callable[[float, jnp.DeviceArray], Callable],
