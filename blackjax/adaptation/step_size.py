@@ -46,7 +46,7 @@ class DualAveragingState(NamedTuple):
 
 
 def dual_averaging(
-    t0: int = 10, gamma: float = 0.05, kappa: float = 0.75, target: float = 0.65
+    t0: int = 10, gamma: float = 0.05, kappa: float = 0.75, target_accept: float = 0.65
 ) -> Tuple[Callable, Callable]:
     """Tune the step size in order to achieve a desired target acceptance rate.
 
@@ -135,7 +135,7 @@ def dual_averaging(
         log_step, avg_log_step, step, avg_error, mu = da_state
         reg_step = step + t0
         eta_t = step ** (-kappa)
-        avg_error = (1 - (1 / (reg_step))) * avg_error + (target - p_accept) / reg_step
+        avg_error = (1 - (1 / (reg_step))) * avg_error + (target_accept - p_accept) / reg_step
         log_step_size = mu - (jnp.sqrt(step) / gamma) * avg_error
         log_step_size_avg = eta_t * log_step + (1 - eta_t) * avg_log_step
         return DualAveragingState(
@@ -174,7 +174,7 @@ class ReasonableStepSizeState(NamedTuple):
 
 
 def find_reasonable_step_size(
-    initial_step_size: float, target_accept: float = 0.65
+    target_accept: float = 0.65
 ) -> Tuple[Callable, Callable, Callable, Callable]:
     """Find a reasonable initial step size during warmup.
 
@@ -214,7 +214,7 @@ def find_reasonable_step_size(
             of Machine Learning Research 15.1 (2014): 1593-1623.
     """
 
-    def init(initial_step_size):
+    def init(initial_step_size: float = 1):
         return ReasonableStepSizeState(0, 0, initial_step_size)
 
     def do_continue(rss_state: ReasonableStepSizeState) -> bool:
@@ -235,7 +235,7 @@ def find_reasonable_step_size(
 
         """
         direction, previous_direction, step_size = rss_state
-        fp_limit = jnp.finfo(jax.lax.dtype(initial_step_size))
+        fp_limit = jnp.finfo(jax.lax.dtype(step_size))
 
         not_too_large = (step_size < fp_limit.max) | (direction <= 0)
         not_too_small = (step_size > fp_limit.tiny) | (direction >= 0)
@@ -256,88 +256,3 @@ def find_reasonable_step_size(
         return rss_state.step_size
 
     return init, update, final, do_continue
-
-
-def find_reasonable_step_size(
-    rng_key,
-    kernel_generator: Callable[[float, jnp.DeviceArray], Callable],
-    reference_hmc_state: HMCState,
-    inverse_mass_matrix: jnp.DeviceArray,
-    initial_step_size: float = 1.0,
-    target_accept: float = 0.65,
-) -> float:
-    """Find a reasonable initial step size during warmup.
-
-    While the dual averaging scheme is guaranteed to converge to a reasonable
-    value for the step size starting from any value, choosing a good first
-    value can speed up the convergence. This heuristics doubles and halves the
-    step size until the acceptance probability of the HMC proposal crosses the
-    .5 value.
-
-    Parameters
-    ----------
-    rng_key
-       Key used by JAX's random number generator.
-    kernel_generator
-        A function that takes a step size as an input and returns the corresponding
-        sampling kernel.
-    reference_hmc_state
-        The location (HMC state) where this first step size must be found. This function
-        never advances the chain.
-    inverse_mass_matrix
-        The inverse mass matrix relative to which the step size must be found.
-    initial_step_size
-        The first step size used to start the search.
-    target_accept
-        Once that value of the metropolis acceptance probability is reached we
-        estimate that we have found a "reasonable" first step size.
-
-    Returns
-    -------
-    float
-        A reasonable first value for the step size.
-
-    Reference
-    ---------
-    .. [1]: Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler:
-            adaptively setting path lengths in Hamiltonian Monte Carlo." Journal
-            of Machine Learning Research 15.1 (2014): 1593-1623.
-    """
-    fp_limit = jnp.finfo(jax.lax.dtype(initial_step_size))
-
-    def _update(
-        rng_key, search_state: ReasonableStepSizeState
-    ) -> ReasonableStepSizeState:
-        """Perform one step of the step size search."""
-        direction, _, step_size = search_state
-        _, rng_key = jax.random.split(rng_key)
-
-        step_size = (2.0 ** direction) * step_size
-        kernel = kernel_generator(step_size, inverse_mass_matrix)
-        _, hmc_info = kernel(rng_key, reference_hmc_state)
-
-        new_direction = jnp.where(
-            target_accept < hmc_info.acceptance_probability, 1, -1
-        )
-        return ReasonableStepSizeState(rng_key, new_direction, direction, step_size)
-
-    def _do_continue(search_state: ReasonableStepSizeState) -> bool:
-        """Decides whether the search should continue.
-
-        The search stops when it crosses the `target_accept` threshold, i.e.
-        when the current direction is opposite to the previous direction.
-        """
-        _, direction, previous_direction, step_size = search_state
-
-        not_too_large = (step_size < fp_limit.max) | (direction <= 0)
-        not_too_small = (step_size > fp_limit.tiny) | (direction >= 0)
-        is_step_size_not_extreme = not_too_large & not_too_small
-        has_acceptance_rate_not_crossed_threshold = (previous_direction == 0) | (
-            direction == previous_direction
-        )
-        return is_step_size_not_extreme & has_acceptance_rate_not_crossed_threshold
-
-    _, _, step_size = jax.lax.while_loop(
-        _do_continue, _update, ReasonableStepSizeState(rng_key, 0, 0, initial_step_size)
-    )
-    return step_size
