@@ -215,7 +215,7 @@ def find_reasonable_step_size(
     """
 
     def init(initial_step_size: float = 1):
-        return ReasonableStepSizeState(0, 0, initial_step_size)
+        return ReasonableStepSizeState(0, initial_step_size, 0)
 
     def do_continue(rss_state: ReasonableStepSizeState) -> bool:
         """Decides whether the search should continue.
@@ -234,7 +234,7 @@ def find_reasonable_step_size(
         .. [1]: jax.numpy.finfo documentation. https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.finfo.html
 
         """
-        direction, previous_direction, step_size = rss_state
+        direction, step_size, previous_direction = rss_state
         fp_limit = jnp.finfo(jax.lax.dtype(step_size))
 
         not_too_large = (step_size < fp_limit.max) | (direction <= 0)
