@@ -185,6 +185,24 @@ def hmc(
 
 
 class NUTSInfo(NamedTuple):
+    """ In PyMC3
+
+    "depth": self.depth,
+    "mean_tree_accept": self.mean_tree_accept,
+    "energy_error": self.proposal.energy - self.start.energy,
+    "energy": self.proposal.energy,
+    "tree_size": self.n_proposals,
+    "max_energy_error": self.max_energy_change,
+    "model_logp": self.proposal.logp,
+
+    We need some info on the divergence. In particular we need the offending
+    new state.
+    """
+    proposal: Proposal
+    delta_energy: float
+    max_delta_energy: float
+    num_subtrajectories: int
+    num_integration_steps: int
 
 
 def iterative_nuts(
@@ -224,7 +242,7 @@ def iterative_nuts(
     step_size
         Size of the integration step.
     max_num_trajectory_samples
-        The maximum number of trajectory samples we take in the absence of divergence or u-turn.
+        The number of sub-trajectory samples we take to build the trajectory.
     divergence_threshold
         Threshold above which we say that there is a divergence.
 
