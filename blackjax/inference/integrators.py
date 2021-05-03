@@ -17,6 +17,11 @@ class IntegratorState(NamedTuple):
     potential_energy_grad: PyTree
 
 
+def new_integrator_state(potential_fn, position, momentum):
+    potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
+    return IntegratorState(position, momentum, potential_energy, potential_energy_grad)
+
+
 def velocity_verlet(
     potential_fn: Callable, kinetic_energy_fn: EuclideanKineticEnergy
 ) -> Callable:
