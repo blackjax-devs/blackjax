@@ -45,11 +45,6 @@ PyTree = Union[Dict, List, Tuple]
 ProposalState = IntegratorState
 
 
-class HMCTrajectoryInfo(NamedTuple):
-    step_size: float
-    num_integration_steps: int
-
-
 class HMCState(NamedTuple):
     """State of the HMC algorithm.
 
@@ -70,6 +65,8 @@ class HMCInfo(NamedTuple):
     This additional information can be used for debugging or computing
     diagnostics.
 
+    momentum:
+        The momentum that was sampled and used to integrate the trajectory.
     acceptance_probability
         The acceptance probability of the transition, linked to the energy
         difference between the original and the proposed states.
@@ -79,12 +76,15 @@ class HMCInfo(NamedTuple):
     is_divergent
         Whether the difference in energy between the original and the new state
         exceeded the divergence threshold.
+    energy:
+        Energy of the transition.
     proposal
         The state proposed by the proposal. Typically includes the position and
         momentum.
-    proposal_info
-        Information returned by the proposal. Typically includes the step size,
-        number of integration steps and intermediate states.
+    step_size
+        Size of the integration step.
+    num_integration_steps
+        Number of times we run the symplectic integrator to build the trajectory
     """
 
     momentum: PyTree
@@ -93,7 +93,8 @@ class HMCInfo(NamedTuple):
     is_divergent: bool
     energy: float
     proposal: IntegratorState
-    trajectory_info: HMCTrajectoryInfo
+    step_size: float
+    num_integration_steps: int
 
 
 def hmc(
@@ -174,12 +175,16 @@ def hmc(
             is_diverging,
             new_proposal.energy,
             new_proposal,
-            HMCTrajectoryInfo(step_size, num_integration_steps),
+            step_size,
+            num_integration_steps,
         )
 
         return sampled_proposal.state, info
 
     return generate
+
+
+class NUTSInfo(NamedTuple):
 
 
 def iterative_nuts(
