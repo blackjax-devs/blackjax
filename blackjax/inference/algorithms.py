@@ -106,8 +106,27 @@ def hmc(
     """Vanilla HMC algorithm.
 
     The algorithm integrates the trajectory applying a symplectic integrator
-    `num_integration_steps` times in one direction to get a proposal and
-    uses a Metropolis-Hastings acceptance step.
+    `num_integration_steps` times in one direction to get a proposal and uses a
+    Metropolis-Hastings acceptance step to either reject or accept this
+    proposal. This is what people usually refer to when they talk about "the
+    HMC algorithm".
+
+    Parameters
+    ----------
+    integrator
+        Symplectic integrator used to build the trajectory step by step.
+    kinetic_energy
+        Function that computes the kinetic energy.
+    step_size
+        Size of the integration step.
+    num_integration_steps
+        Number of times we run the symplectic integrator to build the trajectory
+    divergence_threshold
+        Threshold above which we say that there is a divergence.
+
+    Returns
+    -------
+    A kernel that generates a new chain state and information about the transition.
 
     """
     build_trajectory = trajectory.static_integration(
@@ -168,11 +187,47 @@ def iterative_nuts(
     kinetic_energy: Callable,
     uturn_check_fn: Callable,
     step_size: float,
-    max_num_doublings: int = 10,
+    max_num_trajectory_samples: int = 10,
     divergence_threshold: float = 1000,
 ):
-    """Iterative NUTS proposal."""
+    """Iterative NUTS algorithm.
 
+    This algorithm is an iteration of the original NUTS algorithm [1]_ with two major differences:
+    - We do not use slice samplig but multinomial sampling instead [2]_;
+    - The trajectory expansion is not recursive but iterative [3]_.
+
+    The implementation can seem unusual for those familiar with similar
+    algorithms. Indeed, we do not conceptualize the trajectory construction as
+    building a tree. We feel that the tree lingo, inherited from the recursive
+    version, is unnecessarily complicated and hides the more general concepts
+    on which the NUTS algorithm is built.
+
+    NUTS, in essence, consists in sampling a trajectory by iteratively choosing
+    a direction at random and integrating in this direction a number of times
+    that doubles at every step. From this trajectory we continuously sample a
+    proposal. When the trajectory turns on itself or when we have reached the
+    maximum trajectory length we return the current proposal.
+
+    Parameters
+    ----------
+    integrator
+        Symplectic integrator used to build the trajectory step by step.
+    kinetic_energy
+        Function that computes the kinetic energy.
+    uturn_check_fn:
+        Function that determines whether the trajectory is turning on itself (metric-dependant).
+    step_size
+        Size of the integration step.
+    max_num_trajectory_samples
+        The maximum number of trajectory samples we take in the absence of divergence or u-turn.
+    divergence_threshold
+        Threshold above which we say that there is a divergence.
+
+    Returns
+    -------
+    A kernel that generates a new chain state and information about the transition.
+
+    """
     (
         new_criterion_state,
         update_criterion_state,
@@ -191,7 +246,7 @@ def iterative_nuts(
         trajectory_integrator,
         uturn_check_fn,
         step_size,
-        max_num_doublings,
+        max_num_trajectory_samples,
     )
 
     def _compute_energy(state: IntegratorState) -> float:
@@ -199,7 +254,7 @@ def iterative_nuts(
         return energy
 
     def propose(rng_key, initial_state: IntegratorState):
-        criterion_state = new_criterion_state(initial_state, max_num_doublings)
+        criterion_state = new_criterion_state(initial_state, max_num_trajectory_samples)
         proposal = Proposal(initial_state, _compute_energy(initial_state), 0.0)
         trajectory = Trajectory(initial_state, initial_state, initial_state.momentum)
 
