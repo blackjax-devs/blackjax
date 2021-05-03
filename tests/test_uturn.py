@@ -3,6 +3,7 @@
 """Test the iterative u-turn criterion."""
 import jax.numpy as jnp
 import pytest
+
 from blackjax.inference.metrics import gaussian_euclidean
 from blackjax.inference.termination import IterativeUTurnState, iterative_uturn_numpyro
 

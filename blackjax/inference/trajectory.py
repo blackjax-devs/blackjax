@@ -28,9 +28,10 @@ References
 """
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
-import blackjax.inference.proposal as proposal
 import jax
 import jax.numpy as jnp
+
+import blackjax.inference.proposal as proposal
 from blackjax.inference.integrators import IntegratorState
 
 PyTree = Union[Dict, List, Tuple]

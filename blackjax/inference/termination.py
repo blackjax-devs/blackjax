@@ -16,8 +16,6 @@ from typing import NamedTuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.inference.integrators import IntegratorState
-
 
 class IterativeUTurnState(NamedTuple):
     momentum: jnp.ndarray
