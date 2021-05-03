@@ -222,10 +222,10 @@ def dynamic_progressive_integration(
             new_proposal, is_diverging = generate_proposal(proposal, new_state)
             sampled_proposal = sample_proposal(rng_key, proposal, new_proposal)
             new_termination_state = update_termination(
-                termination_state, new_trajectory, new_state, step
+                termination_state, new_trajectory.momentum_sum, new_state.momentum, step
             )
             has_terminated = is_criterion_met(
-                new_termination_state, new_trajectory, new_state
+                new_termination_state, new_trajectory.momentum_sum, new_state.momentum
             )
 
             return (

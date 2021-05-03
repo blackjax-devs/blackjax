@@ -41,14 +41,14 @@ def iterative_uturn_numpyro(is_turning):
 
     def update_criterion_state(
         checkpoints: IterativeUTurnState,
-        trajectory,
-        state: IntegratorState,
+        momentum_sum,
+        momentum,
         step: int,
     ):
         r_ckpts, r_sum_ckpts, _, _ = checkpoints
         ckpt_idx_min, ckpt_idx_max = _leaf_idx_to_ckpt_idxs(step)
-        r, _ = jax.flatten_util.ravel_pytree(state.momentum)
-        r_sum, _ = jax.flatten_util.ravel_pytree(trajectory.momentum_sum)
+        r, _ = jax.flatten_util.ravel_pytree(momentum)
+        r_sum, _ = jax.flatten_util.ravel_pytree(momentum_sum)
         r_ckpts, r_sum_ckpts = jax.lax.cond(
             step % 2 == 0,
             (r_ckpts, r_sum_ckpts),
@@ -78,15 +78,15 @@ def iterative_uturn_numpyro(is_turning):
         idx_min = idx_max - num_subtrees + 1
         return idx_min, idx_max
 
-    def _is_iterative_turning(checkpoints, trajectory, state):
+    def _is_iterative_turning(checkpoints, momentum_sum, momentum):
         """Checks whether there is a U-turn in the iteratively built expanded trajectory.
         These checks only need to be performed as specific points.
 
         Does that include the robust U-turn check?
         """
 
-        r, _ = jax.flatten_util.ravel_pytree(state.momentum)
-        r_sum, _ = jax.flatten_util.ravel_pytree(trajectory.momentum_sum)
+        r, _ = jax.flatten_util.ravel_pytree(momentum)
+        r_sum, _ = jax.flatten_util.ravel_pytree(momentum_sum)
         r_ckpts, r_sum_ckpts, idx_min, idx_max = checkpoints
 
         def _body_fn(state):
