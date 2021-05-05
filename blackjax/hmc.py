@@ -5,13 +5,16 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-import blackjax.inference.algorithms as algorithms
 import blackjax.inference.base as base
 import blackjax.inference.integrators as integrators
 import blackjax.inference.metrics as metrics
+import blackjax.inference.trajectory as trajectory
+import blackjax.inference.proposal as proposal
 
 Array = Union[np.ndarray, jnp.DeviceArray]
 PyTree = Union[Dict, List, Tuple]
+
+__all__ = ["new_state", "kernel"]
 
 
 class HMCParameters(NamedTuple):
@@ -21,68 +24,62 @@ class HMCParameters(NamedTuple):
     divergence_threshold: int = 1000
 
 
-def new_state(position: PyTree, potential_fn: Callable) -> base.HMCState:
-    """Create a chain state from a position.
+class HMCInfo(NamedTuple):
+    """Additional information on the HMC transition.
 
-    The HMC kernel works with states that contain the current chain position
-    and its associated potential energy and derivative of the potential energy.
-    This function computes initial states from an initial position.  While this
-    function is intended to work for one chain, it is possible to use
-    `jax.vmap` to compute the initial state of several chains.
+    This additional information can be used for debugging or computing
+    diagnostics.
 
-    Note: Potential energy is also known as
-    the negative joint loglikelihood of the model, priors, and data
-    without the normalizing constant,
-    otherwise known as the negative log posterior density.
-
-    Example
-    -------
-    Let us assume a model with two random variables. We wish to sample from
-    4 chains with the following initial positions:
-
-        >>> import numpy as np
-        >>> init_positions = (np.random.rand(4, 1000), np.random.rand(4, 300))
-
-    We have a `logpdf` function that returns the log-probability associated with
-    the chain at a given position:
-
-        >>> potential_fn((np.random.rand(1000), np.random.rand(3000)))
-        -3.4
-
-    We can compute the initial state for each of the 4 chain as follows:
-
-        >>> import jax
-        >>> jax.vmap(new_state, in_axes=(0, None))(init_positions, potential_fn)
-
-    Parameters
-    ----------
-    position
-        The current values of the random variables whose posterior we want to
-        sample from. Can be anything from a list, a (named) tuple or a dict of
-        arrays. The arrays can either be Numpy arrays or JAX DeviceArrays.
-    potential_fn
-        A function that returns the value of the potential energy when called
-        with a position.
-
-    Returns
-    -------
-    A HMC state that contains the position, the associated potential energy and gradient of the
-    potential energy.
+    momentum:
+        The momentum that was sampled and used to integrate the trajectory.
+    acceptance_probability
+        The acceptance probability of the transition, linked to the energy
+        difference between the original and the proposed states.
+    is_accepted
+        Whether the proposed position was accepted or the original position
+        was returned.
+    is_divergent
+        Whether the difference in energy between the original and the new state
+        exceeded the divergence threshold.
+    energy:
+        Energy of the transition.
+    proposal
+        The state proposed by the proposal. Typically includes the position and
+        momentum.
+    step_size
+        Size of the integration step.
+    num_integration_steps
+        Number of times we run the symplectic integrator to build the trajectory
     """
-    potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
-    return base.HMCState(position, potential_energy, potential_energy_grad)
+
+    momentum: PyTree
+    acceptance_probability: float
+    is_accepted: bool
+    is_divergent: bool
+    energy: float
+    proposal: integrators.IntegratorState
+    step_size: float
+    num_integration_steps: int
 
 
-def kernel(potential_fn: Callable, parameters: HMCParameters) -> Callable:
+new_state = base.new_hmc_state
+
+
+def kernel(potential_fn: Callable, parameters: HMCParameters):
     """Build a HMC kernel.
 
     Parameters
     ----------
     potential_fn
         A function that returns the potential energy of a chain at a given position.
-
     parameters
         A NamedTuple that contains the parameters of the kernel to be built.
+
+    Returns
+    -------
+    A kernel that takes a rng_key and a Pytree that contains the current state
+    of the chain and that returns a new state of the chain along with
+    information about the transition.
     """
     step_size, num_integration_steps, inv_mass_matrix, divergence_threshold = parameters
 
@@ -96,14 +93,104 @@ def kernel(potential_fn: Callable, parameters: HMCParameters) -> Callable:
     momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
         inv_mass_matrix
     )
-    integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
-    proposal = algorithms.hmc(
-        integrator,
+    symplectic_integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
+    proposal_generator = hmc_proposal(
+        symplectic_integrator,
         kinetic_energy_fn,
         step_size,
         num_integration_steps,
         divergence_threshold,
     )
-    kernel = base.hmc(momentum_generator, proposal)
-
+    kernel = base.hmc(momentum_generator, proposal_generator)
     return kernel
+
+
+def hmc_proposal(
+    integrator: Callable,
+    kinetic_energy: Callable,
+    step_size: float,
+    num_integration_steps: int = 1,
+    divergence_threshold: float = 1000,
+) -> Callable:
+    """Vanilla HMC algorithm.
+
+    The algorithm integrates the trajectory applying a symplectic integrator
+    `num_integration_steps` times in one direction to get a proposal and uses a
+    Metropolis-Hastings acceptance step to either reject or accept this
+    proposal. This is what people usually refer to when they talk about "the
+    HMC algorithm".
+
+    Parameters
+    ----------
+    integrator
+        Symplectic integrator used to build the trajectory step by step.
+    kinetic_energy
+        Function that computes the kinetic energy.
+    step_size
+        Size of the integration step.
+    num_integration_steps
+        Number of times we run the symplectic integrator to build the trajectory
+    divergence_threshold
+        Threshold above which we say that there is a divergence.
+
+    Returns
+    -------
+    A kernel that generates a new chain state and information about the transition.
+
+    """
+    build_trajectory = trajectory.static_integration(
+        integrator, step_size, num_integration_steps
+    )
+    init_proposal, generate_proposal = proposal.proposal_generator(
+        kinetic_energy, divergence_threshold
+    )
+    sample_proposal = proposal.static_binomial_sampling
+
+    def _compute_energy(state: integrators.IntegratorState) -> float:
+        energy = state.potential_energy + kinetic_energy(state.position, state.momentum)
+        return energy
+
+    def flip_momentum(
+        state: integrators.IntegratorState,
+    ) -> integrators.IntegratorState:
+        """To guarantee time-reversibility (hence detailed balance) we
+        need to flip the last state's momentum. If we run the hamiltonian
+        dynamics starting from the last state with flipped momentum we
+        should indeed retrieve the initial state (with flipped momentum).
+
+        """
+        flipped_momentum = jax.tree_util.tree_multimap(
+            lambda m: -1.0 * m, state.momentum
+        )
+        return integrators.IntegratorState(
+            state.position,
+            flipped_momentum,
+            state.potential_energy,
+            state.potential_energy_grad,
+        )
+
+    def generate(
+        rng_key, state: integrators.IntegratorState
+    ) -> Tuple[integrators.IntegratorState, HMCInfo]:
+        """Generate a new chain state."""
+        end_state = build_trajectory(state)
+        end_state = flip_momentum(end_state)
+        proposal = init_proposal(state)
+        new_proposal, is_diverging = generate_proposal(proposal, end_state)
+        sampled_proposal, *info = sample_proposal(rng_key, proposal, new_proposal)
+        do_accept, p_accept = info
+
+        info = HMCInfo(
+            state.momentum,
+            p_accept,
+            do_accept,
+            is_diverging,
+            new_proposal.energy,
+            new_proposal,
+            step_size,
+            num_integration_steps,
+        )
+
+        return sampled_proposal.state, info
+
+    return generate

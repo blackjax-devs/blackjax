@@ -40,152 +40,12 @@ from blackjax.inference.trajectory import Trajectory
 
 __all__ = ["HMCState", "HMCInfo", "hmc", "iterative_nuts"]
 
-
 PyTree = Union[Dict, List, Tuple]
 ProposalState = IntegratorState
 
 
-class HMCState(NamedTuple):
-    """State of the HMC algorithm.
-
-    The HMC algorithm takes one position of the chain and returns another
-    position. In order to make computations more efficient, we also store
-    the current potential energy as well as the current gradient of the
-    potential energy.
-    """
-
-    position: PyTree
-    potential_energy: float
-    potential_energy_grad: PyTree
-
-
-class HMCInfo(NamedTuple):
-    """Additional information on the HMC transition.
-
-    This additional information can be used for debugging or computing
-    diagnostics.
-
-    momentum:
-        The momentum that was sampled and used to integrate the trajectory.
-    acceptance_probability
-        The acceptance probability of the transition, linked to the energy
-        difference between the original and the proposed states.
-    is_accepted
-        Whether the proposed position was accepted or the original position
-        was returned.
-    is_divergent
-        Whether the difference in energy between the original and the new state
-        exceeded the divergence threshold.
-    energy:
-        Energy of the transition.
-    proposal
-        The state proposed by the proposal. Typically includes the position and
-        momentum.
-    step_size
-        Size of the integration step.
-    num_integration_steps
-        Number of times we run the symplectic integrator to build the trajectory
-    """
-
-    momentum: PyTree
-    acceptance_probability: float
-    is_accepted: bool
-    is_divergent: bool
-    energy: float
-    proposal: IntegratorState
-    step_size: float
-    num_integration_steps: int
-
-
-def hmc(
-    integrator: Callable,
-    kinetic_energy: Callable,
-    step_size: float,
-    num_integration_steps: int = 1,
-    divergence_threshold: float = 1000,
-) -> Callable:
-    """Vanilla HMC algorithm.
-
-    The algorithm integrates the trajectory applying a symplectic integrator
-    `num_integration_steps` times in one direction to get a proposal and uses a
-    Metropolis-Hastings acceptance step to either reject or accept this
-    proposal. This is what people usually refer to when they talk about "the
-    HMC algorithm".
-
-    Parameters
-    ----------
-    integrator
-        Symplectic integrator used to build the trajectory step by step.
-    kinetic_energy
-        Function that computes the kinetic energy.
-    step_size
-        Size of the integration step.
-    num_integration_steps
-        Number of times we run the symplectic integrator to build the trajectory
-    divergence_threshold
-        Threshold above which we say that there is a divergence.
-
-    Returns
-    -------
-    A kernel that generates a new chain state and information about the transition.
-
-    """
-    build_trajectory = trajectory.static_integration(
-        integrator, step_size, num_integration_steps
-    )
-    init_proposal, generate_proposal = proposal.proposal_generator(
-        kinetic_energy, divergence_threshold
-    )
-    sample_proposal = proposal.static_binomial_sampling
-
-    def _compute_energy(state: IntegratorState) -> float:
-        energy = state.potential_energy + kinetic_energy(state.position, state.momentum)
-        return energy
-
-    def flip_momentum(state: IntegratorState) -> IntegratorState:
-        """To guarantee time-reversibility (hence detailed balance) we
-        need to flip the last state's momentum. If we run the hamiltonian
-        dynamics starting from the last state with flipped momentum we
-        should indeed retrieve the initial state (with flipped momentum).
-
-        """
-        flipped_momentum = jax.tree_util.tree_multimap(
-            lambda m: -1.0 * m, state.momentum
-        )
-        return IntegratorState(
-            state.position,
-            flipped_momentum,
-            state.potential_energy,
-            state.potential_energy_grad,
-        )
-
-    def generate(rng_key, state: IntegratorState) -> Tuple[IntegratorState, HMCInfo]:
-        """Generate a new chain state."""
-        end_state = build_trajectory(state)
-        end_state = flip_momentum(end_state)
-        proposal = init_proposal(state)
-        new_proposal, is_diverging = generate_proposal(proposal, end_state)
-        sampled_proposal, *info = sample_proposal(rng_key, proposal, new_proposal)
-        do_accept, p_accept = info
-
-        info = HMCInfo(
-            state.momentum,
-            p_accept,
-            do_accept,
-            is_diverging,
-            new_proposal.energy,
-            new_proposal,
-            step_size,
-            num_integration_steps,
-        )
-
-        return sampled_proposal.state, info
-
-    return generate
-
-
 class NUTSInfo(NamedTuple):
-    """ In PyMC3
+    """In PyMC3
 
     "depth": self.depth,
     "mean_tree_accept": self.mean_tree_accept,
@@ -198,6 +58,7 @@ class NUTSInfo(NamedTuple):
     We need some info on the divergence. In particular we need the offending
     new state.
     """
+
     proposal: Proposal
     delta_energy: float
     max_delta_energy: float

@@ -3,10 +3,9 @@ from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
 
-from blackjax.inference.algorithms import HMCInfo
 from blackjax.inference.integrators import IntegratorState
 
-__all__ = ["HMCState", "HMCInfo", "hmc"]
+__all__ = ["HMCState", "hmc"]
 
 PyTree = Union[Dict, List, Tuple]
 
@@ -23,6 +22,58 @@ class HMCState(NamedTuple):
     position: PyTree
     potential_energy: float
     potential_energy_grad: PyTree
+
+
+def new_hmc_state(position: PyTree, potential_fn: Callable) -> HMCState:
+    """Create a chain state from a position.
+
+    The HMC kernel works with states that contain the current chain position
+    and its associated potential energy and derivative of the potential energy.
+    This function computes initial states from an initial position.  While this
+    function is intended to work for one chain, it is possible to use
+    `jax.vmap` to compute the initial state of several chains.
+
+    Note: Potential energy is also known as
+    the negative joint loglikelihood of the model, priors, and data
+    without the normalizing constant,
+    otherwise known as the negative log posterior density.
+
+    Example
+    -------
+    Let us assume a model with two random variables. We wish to sample from
+    4 chains with the following initial positions:
+
+        >>> import numpy as np
+        >>> init_positions = (np.random.rand(4, 1000), np.random.rand(4, 300))
+
+    We have a `logpdf` function that returns the log-probability associated with
+    the chain at a given position:
+
+        >>> potential_fn((np.random.rand(1000), np.random.rand(3000)))
+        -3.4
+
+    We can compute the initial state for each of the 4 chain as follows:
+
+        >>> import jax
+        >>> jax.vmap(new_state, in_axes=(0, None))(init_positions, potential_fn)
+
+    Parameters
+    ----------
+    position
+        The current values of the random variables whose posterior we want to
+        sample from. Can be anything from a list, a (named) tuple or a dict of
+        arrays. The arrays can either be Numpy arrays or JAX DeviceArrays.
+    potential_fn
+        A function that returns the value of the potential energy when called
+        with a position.
+
+    Returns
+    -------
+    A HMC state that contains the position, the associated potential energy and gradient of the
+    potential energy.
+    """
+    potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
+    return HMCState(position, potential_energy, potential_energy_grad)
 
 
 def hmc(
@@ -88,7 +139,7 @@ def hmc(
 
     def kernel(
         rng_key: jax.numpy.DeviceArray, state: HMCState
-    ) -> Tuple[HMCState, HMCInfo]:
+    ) -> Tuple[HMCState, NamedTuple]:
         """Moves the chain by one step using the Hamiltonian dynamics.
 
         Parameters
