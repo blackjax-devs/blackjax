@@ -11,6 +11,11 @@ PyTree = Union[Dict, List, Tuple]
 
 
 class IntegratorState(NamedTuple):
+    """State of the trajectory integration.
+
+    We keep the gradient of the potential energy to speedup computations.
+    """
+
     position: PyTree
     momentum: PyTree
     potential_energy: float

@@ -11,10 +11,13 @@ For a Newtonian hamiltonian dynamic the kinetic energy is given by:
 .. math::
     K(p) = \frac{1}{2} p^T M^{-1} p
 
+We can also generate a relativistic dynamic [2]_.
+
 References
 ----------
 .. [1]: Betancourt, Michael, et al. "The geometric foundations of hamiltonian
         monte carlo." Bernoulli 23.4A (2017): 2257-2298.
+.. [2]: Lu, Xiaoyu, et al. "Relativistic monte carlo." Artificial Intelligence and Statistics. PMLR, 2017.
 
 """
 from typing import Callable, Dict, List, Tuple, Union
@@ -52,6 +55,16 @@ def gaussian_euclidean(
         In particular, JAX sorts dictionaries by key when flattening them. The
         value of each variables will appear in the flattened Pytree following
         the order given by `sort(keys)`.
+
+    Returns
+    -------
+    momentum_generator
+        A function that generates a value for the momentum at random.
+    kinetic_energy
+        A function that returns the kinetic energy given the momentum.
+    is_turning
+        A function that determines whether a trajectory is turning back on
+        itself given the values of the momentum along the trajectory.
 
     References
     ----------

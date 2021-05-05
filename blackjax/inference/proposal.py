@@ -14,15 +14,13 @@ class Proposal(NamedTuple):
     energy:
         The potential energy corresponding to the state.
     weight:
-        Weight of the proposal. The logarithm of the sum of the canonical
+        Weight of the proposal. It is equal to the logarithm of the sum of the canonical
         densities of each state :math:`e^{-H(z)}` along the trajectory.
-    is_diverging
-        Whether a divergence was observed when making one step.
     """
 
     state: IntegratorState
     energy: float
-    log_weight: float
+    weight: float
 
 
 def proposal_generator(
@@ -36,6 +34,12 @@ def proposal_generator(
         previous_proposal: Proposal, state: IntegratorState
     ) -> Tuple[Proposal, bool]:
         """Generate a new proposal from a trajectory state.
+
+        The trajectory state records information about the position in the state
+        space and corresponding potential energy. A proposal also carries a
+        weight that is equal to the difference between the current energy and
+        the previous one. It thus carries information about the previous state
+        as well as the current state.
 
         Parameters
         ----------
@@ -54,14 +58,14 @@ def proposal_generator(
         delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
         is_transition_divergent = jnp.abs(delta_energy) > divergence_threshold
 
-        # The log-weight of the new proposal is equal to H(z) - H(z_new)?
-        log_weight = delta_energy
+        # The weight of the new proposal is equal to H(z) - H(z_new)
+        weight = delta_energy
 
         return (
             Proposal(
                 state,
                 new_energy,
-                log_weight,
+                weight,
             ),
             is_transition_divergent,
         )
@@ -75,8 +79,14 @@ def proposal_generator(
 
 
 def static_binomial_sampling(rng_key, proposal, new_proposal):
-    """Choose a state between two states."""
-    p_accept = jnp.clip(jnp.exp(proposal.log_weight), a_max=1)
+    """Accept or reject a proposal based on its weight.
+
+    In the static setting, the `log_weight` of the proposal will be equal to the
+    difference of energy between the beginning and the end of the trajectory. It
+    is implemented this way to keep a consistent API with progressive sampling.
+
+    """
+    p_accept = jnp.clip(jnp.exp(proposal.weight), a_max=1)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
 
     return jax.lax.cond(
@@ -98,14 +108,13 @@ def static_binomial_sampling(rng_key, proposal, new_proposal):
 
 
 def progressive_uniform_sampling(rng_key, proposal, new_proposal):
-    """Uniform proposal sampling."""
-    p_accept = jax.scipy.special.expit(new_proposal.log_weight - proposal.log_weight)
+    p_accept = jax.scipy.special.expit(new_proposal.weight - proposal.weight)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
 
     updated_proposal = Proposal(
         new_proposal.state,
         new_proposal.energy,
-        jnp.logaddexp(proposal.log_weight, new_proposal.log_weight),
+        jnp.logaddexp(proposal.weight, new_proposal.weight),
     )
 
     return jax.lax.cond(
@@ -120,14 +129,14 @@ def progressive_biased_sampling(rng_key, proposal, new_proposal):
     biases the transition away from the trajectory's initial state.
 
     """
-    p_accept = jnp.exp(new_proposal.log_weight - proposal.log_weight)
+    p_accept = jnp.exp(new_proposal.weight - proposal.weight)
     p_accept = jnp.clip(p_accept, a_max=1.0)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
 
     updated_proposal = Proposal(
         new_proposal.state,
         new_proposal.energy,
-        jnp.logaddexp(proposal.log_weight, new_proposal.log_weight),
+        jnp.logaddexp(proposal.weight, new_proposal.weight),
     )
 
     return jax.lax.cond(

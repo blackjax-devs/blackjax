@@ -1,25 +1,26 @@
 """Procedures to build trajectories for algorithms in the HMC family.
 
-While the traditional implementation of HMC generates proposals by running the
-integrators in a given direction and flipping the momentum of the last state,
-this is only one possible way to generate trajectories and thus proposals.
+To propose a new state, algorithms in the HMC family generally proceed by [1]_:
+1. Sampling a trajectory starting from the initial point;
+2. Sampling a new state from this sampled trajectory.
 
-The next level of complexity would be to choose directions at random at each
-step, thus *sampling* a trajectory (which ensures detailed balance). NUTS goes
-even further by choosing the direction at random and runs the interator a
-number of times that is a function of the current step.
+Step (1) ensures that the process is reversible and thus that detailed balance
+is respected. The traditional implementation of HMC does not sample a
+trajectory, but instead takes a fixed number of steps in the same direction and
+flips the momentum of the last state.
 
-In this file we implement various ways of sampling trajectories. As in [1]_ we
-distinguish between:
+We distinguish here between two different methods to sample trajectories: static
+and dynamic sampling. In the static setting we sample trajectories with a fixed
+number of steps, while in the dynamic setting the total number of steps is
+determined by a dynamic termination criterion. Traditional HMC falls in the
+former category, NUTS in the latter.
 
-    - static trajectory sampling: we first sample a trajectory and then
-      generate a proposal from this trajectory; this requires to store the
-      whole trajectory in memory. We can also update proposals as we sample the
-      trajectory; in this progressive scheme we only need to store the
-      endpoints of the trajectory and the current proposal.
+There are also two methods to sample proposals from these trajectories. In the
+static setting we first build the trajectory and then sample a proposal from
+this trajectory. In the progressive setting we update the proposal as the
+trajectory is being sampled. While the former is faster, we risk saturating the
+memory by keeping states that will subsequently be discarded.
 
-    - dynamic trajectory sampling: we stop sampling when a certain critetion is
-      met.
 
 References
 ----------
@@ -43,7 +44,9 @@ class Trajectory(NamedTuple):
     momentum_sum: PyTree
 
 
-def append_to_trajectory(direction, trajectory, state):
+def append_to_trajectory(
+    direction: int, trajectory: Trajectory, state: IntegratorState
+) -> Trajectory:
     """Append a state to the trajectory to form a new trajectory."""
     leftmost_state, rightmost_state = jax.lax.cond(
         direction > 0,
@@ -122,7 +125,6 @@ def static_progressive_integration(
     proposal at each step.
 
     """
-
     directed_step_size = direction * step_size
 
     def integrate(rng_key, initial_state: IntegratorState) -> IntegratorState:
@@ -156,13 +158,12 @@ def dynamic_progressive_integration(
     ----------
     integrator
         The symplectic integrator used to integrate the hamiltonian trajectory.
+    kinetic_energy
+        Function to compute the current value of the kinetic energy.
     termination_criterion
         The criterion used to stop the sampling. This function generates a function that
         initializes the state, a function that updates it and a function that determines
         whether the criterion is met.
-    progressive_sample
-        The sampler used to update the proposal as the trajectory is being sampled. Generates
-        a function that initializes the proposal state and one that updates it.
 
     """
     init_proposal, generate_proposal = proposal.proposal_generator(

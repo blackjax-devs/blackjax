@@ -95,12 +95,12 @@ def iterative_nuts_proposal(
     step_size: float,
     max_num_trajectory_samples: int = 10,
     divergence_threshold: float = 1000,
-):
+) -> Callable:
     """Iterative NUTS algorithm.
 
-    This algorithm is an iteration of the original NUTS algorithm [1]_ with two major differences:
-    - We do not use slice samplig but multinomial sampling instead [2]_;
-    - The trajectory expansion is not recursive but iterative [3]_.
+    This algorithm is an iteration on the original NUTS algorithm [1]_ with two major differences:
+    - We do not use slice samplig but multinomial sampling for the proposal [2]_;
+    - The trajectory expansion is not recursive but iterative [3,4]_.
 
     The implementation can seem unusual for those familiar with similar
     algorithms. Indeed, we do not conceptualize the trajectory construction as
@@ -133,6 +133,12 @@ def iterative_nuts_proposal(
     -------
     A kernel that generates a new chain state and information about the transition.
 
+    References
+    ----------
+    .. [1]: Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo." J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
+    .. [2]: Betancourt, Michael. "A conceptual introduction to Hamiltonian Monte Carlo." arXiv preprint arXiv:1701.02434 (2017).
+    .. [3]: Phan, Du, Neeraj Pradhan, and Martin Jankowiak. "Composable effects for flexible and accelerated probabilistic programming in NumPyro." arXiv preprint arXiv:1912.11554 (2019).
+    .. [4]: Lao, Junpeng, et al. "tfp. mcmc: Modern markov chain monte carlo tools built for modern hardware." arXiv preprint arXiv:2002.01184 (2020).
     """
     (
         new_criterion_state,

@@ -33,10 +33,11 @@ def new_hmc_state(position: PyTree, potential_fn: Callable) -> HMCState:
     function is intended to work for one chain, it is possible to use
     `jax.vmap` to compute the initial state of several chains.
 
-    Note: Potential energy is also known as
-    the negative joint loglikelihood of the model, priors, and data
-    without the normalizing constant,
-    otherwise known as the negative log posterior density.
+    Note
+    ----
+    The potential energy is also known as the negative joint loglikelihood of
+    the model, priors, and data without the normalizing constant, otherwise
+    known as the negative log posterior density.
 
     Example
     -------
