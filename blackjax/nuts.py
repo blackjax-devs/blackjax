@@ -73,9 +73,9 @@ def kernel(potential_fn: Callable, parameters: NUTSParameters) -> Callable:
     momentum_generator, kinetic_energy_fn, uturn_check_fn = metrics.gaussian_euclidean(
         inv_mass_matrix
     )
-    integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
+    symplectic_integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
     proposal_generator = iterative_nuts_proposal(
-        integrator,
+        symplectic_integrator,
         kinetic_energy_fn,
         uturn_check_fn,
         step_size,
