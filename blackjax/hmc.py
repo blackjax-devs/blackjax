@@ -8,8 +8,8 @@ import numpy as np
 import blackjax.inference.base as base
 import blackjax.inference.integrators as integrators
 import blackjax.inference.metrics as metrics
-import blackjax.inference.trajectory as trajectory
 import blackjax.inference.proposal as proposal
+import blackjax.inference.trajectory as trajectory
 
 Array = Union[np.ndarray, jnp.DeviceArray]
 PyTree = Union[Dict, List, Tuple]
