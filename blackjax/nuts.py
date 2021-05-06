@@ -24,25 +24,35 @@ class NUTSParameters(NamedTuple):
 
 
 class NUTSInfo(NamedTuple):
-    """In PyMC3
+    """Additional information on the NUTS transition.
 
-    "depth": self.depth,
-    "mean_tree_accept": self.mean_tree_accept,
-    "energy_error": self.proposal.energy - self.start.energy,
-    "energy": self.proposal.energy,
-    "tree_size": self.n_proposals,
-    "max_energy_error": self.max_energy_change,
-    "model_logp": self.proposal.logp,
+    This additional information can be used for debugging or computing
+    diagnostics.
 
-    We need some info on the divergence. In particular we need the offending
-    new state.
+    momentum:
+        The momentum that was sampled and used to integrate the trajectory.
+    is_divergent
+        Whether the difference in energy between the original and the new state
+        exceeded the divergence threshold.
+    is_turning
+        Whether the sampling returned because the trajectory started turning back on itself.
+    energy:
+        Energy of the transition.
+    trajectory_leftmost_state
+        The leftmost state of the full trajectory.
+    trajectory_rightmost_state
+        The rightmost state of the full trajectory.
+    num_trajectory_expansions
+        Number of subtrajectory samples that were taken.
     """
 
-    proposal: proposal.Proposal
-    delta_energy: float
-    max_delta_energy: float
-    num_subtrajectories: int
-    num_integration_steps: int
+    momentum: PyTree
+    is_divergent: bool
+    is_turning: bool
+    energy: float
+    trajectory_leftmost_state: integrators.IntegratorState
+    trajectory_rightmost_state: integrators.IntegratorState
+    num_trajectory_expansions: int
 
 
 new_state = blackjax.hmc.new_state
@@ -170,13 +180,23 @@ def iterative_nuts_proposal(
             initial_state, _compute_energy(initial_state), 0.0
         )
 
-        sampled_proposal, *_ = expand(
+        sampled_proposal, *info = expand(
             rng_key,
             initial_proposal,
             criterion_state,
         )
+        trajectory, num_doublings, is_diverging, has_terminated, is_turning = info
 
-        # Don't forget the proposal info here!
-        return sampled_proposal.state, None
+        info = NUTSInfo(
+            initial_state.momentum,
+            is_diverging,
+            has_terminated | is_turning,
+            sampled_proposal.energy,
+            trajectory.leftmost_state,
+            trajectory.rightmost_state,
+            num_doublings,
+        )
+
+        return sampled_proposal.state, info
 
     return propose

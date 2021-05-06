@@ -252,11 +252,19 @@ def dynamic_progressive_integration(
             False,
         )
 
-        _, step, proposal, trajectory, termination_state, _, _ = jax.lax.while_loop(
+        (
+            _,
+            step,
+            proposal,
+            trajectory,
+            termination_state,
+            is_diverging,
+            has_terminated,
+        ) = jax.lax.while_loop(
             do_keep_integrating, add_one_state, initial_integration_state
         )
 
-        return proposal, trajectory, termination_state, (step < max_num_steps)
+        return proposal, trajectory, termination_state, is_diverging, has_terminated
 
     return integrate
 
@@ -314,8 +322,8 @@ def dynamic_multiplicative_expansion(
     ):
         def do_keep_expanding(expansion_state) -> bool:
             """Determine whether we need to keep expanding the trajectory."""
-            _, step, trajectory, _, _, terminated_early, is_turning = expansion_state
-            return (step <= max_num_expansions) & ~terminated_early & ~is_turning
+            _, step, trajectory, _, _, is_diverging, _, is_turning = expansion_state
+            return (step <= max_num_expansions) & ~is_diverging & ~is_turning
 
         def expand_once(expansion_state):
             """Expand the current trajectory.
@@ -338,6 +346,7 @@ def dynamic_multiplicative_expansion(
                 termination_state,
                 _,
                 _,
+                _,
             ) = expansion_state
             rng_key, direction_key = jax.random.split(rng_key, 2)
 
@@ -355,7 +364,8 @@ def dynamic_multiplicative_expansion(
                 new_proposal,
                 new_trajectory,
                 termination_state,
-                terminated_early,
+                is_diverging,
+                has_terminated,
             ) = trajectory_integrator(
                 rng_key,
                 start_state,
@@ -371,7 +381,7 @@ def dynamic_multiplicative_expansion(
             # update the proposal
             # we reject proposals coming from diverging or turning subtrajectories
             sampled_proposal = jax.lax.cond(
-                terminated_early,
+                is_diverging | has_terminated,
                 proposal,
                 lambda x: x,
                 (rng_key, proposal, new_proposal),
@@ -390,7 +400,8 @@ def dynamic_multiplicative_expansion(
                 sampled_proposal,
                 new_trajectory,
                 termination_state,
-                terminated_early,
+                is_diverging,
+                has_terminated,
                 is_turning,
             )
 
@@ -399,7 +410,16 @@ def dynamic_multiplicative_expansion(
             initial_state, initial_state, initial_state.momentum
         )
 
-        _, step, new_proposal, _, _, _, is_turning = jax.lax.while_loop(
+        (
+            _,
+            step,
+            new_proposal,
+            trajectory,
+            _,
+            is_diverging,
+            has_terminated,
+            is_turning,
+        ) = jax.lax.while_loop(
             do_keep_expanding,
             expand_once,
             (
@@ -410,9 +430,10 @@ def dynamic_multiplicative_expansion(
                 criterion_state,
                 False,
                 False,
+                False,
             ),
         )
 
-        return new_proposal, step, is_turning
+        return new_proposal, trajectory, step, is_diverging, has_terminated, is_turning
 
     return expand

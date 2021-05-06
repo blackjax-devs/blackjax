@@ -58,7 +58,6 @@ class HMCInfo(NamedTuple):
     is_divergent: bool
     energy: float
     proposal: integrators.IntegratorState
-    step_size: float
     num_integration_steps: int
 
 
@@ -183,7 +182,6 @@ def hmc_proposal(
             is_diverging,
             new_proposal.energy,
             new_proposal,
-            step_size,
             num_integration_steps,
         )
 
