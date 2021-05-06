@@ -21,7 +21,7 @@ def test_gaussian_euclidean_ndim_invalid(shape):
 def test_gaussian_euclidean_dim_1():
     """Test Gaussian Euclidean Function with ndim 1"""
     inverse_mass_matrix = jnp.asarray([1 / 4], dtype=DTYPE)
-    momentum, kinetic_energy = metrics.gaussian_euclidean(inverse_mass_matrix)
+    momentum, kinetic_energy, _ = metrics.gaussian_euclidean(inverse_mass_matrix)
 
     arbitrary_position = jnp.asarray([12345], dtype=DTYPE)
     momentum_val = momentum(KEY, arbitrary_position)
@@ -41,7 +41,7 @@ def test_gaussian_euclidean_dim_1():
 def test_gaussian_euclidean_dim_2():
     """Test Gaussian Euclidean Function with ndim 2"""
     inverse_mass_matrix = jnp.asarray([[1 / 9, 0], [0, 1 / 4]], dtype=DTYPE)
-    momentum, kinetic_energy = metrics.gaussian_euclidean(inverse_mass_matrix)
+    momentum, kinetic_energy, _ = metrics.gaussian_euclidean(inverse_mass_matrix)
 
     arbitrary_position = jnp.asarray([12345, 23456], dtype=DTYPE)
     momentum_val = momentum(KEY, arbitrary_position)

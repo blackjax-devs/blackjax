@@ -2,11 +2,10 @@
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
-import jax.numpy as jnp
 
-from blackjax.inference.proposals import HMCProposalInfo, HMCProposalState
+from blackjax.inference.integrators import IntegratorState
 
-__all__ = ["HMCState", "HMCInfo", "hmc"]
+__all__ = ["HMCState", "hmc"]
 
 PyTree = Union[Dict, List, Tuple]
 
@@ -25,44 +24,62 @@ class HMCState(NamedTuple):
     potential_energy_grad: PyTree
 
 
-class HMCInfo(NamedTuple):
-    """Additional information on the HMC transition.
+def new_hmc_state(position: PyTree, potential_fn: Callable) -> HMCState:
+    """Create a chain state from a position.
 
-    This additional information can be used for debugging or computing
-    diagnostics.
+    The HMC kernel works with states that contain the current chain position
+    and its associated potential energy and derivative of the potential energy.
+    This function computes initial states from an initial position.  While this
+    function is intended to work for one chain, it is possible to use
+    `jax.vmap` to compute the initial state of several chains.
 
-    acceptance_probability
-        The acceptance probability of the transition, linked to the energy
-        difference between the original and the proposed states.
-    is_accepted
-        Whether the proposed position was accepted or the original position
-        was returned.
-    is_divergent
-        Whether the difference in energy between the original and the new state
-        exceeded the divergence threshold.
-    energy
-        The total energy that corresponds to the returned state.
-    proposal
-        The state proposed by the proposal. Typically includes the position and
-        momentum.
-    proposal_info
-        Information returned by the proposal. Typically includes the step size,
-        number of integration steps and intermediate states.
+    Note
+    ----
+    The potential energy is also known as the negative joint loglikelihood of
+    the model, priors, and data without the normalizing constant, otherwise
+    known as the negative log posterior density.
+
+    Example
+    -------
+    Let us assume a model with two random variables. We wish to sample from
+    4 chains with the following initial positions:
+
+        >>> import numpy as np
+        >>> init_positions = (np.random.rand(4, 1000), np.random.rand(4, 300))
+
+    We have a `logpdf` function that returns the log-probability associated with
+    the chain at a given position:
+
+        >>> potential_fn((np.random.rand(1000), np.random.rand(3000)))
+        -3.4
+
+    We can compute the initial state for each of the 4 chain as follows:
+
+        >>> import jax
+        >>> jax.vmap(new_state, in_axes=(0, None))(init_positions, potential_fn)
+
+    Parameters
+    ----------
+    position
+        The current values of the random variables whose posterior we want to
+        sample from. Can be anything from a list, a (named) tuple or a dict of
+        arrays. The arrays can either be Numpy arrays or JAX DeviceArrays.
+    potential_fn
+        A function that returns the value of the potential energy when called
+        with a position.
+
+    Returns
+    -------
+    A HMC state that contains the position, the associated potential energy and gradient of the
+    potential energy.
     """
-
-    acceptance_probability: float
-    is_accepted: bool
-    is_divergent: bool
-    energy: float
-    proposal: HMCProposalState
-    proposal_info: HMCProposalInfo
+    potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
+    return HMCState(position, potential_energy, potential_energy_grad)
 
 
 def hmc(
-    proposal_generator: Callable,
     momentum_generator: Callable,
-    kinetic_energy: Callable,
-    divergence_threshold: float = 1000.0,
+    proposal_generator: Callable,
 ) -> Callable:
     """Create a Hamiltonian Monte Carlo transition kernel.
 
@@ -122,8 +139,8 @@ def hmc(
     """
 
     def kernel(
-        rng_key: jax.random.PRNGKey, state: HMCState
-    ) -> Tuple[HMCState, HMCInfo]:
+        rng_key: jax.numpy.DeviceArray, state: HMCState
+    ) -> Tuple[HMCState, NamedTuple]:
         """Moves the chain by one step using the Hamiltonian dynamics.
 
         Parameters
@@ -138,63 +155,19 @@ def hmc(
         -------
         The next state of the chain and additional information about the current step.
         """
-        key_momentum, key_integrator, key_accept = jax.random.split(rng_key, 3)
+        key_momentum, key_integrator = jax.random.split(rng_key, 2)
 
         position, potential_energy, potential_energy_grad = state
         momentum = momentum_generator(key_momentum, position)
-        energy = potential_energy + kinetic_energy(momentum, position)
 
-        proposal, proposal_info = proposal_generator(
-            key_integrator,
-            HMCProposalState(
-                position, momentum, potential_energy, potential_energy_grad
-            ),
+        augmented_state = IntegratorState(
+            position, momentum, potential_energy, potential_energy_grad
         )
-
-        flipped_momentum = jax.tree_util.tree_multimap(
-            lambda m: -1.0 * m, proposal.momentum
-        )
-        new_energy = proposal.potential_energy + kinetic_energy(
-            flipped_momentum, proposal.position
-        )
-        new_state = HMCState(
+        proposal, info = proposal_generator(key_integrator, augmented_state)
+        proposal = HMCState(
             proposal.position, proposal.potential_energy, proposal.potential_energy_grad
         )
 
-        delta_energy = energy - new_energy
-        delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
-        is_divergent = jnp.abs(delta_energy) > divergence_threshold
-
-        p_accept = jnp.clip(jnp.exp(delta_energy), a_max=1)
-        do_accept = jax.random.bernoulli(key_accept, p_accept)
-        accept_state = (
-            new_state,
-            HMCInfo(
-                p_accept,
-                True,
-                is_divergent,
-                new_energy,
-                proposal,
-                proposal_info,
-            ),
-        )
-        reject_state = (
-            state,
-            HMCInfo(
-                p_accept,
-                False,
-                is_divergent,
-                energy,
-                proposal,
-                proposal_info,
-            ),
-        )
-        return jax.lax.cond(
-            do_accept,
-            accept_state,
-            lambda state: state,
-            reject_state,
-            lambda state: state,
-        )
+        return proposal, info
 
     return kernel
