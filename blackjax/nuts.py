@@ -1,7 +1,6 @@
 """Public API for the NUTS Kernel"""
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 
@@ -93,7 +92,7 @@ def iterative_nuts_proposal(
     kinetic_energy: Callable,
     uturn_check_fn: Callable,
     step_size: float,
-    max_num_trajectory_samples: int = 10,
+    max_num_expansions: int = 10,
     divergence_threshold: float = 1000,
 ) -> Callable:
     """Iterative NUTS algorithm.
@@ -124,7 +123,7 @@ def iterative_nuts_proposal(
         Function that determines whether the trajectory is turning on itself (metric-dependant).
     step_size
         Size of the integration step.
-    max_num_trajectory_samples
+    max_num_expansions
         The number of sub-trajectory samples we take to build the trajectory.
     divergence_threshold
         Threshold above which we say that there is a divergence.
@@ -154,11 +153,11 @@ def iterative_nuts_proposal(
         divergence_threshold,
     )
 
-    expand, do_keep_expanding = trajectory.dynamic_multiplicative_expansion(
+    expand = trajectory.dynamic_multiplicative_expansion(
         trajectory_integrator,
         uturn_check_fn,
         step_size,
-        max_num_trajectory_samples,
+        max_num_expansions,
     )
 
     def _compute_energy(state: integrators.IntegratorState) -> float:
@@ -166,29 +165,18 @@ def iterative_nuts_proposal(
         return energy
 
     def propose(rng_key, initial_state: integrators.IntegratorState):
-        criterion_state = new_criterion_state(initial_state, max_num_trajectory_samples)
+        criterion_state = new_criterion_state(initial_state, max_num_expansions)
         initial_proposal = proposal.Proposal(
             initial_state, _compute_energy(initial_state), 0.0
         )
-        initial_trajectory = trajectory.Trajectory(
-            initial_state, initial_state, initial_state.momentum
-        )
 
-        _, _, new_proposal, _, _, _, _ = jax.lax.while_loop(
-            do_keep_expanding,
-            expand,
-            (
-                rng_key,
-                1,
-                initial_proposal,
-                initial_trajectory,
-                criterion_state,
-                False,
-                False,
-            ),
+        sampled_proposal, *_ = expand(
+            rng_key,
+            initial_proposal,
+            criterion_state,
         )
 
         # Don't forget the proposal info here!
-        return new_proposal.state, None
+        return sampled_proposal.state, None
 
     return propose

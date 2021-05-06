@@ -146,10 +146,6 @@ def hmc_proposal(
     )
     sample_proposal = proposal.static_binomial_sampling
 
-    def _compute_energy(state: integrators.IntegratorState) -> float:
-        energy = state.potential_energy + kinetic_energy(state.position, state.momentum)
-        return energy
-
     def flip_momentum(
         state: integrators.IntegratorState,
     ) -> integrators.IntegratorState:

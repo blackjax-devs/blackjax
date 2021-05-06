@@ -147,7 +147,7 @@ def static_progressive_integration(
 def dynamic_progressive_integration(
     integrator: Callable,
     kinetic_energy: Callable,
-    update_termination: Callable,
+    update_termination_state: Callable,
     is_criterion_met: Callable,
     divergence_threshold: float,
 ):
@@ -160,10 +160,12 @@ def dynamic_progressive_integration(
         The symplectic integrator used to integrate the hamiltonian trajectory.
     kinetic_energy
         Function to compute the current value of the kinetic energy.
-    termination_criterion
-        The criterion used to stop the sampling. This function generates a function that
-        initializes the state, a function that updates it and a function that determines
-        whether the criterion is met.
+    update_termination_state
+        Updates the state of the termination mechanism.
+    is_criterion_met
+        Determines whether the termination criterion has been met.
+    divergence_threshold
+        Value of the difference of energy between two consecutive states above which we say a transition is divergent.
 
     """
     init_proposal, generate_proposal = proposal.proposal_generator(
@@ -190,6 +192,8 @@ def dynamic_progressive_integration(
             The initial state from which we start expanding the trajectory.
         direction int in {-1, 1}
             The direction in which to expand the trajectory.
+        termination_state
+            The state that keeps track of the information needed for the termination criterion.
         max_num_steps
             The maximum number of integration steps. The expansion will stop
             when this number is reached if the termination criterion has not
@@ -205,9 +209,6 @@ def dynamic_progressive_integration(
             return (step < max_num_steps) & ~has_terminated & ~is_diverging
 
         def add_one_state(expansion_state):
-            """We need to compute the delta energy between the last and the new state
-            proposed. Tree weight is taken to be energy_current - energy_new
-            """
             (
                 rng_key,
                 step,
@@ -223,7 +224,7 @@ def dynamic_progressive_integration(
             new_trajectory = append_to_trajectory(direction, trajectory, new_state)
             new_proposal, is_diverging = generate_proposal(proposal, new_state)
             sampled_proposal = sample_proposal(rng_key, proposal, new_proposal)
-            new_termination_state = update_termination(
+            new_termination_state = update_termination_state(
                 termination_state, new_trajectory.momentum_sum, new_state.momentum, step
             )
             has_terminated = is_criterion_met(
@@ -274,17 +275,17 @@ def dynamic_multiplicative_expansion(
     trajectory_integrator: Callable,
     uturn_check_fn: Callable,
     step_size: float,
-    max_num_doublings: int = 10,
+    max_num_expansions: int = 10,
     rate: int = 2,
-) -> Tuple[Callable, Callable]:
+) -> Callable:
     """Sample a trajectory and update the proposal sequentially
     until the termination criterion is met.
 
     The trajectory is sampled with the following procedure:
-    1. Pick a direction at random
-    2. Integrate `num_step` steps in this direction
-    3. If integration stopped prematurely, do not update proposal
-    4. Else if trajectory is performing a U-turn, return proposal
+    1. Pick a direction at random;
+    2. Integrate `num_step` steps in this direction;
+    3. If the integration has stopped prematurely, do not update the proposal;
+    4. Else if the trajectory is performing a U-turn, return current proposal;
     5. Else update proposal, `num_steps = num_steps ** rate` and repeat from (1).
 
     Parameters
@@ -296,7 +297,7 @@ def dynamic_multiplicative_expansion(
         Function used to check the U-Turn criterion.
     step_size
         The step size used by the symplectic integrator.
-    max_num_doublings
+    max_num_expansions
         The maximum number of trajectory expansions until the proposal is
         returned.
     rate
@@ -306,78 +307,112 @@ def dynamic_multiplicative_expansion(
     """
     proposal_sampler = proposal.progressive_biased_sampling
 
-    def do_keep_expanding(expansion_state) -> bool:
-        """Determine whether we need to keep expanding the trajectory."""
-        _, step, trajectory, _, _, terminated_early, is_turning = expansion_state
-        return (step <= max_num_doublings) & ~terminated_early & ~is_turning
+    def expand(
+        rng_key,
+        initial_proposal: proposal.Proposal,
+        criterion_state,
+    ):
+        def do_keep_expanding(expansion_state) -> bool:
+            """Determine whether we need to keep expanding the trajectory."""
+            _, step, trajectory, _, _, terminated_early, is_turning = expansion_state
+            return (step <= max_num_expansions) & ~terminated_early & ~is_turning
 
-    def expand(expansion_state):
-        """Expand the current trajectory.
+        def expand_once(expansion_state):
+            """Expand the current trajectory.
 
-        At each step we draw a direction at random, build a subtrajectory starting
-        from the leftmost or rightmost point of the current trajectory that is
-        twice as long as the current trajectory.
+            At each step we draw a direction at random, build a subtrajectory starting
+            from the leftmost or rightmost point of the current trajectory that is
+            twice as long as the current trajectory.
 
-        Once that is done, possibly update the current proposal with that of
-        the subtrajectory.
+            Once that is done, possibly update the current proposal with that of
+            the subtrajectory.
 
-        """
-        # Q: Should this function be aware of all the elements that need to
-        # be passed downstream?
-        rng_key, step, proposal, trajectory, termination_state, _, _ = expansion_state
-        rng_key, direction_key = jax.random.split(rng_key, 2)
+            """
+            # Q: Should this function be aware of all the elements that need to
+            # be passed downstream?
+            (
+                rng_key,
+                step,
+                proposal,
+                trajectory,
+                termination_state,
+                _,
+                _,
+            ) = expansion_state
+            rng_key, direction_key = jax.random.split(rng_key, 2)
 
-        # create new subtrajectory that is twice as long as the current
-        # trajectory.
-        direction = jnp.where(jax.random.bernoulli(direction_key), 1, -1)
-        start_state = jax.lax.cond(
-            direction > 0,
-            trajectory,
-            lambda trajectory: trajectory.rightmost_state,
-            trajectory,
-            lambda trajectory: trajectory.leftmost_state,
+            # create new subtrajectory that is twice as long as the current
+            # trajectory.
+            direction = jnp.where(jax.random.bernoulli(direction_key), 1, -1)
+            start_state = jax.lax.cond(
+                direction > 0,
+                trajectory,
+                lambda trajectory: trajectory.rightmost_state,
+                trajectory,
+                lambda trajectory: trajectory.leftmost_state,
+            )
+            (
+                new_proposal,
+                new_trajectory,
+                termination_state,
+                terminated_early,
+            ) = trajectory_integrator(
+                rng_key,
+                start_state,
+                direction,
+                termination_state,
+                rate ** step,
+                step_size,
+            )
+
+            # merge the freshly integrated trajectory to the current trajectory
+            new_trajectory = merge_trajectories(direction, trajectory, new_trajectory)
+
+            # update the proposal
+            # we reject proposals coming from diverging or turning subtrajectories
+            sampled_proposal = jax.lax.cond(
+                terminated_early,
+                proposal,
+                lambda x: x,
+                (rng_key, proposal, new_proposal),
+                lambda x: proposal_sampler(*x),
+            )
+
+            is_turning = uturn_check_fn(
+                trajectory.leftmost_state.momentum,
+                trajectory.rightmost_state.momentum,
+                trajectory.momentum_sum,
+            )
+
+            return (
+                rng_key,
+                step + 1,
+                sampled_proposal,
+                new_trajectory,
+                termination_state,
+                terminated_early,
+                is_turning,
+            )
+
+        initial_state = initial_proposal.state
+        initial_trajectory = Trajectory(
+            initial_state, initial_state, initial_state.momentum
         )
-        (
-            new_proposal,
-            new_trajectory,
-            termination_state,
-            terminated_early,
-        ) = trajectory_integrator(
-            rng_key,
-            start_state,
-            direction,
-            termination_state,
-            rate ** step,
-            step_size,
+
+        _, step, new_proposal, _, _, _, is_turning = jax.lax.while_loop(
+            do_keep_expanding,
+            expand_once,
+            (
+                rng_key,
+                1,
+                initial_proposal,
+                initial_trajectory,
+                criterion_state,
+                False,
+                False,
+            ),
         )
 
-        # merge the freshly integrated trajectory to the current trajectory
-        new_trajectory = merge_trajectories(direction, trajectory, new_trajectory)
+        return new_proposal, step, is_turning
 
-        # update the proposal
-        # we reject proposals coming from diverging or turning subtrajectories
-        sampled_proposal = jax.lax.cond(
-            terminated_early,
-            proposal,
-            lambda x: x,
-            (rng_key, proposal, new_proposal),
-            lambda x: proposal_sampler(*x),
-        )
-
-        is_turning = uturn_check_fn(
-            trajectory.leftmost_state.momentum,
-            trajectory.rightmost_state.momentum,
-            trajectory.momentum_sum,
-        )
-
-        return (
-            rng_key,
-            step + 1,
-            sampled_proposal,
-            new_trajectory,
-            termination_state,
-            terminated_early,
-            is_turning,
-        )
-
-    return expand, do_keep_expanding
+    return expand
