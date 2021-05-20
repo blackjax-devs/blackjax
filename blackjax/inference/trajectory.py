@@ -323,7 +323,7 @@ def dynamic_multiplicative_expansion(
         def do_keep_expanding(expansion_state) -> bool:
             """Determine whether we need to keep expanding the trajectory."""
             _, step, trajectory, _, _, is_diverging, _, is_turning = expansion_state
-            return (step <= max_num_expansions) & ~is_diverging & ~is_turning
+            return (step < max_num_expansions) & ~is_diverging & ~is_turning
 
         def expand_once(expansion_state):
             """Expand the current trajectory.
@@ -355,10 +355,9 @@ def dynamic_multiplicative_expansion(
             direction = jnp.where(jax.random.bernoulli(direction_key), 1, -1)
             start_state = jax.lax.cond(
                 direction > 0,
-                trajectory,
-                lambda trajectory: trajectory.rightmost_state,
-                trajectory,
-                lambda trajectory: trajectory.leftmost_state,
+                lambda _: trajectory.rightmost_state,
+                lambda _: trajectory.leftmost_state,
+                operand=None,
             )
             (
                 new_proposal,
@@ -407,7 +406,9 @@ def dynamic_multiplicative_expansion(
 
         initial_state = initial_proposal.state
         initial_trajectory = Trajectory(
-            initial_state, initial_state, initial_state.momentum
+            initial_state,
+            initial_state,
+            jax.tree_util.tree_map(lambda x: 2 * x, initial_state.momentum),
         )
 
         (
@@ -424,7 +425,7 @@ def dynamic_multiplicative_expansion(
             expand_once,
             (
                 rng_key,
-                1,
+                0,
                 initial_proposal,
                 initial_trajectory,
                 criterion_state,
