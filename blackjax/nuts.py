@@ -18,7 +18,7 @@ PyTree = Union[Dict, List, Tuple]
 
 class NUTSParameters(NamedTuple):
     step_size: float = 1e-3
-    max_tree_depth: int = 100
+    max_tree_depth: int = 10
     inv_mass_matrix: Array = None
     divergence_threshold: int = 1000
 
