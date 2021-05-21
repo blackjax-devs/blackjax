@@ -50,10 +50,7 @@ def iterative_uturn_numpyro(is_turning):
         r_ckpts, r_sum_ckpts = jax.lax.cond(
             step % 2 == 0,
             (r_ckpts, r_sum_ckpts),
-            lambda x: (
-                x[0].at[ckpt_idx_max].set(r),
-                x[1].at[ckpt_idx_max].set(r_sum)
-            ),
+            lambda x: (x[0].at[ckpt_idx_max].set(r), x[1].at[ckpt_idx_max].set(r_sum)),
             (r_ckpts, r_sum_ckpts),
             lambda x: x,
         )

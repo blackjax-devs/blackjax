@@ -388,7 +388,9 @@ def dynamic_multiplicative_expansion(
             )
 
             # merge the freshly integrated trajectory to the current trajectory
-            merged_trajectory = merge_trajectories(direction, trajectory, new_trajectory)
+            merged_trajectory = merge_trajectories(
+                direction, trajectory, new_trajectory
+            )
 
             # update the proposal
             # we reject proposals coming from diverging or turning subtrajectories
