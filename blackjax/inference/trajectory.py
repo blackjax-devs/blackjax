@@ -376,15 +376,23 @@ def dynamic_multiplicative_expansion(
             # robust u-turn check when merging the two trajectory
             # note this is different from the robust u-turn check done during
             # trajectory building.
+            momentum_sum_left = jax.tree_util.tree_multimap(
+                jnp.add, trajectory.momentum_sum, new_trajectory.leftmost_state.momentum
+            )
             is_turning_left = uturn_check_fn(
                 trajectory.leftmost_state.momentum,
                 new_trajectory.leftmost_state.momentum,
-                trajectory.momentum_sum + new_trajectory.leftmost_state.momentum,
+                momentum_sum_left,
+            )
+            momentum_sum_right = jax.tree_util.tree_multimap(
+                jnp.add,
+                trajectory.rightmost_state.momentum,
+                new_trajectory.momentum_sum,
             )
             is_turning_right = uturn_check_fn(
                 trajectory.rightmost_state.momentum,
                 new_trajectory.rightmost_state.momentum,
-                trajectory.rightmost_state.momentum + new_trajectory.momentum_sum,
+                momentum_sum_right,
             )
 
             # merge the freshly integrated trajectory to the current trajectory
