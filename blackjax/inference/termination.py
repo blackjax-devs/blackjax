@@ -51,8 +51,8 @@ def iterative_uturn_numpyro(is_turning):
             step % 2 == 0,
             (r_ckpts, r_sum_ckpts),
             lambda x: (
-                jax.ops.index_update(x[0], ckpt_idx_max, r),
-                jax.ops.index_update(x[1], ckpt_idx_max, r_sum),
+                x[0].at[ckpt_idx_max].set(r),
+                x[1].at[ckpt_idx_max].set(r_sum)
             ),
             (r_ckpts, r_sum_ckpts),
             lambda x: x,
