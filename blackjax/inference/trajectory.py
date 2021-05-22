@@ -62,42 +62,19 @@ def append_to_trajectory(
 
 def reorder_trajectories(
     direction: int, trajectory: Trajectory, new_trajectory: Trajectory
-) -> Trajectory:
+) -> Tuple[Trajectory, Trajectory]:
     """Order the two trajectories depending on the direction."""
-    (
-        left_trajectory_leftmost_state,
-        left_trajectory_rightmost_state,
-        left_trajectory_momentum_sum,
-        right_trajectory_leftmost_state,
-        right_trajectory_rightmost_state,
-        right_trajectory_momentum_sum,
-    ) = jax.lax.cond(
+    return jax.lax.cond(
         direction > 0,
         lambda _: (
-            trajectory.leftmost_state,
-            trajectory.rightmost_state,
-            trajectory.momentum_sum,
-            new_trajectory.leftmost_state,
-            new_trajectory.rightmost_state,
-            new_trajectory.momentum_sum,
+            trajectory,
+            new_trajectory,
         ),
         lambda _: (
-            new_trajectory.leftmost_state,
-            new_trajectory.rightmost_state,
-            new_trajectory.momentum_sum,
-            trajectory.leftmost_state,
-            trajectory.rightmost_state,
-            trajectory.momentum_sum,
+            new_trajectory,
+            trajectory,
         ),
         operand=None,
-    )
-    return (
-        left_trajectory_leftmost_state,
-        left_trajectory_rightmost_state,
-        left_trajectory_momentum_sum,
-        right_trajectory_leftmost_state,
-        right_trajectory_rightmost_state,
-        right_trajectory_momentum_sum,
     )
 
 
@@ -395,42 +372,37 @@ def dynamic_multiplicative_expansion(
             # robust u-turn check when merging the two trajectory
             # note this is different from the robust u-turn check done during
             # trajectory building.
-            (
-                left_trajectory_leftmost_state,
-                left_trajectory_rightmost_state,
-                left_trajectory_momentum_sum,
-                right_trajectory_leftmost_state,
-                right_trajectory_rightmost_state,
-                right_trajectory_momentum_sum,
-            ) = reorder_trajectories(direction, trajectory, new_trajectory)
+            left_trajectory, right_trajectory = reorder_trajectories(
+                direction, trajectory, new_trajectory
+            )
             momentum_sum_left = jax.tree_util.tree_multimap(
                 jnp.add,
-                left_trajectory_momentum_sum,
-                right_trajectory_leftmost_state.momentum,
+                left_trajectory.momentum_sum,
+                right_trajectory.leftmost_state.momentum,
             )
             is_turning_left = uturn_check_fn(
-                left_trajectory_leftmost_state.momentum,
-                right_trajectory_leftmost_state.momentum,
+                left_trajectory.leftmost_state.momentum,
+                right_trajectory.leftmost_state.momentum,
                 momentum_sum_left,
             )
             momentum_sum_right = jax.tree_util.tree_multimap(
                 jnp.add,
-                left_trajectory_rightmost_state.momentum,
-                right_trajectory_momentum_sum,
+                left_trajectory.rightmost_state.momentum,
+                right_trajectory.momentum_sum,
             )
             is_turning_right = uturn_check_fn(
-                left_trajectory_rightmost_state.momentum,
-                right_trajectory_rightmost_state.momentum,
+                left_trajectory.rightmost_state.momentum,
+                right_trajectory.rightmost_state.momentum,
                 momentum_sum_right,
             )
 
             # merge the freshly integrated trajectory to the current trajectory
             momentum_sum = jax.tree_util.tree_multimap(
-                jnp.add, left_trajectory_momentum_sum, right_trajectory_momentum_sum
+                jnp.add, left_trajectory.momentum_sum, right_trajectory.momentum_sum
             )
             merged_trajectory = Trajectory(
-                left_trajectory_leftmost_state,
-                right_trajectory_rightmost_state,
+                left_trajectory.leftmost_state,
+                right_trajectory.rightmost_state,
                 momentum_sum,
             )
 
@@ -465,7 +437,7 @@ def dynamic_multiplicative_expansion(
         initial_trajectory = Trajectory(
             initial_state,
             initial_state,
-            jax.tree_util.tree_map(lambda x: 2 * x, initial_state.momentum),
+            initial_state.momentum,
         )
 
         (
