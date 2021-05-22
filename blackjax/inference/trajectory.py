@@ -373,7 +373,7 @@ def dynamic_multiplicative_expansion(
             left_trajectory, right_trajectory = reorder_trajectories(
                 direction, trajectory, new_trajectory
             )
-            
+
             # robust u-turn check when merging the two trajectory
             # note this is different from the robust u-turn check done during
             # trajectory building.
@@ -432,7 +432,7 @@ def dynamic_multiplicative_expansion(
                 termination_state,
                 is_diverging,
                 has_terminated,
-                is_turning | is_turning_left | is_turning_right,
+                is_turning,  # | is_turning_left | is_turning_right,
             )
 
         initial_state = initial_proposal.state
