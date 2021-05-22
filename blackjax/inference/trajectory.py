@@ -369,32 +369,34 @@ def dynamic_multiplicative_expansion(
                 rate ** step,
                 step_size,
             )
-            # robust u-turn check when merging the two trajectory
-            # note this is different from the robust u-turn check done during
-            # trajectory building.
+
             left_trajectory, right_trajectory = reorder_trajectories(
                 direction, trajectory, new_trajectory
             )
-            momentum_sum_left = jax.tree_util.tree_multimap(
-                jnp.add,
-                left_trajectory.momentum_sum,
-                right_trajectory.leftmost_state.momentum,
-            )
-            is_turning_left = uturn_check_fn(
-                left_trajectory.leftmost_state.momentum,
-                right_trajectory.leftmost_state.momentum,
-                momentum_sum_left,
-            )
-            momentum_sum_right = jax.tree_util.tree_multimap(
-                jnp.add,
-                left_trajectory.rightmost_state.momentum,
-                right_trajectory.momentum_sum,
-            )
-            is_turning_right = uturn_check_fn(
-                left_trajectory.rightmost_state.momentum,
-                right_trajectory.rightmost_state.momentum,
-                momentum_sum_right,
-            )
+            
+            # robust u-turn check when merging the two trajectory
+            # note this is different from the robust u-turn check done during
+            # trajectory building.
+            # momentum_sum_left = jax.tree_util.tree_multimap(
+            #     jnp.add,
+            #     left_trajectory.momentum_sum,
+            #     right_trajectory.leftmost_state.momentum,
+            # )
+            # is_turning_left = uturn_check_fn(
+            #     left_trajectory.leftmost_state.momentum,
+            #     right_trajectory.leftmost_state.momentum,
+            #     momentum_sum_left,
+            # )
+            # momentum_sum_right = jax.tree_util.tree_multimap(
+            #     jnp.add,
+            #     left_trajectory.rightmost_state.momentum,
+            #     right_trajectory.momentum_sum,
+            # )
+            # is_turning_right = uturn_check_fn(
+            #     left_trajectory.rightmost_state.momentum,
+            #     right_trajectory.rightmost_state.momentum,
+            #     momentum_sum_right,
+            # )
 
             # merge the freshly integrated trajectory to the current trajectory
             momentum_sum = jax.tree_util.tree_multimap(
