@@ -59,7 +59,7 @@ def test_dynamic_progressive_integration_divergence(case):
 
 @pytest.mark.parametrize(
     "case",
-    [(0.0000000001, False, False, 10), (1, False, True, 3), (100000, True, False, 1)],
+    [(0.0000000001, False, False, 10), (1, False, True, 2), (100000, True, True, 1)],
 )
 def test_dynamic_progressive_expansion(case):
     rng_key = jax.random.PRNGKey(0)

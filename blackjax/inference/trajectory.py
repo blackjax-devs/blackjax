@@ -60,26 +60,22 @@ def append_to_trajectory(
     return Trajectory(leftmost_state, rightmost_state, momentum_sum)
 
 
-def merge_trajectories(
+def reorder_trajectories(
     direction: int, trajectory: Trajectory, new_trajectory: Trajectory
-) -> Trajectory:
-    """Merge two trajectories to form a new trajectory."""
-    leftmost_state, rightmost_state = jax.lax.cond(
+) -> Tuple[Trajectory, Trajectory]:
+    """Order the two trajectories depending on the direction."""
+    return jax.lax.cond(
         direction > 0,
         lambda _: (
-            trajectory.leftmost_state,
-            new_trajectory.rightmost_state,
+            trajectory,
+            new_trajectory,
         ),
         lambda _: (
-            new_trajectory.leftmost_state,
-            trajectory.rightmost_state,
+            new_trajectory,
+            trajectory,
         ),
         operand=None,
     )
-    momentum_sum = jax.tree_util.tree_multimap(
-        jnp.add, trajectory.momentum_sum, new_trajectory.momentum_sum
-    )
-    return Trajectory(leftmost_state, rightmost_state, momentum_sum)
 
 
 # -------------------------------------------------------------------
@@ -374,8 +370,43 @@ def dynamic_multiplicative_expansion(
                 step_size,
             )
 
+            left_trajectory, right_trajectory = reorder_trajectories(
+                direction, trajectory, new_trajectory
+            )
+
+            # robust u-turn check when merging the two trajectory
+            # note this is different from the robust u-turn check done during
+            # trajectory building.
+            # momentum_sum_left = jax.tree_util.tree_multimap(
+            #     jnp.add,
+            #     left_trajectory.momentum_sum,
+            #     right_trajectory.leftmost_state.momentum,
+            # )
+            # is_turning_left = uturn_check_fn(
+            #     left_trajectory.leftmost_state.momentum,
+            #     right_trajectory.leftmost_state.momentum,
+            #     momentum_sum_left,
+            # )
+            # momentum_sum_right = jax.tree_util.tree_multimap(
+            #     jnp.add,
+            #     left_trajectory.rightmost_state.momentum,
+            #     right_trajectory.momentum_sum,
+            # )
+            # is_turning_right = uturn_check_fn(
+            #     left_trajectory.rightmost_state.momentum,
+            #     right_trajectory.rightmost_state.momentum,
+            #     momentum_sum_right,
+            # )
+
             # merge the freshly integrated trajectory to the current trajectory
-            new_trajectory = merge_trajectories(direction, trajectory, new_trajectory)
+            momentum_sum = jax.tree_util.tree_multimap(
+                jnp.add, left_trajectory.momentum_sum, right_trajectory.momentum_sum
+            )
+            merged_trajectory = Trajectory(
+                left_trajectory.leftmost_state,
+                right_trajectory.rightmost_state,
+                momentum_sum,
+            )
 
             # update the proposal
             # we reject proposals coming from diverging or turning subtrajectories
@@ -388,27 +419,27 @@ def dynamic_multiplicative_expansion(
             )
 
             is_turning = uturn_check_fn(
-                trajectory.leftmost_state.momentum,
-                trajectory.rightmost_state.momentum,
-                trajectory.momentum_sum,
+                merged_trajectory.leftmost_state.momentum,
+                merged_trajectory.rightmost_state.momentum,
+                merged_trajectory.momentum_sum,
             )
 
             return (
                 rng_key,
                 step + 1,
                 sampled_proposal,
-                new_trajectory,
+                merged_trajectory,
                 termination_state,
                 is_diverging,
                 has_terminated,
-                is_turning,
+                is_turning,  # | is_turning_left | is_turning_right,
             )
 
         initial_state = initial_proposal.state
         initial_trajectory = Trajectory(
             initial_state,
             initial_state,
-            jax.tree_util.tree_map(lambda x: 2 * x, initial_state.momentum),
+            initial_state.momentum,
         )
 
         (
