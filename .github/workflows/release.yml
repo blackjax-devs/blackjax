@@ -27,7 +27,7 @@ jobs:
         echo "GITHUB_REF: ${GITHUB_REF}"
         # The GITHUB_REF should be something like "refs/tags/v3.x.x"
         # Make sure the package version is the same as the tag
-        grep -Rq "^Version: ${GITHUB_REF:11}$" pymc3.egg-info/PKG-INFO
+        grep -Rq "^Version: ${GITHUB_REF:11}$" blackjax.egg-info/PKG-INFO
     - name: Publish to PyPI
       run: |
         twine check dist/*
@@ -44,4 +44,4 @@ jobs:
       run: sleep 240
     - name: Install from PyPI
       run: |
-        pip install pymc3==${GITHUB_REF:11}
+        pip install blackjax==${GITHUB_REF:11}
