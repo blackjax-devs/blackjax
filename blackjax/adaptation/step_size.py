@@ -3,6 +3,7 @@ from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
+
 from blackjax.inference.base import HMCState
 
 __all__ = [
@@ -168,14 +169,19 @@ class ReasonableStepSizeState(NamedTuple):
         The current step size in the search.
     """
 
+    rng_key: int
     direction: int
-    step_size: float
     previous_direction: int
+    step_size: float
 
 
 def find_reasonable_step_size(
-    initial_step_size: float, target_accept: float = 0.65
-) -> Tuple[Callable, Callable, Callable, Callable]:
+    rng_key,
+    kernel_generator,
+    reference_state,
+    initial_step_size: float,
+    target_accept: float = 0.65,
+) -> float:
     """Find a reasonable initial step size during warmup.
 
     While the dual averaging scheme is guaranteed to converge to a reasonable
@@ -213,9 +219,7 @@ def find_reasonable_step_size(
             adaptively setting path lengths in Hamiltonian Monte Carlo." Journal
             of Machine Learning Research 15.1 (2014): 1593-1623.
     """
-
-    def init(initial_step_size):
-        return ReasonableStepSizeState(0, 0, initial_step_size)
+    fp_limit = jnp.finfo(jax.lax.dtype(initial_step_size))
 
     def do_continue(rss_state: ReasonableStepSizeState) -> bool:
         """Decides whether the search should continue.
@@ -234,8 +238,7 @@ def find_reasonable_step_size(
         .. [1]: jax.numpy.finfo documentation. https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.finfo.html
 
         """
-        direction, previous_direction, step_size = rss_state
-        fp_limit = jnp.finfo(jax.lax.dtype(initial_step_size))
+        _, direction, previous_direction, step_size = rss_state
 
         not_too_large = (step_size < fp_limit.max) | (direction <= 0)
         not_too_small = (step_size > fp_limit.tiny) | (direction >= 0)
@@ -245,14 +248,19 @@ def find_reasonable_step_size(
         )
         return is_step_size_not_extreme & has_acceptance_rate_not_crossed_threshold
 
-    def update(rss_state: ReasonableStepSizeState, _, info) -> ReasonableStepSizeState:
+    def update(rss_state: ReasonableStepSizeState) -> Tuple:
         """Perform one step of the step size search."""
-        direction, step_size, _ = rss_state
+        rng_key, direction, _, step_size = rss_state
+        _, rng_key = jax.random.split(rng_key)
+
         step_size = (2.0 ** direction) * step_size
+        kernel = kernel_generator(step_size=step_size)
+        _, info = kernel(rng_key, reference_state)
+
         new_direction = jnp.where(target_accept < info.acceptance_probability, 1, -1)
-        return ReasonableStepSizeState(new_direction, step_size, direction)
+        return ReasonableStepSizeState(rng_key, new_direction, direction, step_size)
 
-    def final(rss_state: ReasonableStepSizeState) -> float:
-        return rss_state.step_size
+    rss_state = ReasonableStepSizeState(rng_key, 0, 0, initial_step_size)
+    rss_state = jax.lax.while_loop(do_continue, update, rss_state)
 
-    return init, update, final, do_continue
+    return rss_state.step_size
