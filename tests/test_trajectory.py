@@ -101,7 +101,7 @@ def test_dynamic_progressive_expansion(case):
     initial_proposal = initial_proposal = proposal.Proposal(state, energy, 0.0)
     initial_termination_state = new_criterion_state(state, 10)
 
-    _, _, step, is_diverging, has_terminated, is_turning, _ = expand(
+    _, _, step, is_diverging, has_terminated, is_turning = expand(
         rng_key, initial_proposal, initial_termination_state
     )
 

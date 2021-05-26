@@ -42,6 +42,7 @@ class Trajectory(NamedTuple):
     leftmost_state: IntegratorState
     rightmost_state: IntegratorState
     momentum_sum: PyTree
+    length: int
 
 
 def append_to_trajectory(
@@ -57,7 +58,7 @@ def append_to_trajectory(
     momentum_sum = jax.tree_util.tree_multimap(
         jnp.add, trajectory.momentum_sum, state.momentum
     )
-    return Trajectory(leftmost_state, rightmost_state, momentum_sum)
+    return Trajectory(leftmost_state, rightmost_state, momentum_sum, trajectory.length+1)
 
 
 def reorder_trajectories(
@@ -201,7 +202,7 @@ def dynamic_progressive_integration(
 
         def do_keep_integrating(expansion_state):
             """Decide whether we should continue integrating the trajectory"""
-            _, step, _, _, _, is_diverging, has_terminated, _ = expansion_state
+            _, step, _, _, _, is_diverging, has_terminated = expansion_state
             return (step < max_num_steps) & ~has_terminated & ~is_diverging
 
         def add_one_state(expansion_state):
@@ -242,7 +243,7 @@ def dynamic_progressive_integration(
             rng_key,
             0,
             initial_proposal,
-            Trajectory(initial_state, initial_state, initial_state.momentum),
+            Trajectory(initial_state, initial_state, initial_state.momentum, 0),
             termination_state,
             False,
             False,
@@ -318,7 +319,7 @@ def dynamic_multiplicative_expansion(
     ):
         def do_keep_expanding(expansion_state) -> bool:
             """Determine whether we need to keep expanding the trajectory."""
-            _, step, trajectory, _, _, is_diverging, _, is_turning, _ = expansion_state
+            _, step, trajectory, _, _, is_diverging, _, is_turning = expansion_state
             return (step < max_num_expansions) & ~is_diverging & ~is_turning
 
         def expand_once(expansion_state):
@@ -343,7 +344,6 @@ def dynamic_multiplicative_expansion(
                 _,
                 _,
                 _,
-                previous_step_count,
             ) = expansion_state
             rng_key, direction_key = jax.random.split(rng_key, 2)
 
@@ -408,6 +408,7 @@ def dynamic_multiplicative_expansion(
                 left_trajectory.leftmost_state,
                 right_trajectory.rightmost_state,
                 momentum_sum,
+                left_trajectory.length + right_trajectory.length
             )
 
             # update the proposal
@@ -435,7 +436,6 @@ def dynamic_multiplicative_expansion(
                 is_diverging,
                 has_terminated,
                 is_turning,  # | is_turning_left | is_turning_right,
-                previous_step_count + num_steps,
             )
 
         initial_state = initial_proposal.state
@@ -443,6 +443,7 @@ def dynamic_multiplicative_expansion(
             initial_state,
             initial_state,
             initial_state.momentum,
+            0,
         )
 
         (
@@ -454,7 +455,6 @@ def dynamic_multiplicative_expansion(
             is_diverging,
             has_terminated,
             is_turning,
-            total_leapfrog_steps,
         ) = jax.lax.while_loop(
             do_keep_expanding,
             expand_once,
@@ -467,10 +467,9 @@ def dynamic_multiplicative_expansion(
                 False,
                 False,
                 False,
-                0,
             ),
         )
 
-        return new_proposal, trajectory, step, is_diverging, has_terminated, is_turning, total_leapfrog_steps
+        return new_proposal, trajectory, step, is_diverging, has_terminated, is_turning
 
     return expand
