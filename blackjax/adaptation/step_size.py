@@ -177,8 +177,8 @@ class ReasonableStepSizeState(NamedTuple):
 
 def find_reasonable_step_size(
     rng_key,
-    kernel_generator,
-    reference_state,
+    kernel_generator: Callable[[float], Callable],
+    reference_state: HMCState,
     initial_step_size: float,
     target_accept: float = 0.65,
 ) -> float:
