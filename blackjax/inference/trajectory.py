@@ -42,6 +42,7 @@ class Trajectory(NamedTuple):
     leftmost_state: IntegratorState
     rightmost_state: IntegratorState
     momentum_sum: PyTree
+    num_states: int
 
 
 def append_to_trajectory(
@@ -57,7 +58,9 @@ def append_to_trajectory(
     momentum_sum = jax.tree_util.tree_multimap(
         jnp.add, trajectory.momentum_sum, state.momentum
     )
-    return Trajectory(leftmost_state, rightmost_state, momentum_sum)
+    return Trajectory(
+        leftmost_state, rightmost_state, momentum_sum, trajectory.num_states + 1
+    )
 
 
 def reorder_trajectories(
@@ -242,7 +245,7 @@ def dynamic_progressive_integration(
             rng_key,
             0,
             initial_proposal,
-            Trajectory(initial_state, initial_state, initial_state.momentum),
+            Trajectory(initial_state, initial_state, initial_state.momentum, 0),
             termination_state,
             False,
             False,
@@ -260,7 +263,14 @@ def dynamic_progressive_integration(
             do_keep_integrating, add_one_state, initial_integration_state
         )
 
-        return proposal, trajectory, termination_state, is_diverging, has_terminated
+        return (
+            proposal,
+            trajectory,
+            termination_state,
+            is_diverging,
+            has_terminated,
+            step,
+        )
 
     return integrate
 
@@ -361,6 +371,7 @@ def dynamic_multiplicative_expansion(
                 termination_state,
                 is_diverging,
                 has_terminated,
+                num_steps,
             ) = trajectory_integrator(
                 rng_key,
                 start_state,
@@ -406,6 +417,7 @@ def dynamic_multiplicative_expansion(
                 left_trajectory.leftmost_state,
                 right_trajectory.rightmost_state,
                 momentum_sum,
+                left_trajectory.num_states + right_trajectory.num_states,
             )
 
             # update the proposal
@@ -440,6 +452,7 @@ def dynamic_multiplicative_expansion(
             initial_state,
             initial_state,
             initial_state.momentum,
+            0,
         )
 
         (

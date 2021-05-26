@@ -53,6 +53,7 @@ class NUTSInfo(NamedTuple):
     trajectory_leftmost_state: integrators.IntegratorState
     trajectory_rightmost_state: integrators.IntegratorState
     num_trajectory_expansions: int
+    integration_steps: int
 
 
 new_state = blackjax.hmc.new_state
@@ -195,6 +196,7 @@ def iterative_nuts_proposal(
             trajectory.leftmost_state,
             trajectory.rightmost_state,
             num_doublings,
+            trajectory.num_states,
         )
 
         return sampled_proposal.state, info
