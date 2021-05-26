@@ -42,7 +42,7 @@ class Trajectory(NamedTuple):
     leftmost_state: IntegratorState
     rightmost_state: IntegratorState
     momentum_sum: PyTree
-    length: int
+    num_states: int
 
 
 def append_to_trajectory(
@@ -59,7 +59,7 @@ def append_to_trajectory(
         jnp.add, trajectory.momentum_sum, state.momentum
     )
     return Trajectory(
-        leftmost_state, rightmost_state, momentum_sum, trajectory.length + 1
+        leftmost_state, rightmost_state, momentum_sum, trajectory.num_states + 1
     )
 
 
@@ -417,7 +417,7 @@ def dynamic_multiplicative_expansion(
                 left_trajectory.leftmost_state,
                 right_trajectory.rightmost_state,
                 momentum_sum,
-                left_trajectory.length + right_trajectory.length,
+                left_trajectory.num_states + right_trajectory.num_states,
             )
 
             # update the proposal

@@ -196,7 +196,7 @@ def iterative_nuts_proposal(
             trajectory.leftmost_state,
             trajectory.rightmost_state,
             num_doublings,
-            trajectory.length,
+            trajectory.num_states,
         )
 
         return sampled_proposal.state, info
