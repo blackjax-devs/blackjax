@@ -1,5 +1,5 @@
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Any, Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -230,7 +230,7 @@ def stan_first_stage() -> Tuple[Callable, Callable]:
 
     @jax.jit
     def update(
-        state: Tuple[jax.random.PRNGKey, HMCState, HMCInfo, StanWarmupState]
+        state: Tuple[jax.random.PRNGKey, HMCState, Any, StanWarmupState]
     ) -> StanWarmupState:
         rng_key, chain_state, chain_info, warmup_state = state
 
@@ -277,7 +277,7 @@ def stan_second_stage(
 
     @jax.jit
     def update(
-        state: Tuple[jax.random.PRNGKey, HMCState, HMCInfo, StanWarmupState]
+        state: Tuple[jax.random.PRNGKey, HMCState, Any, StanWarmupState]
     ) -> StanWarmupState:
         """Move the warmup by one state when in a slow adaptation interval.
 
