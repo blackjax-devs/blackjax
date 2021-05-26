@@ -58,7 +58,9 @@ def append_to_trajectory(
     momentum_sum = jax.tree_util.tree_multimap(
         jnp.add, trajectory.momentum_sum, state.momentum
     )
-    return Trajectory(leftmost_state, rightmost_state, momentum_sum, trajectory.length+1)
+    return Trajectory(
+        leftmost_state, rightmost_state, momentum_sum, trajectory.length + 1
+    )
 
 
 def reorder_trajectories(
@@ -261,7 +263,14 @@ def dynamic_progressive_integration(
             do_keep_integrating, add_one_state, initial_integration_state
         )
 
-        return proposal, trajectory, termination_state, is_diverging, has_terminated, step
+        return (
+            proposal,
+            trajectory,
+            termination_state,
+            is_diverging,
+            has_terminated,
+            step,
+        )
 
     return integrate
 
@@ -408,7 +417,7 @@ def dynamic_multiplicative_expansion(
                 left_trajectory.leftmost_state,
                 right_trajectory.rightmost_state,
                 momentum_sum,
-                left_trajectory.length + right_trajectory.length
+                left_trajectory.length + right_trajectory.length,
             )
 
             # update the proposal
