@@ -53,6 +53,7 @@ class NUTSInfo(NamedTuple):
     trajectory_leftmost_state: integrators.IntegratorState
     trajectory_rightmost_state: integrators.IntegratorState
     num_trajectory_expansions: int
+    num_leapfrogs: int
 
 
 new_state = blackjax.hmc.new_state
@@ -185,7 +186,7 @@ def iterative_nuts_proposal(
             initial_proposal,
             criterion_state,
         )
-        trajectory, num_doublings, is_diverging, has_terminated, is_turning = info
+        trajectory, num_doublings, is_diverging, has_terminated, is_turning, num_leapfrogs = info
 
         info = NUTSInfo(
             initial_state.momentum,
@@ -195,6 +196,7 @@ def iterative_nuts_proposal(
             trajectory.leftmost_state,
             trajectory.rightmost_state,
             num_doublings,
+            num_leapfrogs,
         )
 
         return sampled_proposal.state, info
