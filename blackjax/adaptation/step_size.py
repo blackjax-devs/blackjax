@@ -4,10 +4,11 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
+import blackjax.optimizers as optimizers
 from blackjax.inference.base import HMCState
 
 __all__ = [
-    "dual_averaging",
+    "dual_averaging_adaptation",
     "find_reasonable_step_size",
 ]
 
@@ -17,7 +18,7 @@ __all__ = [
 # -------------------------------------------------------------------
 
 
-class DualAveragingState(NamedTuple):
+class DualAveragingAdaptationState(NamedTuple):
     """State carried through the dual averaging procedure.
 
     log_step_size
@@ -46,7 +47,7 @@ class DualAveragingState(NamedTuple):
     mu: float
 
 
-def dual_averaging(
+def dual_averaging_adaptation(
     t0: int = 10, gamma: float = 0.05, kappa: float = 0.75, target: float = 0.65
 ) -> Tuple[Callable, Callable, Callable]:
     """Tune the step size in order to achieve a desired target acceptance rate.
@@ -104,21 +105,19 @@ def dual_averaging(
             adaptively setting path lengths in Hamiltonian Monte Carlo." Journal
             of Machine Learning Research 15.1 (2014): 1593-1623.
     """
+    da_init, da_update, da_final = optimizers.dual_averaging(t0, gamma, kappa)
 
-    def init(inital_step_size: float) -> DualAveragingState:
+    def init(inital_step_size: float) -> DualAveragingAdaptationState:
         """Initialize the state of the dual averaging scheme.
 
         The parameter :math:`\\mu` is set to :math:`\\log(10 \\epsilon_1)`
         where :math:`\\epsilon_1` is the initial value of the step size.
         """
-        mu: float = jnp.log(10 * inital_step_size)
-        step = 1
-        avg_error: float = 0.0
-        log_step_size: float = jnp.log(inital_step_size)
-        log_step_size_avg: float = 0.0
-        return DualAveragingState(log_step_size, log_step_size_avg, step, avg_error, mu)
+        return DualAveragingAdaptationState(*da_init(inital_step_size))
 
-    def update(da_state: DualAveragingState, info) -> DualAveragingState:
+    def update(
+        da_state: DualAveragingAdaptationState, info
+    ) -> DualAveragingAdaptationState:
         """Update the state of the Dual Averaging adaptive algorithm.
 
         Parameters
@@ -133,17 +132,10 @@ def dual_averaging(
         The updated state of the dual averaging algorithm.
         """
         p_accept = info.acceptance_probability
-        log_step, avg_log_step, step, avg_error, mu = da_state
-        reg_step = step + t0
-        eta_t = step ** (-kappa)
-        avg_error = (1 - (1 / (reg_step))) * avg_error + (target - p_accept) / reg_step
-        log_step_size = mu - (jnp.sqrt(step) / gamma) * avg_error
-        log_step_size_avg = eta_t * log_step + (1 - eta_t) * avg_log_step
-        return DualAveragingState(
-            log_step_size, log_step_size_avg, step + 1, avg_error, mu
-        )
+        gradient = target - p_accept
+        return DualAveragingAdaptationState(*da_update(da_state, gradient))
 
-    def final(da_state: DualAveragingState) -> float:
+    def final(da_state: DualAveragingAdaptationState) -> float:
         return jnp.exp(da_state.log_step_size_avg)
 
     return init, update, final
