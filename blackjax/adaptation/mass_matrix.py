@@ -88,7 +88,7 @@ def mass_matrix_adaptation(
         return MassMatrixAdaptationState(inverse_mass_matrix, wc_state)
 
     def update(
-        mm_state: MassMatrixAdaptationState, position: jnp.DeviceArray, _
+        mm_state: MassMatrixAdaptationState, position: jnp.DeviceArray
     ) -> MassMatrixAdaptationState:
         """Update the algorithm's state.
 
