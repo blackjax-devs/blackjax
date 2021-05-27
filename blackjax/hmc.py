@@ -17,13 +17,6 @@ PyTree = Union[Dict, List, Tuple]
 __all__ = ["new_state", "kernel"]
 
 
-class HMCParameters(NamedTuple):
-    step_size: float = 1e-3
-    num_integration_steps: int = 30
-    inv_mass_matrix: Array = None
-    divergence_threshold: int = 1000
-
-
 class HMCInfo(NamedTuple):
     """Additional information on the HMC transition.
 
@@ -66,9 +59,9 @@ new_state = base.new_hmc_state
 
 def kernel(
     potential_fn: Callable,
-    num_integration_steps: int,
     step_size: float,
-    inverse_mass_matrix: Array = None,
+    inverse_mass_matrix: Array,
+    num_integration_steps: int,
     divergence_threshold: int = 1000,
 ):
     """Build a HMC kernel.

@@ -1,5 +1,3 @@
-import functools as ft
-
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -19,11 +17,8 @@ def test_reasonable_step_size():
     reference_state = new_hmc_state(init_position, potential_fn)
 
     inv_mass_matrix = jnp.array([1.0])
-    generator = ft.partial(
-        hmc.kernel,
-        potential_fn=potential_fn,
-        num_integration_steps=10,
-        inverse_mass_matrix=inv_mass_matrix,
+    generator = lambda step_size: hmc.kernel(
+        potential_fn, step_size, inv_mass_matrix, 10
     )
 
     # Test that the algorithm actually does something

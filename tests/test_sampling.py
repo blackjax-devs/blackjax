@@ -9,6 +9,7 @@ import pytest
 
 import blackjax.hmc as hmc
 import blackjax.nuts as nuts
+import blackjax.stan_warmup as stan_warmup
 
 
 def potential_fn(scale, coefs, preds, x):
@@ -32,15 +33,9 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     return states
 
 
-inv_mass_matrices = [np.array([1.0, 1.0]), np.array([[1.0, 0.0], [0.0, 1.0]])]
-
-
-@pytest.mark.parametrize("inv_mass_matrix", inv_mass_matrices)
-def test_hmc(inv_mass_matrix):
-    """Test the HMC kernel.
-
-    This is a very simple sanity-check.
-    """
+@pytest.mark.parametrize("is_mass_matrix_diagonal", [True, False])
+def test_hmc(is_mass_matrix_diagonal):
+    """Test the HMC kernel and the Stan warmup."""
     x_data = np.random.normal(0, 1, size=(1000, 1))
     y_data = 3 * x_data + np.random.normal(size=x_data.shape)
     observations = {"x": x_data, "preds": y_data}
@@ -48,30 +43,41 @@ def test_hmc(inv_mass_matrix):
     conditioned_potential = ft.partial(potential_fn, **observations)
     potential = lambda x: conditioned_potential(**x)
 
+    rng_key = jax.random.PRNGKey(19)
     initial_position = {"scale": 1.0, "coefs": 2.0}
     initial_state = hmc.new_state(initial_position, potential)
 
-    params = hmc.HMCParameters(
-        num_integration_steps=90, step_size=1e-3, inv_mass_matrix=inv_mass_matrix
+    kernel_factory = lambda step_size, inverse_mass_matrix: hmc.kernel(
+        potential, step_size, inverse_mass_matrix, 90
     )
-    kernel = hmc.kernel(potential, params)
 
-    rng_key = jax.random.PRNGKey(19)
-    states = inference_loop(rng_key, kernel, initial_state, 20_000)
+    state, (step_size, inverse_mass_matrix), _ = stan_warmup.run(
+        rng_key,
+        kernel_factory,
+        initial_state,
+        3_000,
+        is_mass_matrix_diagonal=is_mass_matrix_diagonal,
+    )
 
-    coefs_samples = states.position["coefs"][5000:]
-    scale_samples = states.position["scale"][5000:]
+    if is_mass_matrix_diagonal:
+        assert inverse_mass_matrix.ndim == 1
+    else:
+        assert inverse_mass_matrix.ndim == 2
+
+    kernel = kernel_factory(step_size, inverse_mass_matrix)
+    states = inference_loop(rng_key, kernel, initial_state, 2_000)
+
+    coefs_samples = states.position["coefs"]
+    scale_samples = states.position["scale"]
 
     assert np.mean(scale_samples) == pytest.approx(1, 1e-1)
     assert np.mean(coefs_samples) == pytest.approx(3, 1e-1)
 
 
-@pytest.mark.parametrize("inv_mass_matrix", inv_mass_matrices)
-def test_nuts(inv_mass_matrix):
-    """Test the HMC kernel.
-
-    This is a very simple sanity-check.
-    """
+@pytest.mark.parametrize("is_mass_matrix_diagonal", [True, False])
+def test_nuts(is_mass_matrix_diagonal):
+    """Test the NUTS kernel and the Stan warmup."""
+    rng_key = jax.random.PRNGKey(19)
     x_data = np.random.normal(0, 1, size=(1000, 1))
     y_data = 3 * x_data + np.random.normal(size=x_data.shape)
     observations = {"x": x_data, "preds": y_data}
@@ -82,17 +88,28 @@ def test_nuts(inv_mass_matrix):
     initial_position = {"scale": 1.0, "coefs": 2.0}
     initial_state = hmc.new_state(initial_position, potential)
 
-    params = nuts.NUTSParameters(
-        step_size=1e-3, max_tree_depth=10, inv_mass_matrix=inv_mass_matrix
+    kernel_factory = lambda step_size, inverse_mass_matrix: nuts.kernel(
+        potential, step_size, inverse_mass_matrix
     )
-    kernel = nuts.kernel(potential, params)
 
-    rng_key = jax.random.PRNGKey(19)
-    states = inference_loop(rng_key, kernel, initial_state, 20_000)
+    state, (step_size, inverse_mass_matrix), _ = stan_warmup.run(
+        rng_key,
+        kernel_factory,
+        initial_state,
+        1_000,
+        is_mass_matrix_diagonal=is_mass_matrix_diagonal,
+    )
 
-    coefs_samples = states.position["coefs"][5000:]
-    scale_samples = states.position["scale"][5000:]
+    if is_mass_matrix_diagonal:
+        assert inverse_mass_matrix.ndim == 1
+    else:
+        assert inverse_mass_matrix.ndim == 2
 
-    print(scale_samples, coefs_samples)
+    kernel = nuts.kernel(potential, step_size, inverse_mass_matrix)
+    states = inference_loop(rng_key, kernel, initial_state, 500)
+
+    coefs_samples = states.position["coefs"]
+    scale_samples = states.position["scale"]
+
     assert np.mean(scale_samples) == pytest.approx(1, 1e-1)
     assert np.mean(coefs_samples) == pytest.approx(3, 1e-1)

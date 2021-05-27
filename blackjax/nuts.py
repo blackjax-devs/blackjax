@@ -85,7 +85,7 @@ def kernel(
         kinetic_energy_fn,
         uturn_check_fn,
         step_size,
-        max_tree_depth,
+        max_num_doublings,
         divergence_threshold,
     )
 

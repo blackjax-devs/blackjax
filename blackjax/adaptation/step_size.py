@@ -246,7 +246,7 @@ def find_reasonable_step_size(
         _, rng_key = jax.random.split(rng_key)
 
         step_size = (2.0 ** direction) * step_size
-        kernel = kernel_generator(step_size=step_size)
+        kernel = kernel_generator(step_size)
         _, info = kernel(rng_key, reference_state)
 
         new_direction = jnp.where(target_accept < info.acceptance_probability, 1, -1)

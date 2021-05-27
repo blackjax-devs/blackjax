@@ -9,6 +9,7 @@ parameters used in Hamiltonian Monte Carlo.
 """
 from typing import Callable, NamedTuple, Tuple
 
+import jax
 import jax.numpy as jnp
 
 __all__ = ["mass_matrix_adaptation", "welford_algorithm"]
@@ -100,6 +101,7 @@ def mass_matrix_adaptation(
             The current position of the chain.
         """
         inverse_mass_matrix, wc_state = mm_state
+        position, _ = jax.flatten_util.ravel_pytree(position)
         wc_state = wc_update(wc_state, position)
         return MassMatrixAdaptationState(inverse_mass_matrix, wc_state)
 
