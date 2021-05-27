@@ -225,7 +225,7 @@ def dynamic_progressive_integration(
                 step == 0,
                 lambda _: Trajectory(new_state, new_state, new_state.momentum, 1),
                 lambda _: append_to_trajectory(direction, trajectory, new_state),
-                operand=None
+                operand=None,
             )
             new_proposal, is_diverging = generate_proposal(proposal, new_state)
             sampled_proposal = sample_proposal(rng_key, proposal, new_proposal)
@@ -235,7 +235,7 @@ def dynamic_progressive_integration(
             has_terminated = is_criterion_met(
                 new_termination_state, new_trajectory.momentum_sum, new_state.momentum
             )
-            
+
             return (
                 rng_key,
                 step + 1,
@@ -263,7 +263,7 @@ def dynamic_progressive_integration(
             _,
             step,
             proposal,
-            _, 
+            _,
             trajectory,
             termination_state,
             is_diverging,
