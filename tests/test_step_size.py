@@ -68,6 +68,6 @@ def test_dual_averaging():
     for _ in range(100):
         x = jnp.exp(da_state.log_step_size)
         g = -jax.grad(f)(x)
-        da_state = update(da_state, None, to_hmc_info_mock(g))
+        da_state = update(da_state, to_hmc_info_mock(g))
 
     assert final(da_state) == pytest.approx(1.0, 1e-1)

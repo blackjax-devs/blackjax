@@ -118,7 +118,7 @@ def dual_averaging(
         log_step_size_avg: float = 0.0
         return DualAveragingState(log_step_size, log_step_size_avg, step, avg_error, mu)
 
-    def update(da_state: DualAveragingState, _, info) -> DualAveragingState:
+    def update(da_state: DualAveragingState, info) -> DualAveragingState:
         """Update the state of the Dual Averaging adaptive algorithm.
 
         Parameters
