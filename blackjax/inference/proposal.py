@@ -110,15 +110,21 @@ def static_binomial_sampling(rng_key, proposal, new_proposal):
 def progressive_uniform_sampling(rng_key, proposal, new_proposal):
     p_accept = jax.scipy.special.expit(new_proposal.weight - proposal.weight)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
-
-    updated_proposal = Proposal(
-        new_proposal.state,
-        new_proposal.energy,
-        jnp.logaddexp(proposal.weight, new_proposal.weight),
-    )
+    new_weight = jnp.logaddexp(proposal.weight, new_proposal.weight)
 
     return jax.lax.cond(
-        do_accept, lambda _: updated_proposal, lambda _: proposal, operand=None
+        do_accept,
+        lambda _: Proposal(
+            new_proposal.state,
+            new_proposal.energy,
+            new_weight,
+        ),
+        lambda _: Proposal(
+            proposal.state,
+            proposal.energy,
+            new_weight,
+        ),
+        operand=None,
     )
 
 
@@ -132,13 +138,19 @@ def progressive_biased_sampling(rng_key, proposal, new_proposal):
     p_accept = jnp.exp(new_proposal.weight - proposal.weight)
     p_accept = jnp.clip(p_accept, a_max=1.0)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
-
-    updated_proposal = Proposal(
-        new_proposal.state,
-        new_proposal.energy,
-        jnp.logaddexp(proposal.weight, new_proposal.weight),
-    )
+    new_weight = jnp.logaddexp(proposal.weight, new_proposal.weight)
 
     return jax.lax.cond(
-        do_accept, lambda _: updated_proposal, lambda _: proposal, operand=None
+        do_accept,
+        lambda _: Proposal(
+            new_proposal.state,
+            new_proposal.energy,
+            new_weight,
+        ),
+        lambda _: Proposal(
+            proposal.state,
+            proposal.energy,
+            new_weight,
+        ),
+        operand=None,
     )

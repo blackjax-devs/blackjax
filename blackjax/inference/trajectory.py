@@ -204,7 +204,7 @@ def dynamic_progressive_integration(
 
         def do_keep_integrating(expansion_state):
             """Decide whether we should continue integrating the trajectory"""
-            _, step, _, _, _, is_diverging, has_terminated = expansion_state
+            _, step, _, _, _, _, is_diverging, has_terminated = expansion_state
             return (step < max_num_steps) & ~has_terminated & ~is_diverging
 
         def add_one_state(expansion_state):
@@ -212,6 +212,7 @@ def dynamic_progressive_integration(
                 rng_key,
                 step,
                 proposal,
+                previous_state,
                 trajectory,
                 termination_state,
                 _,
@@ -219,8 +220,13 @@ def dynamic_progressive_integration(
             ) = expansion_state
             _, rng_key = jax.random.split(rng_key)
 
-            new_state = integrator(proposal.state, direction * step_size)
-            new_trajectory = append_to_trajectory(direction, trajectory, new_state)
+            new_state = integrator(previous_state, direction * step_size)
+            new_trajectory = jax.lax.cond(
+                step == 0,
+                lambda _: Trajectory(new_state, new_state, new_state.momentum, 1),
+                lambda _: append_to_trajectory(direction, trajectory, new_state),
+                operand=None
+            )
             new_proposal, is_diverging = generate_proposal(proposal, new_state)
             sampled_proposal = sample_proposal(rng_key, proposal, new_proposal)
             new_termination_state = update_termination_state(
@@ -229,11 +235,12 @@ def dynamic_progressive_integration(
             has_terminated = is_criterion_met(
                 new_termination_state, new_trajectory.momentum_sum, new_state.momentum
             )
-
+            
             return (
                 rng_key,
                 step + 1,
                 sampled_proposal,
+                new_state,
                 new_trajectory,
                 new_termination_state,
                 is_diverging,
@@ -245,6 +252,7 @@ def dynamic_progressive_integration(
             rng_key,
             0,
             initial_proposal,
+            initial_state,
             Trajectory(initial_state, initial_state, initial_state.momentum, 0),
             termination_state,
             False,
@@ -255,6 +263,7 @@ def dynamic_progressive_integration(
             _,
             step,
             proposal,
+            _, 
             trajectory,
             termination_state,
             is_diverging,
