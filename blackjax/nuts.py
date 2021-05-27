@@ -177,14 +177,14 @@ def iterative_nuts_proposal(
 
     def propose(rng_key, initial_state: integrators.IntegratorState):
         criterion_state = new_criterion_state(initial_state, max_num_expansions)
-        initial_proposal = proposal.Proposal(
-            initial_state, _compute_energy(initial_state), 0.0
-        )
+        initial_energy = _compute_energy(initial_state)  # H0 of the HMC step
+        initial_proposal = proposal.Proposal(initial_state, initial_energy, 0.0)
 
         sampled_proposal, *info = expand(
             rng_key,
             initial_proposal,
             criterion_state,
+            initial_energy,
         )
         trajectory, num_doublings, is_diverging, has_terminated, is_turning = info
 

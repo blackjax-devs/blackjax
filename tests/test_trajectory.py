@@ -47,11 +47,12 @@ def test_dynamic_progressive_integration_divergence(case):
     initial_state = integrators.new_integrator_state(
         potential_fn, position, momentum_generator(rng_key, position)
     )
+    initial_energy = initial_state.potential_energy + kinetic_energy_fn(initial_state.position, initial_state.momentum)
     termination_state = new_criterion_state(initial_state, 10)
     max_num_steps = 100
 
     _, _, _, is_diverging, _, _ = trajectory_integrator(
-        rng_key, initial_state, direction, termination_state, max_num_steps, step_size
+        rng_key, initial_state, direction, termination_state, max_num_steps, step_size, initial_energy
     )
 
     assert is_diverging.item() is should_diverge
@@ -102,7 +103,7 @@ def test_dynamic_progressive_expansion(case):
     initial_termination_state = new_criterion_state(state, 10)
 
     _, _, step, is_diverging, has_terminated, is_turning = expand(
-        rng_key, initial_proposal, initial_termination_state
+        rng_key, initial_proposal, initial_termination_state, energy
     )
 
     assert is_diverging == should_diverge

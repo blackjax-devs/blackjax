@@ -30,9 +30,7 @@ def proposal_generator(
         energy = state.potential_energy + kinetic_energy(state.position, state.momentum)
         return Proposal(state, energy, 0.0)
 
-    def update(
-        previous_proposal: Proposal, state: IntegratorState
-    ) -> Tuple[Proposal, bool]:
+    def update(initial_energy: float, state: IntegratorState) -> Tuple[Proposal, bool]:
         """Generate a new proposal from a trajectory state.
 
         The trajectory state records information about the position in the state
@@ -43,18 +41,17 @@ def proposal_generator(
 
         Parameters
         ----------
-        previous_proposal:
-            The previous proposal.
+        initial_energy:
+            The initial energy.
         state:
             The new state.
 
         """
-        energy = previous_proposal.energy
         new_energy = state.potential_energy + kinetic_energy(
             state.position, state.momentum
         )
 
-        delta_energy = energy - new_energy
+        delta_energy = initial_energy - new_energy
         delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
         is_transition_divergent = jnp.abs(delta_energy) > divergence_threshold
 

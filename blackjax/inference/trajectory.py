@@ -179,6 +179,7 @@ def dynamic_progressive_integration(
         termination_state,
         max_num_steps: int,
         step_size,
+        initial_energy,
     ):
         """Integrate the trajectory starting from `initial_state` and update
         the proposal sequentially until the termination criterion is met.
@@ -199,6 +200,8 @@ def dynamic_progressive_integration(
             been met.
         step_size
             The step size of the symplectic integrator.
+        initial_energy
+            Initial energy H0 of the HMC step (not to confused with the initial energy of the subtree)
 
         """
 
@@ -227,7 +230,7 @@ def dynamic_progressive_integration(
                 lambda _: append_to_trajectory(direction, trajectory, new_state),
                 operand=None,
             )
-            new_proposal, is_diverging = generate_proposal(proposal, new_state)
+            new_proposal, is_diverging = generate_proposal(initial_energy, new_state)
             sampled_proposal = sample_proposal(rng_key, proposal, new_proposal)
             new_termination_state = update_termination_state(
                 termination_state, new_trajectory.momentum_sum, new_state.momentum, step
@@ -334,6 +337,7 @@ def dynamic_multiplicative_expansion(
         rng_key,
         initial_proposal: proposal.Proposal,
         criterion_state,
+        initial_energy,
     ):
         def do_keep_expanding(expansion_state) -> bool:
             """Determine whether we need to keep expanding the trajectory."""
@@ -388,6 +392,7 @@ def dynamic_multiplicative_expansion(
                 termination_state,
                 rate ** step,
                 step_size,
+                initial_energy,
             )
 
             left_trajectory, right_trajectory = reorder_trajectories(
