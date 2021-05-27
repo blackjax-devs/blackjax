@@ -224,14 +224,23 @@ def dynamic_progressive_integration(
             _, rng_key = jax.random.split(rng_key)
 
             new_state = integrator(previous_state, direction * step_size)
-            new_trajectory = jax.lax.cond(
+            new_proposal, is_diverging = generate_proposal(initial_energy, new_state)
+
+            new_trajectory, sampled_proposal = jax.lax.cond(
                 step == 0,
-                lambda _: Trajectory(new_state, new_state, new_state.momentum, 1),
-                lambda _: append_to_trajectory(direction, trajectory, new_state),
+                lambda _: (
+                    # At step 0 we start the new trajectory and proposal
+                    Trajectory(new_state, new_state, new_state.momentum, 1),
+                    new_proposal,
+                ),
+                lambda _: (
+                    # At step k we append the new state to the trajectory and generate new proposal
+                    append_to_trajectory(direction, trajectory, new_state),
+                    sample_proposal(rng_key, proposal, new_proposal),
+                ),
                 operand=None,
             )
-            new_proposal, is_diverging = generate_proposal(initial_energy, new_state)
-            sampled_proposal = sample_proposal(rng_key, proposal, new_proposal)
+
             new_termination_state = update_termination_state(
                 termination_state, new_trajectory.momentum_sum, new_state.momentum, step
             )
@@ -282,6 +291,89 @@ def dynamic_progressive_integration(
             is_diverging,
             has_terminated,
             step,
+        )
+
+    return integrate
+
+
+def dynamic_recursive_integration(
+    integrator: Callable,
+    kinetic_energy: Callable,
+    update_termination_state: Callable,
+    is_criterion_met: Callable,
+    divergence_threshold: float,
+    use_robust_uturn_check: bool = False,
+):
+    """Integrate a trajectory and update the proposal recursively in Python
+    until the termination criterion is met.
+
+    Parameters
+    ----------
+    integrator
+        The symplectic integrator used to integrate the hamiltonian trajectory.
+    kinetic_energy
+        Function to compute the current value of the kinetic energy.
+    update_termination_state
+        Not used.
+    is_criterion_met
+        Determines whether the termination criterion has been met.
+    divergence_threshold
+        Value of the difference of energy between two consecutive states above which we say a transition is divergent.
+    use_robust_uturn_check
+        Bool to indicate whether to perform additional U turn check between two trajectory.
+
+    """
+    del update_termination_state
+
+    init_proposal, generate_proposal = proposal.proposal_generator(
+        kinetic_energy, divergence_threshold
+    )
+    # sample_proposal = proposal.progressive_uniform_sampling
+
+    def integrate(
+        rng_key: jax.numpy.DeviceArray,
+        initial_state: IntegratorState,
+        direction: int,
+        tree_depth: int,
+        step_size,
+        initial_energy: float,
+    ):
+        """Integrate the trajectory starting from `initial_state` and update
+        the proposal recursively until the termination criterion is met.
+
+        Parameters
+        ----------
+        rng_key
+            Key used by JAX's random number generator.
+        initial_state
+            The initial state from which we start expanding the trajectory.
+        direction int in {-1, 1}
+            The direction in which to expand the trajectory.
+        tree_depth
+            The depth of the binary tree doubling.
+        step_size
+            The step size of the symplectic integrator.
+        initial_energy
+            Initial energy H0 of the HMC step (not to confused with the initial energy of the subtree)
+
+        """
+        if tree_depth == 0:
+            # Base case - take one leapfrog step in the direction v.
+            next_state = integrator(initial_state, direction * step_size)
+            trajectory = Trajectory(next_state, next_state, next_state.momentum, 1)
+            return (
+                rng_key,
+                next_state,
+                trajectory,
+            )
+
+        return (
+            # rng_key
+            # proposal,
+            # trajectory,
+            # None,
+            # is_diverging,
+            # has_terminated,
         )
 
     return integrate
