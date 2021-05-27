@@ -62,7 +62,7 @@ def kernel(
     potential_fn: Callable,
     step_size: float,
     inverse_mass_matrix: Array,
-    max_tree_depth: int = 10,
+    max_num_doublings: int = 10,
     divergence_threshold: int = 1000,
 ) -> Callable:
     """Build an iterative NUTS kernel.
