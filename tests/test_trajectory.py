@@ -1,9 +1,10 @@
 """Test the trajectory integration"""
+import functools
+
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-import functools
 
 import blackjax.inference.integrators as integrators
 import blackjax.inference.metrics as metrics

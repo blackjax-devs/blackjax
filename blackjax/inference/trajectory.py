@@ -32,13 +32,13 @@ from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 import jax
 import jax.numpy as jnp
 
+from blackjax.inference.integrators import IntegratorState
 from blackjax.inference.proposal import (
     Proposal,
-    proposal_generator,
     progressive_biased_sampling,
     progressive_uniform_sampling,
+    proposal_generator,
 )
-from blackjax.inference.integrators import IntegratorState
 
 PyTree = Union[Dict, List, Tuple]
 
