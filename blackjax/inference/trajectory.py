@@ -32,7 +32,12 @@ from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 import jax
 import jax.numpy as jnp
 
-import blackjax.inference.proposal as proposal
+from blackjax.inference.proposal import (
+    Proposal,
+    proposal_generator,
+    progressive_biased_sampling,
+    progressive_uniform_sampling,
+)
 from blackjax.inference.integrators import IntegratorState
 
 PyTree = Union[Dict, List, Tuple]
@@ -78,6 +83,18 @@ def reorder_trajectories(
             trajectory,
         ),
         operand=None,
+    )
+
+
+def merge_trajectories(left_trajectory: Trajectory, right_trajectory: Trajectory):
+    momentum_sum = jax.tree_util.tree_multimap(
+        jnp.add, left_trajectory.momentum_sum, right_trajectory.momentum_sum
+    )
+    return Trajectory(
+        left_trajectory.leftmost_state,
+        right_trajectory.rightmost_state,
+        momentum_sum,
+        left_trajectory.num_states + right_trajectory.num_states,
     )
 
 
@@ -167,10 +184,10 @@ def dynamic_progressive_integration(
         Value of the difference of energy between two consecutive states above which we say a transition is divergent.
 
     """
-    init_proposal, generate_proposal = proposal.proposal_generator(
+    init_proposal, generate_proposal = proposal_generator(
         kinetic_energy, divergence_threshold
     )
-    sample_proposal = proposal.progressive_uniform_sampling
+    sample_proposal = progressive_uniform_sampling
 
     def integrate(
         rng_key: jax.numpy.DeviceArray,
@@ -221,7 +238,7 @@ def dynamic_progressive_integration(
                 _,
                 _,
             ) = expansion_state
-            _, rng_key = jax.random.split(rng_key)
+            rng_key, proposal_key = jax.random.split(rng_key)
 
             new_state = integrator(previous_state, direction * step_size)
             new_proposal, is_diverging = generate_proposal(initial_energy, new_state)
@@ -236,7 +253,7 @@ def dynamic_progressive_integration(
                 lambda _: (
                     # At step k we append the new state to the trajectory and generate new proposal
                     append_to_trajectory(direction, trajectory, new_state),
-                    sample_proposal(rng_key, proposal, new_proposal),
+                    sample_proposal(proposal_key, proposal, new_proposal),
                 ),
                 operand=None,
             )
@@ -299,13 +316,14 @@ def dynamic_progressive_integration(
 def dynamic_recursive_integration(
     integrator: Callable,
     kinetic_energy: Callable,
-    update_termination_state: Callable,
-    is_criterion_met: Callable,
+    uturn_check_fn: Callable,
     divergence_threshold: float,
     use_robust_uturn_check: bool = False,
 ):
     """Integrate a trajectory and update the proposal recursively in Python
     until the termination criterion is met.
+
+    This is the implementation of Algorithm 6 from [1] with multinomial sampling.
 
     Parameters
     ----------
@@ -313,24 +331,22 @@ def dynamic_recursive_integration(
         The symplectic integrator used to integrate the hamiltonian trajectory.
     kinetic_energy
         Function to compute the current value of the kinetic energy.
-    update_termination_state
-        Not used.
-    is_criterion_met
+    uturn_check_fn
         Determines whether the termination criterion has been met.
     divergence_threshold
         Value of the difference of energy between two consecutive states above which we say a transition is divergent.
     use_robust_uturn_check
         Bool to indicate whether to perform additional U turn check between two trajectory.
 
+    References
+    ----------
+    .. [1]: Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo." J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
     """
-    del update_termination_state
 
-    init_proposal, generate_proposal = proposal.proposal_generator(
-        kinetic_energy, divergence_threshold
-    )
-    # sample_proposal = proposal.progressive_uniform_sampling
+    _, generate_proposal = proposal_generator(kinetic_energy, divergence_threshold)
+    sample_proposal = progressive_uniform_sampling
 
-    def integrate(
+    def buildtree_integrate(
         rng_key: jax.numpy.DeviceArray,
         initial_state: IntegratorState,
         direction: int,
@@ -339,7 +355,7 @@ def dynamic_recursive_integration(
         initial_energy: float,
     ):
         """Integrate the trajectory starting from `initial_state` and update
-        the proposal recursively until the termination criterion is met.
+        the proposal recursively with tree doubling until the termination criterion is met.
 
         Parameters
         ----------
@@ -360,23 +376,97 @@ def dynamic_recursive_integration(
         if tree_depth == 0:
             # Base case - take one leapfrog step in the direction v.
             next_state = integrator(initial_state, direction * step_size)
+            new_proposal, is_diverging = generate_proposal(initial_energy, next_state)
             trajectory = Trajectory(next_state, next_state, next_state.momentum, 1)
             return (
                 rng_key,
-                next_state,
+                new_proposal,
                 trajectory,
+                is_diverging,
+                False,
             )
+        else:
+            (
+                rng_key,
+                proposal,
+                trajectory,
+                is_diverging,
+                is_turning,
+            ) = buildtree_integrate(
+                rng_key,
+                initial_state,
+                direction,
+                tree_depth - 1,
+                step_size,
+                initial_energy,
+            )
+            # Note that is_diverging and is_turning is inplace updated
+            if ~is_diverging & ~is_turning:
+                start_state = jax.lax.cond(
+                    direction > 0,
+                    lambda _: trajectory.rightmost_state,
+                    lambda _: trajectory.leftmost_state,
+                    operand=None,
+                )
+                (
+                    rng_key,
+                    new_proposal,
+                    new_trajectory,
+                    is_diverging,
+                    is_turning,
+                ) = buildtree_integrate(
+                    rng_key,
+                    start_state,
+                    direction,
+                    tree_depth - 1,
+                    step_size,
+                    initial_energy,
+                )
+                left_trajectory, right_trajectory = reorder_trajectories(
+                    direction, trajectory, new_trajectory
+                )
+                trajectory = merge_trajectories(left_trajectory, right_trajectory)
+
+                if ~is_turning:
+                    is_turning = uturn_check_fn(
+                        trajectory.leftmost_state.momentum,
+                        trajectory.rightmost_state.momentum,
+                        trajectory.momentum_sum,
+                    )
+                    if use_robust_uturn_check & (tree_depth - 1 > 0):
+                        momentum_sum_left = jax.tree_util.tree_multimap(
+                            jnp.add,
+                            left_trajectory.momentum_sum,
+                            right_trajectory.leftmost_state.momentum,
+                        )
+                        is_turning_left = uturn_check_fn(
+                            left_trajectory.leftmost_state.momentum,
+                            right_trajectory.leftmost_state.momentum,
+                            momentum_sum_left,
+                        )
+                        momentum_sum_right = jax.tree_util.tree_multimap(
+                            jnp.add,
+                            left_trajectory.rightmost_state.momentum,
+                            right_trajectory.momentum_sum,
+                        )
+                        is_turning_right = uturn_check_fn(
+                            left_trajectory.rightmost_state.momentum,
+                            right_trajectory.rightmost_state.momentum,
+                            momentum_sum_right,
+                        )
+                        is_turning = is_turning | is_turning_left | is_turning_right
+                rng_key, proposal_key = jax.random.split(rng_key)
+                proposal = sample_proposal(proposal_key, proposal, new_proposal)
 
         return (
-            # rng_key
-            # proposal,
-            # trajectory,
-            # None,
-            # is_diverging,
-            # has_terminated,
+            rng_key,
+            proposal,
+            trajectory,
+            is_diverging,
+            is_turning,
         )
 
-    return integrate
+    return buildtree_integrate
 
 
 # -------------------------------------------------------------------
@@ -423,17 +513,17 @@ def dynamic_multiplicative_expansion(
         the literature often refers to "tree doubling".
 
     """
-    proposal_sampler = proposal.progressive_biased_sampling
+    proposal_sampler = progressive_biased_sampling
 
     def expand(
         rng_key,
-        initial_proposal: proposal.Proposal,
+        initial_proposal: Proposal,
         criterion_state,
         initial_energy,
     ):
         def do_keep_expanding(expansion_state) -> bool:
             """Determine whether we need to keep expanding the trajectory."""
-            _, step, trajectory, _, _, is_diverging, _, is_turning = expansion_state
+            _, step, trajectory, _, _, is_diverging, is_turning = expansion_state
             return (step < max_num_expansions) & ~is_diverging & ~is_turning
 
         def expand_once(expansion_state):
@@ -457,9 +547,8 @@ def dynamic_multiplicative_expansion(
                 termination_state,
                 _,
                 _,
-                _,
             ) = expansion_state
-            rng_key, direction_key = jax.random.split(rng_key, 2)
+            rng_key, direction_key, proposal_key = jax.random.split(rng_key, 3)
 
             # create new subtrajectory that is twice as long as the current
             # trajectory.
@@ -475,7 +564,7 @@ def dynamic_multiplicative_expansion(
                 new_trajectory,
                 termination_state,
                 is_diverging,
-                has_terminated,
+                is_turning_subtree,
                 num_steps,
             ) = trajectory_integrator(
                 rng_key,
@@ -491,49 +580,25 @@ def dynamic_multiplicative_expansion(
                 direction, trajectory, new_trajectory
             )
 
-            # robust u-turn check when merging the two trajectory
-            # note this is different from the robust u-turn check done during
-            # trajectory building.
-            # momentum_sum_left = jax.tree_util.tree_multimap(
-            #     jnp.add,
-            #     left_trajectory.momentum_sum,
-            #     right_trajectory.leftmost_state.momentum,
-            # )
-            # is_turning_left = uturn_check_fn(
-            #     left_trajectory.leftmost_state.momentum,
-            #     right_trajectory.leftmost_state.momentum,
-            #     momentum_sum_left,
-            # )
-            # momentum_sum_right = jax.tree_util.tree_multimap(
-            #     jnp.add,
-            #     left_trajectory.rightmost_state.momentum,
-            #     right_trajectory.momentum_sum,
-            # )
-            # is_turning_right = uturn_check_fn(
-            #     left_trajectory.rightmost_state.momentum,
-            #     right_trajectory.rightmost_state.momentum,
-            #     momentum_sum_right,
-            # )
-
-            # merge the freshly integrated trajectory to the current trajectory
-            momentum_sum = jax.tree_util.tree_multimap(
-                jnp.add, left_trajectory.momentum_sum, right_trajectory.momentum_sum
-            )
-            merged_trajectory = Trajectory(
-                left_trajectory.leftmost_state,
-                right_trajectory.rightmost_state,
-                momentum_sum,
-                left_trajectory.num_states + right_trajectory.num_states,
-            )
+            merged_trajectory = merge_trajectories(left_trajectory, right_trajectory)
 
             # update the proposal
-            # we reject proposals coming from diverging or turning subtrajectories
+            # we reject proposals coming from diverging or turning subtrajectories,
+            # but accumulate average acceptance probabilty across entire trajectory
+            def update_log_p_accept(inputs):
+                _, proposal, new_proposal = inputs
+                return Proposal(
+                    proposal.state,
+                    proposal.energy,
+                    proposal.weight,
+                    jnp.logaddexp(proposal.log_p_accept, new_proposal.log_p_accept),
+                )
+
             sampled_proposal = jax.lax.cond(
-                is_diverging | has_terminated,
-                proposal,
-                lambda x: x,
-                (rng_key, proposal, new_proposal),
+                is_diverging | is_turning_subtree,
+                update_log_p_accept,
                 lambda x: proposal_sampler(*x),
+                operand=(proposal_key, proposal, new_proposal),
             )
 
             is_turning = uturn_check_fn(
@@ -549,8 +614,7 @@ def dynamic_multiplicative_expansion(
                 merged_trajectory,
                 termination_state,
                 is_diverging,
-                has_terminated,
-                is_turning,  # | is_turning_left | is_turning_right,
+                is_turning_subtree | is_turning,
             )
 
         initial_state = initial_proposal.state
@@ -568,7 +632,6 @@ def dynamic_multiplicative_expansion(
             trajectory,
             _,
             is_diverging,
-            has_terminated,
             is_turning,
         ) = jax.lax.while_loop(
             do_keep_expanding,
@@ -581,10 +644,9 @@ def dynamic_multiplicative_expansion(
                 criterion_state,
                 False,
                 False,
-                False,
             ),
         )
 
-        return new_proposal, trajectory, step, is_diverging, has_terminated, is_turning
+        return new_proposal, trajectory, step, is_diverging, is_turning
 
     return expand
