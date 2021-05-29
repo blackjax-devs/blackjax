@@ -56,7 +56,7 @@ def test_hmc(inv_mass_matrix):
     )
     kernel = hmc.kernel(potential, params)
 
-    rng_key = jax.random.PRNGKey(19)
+    rng_key = jax.random.PRNGKey(23)
     states = inference_loop(rng_key, kernel, initial_state, 20_000)
 
     coefs_samples = states.position["coefs"][5000:]
