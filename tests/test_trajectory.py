@@ -183,7 +183,7 @@ def test_dynamic_progressive_equal_recursive():
         # with the full trajectory should be the same.
         np.testing.assert_allclose(proposal0.weight, proposal1.weight, rtol=1e-5)
         np.testing.assert_allclose(
-            proposal0.cumsum_log_mh_accpet, proposal1.cumsum_log_mh_accpet, rtol=1e-5
+            proposal0.sum_log_p_accept, proposal1.sum_log_p_accept, rtol=1e-5
         )
 
 
