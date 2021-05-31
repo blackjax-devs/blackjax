@@ -184,9 +184,7 @@ def dynamic_progressive_integration(
         Value of the difference of energy between two consecutive states above which we say a transition is divergent.
 
     """
-    _, generate_proposal = proposal_generator(
-        kinetic_energy, divergence_threshold
-    )
+    _, generate_proposal = proposal_generator(kinetic_energy, divergence_threshold)
     sample_proposal = progressive_uniform_sampling
 
     def integrate(
@@ -264,8 +262,8 @@ def dynamic_progressive_integration(
                 has_terminated,
             )
 
-        # Take the first step (step 0) that starts the new trajectory with proposal, 
-        # so that at for step k > 0 in the while loop we can just append the new 
+        # Take the first step (step 0) that starts the new trajectory with proposal,
+        # so that at for step k > 0 in the while loop we can just append the new
         # state to the trajectory and generate new proposal.
         state_step0 = integrator(initial_state, direction * step_size)
         initial_proposal, is_diverging = generate_proposal(initial_energy, state_step0)
