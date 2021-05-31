@@ -243,7 +243,6 @@ def dynamic_progressive_integration(
             new_state = integrator(previous_state, direction * step_size)
             new_proposal, is_diverging = generate_proposal(initial_energy, new_state)
 
-                    new_proposal,
             new_trajectory = append_to_trajectory(direction, trajectory, new_state)
             sampled_proposal = sample_proposal(proposal_key, proposal, new_proposal)
 
