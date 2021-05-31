@@ -47,7 +47,7 @@ class NUTSInfo(NamedTuple):
     integration_steps
         Number of integration steps that were taken. This is also the number of states
         in the full trajectory.
-    avg_accept_prob
+    acceptance_probability
         average acceptance probabilty across entire trajectory
     """
 
@@ -59,7 +59,7 @@ class NUTSInfo(NamedTuple):
     trajectory_rightmost_state: integrators.IntegratorState
     num_trajectory_expansions: int
     integration_steps: int
-    avg_accept_prob: float
+    acceptance_probability: float
 
 
 new_state = blackjax.hmc.new_state
@@ -197,7 +197,7 @@ def iterative_nuts_proposal(
         trajectory, num_doublings, is_diverging, is_turning = info
         # Compute average acceptance probabilty across entire trajectory,
         # even over subtrees that may have been rejected
-        avg_accept_prob = (
+        acceptance_probability = (
             jnp.exp(sampled_proposal.sum_log_p_accept) / trajectory.num_states
         )
 
@@ -210,7 +210,7 @@ def iterative_nuts_proposal(
             trajectory.rightmost_state,
             num_doublings,
             trajectory.num_states,
-            avg_accept_prob,
+            acceptance_probability,
         )
 
         return sampled_proposal.state, info
