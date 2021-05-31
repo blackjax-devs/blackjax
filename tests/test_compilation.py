@@ -45,4 +45,6 @@ def test_nuts():
         _, rng_key = jax.random.split(rng_key)
         state, _ = kernel(rng_key, state)
 
-    assert GLOBAL["count"] == 1
+    # Potential function was traced twice as we call potential function
+    # at Step 0 when building a new trajectory in tree doubling.
+    assert GLOBAL["count"] == 2
