@@ -17,14 +17,14 @@ class Proposal(NamedTuple):
     weight:
         Weight of the proposal. It is equal to the logarithm of the sum of the canonical
         densities of each state :math:`e^{-H(z)}` along the trajectory.
-    log_p_accept:
-        Average acceptance probabilty across entire trajectory.
+    cumsum_log_mh_accpet:
+        cumulated Metropolis-Hastings acceptance probabilty across entire trajectory.
     """
 
     state: IntegratorState
     energy: float
     weight: float
-    log_p_accept: float
+    cumsum_log_mh_accpet: float
 
 
 def proposal_generator(
@@ -62,14 +62,14 @@ def proposal_generator(
         # The weight of the new proposal is equal to H0 - H(z_new)
         weight = delta_energy
         # Acceptance statistic min(e^{H0 - H(z_new)}, 1)
-        log_p_accept = jnp.minimum(delta_energy, 0.0)
+        cumsum_log_mh_accpet = jnp.minimum(delta_energy, 0.0)
 
         return (
             Proposal(
                 state,
                 new_energy,
                 weight,
-                log_p_accept,
+                cumsum_log_mh_accpet,
             ),
             is_transition_divergent,
         )
@@ -85,12 +85,12 @@ def proposal_generator(
 def static_binomial_sampling(rng_key, proposal, new_proposal):
     """Accept or reject a proposal based on its weight.
 
-    In the static setting, the `log_p_accept` of the proposal will be equal to the
+    In the static setting, the `log_weight` of the proposal will be equal to the
     difference of energy between the beginning and the end of the trajectory (truncated at 0.). It
     is implemented this way to keep a consistent API with progressive sampling.
 
     """
-    p_accept = jnp.exp(new_proposal.log_p_accept)
+    p_accept = jnp.clip(jnp.exp(proposal.weight), a_max=1)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
 
     return jax.lax.cond(
@@ -112,10 +112,13 @@ def static_binomial_sampling(rng_key, proposal, new_proposal):
 
 
 def progressive_uniform_sampling(rng_key, proposal, new_proposal):
+    # Using expit to compute exp(w1) / (exp(w0) + exp(w1)) 
     p_accept = jax.scipy.special.expit(new_proposal.weight - proposal.weight)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
     new_weight = jnp.logaddexp(proposal.weight, new_proposal.weight)
-    new_log_p_accept = jnp.logaddexp(proposal.log_p_accept, new_proposal.log_p_accept)
+    new_cumsum_log_mh_accpet = jnp.logaddexp(
+        proposal.cumsum_log_mh_accpet, new_proposal.cumsum_log_mh_accpet
+    )
 
     return jax.lax.cond(
         do_accept,
@@ -123,13 +126,13 @@ def progressive_uniform_sampling(rng_key, proposal, new_proposal):
             new_proposal.state,
             new_proposal.energy,
             new_weight,
-            new_log_p_accept,
+            new_cumsum_log_mh_accpet,
         ),
         lambda _: Proposal(
             proposal.state,
             proposal.energy,
             new_weight,
-            new_log_p_accept,
+            new_cumsum_log_mh_accpet,
         ),
         operand=None,
     )
@@ -142,11 +145,12 @@ def progressive_biased_sampling(rng_key, proposal, new_proposal):
     biases the transition away from the trajectory's initial state.
 
     """
-    p_accept = jnp.exp(new_proposal.weight - proposal.weight)
-    p_accept = jnp.clip(p_accept, a_max=1.0)
+    p_accept = jnp.clip(jnp.exp(new_proposal.weight - proposal.weight), a_max=1)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
     new_weight = jnp.logaddexp(proposal.weight, new_proposal.weight)
-    new_log_p_accept = jnp.logaddexp(proposal.log_p_accept, new_proposal.log_p_accept)
+    new_cumsum_log_mh_accpet = jnp.logaddexp(
+        proposal.cumsum_log_mh_accpet, new_proposal.cumsum_log_mh_accpet
+    )
 
     return jax.lax.cond(
         do_accept,
@@ -154,13 +158,13 @@ def progressive_biased_sampling(rng_key, proposal, new_proposal):
             new_proposal.state,
             new_proposal.energy,
             new_weight,
-            new_log_p_accept,
+            new_cumsum_log_mh_accpet,
         ),
         lambda _: Proposal(
             proposal.state,
             proposal.energy,
             new_weight,
-            new_log_p_accept,
+            new_cumsum_log_mh_accpet,
         ),
         operand=None,
     )

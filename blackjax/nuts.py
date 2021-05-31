@@ -197,7 +197,9 @@ def iterative_nuts_proposal(
         trajectory, num_doublings, is_diverging, is_turning = info
         # Compute average acceptance probabilty across entire trajectory,
         # even over subtrees that may have been rejected
-        avg_accept_prob = jnp.exp(sampled_proposal.log_p_accept) / trajectory.num_states
+        avg_accept_prob = (
+            jnp.exp(sampled_proposal.cumsum_log_mh_accpet) / trajectory.num_states
+        )
 
         info = NUTSInfo(
             initial_state.momentum,

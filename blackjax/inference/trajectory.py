@@ -585,18 +585,20 @@ def dynamic_multiplicative_expansion(
             # update the proposal
             # we reject proposals coming from diverging or turning subtrajectories,
             # but accumulate average acceptance probabilty across entire trajectory
-            def update_log_p_accept(inputs):
+            def update_cumsum_log_mh_accpet(inputs):
                 _, proposal, new_proposal = inputs
                 return Proposal(
                     proposal.state,
                     proposal.energy,
                     proposal.weight,
-                    jnp.logaddexp(proposal.log_p_accept, new_proposal.log_p_accept),
+                    jnp.logaddexp(
+                        proposal.cumsum_log_mh_accpet, new_proposal.cumsum_log_mh_accpet
+                    ),
                 )
 
             sampled_proposal = jax.lax.cond(
                 is_diverging | is_turning_subtree,
-                update_log_p_accept,
+                update_cumsum_log_mh_accpet,
                 lambda x: proposal_sampler(*x),
                 operand=(proposal_key, proposal, new_proposal),
             )
