@@ -184,7 +184,7 @@ def dynamic_progressive_integration(
         Value of the difference of energy between two consecutive states above which we say a transition is divergent.
 
     """
-    init_proposal, generate_proposal = proposal_generator(
+    _, generate_proposal = proposal_generator(
         kinetic_energy, divergence_threshold
     )
     sample_proposal = progressive_uniform_sampling
@@ -243,20 +243,9 @@ def dynamic_progressive_integration(
             new_state = integrator(previous_state, direction * step_size)
             new_proposal, is_diverging = generate_proposal(initial_energy, new_state)
 
-            new_trajectory, sampled_proposal = jax.lax.cond(
-                step == 0,
-                lambda _: (
-                    # At step 0 we start the new trajectory and proposal
-                    Trajectory(new_state, new_state, new_state.momentum, 1),
                     new_proposal,
-                ),
-                lambda _: (
-                    # At step k we append the new state to the trajectory and generate new proposal
-                    append_to_trajectory(direction, trajectory, new_state),
-                    sample_proposal(proposal_key, proposal, new_proposal),
-                ),
-                operand=None,
-            )
+            new_trajectory = append_to_trajectory(direction, trajectory, new_state)
+            sampled_proposal = sample_proposal(proposal_key, proposal, new_proposal)
 
             new_termination_state = update_termination_state(
                 termination_state, new_trajectory.momentum_sum, new_state.momentum, step
@@ -276,16 +265,27 @@ def dynamic_progressive_integration(
                 has_terminated,
             )
 
-        initial_proposal = init_proposal(initial_state)
+        # Take the first step (step 0) that starts the new trajectory with proposal, 
+        # so that at for step k > 0 in the while loop we can just append the new 
+        # state to the trajectory and generate new proposal.
+        state_step0 = integrator(initial_state, direction * step_size)
+        initial_proposal, is_diverging = generate_proposal(initial_energy, state_step0)
+        trajectory0 = Trajectory(state_step0, state_step0, state_step0.momentum, 1)
+        termination_state0 = update_termination_state(
+            termination_state, trajectory0.momentum_sum, state_step0.momentum, 0
+        )
+        has_terminated = is_criterion_met(
+            termination_state0, trajectory0.momentum_sum, state_step0.momentum
+        )
         initial_integration_state = (
             rng_key,
-            0,
+            1,
             initial_proposal,
-            initial_state,
-            Trajectory(initial_state, initial_state, initial_state.momentum, 0),
-            termination_state,
-            False,
-            False,
+            state_step0,
+            trajectory0,
+            termination_state0,
+            is_diverging,
+            has_terminated,
         )
 
         (
@@ -324,6 +324,9 @@ def dynamic_recursive_integration(
     until the termination criterion is met.
 
     This is the implementation of Algorithm 6 from [1] with multinomial sampling.
+    The implemenation here is mostly for validating the progressive implementation
+    to make sure the two are equivalent. The recursive implementation should not
+    be used for actually sampling as it cannot be jitted and thus likely slow.
 
     Parameters
     ----------
@@ -356,6 +359,9 @@ def dynamic_recursive_integration(
     ):
         """Integrate the trajectory starting from `initial_state` and update
         the proposal recursively with tree doubling until the termination criterion is met.
+
+        The function `buildtree_integrate` calls itself for tree_depth > 0, thus invokes
+        the recursive scheme that builds a trajectory by doubling a binary tree.
 
         Parameters
         ----------
