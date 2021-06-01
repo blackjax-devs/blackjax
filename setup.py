@@ -4,7 +4,6 @@ import sys
 
 import setuptools
 
-
 # READ README.md for long description on PyPi.
 try:
     long_description = open("README.md", encoding="utf-8").read()

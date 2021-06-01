@@ -44,6 +44,11 @@ class NUTSInfo(NamedTuple):
         The rightmost state of the full trajectory.
     num_trajectory_expansions
         Number of subtrajectory samples that were taken.
+    integration_steps
+        Number of integration steps that were taken. This is also the number of states
+        in the full trajectory.
+    acceptance_probability
+        average acceptance probabilty across entire trajectory
     """
 
     momentum: PyTree
@@ -54,6 +59,7 @@ class NUTSInfo(NamedTuple):
     trajectory_rightmost_state: integrators.IntegratorState
     num_trajectory_expansions: int
     integration_steps: int
+    acceptance_probability: float
 
 
 new_state = blackjax.hmc.new_state
@@ -177,26 +183,34 @@ def iterative_nuts_proposal(
 
     def propose(rng_key, initial_state: integrators.IntegratorState):
         criterion_state = new_criterion_state(initial_state, max_num_expansions)
+        initial_energy = _compute_energy(initial_state)  # H0 of the HMC step
         initial_proposal = proposal.Proposal(
-            initial_state, _compute_energy(initial_state), 0.0
+            initial_state, initial_energy, 0.0, -np.inf
         )
 
         sampled_proposal, *info = expand(
             rng_key,
             initial_proposal,
             criterion_state,
+            initial_energy,
         )
-        trajectory, num_doublings, is_diverging, has_terminated, is_turning = info
+        trajectory, num_doublings, is_diverging, is_turning = info
+        # Compute average acceptance probabilty across entire trajectory,
+        # even over subtrees that may have been rejected
+        acceptance_probability = (
+            jnp.exp(sampled_proposal.sum_log_p_accept) / trajectory.num_states
+        )
 
         info = NUTSInfo(
             initial_state.momentum,
             is_diverging,
-            has_terminated | is_turning,
+            is_turning,
             sampled_proposal.energy,
             trajectory.leftmost_state,
             trajectory.rightmost_state,
             num_doublings,
             trajectory.num_states,
+            acceptance_probability,
         )
 
         return sampled_proposal.state, info

@@ -171,7 +171,7 @@ def hmc_proposal(
         end_state = build_trajectory(state)
         end_state = flip_momentum(end_state)
         proposal = init_proposal(state)
-        new_proposal, is_diverging = generate_proposal(proposal, end_state)
+        new_proposal, is_diverging = generate_proposal(proposal.energy, end_state)
         sampled_proposal, *info = sample_proposal(rng_key, proposal, new_proposal)
         do_accept, p_accept = info
 
