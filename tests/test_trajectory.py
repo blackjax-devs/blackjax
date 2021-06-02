@@ -11,6 +11,7 @@ import blackjax.inference.metrics as metrics
 import blackjax.inference.proposal as proposal
 import blackjax.inference.termination as termination
 import blackjax.inference.trajectory as trajectory
+from blackjax.inference.trajectory import DynamicExpansionState, Trajectory
 
 divergence_threshold = 1000
 
@@ -56,7 +57,7 @@ def test_dynamic_progressive_integration_divergence(case):
     termination_state = new_criterion_state(initial_state, 10)
     max_num_steps = 100
 
-    _, _, _, is_diverging, _, _ = trajectory_integrator(
+    _, _, _, is_diverging, _ = trajectory_integrator(
         rng_key,
         initial_state,
         direction,
@@ -145,7 +146,6 @@ def test_dynamic_progressive_equal_recursive():
             _,
             is_diverging0,
             has_terminated0,
-            _,
         ) = trajectory_integrator(
             rng_key,
             initial_state,
@@ -230,11 +230,20 @@ def test_dynamic_progressive_expansion(case):
     energy = state.potential_energy + kinetic_energy_fn(state.position, state.momentum)
     initial_proposal = proposal.Proposal(state, energy, 0.0, -np.inf)
     initial_termination_state = new_criterion_state(state, 10)
+    initial_trajectory = Trajectory(
+        state,
+        state,
+        state.momentum,
+        0,
+    )
+    initial_expansion_state = DynamicExpansionState(
+        0, initial_proposal, initial_trajectory, initial_termination_state
+    )
 
-    _, _, step, is_diverging, is_turning = expand(
-        rng_key, initial_proposal, initial_termination_state, energy
+    expansion_state, (is_diverging, is_turning) = expand(
+        rng_key, initial_expansion_state, energy
     )
 
     assert is_diverging == should_diverge
-    assert step == expected_doublings
+    assert expansion_state.step == expected_doublings
     assert is_turning == should_turn
