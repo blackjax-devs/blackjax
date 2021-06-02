@@ -50,21 +50,13 @@ class Trajectory(NamedTuple):
     num_states: int
 
 
-def append_to_trajectory(
-    direction: int, trajectory: Trajectory, state: IntegratorState
-) -> Trajectory:
-    """Append a state to the trajectory to form a new trajectory."""
-    leftmost_state, rightmost_state = jax.lax.cond(
-        direction > 0,
-        lambda _: (trajectory.leftmost_state, state),
-        lambda _: (state, trajectory.rightmost_state),
-        operand=None,
-    )
+def append_to_trajectory(trajectory: Trajectory, state: IntegratorState) -> Trajectory:
+    """Append a state to the (right of the) trajectory to form a new trajectory."""
     momentum_sum = jax.tree_util.tree_multimap(
         jnp.add, trajectory.momentum_sum, state.momentum
     )
     return Trajectory(
-        leftmost_state, rightmost_state, momentum_sum, trajectory.num_states + 1
+        trajectory.leftmost_state, state, momentum_sum, trajectory.num_states + 1
     )
 
 
@@ -167,7 +159,7 @@ def dynamic_progressive_integration(
     is_criterion_met: Callable,
     divergence_threshold: float,
 ):
-    """Integrate a trajectory and update the proposal sequentially
+    """Integrate a trajectory and update the proposal sequentially in one direction
     until the termination criterion is met.
 
     Parameters
@@ -222,7 +214,7 @@ def dynamic_progressive_integration(
 
         def do_keep_integrating(expansion_state):
             """Decide whether we should continue integrating the trajectory"""
-            _, step, _, _, _, _, is_diverging, has_terminated = expansion_state
+            _, step, _, _, _, is_diverging, has_terminated = expansion_state
             return (step < max_num_steps) & ~has_terminated & ~is_diverging
 
         def add_one_state(expansion_state):
@@ -230,7 +222,6 @@ def dynamic_progressive_integration(
                 rng_key,
                 step,
                 proposal,
-                previous_state,
                 trajectory,
                 termination_state,
                 _,
@@ -238,10 +229,10 @@ def dynamic_progressive_integration(
             ) = expansion_state
             rng_key, proposal_key = jax.random.split(rng_key)
 
-            new_state = integrator(previous_state, direction * step_size)
+            new_state = integrator(trajectory.rightmost_state, direction * step_size)
             new_proposal, is_diverging = generate_proposal(initial_energy, new_state)
 
-            new_trajectory = append_to_trajectory(direction, trajectory, new_state)
+            new_trajectory = append_to_trajectory(trajectory, new_state)
             sampled_proposal = sample_proposal(proposal_key, proposal, new_proposal)
 
             new_termination_state = update_termination_state(
@@ -255,7 +246,6 @@ def dynamic_progressive_integration(
                 rng_key,
                 step + 1,
                 sampled_proposal,
-                new_state,
                 new_trajectory,
                 new_termination_state,
                 is_diverging,
@@ -278,7 +268,6 @@ def dynamic_progressive_integration(
             rng_key,
             1,
             initial_proposal,
-            state_step0,
             trajectory0,
             termination_state0,
             is_diverging,
@@ -289,7 +278,6 @@ def dynamic_progressive_integration(
             _,
             step,
             proposal,
-            _,
             trajectory,
             termination_state,
             is_diverging,
@@ -297,10 +285,22 @@ def dynamic_progressive_integration(
         ) = jax.lax.while_loop(
             do_keep_integrating, add_one_state, initial_integration_state
         )
+        # In the while_loop we always extend on the right most direction.
+        new_trajectory = jax.lax.cond(
+            direction > 0,
+            lambda _: trajectory,
+            lambda _: Trajectory(
+                trajectory.rightmost_state,
+                trajectory.leftmost_state,
+                trajectory.momentum_sum,
+                trajectory.num_states,
+            ),
+            operand=None,
+        )
 
         return (
             proposal,
-            trajectory,
+            new_trajectory,
             termination_state,
             is_diverging,
             has_terminated,
