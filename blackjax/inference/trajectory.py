@@ -50,10 +50,10 @@ class Trajectory(NamedTuple):
     num_states: int
 
 
-def rightmost_append_to_trajectory(
+def append_to_trajectory(
     trajectory: Trajectory, state: IntegratorState
 ) -> Trajectory:
-    """Append a state to the rightmost of an existing trajectory."""
+    """Append a state to the (right of the) trajectory to form a new trajectory."""
     momentum_sum = jax.tree_util.tree_multimap(
         jnp.add, trajectory.momentum_sum, state.momentum
     )
@@ -234,7 +234,7 @@ def dynamic_progressive_integration(
             new_state = integrator(trajectory.rightmost_state, direction * step_size)
             new_proposal, is_diverging = generate_proposal(initial_energy, new_state)
 
-            new_trajectory = rightmost_append_to_trajectory(trajectory, new_state)
+            new_trajectory = append_to_trajectory(trajectory, new_state)
             sampled_proposal = sample_proposal(proposal_key, proposal, new_proposal)
 
             new_termination_state = update_termination_state(
