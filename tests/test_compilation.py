@@ -21,10 +21,16 @@ def test_hmc():
     """The reason why this works is because JAX only reads the potential once when compiled?"""
     rng_key = jax.random.PRNGKey(0)
     state = hmc.new_state(1.0, potential)
-    params = hmc.HMCParameters(inv_mass_matrix=jnp.array([1.0]))
 
     GLOBAL["count"] = 0
-    kernel = jax.jit(hmc.kernel(potential, params))
+    kernel = jax.jit(
+        hmc.kernel(
+            potential,
+            step_size=1e-2,
+            inverse_mass_matrix=jnp.array([1.0]),
+            num_integration_steps=10,
+        )
+    )
 
     for _ in range(10):
         _, rng_key = jax.random.split(rng_key)
@@ -36,10 +42,11 @@ def test_hmc():
 def test_nuts():
     rng_key = jax.random.PRNGKey(0)
     state = hmc.new_state(1.0, potential)
-    params = hmc.HMCParameters(inv_mass_matrix=jnp.array([1.0]))
 
     GLOBAL["count"] = 0
-    kernel = jax.jit(nuts.kernel(potential, params))
+    kernel = jax.jit(
+        nuts.kernel(potential, step_size=1e-2, inverse_mass_matrix=jnp.array([1.0]))
+    )
 
     for _ in range(10):
         _, rng_key = jax.random.split(rng_key)

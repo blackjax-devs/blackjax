@@ -90,7 +90,7 @@ def static_binomial_sampling(rng_key, proposal, new_proposal):
     is implemented this way to keep a consistent API with progressive sampling.
 
     """
-    p_accept = jnp.clip(jnp.exp(proposal.weight), a_max=1)
+    p_accept = jnp.clip(jnp.exp(new_proposal.weight), a_max=1)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
 
     return jax.lax.cond(

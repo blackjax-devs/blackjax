@@ -16,13 +16,6 @@ Array = Union[np.ndarray, jnp.DeviceArray]
 PyTree = Union[Dict, List, Tuple]
 
 
-class NUTSParameters(NamedTuple):
-    step_size: float = 1e-3
-    max_tree_depth: int = 10
-    inv_mass_matrix: Array = None
-    divergence_threshold: int = 1000
-
-
 class NUTSInfo(NamedTuple):
     """Additional information on the NUTS transition.
 
@@ -65,7 +58,13 @@ class NUTSInfo(NamedTuple):
 new_state = blackjax.hmc.new_state
 
 
-def kernel(potential_fn: Callable, parameters: NUTSParameters) -> Callable:
+def kernel(
+    potential_fn: Callable,
+    step_size: float,
+    inverse_mass_matrix: Array,
+    max_num_doublings: int = 10,
+    divergence_threshold: int = 1000,
+) -> Callable:
     """Build an iterative NUTS kernel.
 
     Parameters
@@ -77,17 +76,8 @@ def kernel(potential_fn: Callable, parameters: NUTSParameters) -> Callable:
         A NamedTuple that contains the parameters of the kernel to be built.
 
     """
-    step_size, max_tree_depth, inv_mass_matrix, divergence_threshold = parameters
-
-    if inv_mass_matrix is None:
-        raise ValueError(
-            "Expected a value for `inv_mass_matrix`,"
-            " got None. Please specify a value when initializing"
-            " the parameters or run the window adaptation."
-        )
-
     momentum_generator, kinetic_energy_fn, uturn_check_fn = metrics.gaussian_euclidean(
-        inv_mass_matrix
+        inverse_mass_matrix
     )
     symplectic_integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
     proposal_generator = iterative_nuts_proposal(
@@ -95,7 +85,7 @@ def kernel(potential_fn: Callable, parameters: NUTSParameters) -> Callable:
         kinetic_energy_fn,
         uturn_check_fn,
         step_size,
-        max_tree_depth,
+        max_num_doublings,
         divergence_threshold,
     )
 

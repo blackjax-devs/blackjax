@@ -8,7 +8,7 @@
 BlackJAX is a library of samplers for [JAX](https://github.com/google/jax) that
 works on CPU as well as GPU. 
 
-It is *not* a probabilistic programming library.  However it integrates really
+It is *not* a probabilistic programming library. However it integrates really
 well with PPLs as long as they can provide a (potentially unnormalized)
 log-probability density function compatible with JAX.
 
@@ -17,6 +17,7 @@ log-probability density function compatible with JAX.
 BlackJAX should appeal to those who:
 - Have a logpdf and just need a sampler;
 - Need more than a general-purpose sampler;
+- Want to sample on GPU;
 - Want to build upon robust elementary blocks for their research;
 - Are building a PPL;
 - Want to learn how sampling algorithms work.
@@ -25,9 +26,16 @@ BlackJAX should appeal to those who:
 
 ### Installation
 
-BlackJAX is written in pure Python but depends on XLA via JAX. JAX installation
-is different depending on whether you want GPU support and your CUDA version,
-follow [these instructions](https://github.com/google/jax#installation) to install JAX with the relevant hardware acceleration support.
+BlackJAX is written in pure Python but depends on XLA via JAX. Since the JAX
+installation depends on your CUDA version BlackJAX does not list JAX as a
+dependency. If you simply want to use JAX on CPU, install it with:
+
+```python
+pip install jax jaxlib
+```
+
+Follow [these instructions](https://github.com/google/jax#installation) to
+install JAX with the relevant hardware acceleration support.
 
 Then install BlackJAX
 
