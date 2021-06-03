@@ -148,15 +148,15 @@ def iterative_nuts_proposal(
     .. [4]: Lao, Junpeng, et al. "tfp. mcmc: Modern markov chain monte carlo tools built for modern hardware." arXiv preprint arXiv:2002.01184 (2020).
     """
     (
-        new_criterion_state,
-        update_criterion_state,
+        new_termination_state,
+        update_termination_state,
         is_criterion_met,
     ) = termination.iterative_uturn_numpyro(uturn_check_fn)
 
     trajectory_integrator = trajectory.dynamic_progressive_integration(
         integrator,
         kinetic_energy,
-        update_criterion_state,
+        update_termination_state,
         is_criterion_met,
         divergence_threshold,
     )
@@ -173,7 +173,7 @@ def iterative_nuts_proposal(
         return energy
 
     def propose(rng_key, initial_state: integrators.IntegratorState):
-        initial_termination_state = new_criterion_state(
+        initial_termination_state = new_termination_state(
             initial_state, max_num_expansions
         )
         initial_energy = _compute_energy(initial_state)  # H0 of the HMC step
