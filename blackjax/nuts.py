@@ -11,6 +11,7 @@ import blackjax.inference.metrics as metrics
 import blackjax.inference.proposal as proposal
 import blackjax.inference.termination as termination
 import blackjax.inference.trajectory as trajectory
+from blackjax.inference.trajectory import DynamicExpansionState, Trajectory
 
 Array = Union[np.ndarray, jnp.DeviceArray]
 PyTree = Union[Dict, List, Tuple]
@@ -172,19 +173,30 @@ def iterative_nuts_proposal(
         return energy
 
     def propose(rng_key, initial_state: integrators.IntegratorState):
-        criterion_state = new_criterion_state(initial_state, max_num_expansions)
+        initial_termination_state = new_criterion_state(
+            initial_state, max_num_expansions
+        )
         initial_energy = _compute_energy(initial_state)  # H0 of the HMC step
         initial_proposal = proposal.Proposal(
             initial_state, initial_energy, 0.0, -np.inf
         )
+        initial_trajectory = Trajectory(
+            initial_state,
+            initial_state,
+            initial_state.momentum,
+            0,
+        )
+        initial_expansion_state = DynamicExpansionState(
+            0, initial_proposal, initial_trajectory, initial_termination_state
+        )
 
-        sampled_proposal, *info = expand(
+        expansion_state, info = expand(
             rng_key,
-            initial_proposal,
-            criterion_state,
+            initial_expansion_state,
             initial_energy,
         )
-        trajectory, num_doublings, is_diverging, is_turning = info
+        is_diverging, is_turning = info
+        num_doublings, sampled_proposal, trajectory, _ = expansion_state
         # Compute average acceptance probabilty across entire trajectory,
         # even over subtrees that may have been rejected
         acceptance_probability = (
