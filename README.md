@@ -140,3 +140,9 @@ We value the following contributions:
    dependencies.
 2. Run `make lint` and `make test` before pushing on the repo; CI should pass if
    these pass locally.
+
+
+## Acknowledgements
+
+Some details of the NUTS implementation were largely inspired by
+[Numpyro](https://github.com/pyro-ppl/numpyro)'s.
