@@ -196,13 +196,15 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         The updated states of the chain and the warmup.
 
         """
+        state_key, middle_key = jax.random.split(rng_key, 2)
+
         step_size = jnp.exp(warmup_state.da_state.log_step_size)
         inverse_mass_matrix = warmup_state.mm_state.inverse_mass_matrix
         kernel = kernel_factory(
             step_size=step_size, inverse_mass_matrix=inverse_mass_matrix
         )
 
-        chain_state, chain_info = kernel(rng_key, chain_state)
+        chain_state, chain_info = kernel(state_key, chain_state)
 
         warmup_state = jax.lax.switch(
             stage,
@@ -212,12 +214,23 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
 
         warmup_state = jax.lax.cond(
             is_middle_window_end,
-            slow_final,
-            lambda x: x,
-            warmup_state,
+            lambda args: update_window_end(*args),
+            lambda x: x[2],
+            (middle_key, chain_state, warmup_state),
         )
 
         return chain_state, warmup_state, chain_info
+
+    def update_window_end(rng_key, state, warmup_state):
+        mm_state = slow_final(warmup_state)
+
+        step_size = jnp.exp(warmup_state.da_state.log_step_size_avg)
+        kernel = lambda step_size: kernel_factory(
+            step_size, mm_state.inverse_mass_matrix
+        )
+        da_state = fast_init(rng_key, kernel, state, step_size)
+
+        return StanWarmupState(da_state, mm_state)
 
     def final(warmup_state: StanWarmupState) -> Tuple[float, jnp.DeviceArray]:
         """Return the step size and mass matrix."""
@@ -328,11 +341,8 @@ def slow_window(
         adapation's internal state since middle windows are "memoryless".
 
         """
-        new_mm_state = mm_final(warmup_state.mm_state)
-        new_da_state = da_init(da_final(warmup_state.da_state))
-        new_warmup_state = StanWarmupState(new_da_state, new_mm_state)
-
-        return new_warmup_state
+        mm_state = mm_final(warmup_state.mm_state)
+        return mm_state
 
     return init, update, final
 
