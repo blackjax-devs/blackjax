@@ -70,7 +70,7 @@ def mass_matrix_adaptation(
     """
     wc_init, wc_update, wc_final = welford_algorithm(is_diagonal_matrix)
 
-    def init(n_dims: int) -> MassMatrixAdaptationState:
+    def init(inverse_mass_matrix: int) -> MassMatrixAdaptationState:
         """Initialize the matrix adaptation.
 
         Parameters
@@ -79,13 +79,8 @@ def mass_matrix_adaptation(
             The number of dimensions of the mass matrix, which corresponds to
             the number of dimensions of the chain position.
         """
-        if is_diagonal_matrix:
-            inverse_mass_matrix = jnp.ones(n_dims)
-        else:
-            inverse_mass_matrix = jnp.identity(n_dims)
-
+        n_dims = jnp.shape(inverse_mass_matrix)[-1]
         wc_state = wc_init(n_dims)
-
         return MassMatrixAdaptationState(inverse_mass_matrix, wc_state)
 
     def update(
@@ -105,7 +100,7 @@ def mass_matrix_adaptation(
         wc_state = wc_update(wc_state, position)
         return MassMatrixAdaptationState(inverse_mass_matrix, wc_state)
 
-    def final(mm_state: MassMatrixAdaptationState) -> MassMatrixAdaptationState:
+    def final(mm_state: MassMatrixAdaptationState) -> jnp.ndarray:
         """Final iteration of the mass matrix adaptation.
 
         In this step we compute the mass matrix from the covariance matrix computed
@@ -124,10 +119,7 @@ def mass_matrix_adaptation(
                 mean.shape[0]
             )
 
-        ndims = jnp.shape(inverse_mass_matrix)[-1]
-        new_mm_state = MassMatrixAdaptationState(inverse_mass_matrix, wc_init(ndims))
-
-        return new_mm_state
+        return inverse_mass_matrix
 
     return init, update, final
 

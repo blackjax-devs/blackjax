@@ -117,7 +117,7 @@ def dual_averaging_adaptation(
         return DualAveragingAdaptationState(*da_init(initial_mu))
 
     def update(
-        da_state: DualAveragingAdaptationState, info
+            da_state: DualAveragingAdaptationState, acceptance_probability: float
     ) -> DualAveragingAdaptationState:
         """Update the state of the Dual Averaging adaptive algorithm.
 
@@ -132,8 +132,7 @@ def dual_averaging_adaptation(
         -------
         The updated state of the dual averaging algorithm.
         """
-        p_accept = info.acceptance_probability
-        gradient = target - p_accept
+        gradient = target - acceptance_probability
         return DualAveragingAdaptationState(*da_update(da_state, gradient))
 
     def final(da_state: DualAveragingAdaptationState) -> float:

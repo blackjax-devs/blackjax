@@ -151,11 +151,18 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         averaging algorithm.
 
         """
-        mm_state = slow_init(initial_state)
 
-        kernel = lambda step_size: kernel_factory(
-            step_size, mm_state.inverse_mass_matrix
-        )
+        # Initialize the inverse_mass_matrix with ones
+        flat_position, _ = jax.flatten_util.ravel_pytree(initial_state.position)
+        n_dims = flat_position.shape[-1]
+        if is_mass_matrix_diagonal:
+            inverse_mass_matrix = jnp.ones(n_dims)
+        else:
+            inverse_mass_matrix = jnp.identity(n_dims)
+        mm_state = slow_init(inverse_mass_matrix)
+
+        # Find a reasonable first step size
+        kernel = lambda s: kernel_factory(s, inverse_mass_matrix)
         da_state = fast_init(rng_key, kernel, initial_state, initial_step_size)
 
         warmup_state = StanWarmupState(da_state, mm_state)
@@ -166,7 +173,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         rng_key: jnp.ndarray,
         stage: int,
         is_middle_window_end: bool,
-        chain_state: HMCState,
+        state: HMCState,
         warmup_state: StanWarmupState,
     ) -> Tuple[HMCState, StanWarmupState, NamedTuple]:
         """Move the warmup by one step.
@@ -200,34 +207,31 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
 
         step_size = jnp.exp(warmup_state.da_state.log_step_size)
         inverse_mass_matrix = warmup_state.mm_state.inverse_mass_matrix
-        kernel = kernel_factory(
-            step_size=step_size, inverse_mass_matrix=inverse_mass_matrix
-        )
+        kernel = kernel_factory(step_size, inverse_mass_matrix)
 
-        chain_state, chain_info = kernel(state_key, chain_state)
+        chain_state, chain_info = kernel(state_key, state)
 
         warmup_state = jax.lax.switch(
             stage,
             (fast_update, slow_update),
-            (rng_key, chain_state, chain_info, warmup_state),
+            (rng_key, state, chain_info, warmup_state),
         )
 
         warmup_state = jax.lax.cond(
             is_middle_window_end,
             lambda args: update_window_end(*args),
             lambda x: x[2],
-            (middle_key, chain_state, warmup_state),
+            (middle_key, state, warmup_state),
         )
 
         return chain_state, warmup_state, chain_info
 
     def update_window_end(rng_key, state, warmup_state):
-        mm_state = slow_final(warmup_state)
+        inverse_mass_matrix = slow_final(warmup_state)
+        mm_state = slow_init(inverse_mass_matrix)
 
-        step_size = jnp.exp(warmup_state.da_state.log_step_size_avg)
-        kernel = lambda step_size: kernel_factory(
-            step_size, mm_state.inverse_mass_matrix
-        )
+        step_size = jnp.exp(warmup_state.da_state.log_step_size)
+        kernel = lambda s: kernel_factory(s, inverse_mass_matrix)
         da_state = fast_init(rng_key, kernel, state, step_size)
 
         return StanWarmupState(da_state, mm_state)
@@ -260,7 +264,9 @@ def fast_window() -> Tuple[Callable, Callable]:
     """
     da_init, da_update, _ = dual_averaging_adaptation()
 
-    def init(rng_key, kernel_factory, state, initial_step_size: float) -> DualAveragingAdaptationState:
+    def init(
+        rng_key, kernel_factory, state, initial_step_size: float
+    ) -> DualAveragingAdaptationState:
         step_size = find_reasonable_step_size(
             rng_key,
             kernel_factory,
@@ -275,8 +281,7 @@ def fast_window() -> Tuple[Callable, Callable]:
         fw_state: Tuple[jnp.ndarray, HMCState, Any, StanWarmupState]
     ) -> StanWarmupState:
         rng_key, state, info, warmup_state = fw_state
-
-        new_da_state = da_update(warmup_state.da_state, info)
+        new_da_state = da_update(warmup_state.da_state, info.acceptance_probability)
         new_warmup_state = StanWarmupState(new_da_state, warmup_state.mm_state)
 
         return new_warmup_state
@@ -309,11 +314,9 @@ def slow_window(
     mm_init, mm_update, mm_final = mass_matrix_adaptation(is_mass_matrix_diagonal)
     da_init, da_update, da_final = dual_averaging_adaptation()
 
-    def init(state: HMCState) -> MassMatrixAdaptationState:
+    def init(inverse_mass_matrix: jnp.ndarray) -> MassMatrixAdaptationState:
         """Initialize the mass matrix adaptation algorithm."""
-        flat_position, _ = jax.flatten_util.ravel_pytree(state.position)
-        n_dims = flat_position.shape[-1]
-        mm_state = mm_init(n_dims)
+        mm_state = mm_init(inverse_mass_matrix)
         return mm_state
 
     def update(
@@ -328,21 +331,21 @@ def slow_window(
         """
         rng_key, state, info, warmup_state = fs_state
 
-        new_da_state = da_update(warmup_state.da_state, info)
+        new_da_state = da_update(warmup_state.da_state, info.acceptance_probability)
         new_mm_state = mm_update(warmup_state.mm_state, state.position)
         new_warmup_state = StanWarmupState(new_da_state, new_mm_state)
 
         return new_warmup_state
 
-    def final(warmup_state: StanWarmupState) -> StanWarmupState:
+    def final(warmup_state: StanWarmupState) -> jnp.ndarray:
         """Update the parameters at the end of a slow adaptation window.
 
         We compute the value of the mass matrix and reset the mass matrix
         adapation's internal state since middle windows are "memoryless".
 
         """
-        mm_state = mm_final(warmup_state.mm_state)
-        return mm_state
+        inverse_mass_matrix = mm_final(warmup_state.mm_state)
+        return inverse_mass_matrix
 
     return init, update, final
 
