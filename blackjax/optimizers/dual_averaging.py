@@ -25,16 +25,16 @@ class DualAveragingState(NamedTuple):
 
     """
 
-    log_x: float
-    log_x_avg: float
+    x: float
+    x_avg: float
     step: int
-    avg_error: float
+    avg_gradient: float
     mu: float
 
 
 def dual_averaging(
     t0: int = 10, gamma: float = 0.05, kappa: float = 0.75
-) -> Tuple[Callable, Callable, Callable]:
+) -> Tuple[Callable, Callable]:
     """Find the state that minimizes an objective function using a primal-dual
     subgradient method.
 
@@ -71,18 +71,17 @@ def dual_averaging(
             problems." Mathematical programming 120.1 (2009): 221-259.
     """
 
-    def init(x_init: float) -> DualAveragingState:
+    def init(mu: float = 0) -> DualAveragingState:
         """Initialize the state of the dual averaging scheme.
 
         The parameter :math:`\\mu` is set to :math:`\\log(10 \\x_init)`
         where :math:`\\x_init` is the initial value of the state.
         """
-        mu: float = jnp.log(10 * x_init)
         step = 1
-        avg_error: float = 0.0
-        log_x: float = jnp.log(x_init)
-        log_x_avg: float = 0.0
-        return DualAveragingState(log_x, log_x_avg, step, avg_error, mu)
+        avg_gradient: float = 0.0
+        x: float = 0.0
+        x_avg: float = 0.0
+        return DualAveragingState(x, x_avg, step, avg_gradient, mu)
 
     def update(da_state: DualAveragingState, gradient) -> DualAveragingState:
         """Update the state of the Dual Averaging adaptive algorithm.
@@ -99,16 +98,12 @@ def dual_averaging(
         -------
         The updated state of the dual averaging algorithm.
         """
-        log_step, avg_log_step, step, avg_error, mu = da_state
+        _, x_avg, step, avg_gradient, mu = da_state
         reg_step = step + t0
         eta_t = step ** (-kappa)
-        avg_error = (1 - (1 / (reg_step))) * avg_error + gradient / reg_step
-        log_x = mu - (jnp.sqrt(step) / gamma) * avg_error
-        log_x_avg = eta_t * log_step + (1 - eta_t) * avg_log_step
-        return DualAveragingState(log_x, log_x_avg, step + 1, avg_error, mu)
+        avg_gradient = (1.0 - (1.0 / (reg_step))) * avg_gradient + gradient / reg_step
+        x = mu - (jnp.sqrt(step) / gamma) * avg_gradient
+        x_avg = eta_t * x + (1.0 - eta_t) * x_avg
+        return DualAveragingState(x, x_avg, step + 1, avg_gradient, mu)
 
-    def final(da_state: DualAveragingState) -> float:
-        """Returns the state that minimizes the objective function."""
-        return jnp.exp(da_state.log_x_avg)
-
-    return init, update, final
+    return init, update
