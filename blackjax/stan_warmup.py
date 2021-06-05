@@ -156,13 +156,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         kernel = lambda step_size: kernel_factory(
             step_size, mm_state.inverse_mass_matrix
         )
-        step_size = find_reasonable_step_size(
-            rng_key,
-            kernel,
-            initial_state,
-            initial_step_size,
-        )
-        da_state = fast_init(step_size)
+        da_state = fast_init(rng_key, kernel, initial_state, initial_step_size)
 
         warmup_state = StanWarmupState(da_state, mm_state)
 
@@ -253,8 +247,15 @@ def fast_window() -> Tuple[Callable, Callable]:
     """
     da_init, da_update, _ = dual_averaging_adaptation()
 
-    def init(initial_step_size: float) -> DualAveragingAdaptationState:
-        da_state = da_init(initial_step_size)
+    def init(rng_key, kernel_factory, state, initial_step_size: float) -> DualAveragingAdaptationState:
+        step_size = find_reasonable_step_size(
+            rng_key,
+            kernel_factory,
+            state,
+            initial_step_size,
+        )
+        da_state = da_init(step_size)
+
         return da_state
 
     def update(
