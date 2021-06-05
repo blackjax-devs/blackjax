@@ -1,3 +1,5 @@
+# Copyright Contributors to the Numpyro project.
+# SPDX-License-Identifier: Apache-2.0
 import jax
 import numpy as np
 import pytest
@@ -29,8 +31,8 @@ def test_welford_adaptation(n_dim, is_mass_matrix_diagonal):
 
     if is_mass_matrix_diagonal:
         if n_dim == 1:
-            np.testing.assert_allclose(estimated_cov, cov.squeeze(), rtol=1e-1)
+            np.testing.assert_allclose(estimated_cov, cov.squeeze(), rtol=0.06)
         else:
-            np.testing.assert_allclose(estimated_cov, np.diagonal(cov), rtol=1e-1)
+            np.testing.assert_allclose(estimated_cov, np.diagonal(cov), rtol=0.06)
     else:
-        np.testing.assert_allclose(estimated_cov, cov, rtol=1e-1)
+        np.testing.assert_allclose(estimated_cov, cov, rtol=0.06)
