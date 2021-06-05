@@ -105,7 +105,7 @@ def dual_averaging_adaptation(
             adaptively setting path lengths in Hamiltonian Monte Carlo." Journal
             of Machine Learning Research 15.1 (2014): 1593-1623.
     """
-    da_init, da_update, da_final = optimizers.dual_averaging(t0, gamma, kappa)
+    da_init, da_update = optimizers.dual_averaging(t0, gamma, kappa)
 
     def init(inital_step_size: float) -> DualAveragingAdaptationState:
         """Initialize the state of the dual averaging scheme.
@@ -113,7 +113,8 @@ def dual_averaging_adaptation(
         The parameter :math:`\\mu` is set to :math:`\\log(10 \\epsilon_1)`
         where :math:`\\epsilon_1` is the initial value of the step size.
         """
-        return DualAveragingAdaptationState(*da_init(inital_step_size))
+        initial_mu = jnp.log(10) + jnp.log(inital_step_size)
+        return DualAveragingAdaptationState(*da_init(initial_mu))
 
     def update(
         da_state: DualAveragingAdaptationState, info
