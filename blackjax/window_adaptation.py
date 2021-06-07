@@ -235,9 +235,9 @@ def window_adaptation(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
     def update_window_end(rng_key, state, warmup_state):
         da_state, mm_foreground_state, mm_background_state = warmup_state
 
-        inverse_mass_matrix = slow_final(warmup_state.mm_foreground_state)
         new_mm_foreground_state = mm_background_state
         new_mm_background_state = slow_init(_init_mass_matrix(state.position))
+        inverse_mass_matrix = slow_final(warmup_state.mm_foreground_state)
 
         step_size = jnp.exp(warmup_state.da_state.log_step_size)
         kernel = lambda s: kernel_factory(s, inverse_mass_matrix)
