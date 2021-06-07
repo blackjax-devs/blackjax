@@ -312,7 +312,7 @@ def dynamic_recursive_integration(
     sample_proposal = progressive_uniform_sampling
 
     def buildtree_integrate(
-        rng_key: jax.numpy.DeviceArray,
+        rng_key: jnp.ndarray,
         initial_state: IntegratorState,
         direction: int,
         tree_depth: int,

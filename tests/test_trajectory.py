@@ -52,7 +52,7 @@ def test_dynamic_progressive_integration_divergence(case):
         potential_fn, position, momentum_generator(rng_key, position)
     )
     initial_energy = initial_state.potential_energy + kinetic_energy_fn(
-        initial_state.position, initial_state.momentum
+        initial_state.momentum
     )
     termination_state = new_criterion_state(initial_state, 10)
     max_num_steps = 100
@@ -136,7 +136,7 @@ def test_dynamic_progressive_equal_recursive():
         )
         step_size = jnp.abs(jax.random.normal(rng_step_size, [])) * 0.1
         initial_energy = initial_state.potential_energy + kinetic_energy_fn(
-            initial_state.position, initial_state.momentum
+            initial_state.momentum
         )
 
         termination_state = new_criterion_state(initial_state, tree_depth)
@@ -227,7 +227,7 @@ def test_dynamic_progressive_expansion(case):
     state = integrators.new_integrator_state(
         potential_fn, position, momentum_generator(rng_key, position)
     )
-    energy = state.potential_energy + kinetic_energy_fn(state.position, state.momentum)
+    energy = state.potential_energy + kinetic_energy_fn(state.momentum)
     initial_proposal = proposal.Proposal(state, energy, 0.0, -np.inf)
     initial_termination_state = new_criterion_state(state, 10)
     initial_trajectory = Trajectory(

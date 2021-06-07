@@ -161,7 +161,7 @@ class ReasonableStepSizeState(NamedTuple):
         The current step size in the search.
     """
 
-    rng_key: int
+    rng_key: jnp.ndarray
     direction: int
     previous_direction: int
     step_size: float

@@ -2,6 +2,7 @@
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
+import jax.numpy as jnp
 
 from blackjax.inference.integrators import IntegratorState
 
@@ -138,9 +139,7 @@ def hmc(
 
     """
 
-    def kernel(
-        rng_key: jax.numpy.DeviceArray, state: HMCState
-    ) -> Tuple[HMCState, NamedTuple]:
+    def kernel(rng_key: jnp.ndarray, state: HMCState) -> Tuple[HMCState, NamedTuple]:
         """Moves the chain by one step using the Hamiltonian dynamics.
 
         Parameters

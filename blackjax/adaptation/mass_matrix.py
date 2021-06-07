@@ -28,8 +28,8 @@ class WelfordAlgorithmState(NamedTuple):
         also the current number of iterations of the algorithm.
     """
 
-    mean: float
-    m2: float
+    mean: jnp.ndarray
+    m2: jnp.ndarray
     sample_size: int
 
 
@@ -182,7 +182,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
         return WelfordAlgorithmState(mean, m2, sample_size)
 
     def update(
-        wa_state: WelfordAlgorithmState, value: jnp.DeviceArray
+        wa_state: WelfordAlgorithmState, value: jnp.ndarray
     ) -> WelfordAlgorithmState:
         """Update the M2 matrix using the new value.
 
@@ -208,7 +208,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
 
     def final(
         wa_state: WelfordAlgorithmState,
-    ) -> Tuple[jnp.DeviceArray, int, jnp.DeviceArray]:
+    ) -> Tuple[float, int, jnp.ndarray]:
         mean, m2, sample_size = wa_state
         covariance = m2 / (sample_size - 1)
         return covariance, sample_size, mean
