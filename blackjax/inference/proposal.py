@@ -30,8 +30,9 @@ class Proposal(NamedTuple):
 def proposal_generator(
     kinetic_energy: Callable, divergence_threshold: float
 ) -> Tuple[Callable, Callable]:
-    def init(state: IntegratorState) -> Proposal:
-        energy = state.potential_energy + kinetic_energy(state.position, state.momentum)
+
+    def new(state: IntegratorState) -> Proposal:
+        energy = state.potential_energy + kinetic_energy(state.momentum, state.position)
         return Proposal(state, energy, 0.0, -np.inf)
 
     def update(initial_energy: float, state: IntegratorState) -> Tuple[Proposal, bool]:
@@ -52,7 +53,7 @@ def proposal_generator(
 
         """
         new_energy = state.potential_energy + kinetic_energy(
-            state.position, state.momentum
+            state.momentum, state.position
         )
 
         delta_energy = initial_energy - new_energy
@@ -74,7 +75,7 @@ def proposal_generator(
             is_transition_divergent,
         )
 
-    return init, update
+    return new, update
 
 
 # --------------------------------------------------------------------
