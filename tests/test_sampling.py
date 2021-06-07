@@ -9,7 +9,7 @@ import pytest
 
 import blackjax.hmc as hmc
 import blackjax.nuts as nuts
-import blackjax.stan_warmup as stan_warmup
+import blackjax.window_adaptation as window_adaptation
 
 
 def inference_loop(rng_key, kernel, initial_state, num_samples):
@@ -75,7 +75,7 @@ def test_linear_regression(case, is_mass_matrix_diagonal):
         potential, step_size, inverse_mass_matrix, **case["parameters"]
     )
 
-    state, (step_size, inverse_mass_matrix), _ = stan_warmup.run(
+    state, (step_size, inverse_mass_matrix), _ = window_adaptation.run(
         rng_key,
         kernel_factory,
         initial_state,

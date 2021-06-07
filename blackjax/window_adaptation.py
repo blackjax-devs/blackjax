@@ -1,4 +1,4 @@
-"""Implementation of the Stan warmup for the HMC family of sampling algorithms."""
+"""Window_adaptationtation for the HMC family of sampling algorithms."""
 from typing import Any, Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
@@ -22,9 +22,10 @@ Array = Union[np.ndarray, jnp.DeviceArray]
 PyTree = Union[Array, Dict, List, Tuple]
 
 
-class StanWarmupState(NamedTuple):
+class WindowWarmupState(NamedTuple):
     da_state: DualAveragingAdaptationState
-    mm_state: MassMatrixAdaptationState
+    mm_foreground_state: MassMatrixAdaptationState
+    mm_background_state: MassMatrixAdaptationState
 
 
 def run(
@@ -60,7 +61,7 @@ def run(
         that contains the whole adaptation chain.
 
     """
-    init, update, final = stan_warmup(kernel_factory, is_mass_matrix_diagonal)
+    init, update, final = window_adaptation(kernel_factory, is_mass_matrix_diagonal)
 
     def one_step(carry, interval):
         rng_key, state, warmup_state = carry
@@ -86,7 +87,7 @@ def run(
     return last_chain_state, (step_size, inverse_mass_matrix), warmup_chain
 
 
-def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
+def window_adaptation(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
     The schedule and algorithms used match Stan's [1]_ as closely as possible.
 
@@ -141,9 +142,19 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
     fast_init, fast_update = fast_window()
     slow_init, slow_update, slow_final = slow_window(is_mass_matrix_diagonal)
 
+    def _init_mass_matrix(position):
+        # Initialize the inverse_mass_matrix with ones
+        flat_position, _ = jax.flatten_util.ravel_pytree(position)
+        n_dims = flat_position.shape[-1]
+        if is_mass_matrix_diagonal:
+            inverse_mass_matrix = jnp.ones(n_dims)
+        else:
+            inverse_mass_matrix = jnp.identity(n_dims)
+        return inverse_mass_matrix
+
     def init(
         rng_key: jnp.ndarray, initial_state: HMCState, initial_step_size: float
-    ) -> StanWarmupState:
+    ) -> WindowWarmupState:
         """Initialize the warmup.
 
         To initialize the Stan warmup we create an identity mass matrix and use
@@ -152,20 +163,15 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
 
         """
 
-        # Initialize the inverse_mass_matrix with ones
-        flat_position, _ = jax.flatten_util.ravel_pytree(initial_state.position)
-        n_dims = flat_position.shape[-1]
-        if is_mass_matrix_diagonal:
-            inverse_mass_matrix = jnp.ones(n_dims)
-        else:
-            inverse_mass_matrix = jnp.identity(n_dims)
-        mm_state = slow_init(inverse_mass_matrix)
+        inverse_mass_matrix = _init_mass_matrix(initial_state.position)
+        mm_foreground_state = slow_init(inverse_mass_matrix)
+        mm_background_state = slow_init(inverse_mass_matrix)
 
         # Find a reasonable first step size
         kernel = lambda s: kernel_factory(s, inverse_mass_matrix)
         da_state = fast_init(rng_key, kernel, initial_state, initial_step_size)
 
-        warmup_state = StanWarmupState(da_state, mm_state)
+        warmup_state = WindowWarmupState(da_state, mm_foreground_state, mm_background_state)
 
         return warmup_state
 
@@ -174,8 +180,8 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         stage: int,
         is_middle_window_end: bool,
         state: HMCState,
-        warmup_state: StanWarmupState,
-    ) -> Tuple[HMCState, StanWarmupState, NamedTuple]:
+        warmup_state: WindowWarmupState,
+    ) -> Tuple[HMCState, WindowWarmupState, NamedTuple]:
         """Move the warmup by one step.
 
         We first create a new kernel with the current values of the step size
@@ -206,7 +212,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         state_key, middle_key = jax.random.split(rng_key, 2)
 
         step_size = jnp.exp(warmup_state.da_state.log_step_size)
-        inverse_mass_matrix = warmup_state.mm_state.inverse_mass_matrix
+        inverse_mass_matrix = slow_final(warmup_state.mm_foreground_state)
         kernel = kernel_factory(step_size, inverse_mass_matrix)
 
         chain_state, chain_info = kernel(state_key, state)
@@ -227,19 +233,22 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         return chain_state, warmup_state, chain_info
 
     def update_window_end(rng_key, state, warmup_state):
-        inverse_mass_matrix = slow_final(warmup_state)
-        mm_state = slow_init(inverse_mass_matrix)
+        da_state, mm_foreground_state, mm_background_state = warmup_state
+
+        inverse_mass_matrix = slow_final(warmup_state.mm_foreground_state)
+        new_mm_foreground_state = mm_background_state
+        new_mm_background_state = slow_init(_init_mass_matrix(state.position))
 
         step_size = jnp.exp(warmup_state.da_state.log_step_size)
         kernel = lambda s: kernel_factory(s, inverse_mass_matrix)
         da_state = fast_init(rng_key, kernel, state, step_size)
 
-        return StanWarmupState(da_state, mm_state)
+        return WindowWarmupState(da_state, new_mm_foreground_state, new_mm_background_state)
 
-    def final(warmup_state: StanWarmupState) -> Tuple[float, jnp.DeviceArray]:
+    def final(warmup_state: WindowWarmupState) -> Tuple[float, jnp.DeviceArray]:
         """Return the step size and mass matrix."""
         step_size = jnp.exp(warmup_state.da_state.log_step_size_avg)
-        inverse_mass_matrix = warmup_state.mm_state.inverse_mass_matrix
+        inverse_mass_matrix = slow_final(warmup_state.mm_foreground_state)
         return step_size, inverse_mass_matrix
 
     return init, update, final
@@ -278,11 +287,11 @@ def fast_window() -> Tuple[Callable, Callable]:
         return da_state
 
     def update(
-        fw_state: Tuple[jnp.ndarray, HMCState, Any, StanWarmupState]
-    ) -> StanWarmupState:
+        fw_state: Tuple[jnp.ndarray, HMCState, Any, WindowWarmupState]
+    ) -> WindowWarmupState:
         rng_key, state, info, warmup_state = fw_state
         new_da_state = da_update(warmup_state.da_state, info.acceptance_probability)
-        new_warmup_state = StanWarmupState(new_da_state, warmup_state.mm_state)
+        new_warmup_state = WindowWarmupState(new_da_state, warmup_state.mm_foreground_state, warmup_state.mm_background_state)
 
         return new_warmup_state
 
@@ -320,8 +329,8 @@ def slow_window(
         return mm_state
 
     def update(
-        fs_state: Tuple[jnp.ndarray, HMCState, Any, StanWarmupState]
-    ) -> StanWarmupState:
+        fs_state: Tuple[jax.random.PRNGKey, HMCState, Any, WindowWarmupState]
+    ) -> WindowWarmupState:
         """Move the warmup by one state when in a slow adaptation interval.
 
         Mass matrix adaptation and dual averaging states are both
@@ -332,19 +341,20 @@ def slow_window(
         rng_key, state, info, warmup_state = fs_state
 
         new_da_state = da_update(warmup_state.da_state, info.acceptance_probability)
-        new_mm_state = mm_update(warmup_state.mm_state, state.position)
-        new_warmup_state = StanWarmupState(new_da_state, new_mm_state)
+        new_mm_foreground_state = mm_update(warmup_state.mm_foreground_state, state.position)
+        new_mm_background_state = mm_update(warmup_state.mm_background_state, state.position)
+        new_warmup_state = WindowWarmupState(new_da_state, new_mm_foreground_state, new_mm_background_state)
 
         return new_warmup_state
 
-    def final(warmup_state: StanWarmupState) -> jnp.ndarray:
+    def final(mm_state) -> jnp.ndarray:
         """Update the parameters at the end of a slow adaptation window.
 
         We compute the value of the mass matrix and reset the mass matrix
         adapation's internal state since middle windows are "memoryless".
 
         """
-        inverse_mass_matrix = mm_final(warmup_state.mm_state)
+        inverse_mass_matrix = mm_final(mm_state)
         return inverse_mass_matrix
 
     return init, update, final
