@@ -3,7 +3,6 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 import numpy as np
-
 from blackjax.inference.integrators import IntegratorState
 
 
@@ -30,9 +29,8 @@ class Proposal(NamedTuple):
 def proposal_generator(
     kinetic_energy: Callable, divergence_threshold: float
 ) -> Tuple[Callable, Callable]:
-
     def new(state: IntegratorState) -> Proposal:
-        energy = state.potential_energy + kinetic_energy(state.momentum, state.position)
+        energy = state.potential_energy + kinetic_energy(state.momentum)
         return Proposal(state, energy, 0.0, -np.inf)
 
     def update(initial_energy: float, state: IntegratorState) -> Tuple[Proposal, bool]:
@@ -52,9 +50,7 @@ def proposal_generator(
             The new state.
 
         """
-        new_energy = state.potential_energy + kinetic_energy(
-            state.momentum, state.position
-        )
+        new_energy = state.potential_energy + kinetic_energy(state.momentum)
 
         delta_energy = initial_energy - new_energy
         delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)

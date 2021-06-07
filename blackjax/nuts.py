@@ -169,7 +169,7 @@ def iterative_nuts_proposal(
     )
 
     def _compute_energy(state: integrators.IntegratorState) -> float:
-        energy = state.potential_energy + kinetic_energy(state.momentum, state.position)
+        energy = state.potential_energy + kinetic_energy(state.momentum)
         return energy
 
     def propose(rng_key, initial_state: integrators.IntegratorState):
