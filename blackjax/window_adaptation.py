@@ -237,12 +237,12 @@ def window_adaptation(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
 
         new_mm_foreground_state = mm_background_state
         new_mm_background_state = slow_init(_init_mass_matrix(state.position))
-        inverse_mass_matrix = slow_final(warmup_state.mm_foreground_state)
-
-        step_size = jnp.exp(warmup_state.da_state.log_step_size)
+        #inverse_mass_matrix = slow_final(new_mm_foreground_state)
+        """
+        step_size = jnp.exp(warmup_state.da_state.log_step_size_avg)
         kernel = lambda s: kernel_factory(s, inverse_mass_matrix)
         da_state = fast_init(rng_key, kernel, state, step_size)
-
+        """
         return WindowWarmupState(da_state, new_mm_foreground_state, new_mm_background_state)
 
     def final(warmup_state: WindowWarmupState) -> Tuple[float, jnp.DeviceArray]:
