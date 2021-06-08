@@ -169,7 +169,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         return warmup_state
 
     def update(
-        rng_key: jax.random.PRNGKey,
+        rng_key: jnp.ndarray,
         stage: int,
         is_middle_window_end: bool,
         chain_state: HMCState,
@@ -303,7 +303,7 @@ def slow_window(
         return mm_state
 
     def update(
-        fs_state: Tuple[jax.random.PRNGKey, HMCState, Any, StanWarmupState]
+        fs_state: Tuple[jnp.ndarray, HMCState, Any, StanWarmupState]
     ) -> StanWarmupState:
         """Move the warmup by one state when in a slow adaptation interval.
 

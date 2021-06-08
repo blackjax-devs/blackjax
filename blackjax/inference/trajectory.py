@@ -122,36 +122,6 @@ def static_integration(
     return integrate
 
 
-def static_progressive_integration(
-    integrator_step: Callable,
-    update_proposal: Callable,
-    step_size: float,
-    num_integration_steps: int,
-    direction: int = 1,
-) -> Callable:
-    """Generate a trajectory by integrating in one direction and updating the
-    proposal at each step.
-
-    """
-    directed_step_size = direction * step_size
-
-    def integrate(rng_key, initial_state: IntegratorState) -> IntegratorState:
-        def one_step(integration_step, _):
-            rng_key, state, proposal = integration_step
-            _, rng_key = jax.random.split(rng_key)
-            new_state = integrator_step(state, directed_step_size)
-            new_proposal = update_proposal(rng_key, new_state, proposal)
-            return (rng_key, new_state, new_proposal), new_proposal
-
-        last_state, _ = jax.lax.scan(
-            one_step, (initial_state, initial_state), jnp.arange(num_integration_steps)
-        )
-
-        return last_state[-1]
-
-    return integrate
-
-
 class DynamicIntegrationState(NamedTuple):
     step: int
     proposal: Proposal
@@ -342,7 +312,7 @@ def dynamic_recursive_integration(
     sample_proposal = progressive_uniform_sampling
 
     def buildtree_integrate(
-        rng_key: jax.numpy.DeviceArray,
+        rng_key: jnp.ndarray,
         initial_state: IntegratorState,
         direction: int,
         tree_depth: int,
