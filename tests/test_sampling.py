@@ -12,16 +12,6 @@ import blackjax.nuts as nuts
 import blackjax.stan_warmup as stan_warmup
 
 
-def potential_fn(scale, coefs, preds, x):
-    """Linear regression"""
-    logpdf = 0
-    logpdf += stats.expon.logpdf(scale, 1, 1)
-    logpdf += stats.norm.logpdf(coefs, 3 * jnp.ones(x.shape[-1]), 2)
-    y = jnp.dot(x, coefs)
-    logpdf += stats.norm.logpdf(preds, y, scale)
-    return -jnp.sum(logpdf)
-
-
 def inference_loop(rng_key, kernel, initial_state, num_samples):
     def one_step(state, rng_key):
         state, _ = kernel(rng_key, state)
@@ -33,29 +23,63 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     return states
 
 
+# -------------------------------------------------------------------
+#                        LINEAR REGRESSION
+# -------------------------------------------------------------------
+
+
+def regression_potential_fn(scale, coefs, preds, x):
+    """Linear regression"""
+    logpdf = 0
+    logpdf += stats.expon.logpdf(scale, 1, 1)
+    logpdf += stats.norm.logpdf(coefs, 3 * jnp.ones(x.shape[-1]), 2)
+    y = jnp.dot(x, coefs)
+    logpdf += stats.norm.logpdf(preds, y, scale)
+    return -jnp.sum(logpdf)
+
+
+regresion_test_cases = [
+    {
+        "algorithm": hmc,
+        "initial_position": {"scale": 1.0, "coefs": 2.0},
+        "parameters": {"num_integration_steps": 90},
+        "num_warmup_steps": 3_000,
+        "num_sampling_steps": 2_000,
+    },
+    {
+        "algorithm": nuts,
+        "initial_position": {"scale": 1.0, "coefs": 2.0},
+        "parameters": {},
+        "num_warmup_steps": 1_000,
+        "num_sampling_steps": 500,
+    },
+]
+
+
+@pytest.mark.parametrize("case", regresion_test_cases)
 @pytest.mark.parametrize("is_mass_matrix_diagonal", [True, False])
-def test_hmc(is_mass_matrix_diagonal):
+def test_linear_regression(case, is_mass_matrix_diagonal):
     """Test the HMC kernel and the Stan warmup."""
     x_data = np.random.normal(0, 1, size=(1000, 1))
     y_data = 3 * x_data + np.random.normal(size=x_data.shape)
     observations = {"x": x_data, "preds": y_data}
 
-    conditioned_potential = ft.partial(potential_fn, **observations)
+    conditioned_potential = ft.partial(regression_potential_fn, **observations)
     potential = lambda x: conditioned_potential(**x)
 
     rng_key = jax.random.PRNGKey(19)
-    initial_position = {"scale": 1.0, "coefs": 2.0}
-    initial_state = hmc.new_state(initial_position, potential)
+    initial_position = case["initial_position"]
+    initial_state = case["algorithm"].new_state(initial_position, potential)
 
-    kernel_factory = lambda step_size, inverse_mass_matrix: hmc.kernel(
-        potential, step_size, inverse_mass_matrix, 90
+    kernel_factory = lambda step_size, inverse_mass_matrix: case["algorithm"].kernel(
+        potential, step_size, inverse_mass_matrix, **case["parameters"]
     )
 
     state, (step_size, inverse_mass_matrix), _ = stan_warmup.run(
         rng_key,
         kernel_factory,
         initial_state,
-        3_000,
+        case["num_warmup_steps"],
         is_mass_matrix_diagonal=is_mass_matrix_diagonal,
     )
 
@@ -65,7 +89,7 @@ def test_hmc(is_mass_matrix_diagonal):
         assert inverse_mass_matrix.ndim == 2
 
     kernel = kernel_factory(step_size, inverse_mass_matrix)
-    states = inference_loop(rng_key, kernel, initial_state, 2_000)
+    states = inference_loop(rng_key, kernel, initial_state, case["num_sampling_steps"])
 
     coefs_samples = states.position["coefs"]
     scale_samples = states.position["scale"]
@@ -74,42 +98,47 @@ def test_hmc(is_mass_matrix_diagonal):
     assert np.mean(coefs_samples) == pytest.approx(3, 1e-1)
 
 
+# -------------------------------------------------------------------
+#                UNIVARIATE NORMAL DISTRIBUTION
+# -------------------------------------------------------------------
+
+
+def normal_potential_fn(x):
+    return -stats.norm.logpdf(x, loc=1.0, scale=2.0).squeeze()
+
+
+normal_test_cases = [
+    {
+        "algorithm": hmc,
+        "initial_position": {"x": 1.0},
+        "parameters": {
+            "step_size": 1e-2,
+            "inverse_mass_matrix": jnp.array([0.1]),
+            "num_integration_steps": 100,
+        },
+        "num_sampling_steps": 50_000,
+    },
+    {
+        "algorithm": nuts,
+        "initial_position": {"x": 1.0},
+        "parameters": {"step_size": 1e-2, "inverse_mass_matrix": jnp.array([0.1])},
+        "num_sampling_steps": 50_000,
+    },
+]
+
+
+@pytest.mark.parametrize("case", normal_test_cases)
 @pytest.mark.parametrize("is_mass_matrix_diagonal", [True, False])
-def test_nuts(is_mass_matrix_diagonal):
-    """Test the NUTS kernel and the Stan warmup."""
+def test_univariate_normal(case, is_mass_matrix_diagonal):
     rng_key = jax.random.PRNGKey(19)
-    x_data = np.random.normal(0, 1, size=(1000, 1))
-    y_data = 3 * x_data + np.random.normal(size=x_data.shape)
-    observations = {"x": x_data, "preds": y_data}
+    potential = lambda x: normal_potential_fn(**x)
+    initial_position = case["initial_position"]
+    initial_state = case["algorithm"].new_state(initial_position, potential)
 
-    conditioned_potential = ft.partial(potential_fn, **observations)
-    potential = lambda x: conditioned_potential(**x)
+    kernel = case["algorithm"].kernel(potential, **case["parameters"])
+    states = inference_loop(rng_key, kernel, initial_state, case["num_sampling_steps"])
 
-    initial_position = {"scale": 1.0, "coefs": 2.0}
-    initial_state = hmc.new_state(initial_position, potential)
+    samples = states.position["x"]
 
-    kernel_factory = lambda step_size, inverse_mass_matrix: nuts.kernel(
-        potential, step_size, inverse_mass_matrix
-    )
-
-    state, (step_size, inverse_mass_matrix), _ = stan_warmup.run(
-        rng_key,
-        kernel_factory,
-        initial_state,
-        1_000,
-        is_mass_matrix_diagonal=is_mass_matrix_diagonal,
-    )
-
-    if is_mass_matrix_diagonal:
-        assert inverse_mass_matrix.ndim == 1
-    else:
-        assert inverse_mass_matrix.ndim == 2
-
-    kernel = nuts.kernel(potential, step_size, inverse_mass_matrix)
-    states = inference_loop(rng_key, kernel, initial_state, 500)
-
-    coefs_samples = states.position["coefs"]
-    scale_samples = states.position["scale"]
-
-    assert np.mean(scale_samples) == pytest.approx(1, 1e-1)
-    assert np.mean(coefs_samples) == pytest.approx(3, 1e-1)
+    assert np.var(samples).item() == pytest.approx(4.0, 1e-1)
+    assert np.mean(samples).item() == pytest.approx(1.0, 1e-1)
