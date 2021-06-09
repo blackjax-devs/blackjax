@@ -11,13 +11,14 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from typing import NamedTuple
 
+import chex
 import jax
 import jax.numpy as jnp
 
 
-class IterativeUTurnState(NamedTuple):
+@chex.dataclass
+class IterativeUTurnState:
     momentum: jnp.ndarray
     momentum_sum: jnp.ndarray
     idx_min: int
@@ -31,10 +32,10 @@ def iterative_uturn_numpyro(is_turning):
         flat, _ = jax.flatten_util.ravel_pytree(chain_state.position)
         num_dims = jnp.shape(flat)[0]
         return IterativeUTurnState(
-            jnp.zeros((max_num_doublings, num_dims)),
-            jnp.zeros((max_num_doublings, num_dims)),
-            0,
-            0,
+            momentum=jnp.zeros((max_num_doublings, num_dims)),
+            momentum_sum=jnp.zeros((max_num_doublings, num_dims)),
+            idx_min=0,
+            idx_max=0,
         )
 
     def update_criterion_state(
@@ -43,7 +44,8 @@ def iterative_uturn_numpyro(is_turning):
         momentum,
         step: int,
     ):
-        r_ckpts, r_sum_ckpts, _, _ = checkpoints
+        r_ckpts = checkpoints.momentum
+        r_sum_ckpts = checkpoints.momentum_sum
         ckpt_idx_min, ckpt_idx_max = _leaf_idx_to_ckpt_idxs(step)
         r, _ = jax.flatten_util.ravel_pytree(momentum)
         r_sum, _ = jax.flatten_util.ravel_pytree(momentum_sum)
@@ -54,7 +56,12 @@ def iterative_uturn_numpyro(is_turning):
             (r_ckpts, r_sum_ckpts),
             lambda x: x,
         )
-        return IterativeUTurnState(r_ckpts, r_sum_ckpts, ckpt_idx_min, ckpt_idx_max)
+        return IterativeUTurnState(
+            momentum=r_ckpts,
+            momentum_sum=r_sum_ckpts,
+            idx_min=ckpt_idx_min,
+            idx_max=ckpt_idx_max,
+        )
 
     def _leaf_idx_to_ckpt_idxs(n):
         """Find the checkpoint id from a step number."""
@@ -73,7 +80,7 @@ def iterative_uturn_numpyro(is_turning):
         idx_min = idx_max - num_subtrees + 1
         return idx_min, idx_max
 
-    def _is_iterative_turning(checkpoints, momentum_sum, momentum):
+    def _is_iterative_turning(checkpoints: IterativeUTurnState, momentum_sum, momentum):
         """Checks whether there is a U-turn in the iteratively built expanded trajectory.
         These checks only need to be performed as specific points.
 
@@ -82,15 +89,18 @@ def iterative_uturn_numpyro(is_turning):
 
         r, _ = jax.flatten_util.ravel_pytree(momentum)
         r_sum, _ = jax.flatten_util.ravel_pytree(momentum_sum)
-        r_ckpts, r_sum_ckpts, idx_min, idx_max = checkpoints
 
         def _body_fn(state):
             i, _ = state
-            subtree_r_sum = r_sum - r_sum_ckpts[i] + r_ckpts[i]
-            return i - 1, is_turning(r_ckpts[i], r, subtree_r_sum)
+            subtree_r_sum = (
+                r_sum - checkpoints.momentum_sum[i] + checkpoints.momentum[i]
+            )
+            return i - 1, is_turning(checkpoints.momentum[i], r, subtree_r_sum)
 
         _, turning = jax.lax.while_loop(
-            lambda it: (it[0] >= idx_min) & ~it[1], _body_fn, (idx_max, False)
+            lambda it: (it[0] >= checkpoints.idx_min) & ~it[1],
+            _body_fn,
+            (checkpoints.idx_max, False),
         )
         return turning
 

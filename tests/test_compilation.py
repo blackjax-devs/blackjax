@@ -33,8 +33,8 @@ def test_hmc():
     )
 
     for _ in range(10):
-        _, rng_key = jax.random.split(rng_key)
-        state, _ = kernel(rng_key, state)
+        rng_key, sample_key = jax.random.split(rng_key)
+        state, _ = kernel(sample_key, state)
 
     assert GLOBAL["count"] == 1
 
@@ -49,8 +49,8 @@ def test_nuts():
     )
 
     for _ in range(10):
-        _, rng_key = jax.random.split(rng_key)
-        state, _ = kernel(rng_key, state)
+        rng_key, sample_key = jax.random.split(rng_key)
+        state, _ = kernel(sample_key, state)
 
     # Potential function was traced twice as we call potential function
     # at Step 0 when building a new trajectory in tree doubling.

@@ -1,6 +1,7 @@
 """Public API for the NUTS Kernel"""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 
+import chex
 import jax.numpy as jnp
 import numpy as np
 
@@ -17,7 +18,8 @@ Array = Union[np.ndarray, jnp.DeviceArray]
 PyTree = Union[Dict, List, Tuple]
 
 
-class NUTSInfo(NamedTuple):
+@chex.dataclass
+class NUTSInfo:
     """Additional information on the NUTS transition.
 
     This additional information can be used for debugging or computing
@@ -73,8 +75,22 @@ def kernel(
     potential_fn
         A function that returns the potential energy of a chain at a given position. The potential energy
         is defined as minus the log-probability.
-    parameters
-        A NamedTuple that contains the parameters of the kernel to be built.
+    step_size
+        Step size of the numerical integrator
+    inverse_mass_matrix
+        One or two-dimensional array corresponding respectively to a diagonal
+        or dense mass matrix. The inverse mass matrix is multiplied to a
+        flattened version of the Pytree in which the chain position is stored
+        (the current value of the random variables). The order of the variables
+        should thus match JAX's tree flattening order, and more specifically
+        that of `ravel_pytree`.
+        In particular, JAX sorts dictionaries by key when flattening them. The
+        value of each variables will appear in the flattened Pytree following
+        the order given by `sort(keys)`.
+    max_num_doublings
+        Number of maximum tree doubling in the trajectory building in NUTS
+    divergence_threshold
+        Energy difference threshold to be consider divergence during numerical integration
 
     """
     momentum_generator, kinetic_energy_fn, uturn_check_fn = metrics.gaussian_euclidean(
@@ -178,16 +194,22 @@ def iterative_nuts_proposal(
         )
         initial_energy = _compute_energy(initial_state)  # H0 of the HMC step
         initial_proposal = proposal.Proposal(
-            initial_state, initial_energy, 0.0, -np.inf
+            state=initial_state,
+            energy=initial_energy,
+            weight=0.0,
+            sum_log_p_accept=-np.inf,
         )
         initial_trajectory = Trajectory(
-            initial_state,
-            initial_state,
-            initial_state.momentum,
-            0,
+            leftmost_state=initial_state,
+            rightmost_state=initial_state,
+            momentum_sum=initial_state.momentum,
+            num_states=0,
         )
         initial_expansion_state = DynamicExpansionState(
-            0, initial_proposal, initial_trajectory, initial_termination_state
+            step=0,
+            proposal=initial_proposal,
+            trajectory=initial_trajectory,
+            termination_state=initial_termination_state,
         )
 
         expansion_state, info = expand(
@@ -196,7 +218,8 @@ def iterative_nuts_proposal(
             initial_energy,
         )
         is_diverging, is_turning = info
-        num_doublings, sampled_proposal, trajectory, _ = expansion_state
+        sampled_proposal = expansion_state.proposal
+        trajectory= expansion_state.trajectory
         # Compute average acceptance probabilty across entire trajectory,
         # even over subtrees that may have been rejected
         acceptance_probability = (
@@ -204,15 +227,15 @@ def iterative_nuts_proposal(
         )
 
         info = NUTSInfo(
-            initial_state.momentum,
-            is_diverging,
-            is_turning,
-            sampled_proposal.energy,
-            trajectory.leftmost_state,
-            trajectory.rightmost_state,
-            num_doublings,
-            trajectory.num_states,
-            acceptance_probability,
+            momentum=initial_state.momentum,
+            is_divergent=is_diverging,
+            is_turning=is_turning,
+            energy=sampled_proposal.energy,
+            trajectory_leftmost_state=trajectory.leftmost_state,
+            trajectory_rightmost_state=trajectory.rightmost_state,
+            num_trajectory_expansions=expansion_state.step,
+            integration_steps=trajectory.num_states,
+            acceptance_probability=acceptance_probability,
         )
 
         return sampled_proposal.state, info

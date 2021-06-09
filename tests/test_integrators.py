@@ -106,7 +106,10 @@ def test_integrator(example, integrator, do_jit_compile):
     q = example["q_init"]
     p = example["p_init"]
     initial_state = integrators.IntegratorState(
-        q, p, potential(q), jax.grad(potential)(q)
+        position=q,
+        momentum=p,
+        potential_energy=potential(q),
+        potential_energy_grad=jax.grad(potential)(q),
     )
     final_state = jax.lax.fori_loop(
         0, example["num_steps"], lambda _, state: step(state, step_size), initial_state

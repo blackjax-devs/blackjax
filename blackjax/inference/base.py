@@ -1,6 +1,7 @@
 """Base kernel for the HMC family."""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 
+import chex
 import jax
 import jax.numpy as jnp
 
@@ -11,7 +12,8 @@ __all__ = ["HMCState", "hmc"]
 PyTree = Union[Dict, List, Tuple]
 
 
-class HMCState(NamedTuple):
+@chex.dataclass
+class HMCState:
     """State of the HMC algorithm.
 
     The HMC algorithm takes one position of the chain and returns another
@@ -75,7 +77,11 @@ def new_hmc_state(position: PyTree, potential_fn: Callable) -> HMCState:
     potential energy.
     """
     potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
-    return HMCState(position, potential_energy, potential_energy_grad)
+    return HMCState(
+        position=position,
+        potential_energy=potential_energy,
+        potential_energy_grad=potential_energy_grad,
+    )
 
 
 def hmc(
@@ -139,7 +145,9 @@ def hmc(
 
     """
 
-    def kernel(rng_key: jnp.ndarray, state: HMCState) -> Tuple[HMCState, NamedTuple]:
+    def kernel(
+        rng_key: jnp.ndarray, state: HMCState
+    ) -> Tuple[HMCState, chex.dataclass]:
         """Moves the chain by one step using the Hamiltonian dynamics.
 
         Parameters
@@ -154,17 +162,20 @@ def hmc(
         -------
         The next state of the chain and additional information about the current step.
         """
-        key_momentum, key_integrator = jax.random.split(rng_key, 2)
+        _, key_momentum, key_integrator = jax.random.split(rng_key, 3)
 
-        position, potential_energy, potential_energy_grad = state
-        momentum = momentum_generator(key_momentum, position)
-
+        momentum = momentum_generator(key_momentum, state.position)
         augmented_state = IntegratorState(
-            position, momentum, potential_energy, potential_energy_grad
+            position=state.position,
+            momentum=momentum,
+            potential_energy=state.potential_energy,
+            potential_energy_grad=state.potential_energy_grad,
         )
         proposal, info = proposal_generator(key_integrator, augmented_state)
         proposal = HMCState(
-            proposal.position, proposal.potential_energy, proposal.potential_energy_grad
+            position=proposal.position,
+            potential_energy=proposal.potential_energy,
+            potential_energy_grad=proposal.potential_energy_grad,
         )
 
         return proposal, info

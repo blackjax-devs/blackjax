@@ -1,10 +1,11 @@
 """Step size adaptation"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, Tuple
 
+import chex
 import jax
 import jax.numpy as jnp
 
-import blackjax.optimizers as optimizers
+from blackjax.optimizers import dual_averaging, DualAveragingState
 from blackjax.inference.base import HMCState
 
 __all__ = [
@@ -16,35 +17,6 @@ __all__ = [
 # -------------------------------------------------------------------
 #                        DUAL AVERAGING
 # -------------------------------------------------------------------
-
-
-class DualAveragingAdaptationState(NamedTuple):
-    """State carried through the dual averaging procedure.
-
-    log_step_size
-        The logarithm of the current value of the step size.
-    log_step_size_avg
-        The time-weighted average of the values that the logarithm of the step
-        size has taken so far.
-    step
-        The current iteration step.
-    avg_err
-        The time average of the value of the quantity :math:`H_t`, the
-        difference between the target acceptance rate and the current
-        acceptance rate.
-    mu
-        Arbitrary point the values of log_step_size are shrunk towards. Chose
-        to be :math:`\\log(10 \\epsilon_0)` where :math:`\\epsilon_0` is chosen
-        in this context to be the step size given by the
-        `find_reasonable_step_size` procedure.
-
-    """
-
-    log_step_size: float
-    log_step_size_avg: float
-    step: int
-    avg_error: float
-    mu: float
 
 
 def dual_averaging_adaptation(
@@ -105,19 +77,17 @@ def dual_averaging_adaptation(
             adaptively setting path lengths in Hamiltonian Monte Carlo." Journal
             of Machine Learning Research 15.1 (2014): 1593-1623.
     """
-    da_init, da_update, da_final = optimizers.dual_averaging(t0, gamma, kappa)
+    da_init, da_update, da_final = dual_averaging(t0, gamma, kappa)
 
-    def init(inital_step_size: float) -> DualAveragingAdaptationState:
+    def init(inital_step_size: float) -> DualAveragingState:
         """Initialize the state of the dual averaging scheme.
 
         The parameter :math:`\\mu` is set to :math:`\\log(10 \\epsilon_1)`
         where :math:`\\epsilon_1` is the initial value of the step size.
         """
-        return DualAveragingAdaptationState(*da_init(inital_step_size))
+        return da_init(inital_step_size)
 
-    def update(
-        da_state: DualAveragingAdaptationState, info
-    ) -> DualAveragingAdaptationState:
+    def update(da_state: DualAveragingState, info) -> DualAveragingState:
         """Update the state of the Dual Averaging adaptive algorithm.
 
         Parameters
@@ -133,10 +103,10 @@ def dual_averaging_adaptation(
         """
         p_accept = info.acceptance_probability
         gradient = target - p_accept
-        return DualAveragingAdaptationState(*da_update(da_state, gradient))
+        return da_update(da_state, gradient)
 
-    def final(da_state: DualAveragingAdaptationState) -> float:
-        return jnp.exp(da_state.log_step_size_avg)
+    def final(da_state: DualAveragingState) -> float:
+        return jnp.exp(da_state.log_x_avg)
 
     return init, update, final
 
@@ -146,7 +116,8 @@ def dual_averaging_adaptation(
 # -------------------------------------------------------------------
 
 
-class ReasonableStepSizeState(NamedTuple):
+@chex.dataclass
+class ReasonableStepSizeState:
     """State carried through the search for a reasonable first step size.
 
     rng_key
@@ -230,29 +201,37 @@ def find_reasonable_step_size(
         .. [1]: jax.numpy.finfo documentation. https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.finfo.html
 
         """
-        _, direction, previous_direction, step_size = rss_state
-
-        not_too_large = (step_size < fp_limit.max) | (direction <= 0)
-        not_too_small = (step_size > fp_limit.tiny) | (direction >= 0)
-        is_step_size_not_extreme = not_too_large & not_too_small
-        has_acceptance_rate_not_crossed_threshold = (previous_direction == 0) | (
-            direction == previous_direction
+        not_too_large = (rss_state.step_size < fp_limit.max) | (
+            rss_state.direction <= 0
         )
+        not_too_small = (rss_state.step_size > fp_limit.tiny) | (
+            rss_state.direction >= 0
+        )
+        is_step_size_not_extreme = not_too_large & not_too_small
+        has_acceptance_rate_not_crossed_threshold = (
+            rss_state.previous_direction == 0
+        ) | (rss_state.direction == rss_state.previous_direction)
         return is_step_size_not_extreme & has_acceptance_rate_not_crossed_threshold
 
     def update(rss_state: ReasonableStepSizeState) -> Tuple:
         """Perform one step of the step size search."""
-        rng_key, direction, _, step_size = rss_state
-        _, rng_key = jax.random.split(rng_key)
+        rng_key, sample_key = jax.random.split(rss_state.rng_key)
 
-        step_size = (2.0 ** direction) * step_size
+        step_size = (2.0 ** rss_state.direction) * rss_state.step_size
         kernel = kernel_generator(step_size)
-        _, info = kernel(rng_key, reference_state)
+        _, info = kernel(sample_key, reference_state)
 
         new_direction = jnp.where(target_accept < info.acceptance_probability, 1, -1)
-        return ReasonableStepSizeState(rng_key, new_direction, direction, step_size)
+        return ReasonableStepSizeState(
+            rng_key=rng_key,
+            direction=new_direction,
+            previous_direction=rss_state.direction,
+            step_size=step_size,
+        )
 
-    rss_state = ReasonableStepSizeState(rng_key, 0, 0, initial_step_size)
+    rss_state = ReasonableStepSizeState(
+        rng_key=rng_key, direction=0, previous_direction=0, step_size=initial_step_size
+    )
     rss_state = jax.lax.while_loop(do_continue, update, rss_state)
 
     return rss_state.step_size

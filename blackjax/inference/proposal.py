@@ -1,5 +1,6 @@
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, Tuple
 
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -7,7 +8,8 @@ import numpy as np
 from blackjax.inference.integrators import IntegratorState
 
 
-class Proposal(NamedTuple):
+@chex.dataclass
+class Proposal:
     """Proposal for the next chain step.
 
     state:
@@ -32,7 +34,9 @@ def proposal_generator(
 ) -> Tuple[Callable, Callable]:
     def new(state: IntegratorState) -> Proposal:
         energy = state.potential_energy + kinetic_energy(state.momentum)
-        return Proposal(state, energy, 0.0, -np.inf)
+        return Proposal(
+            state=state, energy=energy, weight=0.0, sum_log_p_accept=-np.inf
+        )
 
     def update(initial_energy: float, state: IntegratorState) -> Tuple[Proposal, bool]:
         """Generate a new proposal from a trajectory state.
@@ -64,10 +68,10 @@ def proposal_generator(
 
         return (
             Proposal(
-                state,
-                new_energy,
-                weight,
-                sum_log_p_accept,
+                state=state,
+                energy=new_energy,
+                weight=weight,
+                sum_log_p_accept=sum_log_p_accept,
             ),
             is_transition_divergent,
         )
@@ -113,26 +117,22 @@ def progressive_uniform_sampling(rng_key, proposal, new_proposal):
     # Using expit to compute exp(w1) / (exp(w0) + exp(w1))
     p_accept = jax.scipy.special.expit(new_proposal.weight - proposal.weight)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
-    new_weight = jnp.logaddexp(proposal.weight, new_proposal.weight)
-    new_sum_log_p_accept = jnp.logaddexp(
+    accepted_proposal = jax.lax.cond(
+        do_accept,
+        lambda _: new_proposal,
+        lambda _: proposal,
+        operand=None,
+    )
+    accepted_weight = jnp.logaddexp(proposal.weight, new_proposal.weight)
+    accepted_sum_log_p_accept = jnp.logaddexp(
         proposal.sum_log_p_accept, new_proposal.sum_log_p_accept
     )
 
-    return jax.lax.cond(
-        do_accept,
-        lambda _: Proposal(
-            new_proposal.state,
-            new_proposal.energy,
-            new_weight,
-            new_sum_log_p_accept,
-        ),
-        lambda _: Proposal(
-            proposal.state,
-            proposal.energy,
-            new_weight,
-            new_sum_log_p_accept,
-        ),
-        operand=None,
+    return Proposal(
+        state=accepted_proposal.state,
+        energy=accepted_proposal.energy,
+        weight=accepted_weight,
+        sum_log_p_accept=accepted_sum_log_p_accept,
     )
 
 
@@ -145,24 +145,20 @@ def progressive_biased_sampling(rng_key, proposal, new_proposal):
     """
     p_accept = jnp.clip(jnp.exp(new_proposal.weight - proposal.weight), a_max=1)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
-    new_weight = jnp.logaddexp(proposal.weight, new_proposal.weight)
-    new_sum_log_p_accept = jnp.logaddexp(
+    accepted_proposal = jax.lax.cond(
+        do_accept,
+        lambda _: new_proposal,
+        lambda _: proposal,
+        operand=None,
+    )
+    accepted_weight = jnp.logaddexp(proposal.weight, new_proposal.weight)
+    accepted_sum_log_p_accept = jnp.logaddexp(
         proposal.sum_log_p_accept, new_proposal.sum_log_p_accept
     )
 
-    return jax.lax.cond(
-        do_accept,
-        lambda _: Proposal(
-            new_proposal.state,
-            new_proposal.energy,
-            new_weight,
-            new_sum_log_p_accept,
-        ),
-        lambda _: Proposal(
-            proposal.state,
-            proposal.energy,
-            new_weight,
-            new_sum_log_p_accept,
-        ),
-        operand=None,
+    return Proposal(
+        state=accepted_proposal.state,
+        energy=accepted_proposal.energy,
+        weight=accepted_weight,
+        sum_log_p_accept=accepted_sum_log_p_accept,
     )

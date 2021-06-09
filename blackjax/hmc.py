@@ -1,5 +1,6 @@
 """Public API for the HMC Kernel"""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
+import chex
 
 import jax
 import jax.numpy as jnp
@@ -17,7 +18,8 @@ PyTree = Union[Dict, List, Tuple]
 __all__ = ["new_state", "kernel"]
 
 
-class HMCInfo(NamedTuple):
+@chex.dataclass
+class HMCInfo:
     """Additional information on the HMC transition.
 
     This additional information can be used for debugging or computing
@@ -70,8 +72,22 @@ def kernel(
     ----------
     potential_fn
         A function that returns the potential energy of a chain at a given position.
-    parameters
-        A NamedTuple that contains the parameters of the kernel to be built.
+    step_size
+        Step size of the numerical integrator
+    inverse_mass_matrix
+        One or two-dimensional array corresponding respectively to a diagonal
+        or dense mass matrix. The inverse mass matrix is multiplied to a
+        flattened version of the Pytree in which the chain position is stored
+        (the current value of the random variables). The order of the variables
+        should thus match JAX's tree flattening order, and more specifically
+        that of `ravel_pytree`.
+        In particular, JAX sorts dictionaries by key when flattening them. The
+        value of each variables will appear in the flattened Pytree following
+        the order given by `sort(keys)`.
+    num_integration_steps
+        Number of steps to integrate with the numerical integrator
+    divergence_threshold
+        Energy difference threshold to be consider divergence during numerical integration
 
     Returns
     -------
@@ -149,10 +165,10 @@ def hmc_proposal(
             lambda m: -1.0 * m, state.momentum
         )
         return integrators.IntegratorState(
-            state.position,
-            flipped_momentum,
-            state.potential_energy,
-            state.potential_energy_grad,
+            position=state.position,
+            momentum=flipped_momentum,
+            potential_energy=state.potential_energy,
+            potential_energy_grad=state.potential_energy_grad,
         )
 
     def generate(
@@ -167,13 +183,13 @@ def hmc_proposal(
         do_accept, p_accept = info
 
         info = HMCInfo(
-            state.momentum,
-            p_accept,
-            do_accept,
-            is_diverging,
-            new_proposal.energy,
-            new_proposal,
-            num_integration_steps,
+            momentum=state.momentum,
+            acceptance_probability=p_accept,
+            is_accepted=do_accept,
+            is_divergent=is_diverging,
+            energy=new_proposal.energy,
+            proposal=new_proposal,
+            num_integration_steps=num_integration_steps,
         )
 
         return sampled_proposal.state, info

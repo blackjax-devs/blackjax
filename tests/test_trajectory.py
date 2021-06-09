@@ -228,16 +228,22 @@ def test_dynamic_progressive_expansion(case):
         potential_fn, position, momentum_generator(rng_key, position)
     )
     energy = state.potential_energy + kinetic_energy_fn(state.momentum)
-    initial_proposal = proposal.Proposal(state, energy, 0.0, -np.inf)
+    initial_proposal = proposal.Proposal(
+        state=state, energy=energy, weight=0.0, sum_log_p_accept=-np.inf
+    )
     initial_termination_state = new_criterion_state(state, 10)
     initial_trajectory = Trajectory(
-        state,
-        state,
-        state.momentum,
-        0,
+        leftmost_state=state,
+        rightmost_state=state,
+        momentum_sum=state.momentum,
+        num_states=0,
     )
+
     initial_expansion_state = DynamicExpansionState(
-        0, initial_proposal, initial_trajectory, initial_termination_state
+        step=0,
+        proposal=initial_proposal,
+        trajectory=initial_trajectory,
+        termination_state=initial_termination_state,
     )
 
     expansion_state, (is_diverging, is_turning) = expand(

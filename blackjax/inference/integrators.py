@@ -1,6 +1,7 @@
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 
+import chex
 import jax
 
 from blackjax.inference.metrics import EuclideanKineticEnergy
@@ -10,7 +11,8 @@ __all__ = ["velocity_verlet"]
 PyTree = Union[Dict, List, Tuple]
 
 
-class IntegratorState(NamedTuple):
+@chex.dataclass
+class IntegratorState:
     """State of the trajectory integration.
 
     We keep the gradient of the potential energy to speedup computations.
@@ -24,7 +26,12 @@ class IntegratorState(NamedTuple):
 
 def new_integrator_state(potential_fn, position, momentum):
     potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
-    return IntegratorState(position, momentum, potential_energy, potential_energy_grad)
+    return IntegratorState(
+        position=position,
+        momentum=momentum,
+        potential_energy=potential_energy,
+        potential_energy_grad=potential_energy_grad,
+    )
 
 
 def velocity_verlet(
@@ -69,18 +76,16 @@ def velocity_verlet(
     kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
-        position, momentum, _, potential_energy_grad = state
-
         momentum = jax.tree_util.tree_multimap(
             lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
-            momentum,
-            potential_energy_grad,
+            state.momentum,
+            state.potential_energy_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
         position = jax.tree_util.tree_multimap(
             lambda position, kinetic_grad: position + a2 * step_size * kinetic_grad,
-            position,
+            state.position,
             kinetic_grad,
         )
 
@@ -92,7 +97,10 @@ def velocity_verlet(
         )
 
         return IntegratorState(
-            position, momentum, potential_energy, potential_energy_grad
+            position=position,
+            momentum=momentum,
+            potential_energy=potential_energy,
+            potential_energy_grad=potential_energy_grad,
         )
 
     return one_step

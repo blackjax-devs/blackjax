@@ -72,9 +72,9 @@ initial_position = {"loc": 1., "scale": 2.}
 state = nuts.new_state(initial_position, potential)
 
 # Iterate
-rng_key = jax.random.PRNGKey(0)
+next_key = jax.random.PRNGKey(0)
 for _ in range(1_000):
-    _, rng_key = jax.random.split(rng_key)
+    next_key, rng_key = jax.random.split(next_key)
     state, _ = kernel(rng_key, state)
 ```
 

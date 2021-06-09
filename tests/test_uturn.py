@@ -24,10 +24,10 @@ def test_is_iterative_turning(checkpoint_idxs, expected_turning):
     momentum_ckpts = jnp.array([1.0, 2.0, 3.0, -2.0])
     momentum_sum_ckpts = jnp.array([2.0, 4.0, 4.0, -1.0])
     checkpoints = IterativeUTurnState(
-        momentum_ckpts,
-        momentum_sum_ckpts,
-        idx_min,
-        idx_max,
+        momentum=momentum_ckpts,
+        momentum_sum=momentum_sum_ckpts,
+        idx_min=idx_min,
+        idx_max=idx_max,
     )
 
     actual_turning = is_iterative_turning(checkpoints, momentum_sum, momentum)

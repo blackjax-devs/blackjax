@@ -1,6 +1,7 @@
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Any, Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -9,8 +10,8 @@ from blackjax.adaptation.mass_matrix import (
     MassMatrixAdaptationState,
     mass_matrix_adaptation,
 )
+from blackjax.optimizers import DualAveragingState
 from blackjax.adaptation.step_size import (
-    DualAveragingAdaptationState,
     dual_averaging_adaptation,
     find_reasonable_step_size,
 )
@@ -22,8 +23,9 @@ Array = Union[np.ndarray, jnp.DeviceArray]
 PyTree = Union[Array, Dict, List, Tuple]
 
 
-class StanWarmupState(NamedTuple):
-    da_state: DualAveragingAdaptationState
+@chex.dataclass
+class StanWarmupState:
+    da_state: DualAveragingState
     mm_state: MassMatrixAdaptationState
 
 
@@ -35,7 +37,7 @@ def run(
     *,
     is_mass_matrix_diagonal: bool = True,
     initial_step_size: float = 1.0
-) -> Tuple[HMCState, Tuple[float, Array], NamedTuple]:
+) -> Tuple[HMCState, Tuple[float, Array], chex.dataclass]:
     """Loop for the Stan warmup.
 
     Parameters
@@ -66,9 +68,9 @@ def run(
         rng_key, state, warmup_state = carry
         stage, is_middle_window_end = interval
 
-        _, rng_key = jax.random.split(rng_key)
+        rng_key, update_key = jax.random.split(rng_key)
         state, warmup_state, info = update(
-            rng_key, stage, is_middle_window_end, state, warmup_state
+            update_key, stage, is_middle_window_end, state, warmup_state
         )
 
         return ((rng_key, state, warmup_state), (state, warmup_state, info))
@@ -164,7 +166,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         )
         da_state = fast_init(step_size)
 
-        warmup_state = StanWarmupState(da_state, mm_state)
+        warmup_state = StanWarmupState(da_state=da_state, mm_state=mm_state)
 
         return warmup_state
 
@@ -174,7 +176,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         is_middle_window_end: bool,
         chain_state: HMCState,
         warmup_state: StanWarmupState,
-    ) -> Tuple[HMCState, StanWarmupState, NamedTuple]:
+    ) -> Tuple[HMCState, StanWarmupState, chex.dataclass]:
         """Move the warmup by one step.
 
         We first create a new kernel with the current values of the step size
@@ -202,7 +204,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         The updated states of the chain and the warmup.
 
         """
-        step_size = jnp.exp(warmup_state.da_state.log_step_size)
+        step_size = jnp.exp(warmup_state.da_state.log_x)
         inverse_mass_matrix = warmup_state.mm_state.inverse_mass_matrix
         kernel = kernel_factory(
             step_size=step_size, inverse_mass_matrix=inverse_mass_matrix
@@ -227,7 +229,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
 
     def final(warmup_state: StanWarmupState) -> Tuple[float, jnp.DeviceArray]:
         """Return the step size and mass matrix."""
-        step_size = jnp.exp(warmup_state.da_state.log_step_size_avg)
+        step_size = jnp.exp(warmup_state.da_state.log_x_avg)
         inverse_mass_matrix = warmup_state.mm_state.inverse_mass_matrix
         return step_size, inverse_mass_matrix
 
@@ -253,7 +255,7 @@ def fast_window() -> Tuple[Callable, Callable]:
     """
     da_init, da_update, _ = dual_averaging_adaptation()
 
-    def init(initial_step_size: float) -> DualAveragingAdaptationState:
+    def init(initial_step_size: float) -> DualAveragingState:
         da_state = da_init(initial_step_size)
         return da_state
 
@@ -263,7 +265,9 @@ def fast_window() -> Tuple[Callable, Callable]:
         rng_key, state, info, warmup_state = fw_state
 
         new_da_state = da_update(warmup_state.da_state, info)
-        new_warmup_state = StanWarmupState(new_da_state, warmup_state.mm_state)
+        new_warmup_state = StanWarmupState(
+            da_state=new_da_state, mm_state=warmup_state.mm_state
+        )
 
         return new_warmup_state
 
@@ -316,7 +320,7 @@ def slow_window(
 
         new_da_state = da_update(warmup_state.da_state, info)
         new_mm_state = mm_update(warmup_state.mm_state, state.position)
-        new_warmup_state = StanWarmupState(new_da_state, new_mm_state)
+        new_warmup_state = StanWarmupState(da_state=new_da_state, mm_state=new_mm_state)
 
         return new_warmup_state
 
@@ -329,7 +333,7 @@ def slow_window(
         """
         new_mm_state = mm_final(warmup_state.mm_state)
         new_da_state = da_init(da_final(warmup_state.da_state))
-        new_warmup_state = StanWarmupState(new_da_state, new_mm_state)
+        new_warmup_state = StanWarmupState(da_state=new_da_state, mm_state=new_mm_state)
 
         return new_warmup_state
 

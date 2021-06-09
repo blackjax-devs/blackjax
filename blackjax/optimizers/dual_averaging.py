@@ -1,9 +1,11 @@
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, Tuple
 
+import chex
 import jax.numpy as jnp
 
 
-class DualAveragingState(NamedTuple):
+@chex.dataclass
+class DualAveragingState:
     """State carried through the dual averaging procedure.
 
     log_x
@@ -77,12 +79,13 @@ def dual_averaging(
         The parameter :math:`\\mu` is set to :math:`\\log(10 \\x_init)`
         where :math:`\\x_init` is the initial value of the state.
         """
-        mu: float = jnp.log(10 * x_init)
-        step = 1
-        avg_error: float = 0.0
-        log_x: float = jnp.log(x_init)
-        log_x_avg: float = 0.0
-        return DualAveragingState(log_x, log_x_avg, step, avg_error, mu)
+        return DualAveragingState(
+            log_x=jnp.log(x_init),
+            log_x_avg=0.0,
+            step=1,
+            avg_error=0.0,
+            mu=jnp.log(10 * x_init),
+        )
 
     def update(da_state: DualAveragingState, gradient) -> DualAveragingState:
         """Update the state of the Dual Averaging adaptive algorithm.
@@ -99,13 +102,18 @@ def dual_averaging(
         -------
         The updated state of the dual averaging algorithm.
         """
-        log_step, avg_log_step, step, avg_error, mu = da_state
-        reg_step = step + t0
-        eta_t = step ** (-kappa)
-        avg_error = (1 - (1 / (reg_step))) * avg_error + gradient / reg_step
-        log_x = mu - (jnp.sqrt(step) / gamma) * avg_error
-        log_x_avg = eta_t * log_step + (1 - eta_t) * avg_log_step
-        return DualAveragingState(log_x, log_x_avg, step + 1, avg_error, mu)
+        reg_step = da_state.step + t0
+        eta_t = da_state.step ** (-kappa)
+        avg_error = (1 - (1 / (reg_step))) * da_state.avg_error + gradient / reg_step
+        log_x = da_state.mu - (jnp.sqrt(da_state.step) / gamma) * avg_error
+        log_x_avg = eta_t * da_state.log_x + (1 - eta_t) * da_state.log_x_avg
+        return DualAveragingState(
+            log_x=log_x,
+            log_x_avg=log_x_avg,
+            step=da_state.step + 1,
+            avg_error=avg_error,
+            mu=da_state.mu,
+        )
 
     def final(da_state: DualAveragingState) -> float:
         """Returns the state that minimizes the objective function."""

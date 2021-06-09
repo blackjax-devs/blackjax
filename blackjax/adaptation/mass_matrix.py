@@ -7,15 +7,17 @@ parameters used in Hamiltonian Monte Carlo.
 .. [1]: "HMC Algorithm Parameters", Stan Manual
         https://mc-stan.org/docs/2_20/reference-manual/hmc-algorithm-parameters.html
 """
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, Tuple
 
+import chex
 import jax
 import jax.numpy as jnp
 
 __all__ = ["mass_matrix_adaptation", "welford_algorithm"]
 
 
-class WelfordAlgorithmState(NamedTuple):
+@chex.dataclass
+class WelfordAlgorithmState:
     """State carried through the Welford algorithm.
 
     mean
@@ -33,7 +35,8 @@ class WelfordAlgorithmState(NamedTuple):
     sample_size: int
 
 
-class MassMatrixAdaptationState(NamedTuple):
+@chex.dataclass
+class MassMatrixAdaptationState:
     """State carried through the mass matrix adaptation.
 
     inverse_mass_matrix
@@ -86,7 +89,9 @@ def mass_matrix_adaptation(
 
         wc_state = wc_init(n_dims)
 
-        return MassMatrixAdaptationState(inverse_mass_matrix, wc_state)
+        return MassMatrixAdaptationState(
+            inverse_mass_matrix=inverse_mass_matrix, wc_state=wc_state
+        )
 
     def update(
         mm_state: MassMatrixAdaptationState, position: jnp.DeviceArray
@@ -100,10 +105,11 @@ def mass_matrix_adaptation(
         position:
             The current position of the chain.
         """
-        inverse_mass_matrix, wc_state = mm_state
         position, _ = jax.flatten_util.ravel_pytree(position)
-        wc_state = wc_update(wc_state, position)
-        return MassMatrixAdaptationState(inverse_mass_matrix, wc_state)
+        wc_state = wc_update(mm_state.wc_state, position)
+        return MassMatrixAdaptationState(
+            inverse_mass_matrix=mm_state.inverse_mass_matrix, wc_state=wc_state
+        )
 
     def final(mm_state: MassMatrixAdaptationState) -> MassMatrixAdaptationState:
         """Final iteration of the mass matrix adaptation.
@@ -111,8 +117,7 @@ def mass_matrix_adaptation(
         In this step we compute the mass matrix from the covariance matrix computed
         by the Welford algorithm, and re-initialize the later.
         """
-        _, wc_state = mm_state
-        covariance, count, mean = wc_final(wc_state)
+        covariance, count, mean = wc_final(mm_state.wc_state)
 
         # Regularize the covariance matrix, see Stan
         scaled_covariance = (count / (count + 5)) * covariance
@@ -125,7 +130,9 @@ def mass_matrix_adaptation(
             )
 
         ndims = jnp.shape(inverse_mass_matrix)[-1]
-        new_mm_state = MassMatrixAdaptationState(inverse_mass_matrix, wc_init(ndims))
+        new_mm_state = MassMatrixAdaptationState(
+            inverse_mass_matrix=inverse_mass_matrix, wc_state=wc_init(ndims)
+        )
 
         return new_mm_state
 
@@ -179,7 +186,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
             m2 = jnp.zeros(n_dims)
         else:
             m2 = jnp.zeros((n_dims, n_dims))
-        return WelfordAlgorithmState(mean, m2, sample_size)
+        return WelfordAlgorithmState(mean=mean, m2=m2, sample_size=sample_size)
 
     def update(
         wa_state: WelfordAlgorithmState, value: jnp.ndarray
@@ -193,24 +200,22 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
         position: jax.numpy.DeviceArray, shape (1,)
             The new sample (typically position of the chain) used to update m2
         """
-        mean, m2, sample_size = wa_state
-        sample_size = sample_size + 1
+        sample_size = wa_state.sample_size + 1
 
-        delta = value - mean
-        mean = mean + delta / sample_size
+        delta = value - wa_state.mean
+        mean = wa_state.mean + delta / sample_size
         updated_delta = value - mean
         if is_diagonal_matrix:
-            new_m2 = m2 + delta * updated_delta
+            new_m2 = wa_state.m2 + delta * updated_delta
         else:
-            new_m2 = m2 + jnp.outer(updated_delta, delta)
+            new_m2 = wa_state.m2 + jnp.outer(updated_delta, delta)
 
-        return WelfordAlgorithmState(mean, new_m2, sample_size)
+        return WelfordAlgorithmState(mean=mean, m2=new_m2, sample_size=sample_size)
 
     def final(
         wa_state: WelfordAlgorithmState,
     ) -> Tuple[float, int, jnp.ndarray]:
-        mean, m2, sample_size = wa_state
-        covariance = m2 / (sample_size - 1)
-        return covariance, sample_size, mean
+        covariance = wa_state.m2 / (wa_state.sample_size - 1)
+        return covariance, wa_state.sample_size, wa_state.mean
 
     return init, update, final
