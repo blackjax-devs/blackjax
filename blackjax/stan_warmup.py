@@ -10,12 +10,12 @@ from blackjax.adaptation.mass_matrix import (
     MassMatrixAdaptationState,
     mass_matrix_adaptation,
 )
-from blackjax.optimizers import DualAveragingState
 from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
     find_reasonable_step_size,
 )
 from blackjax.inference.base import HMCState
+from blackjax.optimizers import DualAveragingState
 
 __all__ = ["run", "stan_warmup"]
 

@@ -219,7 +219,7 @@ def iterative_nuts_proposal(
         )
         is_diverging, is_turning = info
         sampled_proposal = expansion_state.proposal
-        trajectory= expansion_state.trajectory
+        trajectory = expansion_state.trajectory
         # Compute average acceptance probabilty across entire trajectory,
         # even over subtrees that may have been rejected
         acceptance_probability = (

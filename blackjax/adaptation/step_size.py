@@ -5,8 +5,8 @@ import chex
 import jax
 import jax.numpy as jnp
 
-from blackjax.optimizers import dual_averaging, DualAveragingState
 from blackjax.inference.base import HMCState
+from blackjax.optimizers import DualAveragingState, dual_averaging
 
 __all__ = [
     "dual_averaging_adaptation",

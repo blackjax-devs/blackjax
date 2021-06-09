@@ -1,7 +1,7 @@
 """Public API for the HMC Kernel"""
 from typing import Callable, Dict, List, Tuple, Union
-import chex
 
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np

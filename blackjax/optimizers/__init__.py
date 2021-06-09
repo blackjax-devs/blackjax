@@ -1,3 +1,3 @@
-from .dual_averaging import dual_averaging, DualAveragingState
+from .dual_averaging import DualAveragingState, dual_averaging
 
 __all__ = ["dual_averaging", "DualAveragingState"]
