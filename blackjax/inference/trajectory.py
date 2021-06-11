@@ -520,7 +520,7 @@ def dynamic_multiplicative_expansion(
             rng_key, expansion_state, _ = loop_state
             step, proposal, trajectory, termination_state = expansion_state
 
-            rng_key, direction_key, proposal_key = jax.random.split(rng_key, 3)
+            rng_key, direction_key, trajectory_key, proposal_key = jax.random.split(rng_key, 4)
 
             # create new subtrajectory that is twice as long as the current
             # trajectory.
@@ -538,7 +538,7 @@ def dynamic_multiplicative_expansion(
                 is_diverging,
                 is_turning_subtree,
             ) = trajectory_integrator(
-                rng_key,
+                trajectory_key,
                 start_state,
                 direction,
                 termination_state,
