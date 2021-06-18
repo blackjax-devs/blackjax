@@ -1,9 +1,8 @@
+import blackjax.inference.integrators as integrators
 import jax
 import jax.numpy as jnp
 import numpy
 import pytest
-
-import blackjax.inference.integrators as integrators
 
 
 def HarmonicOscillator(inv_mass_matrix, k=1.0, m=1.0):
@@ -45,7 +44,10 @@ def PlanetaryMotion(inv_mass_matrix):
     return potential_energy, kinetic_energy
 
 
-algorithms = [{"integrator": integrators.velocity_verlet, "precision": 1e-4}]
+algorithms = [
+    {"integrator": integrators.velocity_verlet, "precision": 1e-4},
+    {"integrator": integrators.mclachlan, "precision": 1e-5},
+]
 
 
 examples = [
