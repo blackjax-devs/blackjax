@@ -62,6 +62,8 @@ def kernel(
     step_size: float,
     inverse_mass_matrix: Array,
     num_integration_steps: int,
+    *,
+    integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: int = 1000,
 ):
     """Build a HMC kernel.
@@ -83,7 +85,7 @@ def kernel(
     momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
         inverse_mass_matrix
     )
-    symplectic_integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
+    symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
     proposal_generator = hmc_proposal(
         symplectic_integrator,
         kinetic_energy_fn,
