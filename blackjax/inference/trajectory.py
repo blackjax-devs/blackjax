@@ -60,6 +60,22 @@ def append_to_trajectory(trajectory: Trajectory, state: IntegratorState) -> Traj
     )
 
 
+def update_trajectory(direction, trajectory, state):
+    """May need to move elswhere"""
+    left_state = jax.lax.cond(direction > 0, trajectory.leftmost_state, state)
+    right_state = jax.lax.cond(direction > 0, state, trajectory.rightmost_state)
+    momentum_sum = jax.tree_util.tree_multimap(
+        jnp.add, trajectory.momentum_sum, state.momentum
+    )
+
+    return Trajectory(
+        left_state,
+        right_state,
+        momentum_sum,
+        trajectory.num_states + 1,
+    )
+
+
 def reorder_trajectories(
     direction: int, trajectory: Trajectory, new_trajectory: Trajectory
 ) -> Tuple[Trajectory, Trajectory]:
@@ -452,6 +468,47 @@ class DynamicExpansionState(NamedTuple):
     proposal: Proposal
     trajectory: Trajectory
     termination_state: NamedTuple
+
+
+def static_sampling(
+    integrator: Callable,
+    proposal_generator,
+    proposal_sampler,
+    kinetic_energy,
+    step_size,
+    divergence_threshold,
+    num_integration_steps,
+):
+    """Sample a trajectory one step at a time.
+
+    At each step we draw a new direction, integrate one step in this direction,
+    and update the proposal.
+
+    """
+    _, generate_proposal = proposal_generator(kinetic_energy, divergence_threshold)
+
+    def sample(rng_key, last_state, proposal, trajectory):
+        direction_key, momentum_key, proposal_key = jax.random.split(rng_key, 3)
+
+        # Sample a new direction and integrate one step
+        direction = jnp.where(jax.random.bernoulli(direction_key), 1, -1)
+        start_state = jax.lax.cond(
+            direction > 0,
+            lambda _: trajectory.rightmost_state,
+            lambda _: trajectory.leftmost_state,
+            operand=None,
+        )
+
+        new_state = integrator(start_state, direction * step_size)
+        new_proposal, is_diverging = generate_proposal(
+            trajectory.initial_energy, new_state
+        )
+        new_trajectory = update_trajectory(direction, trajectory, new_state)
+        sampled_proposal = proposal_sampler(proposal_key, proposal, new_proposal)
+
+        return new_state, sampled_proposal, new_trajectory
+
+    return sample
 
 
 def dynamic_multiplicative_expansion(
