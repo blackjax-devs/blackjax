@@ -4,7 +4,7 @@ from typing import Callable
 import jax
 import jax.numpy as jnp
 
-from blackjax.inference.smc.smc import SMCState
+from blackjax.inference.smc.base import SMCState
 
 
 def ess(log_weights: jnp.ndarray, log: bool = True):

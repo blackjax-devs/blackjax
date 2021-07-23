@@ -229,13 +229,13 @@ def test_dynamic_progressive_expansion(case):
     energy = state.potential_energy + kinetic_energy_fn(state.momentum)
     initial_proposal = proposal.Proposal(state, energy, 0.0, -np.inf)
     initial_termination_state = new_criterion_state(state, 10)
-    initial_trajectory = Trajectory(
+    initial_trajectory = trajectory.Trajectory(
         state,
         state,
         state.momentum,
         0,
     )
-    initial_expansion_state = DynamicExpansionState(
+    initial_expansion_state = trajectory.DynamicExpansionState(
         0, initial_proposal, initial_trajectory, initial_termination_state
     )
 

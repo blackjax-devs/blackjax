@@ -9,8 +9,8 @@ import numpy as np
 import pytest
 
 import blackjax.hmc as hmc
+from blackjax.inference.smc.base import SMCState
 from blackjax.inference.smc.resampling import systematic
-from blackjax.inference.smc.smc import SMCState
 from blackjax.inference.smc.solver import dichotomy_solver
 from blackjax.tempered_smc import (
     TemperedSMCState,

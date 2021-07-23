@@ -5,9 +5,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from blackjax.inference.smc.base import SMCInfo, SMCState, smc
 from blackjax.inference.smc.ess import ess_solver
-from blackjax.inference.smc.smc import SMCInfo, SMCState
-from blackjax.inference.smc.smc import kernel as smc_kernel
 from blackjax.inference.smc.solver import dichotomy_solver
 
 Array = Union[np.ndarray, jnp.DeviceArray]
@@ -212,9 +211,7 @@ def tempered_smc(
     information about the transition.
     """
 
-    smc_step = smc_kernel(
-        mcmc_kernel_factory, new_mcmc_state, resampling_method, mcmc_iter
-    )
+    kernel = smc(mcmc_kernel_factory, new_mcmc_state, resampling_method, mcmc_iter)
 
     def one_step(
         rng_key: jnp.ndarray, state: TemperedSMCState
@@ -242,7 +239,7 @@ def tempered_smc(
             pytree
         ) + state.lmbda * potential_fn(pytree)
 
-        smc_state, smc_info = smc_step(
+        smc_state, smc_info = kernel(
             rng_key, state.smc_state, lambda_potential_fn, log_weights_fn
         )
         state = TemperedSMCState(state.n_iter + 1, smc_state, state.lmbda + delta)

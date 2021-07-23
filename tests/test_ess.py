@@ -5,7 +5,7 @@ import pytest
 from jax.scipy.stats.norm import logpdf
 
 import blackjax.inference.smc.ess as ess
-from blackjax.inference.smc import smc
+from blackjax.inference.smc.base import SMCState
 from blackjax.inference.smc.solver import dichotomy_solver
 
 
@@ -37,7 +37,7 @@ def test_ess_solver(target_ess, N):
     potential_fn = lambda pytree: -logpdf(pytree, scale=0.1)
 
     potential = jax.vmap(lambda x: potential_fn(*x), in_axes=[0])
-    smc_state = smc.SMCState([x_data])
+    smc_state = SMCState([x_data])
 
     delta = ess.ess_solver(
         potential, smc_state, target_ess, 1.0, dichotomy_solver, use_log_ess=True

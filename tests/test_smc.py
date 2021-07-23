@@ -8,7 +8,7 @@ from jax.scipy.stats.norm import logpdf
 
 import blackjax.hmc as hmc
 import blackjax.inference.smc.resampling as resampling
-import blackjax.inference.smc.smc as smc
+from blackjax.inference.smc.base import SMCState, smc
 
 
 def kernel_potential_fn(position):
@@ -30,12 +30,12 @@ def test_smc(N):
 
     specialized_log_weights_fn = lambda tree: log_weights_fn(tree[0], 1.0)
 
-    smc_kernel = smc.kernel(mcmc_factory, hmc.new_state, resampling.systematic, 100)
+    kernel = smc(mcmc_factory, hmc.new_state, resampling.systematic, 100)
 
     # Don't use exactly the invariant distribution for the MCMC kernel
-    init_state = smc.SMCState([0.25 + np.random.randn(N)])
+    init_state = SMCState([0.25 + np.random.randn(N)])
 
-    updated_state, _ = smc_kernel(
+    updated_state, _ = kernel(
         jax.random.PRNGKey(42),
         init_state,
         kernel_potential_fn,

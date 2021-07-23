@@ -22,7 +22,7 @@ class SMCInfo(NamedTuple):
     weights: jnp.ndarray
 
 
-def kernel(
+def smc(
     mcmc_kernel_factory: Callable,
     new_mcmc_state: Callable,
     resampling_method: Callable,
@@ -60,7 +60,7 @@ def kernel(
     information about the transition.
     """
 
-    def one_step(
+    def kernel(
         rng_key: jnp.ndarray,
         state: SMCState,
         potential_fn: Callable,
@@ -115,7 +115,7 @@ def kernel(
         info = SMCInfo(weights)
         return state, info
 
-    return one_step
+    return kernel
 
 
 def _normalize(log_weights):
