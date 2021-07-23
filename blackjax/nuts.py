@@ -5,13 +5,12 @@ import jax.numpy as jnp
 import numpy as np
 
 import blackjax.hmc
-import blackjax.inference.base as base
-import blackjax.inference.integrators as integrators
-import blackjax.inference.metrics as metrics
-import blackjax.inference.proposal as proposal
-import blackjax.inference.termination as termination
-import blackjax.inference.trajectory as trajectory
-from blackjax.inference.trajectory import DynamicExpansionState, Trajectory
+import blackjax.inference.hmc.base as base
+import blackjax.inference.hmc.integrators as integrators
+import blackjax.inference.hmc.metrics as metrics
+import blackjax.inference.hmc.proposal as proposal
+import blackjax.inference.hmc.termination as termination
+import blackjax.inference.hmc.trajectory as trajectory
 from blackjax.types import Array, PyTree
 
 
@@ -180,13 +179,13 @@ def iterative_nuts_proposal(
         initial_proposal = proposal.Proposal(
             initial_state, initial_energy, 0.0, -np.inf
         )
-        initial_trajectory = Trajectory(
+        initial_trajectory = trajectory.Trajectory(
             initial_state,
             initial_state,
             initial_state.momentum,
             0,
         )
-        initial_expansion_state = DynamicExpansionState(
+        initial_expansion_state = trajectory.DynamicExpansionState(
             0, initial_proposal, initial_trajectory, initial_termination_state
         )
 
@@ -196,11 +195,11 @@ def iterative_nuts_proposal(
             initial_energy,
         )
         is_diverging, is_turning = info
-        num_doublings, sampled_proposal, trajectory, _ = expansion_state
+        num_doublings, sampled_proposal, new_trajectory, _ = expansion_state
         # Compute average acceptance probabilty across entire trajectory,
         # even over subtrees that may have been rejected
         acceptance_probability = (
-            jnp.exp(sampled_proposal.sum_log_p_accept) / trajectory.num_states
+            jnp.exp(sampled_proposal.sum_log_p_accept) / new_trajectory.num_states
         )
 
         info = NUTSInfo(
@@ -208,10 +207,10 @@ def iterative_nuts_proposal(
             is_diverging,
             is_turning,
             sampled_proposal.energy,
-            trajectory.leftmost_state,
-            trajectory.rightmost_state,
+            new_trajectory.leftmost_state,
+            new_trajectory.rightmost_state,
             num_doublings,
-            trajectory.num_states,
+            new_trajectory.num_states,
             acceptance_probability,
         )
 

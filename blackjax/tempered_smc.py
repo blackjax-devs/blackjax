@@ -57,15 +57,6 @@ def adaptive_tempered_smc(
 ):
     r"""Build a Tempered SMC step using adaptive schedule.
 
-    Tempered SMC uses tempering to sample from a distribution given by
-
-    :math..
-        p(x) \propto p_0(x) \exp(-V(x)) \mathrm{d}x
-
-    where :math:`p_0` is the prior distribution, typically easy to sample from and for which the density
-    is easy to compute, and :math:`\exp(-V(x))` is an unnormalized likelihood term for which :math:`V(x)` is easy
-    to compute pointwise.
-
     Parameters
     ----------
     prior_logrob_fn: Callable
@@ -191,10 +182,10 @@ def tempered_smc(
     Tempered SMC uses tempering to sample from a distribution given by
 
     :math..
-        p(x) \propto p_0(x) \exp(-V(x)) \mathrm{d}x
+        p(x) \\propto p_0(x) \\exp(-V(x)) \\mathrm{d}x
 
     where :math:`p_0` is the prior distribution, typically easy to sample from and for which the density
-    is easy to compute, and :math:`\exp(-V(x))` is an unnormalized likelihood term for which :math:`V(x)` is easy
+    is easy to compute, and :math:`\\exp(-V(x))` is an unnormalized likelihood term for which :math:`V(x)` is easy
     to compute pointwise.
 
     Parameters

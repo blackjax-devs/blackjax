@@ -3,11 +3,11 @@ from typing import Callable, NamedTuple, Tuple
 
 import jax
 
-import blackjax.inference.base as base
-import blackjax.inference.integrators as integrators
-import blackjax.inference.metrics as metrics
-import blackjax.inference.proposal as proposal
-import blackjax.inference.trajectory as trajectory
+import blackjax.inference.hmc.base as base
+import blackjax.inference.hmc.integrators as integrators
+import blackjax.inference.hmc.metrics as metrics
+import blackjax.inference.hmc.proposal as proposal
+import blackjax.inference.hmc.trajectory as trajectory
 from blackjax.types import Array, PyTree
 
 __all__ = ["new_state", "kernel"]

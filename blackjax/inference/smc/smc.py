@@ -3,7 +3,7 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.inference.base import PyTree
+from blackjax.inference.hmc.base import PyTree
 
 
 class SMCState(NamedTuple):

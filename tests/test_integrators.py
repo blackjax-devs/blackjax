@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import numpy
 import pytest
 
-import blackjax.inference.integrators as integrators
+import blackjax.inference.hmc.integrators as integrators
 
 
 def HarmonicOscillator(inv_mass_matrix, k=1.0, m=1.0):

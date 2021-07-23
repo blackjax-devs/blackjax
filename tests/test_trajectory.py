@@ -6,12 +6,11 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-import blackjax.inference.integrators as integrators
-import blackjax.inference.metrics as metrics
-import blackjax.inference.proposal as proposal
-import blackjax.inference.termination as termination
-import blackjax.inference.trajectory as trajectory
-from blackjax.inference.trajectory import DynamicExpansionState, Trajectory
+import blackjax.inference.hmc.integrators as integrators
+import blackjax.inference.hmc.metrics as metrics
+import blackjax.inference.hmc.proposal as proposal
+import blackjax.inference.hmc.termination as termination
+import blackjax.inference.hmc.trajectory as trajectory
 
 divergence_threshold = 1000
 
