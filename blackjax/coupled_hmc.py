@@ -11,7 +11,7 @@ import blackjax.inference.integrators as integrators
 import blackjax.inference.metrics as metrics
 import blackjax.inference.proposal as proposal
 import blackjax.inference.trajectory as trajectory
-from blackjax.hmc import HMCInfo
+from blackjax.hmc import generate as hmc_generate
 
 Array = Union[np.ndarray, jnp.DeviceArray]
 PyTree = Union[Dict, List, Tuple]
@@ -50,7 +50,7 @@ def kernel(
     ----------
     potential_fn
         A function that returns the potential energy of a chain at a given position.
-    parameters
+    **parameters
         A NamedTuple that contains the parameters of the kernel to be built.
 
     Returns
@@ -157,56 +157,15 @@ def coupled_hmc_proposal(
     )
     sample_proposal = proposal.static_binomial_sampling
 
-    def flip_momentum(
-            state: integrators.IntegratorState,
-    ) -> integrators.IntegratorState:
-        """To guarantee time-reversibility (hence detailed balance) we
-        need to flip the last state's momentum. If we run the hamiltonian
-        dynamics starting from the last state with flipped momentum we
-        should indeed retrieve the initial state (with flipped momentum).
-
-        """
-        flipped_momentum = jax.tree_util.tree_multimap(
-            lambda m: -1.0 * m, state.momentum
-        )
-        return integrators.IntegratorState(
-            state.position,
-            flipped_momentum,
-            state.potential_energy,
-            state.potential_energy_grad,
-        )
-
     def generate(
             rng_key, state_1: integrators.IntegratorState, state_2: integrators.IntegratorState
     ) -> Tuple[integrators.IntegratorState, integrators.IntegratorState, CoupledHMCInfo]:
         """Generate a new chain state."""
 
-        def _generate(state):
-            end_state = build_trajectory(state)
-            end_state = flip_momentum(end_state)
-
-            proposal = init_proposal(state)
-
-            new_proposal, is_diverging = generate_proposal(proposal.energy, end_state)
-
-            # Same key on purpose
-            sampled_proposal, *info = sample_proposal(rng_key, proposal, new_proposal)
-            do_accept, p_accept = info
-
-            info = HMCInfo(
-                state.momentum,
-                p_accept,
-                do_accept,
-                is_diverging,
-                new_proposal.energy,
-                new_proposal,
-                num_integration_steps,
-            )
-
-            return sampled_proposal.state, info
-
-        state_1, info_1 = _generate(state_1)
-        state_2, info_2 = _generate(state_2)
+        state_1, info_1 = hmc_generate(rng_key, state_1, build_trajectory, init_proposal, generate_proposal,
+                                       sample_proposal, num_integration_steps)
+        state_2, info_2 = hmc_generate(rng_key, state_2, build_trajectory, init_proposal, generate_proposal,
+                                       sample_proposal, num_integration_steps)
 
         info = CoupledHMCInfo(info_1, info_2)
 

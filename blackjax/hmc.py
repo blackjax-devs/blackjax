@@ -1,7 +1,7 @@
 """Public API for the HMC Kernel"""
+from functools import partial
 from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 
@@ -58,13 +58,13 @@ new_state = base.new_hmc_state
 
 
 def kernel(
-    potential_fn: Callable,
-    step_size: float,
-    inverse_mass_matrix: Array,
-    num_integration_steps: int,
-    *,
-    integrator: Callable = integrators.velocity_verlet,
-    divergence_threshold: int = 1000,
+        potential_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: Array,
+        num_integration_steps: int,
+        *,
+        integrator: Callable = integrators.velocity_verlet,
+        divergence_threshold: int = 1000,
 ):
     """Build a HMC kernel.
 
@@ -98,11 +98,11 @@ def kernel(
 
 
 def hmc_proposal(
-    integrator: Callable,
-    kinetic_energy: Callable,
-    step_size: float,
-    num_integration_steps: int = 1,
-    divergence_threshold: float = 1000,
+        integrator: Callable,
+        kinetic_energy: Callable,
+        step_size: float,
+        num_integration_steps: int = 1,
+        divergence_threshold: float = 1000,
 ) -> Callable:
     """Vanilla HMC algorithm.
 
@@ -138,46 +138,39 @@ def hmc_proposal(
     )
     sample_proposal = proposal.static_binomial_sampling
 
-    def flip_momentum(
+    return partial(generate,
+                   build_trajectory=build_trajectory,
+                   init_proposal=init_proposal,
+                   generate_proposal=generate_proposal,
+                   sample_proposal=sample_proposal,
+                   num_integration_steps=num_integration_steps)
+
+
+def generate(
+        rng_key,
         state: integrators.IntegratorState,
-    ) -> integrators.IntegratorState:
-        """To guarantee time-reversibility (hence detailed balance) we
-        need to flip the last state's momentum. If we run the hamiltonian
-        dynamics starting from the last state with flipped momentum we
-        should indeed retrieve the initial state (with flipped momentum).
+        build_trajectory: Callable,
+        init_proposal: Callable,
+        generate_proposal: Callable,
+        sample_proposal: Callable,
+        num_integration_steps: int
+) -> Tuple[integrators.IntegratorState, HMCInfo]:
+    """Generate a new chain state."""
+    end_state = build_trajectory(state)
+    end_state = integrators.flip_momentum(end_state)
+    proposal = init_proposal(state)
+    new_proposal, is_diverging = generate_proposal(proposal.energy, end_state)
+    sampled_proposal, *info = sample_proposal(rng_key, proposal, new_proposal)
+    do_accept, p_accept = info
 
-        """
-        flipped_momentum = jax.tree_util.tree_multimap(
-            lambda m: -1.0 * m, state.momentum
-        )
-        return integrators.IntegratorState(
-            state.position,
-            flipped_momentum,
-            state.potential_energy,
-            state.potential_energy_grad,
-        )
+    info = HMCInfo(
+        state.momentum,
+        p_accept,
+        do_accept,
+        is_diverging,
+        new_proposal.energy,
+        new_proposal,
+        num_integration_steps,
+    )
 
-    def generate(
-        rng_key, state: integrators.IntegratorState
-    ) -> Tuple[integrators.IntegratorState, HMCInfo]:
-        """Generate a new chain state."""
-        end_state = build_trajectory(state)
-        end_state = flip_momentum(end_state)
-        proposal = init_proposal(state)
-        new_proposal, is_diverging = generate_proposal(proposal.energy, end_state)
-        sampled_proposal, *info = sample_proposal(rng_key, proposal, new_proposal)
-        do_accept, p_accept = info
-
-        info = HMCInfo(
-            state.momentum,
-            p_accept,
-            do_accept,
-            is_diverging,
-            new_proposal.energy,
-            new_proposal,
-            num_integration_steps,
-        )
-
-        return sampled_proposal.state, info
-
-    return generate
+    return sampled_proposal.state, info

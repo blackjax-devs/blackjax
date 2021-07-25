@@ -31,7 +31,7 @@ def new_integrator_state(potential_fn, position, momentum):
 
 
 def velocity_verlet(
-    potential_fn: Callable, kinetic_energy_fn: EuclideanKineticEnergy
+        potential_fn: Callable, kinetic_energy_fn: EuclideanKineticEnergy
 ) -> EuclideanIntegrator:
     """The velocity Verlet (or Verlet-Störmer) integrator.
 
@@ -102,7 +102,7 @@ def velocity_verlet(
 
 
 def mclachlan(
-    potential_fn: Callable, kinetic_energy_fn: Callable
+        potential_fn: Callable, kinetic_energy_fn: Callable
 ) -> EuclideanIntegrator:
     """Two-stage palindromic symplectic integrator derived in [1]_
 
@@ -253,3 +253,23 @@ def yoshida(potential_fn: Callable, kinetic_energy_fn: Callable) -> EuclideanInt
         )
 
     return one_step
+
+
+def flip_momentum(
+        state: IntegratorState,
+) -> IntegratorState:
+    """To guarantee time-reversibility (hence detailed balance) we
+    need to flip the last state's momentum. If we run the hamiltonian
+    dynamics starting from the last state with flipped momentum we
+    should indeed retrieve the initial state (with flipped momentum).
+
+    """
+    flipped_momentum = jax.tree_util.tree_multimap(
+        lambda m: -1.0 * m, state.momentum
+    )
+    return IntegratorState(
+        state.position,
+        flipped_momentum,
+        state.potential_energy,
+        state.potential_energy_grad,
+    )
