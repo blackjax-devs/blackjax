@@ -5,6 +5,7 @@ from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 import jax
 import jax.numpy as jnp
 import numpy as np
+from jax.experimental.host_callback import id_print
 from jax.flatten_util import ravel_pytree
 
 from blackjax.rwmh import RWMHInfo, RWMHState, new_state as new_rwmh_state

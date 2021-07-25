@@ -8,18 +8,7 @@ import numpy as np
 import blackjax.coupled.rwmh as coupled_rwmh
 import blackjax.rwmh as rwmh
 from blackjax.inference import metrics
-
-
-def inference_loop(rng_key, kernel, initial_state, num_samples):
-    def one_step(state, rng_key):
-        state, _ = kernel(rng_key, state)
-        return state, state
-
-    keys = jax.random.split(rng_key, num_samples)
-    _, states = jax.lax.scan(one_step, initial_state, keys)
-
-    return states
-
+from .utils import inference_loop
 
 def normal_potential_fn(x):
     return -stats.norm.logpdf(x, loc=1.0, scale=2.0).squeeze()

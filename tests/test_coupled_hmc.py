@@ -7,17 +7,8 @@ import numpy as np
 
 import blackjax.coupled.hmc as coupled_hmc
 import blackjax.hmc as hmc
+from .utils import inference_loop
 
-
-def inference_loop(rng_key, kernel, initial_state, num_samples):
-    def one_step(state, rng_key):
-        state, _ = kernel(rng_key, state)
-        return state, state
-
-    keys = jax.random.split(rng_key, num_samples)
-    _, states = jax.lax.scan(one_step, initial_state, keys)
-
-    return states
 
 
 def normal_potential_fn(x):

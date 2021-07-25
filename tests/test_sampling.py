@@ -11,17 +11,7 @@ import blackjax.hmc as hmc
 import blackjax.nuts as nuts
 import blackjax.rwmh as rwmh
 import blackjax.stan_warmup as stan_warmup
-
-
-def inference_loop(rng_key, kernel, initial_state, num_samples):
-    def one_step(state, rng_key):
-        state, _ = kernel(rng_key, state)
-        return state, state
-
-    keys = jax.random.split(rng_key, num_samples)
-    _, states = jax.lax.scan(one_step, initial_state, keys)
-
-    return states
+from .utils import inference_loop
 
 
 # -------------------------------------------------------------------
@@ -125,7 +115,7 @@ normal_test_cases = [
         "parameters": {"step_size": 1e-2, "inverse_mass_matrix": jnp.array([0.1])},
         "num_sampling_steps": 50_000,
     },
-{
+    {
         "algorithm": rwmh,
         "initial_position": {"x": 1.0},
         "parameters": {"inverse_mass_matrix": jnp.array([0.1])},
