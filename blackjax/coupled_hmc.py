@@ -148,6 +148,8 @@ def coupled_hmc_proposal(
 
     References
     ----------
+    [1] J. Heng, P. E. Jacob, Unbiased Hamiltonian Monte Carlo with couplings,
+        Biometrika, Volume 106, Issue 2, June 2019, Pages 287–302, https://doi.org/10.1093/biomet/asy074
     """
     build_trajectory = trajectory.static_integration(
         integrator, step_size, num_integration_steps

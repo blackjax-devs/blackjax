@@ -9,6 +9,7 @@ import pytest
 
 import blackjax.hmc as hmc
 import blackjax.nuts as nuts
+import blackjax.rwmh as rwmh
 import blackjax.stan_warmup as stan_warmup
 
 
@@ -124,6 +125,12 @@ normal_test_cases = [
         "parameters": {"step_size": 1e-2, "inverse_mass_matrix": jnp.array([0.1])},
         "num_sampling_steps": 50_000,
     },
+{
+        "algorithm": rwmh,
+        "initial_position": {"x": 1.0},
+        "parameters": {"inverse_mass_matrix": jnp.array([0.1])},
+        "num_sampling_steps": 50_000,
+    },
 ]
 
 
@@ -136,6 +143,7 @@ def test_univariate_normal(case, is_mass_matrix_diagonal):
     initial_state = case["algorithm"].new_state(initial_position, potential)
 
     kernel = case["algorithm"].kernel(potential, **case["parameters"])
+    kernel(rng_key, initial_state)
     states = inference_loop(rng_key, kernel, initial_state, case["num_sampling_steps"])
 
     samples = states.position["x"]

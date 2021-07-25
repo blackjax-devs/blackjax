@@ -94,12 +94,15 @@ def gaussian_euclidean(
             f" expected 1 or 2, got {jnp.ndim(inverse_mass_matrix)}."
         )
 
-    def momentum_generator(rng_key: jnp.ndarray, position: PyTree) -> PyTree:
+    def momentum_generator(rng_key: jnp.ndarray, position: PyTree, unravel: bool=True) -> PyTree:
         _, unravel_fn = ravel_pytree(position)
         standard_normal_sample = jax.random.normal(rng_key, shape)
         momentum = dot(mass_matrix_sqrt, standard_normal_sample)
-        momentum_unravel = unravel_fn(momentum)
-        return momentum_unravel
+        if unravel:
+            momentum_unravel = unravel_fn(momentum)
+            return momentum_unravel
+        else:
+            return momentum
 
     def kinetic_energy(momentum: PyTree) -> float:
         momentum, _ = ravel_pytree(momentum)
