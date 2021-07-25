@@ -6,7 +6,7 @@ import jax
 import jax.numpy as jnp
 import jax.scipy as jscipy
 
-import blackjax.coupled_hmc as coupled_hmc
+import blackjax.coupled.hmc as coupled_hmc
 import blackjax.hmc as hmc
 import blackjax.nuts as nuts
 

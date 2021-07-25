@@ -11,7 +11,7 @@ import blackjax.inference.integrators as integrators
 import blackjax.inference.metrics as metrics
 import blackjax.inference.proposal as proposal
 import blackjax.inference.trajectory as trajectory
-from blackjax.hmc import generate as hmc_generate
+from blackjax.hmc import generate as hmc_generate, HMCInfo
 
 Array = Union[np.ndarray, jnp.DeviceArray]
 PyTree = Union[Dict, List, Tuple]
@@ -25,8 +25,8 @@ class CoupledHMCState(NamedTuple):
 
 
 class CoupledHMCInfo(NamedTuple):
-    info_state_1: base.HMCState
-    info_state_2: base.HMCState
+    info_state_1: HMCInfo
+    info_state_2: HMCInfo
 
 
 def new_state(position_1: PyTree, position_2: PyTree, potential_fn: Callable) -> CoupledHMCState:

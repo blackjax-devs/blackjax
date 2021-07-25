@@ -5,7 +5,7 @@ import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
 
-import blackjax.coupled_hmc as coupled_hmc
+import blackjax.coupled.hmc as coupled_hmc
 import blackjax.hmc as hmc
 
 

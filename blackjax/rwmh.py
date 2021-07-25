@@ -64,7 +64,7 @@ def kernel(
         potential_fn: Callable,
         inverse_mass_matrix: Array,
 ):
-    """Build a HMC kernel.
+    """Build a RWMH kernel.
 
     Parameters
     ----------
@@ -125,3 +125,4 @@ def kernel(
         return RWMHState(new_position, new_potential), RWMHInfo(p_accept, do_accept, proposed_position)
 
     return one_step
+
