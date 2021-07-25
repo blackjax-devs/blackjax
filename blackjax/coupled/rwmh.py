@@ -116,7 +116,7 @@ def reflected_gaussians(rng_key, inverse_mass_matrix: jnp.DeviceArray,
     Example:
     --------
     >>> rng_key = jax.random.PRNGKey(42)
-    >>> rng_keys = jax.random.split(rng_key, 1000)
+    >>> rng_keys = jax.random.split(rng_key, 10)
     >>> inverse_mass_matrix = jnp.ones((1,))
     >>> position_1 = -jnp.ones((1,))
     >>> position_2 = jnp.ones((1,))
@@ -136,11 +136,11 @@ def reflected_gaussians(rng_key, inverse_mass_matrix: jnp.DeviceArray,
 
     sqrt_inv_matrix = jnp.sqrt(inverse_mass_matrix)
     scaled_diff = jnp.multiply(sqrt_inv_matrix, position_1 - position_2)
-    normed_scaled_diff = scaled_diff / jnp.linalg.norm(scaled_diff, ord=2)
+    normed_scaled_diff = scaled_diff / jnp.sqrt(jnp.sum(scaled_diff ** 2))
 
     normal_key, uniform_key = jax.random.split(rng_key, 2)
-    norm = jax.random.normal(uniform_key, shape)
-    log_u = jax.random.uniform(rng_key, ())
+    norm = jax.random.normal(normal_key, shape)
+    log_u = jnp.log(jax.random.uniform(uniform_key, ()))
 
     do_accept = log_u + _mvn_loglikelihood(norm) < _mvn_loglikelihood(norm + scaled_diff)
     accept = lambda _: norm + scaled_diff
@@ -150,4 +150,5 @@ def reflected_gaussians(rng_key, inverse_mass_matrix: jnp.DeviceArray,
     mass_matrix_sqrt = jnp.reciprocal(sqrt_inv_matrix)
     res_1 = position_1 + jnp.multiply(mass_matrix_sqrt, norm)
     res_2 = position_2 + jnp.multiply(mass_matrix_sqrt, reflected_norm)
+
     return res_1, res_2
