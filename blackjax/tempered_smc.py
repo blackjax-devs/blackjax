@@ -12,7 +12,7 @@ from blackjax.inference.smc.solver import dichotomy_solver
 Array = Union[np.ndarray, jnp.DeviceArray]
 PyTree = Union[Dict, List, Tuple]
 
-__all__ = ["adaptive_tempered_smc", "fixed_schedule_tempered_smc", "TemperedSMCState"]
+__all__ = ["adaptive_tempered_smc", "tempered_smc"]
 
 
 class TemperedSMCState(NamedTuple):
@@ -26,7 +26,6 @@ class TemperedSMCState(NamedTuple):
         Current value of the tempering parameter.
     """
 
-    n_iter: int
     particles: PyTree
     lmbda: float
 
@@ -74,7 +73,7 @@ def adaptive_tempered_smc(
     information about the transition.
     """
 
-    def choose_lambda(state):
+    def compute_delta(state):
         lmbda = state.lmbda
         max_delta = 1 - lmbda
         delta = ess_solver(
@@ -89,70 +88,21 @@ def adaptive_tempered_smc(
 
         return delta
 
-    return tempered_smc(
+    kernel = tempered_smc(
         prior_logrob_fn,
         potential_fn,
         mcmc_kernel_factory,
         new_mcmc_state,
         resampling_method,
-        choose_lambda,
         mcmc_iter,
     )
 
+    def one_step(rng_key, state):
+        delta = compute_delta(state)
+        lmbda = delta + state.lmbda
+        return kernel(rng_key, state, lmbda)
 
-def fixed_schedule_tempered_smc(
-    prior_logrob_fn: Callable,
-    potential_fn: Callable,
-    mcmc_kernel_factory: Callable,
-    new_mcmc_state: Callable,
-    resampling_method: Callable,
-    lambda_schedule: Union[np.ndarray, jnp.ndarray],
-    mcmc_iter: int = 10,
-):
-    r"""Build a Tempered SMC step.
-
-    Parameters
-    ----------
-    prior_logrob_fn: Callable
-        A function that computes the log density of the prior distribution
-    potential_fn: Callable
-        A function that returns the potential energy of a chain at a given position.
-    mcmc_kernel_factory: Callable
-        A callable function that creates a mcmc kernel from a potential function.
-    new_mcmc_state: Callable
-        How to create a new MCMC state from the SMC particles
-    resampling_method: Callable
-        A random function that resamples generated particles based of weights
-    lambda_schedule: array_like
-        The fixed ahead schedule of tempering parameters. It is assumed to be increasing.
-        If not the algorithm will return garbage. Not check is done.
-    mcmc_iter: int
-        Number of iterations in the MCMC chain.
-
-    Returns
-    -------
-    A callable that takes a rng_key and a TemperedSMCState that contains the current state
-    of the chain and that returns a new state of the chain along with
-    information about the transition.
-    """
-
-    lambda_schedule = jnp.clip(lambda_schedule, 0.0, 1.0)
-
-    def choose_lambda(state):
-        iteration = state.n_iter
-        next_lambda = lambda_schedule[iteration]
-        delta = next_lambda - state.lmbda
-        return delta
-
-    return tempered_smc(
-        prior_logrob_fn,
-        potential_fn,
-        mcmc_kernel_factory,
-        new_mcmc_state,
-        resampling_method,
-        choose_lambda,
-        mcmc_iter,
-    )
+    return one_step
 
 
 def tempered_smc(
@@ -161,7 +111,6 @@ def tempered_smc(
     mcmc_kernel_factory: Callable,
     new_mcmc_state: Callable,
     resampling_method: Callable,
-    choose_lambda: Callable,
     mcmc_iter: int,
 ):
     """Build the base Tempered SMC kernel.
@@ -202,7 +151,7 @@ def tempered_smc(
     kernel = smc(mcmc_kernel_factory, new_mcmc_state, resampling_method, mcmc_iter)
 
     def one_step(
-        rng_key: jnp.ndarray, state: TemperedSMCState
+        rng_key: jnp.ndarray, state: TemperedSMCState, lmbda: float
     ) -> Tuple[TemperedSMCState, SMCInfo]:
         """Move the particles one step using the Tempered SMC algorithm.
 
@@ -212,25 +161,30 @@ def tempered_smc(
             JAX PRNGKey for randomness
         state
             Current state of the tempered SMC algorithm
+        lmbda
+            Current value of the tempering parameter
 
         Returns
         -------
         state
             The new state of the tempered SMC algorithm
-         info
+        info
             Additional information on the SMC step
         """
-        delta = choose_lambda(state)
+        delta = lmbda - state.lmbda
 
-        log_weights_fn = lambda pytree: -delta * potential_fn(pytree)
-        lambda_potential_fn = lambda pytree: -prior_logrob_fn(
-            pytree
-        ) + state.lmbda * potential_fn(pytree)
+        def log_weights_fn(chain):
+            return - delta * potential_fn(chain)
+
+        def tempered_potential_fn(chain):
+            lprior = -prior_logrob_fn(chain)
+            tempered_llik = state.lmbda * potential_fn(chain)
+            return lprior + tempered_llik
 
         smc_state, info = kernel(
-            rng_key, state.particles, lambda_potential_fn, log_weights_fn
+            rng_key, state.particles, tempered_potential_fn, log_weights_fn
         )
-        state = TemperedSMCState(state.n_iter + 1, smc_state, state.lmbda + delta)
+        state = TemperedSMCState(smc_state, state.lmbda + delta)
 
         return state, info
 

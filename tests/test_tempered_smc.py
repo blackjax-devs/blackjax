@@ -2,20 +2,15 @@
 import functools as ft
 from typing import List
 
+import blackjax.hmc as hmc
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
 import pytest
-
-import blackjax.hmc as hmc
 from blackjax.inference.smc.resampling import systematic
 from blackjax.inference.smc.solver import dichotomy_solver
-from blackjax.tempered_smc import (
-    TemperedSMCState,
-    adaptive_tempered_smc,
-    fixed_schedule_tempered_smc,
-)
+from blackjax.tempered_smc import TemperedSMCState, adaptive_tempered_smc, tempered_smc
 
 
 def potential_fn(scale, coefs, preds, x):
@@ -103,19 +98,24 @@ def test_fixed_schedule_tempered_smc(N, n_schedule):
     lambda_schedule = np.logspace(-5, 0, n_schedule)
     mcmc_kernel_factory = lambda pot: hmc.kernel(pot, 10e-2, jnp.eye(2), 50)
 
-    tempering_kernel = fixed_schedule_tempered_smc(
+    tempering_kernel = tempered_smc(
         prior,
         potential,
         mcmc_kernel_factory,
         hmc.new_state,
         systematic,
-        lambda_schedule,
         10,
     )
-    tempered_smc_state_init = TemperedSMCState(0, smc_state_init, 0.0)
-    n_iter, result = inference_loop(
-        jax.random.PRNGKey(42), tempering_kernel, tempered_smc_state_init
-    )
+    tempered_smc_state_init = TemperedSMCState(smc_state_init, 0.0)
 
+    def body_fn(carry, lmbda):
+        rng_key, state = carry
+        _, rng_key = jax.random.split(rng_key)
+        new_state, info = tempering_kernel(rng_key, state, lmbda)
+        return (rng_key, new_state), (new_state, info)
+
+    (_, result), _ = jax.lax.scan(
+        body_fn, (jax.random.PRNGKey(42), tempered_smc_state_init), lambda_schedule
+    )
     assert np.mean(result.smc_state.particles[0]) == pytest.approx(1, 1e-1)
     assert np.mean(result.smc_state.particles[1]) == pytest.approx(3, 1e-1)
