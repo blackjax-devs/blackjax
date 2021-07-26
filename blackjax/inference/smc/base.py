@@ -6,12 +6,6 @@ import jax.numpy as jnp
 from blackjax.inference.hmc.base import PyTree
 
 
-class SMCState(NamedTuple):
-    """Current state for the SMC algorithm. This encodes the current set of sampled particles"""
-
-    particles: PyTree
-
-
 class SMCInfo(NamedTuple):
     """Additional information on the tempered SMC step.
 
@@ -62,10 +56,10 @@ def smc(
 
     def kernel(
         rng_key: jnp.ndarray,
-        state: SMCState,
+        particles: PyTree,
         potential_fn: Callable,
         log_weight_fn: Callable,
-    ) -> Tuple[SMCState, SMCInfo]:
+    ) -> Tuple[PyTree, SMCInfo]:
         """
 
         Parameters
@@ -86,7 +80,7 @@ def smc(
          info: SMCInfo,
             Additional information on the SMC step
         """
-        n_particles = jax.tree_flatten(state.particles)[0][0].shape[0]
+        n_particles = jax.tree_flatten(particles)[0][0].shape[0]
 
         step_mcmc_kernel = jax.vmap(mcmc_kernel_factory(potential_fn), in_axes=[0, 0])
         rng_key, resampling_key = jax.random.split(rng_key, 2)
@@ -97,7 +91,7 @@ def smc(
             return mcmc_state, mcmc_state
 
         initial_mcmc_states = jax.vmap(new_mcmc_state, in_axes=[0, None])(
-            state.particles, potential_fn
+            particles, potential_fn
         )
         scan_keys = jax.random.split(rng_key, n_iter)
         last_mcmc_state, _ = jax.lax.scan(
@@ -111,9 +105,8 @@ def smc(
         particles = jax.tree_map(
             lambda x: x[resampling_index], last_mcmc_state.position
         )
-        state = SMCState(particles)
         info = SMCInfo(weights)
-        return state, info
+        return particles, info
 
     return kernel
 

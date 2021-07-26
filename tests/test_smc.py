@@ -8,36 +8,36 @@ from jax.scipy.stats.norm import logpdf
 
 import blackjax.hmc as hmc
 import blackjax.inference.smc.resampling as resampling
-from blackjax.inference.smc.base import SMCState, smc
+from blackjax.inference.smc.base import smc
 
 
 def kernel_potential_fn(position):
-    return -logpdf(position[0])
+    return -jnp.sum(logpdf(position))
 
 
 def log_weights_fn(x, y):
-    return logpdf(y - x)
+    return jnp.sum(logpdf(y - x))
 
 
 @pytest.mark.parametrize("N", [500, 1000, 5000])
 def test_smc(N):
     mcmc_factory = lambda potential_function: hmc.kernel(
         potential_function,
-        hmc.HMCParameters(
-            inv_mass_matrix=jnp.eye(1), step_size=1e-2, num_integration_steps=50
-        ),
+        step_size=1e-2,
+        inverse_mass_matrix=jnp.eye(1),
+        num_integration_steps=120,
     )
 
-    specialized_log_weights_fn = lambda tree: log_weights_fn(tree[0], 1.0)
+    specialized_log_weights_fn = lambda tree: log_weights_fn(tree, 1.0)
 
     kernel = smc(mcmc_factory, hmc.new_state, resampling.systematic, 100)
 
     # Don't use exactly the invariant distribution for the MCMC kernel
-    init_state = SMCState([0.25 + np.random.randn(N)])
+    init_particles = 0.25 + np.random.randn(N, 1)
 
-    updated_state, _ = kernel(
+    updated_particles, _ = kernel(
         jax.random.PRNGKey(42),
-        init_state,
+        init_particles,
         kernel_potential_fn,
         specialized_log_weights_fn,
     )
@@ -45,9 +45,11 @@ def test_smc(N):
     expected_mean = 0.5
     expected_std = np.sqrt(0.5)
 
+    print(updated_particles.shape)
+
     np.testing.assert_allclose(
-        expected_mean, updated_state.particles[0].mean(), rtol=1e-2, atol=1e-1
+        expected_mean, updated_particles[0].mean(), rtol=1e-2, atol=1e-1
     )
     np.testing.assert_allclose(
-        expected_std, updated_state.particles[0].std(), rtol=1e-2, atol=1e-1
+        expected_std, updated_particles[0].std(), rtol=1e-2, atol=1e-1
     )

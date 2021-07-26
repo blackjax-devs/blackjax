@@ -1,10 +1,11 @@
 """Test the ess function"""
-import blackjax.inference.smc.ess as ess
 import jax
 import numpy as np
 import pytest
-from blackjax.inference.smc.solver import dichotomy_solver
 from jax.scipy.stats.norm import logpdf
+
+import blackjax.inference.smc.ess as ess
+from blackjax.inference.smc.solver import dichotomy_solver
 
 
 @pytest.mark.parametrize("N", [100, 1000, 5000])

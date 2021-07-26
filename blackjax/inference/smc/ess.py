@@ -1,9 +1,8 @@
 """All things related to SMC effective sample size"""
-from typing import Callable, Union, Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple, Union
 
 import jax
 import jax.numpy as jnp
-
 
 PyTree = Union[Dict, List, Tuple]
 

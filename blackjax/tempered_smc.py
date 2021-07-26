@@ -5,7 +5,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from blackjax.inference.smc.base import SMCInfo, SMCState, smc
+from blackjax.inference.smc.base import SMCInfo, smc
 from blackjax.inference.smc.ess import ess_solver
 from blackjax.inference.smc.solver import dichotomy_solver
 
@@ -27,20 +27,8 @@ class TemperedSMCState(NamedTuple):
     """
 
     n_iter: int
-    smc_state: SMCState
+    particles: PyTree
     lmbda: float
-
-
-class TemperedSMCInfo(NamedTuple):
-    """Additional information on the tempered SMC step.
-
-    total_steps: int
-        Number of steps in the MCMC pass.
-    smc_info: SMCInfo
-        Information about the inner SMC sampler.
-    """
-
-    smc_info: SMCInfo
 
 
 def adaptive_tempered_smc(
@@ -91,7 +79,7 @@ def adaptive_tempered_smc(
         max_delta = 1 - lmbda
         delta = ess_solver(
             jax.vmap(potential_fn),
-            state.smc_state,
+            state.particles,
             target_ess,
             max_delta,
             root_solver,
@@ -215,7 +203,7 @@ def tempered_smc(
 
     def one_step(
         rng_key: jnp.ndarray, state: TemperedSMCState
-    ) -> Tuple[TemperedSMCState, TemperedSMCInfo]:
+    ) -> Tuple[TemperedSMCState, SMCInfo]:
         """Move the particles one step using the Tempered SMC algorithm.
 
         Parameters
@@ -239,11 +227,10 @@ def tempered_smc(
             pytree
         ) + state.lmbda * potential_fn(pytree)
 
-        smc_state, smc_info = kernel(
-            rng_key, state.smc_state, lambda_potential_fn, log_weights_fn
+        smc_state, info = kernel(
+            rng_key, state.particles, lambda_potential_fn, log_weights_fn
         )
         state = TemperedSMCState(state.n_iter + 1, smc_state, state.lmbda + delta)
-        info = TemperedSMCInfo(smc_info)
 
         return state, info
 
