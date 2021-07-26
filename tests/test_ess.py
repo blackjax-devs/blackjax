@@ -1,12 +1,10 @@
 """Test the ess function"""
+import blackjax.inference.smc.ess as ess
 import jax
 import numpy as np
 import pytest
-from jax.scipy.stats.norm import logpdf
-
-import blackjax.inference.smc.ess as ess
-from blackjax.inference.smc.base import SMCState
 from blackjax.inference.smc.solver import dichotomy_solver
+from jax.scipy.stats.norm import logpdf
 
 
 @pytest.mark.parametrize("N", [100, 1000, 5000])
@@ -32,20 +30,20 @@ def test_ess(N):
 @pytest.mark.parametrize("target_ess", [0.25, 0.5])
 @pytest.mark.parametrize("N", [100, 1000, 5000])
 def test_ess_solver(target_ess, N):
-    x_data = np.random.normal(0, 1, size=(N,))
+    x_data = np.random.normal(0, 1, size=(N, 1))
 
     potential_fn = lambda pytree: -logpdf(pytree, scale=0.1)
 
     potential = jax.vmap(lambda x: potential_fn(*x), in_axes=[0])
-    smc_state = SMCState([x_data])
 
+    particles = x_data
     delta = ess.ess_solver(
-        potential, smc_state, target_ess, 1.0, dichotomy_solver, use_log_ess=True
+        potential, particles, target_ess, 1.0, dichotomy_solver, use_log_ess=True
     )
     delta_log = ess.ess_solver(
-        potential, smc_state, target_ess, 1.0, dichotomy_solver, use_log_ess=False
+        potential, particles, target_ess, 1.0, dichotomy_solver, use_log_ess=False
     )
     assert delta > 0
     np.testing.assert_allclose(delta_log, delta, atol=1e-3, rtol=1e-3)
-    log_ess = ess.ess(-delta * potential(smc_state.particles), log=True)
+    log_ess = ess.ess(-delta * potential(particles), log=True)
     np.testing.assert_allclose(np.exp(log_ess), target_ess * N, atol=1e-1, rtol=1e-2)

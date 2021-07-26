@@ -1,10 +1,11 @@
 """All things related to SMC effective sample size"""
-from typing import Callable
+from typing import Callable, Union, Dict, List, Tuple
 
 import jax
 import jax.numpy as jnp
 
-from blackjax.inference.smc.base import SMCState
+
+PyTree = Union[Dict, List, Tuple]
 
 
 def ess(log_weights: jnp.ndarray, log: bool = True):
@@ -35,7 +36,7 @@ def ess(log_weights: jnp.ndarray, log: bool = True):
 
 def ess_solver(
     potential_fn: Callable,
-    smc_state: SMCState,
+    particles: PyTree,
     target_ess: float,
     max_delta: float,
     root_solver: Callable,
@@ -66,10 +67,10 @@ def ess_solver(
         The increment that solves for the target ESS
     """
 
-    particles = smc_state.particles
+    particles = particles
     n_particles = jax.tree_flatten(particles)[0][0].shape[0]
 
-    potential_val = potential_fn(smc_state.particles)
+    potential_val = potential_fn(particles)
     if use_log_ess:
         target_val = jnp.log(n_particles * target_ess)
     else:
