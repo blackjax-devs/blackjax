@@ -45,13 +45,12 @@ def test_adaptive_tempered_smc(N, use_log):
     y_data = 3 * x_data + np.random.normal(size=x_data.shape)
     observations = {"x": x_data, "preds": y_data}
 
-    conditioned_potential = ft.partial(potential_fn, **observations)
-    potential = lambda x: conditioned_potential(*x)
+    conditioned_potential = lambda x: potential_fn(*x, **observations)
 
     prior = lambda x: stats.expon.logpdf(x[0], 1, 1) + stats.norm.logpdf(x[1])
     scale_init = 1 + np.random.exponential(1, N)
-    coeffs_init = 3 + 2 * np.random.randn(1, N)
-    smc_state_init = jnp.concatenate([scale_init, coeffs_init], axis=0)
+    coeffs_init = 3 + 2 * np.random.randn(N)
+    smc_state_init = [scale_init, coeffs_init]
 
     iterates = []
     results = []  # type: List[TemperedSMCState]
@@ -60,7 +59,7 @@ def test_adaptive_tempered_smc(N, use_log):
     for target_ess in [0.5, 0.75]:
         tempering_kernel = adaptive_tempered_smc(
             prior,
-            potential,
+            conditioned_potential,
             mcmc_kernel_factory,
             hmc.new_state,
             systematic,
@@ -69,14 +68,14 @@ def test_adaptive_tempered_smc(N, use_log):
             use_log,
             5,
         )
-        tempered_smc_state_init = TemperedSMCState(0, smc_state_init, 0.0)
+        tempered_smc_state_init = TemperedSMCState(smc_state_init, 0.0)
         n_iter, result = inference_loop(
             jax.random.PRNGKey(42), tempering_kernel, tempered_smc_state_init
         )
         iterates.append(n_iter)
         results.append(result)
-        assert np.mean(result.smc_state.particles[0]) == pytest.approx(1, 1e-1)
-        assert np.mean(result.smc_state.particles[1]) == pytest.approx(3, 1e-1)
+        assert np.mean(result.particles[0]) == pytest.approx(1, 1e-1)
+        assert np.mean(result.particles[1]) == pytest.approx(3, 1e-1)
 
     assert iterates[1] >= iterates[0]
 
@@ -88,19 +87,18 @@ def test_fixed_schedule_tempered_smc(N, n_schedule):
     y_data = 3 * x_data + np.random.normal(size=x_data.shape)
     observations = {"x": x_data, "preds": y_data}
 
-    conditioned_potential = ft.partial(potential_fn, **observations)
-    potential = lambda x: conditioned_potential(*x)
+    conditioned_potential = lambda x: potential_fn(*x, **observations)
     prior = lambda x: stats.norm.logpdf(jnp.log(x[0])) + stats.norm.logpdf(x[1])
     scale_init = np.exp(np.random.randn(N))
     coeffs_init = np.random.randn(N)
-    smc_state_init = jnp.array([scale_init, coeffs_init])
+    smc_state_init = [scale_init, coeffs_init]
 
     lambda_schedule = np.logspace(-5, 0, n_schedule)
     mcmc_kernel_factory = lambda pot: hmc.kernel(pot, 10e-2, jnp.eye(2), 50)
 
     tempering_kernel = tempered_smc(
         prior,
-        potential,
+        conditioned_potential,
         mcmc_kernel_factory,
         hmc.new_state,
         systematic,
@@ -117,5 +115,5 @@ def test_fixed_schedule_tempered_smc(N, n_schedule):
     (_, result), _ = jax.lax.scan(
         body_fn, (jax.random.PRNGKey(42), tempered_smc_state_init), lambda_schedule
     )
-    assert np.mean(result.smc_state.particles[0]) == pytest.approx(1, 1e-1)
-    assert np.mean(result.smc_state.particles[1]) == pytest.approx(3, 1e-1)
+    assert np.mean(result.particles[0]) == pytest.approx(1, 1e-1)
+    assert np.mean(result.particles[1]) == pytest.approx(3, 1e-1)

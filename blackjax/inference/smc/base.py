@@ -55,7 +55,7 @@ def smc(
     """
 
     def kernel(
-        rng_key: jnp.ndarray,
+        scan_key: jnp.ndarray,
         particles: PyTree,
         potential_fn: Callable,
         log_weight_fn: Callable,
@@ -67,7 +67,7 @@ def smc(
         rng_key: DeviceArray[int],
             JAX PRNGKey for randomness
         state: SMCState
-            Current state of the tempered SMC algorithm
+            Current state of the SMC algorithm
         potential_fn: Callable
             A function takes represents the potential of the Markov kernel at time t.
         log_weight_fn: Callable
@@ -83,7 +83,7 @@ def smc(
         n_particles = jax.tree_flatten(particles)[0][0].shape[0]
 
         step_mcmc_kernel = jax.vmap(mcmc_kernel_factory(potential_fn), in_axes=[0, 0])
-        rng_key, resampling_key = jax.random.split(rng_key, 2)
+        scan_key, resampling_key = jax.random.split(scan_key, 2)
 
         def mcmc_loop_body(mcmc_state, step_key):
             mcmc_keys = jax.random.split(step_key, n_particles)
@@ -93,7 +93,7 @@ def smc(
         initial_mcmc_states = jax.vmap(new_mcmc_state, in_axes=[0, None])(
             particles, potential_fn
         )
-        scan_keys = jax.random.split(rng_key, n_iter)
+        scan_keys = jax.random.split(scan_key, n_iter)
         last_mcmc_state, _ = jax.lax.scan(
             mcmc_loop_body, initial_mcmc_states, scan_keys, length=n_iter
         )

@@ -4,7 +4,7 @@ import numpy as np
 
 import blackjax.hmc as hmc
 from blackjax.adaptation.step_size import find_reasonable_step_size
-from blackjax.inference.base import new_hmc_state
+from blackjax.inference.hmc.base import new_hmc_state
 
 
 def test_reasonable_step_size():

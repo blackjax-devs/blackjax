@@ -66,7 +66,6 @@ def ess_solver(
         The increment that solves for the target ESS
     """
 
-    particles = particles
     n_particles = jax.tree_flatten(particles)[0][0].shape[0]
 
     potential_val = potential_fn(particles)
