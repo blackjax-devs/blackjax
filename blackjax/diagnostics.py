@@ -4,7 +4,7 @@ from typing import Union
 import jax
 import jax.numpy as jnp
 import numpy as np
-from scipy.fftpack import next_fast_len
+from scipy.fftpack import next_fast_len  # type: ignore
 
 Array = Union[np.ndarray, jnp.DeviceArray]
 
@@ -120,13 +120,15 @@ def effective_sample_size(
     carry_cond = jnp.ones_like(mask0[0])
     max_t = jnp.zeros_like(mask0[0], dtype=int)
 
-    def body_fn(state, mask_t):
+    def positive_sequence_body_fn(state, mask_t):
         t, carry_cond, max_t = state
         next_mask = carry_cond & mask_t
         next_max_t = jnp.where(next_mask, jnp.ones_like(max_t) * t, max_t)
         return (t + 1, next_mask, next_max_t), next_mask
 
-    (*_, max_t_next), mask = jax.lax.scan(body_fn, (0, carry_cond, max_t), mask0)
+    (*_, max_t_next), mask = jax.lax.scan(
+        positive_sequence_body_fn, (0, carry_cond, max_t), mask0
+    )
     indices = jnp.indices(max_t_next.shape)
     indices = tuple([max_t_next + 1] + [indices[i] for i in range(max_t_next.ndim)])
     rho_hat_odd = jnp.where(mask, rho_hat_odd, jnp.zeros_like(rho_hat_odd))
@@ -135,13 +137,15 @@ def effective_sample_size(
     rho_hat_even = jnp.where(mask_even, rho_hat_even, jnp.zeros_like(rho_hat_even))
 
     # Geyer's initial monotone sequence
-    def body_fn(rho_hat_sum_tm1, rho_hat_sum_t):
+    def monotone_sequence_body_fn(rho_hat_sum_tm1, rho_hat_sum_t):
         update_mask = rho_hat_sum_t > rho_hat_sum_tm1
         next_rho_hat_sum_t = jnp.where(update_mask, rho_hat_sum_tm1, rho_hat_sum_t)
         return next_rho_hat_sum_t, (update_mask, next_rho_hat_sum_t)
 
     rho_hat_sum = rho_hat_even + rho_hat_odd
-    _, (update_mask, update_value) = jax.lax.scan(body_fn, rho_hat_sum[0], rho_hat_sum)
+    _, (update_mask, update_value) = jax.lax.scan(
+        monotone_sequence_body_fn, rho_hat_sum[0], rho_hat_sum
+    )
 
     rho_hat_even_final = jnp.where(update_mask, update_value / 2.0, rho_hat_even)
     rho_hat_odd_final = jnp.where(update_mask, update_value / 2.0, rho_hat_odd)
