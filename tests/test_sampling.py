@@ -187,10 +187,8 @@ def generate_multivariate_target(rng=None):
 def mcse_test(samples, true_param, p_val=0.01):
     posterior_mean = jnp.mean(samples, axis=[0, 1])
     ess = diagnostics.effective_sample_size(samples, chain_axis=1, sample_axis=0)
-    posterior_sd = jnp.std(samples, axis=[0, 1], ddof=1)
-    avg_monte_carlo_standard_error = jnp.mean(
-        jnp.std(samples, axis=0), axis=0
-    ) / jnp.sqrt(ess)
+    posterior_sd = jnp.std(samples, axis=0, ddof=1)
+    avg_monte_carlo_standard_error = jnp.mean(posterior_sd, axis=0) / jnp.sqrt(ess)
     scaled_error = jnp.abs(posterior_mean - true_param) / avg_monte_carlo_standard_error
     np.testing.assert_array_less(scaled_error, stats.norm.ppf(1 - p_val))
     return scaled_error
