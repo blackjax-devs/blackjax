@@ -135,17 +135,16 @@ def effective_sample_size(
     rho_hat_even = jnp.where(mask_even, rho_hat_even, jnp.zeros_like(rho_hat_even))
 
     # Geyer's initial monotone sequence
+    def body_fn(rho_hat_sum_tm1, rho_hat_sum_t):
+        update_mask = rho_hat_sum_t > rho_hat_sum_tm1
+        next_rho_hat_sum_t = jnp.where(update_mask, rho_hat_sum_tm1, rho_hat_sum_t)
+        return next_rho_hat_sum_t, (update_mask, next_rho_hat_sum_t)
+
     rho_hat_sum = rho_hat_even + rho_hat_odd
-    update_mask = (rho_hat_sum[1:]) > (rho_hat_sum[:-1])
-    update_mask = jnp.concatenate(
-        [jnp.zeros_like(update_mask[:1]), update_mask], axis=0
-    )
-    update_val = (
-        jnp.concatenate([jnp.zeros_like(rho_hat_sum[:1]), rho_hat_sum[:-1]], axis=0)
-        / 2.0
-    )
-    rho_hat_even_final = jnp.where(update_mask, update_val, rho_hat_even)
-    rho_hat_odd_final = jnp.where(update_mask, update_val, rho_hat_odd)
+    _, (update_mask, update_value) = jax.lax.scan(body_fn, rho_hat_sum[0], rho_hat_sum)
+
+    rho_hat_even_final = jnp.where(update_mask, update_value / 2.0, rho_hat_even)
+    rho_hat_odd_final = jnp.where(update_mask, update_value / 2.0, rho_hat_odd)
 
     # compute effective sample size
     ess_raw = num_chains * num_samples
