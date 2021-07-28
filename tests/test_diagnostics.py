@@ -1,4 +1,4 @@
-"""Test MCMC diagnoistics."""
+"""Test MCMC diagnostics."""
 import jax
 import numpy as np
 import pytest
@@ -34,18 +34,18 @@ def insert_list(input_list, loc, elem):
 
 
 @pytest.mark.parametrize("case", test_cases)
-@pytest.mark.parametrize("nchain", [2, 10])
+@pytest.mark.parametrize("num_chains", [2, 10])
 @pytest.mark.parametrize("event_shape", [(), (3,), (5, 7)])
-def test_rhat_ess(case, nchain, event_shape):
+def test_rhat_ess(case, num_chains, event_shape):
     rng_key = jax.random.PRNGKey(32)
-    n_samples = 5000
+    num_samples = 5000
     sample_shape = list(event_shape)
     if case["chain_axis"] < case["sample_axis"]:
-        sample_shape = insert_list(sample_shape, case["chain_axis"], nchain)
-        sample_shape = insert_list(sample_shape, case["sample_axis"], n_samples)
+        sample_shape = insert_list(sample_shape, case["chain_axis"], num_chains)
+        sample_shape = insert_list(sample_shape, case["sample_axis"], num_samples)
     else:
-        sample_shape = insert_list(sample_shape, case["sample_axis"], n_samples)
-        sample_shape = insert_list(sample_shape, case["chain_axis"], nchain)
+        sample_shape = insert_list(sample_shape, case["sample_axis"], num_samples)
+        sample_shape = insert_list(sample_shape, case["chain_axis"], num_chains)
     mc_samples = jax.random.normal(rng_key, shape=sample_shape)
 
     rhat_val = diagnostics.potential_scale_reduction(mc_samples, **case)
@@ -55,4 +55,4 @@ def test_rhat_ess(case, nchain, event_shape):
     # With iid samples we should get ess close to number of samples.
     ess_val = diagnostics.effective_sample_size(mc_samples, **case)
     np.testing.assert_array_equal(ess_val.shape, event_shape)
-    np.testing.assert_allclose(ess_val, nchain * n_samples, rtol=10)
+    np.testing.assert_allclose(ess_val, num_chains * num_samples, rtol=10)
