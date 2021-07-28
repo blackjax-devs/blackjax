@@ -34,8 +34,7 @@ def adaptive_tempered_smc(
     prior_logrob_fn: Callable,
     potential_fn: Callable,
     mcmc_kernel_factory: Callable,
-    new_mcmc_state: Callable,
-    resampling_method: Callable,
+    resampling_fn: Callable,
     target_ess: float,
     root_solver: Callable = dichotomy_solver,
     use_log_ess: bool = True,
@@ -51,9 +50,7 @@ def adaptive_tempered_smc(
         A function that returns the potential energy of a chain at a given position.
     mcmc_kernel_factory: Callable
         A callable function that creates a mcmc kernel from a potential function.
-    new_mcmc_state: Callable
-        How to create a new MCMC state from the SMC particles
-    resampling_method: Callable
+    resampling_fn: Callable
         A random function that resamples generated particles based of weights
     target_ess: float
         The target ESS for the adaptive MCMC tempering
@@ -92,8 +89,7 @@ def adaptive_tempered_smc(
         prior_logrob_fn,
         potential_fn,
         mcmc_kernel_factory,
-        new_mcmc_state,
-        resampling_method,
+        resampling_fn,
         mcmc_iter,
     )
 
@@ -106,12 +102,11 @@ def adaptive_tempered_smc(
 
 
 def tempered_smc(
-    prior_logrob_fn: Callable,
+    logprior_fn: Callable,
     potential_fn: Callable,
     mcmc_kernel_factory: Callable,
-    new_mcmc_state: Callable,
-    resampling_method: Callable,
-    mcmc_iter: int,
+    resampling_fn: Callable,
+    num_mcmc_iterations: int,
 ):
     """Build the base Tempered SMC kernel.
 
@@ -126,19 +121,17 @@ def tempered_smc(
 
     Parameters
     ----------
-    prior_logrob_fn
+    logprior_fn
         A function that computes the log density of the prior distribution
     potential_fn
-        A function that returns the potential energy of a chain at a given position.
+        A function that returns the potential energy of a chain at a given
+        position. It is generally equal to the log-likelihood, but equal to
+        minus the loglikelihood for kernels in the HMC family.
     mcmc_kernel_factory
         A function that creates a mcmc kernel from a potential function.
-    new_mcmc_state
-        How to create a new MCMC state from the SMC particles
-    resampling_method
+    resampling_fn
         A random function that resamples generated particles based of weights
-    choose_lambda
-        A function that generates a new value of lambda given the current state of the chain.
-    mcmc_iter: int
+    num_mcmc_iterations
         Number of iterations in the MCMC chain.
 
     Returns
@@ -146,9 +139,9 @@ def tempered_smc(
     A callable that takes a rng_key and a TemperedSMCState that contains the current state
     of the chain and that returns a new state of the chain along with
     information about the transition.
-    """
 
-    kernel = smc(mcmc_kernel_factory, new_mcmc_state, resampling_method, mcmc_iter)
+    """
+    kernel = smc(mcmc_kernel_factory, resampling_fn, num_mcmc_iterations)
 
     def one_step(
         rng_key: jnp.ndarray, state: TemperedSMCState, lmbda: float
@@ -174,12 +167,12 @@ def tempered_smc(
         delta = lmbda - state.lmbda
 
         def log_weights_fn(chain):
-            return - delta * potential_fn(chain)
+            return -delta * potential_fn(chain)
 
         def tempered_potential_fn(chain):
-            lprior = -prior_logrob_fn(chain)
-            tempered_llik = state.lmbda * potential_fn(chain)
-            return lprior + tempered_llik
+            logprior = -logprior_fn(chain)
+            tempered_loglikelihood = state.lmbda * potential_fn(chain)
+            return logprior + tempered_loglikelihood
 
         smc_state, info = kernel(
             rng_key, state.particles, tempered_potential_fn, log_weights_fn

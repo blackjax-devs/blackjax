@@ -1,13 +1,13 @@
 """Test the tempered SMC steps and routine"""
-import functools as ft
 from typing import List
 
-import blackjax.hmc as hmc
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
 import pytest
+
+import blackjax.hmc as hmc
 from blackjax.inference.smc.resampling import systematic
 from blackjax.inference.smc.solver import dichotomy_solver
 from blackjax.tempered_smc import TemperedSMCState, adaptive_tempered_smc, tempered_smc
