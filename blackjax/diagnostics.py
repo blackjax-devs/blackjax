@@ -102,7 +102,7 @@ def effective_sample_size(
 
     References
     ----------
-    .. [1]: https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html   
+    .. [1]: https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html
     .. [2]: Gelman, Andrew, J. B. Carlin, Hal S. Stern, David B. Dunson, Aki Vehtari, and Donald B. Rubin. (2013). Bayesian Data Analysis. Third Edition. London: Chapman & Hall / CRC Press.
     .. [3]: Geyer, Charles J. (1992). “Practical Markov Chain Monte Carlo.” Statistical Science, 473–83.
     .. [4]: Geyer, Charles J. (2011). “Introduction to Markov Chain Monte Carlo.” In Handbook of Markov Chain Monte Carlo, edited by Steve Brooks, Andrew Gelman, Galin L. Jones, and Xiao-Li Meng, 3–48. Chapman; Hall/CRC.
