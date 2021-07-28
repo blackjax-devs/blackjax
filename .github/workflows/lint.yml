@@ -23,18 +23,6 @@ jobs:
             python -m pip install --upgrade pip
             less requirements-dev.txt | grep -v pytest | xargs -i -t pip install {}
 
-      - name: Check the order of imports with isort
-        run: |
-          isort --profile black --check blackjax tests
-
-      - name: Check PEP8 compliance with flake8
-        run: |
-          flake8 blackjax tests --ignore=E501,E203,E731,W503 --show-source
-
-      - name: Check formatting with black
-        run: |
-          black --check blackjax tests
-
       - name: Check types with mypy
         run: |
           mypy blackjax tests

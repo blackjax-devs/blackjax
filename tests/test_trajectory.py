@@ -93,7 +93,7 @@ def test_dynamic_progressive_equal_recursive():
         update_criterion_state,
         is_criterion_met,
         uturn_check_fn,
-    ) = [
+    ) = (
         jax.jit(x)
         for x in (
             integrator,
@@ -102,7 +102,7 @@ def test_dynamic_progressive_equal_recursive():
             is_criterion_met,
             uturn_check_fn,
         )
-    ]
+    )
 
     trajectory_integrator = trajectory.dynamic_progressive_integration(
         integrator,

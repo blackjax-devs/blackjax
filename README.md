@@ -3,10 +3,10 @@
 [![codecov](https://codecov.io/gh/blackjax-devs/blackjax/branch/master/graph/badge.svg)](https://codecov.io/gh/blackjax-devs/blackjax)
 
 
-## What is BlackJAX? 
+## What is BlackJAX?
 
 BlackJAX is a library of samplers for [JAX](https://github.com/google/jax) that
-works on CPU as well as GPU. 
+works on CPU as well as GPU.
 
 It is *not* a probabilistic programming library. However it integrates really
 well with PPLs as long as they can provide a (potentially unnormalized)
@@ -138,7 +138,7 @@ We value the following contributions:
 
 1. Run `pip install -r requirements-dev.txt` to install all the dev
    dependencies.
-2. Run `make lint` and `make test` before pushing on the repo; CI should pass if
+2. Run `pre-commit run --all-files`, `make lint_check`, and `make test` before pushing on the repo; CI should pass if
    these pass locally.
 
 
