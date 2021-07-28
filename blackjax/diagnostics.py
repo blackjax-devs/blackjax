@@ -34,9 +34,9 @@ def potential_scale_reduction(
     -----
     The diagnostic is computed by:
 
-      .. math:: \hat{R} = \frac{\hat{V}}{W}
+      .. math:: \\hat{R} = \\frac{\\hat{V}}{W}
 
-    where :math:`W` is the within-chain variance and :math:`\hat{V}` is the posterior variance
+    where :math:`W` is the within-chain variance and :math:`\\hat{V}` is the posterior variance
     estimate for the pooled traces. This is the potential scale reduction factor, which
     converges to unity when each of the traces is a sample from the target posterior. Values
     greater than one indicate that one or more chains have not yet converged.
@@ -86,16 +86,16 @@ def effective_sample_size(
 
     Notes
     -----
-    The basic ess (:math:`N_{\mathit{eff}}`) diagnostic is computed by:
+    The basic ess (:math:`N_{\\mathit{eff}}`) diagnostic is computed by:
 
-    .. math:: \hat{N}_{\mathit{eff}} = \frac{MN}{\hat{\tau}}
+    .. math:: \\hat{N}_{\\mathit{eff}} = \\frac{MN}{\\hat{\\tau}}
 
-    .. math:: \hat{\tau} = -1 + 2 \sum_{t'=0}^K \hat{P}_{t'}
+    .. math:: \\hat{\\tau} = -1 + 2 \\sum_{t'=0}^K \\hat{P}_{t'}
 
     where :math:`M` is the number of chains, :math:`N` the number of draws,
-    :math:`\hat{\rho}_t` is the estimated _autocorrelation at lag :math:`t`, and
-    :math:`K` is the last integer for which :math:`\hat{P}_{K} = \hat{\rho}_{2K} +
-    \hat{\rho}_{2K+1}` is still positive.
+    :math:`\\hat{\rho}_t` is the estimated _autocorrelation at lag :math:`t`, and
+    :math:`K` is the last integer for which :math:`\\hat{P}_{K} = \\hat{\rho}_{2K} +
+    \\hat{\rho}_{2K+1}` is still positive.
 
     The current implementation is similar to Stan, which uses Geyer's initial monotone sequence
     criterion (Geyer, 1992; Geyer, 2011).
@@ -103,9 +103,10 @@ def effective_sample_size(
     References
     ----------
     .. [1]: https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html
-    .. [2]: Gelman, Andrew, J. B. Carlin, Hal S. Stern, David B. Dunson, Aki Vehtari, and Donald B. Rubin. (2013). Bayesian Data Analysis. Third Edition. London: Chapman & Hall / CRC Press.
+    .. [2]: Gelman, Andrew, J. B. Carlin, Hal S. Stern, David B. Dunson, Aki Vehtari, and Donald B. Rubin. (2013). Bayesian Data Analysis. Third Edition. Chapman; Hall/CRC.
     .. [3]: Geyer, Charles J. (1992). “Practical Markov Chain Monte Carlo.” Statistical Science, 473–83.
     .. [4]: Geyer, Charles J. (2011). “Introduction to Markov Chain Monte Carlo.” In Handbook of Markov Chain Monte Carlo, edited by Steve Brooks, Andrew Gelman, Galin L. Jones, and Xiao-Li Meng, 3–48. Chapman; Hall/CRC.
+
     """
     input_shape = input_array.shape
     sample_axis = sample_axis if sample_axis >= 0 else len(input_shape) + sample_axis
