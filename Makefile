@@ -1,7 +1,7 @@
 PKG_VERSION = $(shell python setup.py --version)
 
 test:
-	pytest -n 4 --cov=blackjax --cov-report term --cov-report html:coverage tests
+	JAX_PLATFORM_NAME=cpu pytest -n 4 --cov=blackjax --cov-report term --cov-report html:coverage tests
 
 # We launch the package release by tagging the master branch with the package's
 # new version number. The version number is read from `blackjax/__init__.py`
