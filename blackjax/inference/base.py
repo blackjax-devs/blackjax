@@ -1,14 +1,13 @@
 """Base kernel for the HMC family."""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
 
+from blackjax.common import PyTree
 from blackjax.inference.integrators import IntegratorState
 
 __all__ = ["HMCState", "hmc"]
-
-PyTree = Union[Dict, List, Tuple]
 
 
 class HMCState(NamedTuple):

@@ -20,16 +20,17 @@ References
 .. [2]: Lu, Xiaoyu, et al. "Relativistic monte carlo." Artificial Intelligence and Statistics. PMLR, 2017.
 
 """
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Tuple
 
 import jax
 import jax.numpy as jnp
 import jax.scipy as jscipy
 from jax.flatten_util import ravel_pytree
 
+from blackjax.common import PyTree
+
 __all__ = ["gaussian_euclidean"]
 
-PyTree = Union[Dict, List, Tuple]
 EuclideanKineticEnergy = Callable[[PyTree], float]
 
 
