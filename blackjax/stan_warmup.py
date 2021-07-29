@@ -1,9 +1,8 @@
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Any, Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Any, Callable, List, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 from blackjax.adaptation.mass_matrix import (
     MassMatrixAdaptationState,
@@ -14,12 +13,11 @@ from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
     find_reasonable_step_size,
 )
+from blackjax.common import Array
 from blackjax.inference.base import HMCState
 
 __all__ = ["run", "stan_warmup"]
 
-Array = Union[np.ndarray, jnp.DeviceArray]
-PyTree = Union[Array, Dict, List, Tuple]
 
 
 class StanWarmupState(NamedTuple):
