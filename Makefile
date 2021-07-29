@@ -1,8 +1,5 @@
 PKG_VERSION = $(shell python setup.py --version)
 
-lint_check:
-	mypy blackjax tests
-
 test:
 	pytest -n 4 --cov=blackjax --cov-report term --cov-report html:coverage tests
 

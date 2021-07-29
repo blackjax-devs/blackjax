@@ -1,4 +1,4 @@
-name: pre-commit
+name: "Check code style"
 
 on:
   pull_request:

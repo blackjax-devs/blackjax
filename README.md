@@ -138,7 +138,7 @@ We value the following contributions:
 
 1. Run `pip install -r requirements-dev.txt` to install all the dev
    dependencies.
-2. Run `pre-commit run --all-files`, `make lint_check`, and `make test` before pushing on the repo; CI should pass if
+2. Run `pre-commit run --all-files` and `make test` before pushing on the repo; CI should pass if
    these pass locally.
 
 
