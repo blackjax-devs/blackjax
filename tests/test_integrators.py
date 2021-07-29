@@ -45,7 +45,11 @@ def PlanetaryMotion(inv_mass_matrix):
     return potential_energy, kinetic_energy
 
 
-algorithms = [{"integrator": integrators.velocity_verlet, "precision": 1e-4}]
+algorithms = [
+    {"integrator": integrators.velocity_verlet, "precision": 1e-4},
+    {"integrator": integrators.mclachlan, "precision": 1e-5},
+    {"integrator": integrators.yoshida, "precision": 1e-6},
+]
 
 
 examples = [

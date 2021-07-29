@@ -19,7 +19,7 @@ BlackJAX should appeal to those who:
 - Need more than a general-purpose sampler;
 - Want to sample on GPU;
 - Want to build upon robust elementary blocks for their research;
-- Are building a PPL;
+- Are building a probabilistic programming language;
 - Want to learn how sampling algorithms work.
 
 ## Quickstart

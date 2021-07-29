@@ -206,9 +206,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         """
         step_size = jnp.exp(warmup_state.da_state.log_x)
         inverse_mass_matrix = warmup_state.mm_state.inverse_mass_matrix
-        kernel = kernel_factory(
-            step_size=step_size, inverse_mass_matrix=inverse_mass_matrix
-        )
+        kernel = kernel_factory(step_size, inverse_mass_matrix)
 
         chain_state, chain_info = kernel(rng_key, chain_state)
 

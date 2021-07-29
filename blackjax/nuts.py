@@ -66,6 +66,8 @@ def kernel(
     step_size: float,
     inverse_mass_matrix: Array,
     max_num_doublings: int = 10,
+    *,
+    integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: int = 1000,
 ) -> Callable:
     """Build an iterative NUTS kernel.
@@ -96,7 +98,7 @@ def kernel(
     momentum_generator, kinetic_energy_fn, uturn_check_fn = metrics.gaussian_euclidean(
         inverse_mass_matrix
     )
-    symplectic_integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
+    symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
     proposal_generator = iterative_nuts_proposal(
         symplectic_integrator,
         kinetic_energy_fn,
