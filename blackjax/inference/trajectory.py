@@ -27,12 +27,11 @@ References
 .. [1]: Betancourt, Michael. "A conceptual introduction to Hamiltonian Monte Carlo." arXiv preprint arXiv:1701.02434 (2017).
 
 """
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
 import jax.numpy as jnp
 
-from blackjax.common import PyTree
 from blackjax.inference.integrators import IntegratorState
 from blackjax.inference.proposal import (
     Proposal,
@@ -40,6 +39,8 @@ from blackjax.inference.proposal import (
     progressive_uniform_sampling,
     proposal_generator,
 )
+
+PyTree = Union[Dict, List, Tuple]
 
 
 class Trajectory(NamedTuple):

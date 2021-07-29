@@ -1,14 +1,18 @@
 """Public API for the HMC Kernel"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, Dict, List, NamedTuple, Tuple, Union
 
 import jax
+import jax.numpy as jnp
+import numpy as np
 
 import blackjax.inference.base as base
 import blackjax.inference.integrators as integrators
 import blackjax.inference.metrics as metrics
 import blackjax.inference.proposal as proposal
 import blackjax.inference.trajectory as trajectory
-from blackjax.common import Array, PyTree
+
+Array = Union[np.ndarray, jnp.DeviceArray]
+PyTree = Union[Dict, List, Tuple]
 
 __all__ = ["new_state", "kernel"]
 
