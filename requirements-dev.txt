@@ -1,3 +1,4 @@
+-e ./
 apipkg==1.5
 appdirs==1.4.4
 attrs==20.3.0
