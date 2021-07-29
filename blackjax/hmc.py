@@ -5,14 +5,12 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from blackjax.common import Array, PyTree
 import blackjax.inference.base as base
 import blackjax.inference.integrators as integrators
 import blackjax.inference.metrics as metrics
 import blackjax.inference.proposal as proposal
 import blackjax.inference.trajectory as trajectory
-
-Array = Union[np.ndarray, jnp.DeviceArray]
-PyTree = Union[Dict, List, Tuple]
 
 __all__ = ["new_state", "kernel"]
 

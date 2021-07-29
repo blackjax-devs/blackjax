@@ -1,15 +1,12 @@
 """Public API for the Random Walk Metropolis-Hastings Kernel"""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple
 
 import jax.numpy as jnp
 import jax.random
-import numpy as np
 from jax.flatten_util import ravel_pytree
 
 import blackjax.inference.metrics as metrics
-
-Array = Union[np.ndarray, jnp.DeviceArray]
-PyTree = Union[Dict, List, Tuple]
+from blackjax.common import Array, PyTree
 
 __all__ = ["new_state", "kernel", "RWMHState"]
 
@@ -125,4 +122,3 @@ def kernel(
         return RWMHState(new_position, new_potential), RWMHInfo(p_accept, do_accept, proposed_position)
 
     return one_step
-
