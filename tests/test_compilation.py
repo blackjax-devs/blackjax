@@ -17,6 +17,27 @@ def potential(x):
     return jscipy.stats.norm.logpdf(x)
 
 
+def test_coupled_rwmh():
+    rng_key = jax.random.PRNGKey(0)
+    state = coupled_hmc.new_state(1.0, -1.0, potential)
+
+    GLOBAL["count"] = 0
+    kernel = jax.jit(
+        coupled_hmc.kernel(
+            potential,
+            step_size=1e-2,
+            inverse_mass_matrix=jnp.array([1.0]),
+            num_integration_steps=10,
+        )
+    )
+
+    for _ in range(10):
+        _, rng_key = jax.random.split(rng_key)
+        state, _ = kernel(rng_key, state)
+
+    assert GLOBAL["count"] == 2
+
+
 def test_hmc():
     """The reason why this works is because JAX only reads the potential once when compiled?"""
     rng_key = jax.random.PRNGKey(0)

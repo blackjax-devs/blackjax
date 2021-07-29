@@ -10,18 +10,9 @@ import pytest
 import blackjax.diagnostics as diagnostics
 import blackjax.hmc as hmc
 import blackjax.nuts as nuts
+import blackjax.rwmh as rwmh
 import blackjax.stan_warmup as stan_warmup
-
-
-def inference_loop(rng_key, kernel, initial_state, num_samples):
-    def one_step(state, rng_key):
-        state, _ = kernel(rng_key, state)
-        return state, state
-
-    keys = jax.random.split(rng_key, num_samples)
-    _, states = jax.lax.scan(one_step, initial_state, keys)
-
-    return states
+from .utils import inference_loop
 
 
 def inference_loop_multiple_chains(
@@ -60,6 +51,7 @@ regresion_test_cases = [
         "parameters": {"num_integration_steps": 90},
         "num_warmup_steps": 3_000,
         "num_sampling_steps": 2_000,
+        "stan_warmup": True
     },
     {
         "algorithm": nuts,
@@ -67,6 +59,14 @@ regresion_test_cases = [
         "parameters": {},
         "num_warmup_steps": 1_000,
         "num_sampling_steps": 500,
+        "stan_warmup": True,
+    },
+    {
+        "algorithm": rwmh,
+        "initial_position": {"scale": 1.0, "coefs": 2.0},
+        "parameters": {"inverse_mass_matrix": jnp.array([1., 0.1])},
+        "num_sampling_steps": 5_000,
+        "stan_warmup": False
     },
 ]
 
@@ -90,25 +90,27 @@ def test_linear_regression(case, is_mass_matrix_diagonal):
         potential, step_size, inverse_mass_matrix, **case["parameters"]
     )
 
-    state, (step_size, inverse_mass_matrix), _ = stan_warmup.run(
-        rng_key,
-        kernel_factory,
-        initial_state,
-        case["num_warmup_steps"],
-        is_mass_matrix_diagonal=is_mass_matrix_diagonal,
-    )
+    if case["stan_warmup"]:
+        state, (step_size, inverse_mass_matrix), _ = stan_warmup.run(
+            rng_key,
+            kernel_factory,
+            initial_state,
+            case["num_warmup_steps"],
+            is_mass_matrix_diagonal=is_mass_matrix_diagonal,
+        )
 
-    if is_mass_matrix_diagonal:
-        assert inverse_mass_matrix.ndim == 1
+        if is_mass_matrix_diagonal:
+            assert inverse_mass_matrix.ndim == 1
+        else:
+            assert inverse_mass_matrix.ndim == 2
+
+        kernel = kernel_factory(step_size, inverse_mass_matrix)
     else:
-        assert inverse_mass_matrix.ndim == 2
-
-    kernel = kernel_factory(step_size, inverse_mass_matrix)
+        kernel = case["algorithm"].kernel(potential, **case["parameters"])
     states = inference_loop(rng_key, kernel, initial_state, case["num_sampling_steps"])
 
     coefs_samples = states.position["coefs"]
     scale_samples = states.position["scale"]
-
     assert np.mean(scale_samples) == pytest.approx(1, 1e-1)
     assert np.mean(coefs_samples) == pytest.approx(3, 1e-1)
 
@@ -138,6 +140,12 @@ normal_test_cases = [
         "initial_position": {"x": jnp.array(100.0)},
         "parameters": {"step_size": 0.1, "inverse_mass_matrix": jnp.array([0.1])},
         "num_sampling_steps": 6000,
+    },
+    {
+        "algorithm": rwmh,
+        "initial_position": {"x": 1.0},
+        "parameters": {"inverse_mass_matrix": jnp.array([0.1])},
+        "num_sampling_steps": 50_000,
     },
 ]
 
