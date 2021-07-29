@@ -95,7 +95,10 @@ def gaussian_euclidean(
         )
 
     def momentum_generator(rng_key: jnp.ndarray, position: PyTree) -> PyTree:
-        _, unravel_fn = ravel_pytree(position)
+        ravelled_position, unravel_fn = ravel_pytree(position)
+        assert ravelled_position.shape[0] == shape[0], \
+            f"'inverse_mass_matrix' and 'position' are not compatible. 'inverse_mass_matrix' has dimension {shape}, " \
+            f"but 'position' ravelled dimension is {ravelled_position.shape[0]}."
         standard_normal_sample = jax.random.normal(rng_key, shape)
         momentum = dot(mass_matrix_sqrt, standard_normal_sample)
         momentum_unravel = unravel_fn(momentum)

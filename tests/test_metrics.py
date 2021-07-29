@@ -56,3 +56,22 @@ def test_gaussian_euclidean_dim_2():
 
     assert pytest.approx(expected_momentum_val, momentum_val)
     assert kinetic_energy_val == expected_kinetic_energy_val
+
+
+@pytest.mark.parametrize("dim", [1, 2])
+@pytest.mark.parametrize("diag", [True, False])
+def test_incompatible_shapes_raises(dim, diag):
+    if diag:
+        inverse_mass_matrix = jnp.ones((dim,))
+    else:
+        inverse_mass_matrix = jnp.eye(dim)
+
+    momentum, kinetic_energy, _ = metrics.gaussian_euclidean(inverse_mass_matrix)
+    good_position_dimension = jnp.ones((dim,), dtype=DTYPE)
+    bad_position_dimension = jnp.ones((dim + 1,), dtype=DTYPE)
+
+    _ = momentum(KEY, good_position_dimension)
+    with pytest.raises(AssertionError) as e:
+        _ = momentum(KEY, bad_position_dimension)
+    assert "'inverse_mass_matrix' and 'position' are not compatible" in str(e)
+
