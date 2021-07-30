@@ -1,13 +1,11 @@
 """Test MCMC diagnostics."""
-import itertools
 import functools
-
-from absl.testing import absltest
-from absl.testing import parameterized
+import itertools
 
 import chex
 import jax
 import numpy as np
+from absl.testing import absltest, parameterized
 
 import blackjax.diagnostics as diagnostics
 
@@ -43,7 +41,7 @@ class DiagnosticsTest(chex.TestCase):
     """Tests for MCMC diagnostics."""
 
     def setUp(self):
-        super(DiagnosticsTest, self).setUp()
+        super().setUp()
         self.num_samples = 5000
         self.test_seed = 32
 
