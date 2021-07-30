@@ -1,6 +1,4 @@
 """MCMC diagnostics."""
-from typing import Union
-
 import chex
 import jax
 import jax.numpy as jnp

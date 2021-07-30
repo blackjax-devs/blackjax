@@ -11,7 +11,6 @@ import blackjax.inference.proposal as proposal
 import blackjax.inference.trajectory as trajectory
 
 Array = chex.Array
-
 PyTree = Union[Dict, List, Tuple]
 
 __all__ = ["new_state", "kernel"]
