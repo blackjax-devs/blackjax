@@ -1,6 +1,7 @@
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
 from typing import Any, Callable, List, NamedTuple, Tuple
 
+import chex
 import jax
 import jax.numpy as jnp
 
@@ -17,6 +18,10 @@ from blackjax.inference.hmc.base import HMCState
 from blackjax.types import Array, PRNGKey
 
 __all__ = ["run", "stan_warmup"]
+
+Array = chex.Array
+PRNGKey = chex.PRNGKey
+PyTree = Union[Array, Dict, List, Tuple]
 
 
 class StanWarmupState(NamedTuple):

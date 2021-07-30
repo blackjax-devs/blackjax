@@ -1,6 +1,7 @@
 """Step size adaptation"""
 from typing import Callable, NamedTuple, Tuple
 
+import chex
 import jax
 import jax.numpy as jnp
 
@@ -12,7 +13,7 @@ __all__ = [
     "find_reasonable_step_size",
 ]
 
-
+PRNGKey = chex.PRNGKey
 # -------------------------------------------------------------------
 #                        DUAL AVERAGING
 # -------------------------------------------------------------------

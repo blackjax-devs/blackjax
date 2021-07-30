@@ -1,10 +1,13 @@
 """MCMC diagnostics."""
+from typing import Union
+
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
 from scipy.fftpack import next_fast_len  # type: ignore
 
-from blackjax.types import Array
+Array = chex.Array
 
 __all__ = ["potential_scale_reduction", "effective_sample_size"]
 

@@ -1,12 +1,16 @@
 """Base kernel for the HMC family."""
 from typing import Callable, NamedTuple, Tuple
 
+import chex
 import jax
 
 from blackjax.inference.hmc.integrators import IntegratorState
 from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["HMCState", "hmc"]
+
+PRNGKey = chex.PRNGKey
+PyTree = Union[Dict, List, Tuple]
 
 
 class HMCState(NamedTuple):

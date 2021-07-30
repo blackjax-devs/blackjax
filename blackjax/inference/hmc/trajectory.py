@@ -29,6 +29,7 @@ References
 """
 from typing import Callable, NamedTuple, Tuple
 
+import chex
 import jax
 import jax.numpy as jnp
 
@@ -39,7 +40,9 @@ from blackjax.inference.hmc.proposal import (
     progressive_uniform_sampling,
     proposal_generator,
 )
-from blackjax.types import PRNGKey, PyTree
+
+PRNGKey = chex.PRNGKey
+PyTree = Union[Dict, List, Tuple]
 
 
 class Trajectory(NamedTuple):

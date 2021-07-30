@@ -13,10 +13,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from typing import NamedTuple
 
+import chex
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import Array
+Array = chex.Array
 
 
 class IterativeUTurnState(NamedTuple):

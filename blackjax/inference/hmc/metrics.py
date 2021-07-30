@@ -22,6 +22,7 @@ References
 """
 from typing import Callable, Tuple
 
+import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy as jscipy
@@ -31,6 +32,9 @@ from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["gaussian_euclidean"]
 
+Array = chex.Array
+PRNGKey = chex.PRNGKey
+PyTree = Union[Dict, List, Tuple]
 EuclideanKineticEnergy = Callable[[PyTree], float]
 
 

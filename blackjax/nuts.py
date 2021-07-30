@@ -1,17 +1,21 @@
 """Public API for the NUTS Kernel"""
 from typing import Callable, NamedTuple
 
+import chex
 import jax.numpy as jnp
 import numpy as np
 
 import blackjax.hmc
-import blackjax.inference.hmc.base as base
-import blackjax.inference.hmc.integrators as integrators
-import blackjax.inference.hmc.metrics as metrics
-import blackjax.inference.hmc.proposal as proposal
-import blackjax.inference.hmc.termination as termination
-import blackjax.inference.hmc.trajectory as trajectory
-from blackjax.types import Array, PyTree
+import blackjax.inference.base as base
+import blackjax.inference.integrators as integrators
+import blackjax.inference.metrics as metrics
+import blackjax.inference.proposal as proposal
+import blackjax.inference.termination as termination
+import blackjax.inference.trajectory as trajectory
+from blackjax.inference.trajectory import DynamicExpansionState, Trajectory
+
+Array = chex.Array
+PyTree = Union[Dict, List, Tuple]
 
 
 class NUTSInfo(NamedTuple):
