@@ -56,9 +56,13 @@ class DiagnosticsTest(chex.TestCase):
         sample_shape = list(event_shape)
         if case["chain_axis"] < case["sample_axis"]:
             sample_shape = insert_list(sample_shape, case["chain_axis"], num_chains)
-            sample_shape = insert_list(sample_shape, case["sample_axis"], self.num_samples)
+            sample_shape = insert_list(
+                sample_shape, case["sample_axis"], self.num_samples
+            )
         else:
-            sample_shape = insert_list(sample_shape, case["sample_axis"], self.num_samples)
+            sample_shape = insert_list(
+                sample_shape, case["sample_axis"], self.num_samples
+            )
             sample_shape = insert_list(sample_shape, case["chain_axis"], num_chains)
         mc_samples = jax.random.normal(rng_key, shape=sample_shape)
 
