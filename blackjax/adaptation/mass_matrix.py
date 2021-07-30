@@ -9,10 +9,9 @@ parameters used in Hamiltonian Monte Carlo.
 """
 from typing import Callable, NamedTuple, Tuple
 
-from chex import Array
 import jax
 import jax.numpy as jnp
-
+from chex import Array
 
 __all__ = ["mass_matrix_adaptation", "welford_algorithm"]
 

@@ -1,9 +1,9 @@
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
 from typing import Any, Callable, List, NamedTuple, Tuple
 
-from chex import Array, PRNGKey
 import jax
 import jax.numpy as jnp
+from chex import Array, PRNGKey
 
 from blackjax.adaptation.mass_matrix import (
     MassMatrixAdaptationState,

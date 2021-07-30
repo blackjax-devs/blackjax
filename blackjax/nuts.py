@@ -1,9 +1,9 @@
 """Public API for the NUTS Kernel"""
 from typing import Callable, NamedTuple
 
-from chex import Array
 import jax.numpy as jnp
 import numpy as np
+from chex import Array
 
 import blackjax.hmc
 import blackjax.inference.base as base

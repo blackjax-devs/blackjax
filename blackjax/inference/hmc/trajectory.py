@@ -29,9 +29,9 @@ References
 """
 from typing import Callable, NamedTuple, Tuple
 
-import chex
 import jax
 import jax.numpy as jnp
+from chex import PRNGKey
 
 from blackjax.inference.hmc.integrators import IntegratorState
 from blackjax.inference.hmc.proposal import (
@@ -41,7 +41,6 @@ from blackjax.inference.hmc.proposal import (
     proposal_generator,
 )
 
-PRNGKey = chex.PRNGKey
 PyTree = Union[Dict, List, Tuple]
 
 

@@ -1,8 +1,8 @@
 """Public API for the HMC Kernel"""
 from typing import Callable, NamedTuple, Tuple
 
-from chex import Array
 import jax
+from chex import Array
 
 import blackjax.inference.base as base
 import blackjax.inference.integrators as integrators

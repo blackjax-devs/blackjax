@@ -12,10 +12,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 from typing import NamedTuple
-from chex import Array
 
 import jax
 import jax.numpy as jnp
+from chex import Array
 
 
 class IterativeUTurnState(NamedTuple):

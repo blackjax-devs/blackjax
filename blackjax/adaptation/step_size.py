@@ -1,9 +1,9 @@
 """Step size adaptation"""
 from typing import Callable, NamedTuple, Tuple
 
-import chex
 import jax
 import jax.numpy as jnp
+from chex import PRNGKey
 
 import blackjax.optimizers as optimizers
 from blackjax.inference.hmc.base import HMCState
@@ -13,7 +13,6 @@ __all__ = [
     "find_reasonable_step_size",
 ]
 
-PRNGKey = chex.PRNGKey
 # -------------------------------------------------------------------
 #                        DUAL AVERAGING
 # -------------------------------------------------------------------
