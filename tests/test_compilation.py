@@ -15,7 +15,7 @@ def test_hmc():
     @chex.assert_max_traces(n=1)
     def potential(x):
         return jscipy.stats.norm.logpdf(x)
-    
+
     rng_key = jax.random.PRNGKey(0)
     state = hmc.new_state(1.0, potential)
 
@@ -54,4 +54,3 @@ def test_nuts():
     for _ in range(10):
         _, rng_key = jax.random.split(rng_key)
         state, _ = kernel(rng_key, state)
-

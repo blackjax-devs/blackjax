@@ -40,35 +40,43 @@ def insert_list(input_list, loc, elem):
 
 
 class DiagnosticsTest(chex.TestCase):
+    """Tests for MCMC diagnostics."""
 
-    @chex.all_variants(with_pmap=False)
+    def setUp(self):
+        super(DiagnosticsTest, self).setUp()
+        self.num_samples = 5000
+        self.test_seed = 32
+
+    @chex.all_variants
     @parameterized.parameters(
-        itertools.product(test_cases, [2, 10], [(), (3,), (5, 7)]))
+        itertools.product(test_cases, [2, 10], [(), (3,), (5, 7)])
+    )
     def test_rhat_ess(self, case, num_chains, event_shape):
-        rng_key = jax.random.PRNGKey(32)
-        num_samples = 5000
+        rng_key = jax.random.PRNGKey(self.test_seed)
         sample_shape = list(event_shape)
         if case["chain_axis"] < case["sample_axis"]:
             sample_shape = insert_list(sample_shape, case["chain_axis"], num_chains)
-            sample_shape = insert_list(sample_shape, case["sample_axis"], num_samples)
+            sample_shape = insert_list(sample_shape, case["sample_axis"], self.num_samples)
         else:
-            sample_shape = insert_list(sample_shape, case["sample_axis"], num_samples)
+            sample_shape = insert_list(sample_shape, case["sample_axis"], self.num_samples)
             sample_shape = insert_list(sample_shape, case["chain_axis"], num_chains)
         mc_samples = jax.random.normal(rng_key, shape=sample_shape)
 
         potential_scale_reduction = self.variant(
-            functools.partial(diagnostics.potential_scale_reduction, **case))
+            functools.partial(diagnostics.potential_scale_reduction, **case)
+        )
         rhat_val = potential_scale_reduction(mc_samples)
         np.testing.assert_array_equal(rhat_val.shape, event_shape)
         np.testing.assert_allclose(rhat_val, 1.0, rtol=1e-03)
 
         # With iid samples we should get ess close to number of samples.
         effective_sample_size = self.variant(
-            functools.partial(diagnostics.effective_sample_size, **case))
+            functools.partial(diagnostics.effective_sample_size, **case)
+        )
         ess_val = effective_sample_size(mc_samples)
         np.testing.assert_array_equal(ess_val.shape, event_shape)
-        np.testing.assert_allclose(ess_val, num_chains * num_samples, rtol=10)
+        np.testing.assert_allclose(ess_val, num_chains * self.num_samples, rtol=10)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     absltest.main()
