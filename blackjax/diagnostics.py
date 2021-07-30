@@ -1,11 +1,11 @@
 """MCMC diagnostics."""
-import chex
+from chex import Array
+
 import jax
 import jax.numpy as jnp
 import numpy as np
 from scipy.fftpack import next_fast_len  # type: ignore
 
-Array = chex.Array
 
 __all__ = ["potential_scale_reduction", "effective_sample_size"]
 

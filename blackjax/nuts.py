@@ -1,7 +1,7 @@
 """Public API for the NUTS Kernel"""
 from typing import Callable, NamedTuple
 
-import chex
+from chex import Array
 import jax.numpy as jnp
 import numpy as np
 
@@ -14,7 +14,6 @@ import blackjax.inference.termination as termination
 import blackjax.inference.trajectory as trajectory
 from blackjax.inference.trajectory import DynamicExpansionState, Trajectory
 
-Array = chex.Array
 PyTree = Union[Dict, List, Tuple]
 
 

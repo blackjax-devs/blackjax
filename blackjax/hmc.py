@@ -1,7 +1,7 @@
 """Public API for the HMC Kernel"""
 from typing import Callable, NamedTuple, Tuple
 
-import chex
+from chex import Array
 import jax
 
 import blackjax.inference.base as base
@@ -10,7 +10,6 @@ import blackjax.inference.metrics as metrics
 import blackjax.inference.proposal as proposal
 import blackjax.inference.trajectory as trajectory
 
-Array = chex.Array
 PyTree = Union[Dict, List, Tuple]
 
 __all__ = ["new_state", "kernel"]
