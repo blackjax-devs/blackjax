@@ -12,6 +12,8 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
+from blackjax.types import Array
+
 __all__ = ["mass_matrix_adaptation", "welford_algorithm"]
 
 
@@ -28,8 +30,8 @@ class WelfordAlgorithmState(NamedTuple):
         also the current number of iterations of the algorithm.
     """
 
-    mean: jnp.ndarray
-    m2: jnp.ndarray
+    mean: Array
+    m2: Array
     sample_size: int
 
 
@@ -182,7 +184,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
         return WelfordAlgorithmState(mean, m2, sample_size)
 
     def update(
-        wa_state: WelfordAlgorithmState, value: jnp.ndarray
+        wa_state: WelfordAlgorithmState, value: Array
     ) -> WelfordAlgorithmState:
         """Update the M2 matrix using the new value.
 

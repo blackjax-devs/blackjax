@@ -18,8 +18,8 @@ import jax.numpy as jnp
 
 
 class IterativeUTurnState(NamedTuple):
-    momentum: jnp.ndarray
-    momentum_sum: jnp.ndarray
+    momentum: Array
+    momentum_sum: Array
     idx_min: int
     idx_max: int
 
