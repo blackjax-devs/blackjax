@@ -188,9 +188,9 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
 
         Parameters
         ----------
-        state:
+        wa_state:
             The current state of the Welford Algorithm
-        position: jax.numpy.DeviceArray, shape (1,)
+        value: jax.numpy.DeviceArray, shape (1,)
             The new sample (typically position of the chain) used to update m2
         """
         mean, m2, sample_size = wa_state
