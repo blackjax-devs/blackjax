@@ -22,23 +22,23 @@ def potential_fn(scale, coefs, preds, x):
 
 def inference_loop(rng_key, kernel, initial_state):
     def cond(carry):
-        _, state, _ = carry
+        _, state, *_ = carry
         return state.lmbda < 1
 
     def body(carry):
-        i, state, op_key = carry
+        i, state, op_key, curr_loglikelihood = carry
         op_key, subkey = jax.random.split(op_key, 2)
-        state, _ = kernel(subkey, state)
-        return i + 1, state, op_key
+        state, info = kernel(subkey, state)
+        return i + 1, state, op_key, curr_loglikelihood + info.log_likelihood_increment
 
-    total_iter, final_state, _ = jax.lax.while_loop(
-        cond, body, (0, initial_state, rng_key)
+    total_iter, final_state, _, log_likelihood = jax.lax.while_loop(
+        cond, body, (0, initial_state, rng_key, 0.0)
     )
 
-    return total_iter, final_state
+    return total_iter, final_state, log_likelihood
 
 
-@pytest.mark.parametrize("N", [100, 1000])
+@pytest.mark.parametrize("N", [100, 1000, 5000])
 @pytest.mark.parametrize("use_log", [True, False])
 def test_adaptive_tempered_smc(N, use_log):
     x_data = np.random.normal(0, 1, size=(1000, 1))
@@ -69,11 +69,12 @@ def test_adaptive_tempered_smc(N, use_log):
             5,
         )
         tempered_smc_state_init = TemperedSMCState(smc_state_init, 0.0)
-        n_iter, result = inference_loop(
+        n_iter, result, log_likelihood = inference_loop(
             jax.random.PRNGKey(42), tempering_kernel, tempered_smc_state_init
         )
         iterates.append(n_iter)
         results.append(result)
+
         assert np.mean(result.particles[0]) == pytest.approx(1, 1e-1)
         assert np.mean(result.particles[1]) == pytest.approx(3, 1e-1)
 

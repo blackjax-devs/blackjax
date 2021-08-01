@@ -14,12 +14,15 @@ class SMCInfo(NamedTuple):
     proposals: PyTree
         The particles that were proposed by the MCMC pass.
     ancestors: jnp.ndarray
-        The index of the particles that were selected by the resampling step..
+        The index of the particles that were selected by the resampling step.
+    log_likelihood_increment: float
+        The log-likelihood increment due to the current step of the SMC algorithm.
     """
 
     weights: jnp.ndarray
     proposals: PyTree
     ancestors: jnp.ndarray
+    log_likelihood_increment: float
 
 
 def smc(
@@ -58,7 +61,7 @@ def smc(
 
     Returns
     -------
-    A kernel that takes a PRNGKey, a set of particles, the loglikehood of the
+    A kernel that takes a PRNGKey, a set of particles, the log-likehood of the
     distribution and the Feynman-Kac potential at time `t`. The kernel returns
     a new set of particles.
 
@@ -115,17 +118,26 @@ def smc(
 
         # Resample the particles depending on their weight
         log_weights = jax.vmap(log_weight_fn, in_axes=(0,))(proposed_particles)
-        weights = _normalize(log_weights)
+        weights, log_likelihood_increment = _normalize(log_weights)
         resampling_index = resampling_fn(weights, resampling_key)
         particles = jax.tree_map(lambda x: x[resampling_index], proposed_particles)
 
-        info = SMCInfo(weights, proposed_particles, resampling_index)
+        info = SMCInfo(
+            weights, proposed_particles, resampling_index, log_likelihood_increment
+        )
         return particles, info
 
     return kernel
 
 
 def _normalize(log_weights):
-    """Normalize log-weights into weights"""
-    w = jnp.exp(log_weights - jnp.max(log_weights))
-    return w / w.sum()
+    """Normalize log-weights into weights and return resulting weights and log-likelihood increment."""
+    n = log_weights.shape[0]
+    max_logw = jnp.max(log_weights)
+    w = jnp.exp(log_weights - max_logw)
+    w_mean = w.mean()
+
+    log_likelihood_increment = jnp.log(w_mean) + max_logw
+
+    w = w / (n * w_mean)
+    return w, log_likelihood_increment
