@@ -8,7 +8,7 @@ import blackjax.inference.integrators as integrators
 import blackjax.inference.metrics as metrics
 import blackjax.inference.proposal as proposal
 import blackjax.inference.trajectory as trajectory
-from blackjax.common import Array, PyTree
+from blackjax.types import Array, PyTree
 
 __all__ = ["new_state", "kernel"]
 

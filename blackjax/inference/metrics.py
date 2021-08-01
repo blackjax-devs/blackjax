@@ -27,7 +27,7 @@ import jax.numpy as jnp
 import jax.scipy as jscipy
 from jax.flatten_util import ravel_pytree
 
-from blackjax.common import PyTree
+from blackjax.types import PyTree
 
 __all__ = ["gaussian_euclidean"]
 

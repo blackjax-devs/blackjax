@@ -13,7 +13,7 @@ from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
     find_reasonable_step_size,
 )
-from blackjax.common import Array
+from blackjax.types import Array
 from blackjax.inference.base import HMCState
 
 __all__ = ["run", "stan_warmup"]

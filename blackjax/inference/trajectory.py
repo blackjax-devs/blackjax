@@ -32,7 +32,7 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.common import PyTree
+from blackjax.types import PyTree
 from blackjax.inference.integrators import IntegratorState
 from blackjax.inference.proposal import (
     Proposal,
