@@ -2,10 +2,9 @@
 from typing import Callable, NamedTuple, Tuple
 
 import jax
-import jax.numpy as jnp
 
-from blackjax.types import PyTree, PRNGKey
 from blackjax.inference.integrators import IntegratorState
+from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["HMCState", "hmc"]
 

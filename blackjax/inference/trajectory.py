@@ -32,7 +32,6 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import PyTree, PRNGKey
 from blackjax.inference.integrators import IntegratorState
 from blackjax.inference.proposal import (
     Proposal,
@@ -40,6 +39,7 @@ from blackjax.inference.proposal import (
     progressive_uniform_sampling,
     proposal_generator,
 )
+from blackjax.types import PRNGKey, PyTree
 
 
 class Trajectory(NamedTuple):
