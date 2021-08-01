@@ -2,5 +2,5 @@ from typing import Dict, List, Tuple, Union
 
 import jax.numpy as jnp
 
-Array = Union[jnp.ndarray, jnp.DeviceArray, float]
+Array = Union[np.ndarray, jnp.DeviceArray]
 PyTree = Union[Dict, List, Tuple, Array]
