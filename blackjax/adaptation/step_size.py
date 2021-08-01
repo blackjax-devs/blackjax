@@ -16,6 +16,7 @@ __all__ = [
 # -------------------------------------------------------------------
 #                        DUAL AVERAGING
 # -------------------------------------------------------------------
+from blackjax.types import PRNGKey
 
 
 class DualAveragingAdaptationState(NamedTuple):
@@ -161,14 +162,14 @@ class ReasonableStepSizeState(NamedTuple):
         The current step size in the search.
     """
 
-    rng_key: jnp.ndarray
+    rng_key: PRNGKey
     direction: int
     previous_direction: int
     step_size: float
 
 
 def find_reasonable_step_size(
-    rng_key,
+    rng_key: PRNGKey,
     kernel_generator: Callable[[float], Callable],
     reference_state: HMCState,
     initial_step_size: float,

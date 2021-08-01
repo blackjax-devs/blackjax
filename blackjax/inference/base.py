@@ -4,7 +4,7 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import PyTree
+from blackjax.types import PyTree, PRNGKey
 from blackjax.inference.integrators import IntegratorState
 
 __all__ = ["HMCState", "hmc"]
@@ -138,7 +138,7 @@ def hmc(
 
     """
 
-    def kernel(rng_key: jnp.ndarray, state: HMCState) -> Tuple[HMCState, NamedTuple]:
+    def kernel(rng_key: PRNGKey, state: HMCState) -> Tuple[HMCState, NamedTuple]:
         """Moves the chain by one step using the Hamiltonian dynamics.
 
         Parameters

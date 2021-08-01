@@ -13,7 +13,7 @@ from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
     find_reasonable_step_size,
 )
-from blackjax.types import Array
+from blackjax.types import Array, PRNGKey
 from blackjax.inference.base import HMCState
 
 __all__ = ["run", "stan_warmup"]
@@ -139,7 +139,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
     slow_init, slow_update, slow_final = slow_window(is_mass_matrix_diagonal)
 
     def init(
-        rng_key: jnp.ndarray, initial_state: HMCState, initial_step_size: float
+        rng_key: PRNGKey, initial_state: HMCState, initial_step_size: float
     ) -> StanWarmupState:
         """Initialize the warmup.
 
@@ -166,7 +166,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         return warmup_state
 
     def update(
-        rng_key: jnp.ndarray,
+        rng_key: PRNGKey,
         stage: int,
         is_middle_window_end: bool,
         chain_state: HMCState,
