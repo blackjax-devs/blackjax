@@ -30,13 +30,10 @@ def test_smc(N):
 
     specialized_log_weights_fn = lambda tree: log_weights_fn(tree, 1.0)
 
-    kernel = smc(mcmc_factory, resampling.systematic, 1000)
+    kernel = smc(mcmc_factory, hmc.new_state, resampling.systematic, 1000)
 
     # Don't use exactly the invariant distribution for the MCMC kernel
-    init_positions = 0.25 + np.random.randn(N)
-    init_particles = jax.vmap(hmc.new_state, in_axes=(0, None))(
-        init_positions, kernel_potential_fn
-    )
+    init_particles = 0.25 + np.random.randn(N)
 
     updated_particles, _ = kernel(
         jax.random.PRNGKey(42),
@@ -49,8 +46,8 @@ def test_smc(N):
     expected_std = np.sqrt(0.5)
 
     np.testing.assert_allclose(
-        expected_mean, updated_particles.position.mean(), rtol=1e-2, atol=1e-1
+        expected_mean, updated_particles.mean(), rtol=1e-2, atol=1e-1
     )
     np.testing.assert_allclose(
-        expected_std, updated_particles.position.std(), rtol=1e-2, atol=1e-1
+        expected_std, updated_particles.std(), rtol=1e-2, atol=1e-1
     )

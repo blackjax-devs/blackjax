@@ -34,6 +34,7 @@ def adaptive_tempered_smc(
     prior_logrob_fn: Callable,
     potential_fn: Callable,
     mcmc_kernel_factory: Callable,
+    make_mcmc_state: Callable,
     resampling_fn: Callable,
     target_ess: float,
     root_solver: Callable = dichotomy_solver,
@@ -50,6 +51,8 @@ def adaptive_tempered_smc(
         A function that returns the potential energy of a chain at a given position.
     mcmc_kernel_factory: Callable
         A callable function that creates a mcmc kernel from a potential function.
+    make_mcmc_state: Callable
+        A function that creates a new mcmc state from a position and a potential.
     resampling_fn: Callable
         A random function that resamples generated particles based of weights
     target_ess: float
@@ -89,6 +92,7 @@ def adaptive_tempered_smc(
         prior_logrob_fn,
         potential_fn,
         mcmc_kernel_factory,
+        make_mcmc_state,
         resampling_fn,
         mcmc_iter,
     )
@@ -105,6 +109,7 @@ def tempered_smc(
     logprior_fn: Callable,
     potential_fn: Callable,
     mcmc_kernel_factory: Callable,
+    make_mcmc_state: Callable,
     resampling_fn: Callable,
     num_mcmc_iterations: int,
 ):
@@ -129,6 +134,8 @@ def tempered_smc(
         minus the loglikelihood for kernels in the HMC family.
     mcmc_kernel_factory
         A function that creates a mcmc kernel from a potential function.
+    make_mcmc_state: Callable
+        A function that creates a new mcmc state from a position and a potential.
     resampling_fn
         A random function that resamples generated particles based of weights
     num_mcmc_iterations
@@ -141,7 +148,9 @@ def tempered_smc(
     information about the transition.
 
     """
-    kernel = smc(mcmc_kernel_factory, resampling_fn, num_mcmc_iterations)
+    kernel = smc(
+        mcmc_kernel_factory, make_mcmc_state, resampling_fn, num_mcmc_iterations
+    )
 
     def one_step(
         rng_key: jnp.ndarray, state: TemperedSMCState, lmbda: float
