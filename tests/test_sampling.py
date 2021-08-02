@@ -1,5 +1,6 @@
 """Test the accuracy of the HMC kernel"""
 import functools as ft
+from operator import add
 
 import jax
 import jax.numpy as jnp
@@ -26,7 +27,7 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
 
 
 def inference_loop_multiple_chains(
-    rng_key, kernel, initial_state, num_samples, num_chains
+        rng_key, kernel, initial_state, num_samples, num_chains
 ):
     def one_step(states, rng_key):
         keys = jax.random.split(rng_key, num_chains)
@@ -124,20 +125,16 @@ def normal_potential_fn(x):
 
 
 def get_rw_proposal():
-    inverse_mass_matrix = jnp.array([0.01])
     from blackjax.inference.metrics import gaussian_euclidean
+    inverse_mass_matrix = jnp.array([0.01])
     gaussian_momentum, *_ = gaussian_euclidean(inverse_mass_matrix)
 
     def proposal_generator(key, position):
-        from jax.flatten_util import ravel_pytree
-        momentum, _ = ravel_pytree(gaussian_momentum(key, position))
-        position, tree_unravel = ravel_pytree(position)
-        return tree_unravel(position + momentum)
+        from jax import tree_multimap
+        return tree_multimap(add, position, gaussian_momentum(key, position))
 
     proposal_loglikelihood_fn = lambda *_: 0.  # symmetric proposal
     return proposal_generator, proposal_loglikelihood_fn
-
-
 
 
 normal_test_cases = [
@@ -262,7 +259,7 @@ def test_mcse(case):
     posterior_delta = posterior_samples - true_loc
     posterior_variance = posterior_delta ** 2.0
     posterior_correlation = jnp.prod(posterior_delta, axis=-1, keepdims=True) / (
-        true_scale[0] * true_scale[1]
+            true_scale[0] * true_scale[1]
     )
 
     _ = jax.tree_multimap(
