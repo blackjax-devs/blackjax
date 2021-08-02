@@ -107,15 +107,16 @@ def kernel(
         state_conditional_on_proposal = proposal_loglikelihood_fn(state.position, proposal)
 
         u = jax.random.uniform(proposal_key)
+
         p_accept = jnp.exp(state.potential_energy - proposed_potential +
                            state_conditional_on_proposal - proposal_conditional_on_state)
         do_accept = u < jnp.clip(p_accept, 0., 1.)
 
-        new_position, new_potential = jax.lax.cond(
+        next_state = jax.lax.cond(
             do_accept,
-            lambda _: (proposal, proposed_potential),
-            lambda _: (state.position, state.potential_energy),
+            lambda _: MHState(proposal, proposed_potential),
+            lambda _: MHState(state.position, state.potential_energy),
             operand=None)
-        return MHState(new_position, new_potential), MHInfo(p_accept, do_accept, proposal)
+        return next_state, MHInfo(p_accept, do_accept, proposal)
 
     return one_step
