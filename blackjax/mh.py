@@ -1,4 +1,4 @@
-"""Public API for the Random Walk Metropolis-Hastings Kernel"""
+"""Public API for the Metropolis-Hastings Kernel"""
 from typing import Callable, NamedTuple, Tuple
 
 import jax.numpy as jnp
