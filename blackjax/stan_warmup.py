@@ -1,9 +1,8 @@
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Any, Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Any, Callable, List, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 from blackjax.adaptation.mass_matrix import (
     MassMatrixAdaptationState,
@@ -15,11 +14,9 @@ from blackjax.adaptation.step_size import (
     find_reasonable_step_size,
 )
 from blackjax.inference.base import HMCState
+from blackjax.types import Array, PRNGKey
 
 __all__ = ["run", "stan_warmup"]
-
-Array = Union[np.ndarray, jnp.DeviceArray]
-PyTree = Union[Array, Dict, List, Tuple]
 
 
 class StanWarmupState(NamedTuple):
@@ -142,7 +139,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
     slow_init, slow_update, slow_final = slow_window(is_mass_matrix_diagonal)
 
     def init(
-        rng_key: jnp.ndarray, initial_state: HMCState, initial_step_size: float
+        rng_key: PRNGKey, initial_state: HMCState, initial_step_size: float
     ) -> StanWarmupState:
         """Initialize the warmup.
 
@@ -169,7 +166,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         return warmup_state
 
     def update(
-        rng_key: jnp.ndarray,
+        rng_key: PRNGKey,
         stage: int,
         is_middle_window_end: bool,
         chain_state: HMCState,

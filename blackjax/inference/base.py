@@ -1,14 +1,12 @@
 """Base kernel for the HMC family."""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Tuple
 
 import jax
-import jax.numpy as jnp
 
 from blackjax.inference.integrators import IntegratorState
+from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["HMCState", "hmc"]
-
-PyTree = Union[Dict, List, Tuple]
 
 
 class HMCState(NamedTuple):
@@ -139,7 +137,7 @@ def hmc(
 
     """
 
-    def kernel(rng_key: jnp.ndarray, state: HMCState) -> Tuple[HMCState, NamedTuple]:
+    def kernel(rng_key: PRNGKey, state: HMCState) -> Tuple[HMCState, NamedTuple]:
         """Moves the chain by one step using the Hamiltonian dynamics.
 
         Parameters

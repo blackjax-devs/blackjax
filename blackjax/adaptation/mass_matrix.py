@@ -12,6 +12,8 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
+from blackjax.types import Array
+
 __all__ = ["mass_matrix_adaptation", "welford_algorithm"]
 
 
@@ -28,8 +30,8 @@ class WelfordAlgorithmState(NamedTuple):
         also the current number of iterations of the algorithm.
     """
 
-    mean: jnp.ndarray
-    m2: jnp.ndarray
+    mean: Array
+    m2: Array
     sample_size: int
 
 
@@ -174,16 +176,14 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
             of the corresponding square mass matrix.
         """
         sample_size = 0
-        mean = jnp.zeros(n_dims)
+        mean = jnp.zeros((n_dims,))
         if is_diagonal_matrix:
-            m2 = jnp.zeros(n_dims)
+            m2 = jnp.zeros((n_dims,))
         else:
             m2 = jnp.zeros((n_dims, n_dims))
         return WelfordAlgorithmState(mean, m2, sample_size)
 
-    def update(
-        wa_state: WelfordAlgorithmState, value: jnp.ndarray
-    ) -> WelfordAlgorithmState:
+    def update(wa_state: WelfordAlgorithmState, value: Array) -> WelfordAlgorithmState:
         """Update the M2 matrix using the new value.
 
         Parameters
@@ -208,7 +208,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
 
     def final(
         wa_state: WelfordAlgorithmState,
-    ) -> Tuple[float, int, jnp.ndarray]:
+    ) -> Tuple[Array, int, Array]:
         mean, m2, sample_size = wa_state
         covariance = m2 / (sample_size - 1)
         return covariance, sample_size, mean

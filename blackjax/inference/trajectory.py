@@ -27,7 +27,7 @@ References
 .. [1]: Betancourt, Michael. "A conceptual introduction to Hamiltonian Monte Carlo." arXiv preprint arXiv:1701.02434 (2017).
 
 """
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -39,8 +39,7 @@ from blackjax.inference.proposal import (
     progressive_uniform_sampling,
     proposal_generator,
 )
-
-PyTree = Union[Dict, List, Tuple]
+from blackjax.types import PRNGKey, PyTree
 
 
 class Trajectory(NamedTuple):
@@ -157,7 +156,7 @@ def dynamic_progressive_integration(
     sample_proposal = progressive_uniform_sampling
 
     def integrate(
-        rng_key: jax.numpy.DeviceArray,
+        rng_key: PRNGKey,
         initial_state: IntegratorState,
         direction: int,
         termination_state,
@@ -312,7 +311,7 @@ def dynamic_recursive_integration(
     sample_proposal = progressive_uniform_sampling
 
     def buildtree_integrate(
-        rng_key: jnp.ndarray,
+        rng_key: PRNGKey,
         initial_state: IntegratorState,
         direction: int,
         tree_depth: int,
@@ -491,7 +490,7 @@ def dynamic_multiplicative_expansion(
     proposal_sampler = progressive_biased_sampling
 
     def expand(
-        rng_key: jnp.ndarray,
+        rng_key: PRNGKey,
         initial_expansion_state: DynamicExpansionState,
         initial_energy: float,
     ):

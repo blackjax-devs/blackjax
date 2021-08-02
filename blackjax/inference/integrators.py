@@ -1,13 +1,12 @@
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple
 
 import jax
 
 from blackjax.inference.metrics import EuclideanKineticEnergy
+from blackjax.types import PyTree
 
 __all__ = ["mclachlan", "velocity_verlet", "yoshida"]
-
-PyTree = Union[Dict, List, Tuple]
 
 
 class IntegratorState(NamedTuple):

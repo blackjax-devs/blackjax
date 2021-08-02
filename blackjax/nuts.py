@@ -1,5 +1,5 @@
 """Public API for the NUTS Kernel"""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple
 
 import jax.numpy as jnp
 import numpy as np
@@ -12,9 +12,7 @@ import blackjax.inference.proposal as proposal
 import blackjax.inference.termination as termination
 import blackjax.inference.trajectory as trajectory
 from blackjax.inference.trajectory import DynamicExpansionState, Trajectory
-
-Array = Union[np.ndarray, jnp.DeviceArray]
-PyTree = Union[Dict, List, Tuple]
+from blackjax.types import Array, PyTree
 
 
 class NUTSInfo(NamedTuple):
