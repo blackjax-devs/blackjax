@@ -1,15 +1,12 @@
 """Base kernel for the HMC family."""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Tuple
 
 import jax
-import jax.numpy as jnp
 
-from blackjax.common import PyTree
 from blackjax.inference.integrators import IntegratorState
+from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["HMCState", "hmc"]
-
-
 
 
 class HMCState(NamedTuple):
@@ -65,7 +62,7 @@ def new_hmc_state(position: PyTree, potential_fn: Callable) -> HMCState:
     position
         The current values of the random variables whose posterior we want to
         sample from. Can be anything from a list, a (named) tuple or a dict of
-        arrays. The arrays can either be Numpy arrays or JAX DeviceArrays.
+        arrays. The arrays can either be Numpy or JAX arrays.
     potential_fn
         A function that returns the value of the potential energy when called
         with a position.
@@ -140,7 +137,7 @@ def hmc(
 
     """
 
-    def kernel(rng_key: jnp.ndarray, state: HMCState) -> Tuple[HMCState, NamedTuple]:
+    def kernel(rng_key: PRNGKey, state: HMCState) -> Tuple[HMCState, NamedTuple]:
         """Moves the chain by one step using the Hamiltonian dynamics.
 
         Parameters

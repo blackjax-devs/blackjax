@@ -8,7 +8,6 @@ import jax.scipy as jscipy
 
 import blackjax.hmc as hmc
 import blackjax.nuts as nuts
-import blackjax.rwmh  as rwmh
 
 GLOBAL = {"count": 0}
 
@@ -16,25 +15,6 @@ GLOBAL = {"count": 0}
 def potential(x):
     GLOBAL["count"] += 1
     return jscipy.stats.norm.logpdf(x)
-
-
-def test_rwmh():
-    rng_key = jax.random.PRNGKey(0)
-    state = rwmh.new_state(-1.0, potential)
-
-    GLOBAL["count"] = 0
-    kernel = jax.jit(
-        rwmh.kernel(
-            potential,
-            inverse_mass_matrix=jnp.array([1.0]),
-        )
-    )
-
-    for _ in range(10):
-        _, rng_key = jax.random.split(rng_key)
-        state, _ = kernel(rng_key, state)
-
-    assert GLOBAL["count"] == 1
 
 
 def test_hmc():

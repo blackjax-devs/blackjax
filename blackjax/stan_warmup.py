@@ -13,11 +13,10 @@ from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
     find_reasonable_step_size,
 )
-from blackjax.common import Array
 from blackjax.inference.base import HMCState
+from blackjax.types import Array, PRNGKey
 
 __all__ = ["run", "stan_warmup"]
-
 
 
 class StanWarmupState(NamedTuple):
@@ -140,7 +139,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
     slow_init, slow_update, slow_final = slow_window(is_mass_matrix_diagonal)
 
     def init(
-        rng_key: jnp.ndarray, initial_state: HMCState, initial_step_size: float
+        rng_key: PRNGKey, initial_state: HMCState, initial_step_size: float
     ) -> StanWarmupState:
         """Initialize the warmup.
 
@@ -167,7 +166,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         return warmup_state
 
     def update(
-        rng_key: jnp.ndarray,
+        rng_key: PRNGKey,
         stage: int,
         is_middle_window_end: bool,
         chain_state: HMCState,
@@ -221,7 +220,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
 
         return chain_state, warmup_state, chain_info
 
-    def final(warmup_state: StanWarmupState) -> Tuple[float, jnp.DeviceArray]:
+    def final(warmup_state: StanWarmupState) -> Tuple[float, Array]:
         """Return the step size and mass matrix."""
         step_size = jnp.exp(warmup_state.da_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.mm_state.inverse_mass_matrix
@@ -254,7 +253,7 @@ def fast_window() -> Tuple[Callable, Callable]:
         return da_state
 
     def update(
-        fw_state: Tuple[jnp.ndarray, HMCState, Any, StanWarmupState]
+        fw_state: Tuple[Array, HMCState, Any, StanWarmupState]
     ) -> StanWarmupState:
         rng_key, state, info, warmup_state = fw_state
 
@@ -299,7 +298,7 @@ def slow_window(
         return mm_state
 
     def update(
-        fs_state: Tuple[jnp.ndarray, HMCState, Any, StanWarmupState]
+        fs_state: Tuple[Array, HMCState, Any, StanWarmupState]
     ) -> StanWarmupState:
         """Move the warmup by one state when in a slow adaptation interval.
 

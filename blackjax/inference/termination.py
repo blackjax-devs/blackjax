@@ -16,10 +16,12 @@ from typing import NamedTuple
 import jax
 import jax.numpy as jnp
 
+from blackjax.types import Array
+
 
 class IterativeUTurnState(NamedTuple):
-    momentum: jnp.ndarray
-    momentum_sum: jnp.ndarray
+    momentum: Array
+    momentum_sum: Array
     idx_min: int
     idx_max: int
 
