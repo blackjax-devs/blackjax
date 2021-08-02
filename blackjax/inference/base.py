@@ -62,7 +62,7 @@ def new_hmc_state(position: PyTree, potential_fn: Callable) -> HMCState:
     position
         The current values of the random variables whose posterior we want to
         sample from. Can be anything from a list, a (named) tuple or a dict of
-        arrays. The arrays can either be Numpy arrays or JAX DeviceArrays.
+        arrays. The arrays can either be Numpy arrays or JAX Arrays.
     potential_fn
         A function that returns the value of the potential energy when called
         with a position.
