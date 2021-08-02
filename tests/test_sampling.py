@@ -9,6 +9,7 @@ import pytest
 
 import blackjax.diagnostics as diagnostics
 import blackjax.hmc as hmc
+import blackjax.mh as mh
 import blackjax.nuts as nuts
 import blackjax.stan_warmup as stan_warmup
 
@@ -122,6 +123,23 @@ def normal_potential_fn(x):
     return -stats.norm.logpdf(x, loc=1.0, scale=2.0).squeeze()
 
 
+def get_rw_proposal():
+    inverse_mass_matrix = jnp.array([0.01])
+    from blackjax.inference.metrics import gaussian_euclidean
+    gaussian_momentum, *_ = gaussian_euclidean(inverse_mass_matrix)
+
+    def proposal_generator(key, position):
+        from jax.flatten_util import ravel_pytree
+        momentum, _ = ravel_pytree(gaussian_momentum(key, position))
+        position, tree_unravel = ravel_pytree(position)
+        return tree_unravel(position + momentum)
+
+    proposal_loglikelihood_fn = lambda *_: 0.  # symmetric proposal
+    return proposal_generator, proposal_loglikelihood_fn
+
+
+
+
 normal_test_cases = [
     {
         "algorithm": hmc,
@@ -132,12 +150,21 @@ normal_test_cases = [
             "num_integration_steps": 100,
         },
         "num_sampling_steps": 6000,
+        "burnin": 5_000,
     },
     {
         "algorithm": nuts,
         "initial_position": {"x": jnp.array(100.0)},
         "parameters": {"step_size": 0.1, "inverse_mass_matrix": jnp.array([0.1])},
         "num_sampling_steps": 6000,
+        "burnin": 5_000,
+    },
+    {
+        "algorithm": mh,
+        "initial_position": {"x": 1.0},
+        "parameters": {"get_proposal_generator": get_rw_proposal},
+        "num_sampling_steps": 10_000,
+        "burnin": 5_000,
     },
 ]
 
@@ -152,7 +179,7 @@ def test_univariate_normal(case):
     kernel = case["algorithm"].kernel(potential, **case["parameters"])
     states = inference_loop(rng_key, kernel, initial_state, case["num_sampling_steps"])
 
-    samples = states.position["x"][-1000:]
+    samples = states.position["x"][case["burnin"]:]
 
     assert np.var(samples) == pytest.approx(4.0, 1e-1)
     assert np.mean(samples) == pytest.approx(1.0, 1e-1)
