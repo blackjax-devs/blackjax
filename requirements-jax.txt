@@ -1,3 +1,2 @@
-chex
 jax
 jaxlib

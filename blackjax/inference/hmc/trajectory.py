@@ -31,7 +31,6 @@ from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
-from chex import PRNGKey
 
 from blackjax.inference.hmc.integrators import IntegratorState
 from blackjax.inference.hmc.proposal import (

@@ -120,7 +120,7 @@ def test_integrator(example, integrator, do_jit_compile):
     for dimension in final_state.position:
         init = final_state.position[dimension]
         final = example["q_final"][dimension]
-        print(example["q_final"], final_state.position)
+
         numpy.testing.assert_allclose(init, final, atol=1e-2)
 
     # We now check the conservation of energy, the property that matters the most in HMC.

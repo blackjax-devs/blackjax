@@ -3,7 +3,6 @@ from typing import Callable, NamedTuple
 
 import jax.numpy as jnp
 import numpy as np
-from chex import Array
 
 import blackjax.hmc
 import blackjax.inference.base as base

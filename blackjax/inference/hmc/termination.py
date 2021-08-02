@@ -15,7 +15,6 @@ from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
-from chex import Array
 
 
 class IterativeUTurnState(NamedTuple):

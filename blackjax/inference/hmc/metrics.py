@@ -25,7 +25,6 @@ from typing import Callable, Dict, List, Tuple, Union
 import jax
 import jax.numpy as jnp
 import jax.scipy as jscipy
-from chex import Array, PRNGKey
 from jax.flatten_util import ravel_pytree
 
 from blackjax.types import Array, PRNGKey, PyTree
