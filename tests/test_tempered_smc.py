@@ -13,13 +13,6 @@ from blackjax.inference.smc.solver import dichotomy_solver
 from blackjax.tempered_smc import TemperedSMCState, adaptive_tempered_smc, tempered_smc
 
 
-def potential_fn(scale, coefs, preds, x):
-    """Linear regression"""
-    y = jnp.dot(x, coefs)
-    logpdf = stats.norm.logpdf(preds, y, scale)
-    return -jnp.sum(logpdf)
-
-
 def inference_loop(rng_key, kernel, initial_state):
     def cond(carry):
         _, state, *_ = carry
@@ -36,6 +29,17 @@ def inference_loop(rng_key, kernel, initial_state):
     )
 
     return total_iter, final_state, log_likelihood
+
+
+################################
+# Test posterior mean estimate #
+################################
+
+def potential_fn(scale, coefs, preds, x):
+    """Linear regression"""
+    y = jnp.dot(x, coefs)
+    logpdf = stats.norm.logpdf(preds, y, scale)
+    return -jnp.sum(logpdf)
 
 
 @pytest.mark.parametrize("N", [100, 1000, 5000])
@@ -118,3 +122,51 @@ def test_fixed_schedule_tempered_smc(N, n_schedule):
     )
     assert np.mean(result.particles[0]) == pytest.approx(1, 1e-1)
     assert np.mean(result.particles[1]) == pytest.approx(3, 1e-1)
+
+
+######################################
+# Test normalizing constant estimate #
+######################################
+
+
+def normal_potential_fn(x, cov):
+    """multivariate normal"""
+    zeros = jnp.zeros(cov.shape[:1])
+    return -stats.multivariate_normal.logpdf(x, zeros, cov).sum()
+
+
+@pytest.mark.parametrize("N", [500, 1_000])
+@pytest.mark.parametrize("dim", [2, 5, 10])
+def test_adaptive_tempered_smc(N, dim):
+    np.random.seed(42)
+    chol_cov = np.random.randn(dim, dim)
+    iu = np.triu_indices(dim, 1)
+    chol_cov[iu] = 0.
+    cov = chol_cov @ chol_cov.T  # bit silly to have to do this, but we don't import numpyro.
+    conditioned_potential = lambda x: normal_potential_fn(x, cov)
+
+    prior = lambda x: stats.multivariate_normal.logpdf(x, jnp.zeros((dim,)), jnp.eye(dim))
+
+    x_init = np.random.randn(N, dim)
+
+    mcmc_kernel_factory = lambda pot: hmc.kernel(pot, 1e-2, jnp.eye(dim), 50)
+
+    tempering_kernel = adaptive_tempered_smc(
+        prior,
+        conditioned_potential,
+        mcmc_kernel_factory,
+        hmc.new_state,
+        systematic,
+        0.9,
+        dichotomy_solver,
+        True,
+        10,
+    )
+    tempered_smc_state_init = TemperedSMCState(x_init, 0.0)
+    n_iter, result, log_likelihood = inference_loop(
+        jax.random.PRNGKey(42), tempering_kernel, tempered_smc_state_init
+    )
+    expected_log_likelihood = - 0.5 * np.linalg.slogdet(np.eye(dim) + cov)[1] - dim / 2 * np.log(2 * np.pi)
+    assert log_likelihood == pytest.approx(expected_log_likelihood, rel=5e-2, abs=1e-1)
+
+
