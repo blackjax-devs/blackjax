@@ -1,15 +1,5 @@
 PKG_VERSION = $(shell python setup.py --version)
 
-lint:
-	isort --profile black blackjax tests
-	black blackjax tests
-
-lint_check:
-	isort --profile black --check blackjax tests
-	flake8 blackjax tests --count --ignore=E501,E203,E731,W503 --show-source --statistics
-	black --check blackjax tests
-	mypy blackjax tests
-
 test:
 	JAX_PLATFORM_NAME=cpu pytest -n 4 --cov=blackjax --cov-report term --cov-report html:coverage tests
 
@@ -18,4 +8,3 @@ test:
 publish:
 	git tag -a $(LIB_VERSION) -m $(LIB_VERSION)
 	git push --tag
-

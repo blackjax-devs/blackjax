@@ -20,14 +20,14 @@ References
 .. [2]: Lu, Xiaoyu, et al. "Relativistic monte carlo." Artificial Intelligence and Statistics. PMLR, 2017.
 
 """
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Tuple
 
 import jax
 import jax.numpy as jnp
 import jax.scipy as jscipy
 from jax.flatten_util import ravel_pytree
 
-from blackjax.common import PyTree
+from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["gaussian_euclidean"]
 
@@ -35,7 +35,7 @@ EuclideanKineticEnergy = Callable[[PyTree], float]
 
 
 def gaussian_euclidean(
-        inverse_mass_matrix: jnp.DeviceArray,
+    inverse_mass_matrix: Array,
 ) -> Tuple[Callable, EuclideanKineticEnergy, Callable]:
     r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum.
 
@@ -95,25 +95,21 @@ def gaussian_euclidean(
             f" expected 1 or 2, got {jnp.ndim(inverse_mass_matrix)}."
         )
 
-    def momentum_generator(rng_key: jnp.ndarray, position: PyTree, unravel: bool = True) -> PyTree:
+    def momentum_generator(rng_key: PRNGKey, position: PyTree) -> PyTree:
         _, unravel_fn = ravel_pytree(position)
         standard_normal_sample = jax.random.normal(rng_key, shape)
         momentum = dot(mass_matrix_sqrt, standard_normal_sample)
-        if unravel:
-            momentum_unravel = unravel_fn(momentum)
-            return momentum_unravel
-        else:
-            return momentum
+        momentum_unravel = unravel_fn(momentum)
+        return momentum_unravel
 
     def kinetic_energy(momentum: PyTree) -> float:
         momentum, _ = ravel_pytree(momentum)
-        momentum = jnp.array(momentum)
         velocity = matmul(inverse_mass_matrix, momentum)
         kinetic_energy_val = 0.5 * jnp.dot(velocity, momentum)
         return kinetic_energy_val
 
     def is_turning(
-            momentum_left: PyTree, momentum_right: PyTree, momentum_sum: PyTree
+        momentum_left: PyTree, momentum_right: PyTree, momentum_sum: PyTree
     ) -> bool:
         """Generalized U-turn criterion.
 

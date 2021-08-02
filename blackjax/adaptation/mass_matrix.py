@@ -12,6 +12,8 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
+from blackjax.types import Array
+
 __all__ = ["mass_matrix_adaptation", "welford_algorithm"]
 
 
@@ -28,8 +30,8 @@ class WelfordAlgorithmState(NamedTuple):
         also the current number of iterations of the algorithm.
     """
 
-    mean: jnp.ndarray
-    m2: jnp.ndarray
+    mean: Array
+    m2: Array
     sample_size: int
 
 
@@ -42,7 +44,7 @@ class MassMatrixAdaptationState(NamedTuple):
         The current state of the Welford Algorithm.
     """
 
-    inverse_mass_matrix: jnp.DeviceArray
+    inverse_mass_matrix: Array
     wc_state: WelfordAlgorithmState
 
 
@@ -89,7 +91,7 @@ def mass_matrix_adaptation(
         return MassMatrixAdaptationState(inverse_mass_matrix, wc_state)
 
     def update(
-        mm_state: MassMatrixAdaptationState, position: jnp.DeviceArray
+        mm_state: MassMatrixAdaptationState, position: Array
     ) -> MassMatrixAdaptationState:
         """Update the algorithm's state.
 
@@ -174,23 +176,21 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
             of the corresponding square mass matrix.
         """
         sample_size = 0
-        mean = jnp.zeros(n_dims)
+        mean = jnp.zeros((n_dims,))
         if is_diagonal_matrix:
-            m2 = jnp.zeros(n_dims)
+            m2 = jnp.zeros((n_dims,))
         else:
             m2 = jnp.zeros((n_dims, n_dims))
         return WelfordAlgorithmState(mean, m2, sample_size)
 
-    def update(
-        wa_state: WelfordAlgorithmState, value: jnp.ndarray
-    ) -> WelfordAlgorithmState:
+    def update(wa_state: WelfordAlgorithmState, value: Array) -> WelfordAlgorithmState:
         """Update the M2 matrix using the new value.
 
         Parameters
         ----------
         state:
             The current state of the Welford Algorithm
-        position: jax.numpy.DeviceArray, shape (1,)
+        position: Array, shape (1,)
             The new sample (typically position of the chain) used to update m2
         """
         mean, m2, sample_size = wa_state
@@ -208,7 +208,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
 
     def final(
         wa_state: WelfordAlgorithmState,
-    ) -> Tuple[float, int, jnp.ndarray]:
+    ) -> Tuple[Array, int, Array]:
         mean, m2, sample_size = wa_state
         covariance = m2 / (sample_size - 1)
         return covariance, sample_size, mean

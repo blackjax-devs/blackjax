@@ -32,7 +32,6 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.common import PyTree
 from blackjax.inference.integrators import IntegratorState
 from blackjax.inference.proposal import (
     Proposal,
@@ -40,6 +39,7 @@ from blackjax.inference.proposal import (
     progressive_uniform_sampling,
     proposal_generator,
 )
+from blackjax.types import PRNGKey, PyTree
 
 
 class Trajectory(NamedTuple):
@@ -60,7 +60,7 @@ def append_to_trajectory(trajectory: Trajectory, state: IntegratorState) -> Traj
 
 
 def reorder_trajectories(
-        direction: int, trajectory: Trajectory, new_trajectory: Trajectory
+    direction: int, trajectory: Trajectory, new_trajectory: Trajectory
 ) -> Tuple[Trajectory, Trajectory]:
     """Order the two trajectories depending on the direction."""
     return jax.lax.cond(
@@ -98,10 +98,10 @@ def merge_trajectories(left_trajectory: Trajectory, right_trajectory: Trajectory
 
 
 def static_integration(
-        integrator: Callable,
-        step_size: float,
-        num_integration_steps: int,
-        direction: int = 1,
+    integrator: Callable,
+    step_size: float,
+    num_integration_steps: int,
+    direction: int = 1,
 ) -> Callable:
     """Generate a trajectory by integrating several times in one direction."""
 
@@ -129,11 +129,11 @@ class DynamicIntegrationState(NamedTuple):
 
 
 def dynamic_progressive_integration(
-        integrator: Callable,
-        kinetic_energy: Callable,
-        update_termination_state: Callable,
-        is_criterion_met: Callable,
-        divergence_threshold: float,
+    integrator: Callable,
+    kinetic_energy: Callable,
+    update_termination_state: Callable,
+    is_criterion_met: Callable,
+    divergence_threshold: float,
 ):
     """Integrate a trajectory and update the proposal sequentially in one direction
     until the termination criterion is met.
@@ -156,13 +156,13 @@ def dynamic_progressive_integration(
     sample_proposal = progressive_uniform_sampling
 
     def integrate(
-            rng_key: jax.numpy.DeviceArray,
-            initial_state: IntegratorState,
-            direction: int,
-            termination_state,
-            max_num_steps: int,
-            step_size,
-            initial_energy,
+        rng_key: PRNGKey,
+        initial_state: IntegratorState,
+        direction: int,
+        termination_state,
+        max_num_steps: int,
+        step_size,
+        initial_energy,
     ):
         """Integrate the trajectory starting from `initial_state` and update
         the proposal sequentially until the termination criterion is met.
@@ -192,9 +192,9 @@ def dynamic_progressive_integration(
             """Decide whether we should continue integrating the trajectory"""
             _, integration_state, (is_diverging, has_terminated) = loop_state
             return (
-                    (integration_state.step < max_num_steps)
-                    & ~has_terminated
-                    & ~is_diverging
+                (integration_state.step < max_num_steps)
+                & ~has_terminated
+                & ~is_diverging
             )
 
         def add_one_state(loop_state):
@@ -275,11 +275,11 @@ def dynamic_progressive_integration(
 
 
 def dynamic_recursive_integration(
-        integrator: Callable,
-        kinetic_energy: Callable,
-        uturn_check_fn: Callable,
-        divergence_threshold: float,
-        use_robust_uturn_check: bool = False,
+    integrator: Callable,
+    kinetic_energy: Callable,
+    uturn_check_fn: Callable,
+    divergence_threshold: float,
+    use_robust_uturn_check: bool = False,
 ):
     """Integrate a trajectory and update the proposal recursively in Python
     until the termination criterion is met.
@@ -311,12 +311,12 @@ def dynamic_recursive_integration(
     sample_proposal = progressive_uniform_sampling
 
     def buildtree_integrate(
-            rng_key: jnp.ndarray,
-            initial_state: IntegratorState,
-            direction: int,
-            tree_depth: int,
-            step_size,
-            initial_energy: float,
+        rng_key: PRNGKey,
+        initial_state: IntegratorState,
+        direction: int,
+        tree_depth: int,
+        step_size,
+        initial_energy: float,
     ):
         """Integrate the trajectory starting from `initial_state` and update
         the proposal recursively with tree doubling until the termination criterion is met.
@@ -454,11 +454,11 @@ class DynamicExpansionState(NamedTuple):
 
 
 def dynamic_multiplicative_expansion(
-        trajectory_integrator: Callable,
-        uturn_check_fn: Callable,
-        step_size: float,
-        max_num_expansions: int = 10,
-        rate: int = 2,
+    trajectory_integrator: Callable,
+    uturn_check_fn: Callable,
+    step_size: float,
+    max_num_expansions: int = 10,
+    rate: int = 2,
 ) -> Callable:
     """Sample a trajectory and update the proposal sequentially
     until the termination criterion is met.
@@ -490,17 +490,17 @@ def dynamic_multiplicative_expansion(
     proposal_sampler = progressive_biased_sampling
 
     def expand(
-            rng_key: jnp.ndarray,
-            initial_expansion_state: DynamicExpansionState,
-            initial_energy: float,
+        rng_key: PRNGKey,
+        initial_expansion_state: DynamicExpansionState,
+        initial_energy: float,
     ):
         def do_keep_expanding(loop_state) -> bool:
             """Determine whether we need to keep expanding the trajectory."""
             _, expansion_state, (is_diverging, is_turning) = loop_state
             return (
-                    (expansion_state.step < max_num_expansions)
-                    & ~is_diverging
-                    & ~is_turning
+                (expansion_state.step < max_num_expansions)
+                & ~is_diverging
+                & ~is_turning
             )
 
         def expand_once(loop_state):
