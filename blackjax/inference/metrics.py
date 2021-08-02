@@ -27,7 +27,7 @@ import jax.numpy as jnp
 import jax.scipy as jscipy
 from jax.flatten_util import ravel_pytree
 
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["gaussian_euclidean"]
 
@@ -35,7 +35,7 @@ EuclideanKineticEnergy = Callable[[PyTree], float]
 
 
 def gaussian_euclidean(
-    inverse_mass_matrix: jnp.DeviceArray,
+    inverse_mass_matrix: Array,
 ) -> Tuple[Callable, EuclideanKineticEnergy, Callable]:
     r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum.
 
