@@ -16,6 +16,8 @@ from typing import NamedTuple
 import jax
 import jax.numpy as jnp
 
+from blackjax.types import Array
+
 
 class IterativeUTurnState(NamedTuple):
     momentum: Array

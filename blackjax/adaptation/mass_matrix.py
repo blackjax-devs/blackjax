@@ -183,9 +183,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
             m2 = jnp.zeros((n_dims, n_dims))
         return WelfordAlgorithmState(mean, m2, sample_size)
 
-    def update(
-        wa_state: WelfordAlgorithmState, value: Array
-    ) -> WelfordAlgorithmState:
+    def update(wa_state: WelfordAlgorithmState, value: Array) -> WelfordAlgorithmState:
         """Update the M2 matrix using the new value.
 
         Parameters
