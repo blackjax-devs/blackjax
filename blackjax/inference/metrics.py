@@ -104,7 +104,6 @@ def gaussian_euclidean(
 
     def kinetic_energy(momentum: PyTree) -> float:
         momentum, _ = ravel_pytree(momentum)
-        momentum = jnp.array(momentum)
         velocity = matmul(inverse_mass_matrix, momentum)
         kinetic_energy_val = 0.5 * jnp.dot(velocity, momentum)
         return kinetic_energy_val

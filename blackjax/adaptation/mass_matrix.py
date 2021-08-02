@@ -44,7 +44,7 @@ class MassMatrixAdaptationState(NamedTuple):
         The current state of the Welford Algorithm.
     """
 
-    inverse_mass_matrix: jnp.DeviceArray
+    inverse_mass_matrix: Array
     wc_state: WelfordAlgorithmState
 
 
@@ -91,7 +91,7 @@ def mass_matrix_adaptation(
         return MassMatrixAdaptationState(inverse_mass_matrix, wc_state)
 
     def update(
-        mm_state: MassMatrixAdaptationState, position: jnp.DeviceArray
+        mm_state: MassMatrixAdaptationState, position: Array
     ) -> MassMatrixAdaptationState:
         """Update the algorithm's state.
 
@@ -190,7 +190,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
         ----------
         state:
             The current state of the Welford Algorithm
-        position: jax.numpy.DeviceArray, shape (1,)
+        position: Array, shape (1,)
             The new sample (typically position of the chain) used to update m2
         """
         mean, m2, sample_size = wa_state
