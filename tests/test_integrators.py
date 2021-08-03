@@ -53,16 +53,10 @@ algorithms = {
     "yoshida": [integrators.yoshida, 1e-6],
 }
 
-models = {
-    "free_fall": FreeFall,
-    "harmonic_oscillator": HarmonicOscillator,
-    "planetary_motion": PlanetaryMotion,
-}
 
-
-examples = [
-    {
-        "model_name": "free_fall",
+examples = {
+    "free_fall": {
+        "model": FreeFall,
         "num_steps": 100,
         "step_size": 0.01,
         "q_init": {"x": 0.0},
@@ -71,8 +65,8 @@ examples = [
         "p_final": {"x": 1.0},
         "inv_mass_matrix": jnp.array([1.0]),
     },
-    {
-        "model_name": "harmonic_oscillator",
+    "harmonic_oscillator": {
+        "model": HarmonicOscillator,
         "num_steps": 100,
         "step_size": 0.01,
         "q_init": {"x": 0.0},
@@ -81,8 +75,8 @@ examples = [
         "p_final": {"x": jnp.cos(1.0)},
         "inv_mass_matrix": jnp.array([1.0]),
     },
-    {
-        "model_name": "planetary_motion",
+    "planetary_motion": {
+        "model": PlanetaryMotion,
         "num_steps": 628,
         "step_size": 0.01,
         "q_init": {"x": 1.0, "y": 0.0},
@@ -91,7 +85,7 @@ examples = [
         "p_final": {"x": 0.0, "y": 1.0},
         "inv_mass_matrix": jnp.array([1.0, 1.0]),
     },
-]
+}
 
 
 class IntegratorTest(chex.TestCase):
@@ -105,11 +99,16 @@ class IntegratorTest(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
-        itertools.product(examples, ["velocity_verlet", "mclachlan", "yoshida"])
+        itertools.product(
+            ["free_fall", "harmonic_oscillator", "planetary_motion"],
+            ["velocity_verlet", "mclachlan", "yoshida"],
+        )
     )
-    def test_integrator(self, example, integrator_name):
+    def test_integrator(self, example_name, integrator_name):
         integrator, integration_precision = algorithms[integrator_name]
-        model = models[example["model_name"]]
+        example = examples[example_name]
+
+        model = example["model"]
         potential, kinetic_energy = model(example["inv_mass_matrix"])
 
         step = self.variant(integrator(potential, kinetic_energy))
