@@ -47,16 +47,22 @@ def PlanetaryMotion(inv_mass_matrix):
     return potential_energy, kinetic_energy
 
 
-algorithms = [
-    {"integrator": integrators.velocity_verlet, "precision": 1e-4},
-    {"integrator": integrators.mclachlan, "precision": 1e-5},
-    {"integrator": integrators.yoshida, "precision": 1e-6},
-]
+algorithms = {
+    "velocity_verlet": [integrators.velocity_verlet, 1e-4],
+    "mclachlan": [integrators.mclachlan, 1e-5],
+    "yoshida": [integrators.yoshida, 1e-6],
+}
+
+models = {
+    "free_fall": FreeFall,
+    "harmonic_oscillator": HarmonicOscillator,
+    "planetary_motion": PlanetaryMotion,
+}
 
 
 examples = [
     {
-        "model": FreeFall,
+        "model_name": "free_fall",
         "num_steps": 100,
         "step_size": 0.01,
         "q_init": {"x": 0.0},
@@ -66,7 +72,7 @@ examples = [
         "inv_mass_matrix": jnp.array([1.0]),
     },
     {
-        "model": HarmonicOscillator,
+        "model_name": "harmonic_oscillator",
         "num_steps": 100,
         "step_size": 0.01,
         "q_init": {"x": 0.0},
@@ -76,7 +82,7 @@ examples = [
         "inv_mass_matrix": jnp.array([1.0]),
     },
     {
-        "model": PlanetaryMotion,
+        "model_name": "planetary_motion",
         "num_steps": 628,
         "step_size": 0.01,
         "q_init": {"x": 1.0, "y": 0.0},
@@ -98,13 +104,15 @@ class IntegratorTest(chex.TestCase):
     """
 
     @chex.all_variants(with_pmap=False)
-    @parameterized.parameters(itertools.product(examples, algorithms))
-    def test_integrator(self, example, integrator):
-        model = example["model"]
+    @parameterized.parameters(
+        itertools.product(examples, ["velocity_verlet", "mclachlan", "yoshida"])
+    )
+    def test_integrator(self, example, integrator_name):
+        integrator, integration_precision = algorithms[integrator_name]
+        model = models[example["model_name"]]
         potential, kinetic_energy = model(example["inv_mass_matrix"])
-        integrator_step = integrator["integrator"]
 
-        step = self.variant(integrator_step(potential, kinetic_energy))
+        step = self.variant(integrator(potential, kinetic_energy))
 
         step_size = example["step_size"]
 
@@ -128,7 +136,7 @@ class IntegratorTest(chex.TestCase):
         new_energy = potential(final_state.position) + kinetic_energy(
             final_state.momentum
         )
-        self.assertAlmostEqual(energy, new_energy, delta=integrator["precision"])
+        self.assertAlmostEqual(energy, new_energy, delta=integration_precision)
 
 
 if __name__ == "__main__":
