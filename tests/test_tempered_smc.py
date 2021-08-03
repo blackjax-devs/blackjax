@@ -35,6 +35,7 @@ def inference_loop(rng_key, kernel, initial_state):
 # Test posterior mean estimate #
 ################################
 
+
 def potential_fn(scale, coefs, preds, x):
     """Linear regression"""
     y = jnp.dot(x, coefs)
@@ -133,7 +134,9 @@ def normal_potential_fn(x, chol_cov):
     """multivariate normal without the normalizing constant"""
     dim = chol_cov.shape[0]
     y = jax.scipy.linalg.solve_triangular(chol_cov, x, lower=True)
-    normalizing_constant = np.sum(np.log(np.abs(np.diag(chol_cov)))) + dim * np.log(2 * np.pi) / 2.
+    normalizing_constant = (
+        np.sum(np.log(np.abs(np.diag(chol_cov)))) + dim * np.log(2 * np.pi) / 2.0
+    )
     norm_y = jnp.sum(y * y, -1)
     return 0.5 * norm_y + normalizing_constant
 
@@ -144,11 +147,13 @@ def test_normalizing_constant(N, dim):
     np.random.seed(42)
     chol_cov = np.random.rand(dim, dim)
     iu = np.triu_indices(dim, 1)
-    chol_cov[iu] = 0.
+    chol_cov[iu] = 0.0
     cov = chol_cov @ chol_cov.T
     conditioned_potential = lambda x: normal_potential_fn(x, chol_cov)
 
-    prior = lambda x: stats.multivariate_normal.logpdf(x, jnp.zeros((dim,)), jnp.eye(dim))
+    prior = lambda x: stats.multivariate_normal.logpdf(
+        x, jnp.zeros((dim,)), jnp.eye(dim)
+    )
 
     x_init = np.random.randn(N, dim)
 
@@ -169,6 +174,7 @@ def test_normalizing_constant(N, dim):
     n_iter, result, log_likelihood = inference_loop(
         jax.random.PRNGKey(42), tempering_kernel, tempered_smc_state_init
     )
-    expected_log_likelihood = - 0.5 * np.linalg.slogdet(np.eye(dim) + cov)[1] - dim / 2 * np.log(
-        2 * np.pi)
+    expected_log_likelihood = -0.5 * np.linalg.slogdet(np.eye(dim) + cov)[
+        1
+    ] - dim / 2 * np.log(2 * np.pi)
     assert log_likelihood == pytest.approx(expected_log_likelihood, rel=5e-2, abs=1e-1)
