@@ -1,7 +1,9 @@
+import itertools
+
+import chex
 import jax
 import jax.numpy as jnp
-import numpy
-import pytest
+from absl.testing import absltest, parameterized
 
 import blackjax.inference.hmc.integrators as integrators
 
@@ -86,44 +88,48 @@ examples = [
 ]
 
 
-@pytest.mark.parametrize("do_jit_compile", [True, False])
-@pytest.mark.parametrize("integrator", algorithms)
-@pytest.mark.parametrize("example", examples)
-def test_integrator(example, integrator, do_jit_compile):
+class IntegratorTest(chex.TestCase):
     """Test the numerical accuracy of trajectory integrators.
 
     We compare the evolution of the trajectory to analytical integration, and
     the conservation of energy. JAX's default float precision is 32bit; it is
     possible to change it to 64bit but only at startup. It is thus impossible
     to test both in the same run; we run the tests with the lower precision.
-
     """
-    model = example["model"]
-    potential, kinetic_energy = model(example["inv_mass_matrix"])
-    integrator_step = integrator["integrator"]
 
-    step = integrator_step(potential, kinetic_energy)
-    step = jax.jit(step) if do_jit_compile else step
+    @chex.all_variants(with_pmap=False)
+    @parameterized.parameters(itertools.product(examples, algorithms))
+    def test_integrator(self, example, integrator):
+        model = example["model"]
+        potential, kinetic_energy = model(example["inv_mass_matrix"])
+        integrator_step = integrator["integrator"]
 
-    step_size = example["step_size"]
+        step = self.variant(integrator_step(potential, kinetic_energy))
 
-    q = example["q_init"]
-    p = example["p_init"]
-    initial_state = integrators.IntegratorState(
-        q, p, potential(q), jax.grad(potential)(q)
-    )
-    final_state = jax.lax.fori_loop(
-        0, example["num_steps"], lambda _, state: step(state, step_size), initial_state
-    )
+        step_size = example["step_size"]
 
-    # We make sure that the particle moved from its initial position.
-    for dimension in final_state.position:
-        init = final_state.position[dimension]
-        final = example["q_final"][dimension]
+        q = example["q_init"]
+        p = example["p_init"]
+        initial_state = integrators.IntegratorState(
+            q, p, potential(q), jax.grad(potential)(q)
+        )
+        final_state = jax.lax.fori_loop(
+            0,
+            example["num_steps"],
+            lambda _, state: step(state, step_size),
+            initial_state,
+        )
 
-        numpy.testing.assert_allclose(init, final, atol=1e-2)
+        # We make sure that the particle moved from its initial position.
+        chex.assert_tree_all_close(final_state.position, example["q_final"], atol=1e-2)
 
-    # We now check the conservation of energy, the property that matters the most in HMC.
-    energy = potential(q) + kinetic_energy(p)
-    new_energy = potential(final_state.position) + kinetic_energy(final_state.momentum)
-    assert energy == pytest.approx(new_energy.item(), integrator["precision"])
+        # We now check the conservation of energy, the property that matters the most in HMC.
+        energy = potential(q) + kinetic_energy(p)
+        new_energy = potential(final_state.position) + kinetic_energy(
+            final_state.momentum
+        )
+        self.assertAlmostEqual(energy, new_energy, delta=integrator["precision"])
+
+
+if __name__ == "__main__":
+    absltest.main()

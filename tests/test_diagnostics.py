@@ -45,7 +45,7 @@ class DiagnosticsTest(chex.TestCase):
         self.num_samples = 5000
         self.test_seed = 32
 
-    @chex.all_variants
+    @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
         itertools.product(test_cases, [2, 10], [(), (3,), (5, 7)])
     )
