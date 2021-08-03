@@ -5,7 +5,7 @@ import pytest
 from jax.scipy.stats.norm import logpdf
 
 import blackjax.inference.smc.ess as ess
-from blackjax.inference.smc.solver import dichotomy_solver
+import blackjax.inference.smc.solver as solver
 
 
 @pytest.mark.parametrize("N", [100, 1000, 5000])
@@ -39,10 +39,10 @@ def test_ess_solver(target_ess, N):
 
     particles = x_data
     delta = ess.ess_solver(
-        potential, particles, target_ess, 1.0, dichotomy_solver, use_log_ess=True
+        potential, particles, target_ess, 1.0, solver.dichotomy, use_log_ess=True
     )
     delta_log = ess.ess_solver(
-        potential, particles, target_ess, 1.0, dichotomy_solver, use_log_ess=False
+        potential, particles, target_ess, 1.0, solver.dichotomy, use_log_ess=False
     )
     assert delta > 0
     np.testing.assert_allclose(delta_log, delta, atol=1e-3, rtol=1e-3)

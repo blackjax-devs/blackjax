@@ -1,13 +1,13 @@
 """All things related to SMC effective sample size"""
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
 
-PyTree = Union[Dict, List, Tuple]
+from blackjax.types import PyTree
 
 
-def ess(log_weights: jnp.ndarray, log: bool = True):
+def ess(log_weights: jnp.ndarray, log: bool = True) -> float:
     """Compute the effective sample size from the log-weights in a numerically stable way.
 
     Parameters

@@ -6,7 +6,7 @@ import pytest
 
 import blackjax.inference.smc.solver as solver
 
-solving_methods_to_test = [solver.dichotomy_solver]
+solving_methods_to_test = [solver.dichotomy]
 
 
 def positive_function(x):

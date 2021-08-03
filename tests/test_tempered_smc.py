@@ -8,8 +8,8 @@ import numpy as np
 import pytest
 
 import blackjax.hmc as hmc
-from blackjax.inference.smc.resampling import systematic
-from blackjax.inference.smc.solver import dichotomy_solver
+import blackjax.inference.smc.resampling as resampling
+import blackjax.inference.smc.solver as solver
 from blackjax.tempered_smc import TemperedSMCState, adaptive_tempered_smc, tempered_smc
 
 
@@ -67,9 +67,9 @@ def test_adaptive_tempered_smc(N, use_log):
             conditioned_potential,
             mcmc_kernel_factory,
             hmc.new_state,
-            systematic,
+            resampling.systematic,
             target_ess,
-            dichotomy_solver,
+            solver.dichotomy,
             use_log,
             5,
         )
@@ -107,7 +107,7 @@ def test_fixed_schedule_tempered_smc(N, n_schedule):
         conditioned_potential,
         mcmc_kernel_factory,
         hmc.new_state,
-        systematic,
+        resampling.systematic,
         10,
     )
     tempered_smc_state_init = TemperedSMCState(smc_state_init, 0.0)
@@ -164,9 +164,9 @@ def test_normalizing_constant(N, dim):
         conditioned_potential,
         mcmc_kernel_factory,
         hmc.new_state,
-        systematic,
+        resampling.systematic,
         0.9,
-        dichotomy_solver,
+        solver.dichotomy,
         True,
         10,
     )

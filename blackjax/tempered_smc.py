@@ -1,16 +1,13 @@
 """Public API for the Tempered SMC Kernel"""
-from typing import Callable, Dict, List, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 
+import blackjax.inference.smc.solver as solver
 from blackjax.inference.smc.base import SMCInfo, smc
 from blackjax.inference.smc.ess import ess_solver
-from blackjax.inference.smc.solver import dichotomy_solver
-
-Array = Union[np.ndarray, jnp.DeviceArray]
-PyTree = Union[Dict, List, Tuple]
+from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["adaptive_tempered_smc", "tempered_smc"]
 
@@ -18,10 +15,8 @@ __all__ = ["adaptive_tempered_smc", "tempered_smc"]
 class TemperedSMCState(NamedTuple):
     """Current state for the tempered SMC algorithm.
 
-    n_iter: int
-        Current tempered SMC step.
-    smc_state: SMCState
-        The particles' state.
+    particles: PyTree
+        The particles' positions.
     lmbda: float
         Current value of the tempering parameter.
     """
@@ -37,11 +32,11 @@ def adaptive_tempered_smc(
     make_mcmc_state: Callable,
     resampling_fn: Callable,
     target_ess: float,
-    root_solver: Callable = dichotomy_solver,
+    root_solver: Callable = solver.dichotomy,
     use_log_ess: bool = True,
     mcmc_iter: int = 10,
-):
-    r"""Build a Tempered SMC step using adaptive schedule.
+) -> Callable:
+    r"""Build a Tempered SMC step using an adaptive schedule.
 
     Parameters
     ----------
@@ -59,7 +54,7 @@ def adaptive_tempered_smc(
         The target ESS for the adaptive MCMC tempering
     root_solver: Callable, optional
         A solver utility to find delta matching the target ESS. Signature is
-        `root_solver(fun, delta_0, min_delta, max_delta)`, default is dichotomy_solver
+        `root_solver(fun, delta_0, min_delta, max_delta)`, default is a dichotomy solver
     use_log_ess: bool, optional
         Use ESS in log space to solve for delta, default is `True`.
         This is usually more stable when using gradient based solvers.
@@ -73,7 +68,7 @@ def adaptive_tempered_smc(
     information about the transition.
     """
 
-    def compute_delta(state):
+    def compute_delta(state: TemperedSMCState) -> float:
         lmbda = state.lmbda
         max_delta = 1 - lmbda
         delta = ess_solver(
@@ -97,7 +92,9 @@ def adaptive_tempered_smc(
         mcmc_iter,
     )
 
-    def one_step(rng_key, state):
+    def one_step(
+        rng_key: PRNGKey, state: TemperedSMCState
+    ) -> Tuple[TemperedSMCState, SMCInfo]:
         delta = compute_delta(state)
         lmbda = delta + state.lmbda
         return kernel(rng_key, state, lmbda)
@@ -112,7 +109,7 @@ def tempered_smc(
     make_mcmc_state: Callable,
     resampling_fn: Callable,
     num_mcmc_iterations: int,
-):
+) -> Callable:
     """Build the base Tempered SMC kernel.
 
     Tempered SMC uses tempering to sample from a distribution given by
@@ -153,7 +150,7 @@ def tempered_smc(
     )
 
     def one_step(
-        rng_key: jnp.ndarray, state: TemperedSMCState, lmbda: float
+        rng_key: PRNGKey, state: TemperedSMCState, lmbda: float
     ) -> Tuple[TemperedSMCState, SMCInfo]:
         """Move the particles one step using the Tempered SMC algorithm.
 
@@ -175,12 +172,12 @@ def tempered_smc(
         """
         delta = lmbda - state.lmbda
 
-        def log_weights_fn(chain):
-            return -delta * potential_fn(chain)
+        def log_weights_fn(position: PyTree) -> float:
+            return -delta * potential_fn(position)
 
-        def tempered_potential_fn(chain):
-            logprior = -logprior_fn(chain)
-            tempered_loglikelihood = state.lmbda * potential_fn(chain)
+        def tempered_potential_fn(position: PyTree) -> float:
+            logprior = -logprior_fn(position)
+            tempered_loglikelihood = state.lmbda * potential_fn(position)
             return logprior + tempered_loglikelihood
 
         smc_state, info = kernel(

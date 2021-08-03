@@ -4,10 +4,11 @@ import jax
 import numpy as np
 
 
-def dichotomy_solver(fun, _delta0, min_delta, max_delta, eps=1e-4, max_iter=100):
-    """
-    Solves for delta by dichotomy. If max_delta is such that fun(max_delta) > 0,
-    then we assume that max_delta can be used as an increment in the tempering.
+def dichotomy(fun, _delta0, min_delta, max_delta, eps=1e-4, max_iter=100):
+    """Solves for delta by dichotomy.
+
+    If max_delta is such that fun(max_delta) > 0, then we assume that max_delta
+    can be used as an increment in the tempering.
 
     Parameters
     ----------
