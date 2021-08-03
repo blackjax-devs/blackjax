@@ -34,7 +34,7 @@ EuclideanKineticEnergy = Callable[[PyTree], float]
 
 
 def gaussian_euclidean(
-    inverse_mass_matrix: jnp.DeviceArray,
+        inverse_mass_matrix: jnp.DeviceArray,
 ) -> Tuple[Callable, EuclideanKineticEnergy, Callable]:
     r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum.
 
@@ -96,9 +96,10 @@ def gaussian_euclidean(
 
     def momentum_generator(rng_key: jnp.ndarray, position: PyTree) -> PyTree:
         ravelled_position, unravel_fn = ravel_pytree(position)
-        assert ravelled_position.shape[0] == shape[0], \
-            f"'inverse_mass_matrix' and 'position' are not compatible. 'inverse_mass_matrix' has dimension {shape}, " \
-            f"but 'position' ravelled dimension is {ravelled_position.shape[0]}."
+        if not ravelled_position.shape[0] == shape[0]:
+            raise ValueError(f"'inverse_mass_matrix' and 'position' are not compatible. "
+                             f"'inverse_mass_matrix' has dimension {shape}, "
+                             f"but 'position' ravelled dimension is {ravelled_position.shape[0]}.")
         standard_normal_sample = jax.random.normal(rng_key, shape)
         momentum = dot(mass_matrix_sqrt, standard_normal_sample)
         momentum_unravel = unravel_fn(momentum)
@@ -112,7 +113,7 @@ def gaussian_euclidean(
         return kinetic_energy_val
 
     def is_turning(
-        momentum_left: PyTree, momentum_right: PyTree, momentum_sum: PyTree
+            momentum_left: PyTree, momentum_right: PyTree, momentum_sum: PyTree
     ) -> bool:
         """Generalized U-turn criterion.
 

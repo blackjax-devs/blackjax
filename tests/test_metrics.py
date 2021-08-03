@@ -71,7 +71,7 @@ def test_incompatible_shapes_raises(dim, diag):
     bad_position_dimension = jnp.ones((dim + 1,), dtype=DTYPE)
 
     _ = momentum(KEY, good_position_dimension)
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(ValueError) as e:
         _ = momentum(KEY, bad_position_dimension)
     assert "'inverse_mass_matrix' and 'position' are not compatible" in str(e)
 
