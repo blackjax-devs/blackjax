@@ -9,4 +9,4 @@ PyTree = Union[Array, Iterable[Array], Mapping[Any, Array]]
 # Once recursive typing is fully supported (https://github.com/python/mypy/issues/731), we can uncomment the line below.
 # PyTree = Union[Array, Iterable["PyTree"], Mapping[Any, "PyTree"]]
 
-PRNGKey = Array
+PRNGKey = jnp.ndarray

@@ -6,12 +6,11 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-import blackjax.inference.integrators as integrators
-import blackjax.inference.metrics as metrics
-import blackjax.inference.proposal as proposal
-import blackjax.inference.termination as termination
-import blackjax.inference.trajectory as trajectory
-from blackjax.inference.trajectory import DynamicExpansionState, Trajectory
+import blackjax.inference.hmc.integrators as integrators
+import blackjax.inference.hmc.metrics as metrics
+import blackjax.inference.hmc.proposal as proposal
+import blackjax.inference.hmc.termination as termination
+import blackjax.inference.hmc.trajectory as trajectory
 
 divergence_threshold = 1000
 
@@ -230,13 +229,13 @@ def test_dynamic_progressive_expansion(case):
     energy = state.potential_energy + kinetic_energy_fn(state.momentum)
     initial_proposal = proposal.Proposal(state, energy, 0.0, -np.inf)
     initial_termination_state = new_criterion_state(state, 10)
-    initial_trajectory = Trajectory(
+    initial_trajectory = trajectory.Trajectory(
         state,
         state,
         state.momentum,
         0,
     )
-    initial_expansion_state = DynamicExpansionState(
+    initial_expansion_state = trajectory.DynamicExpansionState(
         0, initial_proposal, initial_trajectory, initial_termination_state
     )
 
