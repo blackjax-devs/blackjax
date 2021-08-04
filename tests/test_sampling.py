@@ -125,7 +125,7 @@ def normal_potential_fn(x):
 
 
 def get_rw_proposal():
-    from blackjax.inference.metrics import gaussian_euclidean
+    from blackjax.inference.hmc.metrics import gaussian_euclidean
     inverse_mass_matrix = jnp.array([0.01])
     gaussian_momentum, *_ = gaussian_euclidean(inverse_mass_matrix)
 
