@@ -3,7 +3,6 @@ from typing import Any, Callable, List, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
-from chex import Array, PRNGKey
 
 from blackjax.adaptation.mass_matrix import (
     MassMatrixAdaptationState,
@@ -18,8 +17,6 @@ from blackjax.inference.hmc.base import HMCState
 from blackjax.types import Array, PRNGKey
 
 __all__ = ["run", "stan_warmup"]
-
-PyTree = Union[Array, Dict, List, Tuple]
 
 
 class StanWarmupState(NamedTuple):

@@ -2,14 +2,11 @@
 from typing import Callable, NamedTuple, Tuple
 
 import jax
-from chex import PRNGKey
 
 from blackjax.inference.hmc.integrators import IntegratorState
 from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["HMCState", "hmc"]
-
-PyTree = Union[Dict, List, Tuple]
 
 
 class HMCState(NamedTuple):

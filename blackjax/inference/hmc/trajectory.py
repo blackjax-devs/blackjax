@@ -39,8 +39,7 @@ from blackjax.inference.hmc.proposal import (
     progressive_uniform_sampling,
     proposal_generator,
 )
-
-PyTree = Union[Dict, List, Tuple]
+from blackjax.types import PRNGKey, PyTree
 
 
 class Trajectory(NamedTuple):

@@ -11,7 +11,8 @@ from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
-from chex import Array
+
+from blackjax.types import Array
 
 __all__ = ["mass_matrix_adaptation", "welford_algorithm"]
 
@@ -189,7 +190,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
         ----------
         state:
             The current state of the Welford Algorithm
-        position: NDArray, shape (1,)
+        position: Array, shape (1,)
             The new sample (typically position of the chain) used to update m2
         """
         mean, m2, sample_size = wa_state
@@ -207,7 +208,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
 
     def final(
         wa_state: WelfordAlgorithmState,
-    ) -> Tuple[float, int, Array]:
+    ) -> Tuple[Array, int, Array]:
         mean, m2, sample_size = wa_state
         covariance = m2 / (sample_size - 1)
         return covariance, sample_size, mean
