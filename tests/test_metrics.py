@@ -2,7 +2,7 @@ import jax.numpy as jnp
 import pytest
 from jax import random
 
-from blackjax.inference import metrics
+from blackjax.inference.hmc import metrics
 
 KEY = random.PRNGKey(0)
 DTYPE = "float32"

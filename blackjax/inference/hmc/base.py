@@ -3,7 +3,7 @@ from typing import Callable, NamedTuple, Tuple
 
 import jax
 
-from blackjax.inference.integrators import IntegratorState
+from blackjax.inference.hmc.integrators import IntegratorState
 from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["HMCState", "hmc"]

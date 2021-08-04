@@ -3,7 +3,7 @@ from typing import Callable, NamedTuple
 
 import jax
 
-from blackjax.inference.metrics import EuclideanKineticEnergy
+from blackjax.inference.hmc.metrics import EuclideanKineticEnergy
 from blackjax.types import PyTree
 
 __all__ = ["mclachlan", "velocity_verlet", "yoshida"]

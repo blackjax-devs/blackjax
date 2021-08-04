@@ -32,8 +32,8 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.inference.integrators import IntegratorState
-from blackjax.inference.proposal import (
+from blackjax.inference.hmc.integrators import IntegratorState
+from blackjax.inference.hmc.proposal import (
     Proposal,
     progressive_biased_sampling,
     progressive_uniform_sampling,

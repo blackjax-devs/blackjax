@@ -4,8 +4,11 @@
 import jax.numpy as jnp
 import pytest
 
-from blackjax.inference.metrics import gaussian_euclidean
-from blackjax.inference.termination import IterativeUTurnState, iterative_uturn_numpyro
+from blackjax.inference.hmc.metrics import gaussian_euclidean
+from blackjax.inference.hmc.termination import (
+    IterativeUTurnState,
+    iterative_uturn_numpyro,
+)
 
 
 @pytest.mark.parametrize(
