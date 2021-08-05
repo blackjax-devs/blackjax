@@ -10,6 +10,7 @@ import pytest
 import blackjax.diagnostics as diagnostics
 import blackjax.hmc as hmc
 import blackjax.nuts as nuts
+import blackjax.rwmh as rwmh
 import blackjax.stan_warmup as stan_warmup
 
 
@@ -132,12 +133,21 @@ normal_test_cases = [
             "num_integration_steps": 100,
         },
         "num_sampling_steps": 6000,
+        "burnin": 5_000,
     },
     {
         "algorithm": nuts,
         "initial_position": {"x": jnp.array(100.0)},
         "parameters": {"step_size": 0.1, "inverse_mass_matrix": jnp.array([0.1])},
         "num_sampling_steps": 6000,
+        "burnin": 5_000,
+    },
+    {
+        "algorithm": rwmh,
+        "initial_position": {"x": 1.0},
+        "parameters": {"sigma": jnp.array([1.0])},
+        "num_sampling_steps": 20_000,
+        "burnin": 5_000,
     },
 ]
 
@@ -152,10 +162,10 @@ def test_univariate_normal(case):
     kernel = case["algorithm"].kernel(potential, **case["parameters"])
     states = inference_loop(rng_key, kernel, initial_state, case["num_sampling_steps"])
 
-    samples = states.position["x"][-1000:]
+    samples = states.position["x"][case["burnin"] :]
 
-    assert np.var(samples) == pytest.approx(4.0, 1e-1)
     assert np.mean(samples) == pytest.approx(1.0, 1e-1)
+    assert np.var(samples) == pytest.approx(4.0, 1e-1)
 
 
 # -------------------------------------------------------------------
