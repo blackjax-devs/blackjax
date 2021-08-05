@@ -1,6 +1,5 @@
 """Test the accuracy of the HMC kernel"""
 import functools as ft
-from operator import add
 
 import jax
 import jax.numpy as jnp
@@ -10,8 +9,8 @@ import pytest
 
 import blackjax.diagnostics as diagnostics
 import blackjax.hmc as hmc
-import blackjax.mh as mh
 import blackjax.nuts as nuts
+import blackjax.rwmh as rwmh
 import blackjax.stan_warmup as stan_warmup
 
 
@@ -27,7 +26,7 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
 
 
 def inference_loop_multiple_chains(
-        rng_key, kernel, initial_state, num_samples, num_chains
+    rng_key, kernel, initial_state, num_samples, num_chains
 ):
     def one_step(states, rng_key):
         keys = jax.random.split(rng_key, num_chains)
@@ -124,19 +123,6 @@ def normal_potential_fn(x):
     return -stats.norm.logpdf(x, loc=1.0, scale=2.0).squeeze()
 
 
-def get_rw_proposal():
-    from blackjax.inference.hmc.metrics import gaussian_euclidean
-    inverse_mass_matrix = jnp.array([0.01])
-    gaussian_momentum, *_ = gaussian_euclidean(inverse_mass_matrix)
-
-    def proposal_generator(key, position):
-        from jax import tree_multimap
-        return tree_multimap(add, position, gaussian_momentum(key, position))
-
-    proposal_loglikelihood_fn = lambda *_: 0.  # symmetric proposal
-    return proposal_generator, proposal_loglikelihood_fn
-
-
 normal_test_cases = [
     {
         "algorithm": hmc,
@@ -157,10 +143,10 @@ normal_test_cases = [
         "burnin": 5_000,
     },
     {
-        "algorithm": mh,
+        "algorithm": rwmh,
         "initial_position": {"x": 1.0},
-        "parameters": {"get_proposal_generator": get_rw_proposal},
-        "num_sampling_steps": 10_000,
+        "parameters": {"sigma": jnp.array([1.0])},
+        "num_sampling_steps": 20_000,
         "burnin": 5_000,
     },
 ]
@@ -176,10 +162,10 @@ def test_univariate_normal(case):
     kernel = case["algorithm"].kernel(potential, **case["parameters"])
     states = inference_loop(rng_key, kernel, initial_state, case["num_sampling_steps"])
 
-    samples = states.position["x"][case["burnin"]:]
+    samples = states.position["x"][case["burnin"] :]
 
-    assert np.var(samples) == pytest.approx(4.0, 1e-1)
     assert np.mean(samples) == pytest.approx(1.0, 1e-1)
+    assert np.var(samples) == pytest.approx(4.0, 1e-1)
 
 
 # -------------------------------------------------------------------
@@ -259,7 +245,7 @@ def test_mcse(case):
     posterior_delta = posterior_samples - true_loc
     posterior_variance = posterior_delta ** 2.0
     posterior_correlation = jnp.prod(posterior_delta, axis=-1, keepdims=True) / (
-            true_scale[0] * true_scale[1]
+        true_scale[0] * true_scale[1]
     )
 
     _ = jax.tree_multimap(
