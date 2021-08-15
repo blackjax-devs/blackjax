@@ -5,9 +5,8 @@ import itertools
 import chex
 import jax
 import numpy as np
-
 from absl.testing import absltest, parameterized
-from jax.scipy.stats.norm import logpdf
+from jax.scipy.stats.norm import logpdf as normal_logpdf
 
 import blackjax.inference.smc.ess as ess
 import blackjax.inference.smc.solver as solver
@@ -40,7 +39,7 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(itertools.product([0.25, 0.5], [100, 1000, 5000]))
     def test_ess_solver(self, target_ess, N):
-        potential_fn = lambda pytree: -logpdf(pytree, scale=0.1)
+        potential_fn = lambda pytree: -normal_logpdf(pytree, scale=0.1)
         potential = jax.vmap(lambda x: potential_fn(*x), in_axes=[0])
         ess_solver_fn = functools.partial(
             ess.ess_solver,
