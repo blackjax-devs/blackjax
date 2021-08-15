@@ -1,4 +1,4 @@
-"""Test the ess function"""
+"""Test the ess function for SMC."""
 import functools
 import itertools
 
@@ -64,3 +64,7 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
         np.testing.assert_allclose(
             np.exp(log_ess), target_ess * N, atol=1e-1, rtol=1e-2
         )
+
+
+if __name__ == "__main__":
+    absltest.main()
