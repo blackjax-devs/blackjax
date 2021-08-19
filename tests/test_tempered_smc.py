@@ -1,7 +1,6 @@
 """Test the tempered SMC steps and routine"""
 import functools
 import itertools
-from typing import List
 
 import chex
 import jax
@@ -13,6 +12,7 @@ from absl.testing import absltest, parameterized
 import blackjax.hmc as hmc
 import blackjax.inference.smc.resampling as resampling
 import blackjax.inference.smc.solver as solver
+from blackjax.inference.smc.base import new_smc_state
 from blackjax.tempered_smc import TemperedSMCState, adaptive_tempered_smc, tempered_smc
 
 
@@ -48,8 +48,8 @@ class TemperedSMCTest(chex.TestCase):
         return jnp.sum(logpdf)
 
     @chex.all_variants(without_jit=False, with_pmap=False)
-    @parameterized.parameters(itertools.product([100, 5000], [True, False]))
-    def test_adaptive_tempered_smc(self, N, use_log):
+    @parameterized.parameters(itertools.product([1000], [True, False], [True, False]))
+    def test_adaptive_tempered_smc(self, N, use_log, is_waste_free):
         x_data = np.random.normal(0, 1, size=(1000, 1))
         y_data = 3 * x_data + np.random.normal(size=x_data.shape)
         observations = {"x": x_data, "preds": y_data}
@@ -59,10 +59,9 @@ class TemperedSMCTest(chex.TestCase):
         prior = lambda x: stats.expon.logpdf(x[0], 1, 1) + stats.norm.logpdf(x[1])
         scale_init = 1 + np.random.exponential(1, N)
         coeffs_init = 3 + 2 * np.random.randn(N)
-        smc_state_init = [scale_init, coeffs_init]
+        smc_state_init, _ = new_smc_state([scale_init, coeffs_init], lambda z: 1.0)
 
         iterates = []
-        results = []  # type: List[TemperedSMCState]
         mcmc_kernel_factory = lambda pot: hmc.kernel(pot, 10e-2, jnp.eye(2), 50)
 
         for target_ess in [0.5, 0.75]:
@@ -76,23 +75,33 @@ class TemperedSMCTest(chex.TestCase):
                 solver.dichotomy,
                 use_log,
                 5,
+                is_waste_free,
             )
             tempered_smc_state_init = TemperedSMCState(smc_state_init, 0.0)
 
             n_iter, result, log_likelihood = self.variant(
                 functools.partial(inference_loop, tempering_kernel)
             )(self.key, tempered_smc_state_init)
-            iterates.append(n_iter)
-            results.append(result)
 
-            np.testing.assert_allclose(np.mean(result.particles[0]), 1.0, rtol=1e-1)
-            np.testing.assert_allclose(np.mean(result.particles[1]), 3.0, rtol=1e-1)
+            final_state = result.smc_state
+            iterates.append(n_iter)
+
+            np.testing.assert_allclose(
+                np.average(final_state.particles[0], weights=final_state.weights),
+                1.0,
+                rtol=1e-1,
+            )
+            np.testing.assert_allclose(
+                np.average(final_state.particles[1], weights=final_state.weights),
+                3.0,
+                rtol=1e-1,
+            )
 
         assert iterates[1] >= iterates[0]
 
     @chex.all_variants(without_jit=False, with_pmap=False)
-    @parameterized.parameters(itertools.product([100, 1000], [10, 100]))
-    def test_fixed_schedule_tempered_smc(self, N, n_schedule):
+    @parameterized.parameters(itertools.product([1000], [10], [True, False]))
+    def test_fixed_schedule_tempered_smc(self, N, n_schedule, is_waste_free):
         x_data = np.random.normal(0, 1, size=(1000, 1))
         y_data = 3 * x_data + np.random.normal(size=x_data.shape)
         observations = {"x": x_data, "preds": y_data}
@@ -101,7 +110,7 @@ class TemperedSMCTest(chex.TestCase):
         prior = lambda x: stats.norm.logpdf(jnp.log(x[0])) + stats.norm.logpdf(x[1])
         scale_init = np.exp(np.random.randn(N))
         coeffs_init = np.random.randn(N)
-        smc_state_init = [scale_init, coeffs_init]
+        smc_state_init, _ = new_smc_state([scale_init, coeffs_init], lambda z: 1.0)
 
         lambda_schedule = np.logspace(-5, 0, n_schedule)
         mcmc_kernel_factory = lambda pot: hmc.kernel(pot, 10e-2, jnp.eye(2), 50)
@@ -114,6 +123,7 @@ class TemperedSMCTest(chex.TestCase):
                 hmc.new_state,
                 resampling.systematic,
                 10,
+                is_waste_free,
             )
         )
         tempered_smc_state_init = TemperedSMCState(smc_state_init, 0.0)
@@ -127,34 +137,39 @@ class TemperedSMCTest(chex.TestCase):
         (_, result), _ = jax.lax.scan(
             body_fn, (self.key, tempered_smc_state_init), lambda_schedule
         )
-        np.testing.assert_allclose(np.mean(result.particles[0]), 1.0, rtol=1e-1)
-        np.testing.assert_allclose(np.mean(result.particles[1]), 3.0, rtol=1e-1)
 
-
-def normal_logprob_fn(x, chol_cov):
-    """minus log-density of a centered multivariate normal distribution"""
-    dim = chol_cov.shape[0]
-    y = jax.scipy.linalg.solve_triangular(chol_cov, x, lower=True)
-    normalizing_constant = (
-        np.sum(np.log(np.abs(np.diag(chol_cov)))) + dim * np.log(2 * np.pi) / 2.0
-    )
-    norm_y = jnp.sum(y * y, -1)
-    return -(0.5 * norm_y + normalizing_constant)
+        final_state = result.smc_state
+        np.testing.assert_allclose(np.mean(final_state.particles[0]), 1.0, rtol=1e-1)
+        np.testing.assert_allclose(np.mean(final_state.particles[1]), 3.0, rtol=1e-1)
 
 
 class NormalizingConstantTest(chex.TestCase):
     """Test normalizing constant estimate."""
 
+    def normal_logprob_fn(self, x, chol_cov):
+        """minus log-density of a centered multivariate normal distribution"""
+        dim = chol_cov.shape[0]
+        y = jax.scipy.linalg.solve_triangular(chol_cov, x, lower=True)
+        normalizing_constant = (
+            np.sum(np.log(np.abs(np.diag(chol_cov)))) + dim * np.log(2 * np.pi) / 2.0
+        )
+        norm_y = jnp.sum(y * y, -1)
+        return -(0.5 * norm_y + normalizing_constant)
+
     @chex.all_variants(without_jit=False, with_pmap=False)
-    @parameterized.parameters(itertools.product([500, 1_000], [2, 10]))
-    def test_normalizing_constant(self, N, dim):
+    @parameterized.parameters(itertools.product([5_000], [10], [True, False]))
+    def test_normalizing_constant(self, N, dim, is_waste_free):
+        num_mcmc_iterations = 100
+        if not is_waste_free:
+            N = N // num_mcmc_iterations  # same budget for waste-free and standard SMC
+
         rng_key = jax.random.PRNGKey(2356)
         rng_key, cov_key = jax.random.split(rng_key, 2)
         chol_cov = jax.random.uniform(cov_key, shape=(dim, dim))
         iu = np.triu_indices(dim, 1)
         chol_cov = chol_cov.at[iu].set(0.0)
         cov = chol_cov @ chol_cov.T
-        conditionned_logprob = lambda x: normal_logprob_fn(x, chol_cov)
+        conditionned_logprob = lambda x: self.normal_logprob_fn(x, chol_cov)
 
         prior = lambda x: stats.multivariate_normal.logpdf(
             x, jnp.zeros((dim,)), jnp.eye(dim)
@@ -163,7 +178,9 @@ class NormalizingConstantTest(chex.TestCase):
         rng_key, init_key = jax.random.split(rng_key, 2)
         x_init = jax.random.normal(init_key, shape=(N, dim))
 
-        mcmc_kernel_factory = lambda pot: hmc.kernel(pot, 1e-2, jnp.eye(dim), 50)
+        mcmc_kernel_factory = lambda logprob: hmc.kernel(
+            logprob, 1e-2, jnp.eye(dim), 50
+        )
 
         tempering_kernel = adaptive_tempered_smc(
             prior,
@@ -174,9 +191,14 @@ class NormalizingConstantTest(chex.TestCase):
             0.9,
             solver.dichotomy,
             True,
-            10,
+            num_mcmc_iterations,
+            is_waste_free,
         )
-        tempered_smc_state_init = TemperedSMCState(x_init, 0.0)
+
+        x_init = np.random.randn(N, dim)
+        state_init, _ = new_smc_state(x_init, lambda z: 0.0)
+        tempered_smc_state_init = TemperedSMCState(state_init, 0.0)
+
         n_iter, result, log_likelihood = self.variant(
             functools.partial(inference_loop, tempering_kernel)
         )(rng_key, tempered_smc_state_init)

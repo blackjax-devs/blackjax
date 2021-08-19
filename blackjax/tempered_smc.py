@@ -5,7 +5,7 @@ import jax
 import jax.numpy as jnp
 
 import blackjax.inference.smc.solver as solver
-from blackjax.inference.smc.base import SMCInfo, smc
+from blackjax.inference.smc.base import SMCInfo, SMCState, smc
 from blackjax.inference.smc.ess import ess_solver
 from blackjax.types import PRNGKey, PyTree
 
@@ -15,13 +15,13 @@ __all__ = ["adaptive_tempered_smc", "tempered_smc"]
 class TemperedSMCState(NamedTuple):
     """Current state for the tempered SMC algorithm.
 
-    particles: PyTree
-        The particles' positions.
+    smc_state: SMCState
+        The current SMC state.
     lmbda: float
         Current value of the tempering parameter.
     """
 
-    particles: PyTree
+    smc_state: SMCState
     lmbda: float
 
 
@@ -35,6 +35,7 @@ def adaptive_tempered_smc(
     root_solver: Callable = solver.dichotomy,
     use_log_ess: bool = True,
     mcmc_iter: int = 10,
+    is_waste_free: bool = False,
 ) -> Callable:
     r"""Build a Tempered SMC step using an adaptive schedule.
 
@@ -60,8 +61,10 @@ def adaptive_tempered_smc(
     use_log_ess: bool, optional
         Use ESS in log space to solve for delta, default is `True`.
         This is usually more stable when using gradient based solvers.
-    mcmc_iter: int
+    mcmc_iter: int, optional
         Number of iterations in the MCMC chain.
+    waste_free: bool
+        Is the SMC algorithm using waste-free MCMC proposals. Default is false.
 
     Returns
     -------
@@ -73,9 +76,10 @@ def adaptive_tempered_smc(
     def compute_delta(state: TemperedSMCState) -> float:
         lmbda = state.lmbda
         max_delta = 1 - lmbda
+        smc_state = state.smc_state
         delta = ess_solver(
             jax.vmap(loglikelihood_fn),
-            state.particles,
+            smc_state.particles,
             target_ess,
             max_delta,
             root_solver,
@@ -92,6 +96,7 @@ def adaptive_tempered_smc(
         make_mcmc_state,
         resampling_fn,
         mcmc_iter,
+        is_waste_free,
     )
 
     def one_step(
@@ -111,6 +116,7 @@ def tempered_smc(
     make_mcmc_state: Callable,
     resampling_fn: Callable,
     num_mcmc_iterations: int,
+    waste_free: bool = False,
 ) -> Callable:
     """Build the base Tempered SMC kernel.
 
@@ -139,6 +145,8 @@ def tempered_smc(
         A random function that resamples generated particles based of weights
     num_mcmc_iterations
         Number of iterations in the MCMC chain.
+    waste_free: bool, optional
+        Is the SMC algorithm using waste-free MCMC proposals. Default is false
 
     Returns
     -------
@@ -148,7 +156,11 @@ def tempered_smc(
 
     """
     kernel = smc(
-        mcmc_kernel_factory, make_mcmc_state, resampling_fn, num_mcmc_iterations
+        mcmc_kernel_factory,
+        make_mcmc_state,
+        resampling_fn,
+        num_mcmc_iterations,
+        waste_free,
     )
 
     def one_step(
@@ -183,9 +195,9 @@ def tempered_smc(
             return logprior + tempered_loglikelihood
 
         smc_state, info = kernel(
-            rng_key, state.particles, tempered_logposterior_fn, log_weights_fn
+            rng_key, state.smc_state, tempered_logposterior_fn, log_weights_fn
         )
-        state = TemperedSMCState(smc_state, state.lmbda + delta)
+        state = TemperedSMCState(smc_state, lmbda)
 
         return state, info
 

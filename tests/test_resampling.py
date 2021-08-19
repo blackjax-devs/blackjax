@@ -29,9 +29,9 @@ def integrand(x):
 class ResamplingTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
-        itertools.product([100, 500, 1_000, 100_000], resampling_methods.keys())
+        itertools.product([1_000], [100, 2_000], resampling_methods.keys())
     )
-    def test_resampling_methods(self, N, method_name):
+    def test_resampling_methods(self, N, M, method_name):
         np.random.seed(42)
         batch_size = 100
         w = np.random.rand(N)
@@ -40,9 +40,13 @@ class ResamplingTest(chex.TestCase):
 
         resampling_keys = jax.random.split(jax.random.PRNGKey(42), batch_size)
 
-        resampling_idx = self.variant(
-            jax.vmap(resampling_methods[method_name], in_axes=[None, 0])
-        )(w, resampling_keys)
+        resampling_idx = jax.vmap(
+            self.variant(resampling_methods[method_name], static_argnums=(2,)),
+            in_axes=[None, 0, None],
+        )(w, resampling_keys, M)
+
+        self.assertEqual(resampling_idx.shape[-1], M)
+
         resampling_idx = np.asarray(resampling_idx)
         batch_x = np.repeat(x.reshape(1, -1), batch_size, axis=0)
         batch_resampled_x = np.take_along_axis(batch_x, resampling_idx, axis=1)

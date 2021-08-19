@@ -3,27 +3,69 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.inference.hmc.base import PyTree
+from blackjax.types import PRNGKey, PyTree
 
 
-class SMCInfo(NamedTuple):
-    """Additional information on the tempered SMC step.
+class SMCState(NamedTuple):
+    """SMC current state.
 
     weights: jnp.ndarray
         The weights after the MCMC pass.
-    proposals: PyTree
+    particles: PyTree
         The particles that were proposed by the MCMC pass.
+    """
+
+    weights: jnp.ndarray
+    particles: PyTree
+
+
+class SMCInfo(NamedTuple):
+    """Additional information on the SMC step.
+
     ancestors: jnp.ndarray
         The index of the particles proposed by the MCMC pass that were selected
         by the resampling step.
     log_likelihood_increment: float
         The log-likelihood increment due to the current step of the SMC algorithm.
+    acceptance_rate: float
+        Average acceptance rate for the inner MCMC chain
     """
 
-    weights: jnp.ndarray
-    proposals: PyTree
     ancestors: jnp.ndarray
     log_likelihood_increment: float
+    acceptance_rate: float
+
+
+def new_smc_state(
+    particles: PyTree, potential_fn: Callable
+) -> Tuple[SMCState, SMCInfo]:
+    """Create a SMC state from initial particles and a potential function
+
+    Parameters
+    ----------
+    particles
+        The current value of the particles
+    potential_fn
+        A function that returns the value of the potential energy when called
+        with a position.
+
+    Returns
+    -------
+    smc_state:
+        A SMC state that contains the position, the associated potential energy and gradient of the
+        potential energy.
+    smc_info: SMCInfo
+        initial information state
+    """
+
+    n_samples = jax.tree_flatten(particles)[0][0].shape[0]
+    log_weights = -jax.vmap(potential_fn)(particles)
+    weights, log_likelihood_increment = _normalize(log_weights)
+    ancestors = jnp.arange(n_samples, dtype=int)
+
+    smc_info = SMCInfo(ancestors, log_likelihood_increment, 1.0)
+    smc_state = SMCState(weights, particles)
+    return smc_state, smc_info
 
 
 def smc(
@@ -31,6 +73,7 @@ def smc(
     mcmc_state_generator: Callable,
     resampling_fn: Callable,
     num_mcmc_iterations: int,
+    is_waste_free: bool = False,
 ):
     """Build a generic SMC kernel.
 
@@ -58,72 +101,111 @@ def smc(
         based of previously computed weights.
     num_mcmc_iterations: int
         Number of iterations of the MCMC kernel
+    is_waste_free: bool
+        Is the algorithm using the Waste free algorithm in https://arxiv.org/abs/2011.02328?
+        If true, then num_mcmc_iterations must divide the number of particles in the SMCState
 
     Returns
     -------
-    A kernel that takes a PRNGKey, a set of particles, the log-likehood of the
+    A kernel that takes a PRNGKey, a SMCState, the log-likelihood of the
     distribution and the Feynman-Kac potential at time `t`. The kernel returns
     a new set of particles.
 
     """
+    if is_waste_free:
+        num_mcmc_iterations = num_mcmc_iterations - 1
 
     def kernel(
-        rng_key: jnp.ndarray,
-        particles: PyTree,
+        rng_key: PRNGKey,
+        state: SMCState,
         logprob_fn: Callable,
         log_weight_fn: Callable,
-    ) -> Tuple[PyTree, SMCInfo]:
+    ) -> Tuple[SMCState, SMCInfo]:
         """
 
         Parameters
         ----------
         rng_key: DeviceArray[int],
             JAX PRNGKey for randomness.
-        particles: PyTree
-            Current particles sample of the SMC algorithm.
+        state: SMCState
+            Current state of the SMC algorithm.
         logprob_fn: Callable
-            Log probability function we wish to sample from.
+           The log-probability density function of the distribution we wish to sample from.
         log_weight_fn: Callable
             A function that represents the Feynman-Kac log potential at time t.
 
         Returns
         -------
-        particles: PyTree,
-            The updated set of particles.
+        state: SMCState,
+            The updated state.
         info: SMCInfo,
             Additional information on the SMC step
         """
-
-        num_particles = jax.tree_flatten(particles)[0][0].shape[0]
+        weights, particles = state
         scan_key, resampling_key = jax.random.split(rng_key, 2)
+
+        num_particles = weights.shape[0]
+        if is_waste_free:
+            sub_num_particles, remainder = divmod(
+                num_particles, num_mcmc_iterations + 1
+            )
+            if remainder > 0:
+                raise ValueError(
+                    "`num_mcmc_iterations` must be a divider "
+                    f"of `num_particles`, {num_mcmc_iterations} and "
+                    f"{num_particles} were given"
+                )
+        else:
+            sub_num_particles = num_particles
+
+        resampling_index = resampling_fn(weights, resampling_key, sub_num_particles)
+        particles = jax.tree_map(lambda x: x[resampling_index], particles)
 
         # First advance the particles using the MCMC kernel
         mcmc_kernel = mcmc_kernel_factory(logprob_fn)
 
-        def mcmc_body_fn(curr_particles, curr_key):
-            keys = jax.random.split(curr_key, num_particles)
-            new_particles, _ = jax.vmap(mcmc_kernel, in_axes=(0, 0))(
+        def mcmc_body_fn(carry, curr_key):
+            curr_particles, n_accepted = carry
+            keys = jax.random.split(curr_key, sub_num_particles)
+            new_particles, mcmc_info = jax.vmap(mcmc_kernel, in_axes=(0, 0))(
                 keys, curr_particles
             )
-            return new_particles, None
+            n_accepted = n_accepted + mcmc_info.is_accepted
+            return (new_particles, n_accepted), new_particles
 
         mcmc_state = jax.vmap(mcmc_state_generator, in_axes=(0, None))(
             particles, logprob_fn
         )
-        keys = jax.random.split(scan_key, num_mcmc_iterations)
-        proposed_states, _ = jax.lax.scan(mcmc_body_fn, mcmc_state, keys)
-        proposed_particles = proposed_states.position
 
+        keys = jax.random.split(scan_key, num_mcmc_iterations)
+        (proposed_states, total_accepted), proposed_states_history = jax.lax.scan(
+            mcmc_body_fn, (mcmc_state, jnp.zeros((sub_num_particles,))), keys
+        )
+        acceptance_rate = jnp.mean(total_accepted / num_mcmc_iterations)
+
+        if is_waste_free:
+            initial_position, tree_def = jax.tree_flatten(mcmc_state.position)
+            chains_history, _ = jax.tree_flatten(proposed_states_history.position)
+
+            position_history = [
+                jnp.concatenate([jnp.expand_dims(elem1, 0), elem2])
+                for elem1, elem2 in zip(initial_position, chains_history)
+            ]
+            position_history = jax.tree_unflatten(tree_def, position_history)
+            proposed_particles = jax.tree_map(
+                lambda z: jnp.reshape(z, (num_particles,) + z.shape[2:]),
+                position_history,
+            )
+
+        else:
+            proposed_particles = proposed_states.position
         # Resample the particles depending on their respective weights
         log_weights = jax.vmap(log_weight_fn, in_axes=(0,))(proposed_particles)
         weights, log_likelihood_increment = _normalize(log_weights)
-        resampling_index = resampling_fn(weights, resampling_key)
-        particles = jax.tree_map(lambda x: x[resampling_index], proposed_particles)
 
-        info = SMCInfo(
-            weights, proposed_particles, resampling_index, log_likelihood_increment
-        )
-        return particles, info
+        state = SMCState(weights, proposed_particles)
+        info = SMCInfo(resampling_index, log_likelihood_increment, acceptance_rate)
+        return state, info
 
     return kernel
 
