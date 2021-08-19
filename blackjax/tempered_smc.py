@@ -183,7 +183,7 @@ def tempered_smc(
         smc_state, info = kernel(
             rng_key, state.particles, tempered_potential_fn, log_weights_fn
         )
-        state = TemperedSMCState(smc_state, state.lmbda + delta)
+        state = TemperedSMCState(smc_state, lmbda)
 
         return state, info
 
