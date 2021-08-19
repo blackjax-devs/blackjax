@@ -1,7 +1,9 @@
+import math
 from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
+from jax.experimental.host_callback import id_print
 
 from blackjax.inference.hmc.base import PyTree
 
@@ -27,10 +29,10 @@ class SMCInfo(NamedTuple):
 
 
 def smc(
-    mcmc_kernel_factory: Callable,
-    mcmc_state_generator: Callable,
-    resampling_fn: Callable,
-    num_mcmc_iterations: int,
+        mcmc_kernel_factory: Callable,
+        mcmc_state_generator: Callable,
+        resampling_fn: Callable,
+        num_mcmc_iterations: int,
 ):
     """Build a generic SMC step that takes a mcmc_kernel and a potential function, propagate through it,
     corrects using the weights function and resamples the end result.
@@ -69,10 +71,10 @@ def smc(
     """
 
     def kernel(
-        rng_key: jnp.ndarray,
-        particles: PyTree,
-        potential_fn: Callable,
-        log_weight_fn: Callable,
+            rng_key: jnp.ndarray,
+            particles: PyTree,
+            potential_fn: Callable,
+            log_weight_fn: Callable,
     ) -> Tuple[PyTree, SMCInfo]:
         """
 
@@ -119,7 +121,7 @@ def smc(
 
         # Resample the particles depending on their respective weights
         log_weights = jax.vmap(log_weight_fn, in_axes=(0,))(proposed_particles)
-        weights, log_likelihood_increment = _normalize(log_weights)
+        weights, log_likelihood_increment = normalize(log_weights)
         resampling_index = resampling_fn(weights, resampling_key)
         particles = jax.tree_map(lambda x: x[resampling_index], proposed_particles)
 
@@ -131,14 +133,21 @@ def smc(
     return kernel
 
 
-def _normalize(log_weights):
+def normalize(log_weights, return_log = False):
     """Normalize log-weights into weights and return resulting weights and log-likelihood increment."""
     n = log_weights.shape[0]
+    log_n = math.log(n)
     max_logw = jnp.max(log_weights)
-    w = jnp.exp(log_weights - max_logw)
-    w_mean = w.mean()
+    log_weights = log_weights - max_logw
 
-    log_likelihood_increment = jnp.log(w_mean) + max_logw
+    w = jnp.exp(log_weights)
+    w_sum = jnp.sum(w)
 
-    w = w / (n * w_mean)
-    return w, log_likelihood_increment
+    log_likelihood_increment = jnp.log(w_sum) + max_logw - log_n
+    log_weights = log_weights - jnp.log(w_sum)
+    log_weights = jnp.nan_to_num(log_weights, nan=-jnp.inf)
+
+    if not return_log:
+        w = jnp.exp(log_weights)
+        return w, log_likelihood_increment
+    return log_weights, log_likelihood_increment

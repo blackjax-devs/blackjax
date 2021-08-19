@@ -8,7 +8,7 @@ import pytest
 
 import blackjax.hmc as hmc
 import blackjax.inference.smc.resampling as resampling
-from blackjax.inference.smc.base import _normalize, smc
+from blackjax.inference.smc.base import normalize, smc
 
 
 def kernel_potential_fn(position):
@@ -58,7 +58,7 @@ def test_normalize():
     logw = np.random.randn(
         1234,
     )
-    w, loglikelihood_increment = _normalize(logw)
+    w, loglikelihood_increment = normalize(logw)
 
     assert np.sum(w) == pytest.approx(1.0, rel=1e-6)
     assert np.max(np.log(w) - logw) == pytest.approx(np.min(np.log(w) - logw), rel=1e-6)
