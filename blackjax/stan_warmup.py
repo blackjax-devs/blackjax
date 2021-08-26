@@ -67,7 +67,8 @@ def run(
         kernel_factory,
         is_mass_matrix_diagonal,
         target_accept_initial=target_accept_initial,
-        target_accept=target_accept)
+        target_accept=target_accept,
+    )
 
     def one_step(carry, interval):
         rng_key, state, warmup_state = carry
