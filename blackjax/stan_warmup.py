@@ -63,7 +63,11 @@ def run(
         that contains the whole adaptation chain.
 
     """
-    init, update, final = stan_warmup(kernel_factory, is_mass_matrix_diagonal)
+    init, update, final = stan_warmup(
+        kernel_factory,
+        is_mass_matrix_diagonal,
+        target_accept_initial=target_accept_initial,
+        target_accept=target_accept)
 
     def one_step(carry, interval):
         rng_key, state, warmup_state = carry
