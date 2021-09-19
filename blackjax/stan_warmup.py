@@ -32,7 +32,6 @@ def run(
     *,
     is_mass_matrix_diagonal: bool = True,
     initial_step_size: float = 1.0,
-    target_accept_initial: float = 0.65,
     target_accept: float = 0.65,
 ) -> Tuple[HMCState, Tuple[float, Array], NamedTuple]:
     """Loop for the Stan warmup.
@@ -52,10 +51,8 @@ def run(
         Indicates whether we should adapt a diagonal or full mass matrix.
     initial_step_size:
         The fist step size to use.
-    target_accept_initial:
-        Target acceptance rate for initial step size adaptation.
     target_accept:
-        Target acceptance rate for main step size adaptation using dual averaging.
+        Target acceptance rate for step size adaptation.
 
     Returns
     -------
@@ -66,7 +63,6 @@ def run(
     init, update, final = stan_warmup(
         kernel_factory,
         is_mass_matrix_diagonal,
-        target_accept_initial=target_accept_initial,
         target_accept=target_accept,
     )
 
@@ -97,7 +93,6 @@ def run(
 def stan_warmup(
     kernel_factory: Callable,
     is_mass_matrix_diagonal: bool,
-    target_accept_initial: float = 0.65,
     target_accept: float = 0.65,
 ):
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
@@ -140,10 +135,8 @@ def stan_warmup(
         mass matrix.
     is_mass_matrix_diagonal
         Create and adapt a diagonal mass matrix if True, a dense matrix otherwise.
-    target_accept_initial:
-        Target acceptance rate for initial step size adaptation.
     target_accept:
-        Target acceptance rate for main step size adaptation using dual averaging.
+        Target acceptance rate for step size adaptation.
 
     Returns
     -------
@@ -178,7 +171,7 @@ def stan_warmup(
             kernel,
             initial_state,
             initial_step_size,
-            target_accept_initial,
+            target_accept,
         )
         da_state = fast_init(step_size)
 
