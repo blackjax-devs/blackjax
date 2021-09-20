@@ -32,7 +32,7 @@ def run(
     *,
     is_mass_matrix_diagonal: bool = True,
     initial_step_size: float = 1.0,
-    target_accept: float = 0.65,
+    target_acceptance_rate: float = 0.65,
 ) -> Tuple[HMCState, Tuple[float, Array], NamedTuple]:
     """Loop for the Stan warmup.
 
@@ -51,7 +51,7 @@ def run(
         Indicates whether we should adapt a diagonal or full mass matrix.
     initial_step_size:
         The fist step size to use.
-    target_accept:
+    target_acceptance_rate:
         Target acceptance rate for step size adaptation.
 
     Returns
@@ -63,7 +63,7 @@ def run(
     init, update, final = stan_warmup(
         kernel_factory,
         is_mass_matrix_diagonal,
-        target_accept=target_accept,
+        target_acceptance_rate=target_acceptance_rate,
     )
 
     def one_step(carry, interval):
@@ -93,7 +93,7 @@ def run(
 def stan_warmup(
     kernel_factory: Callable,
     is_mass_matrix_diagonal: bool,
-    target_accept: float = 0.65,
+    target_acceptance_rate: float = 0.65,
 ):
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
     The schedule and algorithms used match Stan's [1]_ as closely as possible.
@@ -135,7 +135,7 @@ def stan_warmup(
         mass matrix.
     is_mass_matrix_diagonal
         Create and adapt a diagonal mass matrix if True, a dense matrix otherwise.
-    target_accept:
+    target_acceptance_rate:
         Target acceptance rate for step size adaptation.
 
     Returns
@@ -148,7 +148,7 @@ def stan_warmup(
         Function that returns the step size and mass matrix given a warmup state.
 
     """
-    fast_init, fast_update = fast_window(target_accept)
+    fast_init, fast_update = fast_window(target_acceptance_rate)
     slow_init, slow_update, slow_final = slow_window(is_mass_matrix_diagonal)
 
     def init(
@@ -171,7 +171,7 @@ def stan_warmup(
             kernel,
             initial_state,
             initial_step_size,
-            target_accept,
+            target_acceptance_rate,
         )
         da_state = fast_init(step_size)
 
