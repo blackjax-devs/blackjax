@@ -31,7 +31,8 @@ def run(
     num_steps: int = 1000,
     *,
     is_mass_matrix_diagonal: bool = True,
-    initial_step_size: float = 1.0
+    initial_step_size: float = 1.0,
+    target_acceptance_rate: float = 0.65,
 ) -> Tuple[HMCState, Tuple[float, Array], NamedTuple]:
     """Loop for the Stan warmup.
 
@@ -50,6 +51,8 @@ def run(
         Indicates whether we should adapt a diagonal or full mass matrix.
     initial_step_size:
         The fist step size to use.
+    target_acceptance_rate:
+        Target acceptance rate for step size adaptation.
 
     Returns
     -------
@@ -57,7 +60,11 @@ def run(
         that contains the whole adaptation chain.
 
     """
-    init, update, final = stan_warmup(kernel_factory, is_mass_matrix_diagonal)
+    init, update, final = stan_warmup(
+        kernel_factory,
+        is_mass_matrix_diagonal,
+        target_acceptance_rate=target_acceptance_rate,
+    )
 
     def one_step(carry, interval):
         rng_key, state, warmup_state = carry
@@ -83,7 +90,11 @@ def run(
     return last_chain_state, (step_size, inverse_mass_matrix), warmup_chain
 
 
-def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
+def stan_warmup(
+    kernel_factory: Callable,
+    is_mass_matrix_diagonal: bool,
+    target_acceptance_rate: float = 0.65,
+):
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
     The schedule and algorithms used match Stan's [1]_ as closely as possible.
 
@@ -124,6 +135,8 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         mass matrix.
     is_mass_matrix_diagonal
         Create and adapt a diagonal mass matrix if True, a dense matrix otherwise.
+    target_acceptance_rate:
+        Target acceptance rate for step size adaptation.
 
     Returns
     -------
@@ -135,7 +148,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
         Function that returns the step size and mass matrix given a warmup state.
 
     """
-    fast_init, fast_update = fast_window()
+    fast_init, fast_update = fast_window(target_acceptance_rate)
     slow_init, slow_update, slow_final = slow_window(is_mass_matrix_diagonal)
 
     def init(
@@ -158,6 +171,7 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
             kernel,
             initial_state,
             initial_step_size,
+            target_acceptance_rate,
         )
         da_state = fast_init(step_size)
 
@@ -229,15 +243,16 @@ def stan_warmup(kernel_factory: Callable, is_mass_matrix_diagonal: bool):
     return init, update, final
 
 
-def fast_window() -> Tuple[Callable, Callable]:
+def fast_window(
+    target_accept: float = 0.65,
+) -> Tuple[Callable, Callable]:
     """First stage of the Stan warmup. The step size is adapted using
     Nesterov's dual averaging algorithms while the mass matrix stays the same.
 
     Parameters
     ----------
-    kernel_factory
-        A function that takes the kernel's parameters as an input
-        and returns the corresponding transition kernel.
+    target_accept:
+        Target acceptance rate for step size adaptation using dual averaging.
 
     Returns
     -------
@@ -246,7 +261,7 @@ def fast_window() -> Tuple[Callable, Callable]:
     window.
 
     """
-    da_init, da_update, _ = dual_averaging_adaptation()
+    da_init, da_update, _ = dual_averaging_adaptation(target=target_accept)
 
     def init(initial_step_size: float) -> DualAveragingAdaptationState:
         da_state = da_init(initial_step_size)
@@ -267,6 +282,7 @@ def fast_window() -> Tuple[Callable, Callable]:
 
 def slow_window(
     is_mass_matrix_diagonal: bool = True,
+    target_accept: float = 0.65,
 ) -> Tuple[Callable, Callable, Callable]:
     """Slow stage of the Stan warmup.
 
@@ -279,6 +295,8 @@ def slow_window(
     is_mass_matrix_diagonal
         Whether we want a diagonal mass matrix. Passed to the mass matrix adapation
         algorithm.
+    target_accept:
+        Target acceptance rate for step size adaptation using dual averaging.
 
     Returns
     -------
@@ -288,7 +306,7 @@ def slow_window(
 
     """
     mm_init, mm_update, mm_final = mass_matrix_adaptation(is_mass_matrix_diagonal)
-    da_init, da_update, da_final = dual_averaging_adaptation()
+    da_init, da_update, da_final = dual_averaging_adaptation(target=target_accept)
 
     def init(state: HMCState) -> MassMatrixAdaptationState:
         """Initialize the mass matrix adaptation algorithm."""
