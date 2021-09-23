@@ -65,16 +65,9 @@ def residual(weights: jnp.ndarray, rng_key: PRNGKey) -> jnp.ndarray:
     # This code is adapted from nchopin/particles library, but made to be compatible with JAX static shape jitting that
     # would not have supported the dynamic slicing implementation of Nicolas. The below will be (slightly) less
     # efficient on CPU but has the benefit of being all XLA-devices compatible. The main difference with Nicolas's code
-    # lies in the introduction of N+1 in the array as a "sink state" for unused indices. Sadly this can't reuse the code
-    # for low variance resampling methods as it is not compatible with the sorted approach taken.
+    # lies in the introduction of N+1 in the array as a "sink state" for unused indices.
 
-    import warnings
-
-    warnings.warn(
-        "Residual resampling typically has a low variance. However the JAX implementation of categorical"
-        "sampling is memory consuming and the program may fail for a large number of samples."
-    )
-
+    key1, key2 = jax.random.split(rng_key)
     N = weights.shape[0]
     N_weights = N * weights
     idx = jnp.arange(N)
@@ -83,9 +76,13 @@ def residual(weights: jnp.ndarray, rng_key: PRNGKey) -> jnp.ndarray:
     sum_integer_part = jnp.sum(integer_part)
 
     residual_part = N_weights - integer_part
-    residual_sample = jax.random.categorical(
-        rng_key, jnp.log(residual_part / (N - sum_integer_part)), shape=(N,)
-    )
+
+    residual_sample = multinomial(residual_part / (N - sum_integer_part), key1)
+    residual_sample = jax.random.permutation(key2, residual_sample)
+    # permutation is needed due to the concatenation happening at the last step.
+    # I am pretty sure we can use lower variance resamplers inside here instead of multinomial,
+    # but I am not sure yet due to the loss of exchangeability, and as a consequence I am playing it safe.
+
     integer_idx = jnp.repeat(
         jnp.arange(N + 1),
         jnp.concatenate([integer_part, jnp.array([N - sum_integer_part])], 0),
