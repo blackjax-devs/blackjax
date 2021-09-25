@@ -89,6 +89,8 @@ def dual_averaging_adaptation(
         Controls the weights of past steps in the current update. The scheme will
         quickly forget earlier step for a small value of `kappa`. Introduced
         in [2]_, with a recommended value of .75
+    target:
+        Target acceptance rate.
 
     Returns
     -------
@@ -181,7 +183,7 @@ def find_reasonable_step_size(
     value for the step size starting from any value, choosing a good first
     value can speed up the convergence. This heuristics doubles and halves the
     step size until the acceptance probability of the HMC proposal crosses the
-    .5 value.
+    target value.
 
     Parameters
     ----------
