@@ -88,7 +88,7 @@ notebook](https://github.com/blackjax-devs/blackjax/blob/master/notebooks/Introd
 BlackJAX bridges the gap between "one liner" frameworks and modular, customizable
 libraries.
 
-Users can import the library and interact with robut, well-tested and performant
+Users can import the library and interact with robust, well-tested and performant
 samplers with a few lines of code. These samplers are aimed at PPL developers,
 or people who have a logpdf and just need a sampler that works.
 
