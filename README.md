@@ -1,6 +1,6 @@
 # BlackJAX
-![CI](https://github.com/blackjax-devs/blackjax/workflows/Run%20tests/badge.svg?branch=master)
-[![codecov](https://codecov.io/gh/blackjax-devs/blackjax/branch/master/graph/badge.svg)](https://codecov.io/gh/blackjax-devs/blackjax)
+![CI](https://github.com/blackjax-devs/blackjax/workflows/Run%20tests/badge.svg?branch=main)
+[![codecov](https://codecov.io/gh/blackjax-devs/blackjax/branch/main/graph/badge.svg)](https://codecov.io/gh/blackjax-devs/blackjax)
 
 
 ## What is BlackJAX?
