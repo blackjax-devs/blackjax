@@ -24,7 +24,7 @@ def integrand(x):
     return np.cos(x)
 
 
-@pytest.mark.parametrize("N", [100, 500, 1000])
+@pytest.mark.parametrize("N", [100, 500, 1_000, 100_000])
 @pytest.mark.parametrize("resampling_method", resampling_methods_to_test)
 def test_resampling_methods(N, resampling_method):
     np.random.seed(42)
