@@ -33,18 +33,18 @@ def test_ess(N):
 def test_ess_solver(target_ess, N):
     x_data = np.random.normal(0, 1, size=(N, 1))
 
-    potential_fn = lambda pytree: -logpdf(pytree, scale=0.1)
+    logprob_fn = lambda pytree: logpdf(pytree, scale=0.1)
 
-    potential = jax.vmap(lambda x: potential_fn(*x), in_axes=[0])
+    logprob = jax.vmap(lambda x: logprob_fn(*x), in_axes=[0])
 
     particles = x_data
     delta = ess.ess_solver(
-        potential, particles, target_ess, 1.0, solver.dichotomy, use_log_ess=True
+        logprob, particles, target_ess, 1.0, solver.dichotomy, use_log_ess=True
     )
     delta_log = ess.ess_solver(
-        potential, particles, target_ess, 1.0, solver.dichotomy, use_log_ess=False
+        logprob, particles, target_ess, 1.0, solver.dichotomy, use_log_ess=False
     )
     assert delta > 0
     np.testing.assert_allclose(delta_log, delta, atol=1e-3, rtol=1e-3)
-    log_ess = ess.ess(-delta * potential(particles), log=True)
+    log_ess = ess.ess(-delta * logprob(particles), log=True)
     np.testing.assert_allclose(np.exp(log_ess), target_ess * N, atol=1e-1, rtol=1e-2)

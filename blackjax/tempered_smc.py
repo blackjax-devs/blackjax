@@ -26,8 +26,8 @@ class TemperedSMCState(NamedTuple):
 
 
 def adaptive_tempered_smc(
-    prior_logrob_fn: Callable,
-    potential_fn: Callable,
+    logprior_fn: Callable,
+    loglikelihood_fn: Callable,
     mcmc_kernel_factory: Callable,
     make_mcmc_state: Callable,
     resampling_fn: Callable,
@@ -40,14 +40,16 @@ def adaptive_tempered_smc(
 
     Parameters
     ----------
-    prior_logrob_fn: Callable
-        A function that computes the log density of the prior distribution
-    potential_fn: Callable
-        A function that returns the potential energy of a chain at a given position.
+    logprior_fn: Callable
+        A function that computes the log-prior density.
+    loglikelihood_fn: Callable
+        A function that returns the log-likelihood density.
     mcmc_kernel_factory: Callable
-        A callable function that creates a mcmc kernel from a potential function.
+        A callable function that creates a mcmc kernel from a log-probability
+        density function.
     make_mcmc_state: Callable
-        A function that creates a new mcmc state from a position and a potential.
+        A function that creates a new mcmc state from a position and a
+        log-probability density function.
     resampling_fn: Callable
         A random function that resamples generated particles based of weights
     target_ess: float
@@ -72,7 +74,7 @@ def adaptive_tempered_smc(
         lmbda = state.lmbda
         max_delta = 1 - lmbda
         delta = ess_solver(
-            jax.vmap(potential_fn),
+            jax.vmap(loglikelihood_fn),
             state.particles,
             target_ess,
             max_delta,
@@ -84,8 +86,8 @@ def adaptive_tempered_smc(
         return delta
 
     kernel = tempered_smc(
-        prior_logrob_fn,
-        potential_fn,
+        logprior_fn,
+        loglikelihood_fn,
         mcmc_kernel_factory,
         make_mcmc_state,
         resampling_fn,
@@ -104,7 +106,7 @@ def adaptive_tempered_smc(
 
 def tempered_smc(
     logprior_fn: Callable,
-    potential_fn: Callable,
+    loglikelihood_fn: Callable,
     mcmc_kernel_factory: Callable,
     make_mcmc_state: Callable,
     resampling_fn: Callable,
@@ -125,14 +127,14 @@ def tempered_smc(
     ----------
     logprior_fn
         A function that computes the log density of the prior distribution
-    potential_fn
-        A function that returns the potential energy of a chain at a given
-        position. It is generally equal to the log-likelihood, but equal to
-        minus the loglikelihood for kernels in the HMC family.
+    loglikelihood_fn
+        A function that returns the probability at a given
+        position.
     mcmc_kernel_factory
-        A function that creates a mcmc kernel from a potential function.
+        A function that creates a mcmc kernel from a log-probability density function.
     make_mcmc_state: Callable
-        A function that creates a new mcmc state from a position and a potential.
+        A function that creates a new mcmc state from a position and a
+        log-probability density function.
     resampling_fn
         A random function that resamples generated particles based of weights
     num_mcmc_iterations
@@ -173,15 +175,15 @@ def tempered_smc(
         delta = lmbda - state.lmbda
 
         def log_weights_fn(position: PyTree) -> float:
-            return -delta * potential_fn(position)
+            return delta * loglikelihood_fn(position)
 
-        def tempered_potential_fn(position: PyTree) -> float:
-            logprior = -logprior_fn(position)
-            tempered_loglikelihood = state.lmbda * potential_fn(position)
+        def tempered_logposterior_fn(position: PyTree) -> float:
+            logprior = logprior_fn(position)
+            tempered_loglikelihood = state.lmbda * loglikelihood_fn(position)
             return logprior + tempered_loglikelihood
 
         smc_state, info = kernel(
-            rng_key, state.particles, tempered_potential_fn, log_weights_fn
+            rng_key, state.particles, tempered_logposterior_fn, log_weights_fn
         )
         state = TemperedSMCState(smc_state, state.lmbda + delta)
 

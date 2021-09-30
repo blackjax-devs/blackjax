@@ -57,7 +57,7 @@ new_state = blackjax.hmc.new_state
 
 
 def kernel(
-    potential_fn: Callable,
+    logprob_fn: Callable,
     step_size: float,
     inverse_mass_matrix: Array,
     max_num_doublings: int = 10,
@@ -69,13 +69,16 @@ def kernel(
 
     Parameters
     ----------
-    potential_fn
-        A function that returns the potential energy of a chain at a given position. The potential energy
-        is defined as minus the log-probability.
+    logprob_fb
+        Log probability function we wish to sample from.
     parameters
         A NamedTuple that contains the parameters of the kernel to be built.
 
     """
+
+    def potential_fn(x):
+        return -logprob_fn(x)
+
     momentum_generator, kinetic_energy_fn, uturn_check_fn = metrics.gaussian_euclidean(
         inverse_mass_matrix
     )

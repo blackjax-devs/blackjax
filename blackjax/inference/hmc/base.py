@@ -23,7 +23,7 @@ class HMCState(NamedTuple):
     potential_energy_grad: PyTree
 
 
-def new_hmc_state(position: PyTree, potential_fn: Callable) -> HMCState:
+def new_hmc_state(position: PyTree, logprob_fn: Callable) -> HMCState:
     """Create a chain state from a position.
 
     The HMC kernel works with states that contain the current chain position
@@ -49,13 +49,13 @@ def new_hmc_state(position: PyTree, potential_fn: Callable) -> HMCState:
     We have a `logpdf` function that returns the log-probability associated with
     the chain at a given position:
 
-        >>> potential_fn((np.random.rand(1000), np.random.rand(3000)))
+        >>> logprob_fn((np.random.rand(1000), np.random.rand(3000)))
         -3.4
 
     We can compute the initial state for each of the 4 chain as follows:
 
         >>> import jax
-        >>> jax.vmap(new_state, in_axes=(0, None))(init_positions, potential_fn)
+        >>> jax.vmap(new_state, in_axes=(0, None))(init_positions, logprob_fn)
 
     Parameters
     ----------
@@ -72,6 +72,10 @@ def new_hmc_state(position: PyTree, potential_fn: Callable) -> HMCState:
     A HMC state that contains the position, the associated potential energy and gradient of the
     potential energy.
     """
+
+    def potential_fn(x):
+        return -logprob_fn(x)
+
     potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
     return HMCState(position, potential_energy, potential_energy_grad)
 

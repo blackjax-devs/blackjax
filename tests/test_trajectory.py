@@ -20,7 +20,7 @@ def test_dynamic_progressive_integration_divergence(case):
     rng_key = jax.random.PRNGKey(0)
 
     def potential_fn(x):
-        return jax.scipy.stats.norm.logpdf(x)
+        return -jax.scipy.stats.norm.logpdf(x)
 
     step_size, should_diverge = case
     position = 1.0
