@@ -1,20 +1,20 @@
-"""Public API for RWMH kernels."""
+"""Public API for Rosenbluth-Metropolis-Hastings kernels."""
 from typing import Callable
 
-import blackjax.inference.rwmh.base as base
-import blackjax.inference.rwmh.proposals as proposals
+import blackjax.inference.rmh.base as base
+import blackjax.inference.rmh.proposals as proposals
 from blackjax.types import Array
 
 __all__ = ["new_state", "kernel"]
 
 
-RWMHState = base.RWMHState
-RWMHInfo = base.RWMHInfo
-new_state = base.new_rwmh_state
+RWMHState = base.RMHState
+RWMHInfo = base.RMHInfo
+new_state = base.new_rmh_state
 
 
 def kernel(logprob_fn: Callable, sigma: Array):
-    """Random Walk Metropolis Hastings algorithm with normal proposals.
+    """Random Walk Rosenbluth-Metropolis-Hastings algorithm with normal proposals.
 
     We currently only support a Gaussian proposal but the algorithm could easily
     be extended to include other proposals.
@@ -28,5 +28,5 @@ def kernel(logprob_fn: Callable, sigma: Array):
 
     """
     proposal_generator = proposals.normal(sigma)
-    kernel = base.rwmh(logprob_fn, proposal_generator)
+    kernel = base.rmh(logprob_fn, proposal_generator)
     return kernel

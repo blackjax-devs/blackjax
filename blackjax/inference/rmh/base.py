@@ -1,4 +1,4 @@
-"""Public API for the Metropolis-Hastings Kernel"""
+"""Public API for the Rosenbluth-Metropolis-Hastings Kernel"""
 from typing import Callable, NamedTuple, Optional, Tuple
 
 import jax.numpy as jnp
@@ -6,11 +6,11 @@ import jax.random
 
 from blackjax.types import PRNGKey, PyTree
 
-__all__ = ["new_rwmh_state", "rwmh", "RWMHState"]
+__all__ = ["new_rmh_state", "rmh", "RMHState"]
 
 
-class RWMHState(NamedTuple):
-    """State of the MH chain
+class RMHState(NamedTuple):
+    """State of the RMH chain
 
     position
         Current position of the chain.
@@ -22,8 +22,8 @@ class RWMHState(NamedTuple):
     log_probability: float
 
 
-class RWMHInfo(NamedTuple):
-    """Additional information on the MH chain.
+class RMHInfo(NamedTuple):
+    """Additional information on the RMH chain.
 
     This additional information can be used for debugging or computing
     diagnostics.
@@ -40,10 +40,10 @@ class RWMHInfo(NamedTuple):
 
     acceptance_probability: float
     is_accepted: bool
-    proposal: RWMHState
+    proposal: RMHState
 
 
-def new_rwmh_state(position: PyTree, logprob_fn: Callable) -> RWMHState:
+def new_rmh_state(position: PyTree, logprob_fn: Callable) -> RMHState:
     """Create a chain state from a position.
 
     Parameters:
@@ -55,15 +55,15 @@ def new_rwmh_state(position: PyTree, logprob_fn: Callable) -> RWMHState:
         from.
 
     """
-    return RWMHState(position, logprob_fn(position))
+    return RMHState(position, logprob_fn(position))
 
 
-def rwmh(
+def rmh(
     logprob_fn: Callable,
     proposal_generator: Callable,
     proposal_logprob_fn: Optional[Callable] = None,
 ):
-    """Build a Random Walk Metropolis Hastings kernel.
+    """Build a Rosenbluth-Metropolis-Hastings kernel.
 
     Parameters
     ----------
@@ -86,12 +86,12 @@ def rwmh(
 
     if proposal_logprob_fn is None:
 
-        def acceptance_probability(state: RWMHState, proposal: RWMHState):
+        def acceptance_probability(state: RMHState, proposal: RMHState):
             return proposal.log_probability - state.log_probability
 
     else:
 
-        def acceptance_probability(state: RWMHState, proposal: RWMHState):
+        def acceptance_probability(state: RMHState, proposal: RMHState):
             return (
                 proposal.log_probability
                 + proposal_logprob_fn(proposal.position, state.position)  # type: ignore
@@ -99,8 +99,8 @@ def rwmh(
                 - proposal_logprob_fn(state.position, proposal.position)  # type: ignore
             )
 
-    def kernel(rng_key: PRNGKey, state: RWMHState) -> Tuple[RWMHState, RWMHInfo]:
-        """Moves the chain by one step using the Random Walk Metropolis Hastings algorithm.
+    def kernel(rng_key: PRNGKey, state: RMHState) -> Tuple[RMHState, RMHInfo]:
+        """Moves the chain by one step using the Rosenbluth Metropolis Hastings algorithm.
 
         We temporarilly assume that the proposal distribution is symmetric.
 
@@ -122,15 +122,15 @@ def rwmh(
             jnp.add, state.position, move_proposal
         )
         new_log_probability = logprob_fn(new_position)
-        new_state = RWMHState(new_position, new_log_probability)
+        new_state = RMHState(new_position, new_log_probability)
 
         delta = acceptance_probability(state, new_state)
         delta = jnp.where(jnp.isnan(delta), -jnp.inf, delta)
         p_accept = jnp.clip(jnp.exp(delta), a_max=1.0)
 
         do_accept = jax.random.bernoulli(key_accept, p_accept)
-        accept_state = (new_state, RWMHInfo(p_accept, True, new_state))
-        reject_state = (state, RWMHInfo(p_accept, False, new_state))
+        accept_state = (new_state, RMHInfo(p_accept, True, new_state))
+        reject_state = (state, RMHInfo(p_accept, False, new_state))
 
         return jax.lax.cond(
             do_accept, lambda _: accept_state, lambda _: reject_state, operand=None
