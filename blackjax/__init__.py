@@ -7,7 +7,7 @@ __all__ = [
     "nuts",
     "adaptive_tempered_smc",
     "tempered_smc",
-    "rwmh",
+    "rmh",
     "stan_warmup",
     "inference",
     "adaptation",
