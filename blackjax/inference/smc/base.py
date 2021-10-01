@@ -32,8 +32,7 @@ def smc(
     resampling_fn: Callable,
     num_mcmc_iterations: int,
 ):
-    """Build a generic SMC step that takes a mcmc_kernel and a potential function, propagate through it,
-    corrects using the weights function and resamples the end result.
+    """Build a generic SMC kernel.
 
     In Feynman-Kac equivalent terms, the algo goes roughly as follows:
 
@@ -71,7 +70,7 @@ def smc(
     def kernel(
         rng_key: jnp.ndarray,
         particles: PyTree,
-        potential_fn: Callable,
+        logprob_fn: Callable,
         log_weight_fn: Callable,
     ) -> Tuple[PyTree, SMCInfo]:
         """
@@ -82,10 +81,8 @@ def smc(
             JAX PRNGKey for randomness.
         particles: PyTree
             Current particles sample of the SMC algorithm.
-        potential_fn: Callable
-            A function takes represents the potential of the Markov kernel at
-            time t. Generally equal to the loglikelihood. For kernels in the
-            HMC family, the potential is equal to minus the loglikelihood.
+        logprob_fn: Callable
+            Log probability function we wish to sample from.
         log_weight_fn: Callable
             A function that represents the Feynman-Kac log potential at time t.
 
@@ -101,7 +98,7 @@ def smc(
         scan_key, resampling_key = jax.random.split(rng_key, 2)
 
         # First advance the particles using the MCMC kernel
-        mcmc_kernel = mcmc_kernel_factory(potential_fn)
+        mcmc_kernel = mcmc_kernel_factory(logprob_fn)
 
         def mcmc_body_fn(curr_particles, curr_key):
             keys = jax.random.split(curr_key, num_particles)
@@ -111,7 +108,7 @@ def smc(
             return new_particles, None
 
         mcmc_state = jax.vmap(mcmc_state_generator, in_axes=(0, None))(
-            particles, potential_fn
+            particles, logprob_fn
         )
         keys = jax.random.split(scan_key, num_mcmc_iterations)
         proposed_states, _ = jax.lax.scan(mcmc_body_fn, mcmc_state, keys)

@@ -1,6 +1,6 @@
 # BlackJAX
-![CI](https://github.com/blackjax-devs/blackjax/workflows/Run%20tests/badge.svg?branch=master)
-[![codecov](https://codecov.io/gh/blackjax-devs/blackjax/branch/master/graph/badge.svg)](https://codecov.io/gh/blackjax-devs/blackjax)
+![CI](https://github.com/blackjax-devs/blackjax/workflows/Run%20tests/badge.svg?branch=main)
+[![codecov](https://codecov.io/gh/blackjax-devs/blackjax/branch/main/graph/badge.svg)](https://codecov.io/gh/blackjax-devs/blackjax)
 
 
 ## What is BlackJAX?
@@ -56,20 +56,19 @@ import numpy as np
 import blackjax.nuts as nuts
 
 observed = np.random.normal(10, 20, size=1_000)
-def potential_fn(loc, scale, observed=observed):
+def logprob_fn(loc, scale, observed=observed):
   logpdf = stats.norm.logpdf(observed, loc, scale)
-  return -jnp.sum(logpdf)
+  return jnp.sum(logpdf)
 
 # Build the kernel
 step_size = 1e-3
 inverse_mass_matrix = jnp.array([1., 1.])
-potential = lambda x: potential_fn(**x)
-kernel = nuts.kernel(potential, step_size, inverse_mass_matrix)
+kernel = nuts.kernel(logprob_fn, step_size, inverse_mass_matrix)
 kernel = jax.jit(kernel)  # try without to see the speedup
 
 # Initialize the state
 initial_position = {"loc": 1., "scale": 2.}
-state = nuts.new_state(initial_position, potential)
+state = nuts.new_state(initial_position, logprob_fn)
 
 # Iterate
 rng_key = jax.random.PRNGKey(0)
@@ -88,7 +87,7 @@ notebook](https://github.com/blackjax-devs/blackjax/blob/master/notebooks/Introd
 BlackJAX bridges the gap between "one liner" frameworks and modular, customizable
 libraries.
 
-Users can import the library and interact with robut, well-tested and performant
+Users can import the library and interact with robust, well-tested and performant
 samplers with a few lines of code. These samplers are aimed at PPL developers,
 or people who have a logpdf and just need a sampler that works.
 

@@ -54,7 +54,7 @@ new_state = base.new_hmc_state
 
 
 def kernel(
-    potential_fn: Callable,
+    logprob_fn: Callable,
     step_size: float,
     inverse_mass_matrix: Array,
     num_integration_steps: int,
@@ -66,8 +66,8 @@ def kernel(
 
     Parameters
     ----------
-    potential_fn
-        A function that returns the potential energy of a chain at a given position.
+    logprob_fn
+        Log probability function we wish to sample from.
     parameters
         A NamedTuple that contains the parameters of the kernel to be built.
 
@@ -78,6 +78,10 @@ def kernel(
     information about the transition.
 
     """
+
+    def potential_fn(x):
+        return -logprob_fn(x)
+
     momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
         inverse_mass_matrix
     )

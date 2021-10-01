@@ -44,14 +44,14 @@ def inference_loop_multiple_chains(
 # -------------------------------------------------------------------
 
 
-def regression_potential_fn(scale, coefs, preds, x):
+def regression_logprob(scale, coefs, preds, x):
     """Linear regression"""
     logpdf = 0
     logpdf += stats.expon.logpdf(scale, 1, 1)
     logpdf += stats.norm.logpdf(coefs, 3 * jnp.ones(x.shape[-1]), 2)
     y = jnp.dot(x, coefs)
     logpdf += stats.norm.logpdf(preds, y, scale)
-    return -jnp.sum(logpdf)
+    return jnp.sum(logpdf)
 
 
 regresion_test_cases = [
@@ -80,15 +80,15 @@ def test_linear_regression(case, is_mass_matrix_diagonal):
     y_data = 3 * x_data + np.random.normal(size=x_data.shape)
     observations = {"x": x_data, "preds": y_data}
 
-    conditioned_potential = ft.partial(regression_potential_fn, **observations)
-    potential = lambda x: conditioned_potential(**x)
+    conditioned_logprob_fn = ft.partial(regression_logprob, **observations)
+    logprob = lambda x: conditioned_logprob_fn(**x)
 
     rng_key = jax.random.PRNGKey(19)
     initial_position = case["initial_position"]
-    initial_state = case["algorithm"].new_state(initial_position, potential)
+    initial_state = case["algorithm"].new_state(initial_position, logprob)
 
     kernel_factory = lambda step_size, inverse_mass_matrix: case["algorithm"].kernel(
-        potential, step_size, inverse_mass_matrix, **case["parameters"]
+        logprob, step_size, inverse_mass_matrix, **case["parameters"]
     )
 
     state, (step_size, inverse_mass_matrix), _ = stan_warmup.run(
@@ -119,8 +119,8 @@ def test_linear_regression(case, is_mass_matrix_diagonal):
 # -------------------------------------------------------------------
 
 
-def normal_potential_fn(x):
-    return -stats.norm.logpdf(x, loc=1.0, scale=2.0).squeeze()
+def normal_logprob(x):
+    return stats.norm.logpdf(x, loc=1.0, scale=2.0).squeeze()
 
 
 normal_test_cases = [
@@ -155,11 +155,11 @@ normal_test_cases = [
 @pytest.mark.parametrize("case", normal_test_cases)
 def test_univariate_normal(case):
     rng_key = jax.random.PRNGKey(19)
-    potential = lambda x: normal_potential_fn(**x)
+    logprob_fn = lambda x: normal_logprob(**x)
     initial_position = case["initial_position"]
-    initial_state = case["algorithm"].new_state(initial_position, potential)
+    initial_state = case["algorithm"].new_state(initial_position, logprob_fn)
 
-    kernel = case["algorithm"].kernel(potential, **case["parameters"])
+    kernel = case["algorithm"].kernel(logprob_fn, **case["parameters"])
     states = inference_loop(rng_key, kernel, initial_state, case["num_sampling_steps"])
 
     samples = states.position["x"][case["burnin"] :]
@@ -188,10 +188,10 @@ def generate_multivariate_target(rng=None):
     cov = cov.at[0, 1].set(rho * scale[0] * scale[1])
     cov = cov.at[1, 0].set(rho * scale[0] * scale[1])
 
-    def potential_fn(x):
-        return -stats.multivariate_normal.logpdf(x, loc, cov).sum()
+    def logprob_fn(x):
+        return stats.multivariate_normal.logpdf(x, loc, cov).sum()
 
-    return potential_fn, loc, scale, rho
+    return logprob_fn, loc, scale, rho
 
 
 def mcse_test(samples, true_param, p_val=0.01):
@@ -224,18 +224,18 @@ def test_mcse(case):
     """Test convergence using Monte Carlo central limit theorem."""
     rng_key = jax.random.PRNGKey(2351235)
     rng_key, init_fn_key, pos_init_key, sample_key = jax.random.split(rng_key, 4)
-    potential_fn, true_loc, true_scale, true_rho = generate_multivariate_target(
+    logprob_fn, true_loc, true_scale, true_rho = generate_multivariate_target(
         init_fn_key
     )
     num_chains = 10
     initial_positions = jax.random.normal(pos_init_key, [num_chains, 2])
     kernel = jax.jit(
         case["algorithm"].kernel(
-            potential_fn, inverse_mass_matrix=true_scale, **case["parameters"]
+            logprob_fn, inverse_mass_matrix=true_scale, **case["parameters"]
         )
     )
     initial_states = jax.vmap(case["algorithm"].new_state, in_axes=(0, None))(
-        initial_positions, potential_fn
+        initial_positions, logprob_fn
     )
     states, _ = inference_loop_multiple_chains(
         sample_key, kernel, initial_states, 2_000, num_chains=num_chains
