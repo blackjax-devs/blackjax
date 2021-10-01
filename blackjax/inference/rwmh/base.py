@@ -14,12 +14,12 @@ class RWMHState(NamedTuple):
 
     position
         Current position of the chain.
-    potential_energy
-        Current value of the potential energy
+    log_probability
+        Current value of the log-probability
     """
 
     position: PyTree
-    potential_energy: float
+    log_probability: float
 
 
 class RWMHInfo(NamedTuple):
@@ -43,17 +43,19 @@ class RWMHInfo(NamedTuple):
     proposal: RWMHState
 
 
-def new_rwmh_state(position: PyTree, potential_fn: Callable) -> RWMHState:
+def new_rwmh_state(position: PyTree, logprob_fn: Callable) -> RWMHState:
     """Create a chain state from a position.
 
     Parameters:
     -----------
     position: PyTree
         The initial position of the chain
-    potential_fn: Callable
-        Target potential function of the chain
+    logprob_fn: Callable
+        Log-probability density function of the distribution we wish to sample
+        from.
+
     """
-    return RWMHState(position, potential_fn(position))
+    return RWMHState(position, logprob_fn(position))
 
 
 def rwmh(
@@ -65,8 +67,8 @@ def rwmh(
 
     Parameters
     ----------
-    potential_fn
-        A function that returns the potential energy of a chain at a given position.
+    logprob_fn
+        A function that returns the log-probability at a given position.
     proposal_generator
         A function that generates a new proposal.
     proposal_logprob_fn:
@@ -85,16 +87,16 @@ def rwmh(
     if proposal_logprob_fn is None:
 
         def acceptance_probability(state: RWMHState, proposal: RWMHState):
-            return state.potential_energy - proposal.potential_energy
+            return proposal.log_probability - state.log_probability
 
     else:
 
         def acceptance_probability(state: RWMHState, proposal: RWMHState):
             return (
-                state.potential_energy
-                + proposal_logprob_fn(state.position, proposal.position)  # type: ignore
-                - proposal.potential_energy
-                - proposal_logprob_fn(proposal.position, state.position)  # type: ignore
+                proposal.log_probability
+                + proposal_logprob_fn(proposal.position, state.position)  # type: ignore
+                - state.log_probability
+                - proposal_logprob_fn(state.position, proposal.position)  # type: ignore
             )
 
     def kernel(rng_key: PRNGKey, state: RWMHState) -> Tuple[RWMHState, RWMHInfo]:
@@ -119,8 +121,8 @@ def rwmh(
         new_position = jax.tree_util.tree_multimap(
             jnp.add, state.position, move_proposal
         )
-        new_potential_energy = logprob_fn(new_position)
-        new_state = RWMHState(new_position, new_potential_energy)
+        new_log_probability = logprob_fn(new_position)
+        new_state = RWMHState(new_position, new_log_probability)
 
         delta = acceptance_probability(state, new_state)
         delta = jnp.where(jnp.isnan(delta), -jnp.inf, delta)

@@ -14,7 +14,19 @@ new_state = base.new_rwmh_state
 
 
 def kernel(logprob_fn: Callable, sigma: Array):
-    """Random Walk Metropolis Hastings algorithm with normal proposals."""
+    """Random Walk Metropolis Hastings algorithm with normal proposals.
+
+    We currently only support a Gaussian proposal but the algorithm could easily
+    be extended to include other proposals.
+
+    Parameters
+    ----------
+    logprob_fn
+        Log probability function we wish to sample from
+    sigma
+        Covariance matrix for the gaussian proposal distribution.
+
+    """
     proposal_generator = proposals.normal(sigma)
     kernel = base.rwmh(logprob_fn, proposal_generator)
     return kernel

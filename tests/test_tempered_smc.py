@@ -36,11 +36,11 @@ def inference_loop(rng_key, kernel, initial_state):
 ################################
 
 
-def potential_fn(scale, coefs, preds, x):
+def logprob_fn(scale, coefs, preds, x):
     """Linear regression"""
     y = jnp.dot(x, coefs)
     logpdf = stats.norm.logpdf(preds, y, scale)
-    return -jnp.sum(logpdf)
+    return jnp.sum(logpdf)
 
 
 @pytest.mark.parametrize("N", [100, 1000, 5000])
@@ -50,7 +50,7 @@ def test_adaptive_tempered_smc(N, use_log):
     y_data = 3 * x_data + np.random.normal(size=x_data.shape)
     observations = {"x": x_data, "preds": y_data}
 
-    conditioned_potential = lambda x: potential_fn(*x, **observations)
+    conditioned_logprob = lambda x: logprob_fn(*x, **observations)
 
     prior = lambda x: stats.expon.logpdf(x[0], 1, 1) + stats.norm.logpdf(x[1])
     scale_init = 1 + np.random.exponential(1, N)
@@ -64,7 +64,7 @@ def test_adaptive_tempered_smc(N, use_log):
     for target_ess in [0.5, 0.75]:
         tempering_kernel = adaptive_tempered_smc(
             prior,
-            conditioned_potential,
+            conditioned_logprob,
             mcmc_kernel_factory,
             hmc.new_state,
             resampling.systematic,
@@ -93,7 +93,7 @@ def test_fixed_schedule_tempered_smc(N, n_schedule):
     y_data = 3 * x_data + np.random.normal(size=x_data.shape)
     observations = {"x": x_data, "preds": y_data}
 
-    conditioned_potential = lambda x: potential_fn(*x, **observations)
+    conditionned_logprob = lambda x: logprob_fn(*x, **observations)
     prior = lambda x: stats.norm.logpdf(jnp.log(x[0])) + stats.norm.logpdf(x[1])
     scale_init = np.exp(np.random.randn(N))
     coeffs_init = np.random.randn(N)
@@ -104,7 +104,7 @@ def test_fixed_schedule_tempered_smc(N, n_schedule):
 
     tempering_kernel = tempered_smc(
         prior,
-        conditioned_potential,
+        conditionned_logprob,
         mcmc_kernel_factory,
         hmc.new_state,
         resampling.systematic,
@@ -130,7 +130,7 @@ def test_fixed_schedule_tempered_smc(N, n_schedule):
 ######################################
 
 
-def normal_potential_fn(x, chol_cov):
+def normal_logprob_fn(x, chol_cov):
     """multivariate normal without the normalizing constant"""
     dim = chol_cov.shape[0]
     y = jax.scipy.linalg.solve_triangular(chol_cov, x, lower=True)
@@ -138,7 +138,7 @@ def normal_potential_fn(x, chol_cov):
         np.sum(np.log(np.abs(np.diag(chol_cov)))) + dim * np.log(2 * np.pi) / 2.0
     )
     norm_y = jnp.sum(y * y, -1)
-    return 0.5 * norm_y + normalizing_constant
+    return -(0.5 * norm_y + normalizing_constant)
 
 
 @pytest.mark.parametrize("N", [500, 1_000])
@@ -149,7 +149,7 @@ def test_normalizing_constant(N, dim):
     iu = np.triu_indices(dim, 1)
     chol_cov[iu] = 0.0
     cov = chol_cov @ chol_cov.T
-    conditioned_potential = lambda x: normal_potential_fn(x, chol_cov)
+    conditionned_logprob = lambda x: normal_logprob_fn(x, chol_cov)
 
     prior = lambda x: stats.multivariate_normal.logpdf(
         x, jnp.zeros((dim,)), jnp.eye(dim)
@@ -161,7 +161,7 @@ def test_normalizing_constant(N, dim):
 
     tempering_kernel = adaptive_tempered_smc(
         prior,
-        conditioned_potential,
+        conditionned_logprob,
         mcmc_kernel_factory,
         hmc.new_state,
         resampling.systematic,
@@ -177,4 +177,4 @@ def test_normalizing_constant(N, dim):
     expected_log_likelihood = -0.5 * np.linalg.slogdet(np.eye(dim) + cov)[
         1
     ] - dim / 2 * np.log(2 * np.pi)
-    assert log_likelihood == pytest.approx(expected_log_likelihood, rel=5e-2, abs=1e-1)
+    assert log_likelihood == pytest.approx(expected_log_likelihood, rel=1e-1)

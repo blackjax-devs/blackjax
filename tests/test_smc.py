@@ -11,8 +11,8 @@ import blackjax.inference.smc.resampling as resampling
 from blackjax.inference.smc.base import _normalize, smc
 
 
-def kernel_potential_fn(position):
-    return -jnp.sum(stats.norm.logpdf(position))
+def kernel_logprob_fn(position):
+    return jnp.sum(stats.norm.logpdf(position))
 
 
 def log_weights_fn(x, y):
@@ -21,8 +21,8 @@ def log_weights_fn(x, y):
 
 @pytest.mark.parametrize("N", [500, 1000, 5000])
 def test_smc(N):
-    mcmc_factory = lambda potential_function: hmc.kernel(
-        potential_function,
+    mcmc_factory = lambda logprob_fn: hmc.kernel(
+        logprob_fn,
         step_size=1e-2,
         inverse_mass_matrix=jnp.eye(1),
         num_integration_steps=50,
@@ -38,7 +38,7 @@ def test_smc(N):
     updated_particles, _ = kernel(
         jax.random.PRNGKey(42),
         init_particles,
-        kernel_potential_fn,
+        kernel_logprob_fn,
         specialized_log_weights_fn,
     )
 
