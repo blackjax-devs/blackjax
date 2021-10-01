@@ -9,7 +9,7 @@ from absl.testing import absltest, parameterized
 from blackjax.adaptation.mass_matrix import mass_matrix_adaptation
 
 
-class SMCEffectiveSampleSizeTest(chex.TestCase):
+class MassMatrixAdaptationTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(itertools.product([1, 3], [True, False]))
     def test_welford_adaptation(self, n_dim, is_mass_matrix_diagonal):

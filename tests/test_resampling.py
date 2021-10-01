@@ -29,7 +29,7 @@ def integrand(x):
 class ResamplingTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
-        itertools.product([100, 500, 1000], resampling_methods.keys())
+        itertools.product([100, 500, 1_000, 100_000], resampling_methods.keys())
     )
     def test_resampling_methods(self, N, method_name):
         np.random.seed(42)
