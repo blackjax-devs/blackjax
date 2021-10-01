@@ -4,11 +4,10 @@ import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy as jscipy
+from absl.testing import absltest
 
 import blackjax.hmc as hmc
 import blackjax.nuts as nuts
-
-from absl.testing import absltest
 
 
 class CompliationTest(chex.TestCase):
@@ -48,7 +47,9 @@ class CompliationTest(chex.TestCase):
         chex.clear_trace_counter()
 
         kernel = jax.jit(
-            nuts.kernel(logprob_fn, step_size=1e-2, inverse_mass_matrix=jnp.array([1.0]))
+            nuts.kernel(
+                logprob_fn, step_size=1e-2, inverse_mass_matrix=jnp.array([1.0])
+            )
         )
 
         for _ in range(10):

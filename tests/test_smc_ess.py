@@ -5,7 +5,6 @@ import itertools
 import chex
 import jax
 import numpy as np
-
 from absl.testing import absltest, parameterized
 from jax.scipy.stats.norm import logpdf
 
@@ -64,3 +63,7 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
         np.testing.assert_allclose(
             np.exp(log_ess), target_ess * N, atol=1e-1, rtol=1e-2
         )
+
+
+if __name__ == "__main__":
+    absltest.main()
