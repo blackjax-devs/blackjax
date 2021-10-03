@@ -10,7 +10,7 @@ import pytest
 import blackjax.diagnostics as diagnostics
 import blackjax.hmc as hmc
 import blackjax.nuts as nuts
-import blackjax.rwmh as rwmh
+import blackjax.rmh as rmh
 import blackjax.stan_warmup as stan_warmup
 
 
@@ -143,7 +143,7 @@ normal_test_cases = [
         "burnin": 5_000,
     },
     {
-        "algorithm": rwmh,
+        "algorithm": rmh,
         "initial_position": {"x": 1.0},
         "parameters": {"sigma": jnp.array([1.0])},
         "num_sampling_steps": 20_000,

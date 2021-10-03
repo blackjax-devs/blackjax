@@ -131,7 +131,7 @@ def test_fixed_schedule_tempered_smc(N, n_schedule):
 
 
 def normal_logprob_fn(x, chol_cov):
-    """multivariate normal without the normalizing constant"""
+    """minus log-density of a centered multivariate normal distribution"""
     dim = chol_cov.shape[0]
     y = jax.scipy.linalg.solve_triangular(chol_cov, x, lower=True)
     normalizing_constant = (
