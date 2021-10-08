@@ -1,11 +1,13 @@
-"""Test the accuracy of the HMC kernel"""
-import functools as ft
+"""Test the accuracy of the MCMC kernels."""
+import functools
+import itertools
 
+import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
-import pytest
+from absl.testing import absltest, parameterized
 
 import blackjax.diagnostics as diagnostics
 import blackjax.hmc as hmc
@@ -14,7 +16,7 @@ import blackjax.rmh as rmh
 import blackjax.stan_warmup as stan_warmup
 
 
-def inference_loop(rng_key, kernel, initial_state, num_samples):
+def inference_loop(kernel, num_samples, rng_key, initial_state):
     def one_step(state, rng_key):
         state, _ = kernel(rng_key, state)
         return state, state
@@ -23,35 +25,6 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     _, states = jax.lax.scan(one_step, initial_state, keys)
 
     return states
-
-
-def inference_loop_multiple_chains(
-    rng_key, kernel, initial_state, num_samples, num_chains
-):
-    def one_step(states, rng_key):
-        keys = jax.random.split(rng_key, num_chains)
-        states, info = jax.vmap(kernel)(keys, states)
-        return states, (states, info)
-
-    keys = jax.random.split(rng_key, num_samples)
-    _, (states, info) = jax.lax.scan(one_step, initial_state, keys)
-
-    return states, info
-
-
-# -------------------------------------------------------------------
-#                        LINEAR REGRESSION
-# -------------------------------------------------------------------
-
-
-def regression_logprob(scale, coefs, preds, x):
-    """Linear regression"""
-    logpdf = 0
-    logpdf += stats.expon.logpdf(scale, 1, 1)
-    logpdf += stats.norm.logpdf(coefs, 3 * jnp.ones(x.shape[-1]), 2)
-    y = jnp.dot(x, coefs)
-    logpdf += stats.norm.logpdf(preds, y, scale)
-    return jnp.sum(logpdf)
 
 
 regresion_test_cases = [
@@ -72,61 +45,75 @@ regresion_test_cases = [
 ]
 
 
-@pytest.mark.parametrize("case", regresion_test_cases)
-@pytest.mark.parametrize("is_mass_matrix_diagonal", [True, False])
-def test_linear_regression(case, is_mass_matrix_diagonal):
-    """Test the HMC kernel and the Stan warmup."""
-    x_data = np.random.normal(0, 1, size=(1000, 1))
-    y_data = 3 * x_data + np.random.normal(size=x_data.shape)
-    observations = {"x": x_data, "preds": y_data}
+class LinearRegressionTest(chex.TestCase):
+    """Test sampling of a linear regression model."""
 
-    conditioned_logprob_fn = ft.partial(regression_logprob, **observations)
-    logprob = lambda x: conditioned_logprob_fn(**x)
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.PRNGKey(19)
 
-    rng_key = jax.random.PRNGKey(19)
-    initial_position = case["initial_position"]
-    initial_state = case["algorithm"].new_state(initial_position, logprob)
+    def regression_logprob(self, scale, coefs, preds, x):
+        """Linear regression"""
+        logpdf = 0
+        logpdf += stats.expon.logpdf(scale, 1, 1)
+        logpdf += stats.norm.logpdf(coefs, 3 * jnp.ones(x.shape[-1]), 2)
+        y = jnp.dot(x, coefs)
+        logpdf += stats.norm.logpdf(preds, y, scale)
+        return jnp.sum(logpdf)
 
-    kernel_factory = lambda step_size, inverse_mass_matrix: case["algorithm"].kernel(
-        logprob, step_size, inverse_mass_matrix, **case["parameters"]
-    )
+    @chex.all_variants(with_pmap=False)
+    @parameterized.parameters(itertools.product(regresion_test_cases, [True, False]))
+    def test_linear_regression(self, case, is_mass_matrix_diagonal):
+        """Test the HMC kernel and the Stan warmup."""
+        rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
 
-    state, (step_size, inverse_mass_matrix), _ = stan_warmup.run(
-        rng_key,
-        kernel_factory,
-        initial_state,
-        case["num_warmup_steps"],
-        is_mass_matrix_diagonal=is_mass_matrix_diagonal,
-    )
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logposterior_fn = lambda x: logposterior_fn_(**x)
 
-    if is_mass_matrix_diagonal:
-        assert inverse_mass_matrix.ndim == 1
-    else:
-        assert inverse_mass_matrix.ndim == 2
+        warmup_key, inference_key = jax.random.split(rng_key, 2)
+        initial_position = case["initial_position"]
+        initial_state = case["algorithm"].new_state(initial_position, logposterior_fn)
 
-    kernel = kernel_factory(step_size, inverse_mass_matrix)
-    states = inference_loop(rng_key, kernel, initial_state, case["num_sampling_steps"])
+        def kernel_factory(step_size, inverse_mass_matrix):
+            return case["algorithm"].kernel(
+                logposterior_fn, step_size, inverse_mass_matrix, **case["parameters"]
+            )
 
-    coefs_samples = states.position["coefs"]
-    scale_samples = states.position["scale"]
+        warmup_run = functools.partial(
+            stan_warmup.run,
+            kernel_factory=kernel_factory,
+            num_steps=case["num_warmup_steps"],
+            is_mass_matrix_diagonal=is_mass_matrix_diagonal,
+        )
+        state, (step_size, inverse_mass_matrix), _ = self.variant(warmup_run)(
+            warmup_key, initial_state=initial_state
+        )
 
-    assert np.mean(scale_samples) == pytest.approx(1, 1e-1)
-    assert np.mean(coefs_samples) == pytest.approx(3, 1e-1)
+        if is_mass_matrix_diagonal:
+            assert inverse_mass_matrix.ndim == 1
+        else:
+            assert inverse_mass_matrix.ndim == 2
 
+        kernel = kernel_factory(step_size, inverse_mass_matrix)
+        states = inference_loop(
+            kernel, case["num_sampling_steps"], inference_key, initial_state
+        )
 
-# -------------------------------------------------------------------
-#                UNIVARIATE NORMAL DISTRIBUTION
-# -------------------------------------------------------------------
+        coefs_samples = states.position["coefs"]
+        scale_samples = states.position["scale"]
 
-
-def normal_logprob(x):
-    return stats.norm.logpdf(x, loc=1.0, scale=2.0).squeeze()
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
 
 normal_test_cases = [
     {
         "algorithm": hmc,
-        "initial_position": {"x": jnp.array(100.0)},
+        "initial_position": jnp.array(100.0),
         "parameters": {
             "step_size": 0.1,
             "inverse_mass_matrix": jnp.array([0.1]),
@@ -137,14 +124,14 @@ normal_test_cases = [
     },
     {
         "algorithm": nuts,
-        "initial_position": {"x": jnp.array(100.0)},
+        "initial_position": jnp.array(100.0),
         "parameters": {"step_size": 0.1, "inverse_mass_matrix": jnp.array([0.1])},
         "num_sampling_steps": 6000,
         "burnin": 5_000,
     },
     {
         "algorithm": rmh,
-        "initial_position": {"x": 1.0},
+        "initial_position": 1.0,
         "parameters": {"sigma": jnp.array([1.0])},
         "num_sampling_steps": 20_000,
         "burnin": 5_000,
@@ -152,56 +139,32 @@ normal_test_cases = [
 ]
 
 
-@pytest.mark.parametrize("case", normal_test_cases)
-def test_univariate_normal(case):
-    rng_key = jax.random.PRNGKey(19)
-    logprob_fn = lambda x: normal_logprob(**x)
-    initial_position = case["initial_position"]
-    initial_state = case["algorithm"].new_state(initial_position, logprob_fn)
+class UnivariateNormalTest(chex.TestCase):
+    """Test sampling of a univariate Normal distribution."""
 
-    kernel = case["algorithm"].kernel(logprob_fn, **case["parameters"])
-    states = inference_loop(rng_key, kernel, initial_state, case["num_sampling_steps"])
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.PRNGKey(19)
 
-    samples = states.position["x"][case["burnin"] :]
+    def normal_logprob(self, x):
+        return stats.norm.logpdf(x, loc=1.0, scale=2.0)
 
-    assert np.mean(samples) == pytest.approx(1.0, 1e-1)
-    assert np.var(samples) == pytest.approx(4.0, 1e-1)
+    @chex.all_variants(with_pmap=False)
+    @parameterized.parameters(normal_test_cases)
+    def test_univariate_normal(
+        self, algorithm, initial_position, parameters, num_sampling_steps, burnin
+    ):
+        initial_state = algorithm.new_state(initial_position, self.normal_logprob)
 
+        kernel = algorithm.kernel(self.normal_logprob, **parameters)
+        states = self.variant(
+            functools.partial(inference_loop, kernel, num_sampling_steps)
+        )(self.key, initial_state)
 
-# -------------------------------------------------------------------
-#                MULTIVARIATE NORMAL DISTRIBUTION
-# -------------------------------------------------------------------
+        samples = states.position[burnin:]
 
-
-def generate_multivariate_target(rng=None):
-    if rng is None:
-        loc = jnp.array([0.0, 3])
-        scale = jnp.array([1.0, 2.0])
-        rho = jnp.array(0.75)
-    else:
-        rng, loc_rng, scale_rng, rho_rng = jax.random.split(rng, 4)
-        loc = jax.random.normal(loc_rng, [2]) * 10.0
-        scale = jnp.abs(jax.random.normal(scale_rng, [2])) * 2.5
-        rho = jax.random.uniform(rho_rng, [], minval=-1.0, maxval=1.0)
-
-    cov = jnp.diag(scale ** 2)
-    cov = cov.at[0, 1].set(rho * scale[0] * scale[1])
-    cov = cov.at[1, 0].set(rho * scale[0] * scale[1])
-
-    def logprob_fn(x):
-        return stats.multivariate_normal.logpdf(x, loc, cov).sum()
-
-    return logprob_fn, loc, scale, rho
-
-
-def mcse_test(samples, true_param, p_val=0.01):
-    posterior_mean = jnp.mean(samples, axis=[0, 1])
-    ess = diagnostics.effective_sample_size(samples, chain_axis=1, sample_axis=0)
-    posterior_sd = jnp.std(samples, axis=0, ddof=1)
-    avg_monte_carlo_standard_error = jnp.mean(posterior_sd, axis=0) / jnp.sqrt(ess)
-    scaled_error = jnp.abs(posterior_mean - true_param) / avg_monte_carlo_standard_error
-    np.testing.assert_array_less(scaled_error, stats.norm.ppf(1 - p_val))
-    return scaled_error
+        np.testing.assert_allclose(np.mean(samples), 1.0, rtol=1e-1)
+        np.testing.assert_allclose(np.var(samples), 4.0, rtol=1e-1)
 
 
 mcse_test_cases = [
@@ -219,37 +182,80 @@ mcse_test_cases = [
 ]
 
 
-@pytest.mark.parametrize("case", mcse_test_cases)
-def test_mcse(case):
-    """Test convergence using Monte Carlo central limit theorem."""
-    rng_key = jax.random.PRNGKey(2351235)
-    rng_key, init_fn_key, pos_init_key, sample_key = jax.random.split(rng_key, 4)
-    logprob_fn, true_loc, true_scale, true_rho = generate_multivariate_target(
-        init_fn_key
-    )
-    num_chains = 10
-    initial_positions = jax.random.normal(pos_init_key, [num_chains, 2])
-    kernel = jax.jit(
-        case["algorithm"].kernel(
-            logprob_fn, inverse_mass_matrix=true_scale, **case["parameters"]
+class MonteCarloStandardErrorTest(chex.TestCase):
+    """Test sampler correctness using Monte Carlo Central Limit Theorem."""
+
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.PRNGKey(2351235)
+
+    def generate_multivariate_target(self, rng=None):
+        """Genrate a Multivariate Normal distribution as target."""
+        if rng is None:
+            loc = jnp.array([0.0, 3])
+            scale = jnp.array([1.0, 2.0])
+            rho = jnp.array(0.75)
+        else:
+            rng, loc_rng, scale_rng, rho_rng = jax.random.split(rng, 4)
+            loc = jax.random.normal(loc_rng, [2]) * 10.0
+            scale = jnp.abs(jax.random.normal(scale_rng, [2])) * 2.5
+            rho = jax.random.uniform(rho_rng, [], minval=-1.0, maxval=1.0)
+
+        cov = jnp.diag(scale ** 2)
+        cov = cov.at[0, 1].set(rho * scale[0] * scale[1])
+        cov = cov.at[1, 0].set(rho * scale[0] * scale[1])
+
+        def logprob_fn(x):
+            return stats.multivariate_normal.logpdf(x, loc, cov).sum()
+
+        return logprob_fn, loc, scale, rho
+
+    def mcse_test(self, samples, true_param, p_val=0.01):
+        posterior_mean = jnp.mean(samples, axis=[0, 1])
+        ess = diagnostics.effective_sample_size(samples, chain_axis=1, sample_axis=0)
+        posterior_sd = jnp.std(samples, axis=0, ddof=1)
+        avg_monte_carlo_standard_error = jnp.mean(posterior_sd, axis=0) / jnp.sqrt(ess)
+        scaled_error = (
+            jnp.abs(posterior_mean - true_param) / avg_monte_carlo_standard_error
         )
-    )
-    initial_states = jax.vmap(case["algorithm"].new_state, in_axes=(0, None))(
-        initial_positions, logprob_fn
-    )
-    states, _ = inference_loop_multiple_chains(
-        sample_key, kernel, initial_states, 2_000, num_chains=num_chains
-    )
+        np.testing.assert_array_less(scaled_error, stats.norm.ppf(1 - p_val))
+        return scaled_error
 
-    posterior_samples = states.position[-1000:]
-    posterior_delta = posterior_samples - true_loc
-    posterior_variance = posterior_delta ** 2.0
-    posterior_correlation = jnp.prod(posterior_delta, axis=-1, keepdims=True) / (
-        true_scale[0] * true_scale[1]
-    )
+    @parameterized.parameters(mcse_test_cases)
+    def test_mcse(self, algorithm, parameters):
+        """Test convergence using Monte Carlo CLT across multiple chains."""
+        init_fn_key, pos_init_key, sample_key = jax.random.split(self.key, 3)
+        logprob_fn, true_loc, true_scale, true_rho = self.generate_multivariate_target(
+            None
+        )
+        num_chains = 10
+        initial_positions = jax.random.normal(pos_init_key, [num_chains, 2])
+        kernel = algorithm.kernel(
+            logprob_fn, inverse_mass_matrix=true_scale, **parameters
+        )
+        initial_states = jax.vmap(algorithm.new_state, in_axes=(0, None))(
+            initial_positions, logprob_fn
+        )
+        multi_chain_sample_key = jax.random.split(sample_key, num_chains)
 
-    _ = jax.tree_multimap(
-        mcse_test,
-        [posterior_samples, posterior_variance, posterior_correlation],
-        [true_loc, true_scale ** 2, true_rho],
-    )
+        inference_loop_multiple_chains = jax.vmap(
+            functools.partial(inference_loop, kernel, 2_000)
+        )
+        states = inference_loop_multiple_chains(multi_chain_sample_key, initial_states)
+
+        posterior_samples = states.position[-1000:]
+        posterior_delta = posterior_samples - true_loc
+        posterior_variance = posterior_delta ** 2.0
+        posterior_correlation = jnp.prod(posterior_delta, axis=-1, keepdims=True) / (
+            true_scale[0] * true_scale[1]
+        )
+
+        _ = jax.tree_multimap(
+            self.mcse_test,
+            [posterior_samples, posterior_variance, posterior_correlation],
+            [true_loc, true_scale ** 2, true_rho],
+        )
+
+
+if __name__ == "__main__":
+    absltest.main()
