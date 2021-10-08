@@ -1,10 +1,12 @@
 """Test the generic SMC sampler"""
+import functools
 
+import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
-import pytest
+from absl.testing import absltest, parameterized
 
 import blackjax.hmc as hmc
 import blackjax.inference.smc.resampling as resampling
@@ -19,49 +21,59 @@ def log_weights_fn(x, y):
     return jnp.sum(stats.norm.logpdf(y - x))
 
 
-@pytest.mark.parametrize("N", [500, 1000, 5000])
-def test_smc(N):
-    mcmc_factory = lambda logprob_fn: hmc.kernel(
-        logprob_fn,
-        step_size=1e-2,
-        inverse_mass_matrix=jnp.eye(1),
-        num_integration_steps=50,
-    )
+class SMCTest(chex.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.PRNGKey(42)
 
-    specialized_log_weights_fn = lambda tree: log_weights_fn(tree, 1.0)
+    @chex.all_variants(with_pmap=False)
+    @parameterized.parameters([500, 1000, 5000])
+    def test_smc(self, N):
+        mcmc_factory = lambda logprob_fn: hmc.kernel(
+            logprob_fn,
+            step_size=1e-2,
+            inverse_mass_matrix=jnp.eye(1),
+            num_integration_steps=50,
+        )
 
-    kernel = smc(mcmc_factory, hmc.new_state, resampling.systematic, 1000)
+        specialized_log_weights_fn = lambda tree: log_weights_fn(tree, 1.0)
 
-    # Don't use exactly the invariant distribution for the MCMC kernel
-    init_particles = 0.25 + np.random.randn(N)
+        kernel = smc(mcmc_factory, hmc.new_state, resampling.systematic, 1000)
 
-    updated_particles, _ = kernel(
-        jax.random.PRNGKey(42),
-        init_particles,
-        kernel_logprob_fn,
-        specialized_log_weights_fn,
-    )
+        # Don't use exactly the invariant distribution for the MCMC kernel
+        init_particles = 0.25 + np.random.randn(N)
 
-    expected_mean = 0.5
-    expected_std = np.sqrt(0.5)
+        updated_particles, _ = self.variant(
+            functools.partial(
+                kernel,
+                logprob_fn=kernel_logprob_fn,
+                log_weight_fn=specialized_log_weights_fn,
+            )
+        )(self.key, init_particles)
 
-    np.testing.assert_allclose(
-        expected_mean, updated_particles.mean(), rtol=1e-2, atol=1e-1
-    )
-    np.testing.assert_allclose(
-        expected_std, updated_particles.std(), rtol=1e-2, atol=1e-1
-    )
+        expected_mean = 0.5
+        expected_std = np.sqrt(0.5)
+
+        np.testing.assert_allclose(
+            expected_mean, updated_particles.mean(), rtol=1e-2, atol=1e-1
+        )
+        np.testing.assert_allclose(
+            expected_std, updated_particles.std(), rtol=1e-2, atol=1e-1
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_normalize(self):
+        logw = jax.random.normal(self.key, shape=[1234])
+        w, loglikelihood_increment = self.variant(_normalize)(logw)
+
+        np.testing.assert_allclose(np.sum(w), 1.0, rtol=1e-6)
+        np.testing.assert_allclose(
+            np.max(np.log(w) - logw), np.min(np.log(w) - logw), rtol=1e-6
+        )
+        np.testing.assert_allclose(
+            loglikelihood_increment, np.log(np.mean(np.exp(logw))), rtol=1e-6
+        )
 
 
-def test_normalize():
-    np.random.seed(42)
-    logw = np.random.randn(
-        1234,
-    )
-    w, loglikelihood_increment = _normalize(logw)
-
-    assert np.sum(w) == pytest.approx(1.0, rel=1e-6)
-    assert np.max(np.log(w) - logw) == pytest.approx(np.min(np.log(w) - logw), rel=1e-6)
-    assert loglikelihood_increment == pytest.approx(
-        np.log(np.mean(np.exp(logw))), rel=1e-6
-    )
+if __name__ == "__main__":
+    absltest.main()
