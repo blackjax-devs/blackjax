@@ -11,10 +11,7 @@ from blackjax.inference.hmc.termination import (
 
 
 class UTurnTest(chex.TestCase):
-    @chex.all_variants(
-        without_device=False,
-        with_pmap=False
-        )
+    @chex.all_variants(without_device=False, with_pmap=False)
     @parameterized.parameters(
         [
             ((3, 2), False),
