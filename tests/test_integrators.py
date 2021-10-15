@@ -111,7 +111,7 @@ class IntegratorTest(chex.TestCase):
         model = example["model"]
         potential, kinetic_energy = model(example["inv_mass_matrix"])
 
-        step = self.variant(integrator['algorithm'](potential, kinetic_energy))
+        step = self.variant(integrator["algorithm"](potential, kinetic_energy))
 
         step_size = example["step_size"]
 
@@ -135,7 +135,7 @@ class IntegratorTest(chex.TestCase):
         new_energy = potential(final_state.position) + kinetic_energy(
             final_state.momentum
         )
-        self.assertAlmostEqual(energy, new_energy, delta=integrator['precision'])
+        self.assertAlmostEqual(energy, new_energy, delta=integrator["precision"])
 
 
 if __name__ == "__main__":
