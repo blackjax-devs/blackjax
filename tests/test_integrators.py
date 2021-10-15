@@ -48,9 +48,9 @@ def PlanetaryMotion(inv_mass_matrix):
 
 
 algorithms = {
-    "velocity_verlet": [integrators.velocity_verlet, 1e-4],
-    "mclachlan": [integrators.mclachlan, 1e-5],
-    "yoshida": [integrators.yoshida, 1e-6],
+    "velocity_verlet": {"algorithm": integrators.velocity_verlet, "precision": 1e-4},
+    "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-5},
+    "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-6},
 }
 
 
@@ -105,13 +105,13 @@ class IntegratorTest(chex.TestCase):
         )
     )
     def test_integrator(self, example_name, integrator_name):
-        integrator, integration_precision = algorithms[integrator_name]
+        integrator = algorithms[integrator_name]
         example = examples[example_name]
 
         model = example["model"]
         potential, kinetic_energy = model(example["inv_mass_matrix"])
 
-        step = self.variant(integrator(potential, kinetic_energy))
+        step = self.variant(integrator['algorithm'](potential, kinetic_energy))
 
         step_size = example["step_size"]
 
@@ -135,7 +135,7 @@ class IntegratorTest(chex.TestCase):
         new_energy = potential(final_state.position) + kinetic_energy(
             final_state.momentum
         )
-        self.assertAlmostEqual(energy, new_energy, delta=integration_precision)
+        self.assertAlmostEqual(energy, new_energy, delta=integrator['precision'])
 
 
 if __name__ == "__main__":
