@@ -10,7 +10,7 @@ import blackjax.hmc as hmc
 import blackjax.nuts as nuts
 
 
-class CompliationTest(chex.TestCase):
+class CompilationTest(chex.TestCase):
     def test_hmc(self):
         @chex.assert_max_traces(n=1)
         def logprob_fn(x):
