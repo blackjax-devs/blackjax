@@ -1,4 +1,4 @@
-"""Make sure that the log probability function is only compiled/trace once.
+"""Make sure that the log probability function is only compiled/traced once.
 """
 import chex
 import jax
