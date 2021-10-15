@@ -1,17 +1,19 @@
-"""Test the resampling functions"""
+"""Test the resampling functions for SMC."""
+import itertools
 
+import chex
 import jax
 import numpy as np
-import pytest
+from absl.testing import absltest, parameterized
 
 import blackjax.inference.smc.resampling as resampling
 
-resampling_methods_to_test = [
-    resampling.systematic,
-    resampling.stratified,
-    resampling.multinomial,
-    resampling.residual,
-]
+resampling_methods = {
+    "systematic": resampling.systematic,
+    "stratified": resampling.stratified,
+    "multinomial": resampling.multinomial,
+    "residual": resampling.residual,
+}
 
 
 def _weighted_avg_and_std(values, weights):
@@ -24,30 +26,37 @@ def integrand(x):
     return np.cos(x)
 
 
-@pytest.mark.parametrize("N", [100, 500, 1_000, 100_000])
-@pytest.mark.parametrize("resampling_method", resampling_methods_to_test)
-def test_resampling_methods(N, resampling_method):
-    np.random.seed(42)
-    batch_size = 100
-    w = np.random.rand(N)
-    x = np.random.randn(N)
-    w = w / w.sum()
-
-    resampling_keys = jax.random.split(jax.random.PRNGKey(42), batch_size)
-
-    resampling_idx = jax.vmap(jax.jit(resampling_method), in_axes=[None, 0])(
-        w, resampling_keys
+class ResamplingTest(chex.TestCase):
+    @chex.all_variants(with_pmap=False)
+    @parameterized.parameters(
+        itertools.product([100, 500, 1_000, 100_000], resampling_methods.keys())
     )
-    resampling_idx = np.asarray(resampling_idx)
-    batch_x = np.repeat(x.reshape(1, -1), batch_size, axis=0)
-    batch_resampled_x = np.take_along_axis(batch_x, resampling_idx, axis=1)
-    batch_integrand = integrand(batch_resampled_x)
-    batch_mean_res = batch_integrand.mean(1)
-    batch_std_res = batch_integrand.std(1)
+    def test_resampling_methods(self, N, method_name):
+        np.random.seed(42)
+        batch_size = 100
+        w = np.random.rand(N)
+        x = np.random.randn(N)
+        w = w / w.sum()
 
-    mean_res = batch_mean_res.mean()
-    std_res = batch_std_res.mean()
-    expected_mean, expected_std = _weighted_avg_and_std(integrand(x), w)
+        resampling_keys = jax.random.split(jax.random.PRNGKey(42), batch_size)
 
-    np.testing.assert_allclose(mean_res, expected_mean, atol=1e-2, rtol=1e-2)
-    np.testing.assert_allclose(std_res, expected_std, atol=1e-2, rtol=1e-2)
+        resampling_idx = self.variant(
+            jax.vmap(resampling_methods[method_name], in_axes=[None, 0])
+        )(w, resampling_keys)
+        resampling_idx = np.asarray(resampling_idx)
+        batch_x = np.repeat(x.reshape(1, -1), batch_size, axis=0)
+        batch_resampled_x = np.take_along_axis(batch_x, resampling_idx, axis=1)
+        batch_integrand = integrand(batch_resampled_x)
+        batch_mean_res = batch_integrand.mean(1)
+        batch_std_res = batch_integrand.std(1)
+
+        mean_res = batch_mean_res.mean()
+        std_res = batch_std_res.mean()
+        expected_mean, expected_std = _weighted_avg_and_std(integrand(x), w)
+
+        np.testing.assert_allclose(mean_res, expected_mean, atol=1e-2, rtol=1e-2)
+        np.testing.assert_allclose(std_res, expected_std, atol=1e-2, rtol=1e-2)
+
+
+if __name__ == "__main__":
+    absltest.main()
