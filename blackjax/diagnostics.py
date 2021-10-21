@@ -130,7 +130,7 @@ def effective_sample_size(
     )
     mean_autocov_var = autocov_value.mean(chain_axis, keepdims=True)
     mean_var0 = (
-        jnp.take(mean_autocov_var, [0], axis=sample_axis)
+        jnp.take(mean_autocov_var, jnp.array([0]), axis=sample_axis)
         * num_samples
         / (num_samples - 1.0)
     )
