@@ -45,6 +45,10 @@ def potential_scale_reduction(
     .. [2]: Gelman, Andrew, and Donald B. Rubin. (1992) “Inference from Iterative Simulation Using Multiple Sequences.” Statistical Science 7 (4): 457–72.
 
     """
+    assert (
+        input_array.shape[chain_axis] > 1
+    ), "potential_scale_reduction as implemented only works for two or more chains."
+
     num_samples = input_array.shape[sample_axis]
     # Compute stats for each chain
     per_chain_mean = input_array.mean(axis=sample_axis, keepdims=True)
@@ -110,6 +114,9 @@ def effective_sample_size(
     sample_axis = sample_axis if sample_axis >= 0 else len(input_shape) + sample_axis
     num_chains = input_shape[chain_axis]
     num_samples = input_shape[sample_axis]
+    assert (
+        num_chains > 1
+    ), "effective_sample_size as implemented only works for two or more chains."
 
     mean_across_chain = input_array.mean(axis=sample_axis, keepdims=True)
     # Compute autocovariance estimates for every lag for the input array using FFT.
@@ -123,7 +130,7 @@ def effective_sample_size(
     )
     mean_autocov_var = autocov_value.mean(chain_axis, keepdims=True)
     mean_var0 = (
-        jnp.take(mean_autocov_var, [0], axis=sample_axis)
+        jnp.take(mean_autocov_var, jnp.array([0]), axis=sample_axis)
         * num_samples
         / (num_samples - 1.0)
     )
