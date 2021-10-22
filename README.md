@@ -56,8 +56,8 @@ import numpy as np
 import blackjax.nuts as nuts
 
 observed = np.random.normal(10, 20, size=1_000)
-def logprob_fn(loc, scale, observed=observed):
-  logpdf = stats.norm.logpdf(observed, loc, scale)
+def logprob_fn(x):
+  logpdf = stats.norm.logpdf(observed, x["loc"], x["scale"])
   return jnp.sum(logpdf)
 
 # Build the kernel
