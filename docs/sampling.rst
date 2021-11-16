@@ -9,6 +9,7 @@ Sampling
   hmc
   nuts
   mala
+  orbital_hmc
   rmh
   tempered_smc
   adaptive_tempered_smc
@@ -60,6 +61,11 @@ NUTS
 ~~~~
 
 .. autoclass:: blackjax.nuts
+
+Periodic Orbital
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: blackjax.orbital_hmc
 
 RMH
 ~~~
