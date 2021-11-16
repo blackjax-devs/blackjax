@@ -15,6 +15,7 @@ __all__ = [
     "hmc",
     "mala",
     "nuts",
+    "orbital_hmc",
     "rmh",
     "tempered_smc",
     "window_adaptation",
@@ -542,6 +543,84 @@ class rmh:
                 state,
                 logprob_fn,
                 sigma,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)
+
+
+class orbital_hmc:
+    """Implements the (basic) user interface for the Periodic orbital MCMC kernel
+
+    Each iteration of the periodic orbital MCMC outputs ``period`` weighted samples from
+    a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable
+    with precision matrix ``inverse_mass_matrix``, evaluated using the ``bijection`` as an
+    integrator with discretization parameter ``step_size``.
+
+    Examples
+    --------
+
+    A new Periodic orbital MCMC kernel can be initialized and used with the following code:
+
+    .. code::
+
+        per_orbit = blackjax.orbital_hmc(logprob_fn, step_size, inverse_mass_matrix, period)
+        state = per_orbit.init(position)
+        new_state, info = per_orbit.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(per_orbit.step)
+        new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    logprob_fn
+        The logarithm of the probability density function we wish to draw samples from. This
+        is minus the potential energy function.
+    step_size
+        The value to use for the step size in for the symplectic integrator to buid the orbit.
+    inverse_mass_matrix
+        The value to use for the inverse mass matrix when drawing a value for
+        the momentum and computing the kinetic energy.
+    period
+        The number of steps used to build the orbit.
+    bijection
+        (algorithm parameter) The symplectic integrator to use to build the orbit.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(mcmc.periodic_orbital.init)
+    kernel = staticmethod(mcmc.periodic_orbital.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logprob_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: Array,  # assume momentum is always Gaussian
+        period: int,
+        *,
+        bijection: Callable = mcmc.integrators.velocity_verlet,
+    ) -> SamplingAlgorithm:
+
+        step = cls.kernel(bijection)
+
+        def init_fn(position: PyTree):
+            return cls.init(position, logprob_fn, period)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return step(
+                rng_key,
+                state,
+                logprob_fn,
+                step_size,
+                inverse_mass_matrix,
+                period,
             )
 
         return SamplingAlgorithm(init_fn, step_fn)

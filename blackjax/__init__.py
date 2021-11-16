@@ -5,6 +5,7 @@ from .kernels import (
     hmc,
     mala,
     nuts,
+    orbital_hmc,
     rmh,
     tempered_smc,
     window_adaptation,
@@ -16,6 +17,7 @@ __all__ = [
     "hmc",  # mcmc
     "mala",
     "nuts",
+    "orbital_hmc",
     "rmh",
     "window_adaptation",  # mcmc adaptation
     "adaptive_tempered_smc",  # smc

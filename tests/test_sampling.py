@@ -24,6 +24,17 @@ def inference_loop(kernel, num_samples, rng_key, initial_state):
     return states
 
 
+def orbit_samples(orbits, weights, rng_key):
+    def sample_orbit(orbit, weights, rng_key):
+        sample = jax.random.choice(rng_key, orbit, p=weights)
+        return sample
+
+    keys = jax.random.split(rng_key, orbits.shape[0])
+    samples = jax.vmap(sample_orbit)(orbits, weights, keys)
+
+    return samples
+
+
 regresion_test_cases = [
     {
         "algorithm": blackjax.hmc,
@@ -116,6 +127,17 @@ normal_test_cases = [
         "burnin": 5_000,
     },
     {
+        "algorithm": blackjax.orbital_hmc,
+        "initial_position": jnp.array(100.0),
+        "parameters": {
+            "step_size": 0.1,
+            "inverse_mass_matrix": jnp.array([0.1]),
+            "period": 100,
+        },
+        "num_sampling_steps": 20_000,
+        "burnin": 15_000,
+    },
+    {
         "algorithm": blackjax.rmh,
         "initial_position": 1.0,
         "parameters": {"sigma": jnp.array([1.0])},
@@ -155,7 +177,13 @@ class UnivariateNormalTest(chex.TestCase):
             functools.partial(inference_loop, kernel, num_sampling_steps)
         )(self.key, initial_state)
 
-        samples = states.position[burnin:]
+        if algorithm == blackjax.orbital_hmc:
+            _, orbit_key = jax.random.split(self.key)
+            samples = orbit_samples(
+                states.positions[burnin:], states.weights[burnin:], orbit_key
+            )
+        else:
+            samples = states.position[burnin:]
 
         np.testing.assert_allclose(np.mean(samples), 1.0, rtol=1e-1)
         np.testing.assert_allclose(np.var(samples), 4.0, rtol=1e-1)
@@ -206,7 +234,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
 
     def mcse_test(self, samples, true_param, p_val=0.01):
         posterior_mean = jnp.mean(samples, axis=[0, 1])
-        ess = diagnostics.effective_sample_size(samples, chain_axis=1, sample_axis=0)
+        ess = diagnostics.effective_sample_size(samples, chain_axis=0, sample_axis=1)
         posterior_sd = jnp.std(samples, axis=0, ddof=1)
         avg_monte_carlo_standard_error = jnp.mean(posterior_sd, axis=0) / jnp.sqrt(ess)
         scaled_error = (
@@ -233,7 +261,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         )
         states = inference_loop_multiple_chains(multi_chain_sample_key, initial_states)
 
-        posterior_samples = states.position[-1000:]
+        posterior_samples = states.position[:, -1000:]
         posterior_delta = posterior_samples - true_loc
         posterior_variance = posterior_delta**2.0
         posterior_correlation = jnp.prod(posterior_delta, axis=-1, keepdims=True) / (
