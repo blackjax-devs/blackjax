@@ -8,6 +8,7 @@ Sampling
 
   hmc
   nuts
+  mala
   rmh
   tempered_smc
   adaptive_tempered_smc
@@ -49,6 +50,11 @@ HMC
 ~~~
 
 .. autoclass:: blackjax.hmc
+
+MALA
+~~~~
+
+.. autoclass:: blackjax.mala
 
 NUTS
 ~~~~

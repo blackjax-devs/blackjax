@@ -3,6 +3,7 @@ from .diagnostics import potential_scale_reduction as rhat
 from .kernels import (
     adaptive_tempered_smc,
     hmc,
+    mala,
     nuts,
     rmh,
     tempered_smc,
@@ -13,6 +14,7 @@ __version__ = "0.4.0"
 
 __all__ = [
     "hmc",  # mcmc
+    "mala",
     "nuts",
     "rmh",
     "window_adaptation",  # mcmc adaptation

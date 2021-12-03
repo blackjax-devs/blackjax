@@ -1,3 +1,3 @@
-from . import hmc, nuts, rmh
+from . import hmc, mala, nuts, rmh
 
-__all__ = ["hmc", "nuts", "rmh"]
+__all__ = ["hmc", "mala", "nuts", "rmh"]
