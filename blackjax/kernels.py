@@ -11,6 +11,7 @@ from blackjax.types import Array, PRNGKey, PyTree
 __all__ = [
     "adaptive_tempered_smc",
     "hmc",
+    "mala",
     "nuts",
     "rmh",
     "tempered_smc",
@@ -218,6 +219,77 @@ class hmc:
                 inverse_mass_matrix,
                 num_integration_steps,
             )
+
+        return SamplingAlgorithm(init_fn, step_fn)
+
+
+class mala:
+    """Implements the (basic) user interface for the MALA kernel.
+
+    The general mala kernel (:meth:`blackjax.mcmc.mala.kernel`, alias `blackjax.mala.kernel`) can be
+    cumbersome to manipulate. Since most users only need to specify the kernel
+    parameters at initialization time, we provide a helper function that
+    specializes the general kernel.
+
+    We also add the general kernel and state generator as an attribute to this class so
+    users only need to pass `blackjax.mala` to SMC, adaptation, etc. algorithms.
+
+    Examples
+    --------
+
+    A new MALA kernel can be initialized and used with the following code:
+
+    .. code::
+
+        mala = blackjax.mala(logprob_fn, step_size)
+        state = mala.init(position)
+        new_state, info = mala.step(rng_key, state)
+
+    Kernels are not jit-compiled by default so you will need to do it manually:
+
+    .. code::
+
+       step = jax.jit(mala.step)
+       new_state, info = step(rng_key, state)
+
+    Should you need to you can always use the base kernel directly:
+
+    .. code::
+
+       kernel = blackjax.mala.kernel(logprob_fn)
+       state = blackjax.mala.init(position, logprob_fn)
+       state, info = kernel(rng_key, state, logprob_fn, step_size)
+
+    Parameters
+    ----------
+    logprob_fn
+        The logprobability density function we wish to draw samples from. This
+        is minus the potential function.
+    step_size
+        The value to use for the step size in the symplectic integrator.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(mcmc.mala.init)
+    kernel = staticmethod(mcmc.mala.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logprob_fn: Callable,
+        step_size: float,
+    ) -> SamplingAlgorithm:
+
+        step = cls.kernel()
+
+        def init_fn(position: PyTree):
+            return cls.init(position, logprob_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return step(rng_key, state, logprob_fn, step_size)
 
         return SamplingAlgorithm(init_fn, step_fn)
 
