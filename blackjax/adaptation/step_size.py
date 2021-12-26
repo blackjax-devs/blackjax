@@ -1,11 +1,13 @@
 """Step size adaptation"""
 from typing import Callable, NamedTuple, Tuple
+from functools import partial
 
 import jax
 import jax.numpy as jnp
 
 import blackjax.optimizers as optimizers
 from blackjax.inference.hmc.base import HMCState
+from blackjax.types import Array
 
 __all__ = [
     "dual_averaging_adaptation",
@@ -170,11 +172,13 @@ class ReasonableStepSizeState(NamedTuple):
     step_size: float
 
 
+@partial(jax.jit, static_argnums=(1,))
 def find_reasonable_step_size(
     rng_key: PRNGKey,
-    kernel_generator: Callable[[float], Callable],
+    kernel: Callable,
     reference_state: HMCState,
     initial_step_size: float,
+    inverse_mass_matrix: Array,
     target_accept: float = 0.65,
 ) -> float:
     """Find a reasonable initial step size during warmup.
@@ -195,10 +199,10 @@ def find_reasonable_step_size(
     reference_hmc_state
         The location (HMC state) where this first step size must be found. This function
         never advances the chain.
-    inverse_mass_matrix
-        The inverse mass matrix relative to which the step size must be found.
     initial_step_size
         The first step size used to start the search.
+    inverse_mass_matrix
+        The inverse mass matrix relative to which the step size must be found.
     target_accept
         Once that value of the metropolis acceptance probability is reached we
         estimate that we have found a "reasonable" first step size.
@@ -249,8 +253,7 @@ def find_reasonable_step_size(
         _, rng_key = jax.random.split(rng_key)
 
         step_size = (2.0 ** direction) * step_size
-        kernel = kernel_generator(step_size)
-        _, info = kernel(rng_key, reference_state)
+        _, info = kernel(rng_key, reference_state, step_size, inverse_mass_matrix)
 
         new_direction = jnp.where(target_accept < info.acceptance_probability, 1, -1)
         return ReasonableStepSizeState(rng_key, new_direction, direction, step_size)

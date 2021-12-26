@@ -58,12 +58,6 @@ new_state = blackjax.hmc.new_state
 
 def kernel(
     logprob_fn: Callable,
-    step_size: float,
-    inverse_mass_matrix: Array,
-    max_num_doublings: int = 10,
-    *,
-    integrator: Callable = integrators.velocity_verlet,
-    divergence_threshold: int = 1000,
 ) -> Callable:
     """Build an iterative NUTS kernel.
 
@@ -79,20 +73,30 @@ def kernel(
     def potential_fn(x):
         return -logprob_fn(x)
 
-    momentum_generator, kinetic_energy_fn, uturn_check_fn = metrics.gaussian_euclidean(
-        inverse_mass_matrix
-    )
-    symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
-    proposal_generator = iterative_nuts_proposal(
-        symplectic_integrator,
-        kinetic_energy_fn,
-        uturn_check_fn,
-        step_size,
-        max_num_doublings,
-        divergence_threshold,
-    )
+    def kernel(
+        rng_key: PRNGKey,
+        state: HMCState,
+        step_size: float,
+        inverse_mass_matrix: Array,
+        max_num_doublings: int = 10,
+        *,
+        integrator: Callable = integrators.velocity_verlet,
+        divergence_threshold: int = 1000,
+    ):
+        momentum_generator, kinetic_energy_fn, uturn_check_fn = metrics.gaussian_euclidean(
+            inverse_mass_matrix
+        )
+        symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
+        proposal_generator = iterative_nuts_proposal(
+            symplectic_integrator,
+            kinetic_energy_fn,
+            uturn_check_fn,
+            step_size,
+            max_num_doublings,
+            divergence_threshold,
+        )
 
-    kernel = base.hmc(momentum_generator, proposal_generator)
+        return base.hmc(momentum_generator, proposal_generator)(rng_key, state)
 
     return kernel
 

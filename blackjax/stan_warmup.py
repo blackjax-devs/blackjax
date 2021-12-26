@@ -26,7 +26,7 @@ class StanWarmupState(NamedTuple):
 
 def run(
     rng_key,
-    kernel_factory: Callable,
+    kernel: Callable,
     initial_state: HMCState,
     num_steps: int = 1000,
     *,
@@ -61,7 +61,7 @@ def run(
 
     """
     init, update, final = stan_warmup(
-        kernel_factory,
+        kernel,
         is_mass_matrix_diagonal,
         target_acceptance_rate=target_acceptance_rate,
     )
@@ -91,7 +91,7 @@ def run(
 
 
 def stan_warmup(
-    kernel_factory: Callable,
+    kernel: Callable,
     is_mass_matrix_diagonal: bool,
     target_acceptance_rate: float = 0.65,
 ):
@@ -163,14 +163,12 @@ def stan_warmup(
         """
         mm_state = slow_init(initial_state)
 
-        kernel = lambda step_size: kernel_factory(
-            step_size, mm_state.inverse_mass_matrix
-        )
         step_size = find_reasonable_step_size(
             rng_key,
             kernel,
             initial_state,
             initial_step_size,
+            mm_state.inverse_mass_matrix,
             target_acceptance_rate,
         )
         da_state = fast_init(step_size)
@@ -179,6 +177,7 @@ def stan_warmup(
 
         return warmup_state
 
+    @jax.jit
     def update(
         rng_key: PRNGKey,
         stage: int,
@@ -215,9 +214,13 @@ def stan_warmup(
         """
         step_size = jnp.exp(warmup_state.da_state.log_step_size)
         inverse_mass_matrix = warmup_state.mm_state.inverse_mass_matrix
-        kernel = kernel_factory(step_size, inverse_mass_matrix)
 
-        chain_state, chain_info = kernel(rng_key, chain_state)
+        chain_state, chain_info = kernel(
+            rng_key,
+            chain_state,
+            step_size,
+            inverse_mass_matrix,
+        )
 
         warmup_state = jax.lax.switch(
             stage,
