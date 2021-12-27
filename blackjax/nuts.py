@@ -11,8 +11,8 @@ import blackjax.inference.hmc.metrics as metrics
 import blackjax.inference.hmc.proposal as proposal
 import blackjax.inference.hmc.termination as termination
 import blackjax.inference.hmc.trajectory as trajectory
-from blackjax.types import Array, PyTree
-
+from blackjax.types import PRNGKey, Array, PyTree
+from blackjax.inference.hmc.base import HMCState
 
 class NUTSInfo(NamedTuple):
     """Additional information on the NUTS transition.

@@ -24,20 +24,16 @@ class StepSizeTest(chex.TestCase):
         reference_state = new_hmc_state(init_position, logprob_fn)
 
         inv_mass_matrix = jnp.array([1.0])
-        kernel_generator = lambda step_size: hmc.kernel(
-            logprob_fn, step_size, inv_mass_matrix, 10
-        )
+        kernel = hmc.kernel(logprob_fn)
 
-        # Test that the algorithm actually does something
-        _find_step_size = self.variant(
-            functools.partial(
-                find_reasonable_step_size, kernel_generator=kernel_generator
-            )
-        )
+        _find_step_size = self.variant(find_reasonable_step_size, static_argnums=(1,))
+
         epsilon_1 = _find_step_size(
             run_key0,
+            kernel=kernel,
             reference_state=reference_state,
             initial_step_size=0.01,
+            inverse_mass_matrix=inv_mass_matrix,
             target_accept=0.95,
         )
         assert not epsilon_1 == 1.0
@@ -46,8 +42,10 @@ class StepSizeTest(chex.TestCase):
         # Different target acceptance rate
         epsilon_2 = _find_step_size(
             run_key1,
+            kernel=kernel,
             reference_state=reference_state,
             initial_step_size=1.0,
+            inverse_mass_matrix=inv_mass_matrix,
             target_accept=0.05,
         )
         assert not epsilon_2.item == epsilon_1

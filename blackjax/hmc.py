@@ -8,7 +8,9 @@ import blackjax.inference.hmc.integrators as integrators
 import blackjax.inference.hmc.metrics as metrics
 import blackjax.inference.hmc.proposal as proposal
 import blackjax.inference.hmc.trajectory as trajectory
-from blackjax.types import Array, PyTree
+
+from blackjax.types import PRNGKey, Array, PyTree
+from blackjax.inference.hmc.base import HMCState
 
 __all__ = ["new_state", "kernel"]
 
@@ -55,12 +57,6 @@ new_state = base.new_hmc_state
 
 def kernel(
     logprob_fn: Callable,
-    step_size: float,
-    inverse_mass_matrix: Array,
-    num_integration_steps: int,
-    *,
-    integrator: Callable = integrators.velocity_verlet,
-    divergence_threshold: int = 1000,
 ):
     """Build a HMC kernel.
 
@@ -82,18 +78,29 @@ def kernel(
     def potential_fn(x):
         return -logprob_fn(x)
 
-    momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
-        inverse_mass_matrix
-    )
-    symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
-    proposal_generator = hmc_proposal(
-        symplectic_integrator,
-        kinetic_energy_fn,
-        step_size,
-        num_integration_steps,
-        divergence_threshold,
-    )
-    kernel = base.hmc(momentum_generator, proposal_generator)
+    def kernel(
+        rng_key: PRNGKey,
+        state: HMCState,
+        step_size: float,
+        inverse_mass_matrix: Array,
+        num_integration_steps: int = 100,
+        *,
+        integrator: Callable = integrators.velocity_verlet,
+        divergence_threshold: int = 1000,
+    ):
+        momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
+            inverse_mass_matrix
+        )
+        symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
+        proposal_generator = hmc_proposal(
+            symplectic_integrator,
+            kinetic_energy_fn,
+            step_size,
+            num_integration_steps,
+            divergence_threshold,
+        )
+        return base.hmc(momentum_generator, proposal_generator)(rng_key, state)
+
     return kernel
 
 

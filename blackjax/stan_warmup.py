@@ -65,6 +65,7 @@ def run(
         is_mass_matrix_diagonal,
         target_acceptance_rate=target_acceptance_rate,
     )
+    update = jax.jit(update)
 
     def one_step(carry, interval):
         rng_key, state, warmup_state = carry
@@ -177,7 +178,6 @@ def stan_warmup(
 
         return warmup_state
 
-    @jax.jit
     def update(
         rng_key: PRNGKey,
         stage: int,

@@ -78,19 +78,19 @@ class LinearRegressionTest(chex.TestCase):
         initial_position = case["initial_position"]
         initial_state = case["algorithm"].new_state(initial_position, logposterior_fn)
 
-        def kernel_factory(step_size, inverse_mass_matrix):
-            return case["algorithm"].kernel(
-                logposterior_fn, step_size, inverse_mass_matrix, **case["parameters"]
-            )
+        kernel = functools.partial(
+            case["algorithm"].kernel(logposterior_fn),
+        )
 
         warmup_run = functools.partial(
             stan_warmup.run,
-            kernel_factory=kernel_factory,
+            kernel=kernel,
             num_steps=case["num_warmup_steps"],
             is_mass_matrix_diagonal=is_mass_matrix_diagonal,
         )
         state, (step_size, inverse_mass_matrix), _ = self.variant(warmup_run)(
-            warmup_key, initial_state=initial_state
+            warmup_key,
+            initial_state=initial_state,
         )
 
         if is_mass_matrix_diagonal:
@@ -98,7 +98,11 @@ class LinearRegressionTest(chex.TestCase):
         else:
             assert inverse_mass_matrix.ndim == 2
 
-        kernel = kernel_factory(step_size, inverse_mass_matrix)
+        kernel = functools.partial(
+            kernel,
+            step_size=step_size,
+            inverse_mass_matrix=inverse_mass_matrix,
+        )
         states = inference_loop(
             kernel, case["num_sampling_steps"], inference_key, initial_state
         )
@@ -156,7 +160,8 @@ class UnivariateNormalTest(chex.TestCase):
     ):
         initial_state = algorithm.new_state(initial_position, self.normal_logprob)
 
-        kernel = algorithm.kernel(self.normal_logprob, **parameters)
+        kernel = algorithm.kernel(self.normal_logprob)
+        kernel = functools.partial(kernel, **parameters)
         states = self.variant(
             functools.partial(inference_loop, kernel, num_sampling_steps)
         )(self.key, initial_state)
@@ -230,8 +235,11 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         )
         num_chains = 10
         initial_positions = jax.random.normal(pos_init_key, [num_chains, 2])
-        kernel = algorithm.kernel(
-            logprob_fn, inverse_mass_matrix=true_scale, **parameters
+        kernel = algorithm.kernel(logprob_fn)
+
+        kernel = functools.partial(kernel,
+            inverse_mass_matrix=true_scale,
+            **parameters,
         )
         initial_states = jax.vmap(algorithm.new_state, in_axes=(0, None))(
             initial_positions, logprob_fn

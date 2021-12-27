@@ -21,18 +21,16 @@ class CompilationTest(chex.TestCase):
 
         chex.clear_trace_counter()
 
-        kernel = jax.jit(
-            hmc.kernel(
-                logprob_fn,
+        kernel = jax.jit(hmc.kernel(logprob_fn), static_argnums=(4,))
+
+        for _ in range(10):
+            rng_key, sample_key = jax.random.split(rng_key)
+            state, _ = kernel(
+                sample_key, state,
                 step_size=1e-2,
                 inverse_mass_matrix=jnp.array([1.0]),
                 num_integration_steps=10,
             )
-        )
-
-        for _ in range(10):
-            rng_key, sample_key = jax.random.split(rng_key)
-            state, _ = kernel(sample_key, state)
 
     def test_nuts(self):
         # Log probability function was traced twice as we call it
@@ -46,15 +44,14 @@ class CompilationTest(chex.TestCase):
 
         chex.clear_trace_counter()
 
-        kernel = jax.jit(
-            nuts.kernel(
-                logprob_fn, step_size=1e-2, inverse_mass_matrix=jnp.array([1.0])
-            )
-        )
+        kernel = jax.jit(nuts.kernel(logprob_fn))
 
         for _ in range(10):
             rng_key, sample_key = jax.random.split(rng_key)
-            state, _ = kernel(sample_key, state)
+            state, _ = kernel(
+                sample_key, state,
+                step_size=1e-2, inverse_mass_matrix=jnp.array([1.0]),
+            )
 
 
 if __name__ == "__main__":

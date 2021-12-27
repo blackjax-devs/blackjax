@@ -180,6 +180,7 @@ def find_reasonable_step_size(
     initial_step_size: float,
     inverse_mass_matrix: Array,
     target_accept: float = 0.65,
+    num_integration_steps: int = 10,
 ) -> float:
     """Find a reasonable initial step size during warmup.
 
@@ -253,7 +254,7 @@ def find_reasonable_step_size(
         _, rng_key = jax.random.split(rng_key)
 
         step_size = (2.0 ** direction) * step_size
-        _, info = kernel(rng_key, reference_state, step_size, inverse_mass_matrix)
+        _, info = kernel(rng_key, reference_state, step_size, inverse_mass_matrix, num_integration_steps)
 
         new_direction = jnp.where(target_accept < info.acceptance_probability, 1, -1)
         return ReasonableStepSizeState(rng_key, new_direction, direction, step_size)
