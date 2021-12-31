@@ -8,3 +8,7 @@ test:
 publish:
 	git tag -a $(LIB_VERSION) -m $(LIB_VERSION)
 	git push --tag
+
+
+build-docs:
+	sphinx-build -b html docs docs/_build/html

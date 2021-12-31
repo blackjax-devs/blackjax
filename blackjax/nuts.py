@@ -67,12 +67,35 @@ def kernel(
 ) -> Callable:
     """Build an iterative NUTS kernel.
 
+    This algorithm is an iteration on the original NUTS algorithm [Hoffman2014]_ with two major differences:
+    - We do not use slice samplig but multinomial sampling for the proposal [Betancourt2017]_;
+    - The trajectory expansion is not recursive but iterative [Phan2019]_, [Lao2020]_.
+
+    The implementation can seem unusual for those familiar with similar
+    algorithms. Indeed, we do not conceptualize the trajectory construction as
+    building a tree. We feel that the tree lingo, inherited from the recursive
+    version, is unnecessarily complicated and hides the more general concepts
+    on which the NUTS algorithm is built.
+
+    NUTS, in essence, consists in sampling a trajectory by iteratively choosing
+    a direction at random and integrating in this direction a number of times
+    that doubles at every step. From this trajectory we continuously sample a
+    proposal. When the trajectory turns on itself or when we have reached the
+    maximum trajectory length we return the current proposal.
+
     Parameters
     ----------
     logprob_fb
         Log probability function we wish to sample from.
     parameters
         A NamedTuple that contains the parameters of the kernel to be built.
+
+    References
+    ----------
+    .. [Hoffman2014] Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo." J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
+    .. [Betancourt2017] Betancourt, Michael. "A conceptual introduction to Hamiltonian Monte Carlo." arXiv preprint arXiv:1701.02434 (2017).
+    .. [Phan2019] Phan, Du, Neeraj Pradhan, and Martin Jankowiak. "Composable effects for flexible and accelerated probabilistic programming in NumPyro." arXiv preprint arXiv:1912.11554 (2019).
+    .. [Lao2020] Lao, Junpeng, et al. "tfp. mcmc: Modern markov chain monte carlo tools built for modern hardware." arXiv preprint arXiv:2002.01184 (2020).
 
     """
 
@@ -105,23 +128,7 @@ def iterative_nuts_proposal(
     max_num_expansions: int = 10,
     divergence_threshold: float = 1000,
 ) -> Callable:
-    """Iterative NUTS algorithm.
-
-    This algorithm is an iteration on the original NUTS algorithm [1]_ with two major differences:
-    - We do not use slice samplig but multinomial sampling for the proposal [2]_;
-    - The trajectory expansion is not recursive but iterative [3,4]_.
-
-    The implementation can seem unusual for those familiar with similar
-    algorithms. Indeed, we do not conceptualize the trajectory construction as
-    building a tree. We feel that the tree lingo, inherited from the recursive
-    version, is unnecessarily complicated and hides the more general concepts
-    on which the NUTS algorithm is built.
-
-    NUTS, in essence, consists in sampling a trajectory by iteratively choosing
-    a direction at random and integrating in this direction a number of times
-    that doubles at every step. From this trajectory we continuously sample a
-    proposal. When the trajectory turns on itself or when we have reached the
-    maximum trajectory length we return the current proposal.
+    """Iterative NUTS proposal.
 
     Parameters
     ----------
@@ -142,12 +149,6 @@ def iterative_nuts_proposal(
     -------
     A kernel that generates a new chain state and information about the transition.
 
-    References
-    ----------
-    .. [1]: Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo." J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
-    .. [2]: Betancourt, Michael. "A conceptual introduction to Hamiltonian Monte Carlo." arXiv preprint arXiv:1701.02434 (2017).
-    .. [3]: Phan, Du, Neeraj Pradhan, and Martin Jankowiak. "Composable effects for flexible and accelerated probabilistic programming in NumPyro." arXiv preprint arXiv:1912.11554 (2019).
-    .. [4]: Lao, Junpeng, et al. "tfp. mcmc: Modern markov chain monte carlo tools built for modern hardware." arXiv preprint arXiv:2002.01184 (2020).
     """
     (
         new_termination_state,
