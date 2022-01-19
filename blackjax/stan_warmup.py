@@ -115,12 +115,11 @@ def stan_warmup(
 
     Schematically:
 
-    ```
     +---------+---+------+------------+------------------------+------+
     |  fast   | s | slow |   slow     |        slow            | fast |
     +---------+---+------+------------+------------------------+------+
-    1         2   3      3            3                        3
-    ```
+    |1        |2  |3     |3           |3                       |3     |
+    +---------+---+------+------------+------------------------+------+
 
     Step (1) consists in find a "reasonable" first step size that is used to
     initialize the dual averaging scheme. In (2) we initialize the mass matrix

@@ -41,8 +41,8 @@ def potential_scale_reduction(
 
     References
     ----------
-    .. [1]: https://mc-stan.org/docs/2_27/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction
-    .. [2]: Gelman, Andrew, and Donald B. Rubin. (1992) “Inference from Iterative Simulation Using Multiple Sequences.” Statistical Science 7 (4): 457–72.
+    .. [1] https://mc-stan.org/docs/2_27/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction
+    .. [2] Gelman, Andrew, and Donald B. Rubin. (1992) “Inference from Iterative Simulation Using Multiple Sequences.” Statistical Science 7 (4): 457–72.
 
     """
     assert (
@@ -95,19 +95,19 @@ def effective_sample_size(
     .. math:: \\hat{\\tau} = -1 + 2 \\sum_{t'=0}^K \\hat{P}_{t'}
 
     where :math:`M` is the number of chains, :math:`N` the number of draws,
-    :math:`\\hat{\rho}_t` is the estimated _autocorrelation at lag :math:`t`, and
-    :math:`K` is the last integer for which :math:`\\hat{P}_{K} = \\hat{\rho}_{2K} +
-    \\hat{\rho}_{2K+1}` is still positive.
+    :math:`\\hat{\\rho}_t` is the estimated _autocorrelation at lag :math:`t`, and
+    :math:`K` is the last integer for which :math:`\\hat{P}_{K} = \\hat{\\rho}_{2K} +
+    \\hat{\\rho}_{2K+1}` is still positive.
 
     The current implementation is similar to Stan, which uses Geyer's initial monotone sequence
     criterion (Geyer, 1992; Geyer, 2011).
 
     References
     ----------
-    .. [1]: https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html
-    .. [2]: Gelman, Andrew, J. B. Carlin, Hal S. Stern, David B. Dunson, Aki Vehtari, and Donald B. Rubin. (2013). Bayesian Data Analysis. Third Edition. Chapman; Hall/CRC.
-    .. [3]: Geyer, Charles J. (1992). “Practical Markov Chain Monte Carlo.” Statistical Science, 473–83.
-    .. [4]: Geyer, Charles J. (2011). “Introduction to Markov Chain Monte Carlo.” In Handbook of Markov Chain Monte Carlo, edited by Steve Brooks, Andrew Gelman, Galin L. Jones, and Xiao-Li Meng, 3–48. Chapman; Hall/CRC.
+    .. [1] https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html
+    .. [2] Gelman, Andrew, J. B. Carlin, Hal S. Stern, David B. Dunson, Aki Vehtari, and Donald B. Rubin. (2013). Bayesian Data Analysis. Third Edition. Chapman; Hall/CRC.
+    .. [3] Geyer, Charles J. (1992). “Practical Markov Chain Monte Carlo.” Statistical Science, 473–83.
+    .. [4] Geyer, Charles J. (2011). “Introduction to Markov Chain Monte Carlo.” In Handbook of Markov Chain Monte Carlo, edited by Steve Brooks, Andrew Gelman, Galin L. Jones, and Xiao-Li Meng, 3–48. Chapman; Hall/CRC.
 
     """
     input_shape = input_array.shape

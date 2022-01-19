@@ -116,7 +116,7 @@ def tempered_smc(
 
     Tempered SMC uses tempering to sample from a distribution given by
 
-    :math..
+    .. math::
         p(x) \\propto p_0(x) \\exp(-V(x)) \\mathrm{d}x
 
     where :math:`p_0` is the prior distribution, typically easy to sample from and for which the density
