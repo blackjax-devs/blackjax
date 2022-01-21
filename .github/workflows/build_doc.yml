@@ -21,7 +21,7 @@ jobs:
 
       - name: Build docs
         run: |
-          pip install -r requirements-dev.txt
+          pip install -r requirements-doc.txt
           sphinx-build -b html docs docs/build/html
 
       - name: Publish docs
