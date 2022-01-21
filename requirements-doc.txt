@@ -1,0 +1,7 @@
+-e ./
+jax
+jaxlib
+myst_nb
+sphinx
+sphinx-autobuild
+sphinx-book-theme
