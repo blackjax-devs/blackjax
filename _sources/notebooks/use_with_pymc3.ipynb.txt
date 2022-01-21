@@ -1,0 +1,463 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "cc9d7129",
+   "metadata": {
+    "id": "397995ab"
+   },
+   "source": [
+    "# Use BlackJAX with PyMC3\n",
+    "Author: Kaustubh Chaudhari"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "19f9bcb8",
+   "metadata": {
+    "id": "bb51846d"
+   },
+   "source": [
+    "BlackJAX can take any log-probability function as long as it is compatible with JAX's JIT. In this notebook we show how we can use PyMC as a modeling language and BlackJAX as an inference library.\n",
+    "\n",
+    "For this notebook to run you will need to install PyMC3:\n",
+    "\n",
+    "```bash\n",
+    "pip install pymc3\n",
+    "```"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "eea474e0",
+   "metadata": {
+    "id": "ujBgnmNdOwRG"
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Looking in indexes: https://pypi.org/simple, https://pypi.ngc.nvidia.com\n",
+      "Collecting jax==0.2.10\n",
+      "  Downloading jax-0.2.10.tar.gz (589 kB)\n",
+      "\u001b[K     |████████████████████████████████| 589 kB 170 kB/s \n",
+      "\u001b[?25hRequirement already satisfied: numpy>=1.12 in /home/kc611/anaconda3/lib/python3.8/site-packages (from jax==0.2.10) (1.21.1)\n",
+      "Collecting absl-py\n",
+      "  Downloading absl_py-0.13.0-py3-none-any.whl (132 kB)\n",
+      "\u001b[K     |████████████████████████████████| 132 kB 112 kB/s \n",
+      "\u001b[?25hCollecting opt_einsum\n",
+      "  Downloading opt_einsum-3.3.0-py3-none-any.whl (65 kB)\n",
+      "\u001b[K     |████████████████████████████████| 65 kB 120 kB/s \n",
+      "\u001b[?25hRequirement already satisfied: six in /home/kc611/anaconda3/lib/python3.8/site-packages (from absl-py->jax==0.2.10) (1.12.0)\n",
+      "Building wheels for collected packages: jax\n",
+      "  Building wheel for jax (setup.py) ... \u001b[?25ldone\n",
+      "\u001b[?25h  Created wheel for jax: filename=jax-0.2.10-py3-none-any.whl size=679776 sha256=7dc83d3259a6fd548f0d859d4f88410777fe89b81c4c924670d9985883fcba40\n",
+      "  Stored in directory: /tmp/pip-ephem-wheel-cache-43993739/wheels/42/76/93/4efdcc626990c35448e8163b3e988184f77a061ad0437f922d\n",
+      "Successfully built jax\n",
+      "Installing collected packages: opt-einsum, absl-py, jax\n",
+      "Successfully installed absl-py-0.13.0 jax-0.2.10 opt-einsum-3.3.0\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Higher versions will have omnistaging disabled which will throw errors when using theano\n",
+    "!pip install jax==0.2.10"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "b260c3fa",
+   "metadata": {
+    "id": "3a905211"
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Running on PyMC3 v3.11.2\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/home/kc611/anaconda3/envs/blackjax/lib/python3.7/site-packages/pymc3/sampling_jax.py:24: UserWarning: This module is experimental.\n",
+      "  warnings.warn(\"This module is experimental.\")\n"
+     ]
+    }
+   ],
+   "source": [
+    "import jax\n",
+    "import numpy as np\n",
+    "import pymc3 as pm\n",
+    "import pymc3.sampling_jax\n",
+    "\n",
+    "import blackjax.nuts as nuts\n",
+    "import blackjax.stan_warmup as stan_warmup\n",
+    "\n",
+    "print(f\"Running on PyMC3 v{pm.__version__}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "05f0126b",
+   "metadata": {
+    "id": "8VrYFaoIX--y"
+   },
+   "source": [
+    "## Data\n",
+    "\n",
+    "Please refer to the [original TFP example](https://www.tensorflow.org/probability/examples/Eight_Schools) for a description of the problem and the model that is used."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "0b6aaeb6",
+   "metadata": {
+    "id": "imotOe9sUNYF"
+   },
+   "outputs": [],
+   "source": [
+    "# Data of the Eight Schools Model\n",
+    "J = 8\n",
+    "y = np.array([28.0, 8.0, -3.0, 7.0, -1.0, 1.0, 18.0, 12.0])\n",
+    "sigma = np.array([15.0, 10.0, 16.0, 11.0, 9.0, 11.0, 10.0, 18.0])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "5693278e",
+   "metadata": {
+    "id": "aabSQ11iYGZw"
+   },
+   "source": [
+    "## Model\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "e82b0be9",
+   "metadata": {
+    "id": "PiBv9iOvRK0f"
+   },
+   "outputs": [],
+   "source": [
+    "with pm.Model() as model:\n",
+    "\n",
+    "    mu = pm.Normal(\"mu\", mu=0.0, sigma=10.0)\n",
+    "    tau = pm.HalfCauchy(\"tau\", 5.0)\n",
+    "\n",
+    "    theta = pm.Normal(\"theta\", mu=0, sigma=1, shape=J)\n",
+    "    theta_1 = mu + tau * theta\n",
+    "    obs = pm.Normal(\"obs\", mu=theta, sigma=sigma, shape=J, observed=y)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "1af0a7f0",
+   "metadata": {
+    "id": "VKMdLEu1Y5jb"
+   },
+   "source": [
+    "## Sampling using PyMC NUTS Sampler"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "d69ddad1",
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/",
+     "height": 244
+    },
+    "id": "0ZyMxwLFY_ZI",
+    "outputId": "793af037-31e4-4e55-9c76-231c9d78532d"
+   },
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/home/kc611/anaconda3/envs/blackjax/lib/python3.7/site-packages/ipykernel_launcher.py:2: FutureWarning: In v4.0, pm.sample will return an `arviz.InferenceData` object instead of a `MultiTrace` by default. You can pass return_inferencedata=True or return_inferencedata=False to be safe and silence this warning.\n",
+      "  \n",
+      "Auto-assigning NUTS sampler...\n",
+      "Initializing NUTS using jitter+adapt_diag...\n",
+      "Sequential sampling (1 chains in 1 job)\n",
+      "NUTS: [theta, tau, mu]\n"
+     ]
+    },
+    {
+     "data": {
+      "text/html": [
+       "\n",
+       "    <div>\n",
+       "        <style>\n",
+       "            /* Turns off some styling */\n",
+       "            progress {\n",
+       "                /* gets rid of default border in Firefox and Opera. */\n",
+       "                border: none;\n",
+       "                /* Needs to be in here for Safari polyfill so background images work as expected. */\n",
+       "                background-size: auto;\n",
+       "            }\n",
+       "            .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {\n",
+       "                background: #F44336;\n",
+       "            }\n",
+       "        </style>\n",
+       "      <progress value='51000' class='' max='51000' style='width:300px; height:20px; vertical-align: middle;'></progress>\n",
+       "      100.00% [51000/51000 00:53<00:00 Sampling chain 0, 0 divergences]\n",
+       "    </div>\n",
+       "    "
+      ],
+      "text/plain": [
+       "<IPython.core.display.HTML object>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "Sampling 1 chain for 1_000 tune and 50_000 draw iterations (1_000 + 50_000 draws total) took 54 seconds.\n",
+      "Only one chain was sampled, this makes it impossible to run some convergence checks\n"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "CPU times: user 58.6 s, sys: 560 ms, total: 59.2 s\n",
+      "Wall time: 1min\n"
+     ]
+    }
+   ],
+   "source": [
+    "%%time\n",
+    "\n",
+    "with model:\n",
+    "    posterior = pm.sample(50_000, chains=1)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "14d220c4",
+   "metadata": {
+    "id": "3I6zXC-JZCfs"
+   },
+   "source": [
+    "## Sampling using PyMC JAX Numpyro NUTS sampler"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "de0ad319",
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "id": "daQ5OO6aZS9t",
+    "outputId": "d865c9dc-45ae-4baa-c643-f145492ea4ab"
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Compiling...\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "sample: 100%|██████████| 51000/51000 [02:57<00:00, 286.59it/s]\n"
+     ]
+    }
+   ],
+   "source": [
+    "%%time\n",
+    "\n",
+    "with model:\n",
+    "    hierarchical_trace_jax = pm.sampling_jax.sample_numpyro_nuts(\n",
+    "        50_000, target_accept=0.9, chains=1\n",
+    "    )"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7c7a7a72",
+   "metadata": {
+    "id": "h8cMqFwiZjxS"
+   },
+   "source": [
+    "## Sampling using BlackJax\n",
+    "\n",
+    "### Configuring the model for BlackJax\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "e0dcad4d",
+   "metadata": {
+    "id": "cTlcZCYmidZ6"
+   },
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/home/kc611/anaconda3/envs/blackjax/lib/python3.7/site-packages/jax/lib/xla_bridge.py:130: UserWarning: No GPU/TPU found, falling back to CPU.\n",
+      "  warnings.warn('No GPU/TPU found, falling back to CPU.')\n"
+     ]
+    }
+   ],
+   "source": [
+    "from theano.graph.fg import FunctionGraph\n",
+    "from theano.link.jax.jax_dispatch import jax_funcify\n",
+    "\n",
+    "seed = jax.random.PRNGKey(1234)\n",
+    "chains = 1\n",
+    "\n",
+    "# Get the FunctionGraph of the model.\n",
+    "fgraph = FunctionGraph(model.free_RVs, [model.logpt])\n",
+    "\n",
+    "# Jax funcify builds Jax variant of the FunctionGraph.\n",
+    "fns = jax_funcify(fgraph)\n",
+    "logp_fn_jax = fns[0]\n",
+    "\n",
+    "# Now we build a Jax variant of the initial state/inputs to the model.\n",
+    "rv_names = [rv.name for rv in model.free_RVs]\n",
+    "init_state = [model.test_point[rv_name] for rv_name in rv_names]\n",
+    "init_state_batched = jax.tree_map(\n",
+    "    lambda x: np.repeat(x[None, ...], chains, axis=0), init_state\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "1ee60800",
+   "metadata": {
+    "id": "x_TiUUVMifeL"
+   },
+   "outputs": [],
+   "source": [
+    "# Then we transform the Jaxified input and FunctionGraph to a BlackJax NUTS sampler\n",
+    "logprob = lambda x: logp_fn_jax(*x)\n",
+    "initial_position = init_state\n",
+    "initial_state = nuts.new_state(initial_position, logprob)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0e2da37f",
+   "metadata": {
+    "id": "tsnfayfaispl"
+   },
+   "source": [
+    "### Sampling"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "5cfc95e8",
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "id": "6ByULStmWDA2",
+    "outputId": "26fa3f89-9b55-46f6-c89c-9edaca155c98"
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "CPU times: user 18.3 s, sys: 126 ms, total: 18.5 s\n",
+      "Wall time: 18.5 s\n"
+     ]
+    }
+   ],
+   "source": [
+    "%%time\n",
+    "\n",
+    "kernel_factory = lambda step_size, inverse_mass_matrix: nuts.kernel(\n",
+    "    logprob, step_size, inverse_mass_matrix\n",
+    ")\n",
+    "\n",
+    "last_state, (step_size, inverse_mass_matrix), _ = stan_warmup.run(\n",
+    "    seed, kernel_factory, initial_state, 1000\n",
+    ")\n",
+    "\n",
+    "\n",
+    "def inference_loop(rng_key, kernel, initial_state, num_samples):\n",
+    "    def one_step(state, rng_key):\n",
+    "        state, info = kernel(rng_key, state)\n",
+    "        return state, (state, info)\n",
+    "\n",
+    "    keys = jax.random.split(rng_key, num_samples)\n",
+    "    _, (states, infos) = jax.lax.scan(one_step, initial_state, keys)\n",
+    "\n",
+    "    return states, infos\n",
+    "\n",
+    "\n",
+    "# Build the kernel using the step size and inverse mass matrix returned from the window adaptation\n",
+    "kernel = kernel_factory(step_size, inverse_mass_matrix)\n",
+    "\n",
+    "# Sample from the posterior distribution\n",
+    "states, infos = inference_loop(seed, kernel, last_state, 50_000)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "4207ff96",
+   "metadata": {
+    "id": "HoDBN7FX4amy"
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "colab": {
+   "collapsed_sections": [],
+   "name": "use_with_pymc3.ipynb",
+   "provenance": []
+  },
+  "kernelspec": {
+   "display_name": "Python 3.7.10 64-bit ('blackjax': conda)",
+   "name": "python3710jvsc74a57bd0da83a268153c84bc9ca9703c2cea4521d98c583fc99858c9f792a1bd45c27e3c"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.10"
+  },
+  "metadata": {
+   "interpreter": {
+    "hash": "da83a268153c84bc9ca9703c2cea4521d98c583fc99858c9f792a1bd45c27e3c"
+   }
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

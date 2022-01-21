@@ -1,0 +1,465 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.diagnostics &#8212; Blackjax</title>
+    
+  <link href="../../_static/css/theme.css" rel="stylesheet">
+  <link href="../../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="../../_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="../../_static/blackjax.png" class="logo" alt="logo">
+      
+      
+      <h1 class="site-logo" id="site-title">Blackjax</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Blackjax by example
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../examples.html">
+   Examples
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../notebooks/Introduction.html">
+     A quick introduction to Blackjax
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../notebooks/LogisticRegression.html">
+     Bayesian Logistic Regression
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../notebooks/TemperedSMC.html">
+     Use Tempered SMC to improve exploration of MCMC methods.
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../notebooks/use_with_numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../notebooks/use_with_pymc3.html">
+     Use BlackJAX with PyMC3
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../notebooks/use_with_tfp.html">
+     Use BlackJAX with TFP
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../notebooks/HierarchicalBNN.html">
+     Hierarchical Bayesian neural networks
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API Documentation
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html">
+   Common Kernels
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/blackjax-devs/blackjax"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1></h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <h1>Source code for blackjax.diagnostics</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;MCMC diagnostics.&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.fftpack</span> <span class="kn">import</span> <span class="n">next_fast_len</span>  <span class="c1"># type: ignore</span>
+
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;potential_scale_reduction&quot;</span><span class="p">,</span> <span class="s2">&quot;effective_sample_size&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="potential_scale_reduction"><a class="viewcode-back" href="../../api.html#blackjax.diagnostics.potential_scale_reduction">[docs]</a><span class="k">def</span> <span class="nf">potential_scale_reduction</span><span class="p">(</span>
+    <span class="n">input_array</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">chain_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Gelman and Rubin (1992)&#39;s potential scale reduction for computing multiple MCMC chain convergence.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_array:</span>
+<span class="sd">        An array representing multiple chains of MCMC samples. The array must</span>
+<span class="sd">        contains a chain dimension and a sample dimension.</span>
+<span class="sd">    chain_axis</span>
+<span class="sd">        The axis indicating the multiple chains. Default to 0.</span>
+<span class="sd">    sample_axis</span>
+<span class="sd">        The axis indicating a single chain of MCMC samples. Default to 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    NDArray of the resulting statistics (r-hat), with the chain and sample dimensions squeezed.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The diagnostic is computed by:</span>
+
+<span class="sd">      .. math:: \\hat{R} = \\frac{\\hat{V}}{W}</span>
+
+<span class="sd">    where :math:`W` is the within-chain variance and :math:`\\hat{V}` is the posterior variance</span>
+<span class="sd">    estimate for the pooled traces. This is the potential scale reduction factor, which</span>
+<span class="sd">    converges to unity when each of the traces is a sample from the target posterior. Values</span>
+<span class="sd">    greater than one indicate that one or more chains have not yet converged [StanRhat]_ [Gelman1992]_.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. [StanRhat] https://mc-stan.org/docs/2_27/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction</span>
+<span class="sd">    .. [Gelman1992] Gelman, Andrew, and Donald B. Rubin. (1992) “Inference from Iterative Simulation Using Multiple Sequences.” Statistical Science 7 (4): 457–72.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="n">input_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">chain_axis</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span>
+    <span class="p">),</span> <span class="s2">&quot;potential_scale_reduction as implemented only works for two or more chains.&quot;</span>
+
+    <span class="n">num_samples</span> <span class="o">=</span> <span class="n">input_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">sample_axis</span><span class="p">]</span>
+    <span class="c1"># Compute stats for each chain</span>
+    <span class="n">per_chain_mean</span> <span class="o">=</span> <span class="n">input_array</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">per_chain_var</span> <span class="o">=</span> <span class="n">input_array</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># Compute between-chain stats</span>
+    <span class="n">between_chain_variance</span> <span class="o">=</span> <span class="n">num_samples</span> <span class="o">*</span> <span class="n">per_chain_mean</span><span class="o">.</span><span class="n">var</span><span class="p">(</span>
+        <span class="n">axis</span><span class="o">=</span><span class="n">chain_axis</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="c1"># Compute within-chain stats</span>
+    <span class="n">within_chain_variance</span> <span class="o">=</span> <span class="n">per_chain_var</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">chain_axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># Estimate of marginal posterior variance</span>
+    <span class="n">rhat_value</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">between_chain_variance</span> <span class="o">/</span> <span class="n">within_chain_variance</span> <span class="o">+</span> <span class="n">num_samples</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="o">/</span> <span class="p">(</span><span class="n">num_samples</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">rhat_value</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="effective_sample_size"><a class="viewcode-back" href="../../api.html#blackjax.diagnostics.effective_sample_size">[docs]</a><span class="k">def</span> <span class="nf">effective_sample_size</span><span class="p">(</span>
+    <span class="n">input_array</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">chain_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Compute estimate of the effective sample size (ess).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_array:</span>
+<span class="sd">        An array representing multiple chains of MCMC samples. The array must</span>
+<span class="sd">        contains a chain dimension and a sample dimension.</span>
+<span class="sd">    chain_axis</span>
+<span class="sd">        The axis indicating the multiple chains. Default to 0.</span>
+<span class="sd">    sample_axis</span>
+<span class="sd">        The axis indicating a single chain of MCMC samples. Default to 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    NDArray of the resulting statistics (ess), with the chain and sample dimensions squeezed.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The basic ess (:math:`N_{\\mathit{eff}}`) diagnostic is computed by:</span>
+
+<span class="sd">    .. math:: \\hat{N}_{\\mathit{eff}} = \\frac{MN}{\\hat{\\tau}}</span>
+
+<span class="sd">    .. math:: \\hat{\\tau} = -1 + 2 \\sum_{t&#39;=0}^K \\hat{P}_{t&#39;}</span>
+
+<span class="sd">    where :math:`M` is the number of chains, :math:`N` the number of draws,</span>
+<span class="sd">    :math:`\\hat{\\rho}_t` is the estimated _autocorrelation at lag :math:`t`, and</span>
+<span class="sd">    :math:`K` is the last integer for which :math:`\\hat{P}_{K} = \\hat{\\rho}_{2K} +</span>
+<span class="sd">    \\hat{\\rho}_{2K+1}` is still positive [StanEff]_ [Gelman2013]_.</span>
+
+<span class="sd">    The current implementation is similar to Stan, which uses Geyer&#39;s initial monotone sequence</span>
+<span class="sd">    criterion [Geyer1992]_ [Geyer2011]_.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. [StanEff] https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html</span>
+<span class="sd">    .. [Gelman2013] Gelman, Andrew, J. B. Carlin, Hal S. Stern, David B. Dunson, Aki Vehtari, and Donald B. Rubin. (2013). Bayesian Data Analysis. Third Edition. Chapman; Hall/CRC.</span>
+<span class="sd">    .. [Geyer1992] Geyer, Charles J. (1992). “Practical Markov Chain Monte Carlo.” Statistical Science, 473–83.</span>
+<span class="sd">    .. [Geyer2011] Geyer, Charles J. (2011). “Introduction to Markov Chain Monte Carlo.” In Handbook of Markov Chain Monte Carlo, edited by Steve Brooks, Andrew Gelman, Galin L. Jones, and Xiao-Li Meng, 3–48. Chapman; Hall/CRC.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">input_shape</span> <span class="o">=</span> <span class="n">input_array</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">sample_axis</span> <span class="o">=</span> <span class="n">sample_axis</span> <span class="k">if</span> <span class="n">sample_axis</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span> <span class="o">+</span> <span class="n">sample_axis</span>
+    <span class="n">num_chains</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="n">chain_axis</span><span class="p">]</span>
+    <span class="n">num_samples</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="n">sample_axis</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="n">num_chains</span> <span class="o">&gt;</span> <span class="mi">1</span>
+    <span class="p">),</span> <span class="s2">&quot;effective_sample_size as implemented only works for two or more chains.&quot;</span>
+
+    <span class="n">mean_across_chain</span> <span class="o">=</span> <span class="n">input_array</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># Compute autocovariance estimates for every lag for the input array using FFT.</span>
+    <span class="n">centered_array</span> <span class="o">=</span> <span class="n">input_array</span> <span class="o">-</span> <span class="n">mean_across_chain</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">next_fast_len</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">num_samples</span><span class="p">)</span>
+    <span class="n">ifft_ary</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">centered_array</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span><span class="p">)</span>
+    <span class="n">ifft_ary</span> <span class="o">*=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">ifft_ary</span><span class="p">)</span>
+    <span class="n">autocov_value</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">ifft_ary</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span><span class="p">)</span>
+    <span class="n">autocov_value</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">autocov_value</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_samples</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_samples</span>
+    <span class="p">)</span>
+    <span class="n">mean_autocov_var</span> <span class="o">=</span> <span class="n">autocov_value</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">chain_axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">mean_var0</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">mean_autocov_var</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span><span class="p">)</span>
+        <span class="o">*</span> <span class="n">num_samples</span>
+        <span class="o">/</span> <span class="p">(</span><span class="n">num_samples</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">weighted_var</span> <span class="o">=</span> <span class="n">mean_var0</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_samples</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_samples</span>
+    <span class="n">weighted_var</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+        <span class="n">num_chains</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">weighted_var</span>
+        <span class="o">+</span> <span class="n">mean_across_chain</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">chain_axis</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">weighted_var</span><span class="p">,</span>
+        <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Geyer&#39;s initial positive sequence</span>
+    <span class="n">num_samples_even</span> <span class="o">=</span> <span class="n">num_samples</span> <span class="o">-</span> <span class="n">num_samples</span> <span class="o">%</span> <span class="mi">2</span>
+    <span class="n">mean_autocov_var_tp1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">take</span><span class="p">(</span>
+        <span class="n">mean_autocov_var</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_samples_even</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span>
+    <span class="p">)</span>
+    <span class="n">rho_hat</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">mean_var0</span><span class="p">),</span>
+            <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">mean_var0</span> <span class="o">-</span> <span class="n">mean_autocov_var_tp1</span><span class="p">)</span> <span class="o">/</span> <span class="n">weighted_var</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">rho_hat</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">rho_hat</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">rho_hat_even</span> <span class="o">=</span> <span class="n">rho_hat</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">rho_hat_odd</span> <span class="o">=</span> <span class="n">rho_hat</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="n">mask0</span> <span class="o">=</span> <span class="p">(</span><span class="n">rho_hat_even</span> <span class="o">+</span> <span class="n">rho_hat_odd</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.0</span>
+    <span class="n">carry_cond</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">mask0</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">max_t</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">mask0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">positive_sequence_body_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">mask_t</span><span class="p">):</span>
+        <span class="n">t</span><span class="p">,</span> <span class="n">carry_cond</span><span class="p">,</span> <span class="n">max_t</span> <span class="o">=</span> <span class="n">state</span>
+        <span class="n">next_mask</span> <span class="o">=</span> <span class="n">carry_cond</span> <span class="o">&amp;</span> <span class="n">mask_t</span>
+        <span class="n">next_max_t</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">next_mask</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">max_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span><span class="p">,</span> <span class="n">max_t</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">next_mask</span><span class="p">,</span> <span class="n">next_max_t</span><span class="p">),</span> <span class="n">next_mask</span>
+
+    <span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">max_t_next</span><span class="p">),</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+        <span class="n">positive_sequence_body_fn</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">carry_cond</span><span class="p">,</span> <span class="n">max_t</span><span class="p">),</span> <span class="n">mask0</span>
+    <span class="p">)</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">max_t_next</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">max_t_next</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_t_next</span><span class="o">.</span><span class="n">ndim</span><span class="p">)])</span>
+    <span class="n">rho_hat_odd</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">rho_hat_odd</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">rho_hat_odd</span><span class="p">))</span>
+    <span class="c1"># improve estimation</span>
+    <span class="n">mask_even</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">rho_hat_even</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">rho_hat_even</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask_even</span><span class="p">,</span> <span class="n">rho_hat_even</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">rho_hat_even</span><span class="p">))</span>
+
+    <span class="c1"># Geyer&#39;s initial monotone sequence</span>
+    <span class="k">def</span> <span class="nf">monotone_sequence_body_fn</span><span class="p">(</span><span class="n">rho_hat_sum_tm1</span><span class="p">,</span> <span class="n">rho_hat_sum_t</span><span class="p">):</span>
+        <span class="n">update_mask</span> <span class="o">=</span> <span class="n">rho_hat_sum_t</span> <span class="o">&gt;</span> <span class="n">rho_hat_sum_tm1</span>
+        <span class="n">next_rho_hat_sum_t</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">update_mask</span><span class="p">,</span> <span class="n">rho_hat_sum_tm1</span><span class="p">,</span> <span class="n">rho_hat_sum_t</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">next_rho_hat_sum_t</span><span class="p">,</span> <span class="p">(</span><span class="n">update_mask</span><span class="p">,</span> <span class="n">next_rho_hat_sum_t</span><span class="p">)</span>
+
+    <span class="n">rho_hat_sum</span> <span class="o">=</span> <span class="n">rho_hat_even</span> <span class="o">+</span> <span class="n">rho_hat_odd</span>
+    <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">update_mask</span><span class="p">,</span> <span class="n">update_value</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+        <span class="n">monotone_sequence_body_fn</span><span class="p">,</span> <span class="n">rho_hat_sum</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">rho_hat_sum</span>
+    <span class="p">)</span>
+
+    <span class="n">rho_hat_even_final</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">update_mask</span><span class="p">,</span> <span class="n">update_value</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">rho_hat_even</span><span class="p">)</span>
+    <span class="n">rho_hat_odd_final</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">update_mask</span><span class="p">,</span> <span class="n">update_value</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">rho_hat_odd</span><span class="p">)</span>
+
+    <span class="c1"># compute effective sample size</span>
+    <span class="n">ess_raw</span> <span class="o">=</span> <span class="n">num_chains</span> <span class="o">*</span> <span class="n">num_samples</span>
+    <span class="n">tau_hat</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="o">-</span><span class="mf">1.0</span>
+        <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">rho_hat_even_final</span> <span class="o">+</span> <span class="n">rho_hat_odd_final</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="o">-</span> <span class="n">rho_hat_even_final</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="n">tau_hat</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">tau_hat</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">ess_raw</span><span class="p">))</span>
+    <span class="n">ess</span> <span class="o">=</span> <span class="n">ess_raw</span> <span class="o">/</span> <span class="n">tau_hat</span>
+
+    <span class="k">return</span> <span class="n">ess</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span></div>
+</pre></div>
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By The Blackjax developers<br/>
+    
+        &copy; Copyright 2022, The Blackjax developers.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="../../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>
