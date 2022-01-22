@@ -78,7 +78,7 @@ for _ in range(1_000):
 ```
 
 See [this
-notebook](https://github.com/blackjax-devs/blackjax/blob/master/notebooks/Introduction.ipynb) for more examples of how to use the library: how to write inference loops for one or several chains, how to use the Stan warmup, etc.
+notebook](https://github.com/blackjax-devs/blackjax/blob/master/examples/Introduction.ipynb) for more examples of how to use the library: how to write inference loops for one or several chains, how to use the Stan warmup, etc.
 
 ## Philosophy
 
