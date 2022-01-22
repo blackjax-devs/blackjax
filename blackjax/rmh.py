@@ -1,19 +1,17 @@
 """Public API for Rosenbluth-Metropolis-Hastings kernels."""
-from typing import Callable
+from typing import Callable, Optional, Union
 
 import blackjax.inference.rmh.base as base
 import blackjax.inference.rmh.proposals as proposals
-from blackjax.types import Array
+from blackjax.base import SamplingAlgorithm, SamplingAlgorithmGenerator
+from blackjax.types import Array, PyTree
 
-__all__ = ["new_state", "kernel"]
-
-
-RWMHState = base.RMHState
-RWMHInfo = base.RMHInfo
-new_state = base.new_rmh_state
+__all__ = ["rmh"]
 
 
-def kernel(logprob_fn: Callable, sigma: Array):
+def rmh(
+    logprob_fn: Callable, sigma: Optional[Array] = None
+) -> Union[SamplingAlgorithm, SamplingAlgorithmGenerator]:
     """Random Walk Rosenbluth-Metropolis-Hastings algorithm with normal proposals.
 
     We currently only support a Gaussian proposal but the algorithm could easily
@@ -26,7 +24,24 @@ def kernel(logprob_fn: Callable, sigma: Array):
     sigma
         Covariance matrix for the gaussian proposal distribution.
 
+    Returns
+    -------
+    A `SamplingAlgorithm` with a state initialization and a step function if the
+    value of `sigma` is specified. Otherwise a state initialization function and
+    a kernel factory.
+
     """
-    proposal_generator = proposals.normal(sigma)
-    kernel = base.rmh(logprob_fn, proposal_generator)
-    return kernel
+
+    def init_fn(position: PyTree):
+        return base.new_rmh_state(position, logprob_fn)
+
+    def kernel_fn(sigma):
+        proposal_generator = proposals.normal(sigma)
+        kernel = base.rmh(logprob_fn, proposal_generator)
+        return kernel
+
+    if sigma is not None:
+        kernel = kernel_fn(sigma)
+        return SamplingAlgorithm(init_fn, kernel)
+    else:
+        return SamplingAlgorithmGenerator(init_fn, kernel_fn)

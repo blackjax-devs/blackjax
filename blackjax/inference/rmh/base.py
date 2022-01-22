@@ -6,7 +6,7 @@ import jax.random
 
 from blackjax.types import PRNGKey, PyTree
 
-__all__ = ["new_rmh_state", "rmh", "RMHState"]
+__all__ = ["RMHState", "RMHInfo", "rmh"]
 
 
 class RMHState(NamedTuple):

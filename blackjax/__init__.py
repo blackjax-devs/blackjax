@@ -1,4 +1,5 @@
 from . import hmc, inference
+from .rmh import rmh
 
 __version__ = "0.3.0"
 
