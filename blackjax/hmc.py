@@ -1,5 +1,6 @@
 """Public API for the HMC Kernel"""
-from typing import Callable, NamedTuple, Tuple
+import functools as ft
+from typing import Callable, NamedTuple, Optional, Tuple, Union
 
 import jax
 
@@ -8,9 +9,10 @@ import blackjax.inference.hmc.integrators as integrators
 import blackjax.inference.hmc.metrics as metrics
 import blackjax.inference.hmc.proposal as proposal
 import blackjax.inference.hmc.trajectory as trajectory
+from blackjax.base import SamplingAlgorithm, SamplingAlgorithmGenerator
 from blackjax.types import Array, PyTree
 
-__all__ = ["new_state", "kernel"]
+__all__ = ["hmc"]
 
 
 class HMCInfo(NamedTuple):
@@ -50,7 +52,45 @@ class HMCInfo(NamedTuple):
     num_integration_steps: int
 
 
-new_state = base.new_hmc_state
+def hmc(
+    logprob_fn: Callable,
+    step_size: Optional[float] = None,
+    inverse_mass_matrix: Optional[Array] = None,
+    num_integration_steps: Optional[int] = None,
+    *,
+    integrator: Callable = integrators.velocity_verlet,
+    divergence_threshold: int = 1000,
+) -> Union[SamplingAlgorithm, SamplingAlgorithmGenerator]:
+    def init_fn(position: PyTree):
+        return base.new_hmc_state(position, logprob_fn)
+
+    kernel_fn = ft.partial(kernel, logprob_fn)
+
+    if (
+        step_size is not None
+        and inverse_mass_matrix is not None
+        and num_integration_steps is not None
+    ):
+        return SamplingAlgorithm(
+            init_fn,
+            kernel_fn(
+                step_size,
+                inverse_mass_matrix,
+                num_integration_steps,
+                integrator,
+                divergence_threshold,
+            ),
+        )
+    elif (
+        step_size is None
+        and inverse_mass_matrix is None
+        and num_integration_steps is None
+    ):
+        return SamplingAlgorithmGenerator(init_fn, kernel_fn)
+    else:
+        raise AttributeError(
+            "Specify either the values of all 3 HMC parameters or none."
+        )
 
 
 def kernel(
@@ -58,7 +98,6 @@ def kernel(
     step_size: float,
     inverse_mass_matrix: Array,
     num_integration_steps: int,
-    *,
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: int = 1000,
 ):
