@@ -1,4 +1,5 @@
 from .hmc import hmc
+from .nuts import nuts
 from .rmh import rmh
 
 __version__ = "0.3.0"

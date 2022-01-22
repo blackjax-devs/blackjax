@@ -1,17 +1,20 @@
 """Public API for the NUTS Kernel"""
-from typing import Callable, NamedTuple
+import functools as ft
+from typing import Callable, NamedTuple, Optional, Union
 
 import jax.numpy as jnp
 import numpy as np
 
-import blackjax.hmc
 import blackjax.inference.hmc.base as base
 import blackjax.inference.hmc.integrators as integrators
 import blackjax.inference.hmc.metrics as metrics
 import blackjax.inference.hmc.proposal as proposal
 import blackjax.inference.hmc.termination as termination
 import blackjax.inference.hmc.trajectory as trajectory
+from blackjax.base import SamplingAlgorithm, SamplingAlgorithmGenerator
 from blackjax.types import Array, PyTree
+
+__all__ = ["NUTSInfo", "nuts"]
 
 
 class NUTSInfo(NamedTuple):
@@ -53,7 +56,38 @@ class NUTSInfo(NamedTuple):
     acceptance_probability: float
 
 
-new_state = blackjax.hmc.new_state
+def nuts(
+    logprob_fn: Callable,
+    step_size: Optional[float] = None,
+    inverse_mass_matrix: Optional[Array] = None,
+    *,
+    max_num_doublings: int = 10,
+    integrator: Callable = integrators.velocity_verlet,
+    divergence_threshold: int = 1000,
+) -> Union[SamplingAlgorithm, SamplingAlgorithmGenerator]:
+    def init_fn(position: PyTree):
+        return base.new_hmc_state(position, logprob_fn)
+
+    kernel_fn = ft.partial(kernel, logprob_fn)
+
+    if step_size is not None and inverse_mass_matrix is not None:
+        return SamplingAlgorithm(
+            init_fn,
+            kernel(
+                logprob_fn,
+                step_size,
+                inverse_mass_matrix,
+                max_num_doublings,
+                integrator,
+                divergence_threshold,
+            ),
+        )
+    if step_size is None and inverse_mass_matrix is None:
+        return SamplingAlgorithmGenerator(init_fn, kernel_fn)
+    else:
+        raise AttributeError(
+            "Specify either the values of all 2 NUTS parameters or none."
+        )
 
 
 def kernel(
@@ -61,10 +95,9 @@ def kernel(
     step_size: float,
     inverse_mass_matrix: Array,
     max_num_doublings: int = 10,
-    *,
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: int = 1000,
-) -> Callable:
+):
     """Build an iterative NUTS kernel.
 
     This algorithm is an iteration on the original NUTS algorithm [Hoffman2014]_ with two major differences:
