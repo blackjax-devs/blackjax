@@ -39,7 +39,7 @@
     <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Common Kernels" href="api.html" />
+    <link rel="next" title="A quick introduction to Blackjax" href="examples/Introduction.html" />
     <link rel="prev" title="Welcome to Blackjax" href="index.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -97,7 +97,42 @@
    <i class="fas fa-chevron-down">
    </i>
   </label>
-  <ul class="simple">
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/Introduction.html">
+     A quick introduction to Blackjax
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/LogisticRegression.html">
+     Bayesian Logistic Regression
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/TemperedSMC.html">
+     Use Tempered SMC to improve exploration of MCMC methods.
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/use_with_numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/use_with_pymc3.html">
+     Use BlackJAX with PyMC3
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/use_with_tfp.html">
+     Use BlackJAX with TFP
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/HierarchicalBNN.html">
+     Hierarchical Bayesian neural networks
+    </a>
+   </li>
   </ul>
  </li>
 </ul>
@@ -195,6 +230,91 @@
   <div class="section" id="examples">
 <h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples/Introduction.html">A quick introduction to Blackjax</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/Introduction.html#the-problem">The problem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/Introduction.html#hmc">HMC</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/Introduction.html#set-the-initial-state">Set the initial state</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples/Introduction.html#sampler-parameters">Sampler parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples/Introduction.html#build-the-kernel-and-inference-loop">Build the kernel and inference loop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples/Introduction.html#inference">Inference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="examples/Introduction.html#nuts">NUTS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/Introduction.html#use-stan-s-window-adaptation">Use Stan’s window adaptation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="examples/Introduction.html#sample-multiple-chains">Sample multiple chains</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples/LogisticRegression.html">Bayesian Logistic Regression</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/LogisticRegression.html#the-data">The data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/LogisticRegression.html#the-model">The model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/LogisticRegression.html#posterior-sampling">Posterior sampling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/LogisticRegression.html#predictive-distribution">Predictive distribution</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples/TemperedSMC.html">Use Tempered SMC to improve exploration of MCMC methods.</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/TemperedSMC.html#imports">Imports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/TemperedSMC.html#sampling-from-a-bimodal-potential">Sampling from a bimodal potential</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/TemperedSMC.html#experimental-setup">Experimental setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples/TemperedSMC.html#sample-with-hmc">Sample with HMC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples/TemperedSMC.html#sample-with-nuts">Sample with NUTS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="examples/TemperedSMC.html#tempered-smc-with-hmc-kernel">Tempered SMC with HMC kernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/TemperedSMC.html#sampling-from-the-rastrigin-potential">Sampling from the Rastrigin potential</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/TemperedSMC.html#id1">Experimental setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples/TemperedSMC.html#hmc-sampler">HMC sampler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples/TemperedSMC.html#nuts-sampler">NUTS sampler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples/TemperedSMC.html#id2">Tempered SMC with HMC kernel</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples/use_with_numpyro.html">Use BlackJAX with Numpyro</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/use_with_numpyro.html#data">Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/use_with_numpyro.html#model">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/use_with_numpyro.html#compare-sampling-time-with-numpyro">Compare sampling time with Numpyro</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples/use_with_pymc3.html">Use BlackJAX with PyMC3</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/use_with_pymc3.html#data">Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/use_with_pymc3.html#model">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/use_with_pymc3.html#sampling-using-pymc-nuts-sampler">Sampling using PyMC NUTS Sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/use_with_pymc3.html#sampling-using-pymc-jax-numpyro-nuts-sampler">Sampling using PyMC JAX Numpyro NUTS sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/use_with_pymc3.html#sampling-using-blackjax">Sampling using BlackJax</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/use_with_pymc3.html#configuring-the-model-for-blackjax">Configuring the model for BlackJax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples/use_with_pymc3.html#sampling">Sampling</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples/use_with_tfp.html">Use BlackJAX with TFP</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/use_with_tfp.html#data">Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/use_with_tfp.html#model">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/use_with_tfp.html#compare-sampling-time-with-tfp">Compare sampling time with TFP</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples/HierarchicalBNN.html">Hierarchical Bayesian neural networks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/HierarchicalBNN.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/HierarchicalBNN.html#data">Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/HierarchicalBNN.html#utility-functions-for-training-and-testing">Utility functions for training and testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/HierarchicalBNN.html#hyperparameters">Hyperparameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/HierarchicalBNN.html#fit-separate-mlps-one-per-task">Fit separate MLPs, one per task</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/HierarchicalBNN.html#results">Results</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="examples/HierarchicalBNN.html#hierarchical-model">Hierarchical Model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/HierarchicalBNN.html#id1">Results</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
 </div>
 </div>
 
@@ -211,10 +331,10 @@
             <p class="prev-next-title">Welcome to Blackjax</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="api.html" title="next page">
+    <a class='right-next' id="next-link" href="examples/Introduction.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Common Kernels</p>
+        <p class="prev-next-title">A quick introduction to Blackjax</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>
