@@ -5,7 +5,6 @@ from typing import Callable, NamedTuple, Optional, Union
 import jax.numpy as jnp
 import numpy as np
 
-import blackjax.inference.hmc.base as base
 import blackjax.inference.hmc.integrators as integrators
 import blackjax.inference.hmc.metrics as metrics
 import blackjax.inference.hmc.proposal as proposal
@@ -13,6 +12,8 @@ import blackjax.inference.hmc.termination as termination
 import blackjax.inference.hmc.trajectory as trajectory
 from blackjax.base import SamplingAlgorithm, SamplingAlgorithmGenerator
 from blackjax.types import Array, PyTree
+
+from .hmc import hmc_init
 
 __all__ = ["NUTSInfo", "nuts"]
 
@@ -66,7 +67,7 @@ def nuts(
     divergence_threshold: int = 1000,
 ) -> Union[SamplingAlgorithm, SamplingAlgorithmGenerator]:
     def init_fn(position: PyTree):
-        return base.new_hmc_state(position, logprob_fn)
+        return hmc_init(position, logprob_fn)
 
     kernel_fn = ft.partial(kernel, logprob_fn)
 
@@ -146,6 +147,19 @@ def kernel(
         step_size,
         max_num_doublings,
         divergence_threshold,
+    )
+
+    key_momentum, key_integrator = jax.random.split(rng_key, 2)
+
+    position, potential_energy, potential_energy_grad = state
+    momentum = momentum_generator(key_momentum, position)
+
+    integrator_state = integrators.IntegratorState(
+        position, momentum, potential_energy, potential_energy_grad
+    )
+    proposal, info = proposal_generator(key_integrator, integrator_state)
+    proposal = HMCState(
+        proposal.position, proposal.potential_energy, proposal.potential_energy_grad
     )
 
     kernel = base.hmc(momentum_generator, proposal_generator)

@@ -1,18 +1,30 @@
 """Public API for the HMC Kernel"""
-import functools as ft
-from typing import Callable, NamedTuple, Optional, Tuple, Union
+from typing import Callable, NamedTuple, Tuple
 
 import jax
 
-import blackjax.inference.hmc.base as base
 import blackjax.inference.hmc.integrators as integrators
 import blackjax.inference.hmc.metrics as metrics
 import blackjax.inference.hmc.proposal as proposal
 import blackjax.inference.hmc.trajectory as trajectory
-from blackjax.base import SamplingAlgorithm, SamplingAlgorithmGenerator
-from blackjax.types import Array, PyTree
+from blackjax.base import SamplingAlgorithm
+from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["hmc"]
+__all__ = ["HMCState", "HMCInfo", "hmc"]
+
+
+class HMCState(NamedTuple):
+    """State of the HMC algorithm.
+
+    The HMC algorithm takes one position of the chain and returns another
+    position. In order to make computations more efficient, we also store
+    the current potential energy as well as the current gradient of the
+    potential energy.
+    """
+
+    position: PyTree
+    potential_energy: float
+    potential_energy_grad: PyTree
 
 
 class HMCInfo(NamedTuple):
@@ -54,61 +66,59 @@ class HMCInfo(NamedTuple):
 
 def hmc(
     logprob_fn: Callable,
-    step_size: Optional[float] = None,
-    inverse_mass_matrix: Optional[Array] = None,
-    num_integration_steps: Optional[int] = None,
-    *,
-    integrator: Callable = integrators.velocity_verlet,
-    divergence_threshold: int = 1000,
-) -> Union[SamplingAlgorithm, SamplingAlgorithmGenerator]:
-    def init_fn(position: PyTree):
-        return base.new_hmc_state(position, logprob_fn)
-
-    kernel_fn = ft.partial(kernel, logprob_fn)
-
-    if (
-        step_size is not None
-        and inverse_mass_matrix is not None
-        and num_integration_steps is not None
-    ):
-        return SamplingAlgorithm(
-            init_fn,
-            kernel_fn(
-                step_size,
-                inverse_mass_matrix,
-                num_integration_steps,
-                integrator,
-                divergence_threshold,
-            ),
-        )
-    elif (
-        step_size is None
-        and inverse_mass_matrix is None
-        and num_integration_steps is None
-    ):
-        return SamplingAlgorithmGenerator(init_fn, kernel_fn)
-    else:
-        raise AttributeError(
-            "Specify either the values of all 3 HMC parameters or none."
-        )
-
-
-def kernel(
-    logprob_fn: Callable,
     step_size: float,
     inverse_mass_matrix: Array,
     num_integration_steps: int,
+    *,
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: int = 1000,
+) -> SamplingAlgorithm:
+
+    # It has an euclidean metric by default
+    kernel = hmc_kernel(integrator, divergence_threshold)
+
+    def init_fn(position: PyTree):
+        return jax.jit(hmc_init, static_argnums=(1,))(position, logprob_fn)
+
+    def step_fn(rng_key: PRNGKey, state: HMCState) -> Tuple[HMCState, HMCInfo]:
+        # `np.ndarray` and `DeviceArray`s are not hashable and thus cannot be used as static arguments.`
+        # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
+        kernel_fn = jax.jit(
+            kernel,
+            static_argnums=(2, 3, 5),
+        )
+        return kernel_fn(
+            rng_key,
+            state,
+            logprob_fn,
+            step_size,
+            inverse_mass_matrix,
+            num_integration_steps,
+        )
+
+    return SamplingAlgorithm(init_fn, step_fn)
+
+
+def hmc_init(position: PyTree, logprob_fn: Callable):
+    def potential_fn(x):
+        return -logprob_fn(x)
+
+    potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
+    return HMCState(position, potential_energy, potential_energy_grad)
+
+
+def hmc_kernel(
+    integrator: Callable = integrators.velocity_verlet,
+    divergence_threshold: float = 100,
 ):
     """Build a HMC kernel.
 
     Parameters
     ----------
-    logprob_fn
-        Log probability function we wish to sample from.
-    parameters
-        A NamedTuple that contains the parameters of the kernel to be built.
+    integrator
+        The symplectic integrator to use to integrate the Hamiltonian dynamics.
+    divergence
+        Value of the difference in energy above which we consider that the transition is divergent.
 
     Returns
     -------
@@ -118,21 +128,46 @@ def kernel(
 
     """
 
-    def potential_fn(x):
-        return -logprob_fn(x)
+    def kernel(
+        rng_key: PRNGKey,
+        state: HMCState,
+        logprob_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: Array,
+        num_integration_steps: int,
+    ) -> Tuple[HMCState, HMCInfo]:
+        """HMC kernel"""
 
-    momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
-        inverse_mass_matrix
-    )
-    symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
-    proposal_generator = hmc_proposal(
-        symplectic_integrator,
-        kinetic_energy_fn,
-        step_size,
-        num_integration_steps,
-        divergence_threshold,
-    )
-    kernel = base.hmc(momentum_generator, proposal_generator)
+        def potential_fn(x):
+            return -logprob_fn(x)
+
+        momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
+            inverse_mass_matrix
+        )
+        symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
+        proposal_generator = hmc_proposal(
+            symplectic_integrator,
+            kinetic_energy_fn,
+            step_size,
+            num_integration_steps,
+            divergence_threshold,
+        )
+
+        key_momentum, key_integrator = jax.random.split(rng_key, 2)
+
+        position, potential_energy, potential_energy_grad = state
+        momentum = momentum_generator(key_momentum, position)
+
+        integrator_state = integrators.IntegratorState(
+            position, momentum, potential_energy, potential_energy_grad
+        )
+        proposal, info = proposal_generator(key_integrator, integrator_state)
+        proposal = HMCState(
+            proposal.position, proposal.potential_energy, proposal.potential_energy_grad
+        )
+
+        return proposal, info
+
     return kernel
 
 
