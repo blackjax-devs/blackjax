@@ -9,10 +9,8 @@ import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest, parameterized
 
+import blackjax
 import blackjax.diagnostics as diagnostics
-import blackjax.hmc as hmc
-import blackjax.nuts as nuts
-import blackjax.rmh as rmh
 import blackjax.stan_warmup as stan_warmup
 
 
@@ -29,14 +27,14 @@ def inference_loop(kernel, num_samples, rng_key, initial_state):
 
 regresion_test_cases = [
     {
-        "algorithm": hmc,
+        "algorithm": blackjax.hmc,
         "initial_position": {"scale": 1.0, "coefs": 2.0},
         "parameters": {"num_integration_steps": 90},
         "num_warmup_steps": 3_000,
         "num_sampling_steps": 2_000,
     },
     {
-        "algorithm": nuts,
+        "algorithm": blackjax.nuts,
         "initial_position": {"scale": 1.0, "coefs": 2.0},
         "parameters": {},
         "num_warmup_steps": 1_000,
@@ -112,7 +110,7 @@ class LinearRegressionTest(chex.TestCase):
 
 normal_test_cases = [
     {
-        "algorithm": hmc,
+        "algorithm": blackjax.hmc,
         "initial_position": jnp.array(100.0),
         "parameters": {
             "step_size": 0.1,
@@ -123,14 +121,14 @@ normal_test_cases = [
         "burnin": 5_000,
     },
     {
-        "algorithm": nuts,
+        "algorithm": blackjax.nuts,
         "initial_position": jnp.array(100.0),
         "parameters": {"step_size": 0.1, "inverse_mass_matrix": jnp.array([0.1])},
         "num_sampling_steps": 6000,
         "burnin": 5_000,
     },
     {
-        "algorithm": rmh,
+        "algorithm": blackjax.rmh,
         "initial_position": 1.0,
         "parameters": {"sigma": jnp.array([1.0])},
         "num_sampling_steps": 20_000,
@@ -154,9 +152,10 @@ class UnivariateNormalTest(chex.TestCase):
     def test_univariate_normal(
         self, algorithm, initial_position, parameters, num_sampling_steps, burnin
     ):
-        initial_state = algorithm.new_state(initial_position, self.normal_logprob)
+        algo = algorithm(self.normal_logprob, **parameters)
+        initial_state = algo.init(initial_position)
 
-        kernel = algorithm.kernel(self.normal_logprob, **parameters)
+        kernel = algo.step
         states = self.variant(
             functools.partial(inference_loop, kernel, num_sampling_steps)
         )(self.key, initial_state)
@@ -169,14 +168,14 @@ class UnivariateNormalTest(chex.TestCase):
 
 mcse_test_cases = [
     {
-        "algorithm": hmc,
+        "algorithm": blackjax.hmc,
         "parameters": {
             "step_size": 0.1,
             "num_integration_steps": 32,
         },
     },
     {
-        "algorithm": nuts,
+        "algorithm": blackjax.nuts,
         "parameters": {"step_size": 0.07},
     },
 ]
@@ -230,16 +229,12 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         )
         num_chains = 10
         initial_positions = jax.random.normal(pos_init_key, [num_chains, 2])
-        kernel = algorithm.kernel(
-            logprob_fn, inverse_mass_matrix=true_scale, **parameters
-        )
-        initial_states = jax.vmap(algorithm.new_state, in_axes=(0, None))(
-            initial_positions, logprob_fn
-        )
+        kernel = algorithm(logprob_fn, inverse_mass_matrix=true_scale, **parameters)
+        initial_states = jax.vmap(kernel.init, in_axes=(0,))(initial_positions)
         multi_chain_sample_key = jax.random.split(sample_key, num_chains)
 
         inference_loop_multiple_chains = jax.vmap(
-            functools.partial(inference_loop, kernel, 2_000)
+            functools.partial(inference_loop, kernel.step, 2_000)
         )
         states = inference_loop_multiple_chains(multi_chain_sample_key, initial_states)
 
