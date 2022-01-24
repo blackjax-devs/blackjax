@@ -1,7 +1,7 @@
 """Public API for the NUTS Kernel"""
-import functools as ft
-from typing import Callable, NamedTuple, Optional, Union
+from typing import Callable, NamedTuple, Tuple
 
+import jax
 import jax.numpy as jnp
 import numpy as np
 
@@ -10,12 +10,11 @@ import blackjax.inference.hmc.metrics as metrics
 import blackjax.inference.hmc.proposal as proposal
 import blackjax.inference.hmc.termination as termination
 import blackjax.inference.hmc.trajectory as trajectory
-from blackjax.base import SamplingAlgorithm, SamplingAlgorithmGenerator
-from blackjax.types import Array, PyTree
+from blackjax.base import SamplingAlgorithm
+from blackjax.hmc import HMCState, hmc_init
+from blackjax.types import Array, PRNGKey, PyTree
 
-from .hmc import hmc_init
-
-__all__ = ["NUTSInfo", "nuts"]
+__all__ = ["NUTSInfo", "nuts", "nuts_kernel"]
 
 
 class NUTSInfo(NamedTuple):
@@ -59,51 +58,39 @@ class NUTSInfo(NamedTuple):
 
 def nuts(
     logprob_fn: Callable,
-    step_size: Optional[float] = None,
-    inverse_mass_matrix: Optional[Array] = None,
+    step_size: float,
+    inverse_mass_matrix: Array,
     *,
     max_num_doublings: int = 10,
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: int = 1000,
-) -> Union[SamplingAlgorithm, SamplingAlgorithmGenerator]:
+) -> SamplingAlgorithm:
+
+    kernel = nuts_kernel(integrator, divergence_threshold, max_num_doublings)
+
     def init_fn(position: PyTree):
-        return hmc_init(position, logprob_fn)
+        return jax.jit(hmc_init, static_argnums=(1,))(position, logprob_fn)
 
-    kernel_fn = ft.partial(kernel, logprob_fn)
+    def step_fn(rng_key: PRNGKey, state: HMCState) -> Tuple[HMCState, NUTSInfo]:
+        # `np.ndarray` and `DeviceArray`s are not hashable and thus cannot be used as static arguments.`
+        # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
+        kernel_fn = jax.jit(kernel, static_argnums=(2, 3))
+        return kernel_fn(rng_key, state, logprob_fn, step_size, inverse_mass_matrix)
 
-    if step_size is not None and inverse_mass_matrix is not None:
-        return SamplingAlgorithm(
-            init_fn,
-            kernel(
-                logprob_fn,
-                step_size,
-                inverse_mass_matrix,
-                max_num_doublings,
-                integrator,
-                divergence_threshold,
-            ),
-        )
-    if step_size is None and inverse_mass_matrix is None:
-        return SamplingAlgorithmGenerator(init_fn, kernel_fn)
-    else:
-        raise AttributeError(
-            "Specify either the values of all 2 NUTS parameters or none."
-        )
+    return SamplingAlgorithm(init_fn, step_fn)
 
 
-def kernel(
-    logprob_fn: Callable,
-    step_size: float,
-    inverse_mass_matrix: Array,
-    max_num_doublings: int = 10,
+def nuts_kernel(
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: int = 1000,
+    max_num_doublings: int = 10,
 ):
     """Build an iterative NUTS kernel.
 
-    This algorithm is an iteration on the original NUTS algorithm [Hoffman2014]_ with two major differences:
-    - We do not use slice samplig but multinomial sampling for the proposal [Betancourt2017]_;
-    - The trajectory expansion is not recursive but iterative [Phan2019]_, [Lao2020]_.
+    This algorithm is an iteration on the original NUTS algorithm [Hoffman2014]_
+    with two major differences: - We do not use slice samplig but multinomial
+    sampling for the proposal [Betancourt2017]_; - The trajectory expansion is
+    not recursive but iterative [Phan2019]_, [Lao2020]_.
 
     The implementation can seem unusual for those familiar with similar
     algorithms. Indeed, we do not conceptualize the trajectory construction as
@@ -133,36 +120,45 @@ def kernel(
 
     """
 
-    def potential_fn(x):
-        return -logprob_fn(x)
+    def kernel(
+        rng_key: PRNGKey,
+        state: HMCState,
+        logprob_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: Array,
+    ) -> Tuple[HMCState, NUTSInfo]:
+        def potential_fn(x):
+            return -logprob_fn(x)
 
-    momentum_generator, kinetic_energy_fn, uturn_check_fn = metrics.gaussian_euclidean(
-        inverse_mass_matrix
-    )
-    symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
-    proposal_generator = iterative_nuts_proposal(
-        symplectic_integrator,
-        kinetic_energy_fn,
-        uturn_check_fn,
-        step_size,
-        max_num_doublings,
-        divergence_threshold,
-    )
+        (
+            momentum_generator,
+            kinetic_energy_fn,
+            uturn_check_fn,
+        ) = metrics.gaussian_euclidean(inverse_mass_matrix)
+        symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
+        proposal_generator = iterative_nuts_proposal(
+            symplectic_integrator,
+            kinetic_energy_fn,
+            uturn_check_fn,
+            step_size,
+            max_num_doublings,
+            divergence_threshold,
+        )
 
-    key_momentum, key_integrator = jax.random.split(rng_key, 2)
+        key_momentum, key_integrator = jax.random.split(rng_key, 2)
 
-    position, potential_energy, potential_energy_grad = state
-    momentum = momentum_generator(key_momentum, position)
+        position, potential_energy, potential_energy_grad = state
+        momentum = momentum_generator(key_momentum, position)
 
-    integrator_state = integrators.IntegratorState(
-        position, momentum, potential_energy, potential_energy_grad
-    )
-    proposal, info = proposal_generator(key_integrator, integrator_state)
-    proposal = HMCState(
-        proposal.position, proposal.potential_energy, proposal.potential_energy_grad
-    )
+        integrator_state = integrators.IntegratorState(
+            position, momentum, potential_energy, potential_energy_grad
+        )
+        proposal, info = proposal_generator(key_integrator, integrator_state)
+        proposal = HMCState(
+            proposal.position, proposal.potential_energy, proposal.potential_energy_grad
+        )
 
-    kernel = base.hmc(momentum_generator, proposal_generator)
+        return proposal, info
 
     return kernel
 
