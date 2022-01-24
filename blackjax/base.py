@@ -1,4 +1,4 @@
-from typing import Callable, NamedTuple, Tuple
+from typing import NamedTuple, Tuple
 
 from typing_extensions import Protocol
 
@@ -96,15 +96,3 @@ class SamplingAlgorithm(NamedTuple):
 
     init: InitFn
     step: Kernel
-
-
-class SamplingAlgorithmGenerator(NamedTuple):
-    """A pair of functions that implement a kenel generator.
-
-    This is meant to be a quick fix until we can pass the values of parameters
-    directly to the step function.
-
-    """
-
-    init: InitFn
-    kernel: Callable
