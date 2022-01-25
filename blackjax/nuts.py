@@ -74,7 +74,7 @@ def nuts(
     def step_fn(rng_key: PRNGKey, state: HMCState) -> Tuple[HMCState, NUTSInfo]:
         # `np.ndarray` and `DeviceArray`s are not hashable and thus cannot be used as static arguments.`
         # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
-        kernel_fn = jax.jit(kernel, static_argnums=(2, 3))
+        kernel_fn = jax.jit(kernel, static_argnames=['logprob_fn', 'step_size'])
         return kernel_fn(rng_key, state, logprob_fn, step_size, inverse_mass_matrix)
 
     return SamplingAlgorithm(init_fn, step_fn)
