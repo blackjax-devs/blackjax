@@ -1,5 +1,4 @@
-from .api import hmc, nuts
-from .rmh import rmh
+from .api import hmc, nuts, rmh
 
 __version__ = "0.3.0"
 
