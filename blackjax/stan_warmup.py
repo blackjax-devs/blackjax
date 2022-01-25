@@ -13,7 +13,7 @@ from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
     find_reasonable_step_size,
 )
-from blackjax.hmc import HMCState
+from blackjax.hmc_base import HMCState
 from blackjax.types import Array, PRNGKey
 
 __all__ = ["run", "stan_warmup"]

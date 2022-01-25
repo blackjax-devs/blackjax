@@ -1,4 +1,4 @@
-from .hmc import hmc
+from .api import hmc
 from .nuts import nuts
 from .rmh import rmh
 

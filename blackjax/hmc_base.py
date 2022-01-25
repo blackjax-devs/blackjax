@@ -7,10 +7,9 @@ import blackjax.inference.hmc.integrators as integrators
 import blackjax.inference.hmc.metrics as metrics
 import blackjax.inference.hmc.proposal as proposal
 import blackjax.inference.hmc.trajectory as trajectory
-from blackjax.base import SamplingAlgorithm
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["HMCState", "HMCInfo", "hmc"]
+__all__ = ["HMCState", "HMCInfo", "hmc_init", "hmc_kernel"]
 
 
 class HMCState(NamedTuple):
@@ -62,41 +61,6 @@ class HMCInfo(NamedTuple):
     energy: float
     proposal: integrators.IntegratorState
     num_integration_steps: int
-
-
-def hmc(
-    logprob_fn: Callable,
-    step_size: float,
-    inverse_mass_matrix: Array,
-    num_integration_steps: int,
-    *,
-    integrator: Callable = integrators.velocity_verlet,
-    divergence_threshold: int = 1000,
-) -> SamplingAlgorithm:
-
-    # It has an euclidean metric by default
-    kernel = hmc_kernel(integrator, divergence_threshold)
-
-    def init_fn(position: PyTree):
-        return jax.jit(hmc_init, static_argnums=(1,))(position, logprob_fn)
-
-    def step_fn(rng_key: PRNGKey, state: HMCState) -> Tuple[HMCState, HMCInfo]:
-        # `np.ndarray` and `DeviceArray`s are not hashable and thus cannot be used as static arguments.`
-        # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
-        kernel_fn = jax.jit(
-            kernel,
-            static_argnames=['logprob_fn', 'step_size', 'num_integration_steps'],
-        )
-        return kernel_fn(
-            rng_key,
-            state,
-            logprob_fn,
-            step_size,
-            inverse_mass_matrix,
-            num_integration_steps,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
 
 
 def hmc_init(position: PyTree, logprob_fn: Callable):

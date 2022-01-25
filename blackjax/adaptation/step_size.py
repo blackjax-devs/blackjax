@@ -5,7 +5,7 @@ import jax
 import jax.numpy as jnp
 
 import blackjax.optimizers as optimizers
-from blackjax.hmc import HMCState
+from blackjax.hmc_base import HMCState
 
 __all__ = [
     "dual_averaging_adaptation",
