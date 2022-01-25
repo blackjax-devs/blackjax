@@ -2,13 +2,16 @@ from typing import Callable, Tuple
 
 import jax
 
-from blackjax.inference.hmc import integrators
-from blackjax.hmc_base import hmc_kernel, hmc_init, HMCState, HMCInfo
 from blackjax.base import SamplingAlgorithm
-from blackjax.types import Array, PyTree, PRNGKey
+from blackjax.hmc_base import HMCInfo, HMCState, hmc_init, hmc_kernel
+from blackjax.inference.hmc import integrators
+from blackjax.nuts_base import NUTSInfo, nuts_kernel
+from blackjax.types import Array, PRNGKey, PyTree
+
+__all__ = ["hmc", "nuts"]
 
 
-class hmc(object):
+class hmc:
     """Implements the (basic) user interface for the HMC kernel.
 
     The general hmc kernel (:meth:`blackjax.hmc_base.hmc_kernel`) can be
@@ -77,6 +80,46 @@ class hmc(object):
                 step_size,
                 inverse_mass_matrix,
                 num_integration_steps,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)
+
+
+class nuts:
+    """Implements the (basic) user interface for the nuts kernel"""
+
+    kernel_gen = nuts_kernel
+    init = hmc_init
+
+    def __new__(
+        cls,
+        logprob_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: Array,
+        *,
+        integrator: Callable = integrators.velocity_verlet,
+        divergence_threshold: int = 1000,
+        max_num_doublings: int = 10,
+    ) -> SamplingAlgorithm:
+
+        kernel = cls.kernel_gen(integrator, divergence_threshold, max_num_doublings)
+
+        def init_fn(position: PyTree):
+            return jax.jit(cls.init, static_argnums=(1,))(position, logprob_fn)
+
+        def step_fn(rng_key: PRNGKey, state: HMCState) -> Tuple[HMCState, NUTSInfo]:
+            # `np.ndarray` and `DeviceArray`s are not hashable and thus cannot be used as static arguments.`
+            # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
+            kernel_fn = jax.jit(
+                kernel,
+                static_argnames=["logprob_fn", "step_size"],
+            )
+            return kernel_fn(
+                rng_key,
+                state,
+                logprob_fn,
+                step_size,
+                inverse_mass_matrix,
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
