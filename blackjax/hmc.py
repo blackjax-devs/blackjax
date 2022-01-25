@@ -85,7 +85,7 @@ def hmc(
         # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
         kernel_fn = jax.jit(
             kernel,
-            static_argnums=(2, 3, 5),
+            static_argnames=['logprob_fn', 'step_size', 'num_integration_steps'],
         )
         return kernel_fn(
             rng_key,
