@@ -11,7 +11,6 @@ from absl.testing import absltest, parameterized
 
 import blackjax
 import blackjax.diagnostics as diagnostics
-import blackjax.stan_warmup as stan_warmup
 
 
 def inference_loop(kernel, num_samples, rng_key, initial_state):
@@ -74,29 +73,26 @@ class LinearRegressionTest(chex.TestCase):
 
         warmup_key, inference_key = jax.random.split(rng_key, 2)
         initial_position = case["initial_position"]
-        initial_state = case["algorithm"].new_state(initial_position, logposterior_fn)
+        initial_state = case["algorithm"].init(initial_position, logposterior_fn)
 
-        def kernel_factory(step_size, inverse_mass_matrix):
-            return case["algorithm"].kernel(
-                logposterior_fn, step_size, inverse_mass_matrix, **case["parameters"]
-            )
-
-        warmup_run = functools.partial(
-            stan_warmup.run,
-            kernel_factory=kernel_factory,
-            num_steps=case["num_warmup_steps"],
-            is_mass_matrix_diagonal=is_mass_matrix_diagonal,
+        warmup = blackjax.window_adaptation(
+            case["algorithm"],
+            logposterior_fn,
+            is_mass_matrix_diagonal,
+            **case["parameters"],
         )
-        state, (step_size, inverse_mass_matrix), _ = self.variant(warmup_run)(
-            warmup_key, initial_state=initial_state
-        )
+        state, (step_size, inverse_mass_matrix), _ = self.variant(
+            warmup.run, static_argnames=["num_steps"]
+        )(warmup_key, initial_state, case["num_warmup_steps"])
 
         if is_mass_matrix_diagonal:
             assert inverse_mass_matrix.ndim == 1
         else:
             assert inverse_mass_matrix.ndim == 2
 
-        kernel = kernel_factory(step_size, inverse_mass_matrix)
+        kernel = case["algorithm"](
+            logposterior_fn, step_size, inverse_mass_matrix, **case["parameters"]
+        ).step
         states = inference_loop(
             kernel, case["num_sampling_steps"], inference_key, initial_state
         )

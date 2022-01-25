@@ -101,3 +101,12 @@ class SamplingAlgorithm(NamedTuple):
 
     init: InitFn
     step: UpdateFn
+
+
+class RunFn(Protocol):
+    def __call__(self, rng_key: PRNGKey, state: State, num_steps: int):
+        pass
+
+
+class AdaptationAlgorithm(NamedTuple):
+    run: RunFn

@@ -16,78 +16,12 @@ from blackjax.adaptation.step_size import (
 from blackjax.hmc_base import HMCState
 from blackjax.types import Array, PRNGKey
 
-__all__ = ["run", "stan_warmup"]
+__all__ = ["stan_warmup"]
 
 
 class StanWarmupState(NamedTuple):
     da_state: DualAveragingAdaptationState
     mm_state: MassMatrixAdaptationState
-
-
-def run(
-    rng_key,
-    kernel_factory: Callable,
-    initial_state: HMCState,
-    num_steps: int = 1000,
-    *,
-    is_mass_matrix_diagonal: bool = True,
-    initial_step_size: float = 1.0,
-    target_acceptance_rate: float = 0.65,
-) -> Tuple[HMCState, Tuple[float, Array], NamedTuple]:
-    """Loop for the Stan warmup.
-
-    Parameters
-    ----------
-    rng_key:
-        Key for the pseudo-random number generator.
-    kernel_factory:
-        A function that takes a step size, and inverse mass matrix and returns
-        a transition kernel.
-    initial_state:
-        The state from which to start the adaptation.
-    num_steps:
-        The number of times the kernel is run during the warmup.
-    is_mass_matrix_diagonal:
-        Indicates whether we should adapt a diagonal or full mass matrix.
-    initial_step_size:
-        The fist step size to use.
-    target_acceptance_rate:
-        Target acceptance rate for step size adaptation.
-
-    Returns
-    -------
-        A tuple that contains the last state, a tuple with the step size and mass matrix, and a tuple
-        that contains the whole adaptation chain.
-
-    """
-    init, update, final = stan_warmup(
-        kernel_factory,
-        is_mass_matrix_diagonal,
-        target_acceptance_rate=target_acceptance_rate,
-    )
-
-    def one_step(carry, interval):
-        rng_key, state, warmup_state = carry
-        stage, is_middle_window_end = interval
-
-        _, rng_key = jax.random.split(rng_key)
-        state, warmup_state, info = update(
-            rng_key, stage, is_middle_window_end, state, warmup_state
-        )
-
-        return ((rng_key, state, warmup_state), (state, warmup_state, info))
-
-    schedule = jnp.array(stan_warmup_schedule(num_steps))
-
-    warmup_state = init(rng_key, initial_state, initial_step_size)
-    last_state, warmup_chain = jax.lax.scan(
-        one_step, (rng_key, initial_state, warmup_state), schedule
-    )
-    _, last_chain_state, last_warmup_state = last_state
-
-    step_size, inverse_mass_matrix = final(last_warmup_state)
-
-    return last_chain_state, (step_size, inverse_mass_matrix), warmup_chain
 
 
 def stan_warmup(
