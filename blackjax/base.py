@@ -23,7 +23,7 @@ class InitFn(Protocol):
     """
 
     def __call__(self, position: Position) -> State:
-        """The initialization function.
+        """Initialize the algorithm's state.
 
         Parameters
         ----------
@@ -37,7 +37,7 @@ class InitFn(Protocol):
         """
 
 
-class Kernel:
+class UpdateFn(Protocol):
     """A transition kernel used as the `update` of a `SamplingAlgorithms`.
 
     Kernels are pure functions and are idempotent. They necessarily take a
@@ -45,10 +45,15 @@ class Kernel:
     current position) as parameters, return a new state and some information
     about the transtion.
 
+    Update functions is a simplified yet universal interface with every sampling
+    algorithm. In essence, what all these algorithms do is take a rng state, a
+    chain state (possibly a batch of data) and return a new state and some
+    information about the transition.
+
     """
 
     def __call__(self, rng_key: PRNGKey, state: State) -> Tuple[State, Info]:
-        """The transition kernel.
+        """Update the current state using the sampling algorithm.
 
         Parameters
         ----------
@@ -95,4 +100,4 @@ class SamplingAlgorithm(NamedTuple):
     """
 
     init: InitFn
-    step: Kernel
+    step: UpdateFn
