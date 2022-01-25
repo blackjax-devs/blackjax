@@ -11,7 +11,7 @@ import blackjax.inference.hmc.proposal as proposal
 import blackjax.inference.hmc.termination as termination
 import blackjax.inference.hmc.trajectory as trajectory
 from blackjax.base import SamplingAlgorithm
-from blackjax.hmc import HMCState, hmc_init
+from blackjax.hmc_base import HMCState, hmc_init
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["NUTSInfo", "nuts", "nuts_kernel"]
@@ -74,7 +74,7 @@ def nuts(
     def step_fn(rng_key: PRNGKey, state: HMCState) -> Tuple[HMCState, NUTSInfo]:
         # `np.ndarray` and `DeviceArray`s are not hashable and thus cannot be used as static arguments.`
         # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
-        kernel_fn = jax.jit(kernel, static_argnames=['logprob_fn', 'step_size'])
+        kernel_fn = jax.jit(kernel, static_argnames=["logprob_fn", "step_size"])
         return kernel_fn(rng_key, state, logprob_fn, step_size, inverse_mass_matrix)
 
     return SamplingAlgorithm(init_fn, step_fn)
