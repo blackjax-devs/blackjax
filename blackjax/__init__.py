@@ -1,4 +1,4 @@
-from .api import hmc, nuts, rmh
+from .mcmc import hmc, nuts, rmh
 
 __version__ = "0.3.0"
 
