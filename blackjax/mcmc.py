@@ -72,7 +72,7 @@ class hmc:
             # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
             kernel_fn = jax.jit(
                 kernel,
-                static_argnames=["logprob_fn", "step_size", "num_integration_steps"],
+                static_argnames=["logprob_fn", "num_integration_steps"],
             )
             return kernel_fn(
                 rng_key,
@@ -113,7 +113,7 @@ class nuts:
             # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
             kernel_fn = jax.jit(
                 kernel,
-                static_argnames=["logprob_fn", "step_size"],
+                static_argnames=["logprob_fn"],
             )
             return kernel_fn(
                 rng_key,
