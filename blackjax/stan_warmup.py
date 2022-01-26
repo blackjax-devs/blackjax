@@ -74,7 +74,7 @@ def window_adaptation_base(
     is_mass_matrix_diagonal
         Create and adapt a diagonal mass matrix if True, a dense matrix otherwise.
     target_acceptance_rate:
-        Target acceptance rate for step size adaptation.
+        The target acceptance rate for the step size adaptation.
 
     Returns
     -------
