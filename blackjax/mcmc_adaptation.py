@@ -19,7 +19,7 @@ def window_adaptation(
     **parameters,
 ) -> AdaptationAlgorithm:
 
-    kernel = algorithm.kernel_gen()
+    kernel = algorithm.new_kernel()
 
     def kernel_factory(step_size: float, inverse_mass_matrix: Array):
         return jax.jit(
@@ -60,6 +60,6 @@ def window_adaptation(
         step_size, inverse_mass_matrix = final(last_warmup_state)
         kernel = kernel_factory(step_size, inverse_mass_matrix)
 
-        return last_chain_state, kernel, warmup_chain
+        return last_chain_state, kernel, (step_size, inverse_mass_matrix)
 
     return AdaptationAlgorithm(run)

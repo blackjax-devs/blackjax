@@ -42,13 +42,13 @@ class hmc:
 
     .. code:
 
-       kernel = blackjax.hmc.kernel_gen(integrators.yoshida)
+       kernel = blackjax.hmc.new_kernel(integrators.yoshida)
        state = blackjax.hmc.init(position, logprob_fn)
        state, info = kernel(rng_key, state, logprob_fn, step_size, inverse_mass_matrix, num_integration_steps)
 
     """
 
-    kernel_gen = hmc_kernel
+    new_kernel = hmc_kernel
     init = hmc_init
 
     def __new__(
@@ -62,7 +62,7 @@ class hmc:
         divergence_threshold: int = 1000,
     ) -> SamplingAlgorithm:
 
-        kernel = cls.kernel_gen(integrator, divergence_threshold)
+        kernel = cls.new_kernel(integrator, divergence_threshold)
 
         def init_fn(position: PyTree):
             return jax.jit(cls.init, static_argnums=(1,))(position, logprob_fn)
@@ -89,7 +89,7 @@ class hmc:
 class nuts:
     """Implements the (basic) user interface for the nuts kernel"""
 
-    kernel_gen = nuts_kernel
+    new_kernel = nuts_kernel
     init = hmc_init
 
     def __new__(
@@ -103,7 +103,7 @@ class nuts:
         max_num_doublings: int = 10,
     ) -> SamplingAlgorithm:
 
-        kernel = cls.kernel_gen(integrator, divergence_threshold, max_num_doublings)
+        kernel = cls.new_kernel(integrator, divergence_threshold, max_num_doublings)
 
         def init_fn(position: PyTree):
             return jax.jit(cls.init, static_argnums=(1,))(position, logprob_fn)
@@ -129,7 +129,7 @@ class nuts:
 class rmh:
     """Implements the (basic) user interface for the gaussian random walk kernel"""
 
-    kernel_gen = rmh_kernel
+    new_kernel = rmh_kernel
     init = rmh_init
 
     def __new__(
@@ -138,7 +138,7 @@ class rmh:
         sigma: Array,
     ) -> SamplingAlgorithm:
 
-        kernel = cls.kernel_gen()
+        kernel = cls.new_kernel()
 
         def init_fn(position: PyTree):
             return jax.jit(cls.init, static_argnums=(1,))(position, logprob_fn)
