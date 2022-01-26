@@ -16,16 +16,18 @@ from blackjax.adaptation.step_size import (
 from blackjax.hmc_base import HMCState
 from blackjax.types import Array, PRNGKey
 
-__all__ = ["stan_warmup"]
+__all__ = ["window_adaptation_base"]
 
 
-class StanWarmupState(NamedTuple):
+class WindowAdaptationState(NamedTuple):
     da_state: DualAveragingAdaptationState
     mm_state: MassMatrixAdaptationState
+    step: int
 
 
-def stan_warmup(
+def window_adaptation_base(
     kernel_factory: Callable,
+    schedule_fn: Callable,
     is_mass_matrix_diagonal: bool,
     target_acceptance_rate: float = 0.65,
 ):
@@ -66,6 +68,9 @@ def stan_warmup(
     kernel_factory
         A function which returns a transition kernel given a step size and a
         mass matrix.
+    schedule_fn
+        A function which returns the current window and whether it is the last
+        step in the window given a sep number.
     is_mass_matrix_diagonal
         Create and adapt a diagonal mass matrix if True, a dense matrix otherwise.
     target_acceptance_rate:
@@ -86,7 +91,7 @@ def stan_warmup(
 
     def init(
         rng_key: PRNGKey, initial_state: HMCState, initial_step_size: float
-    ) -> StanWarmupState:
+    ) -> WindowAdaptationState:
         """Initialize the warmup.
 
         To initialize the Stan warmup we create an identity mass matrix and use
@@ -108,17 +113,15 @@ def stan_warmup(
         )
         da_state = fast_init(step_size)
 
-        warmup_state = StanWarmupState(da_state, mm_state)
+        warmup_state = WindowAdaptationState(da_state, mm_state, 0)
 
         return warmup_state
 
     def update(
         rng_key: PRNGKey,
-        stage: int,
-        is_middle_window_end: bool,
         chain_state: HMCState,
-        warmup_state: StanWarmupState,
-    ) -> Tuple[HMCState, StanWarmupState, NamedTuple]:
+        adaptation_state: WindowAdaptationState,
+    ) -> Tuple[HMCState, WindowAdaptationState, NamedTuple]:
         """Move the warmup by one step.
 
         We first create a new kernel with the current values of the step size
@@ -146,16 +149,18 @@ def stan_warmup(
         The updated states of the chain and the warmup.
 
         """
-        step_size = jnp.exp(warmup_state.da_state.log_step_size)
-        inverse_mass_matrix = warmup_state.mm_state.inverse_mass_matrix
+        step_size = jnp.exp(adaptation_state.da_state.log_step_size)
+        inverse_mass_matrix = adaptation_state.mm_state.inverse_mass_matrix
         kernel = kernel_factory(step_size, inverse_mass_matrix)
 
         chain_state, chain_info = kernel(rng_key, chain_state)
 
+        stage, is_middle_window_end = schedule_fn(adaptation_state.step)
+
         warmup_state = jax.lax.switch(
             stage,
             (fast_update, slow_update),
-            (rng_key, chain_state, chain_info, warmup_state),
+            (rng_key, chain_state, chain_info, adaptation_state),
         )
 
         warmup_state = jax.lax.cond(
@@ -167,7 +172,7 @@ def stan_warmup(
 
         return chain_state, warmup_state, chain_info
 
-    def final(warmup_state: StanWarmupState) -> Tuple[float, Array]:
+    def final(warmup_state: WindowAdaptationState) -> Tuple[float, Array]:
         """Return the step size and mass matrix."""
         step_size = jnp.exp(warmup_state.da_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.mm_state.inverse_mass_matrix
@@ -201,12 +206,14 @@ def fast_window(
         return da_state
 
     def update(
-        fw_state: Tuple[Array, HMCState, Any, StanWarmupState]
-    ) -> StanWarmupState:
+        fw_state: Tuple[Array, HMCState, Any, WindowAdaptationState]
+    ) -> WindowAdaptationState:
         rng_key, state, info, warmup_state = fw_state
 
         new_da_state = da_update(warmup_state.da_state, info)
-        new_warmup_state = StanWarmupState(new_da_state, warmup_state.mm_state)
+        new_warmup_state = WindowAdaptationState(
+            new_da_state, warmup_state.mm_state, warmup_state.step + 1
+        )
 
         return new_warmup_state
 
@@ -249,8 +256,8 @@ def slow_window(
         return mm_state
 
     def update(
-        fs_state: Tuple[Array, HMCState, Any, StanWarmupState]
-    ) -> StanWarmupState:
+        fs_state: Tuple[Array, HMCState, Any, WindowAdaptationState]
+    ) -> WindowAdaptationState:
         """Move the warmup by one state when in a slow adaptation interval.
 
         Mass matrix adaptation and dual averaging states are both
@@ -262,11 +269,13 @@ def slow_window(
 
         new_da_state = da_update(warmup_state.da_state, info)
         new_mm_state = mm_update(warmup_state.mm_state, state.position)
-        new_warmup_state = StanWarmupState(new_da_state, new_mm_state)
+        new_warmup_state = WindowAdaptationState(
+            new_da_state, new_mm_state, warmup_state.step + 1
+        )
 
         return new_warmup_state
 
-    def final(warmup_state: StanWarmupState) -> StanWarmupState:
+    def final(warmup_state: WindowAdaptationState) -> WindowAdaptationState:
         """Update the parameters at the end of a slow adaptation window.
 
         We compute the value of the mass matrix and reset the mass matrix
@@ -275,14 +284,16 @@ def slow_window(
         """
         new_mm_state = mm_final(warmup_state.mm_state)
         new_da_state = da_init(da_final(warmup_state.da_state))
-        new_warmup_state = StanWarmupState(new_da_state, new_mm_state)
+        new_warmup_state = WindowAdaptationState(
+            new_da_state, new_mm_state, warmup_state.step
+        )
 
         return new_warmup_state
 
     return init, update, final
 
 
-def stan_warmup_schedule(
+def window_adaptation_schedule(
     num_steps: int,
     initial_buffer_size: int = 75,
     final_buffer_size: int = 50,
@@ -382,4 +393,17 @@ def stan_warmup_schedule(
         schedule += [(0, False)] * (num_steps - 1 - final_buffer_start)
         schedule.append((0, False))
 
-    return schedule
+    schedule = jnp.array(schedule)
+
+    def schedule_fn(step):
+        """Return the current window and whether this step is the last in the window.
+
+        Passed the supposed last step we stay in the first window.
+
+        """
+        try:
+            return schedule[step]
+        except IndexError:
+            return (0, False)
+
+    return schedule_fn
