@@ -3,11 +3,11 @@ from typing import Callable, Union
 
 import jax
 
-from blackjax import nuts, hmc
+from blackjax import hmc, nuts
 from blackjax.base import AdaptationAlgorithm
 from blackjax.hmc_base import HMCState
 from blackjax.stan_warmup import window_adaptation_base, window_adaptation_schedule
-from blackjax.types import PRNGKey, Array
+from blackjax.types import Array, PRNGKey
 
 
 def window_adaptation(
@@ -58,7 +58,8 @@ def window_adaptation(
         last_chain_state, last_warmup_state = last_state
 
         step_size, inverse_mass_matrix = final(last_warmup_state)
+        kernel = kernel_factory(step_size, inverse_mass_matrix)
 
-        return last_chain_state, (step_size, inverse_mass_matrix), warmup_chain
+        return last_chain_state, kernel, warmup_chain
 
     return AdaptationAlgorithm(run)

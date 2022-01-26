@@ -81,18 +81,10 @@ class LinearRegressionTest(chex.TestCase):
             is_mass_matrix_diagonal,
             **case["parameters"],
         )
-        state, (step_size, inverse_mass_matrix), _ = self.variant(
-            warmup.run, static_argnames=["num_steps"]
-        )(warmup_key, initial_state, case["num_warmup_steps"])
+        state, kernel, _ = self.variant(warmup.run, static_argnames=["num_steps"])(
+            warmup_key, initial_state, case["num_warmup_steps"]
+        )
 
-        if is_mass_matrix_diagonal:
-            assert inverse_mass_matrix.ndim == 1
-        else:
-            assert inverse_mass_matrix.ndim == 2
-
-        kernel = case["algorithm"](
-            logposterior_fn, step_size, inverse_mass_matrix, **case["parameters"]
-        ).step
         states = inference_loop(
             kernel, case["num_sampling_steps"], inference_key, initial_state
         )
