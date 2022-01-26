@@ -2,12 +2,11 @@ import functools
 from typing import Callable, Union
 
 import jax
-import jax.numpy as jnp
 
 from blackjax import nuts, hmc
 from blackjax.base import AdaptationAlgorithm
 from blackjax.hmc_base import HMCState
-from blackjax.stan_warmup import stan_warmup, stan_warmup_schedule
+from blackjax.stan_warmup import window_adaptation_base, window_adaptation_schedule
 from blackjax.types import PRNGKey, Array
 
 
@@ -35,30 +34,28 @@ def window_adaptation(
         )
 
     def run(rng_key: PRNGKey, init_state: HMCState, num_steps: int = 1000):
-        init, update, final = stan_warmup(
+
+        schedule_fn = window_adaptation_schedule(num_steps)
+        init, update, final = window_adaptation_base(
             kernel_factory,
+            schedule_fn,
             is_mass_matrix_diagonal,
             target_acceptance_rate=target_acceptance_rate,
         )
 
-        def one_step(carry, interval):
-            rng_key, state, warmup_state = carry
-            stage, is_middle_window_end = interval
-
-            _, rng_key = jax.random.split(rng_key)
-            state, warmup_state, info = update(
-                rng_key, stage, is_middle_window_end, state, warmup_state
-            )
-
-            return ((rng_key, state, warmup_state), (state, warmup_state, info))
-
-        schedule = jnp.array(stan_warmup_schedule(num_steps))
+        def one_step(carry, rng_key):
+            state, warmup_state = carry
+            state, warmup_state, info = update(rng_key, state, warmup_state)
+            return ((state, warmup_state), (state, warmup_state, info))
 
         warmup_state = init(rng_key, init_state, initial_step_size)
+        keys = jax.random.split(rng_key, num_steps + 1)[1:]
         last_state, warmup_chain = jax.lax.scan(
-            one_step, (rng_key, init_state, warmup_state), schedule
+            one_step,
+            (init_state, warmup_state),
+            keys,
         )
-        _, last_chain_state, last_warmup_state = last_state
+        last_chain_state, last_warmup_state = last_state
 
         step_size, inverse_mass_matrix = final(last_warmup_state)
 
