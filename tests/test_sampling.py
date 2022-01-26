@@ -58,7 +58,6 @@ class LinearRegressionTest(chex.TestCase):
         logpdf += stats.norm.logpdf(preds, y, scale)
         return jnp.sum(logpdf)
 
-    @chex.all_variants(with_pmap=False)
     @parameterized.parameters(itertools.product(regresion_test_cases, [True, False]))
     def test_linear_regression(self, case, is_mass_matrix_diagonal):
         """Test the HMC kernel and the Stan warmup."""
@@ -72,8 +71,6 @@ class LinearRegressionTest(chex.TestCase):
         logposterior_fn = lambda x: logposterior_fn_(**x)
 
         warmup_key, inference_key = jax.random.split(rng_key, 2)
-        initial_position = case["initial_position"]
-        initial_state = case["algorithm"].init(initial_position, logposterior_fn)
 
         warmup = blackjax.window_adaptation(
             case["algorithm"],
@@ -81,12 +78,12 @@ class LinearRegressionTest(chex.TestCase):
             is_mass_matrix_diagonal,
             **case["parameters"],
         )
-        state, kernel, _ = self.variant(warmup.run, static_argnames=["num_steps"])(
-            warmup_key, initial_state, case["num_warmup_steps"]
+        state, kernel, _ = warmup.run(
+            warmup_key, case["initial_position"], case["num_warmup_steps"]
         )
 
         states = inference_loop(
-            kernel, case["num_sampling_steps"], inference_key, initial_state
+            kernel, case["num_sampling_steps"], inference_key, state
         )
 
         coefs_samples = states.position["coefs"]
