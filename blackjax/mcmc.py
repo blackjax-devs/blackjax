@@ -51,7 +51,7 @@ class hmc:
     new_kernel = hmc_kernel
     init = hmc_init
 
-    def __new__(
+    def __new__(  # type: ignore[misc]
         cls,
         logprob_fn: Callable,
         step_size: float,
@@ -92,7 +92,7 @@ class nuts:
     new_kernel = nuts_kernel
     init = hmc_init
 
-    def __new__(
+    def __new__(  # type: ignore[misc]
         cls,
         logprob_fn: Callable,
         step_size: float,
@@ -132,7 +132,7 @@ class rmh:
     new_kernel = rmh_kernel
     init = rmh_init
 
-    def __new__(
+    def __new__(  # type: ignore[misc]
         cls,
         logprob_fn: Callable,
         sigma: Array,
