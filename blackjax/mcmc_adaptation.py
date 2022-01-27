@@ -37,9 +37,9 @@ def window_adaptation(
             position, logprob_fn
         )
 
-    def run(rng_key: PRNGKey, init_position: PyTree, num_steps: int = 1000):
+    def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 1000):
 
-        init_state = init_fn(init_position)
+        init_state = init_fn(position)
         schedule_fn = window_adaptation_schedule(num_steps)
         init, update, final = window_adaptation_base(
             kernel_factory,

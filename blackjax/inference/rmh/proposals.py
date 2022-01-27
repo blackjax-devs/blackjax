@@ -19,7 +19,7 @@ def normal(sigma: Array) -> Callable:
         normal distribution from which we draw the move proposals.
 
     """
-    ndim = jnp.ndim(sigma)
+    ndim = jnp.ndim(sigma)  # type: ignore[arg-type]
     shape = jnp.shape(jnp.atleast_1d(sigma))[:1]
 
     if ndim == 1:

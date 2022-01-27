@@ -104,7 +104,7 @@ class SamplingAlgorithm(NamedTuple):
 
 
 class RunFn(Protocol):
-    def __call__(self, rng_key: PRNGKey, state: State, num_steps: int):
+    def __call__(self, rng_key: PRNGKey, position: PyTree, num_steps: int):
         pass
 
 

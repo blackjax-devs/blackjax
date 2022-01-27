@@ -10,7 +10,7 @@ __all__ = ["RMHState", "RMHInfo", "rmh"]
 
 
 class RMHState(NamedTuple):
-    """State of the RMH chain
+    """State of the RMH chain.
 
     position
         Current position of the chain.

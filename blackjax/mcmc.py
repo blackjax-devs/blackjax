@@ -1,12 +1,12 @@
-from typing import Callable, Tuple
+from typing import Callable
 
 import jax
 
 from blackjax.base import SamplingAlgorithm
-from blackjax.hmc_base import HMCInfo, HMCState, hmc_init, hmc_kernel
+from blackjax.hmc_base import hmc_init, hmc_kernel
 from blackjax.inference.hmc import integrators
-from blackjax.nuts_base import NUTSInfo, nuts_kernel
-from blackjax.rmh_base import RMHInfo, RMHState, rmh_init, rmh_kernel
+from blackjax.nuts_base import nuts_kernel
+from blackjax.rmh_base import rmh_init, rmh_kernel
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["hmc", "nuts", "rmh"]
@@ -48,8 +48,8 @@ class hmc:
 
     """
 
-    new_kernel = hmc_kernel
-    init = hmc_init
+    new_kernel = staticmethod(hmc_kernel)
+    init = staticmethod(hmc_init)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -67,7 +67,7 @@ class hmc:
         def init_fn(position: PyTree):
             return jax.jit(cls.init, static_argnums=(1,))(position, logprob_fn)
 
-        def step_fn(rng_key: PRNGKey, state: HMCState) -> Tuple[HMCState, HMCInfo]:
+        def step_fn(rng_key: PRNGKey, state):
             # `np.ndarray` and `DeviceArray`s are not hashable and thus cannot be used as static arguments.`
             # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
             kernel_fn = jax.jit(
@@ -89,8 +89,8 @@ class hmc:
 class nuts:
     """Implements the (basic) user interface for the nuts kernel"""
 
-    new_kernel = nuts_kernel
-    init = hmc_init
+    new_kernel = staticmethod(nuts_kernel)
+    init = staticmethod(hmc_init)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -108,7 +108,7 @@ class nuts:
         def init_fn(position: PyTree):
             return jax.jit(cls.init, static_argnums=(1,))(position, logprob_fn)
 
-        def step_fn(rng_key: PRNGKey, state: HMCState) -> Tuple[HMCState, NUTSInfo]:
+        def step_fn(rng_key: PRNGKey, state):
             # `np.ndarray` and `DeviceArray`s are not hashable and thus cannot be used as static arguments.`
             # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
             kernel_fn = jax.jit(
@@ -129,8 +129,8 @@ class nuts:
 class rmh:
     """Implements the (basic) user interface for the gaussian random walk kernel"""
 
-    new_kernel = rmh_kernel
-    init = rmh_init
+    new_kernel = staticmethod(rmh_kernel)
+    init = staticmethod(rmh_init)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -143,7 +143,7 @@ class rmh:
         def init_fn(position: PyTree):
             return jax.jit(cls.init, static_argnums=(1,))(position, logprob_fn)
 
-        def step_fn(rng_key: PRNGKey, state: RMHState) -> Tuple[RMHState, RMHInfo]:
+        def step_fn(rng_key: PRNGKey, state):
             # `np.ndarray` and `DeviceArray`s are not hashable and thus cannot be used as static arguments.`
             # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
             kernel_fn = jax.jit(
