@@ -6,9 +6,8 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest
 
-import blackjax.hmc as hmc
+import blackjax
 from blackjax.adaptation.step_size import find_reasonable_step_size
-from blackjax.inference.hmc.base import new_hmc_state
 
 
 class StepSizeTest(chex.TestCase):
@@ -21,12 +20,20 @@ class StepSizeTest(chex.TestCase):
         run_key0, run_key1 = jax.random.split(rng_key, 2)
 
         init_position = jnp.array([3.0])
-        reference_state = new_hmc_state(init_position, logprob_fn)
+        reference_state = blackjax.hmc.init(init_position, logprob_fn)
 
         inv_mass_matrix = jnp.array([1.0])
-        kernel_generator = lambda step_size: hmc.kernel(
-            logprob_fn, step_size, inv_mass_matrix, 10
-        )
+
+        kernel = blackjax.hmc.new_kernel()
+
+        def kernel_generator(step_size: float):
+            return functools.partial(
+                kernel,
+                logprob_fn=logprob_fn,
+                step_size=step_size,
+                inverse_mass_matrix=inv_mass_matrix,
+                num_integration_steps=10,
+            )
 
         # Test that the algorithm actually does something
         _find_step_size = self.variant(

@@ -74,8 +74,8 @@ def gaussian_euclidean(
             Information. Springer, Berlin, Heidelberg, 2013.
 
     """
-    ndim = jnp.ndim(inverse_mass_matrix)
-    shape = jnp.shape(inverse_mass_matrix)[:1]
+    ndim = jnp.ndim(inverse_mass_matrix)  # type: ignore[arg-type]
+    shape = jnp.shape(inverse_mass_matrix)[:1]  # type: ignore[arg-type]
 
     if ndim == 1:  # diagonal mass matrix
         mass_matrix_sqrt = jnp.sqrt(jnp.reciprocal(inverse_mass_matrix))
@@ -92,7 +92,7 @@ def gaussian_euclidean(
     else:
         raise ValueError(
             "The mass matrix has the wrong number of dimensions:"
-            f" expected 1 or 2, got {jnp.ndim(inverse_mass_matrix)}."
+            f" expected 1 or 2, got {jnp.ndim(inverse_mass_matrix)}."  # type: ignore[arg-type]
         )
 
     def momentum_generator(rng_key: PRNGKey, position: PyTree) -> PyTree:

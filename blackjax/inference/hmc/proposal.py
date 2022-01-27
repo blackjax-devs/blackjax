@@ -9,7 +9,6 @@ from blackjax.inference.hmc.integrators import IntegratorState
 
 class Proposal(NamedTuple):
     """Proposal for the next chain step.
-
     state:
         The trajectory state corresponding to this proposal.
     energy:

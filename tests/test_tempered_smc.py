@@ -10,7 +10,7 @@ import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest, parameterized
 
-import blackjax.hmc as hmc
+import blackjax
 import blackjax.inference.smc.resampling as resampling
 import blackjax.inference.smc.solver as solver
 from blackjax.tempered_smc import TemperedSMCState, adaptive_tempered_smc, tempered_smc
@@ -63,14 +63,15 @@ class TemperedSMCTest(chex.TestCase):
 
         iterates = []
         results = []  # type: List[TemperedSMCState]
-        mcmc_kernel_factory = lambda pot: hmc.kernel(pot, 10e-2, jnp.eye(2), 50)
+
+        mcmc_kernel_factory = lambda pot: blackjax.hmc(pot, 10e-2, jnp.eye(2), 50).step
 
         for target_ess in [0.5, 0.75]:
             tempering_kernel = adaptive_tempered_smc(
                 prior,
                 conditioned_logprob,
                 mcmc_kernel_factory,
-                hmc.new_state,
+                blackjax.hmc.init,
                 resampling.systematic,
                 target_ess,
                 solver.dichotomy,
@@ -104,14 +105,14 @@ class TemperedSMCTest(chex.TestCase):
         smc_state_init = [scale_init, coeffs_init]
 
         lambda_schedule = np.logspace(-5, 0, n_schedule)
-        mcmc_kernel_factory = lambda pot: hmc.kernel(pot, 10e-2, jnp.eye(2), 50)
+        mcmc_kernel_factory = lambda pot: blackjax.hmc(pot, 10e-2, jnp.eye(2), 50).step
 
         tempering_kernel = self.variant(
             tempered_smc(
                 prior,
                 conditionned_logprob,
                 mcmc_kernel_factory,
-                hmc.new_state,
+                blackjax.hmc.init,
                 resampling.systematic,
                 10,
             )
@@ -163,13 +164,13 @@ class NormalizingConstantTest(chex.TestCase):
         rng_key, init_key = jax.random.split(rng_key, 2)
         x_init = jax.random.normal(init_key, shape=(N, dim))
 
-        mcmc_kernel_factory = lambda pot: hmc.kernel(pot, 1e-2, jnp.eye(dim), 50)
+        mcmc_kernel_factory = lambda pot: blackjax.hmc(pot, 1e-2, jnp.eye(dim), 50).step
 
         tempering_kernel = adaptive_tempered_smc(
             prior,
             conditionned_logprob,
             mcmc_kernel_factory,
-            hmc.new_state,
+            blackjax.hmc.init,
             resampling.systematic,
             0.9,
             solver.dichotomy,

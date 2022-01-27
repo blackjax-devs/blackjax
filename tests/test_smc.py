@@ -8,7 +8,7 @@ import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest, parameterized
 
-import blackjax.hmc as hmc
+import blackjax
 import blackjax.inference.smc.resampling as resampling
 from blackjax.inference.smc.base import _normalize, smc
 
@@ -29,16 +29,17 @@ class SMCTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters([500, 1000, 5000])
     def test_smc(self, N):
-        mcmc_factory = lambda logprob_fn: hmc.kernel(
+
+        mcmc_factory = lambda logprob_fn: blackjax.hmc(
             logprob_fn,
             step_size=1e-2,
             inverse_mass_matrix=jnp.eye(1),
             num_integration_steps=50,
-        )
+        ).step
 
         specialized_log_weights_fn = lambda tree: log_weights_fn(tree, 1.0)
 
-        kernel = smc(mcmc_factory, hmc.new_state, resampling.systematic, 1000)
+        kernel = smc(mcmc_factory, blackjax.hmc.init, resampling.systematic, 1000)
 
         # Don't use exactly the invariant distribution for the MCMC kernel
         init_particles = 0.25 + np.random.randn(N)
