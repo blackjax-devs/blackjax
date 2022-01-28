@@ -115,7 +115,6 @@ def nuts_kernel(
             symplectic_integrator,
             kinetic_energy_fn,
             uturn_check_fn,
-            step_size,
             max_num_doublings,
             divergence_threshold,
         )
@@ -128,7 +127,7 @@ def nuts_kernel(
         integrator_state = integrators.IntegratorState(
             position, momentum, potential_energy, potential_energy_grad
         )
-        proposal, info = proposal_generator(key_integrator, integrator_state)
+        proposal, info = proposal_generator(key_integrator, integrator_state, step_size)
         proposal = HMCState(
             proposal.position, proposal.potential_energy, proposal.potential_energy_grad
         )
@@ -142,7 +141,6 @@ def iterative_nuts_proposal(
     integrator: Callable,
     kinetic_energy: Callable,
     uturn_check_fn: Callable,
-    step_size: float,
     max_num_expansions: int = 10,
     divergence_threshold: float = 1000,
 ) -> Callable:
@@ -185,7 +183,6 @@ def iterative_nuts_proposal(
     expand = trajectory.dynamic_multiplicative_expansion(
         trajectory_integrator,
         uturn_check_fn,
-        step_size,
         max_num_expansions,
     )
 
@@ -193,7 +190,7 @@ def iterative_nuts_proposal(
         energy = state.potential_energy + kinetic_energy(state.momentum)
         return energy
 
-    def propose(rng_key, initial_state: integrators.IntegratorState):
+    def propose(rng_key, initial_state: integrators.IntegratorState, step_size):
         initial_termination_state = new_termination_state(
             initial_state, max_num_expansions
         )
@@ -212,9 +209,7 @@ def iterative_nuts_proposal(
         )
 
         expansion_state, info = expand(
-            rng_key,
-            initial_expansion_state,
-            initial_energy,
+            rng_key, initial_expansion_state, initial_energy, step_size
         )
         is_diverging, is_turning = info
         num_doublings, sampled_proposal, new_trajectory, _ = expansion_state
