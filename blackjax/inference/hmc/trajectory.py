@@ -99,15 +99,15 @@ def merge_trajectories(left_trajectory: Trajectory, right_trajectory: Trajectory
 
 def static_integration(
     integrator: Callable,
-    step_size: float,
-    num_integration_steps: int,
     direction: int = 1,
 ) -> Callable:
     """Generate a trajectory by integrating several times in one direction."""
 
-    directed_step_size = direction * step_size
+    def integrate(
+        initial_state: IntegratorState, step_size, num_integration_steps
+    ) -> IntegratorState:
+        directed_step_size = direction * step_size
 
-    def integrate(initial_state: IntegratorState) -> IntegratorState:
         def one_step(state, _):
             state = integrator(state, directed_step_size)
             return state, state
@@ -460,7 +460,6 @@ class DynamicExpansionState(NamedTuple):
 def dynamic_multiplicative_expansion(
     trajectory_integrator: Callable,
     uturn_check_fn: Callable,
-    step_size: float,
     max_num_expansions: int = 10,
     rate: int = 2,
 ) -> Callable:
@@ -497,6 +496,7 @@ def dynamic_multiplicative_expansion(
         rng_key: PRNGKey,
         initial_expansion_state: DynamicExpansionState,
         initial_energy: float,
+        step_size: float,
     ):
         def do_keep_expanding(loop_state) -> bool:
             """Determine whether we need to keep expanding the trajectory."""
