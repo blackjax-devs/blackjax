@@ -48,7 +48,6 @@ def window_adaptation(
             target_acceptance_rate=target_acceptance_rate,
         )
 
-        @jax.jit
         def one_step(carry, rng_key):
             state, warmup_state = carry
             state, warmup_state, info = update(rng_key, state, warmup_state)

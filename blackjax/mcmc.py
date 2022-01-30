@@ -1,7 +1,5 @@
 from typing import Callable
 
-import jax
-
 from blackjax.base import SamplingAlgorithm
 from blackjax.hmc_base import hmc_init, hmc_kernel
 from blackjax.inference.hmc import integrators
@@ -18,8 +16,7 @@ class hmc:
     The general hmc kernel (:meth:`blackjax.hmc_base.hmc_kernel`) can be
     cumbersome to manipulate. Since most users only need to specify the kernel
     parameters at initialization time, we provide a helper function that
-    specializes the general kernel and jit-compiles it specifying the static
-    arguments.
+    specializes the general kernel.
 
     In addition, we add the general kernel as an attribute to this class so
     users only need to pass `blackjax.hmc` to the algorithm, and thus don't need
@@ -65,16 +62,10 @@ class hmc:
         kernel = cls.new_kernel(integrator, divergence_threshold)
 
         def init_fn(position: PyTree):
-            return jax.jit(cls.init, static_argnums=(1,))(position, logprob_fn)
+            return cls.init(position, logprob_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            # `np.ndarray` and `DeviceArray`s are not hashable and thus cannot be used as static arguments.`
-            # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
-            kernel_fn = jax.jit(
-                kernel,
-                static_argnames=["logprob_fn", "num_integration_steps"],
-            )
-            return kernel_fn(
+            return kernel(
                 rng_key,
                 state,
                 logprob_fn,
@@ -87,7 +78,37 @@ class hmc:
 
 
 class nuts:
-    """Implements the (basic) user interface for the nuts kernel"""
+    """Implements the (basic) user interface for the nuts kernel.
+
+    Examples
+    --------
+
+    A new NUTS kernel can be initialized and used with the following code:
+
+    .. code:
+
+        nuts = blackjax.nuts(logprob_fn step_size, inverse_mass_matrix)
+        state = nuts.init(position)
+        new_state, info = nuts.step(rng_key, state)
+
+    We can JIT-compile the step function for more speed:
+
+    .. code:
+
+        step = jax.jit(nuts.step)
+        new_state, info = step(rng_key, state)
+
+    If we need to do something slightly fancier we can use the base kernel
+    directly. Here if we want to use Yoshida's symplectic integrator instead of
+    the usual velocity verlet:
+
+    .. code:
+
+       state = blackjax.nuts.init(position, logprob_fn)
+       kernel = blackjax.nuts.new_kernel(integrators.yoshida)
+       state, info = kernel(rng_key, state, logprob_fn, step_size, inverse_mass_matrix, num_integration_steps)
+
+    """
 
     new_kernel = staticmethod(nuts_kernel)
     init = staticmethod(hmc_init)
@@ -106,16 +127,10 @@ class nuts:
         kernel = cls.new_kernel(integrator, divergence_threshold, max_num_doublings)
 
         def init_fn(position: PyTree):
-            return jax.jit(cls.init, static_argnums=(1,))(position, logprob_fn)
+            return cls.init(position, logprob_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            # `np.ndarray` and `DeviceArray`s are not hashable and thus cannot be used as static arguments.`
-            # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
-            kernel_fn = jax.jit(
-                kernel,
-                static_argnames=["logprob_fn"],
-            )
-            return kernel_fn(
+            return kernel(
                 rng_key,
                 state,
                 logprob_fn,
@@ -127,7 +142,27 @@ class nuts:
 
 
 class rmh:
-    """Implements the (basic) user interface for the gaussian random walk kernel"""
+    """Implements the (basic) user interface for the gaussian random walk kernel
+
+    Examples
+    --------
+
+    A new Gaussian Random Walk kernel can be initialized and used with the following code:
+
+    .. code:
+
+        rmh = blackjax.rmh(logprob_fn sigma)
+        state = rmh.init(position)
+        new_state, info = rmh.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code:
+
+        step = jax.jit(rmh.step)
+        new_state, info = step(rng_key, state)
+
+    """
 
     new_kernel = staticmethod(rmh_kernel)
     init = staticmethod(rmh_init)
@@ -141,16 +176,10 @@ class rmh:
         kernel = cls.new_kernel()
 
         def init_fn(position: PyTree):
-            return jax.jit(cls.init, static_argnums=(1,))(position, logprob_fn)
+            return cls.init(position, logprob_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            # `np.ndarray` and `DeviceArray`s are not hashable and thus cannot be used as static arguments.`
-            # Workaround: https://github.com/google/jax/issues/4572#issuecomment-709809897
-            kernel_fn = jax.jit(
-                kernel,
-                static_argnames=["logprob_fn"],
-            )
-            return kernel_fn(
+            return kernel(
                 rng_key,
                 state,
                 logprob_fn,
