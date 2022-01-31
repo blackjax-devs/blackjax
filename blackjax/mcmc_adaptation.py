@@ -13,6 +13,7 @@ def window_adaptation(
     algorithm: Union[hmc, nuts],
     logprob_fn: Callable,
     is_mass_matrix_diagonal: bool = True,
+    num_steps: int = 1000,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.65,
     **parameters,
@@ -21,23 +22,23 @@ def window_adaptation(
     kernel = algorithm.new_kernel()
 
     def kernel_factory(step_size: float, inverse_mass_matrix: Array):
-        return jax.jit(
-            functools.partial(
-                kernel,
-                logprob_fn=logprob_fn,
-                step_size=step_size,
-                inverse_mass_matrix=inverse_mass_matrix,
+        @jax.jit
+        def kernel_fn(rng_key, state):
+            return kernel(
+                rng_key,
+                state,
+                logprob_fn,
+                step_size,
+                inverse_mass_matrix,
                 **parameters,
-            ),
-            static_argnames=["logprob_fn"],
-        )
+            )
+
+        return kernel_fn
 
     def init_fn(position: PyTree):
-        return jax.jit(algorithm.init, static_argnames=["logprob_fn"])(
-            position, logprob_fn
-        )
+        return algorithm.init(position, logprob_fn)
 
-    def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 1000):
+    def run(rng_key: PRNGKey, position: PyTree):
 
         init_state = init_fn(position)
         schedule_fn = window_adaptation_schedule(num_steps)
@@ -53,7 +54,7 @@ def window_adaptation(
             state, warmup_state, info = update(rng_key, state, warmup_state)
             return ((state, warmup_state), (state, warmup_state, info))
 
-        warmup_state = init(rng_key, init_state, initial_step_size)
+        warmup_state = init(init_state, initial_step_size)
         keys = jax.random.split(rng_key, num_steps + 1)[1:]
         last_state, warmup_chain = jax.lax.scan(
             one_step,

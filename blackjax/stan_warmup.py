@@ -11,7 +11,6 @@ from blackjax.adaptation.mass_matrix import (
 from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
     dual_averaging_adaptation,
-    find_reasonable_step_size,
 )
 from blackjax.hmc_base import HMCState
 from blackjax.types import Array, PRNGKey
@@ -90,7 +89,7 @@ def window_adaptation_base(
     slow_init, slow_update, slow_final = slow_window(is_mass_matrix_diagonal)
 
     def init(
-        rng_key: PRNGKey, initial_state: HMCState, initial_step_size: float
+        initial_state: HMCState, initial_step_size: float
     ) -> WindowAdaptationState:
         """Initialize the warmup.
 
@@ -100,19 +99,7 @@ def window_adaptation_base(
 
         """
         mm_state = slow_init(initial_state)
-
-        kernel = lambda step_size: kernel_factory(
-            step_size, mm_state.inverse_mass_matrix
-        )
-        step_size = find_reasonable_step_size(
-            rng_key,
-            kernel,
-            initial_state,
-            initial_step_size,
-            target_acceptance_rate,
-        )
-        da_state = fast_init(step_size)
-
+        da_state = fast_init(initial_step_size)
         warmup_state = WindowAdaptationState(da_state, mm_state, 0)
 
         return warmup_state
