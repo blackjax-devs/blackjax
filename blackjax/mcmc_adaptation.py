@@ -1,4 +1,3 @@
-import functools
 from typing import Callable, Union
 
 import jax
@@ -12,8 +11,8 @@ from blackjax.types import Array, PRNGKey, PyTree
 def window_adaptation(
     algorithm: Union[hmc, nuts],
     logprob_fn: Callable,
-    is_mass_matrix_diagonal: bool = True,
     num_steps: int = 1000,
+    is_mass_matrix_diagonal: bool = True,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.65,
     **parameters,
@@ -22,7 +21,6 @@ def window_adaptation(
     kernel = algorithm.new_kernel()
 
     def kernel_factory(step_size: float, inverse_mass_matrix: Array):
-        @jax.jit
         def kernel_fn(rng_key, state):
             return kernel(
                 rng_key,
@@ -35,30 +33,28 @@ def window_adaptation(
 
         return kernel_fn
 
-    def init_fn(position: PyTree):
-        return algorithm.init(position, logprob_fn)
+    schedule_fn = window_adaptation_schedule(num_steps)
+    init, update, final = window_adaptation_base(
+        kernel_factory,
+        schedule_fn,
+        is_mass_matrix_diagonal,
+        target_acceptance_rate=target_acceptance_rate,
+    )
+
+    @jax.jit
+    def one_step(carry, rng_key):
+        state, warmup_state = carry
+        state, warmup_state, info = update(rng_key, state, warmup_state)
+        return ((state, warmup_state), (state, warmup_state, info))
 
     def run(rng_key: PRNGKey, position: PyTree):
+        init_state = algorithm.init(position, logprob_fn)
+        init_warmup_state = init(init_state, initial_step_size)
 
-        init_state = init_fn(position)
-        schedule_fn = window_adaptation_schedule(num_steps)
-        init, update, final = window_adaptation_base(
-            kernel_factory,
-            schedule_fn,
-            is_mass_matrix_diagonal,
-            target_acceptance_rate=target_acceptance_rate,
-        )
-
-        def one_step(carry, rng_key):
-            state, warmup_state = carry
-            state, warmup_state, info = update(rng_key, state, warmup_state)
-            return ((state, warmup_state), (state, warmup_state, info))
-
-        warmup_state = init(init_state, initial_step_size)
-        keys = jax.random.split(rng_key, num_steps + 1)[1:]
+        keys = jax.random.split(rng_key, num_steps)
         last_state, warmup_chain = jax.lax.scan(
             one_step,
-            (init_state, warmup_state),
+            (init_state, init_warmup_state),
             keys,
         )
         last_chain_state, last_warmup_state = last_state
@@ -66,6 +62,6 @@ def window_adaptation(
         step_size, inverse_mass_matrix = final(last_warmup_state)
         kernel = kernel_factory(step_size, inverse_mass_matrix)
 
-        return last_chain_state, kernel, (step_size, inverse_mass_matrix)
+        return last_chain_state, kernel, warmup_chain
 
     return AdaptationAlgorithm(run)
