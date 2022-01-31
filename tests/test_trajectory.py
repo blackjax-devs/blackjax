@@ -233,7 +233,7 @@ class TrajectoryTest(chex.TestCase):
         )
 
         expand = trajectory.dynamic_multiplicative_expansion(
-            trajectory_integrator, uturn_check_fn, step_size
+            trajectory_integrator, uturn_check_fn
         )
 
         state = integrators.new_integrator_state(
@@ -253,7 +253,7 @@ class TrajectoryTest(chex.TestCase):
         )
 
         expansion_state, (is_diverging, is_turning) = self.variant(expand)(
-            rng_key, initial_expansion_state, energy
+            rng_key, initial_expansion_state, energy, step_size
         )
 
         assert is_diverging == should_diverge
