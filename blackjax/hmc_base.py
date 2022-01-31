@@ -73,7 +73,7 @@ def hmc_init(position: PyTree, logprob_fn: Callable):
 
 def hmc_kernel(
     integrator: Callable = integrators.velocity_verlet,
-    divergence_threshold: float = 100,
+    divergence_threshold: float = 1000,
 ):
     """Build a HMC kernel.
 
