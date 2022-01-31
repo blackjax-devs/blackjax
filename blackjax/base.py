@@ -105,7 +105,7 @@ class SamplingAlgorithm(NamedTuple):
 
 class RunFn(Protocol):
     def __call__(self, rng_key: PRNGKey, position: PyTree):
-        pass
+        """Run"""
 
 
 class AdaptationAlgorithm(NamedTuple):
