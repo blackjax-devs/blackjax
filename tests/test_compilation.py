@@ -53,9 +53,28 @@ class CompilationTest(chex.TestCase):
             rng_key, sample_key = jax.random.split(rng_key)
             state, _ = step(sample_key, state)
 
-    def test_warmup(self):
-        # Log probability function was traced twice as we call it
-        # at Step 0 when building a new trajectory in tree doubling.
+    def test_hmc_warmup(self):
+        @chex.assert_max_traces(n=3)
+        def logprob_fn(x):
+            return jscipy.stats.norm.logpdf(x)
+
+        chex.clear_trace_counter()
+
+        rng_key = jax.random.PRNGKey(0)
+
+        warmup = blackjax.window_adaptation(
+            algorithm=blackjax.hmc,
+            logprob_fn=logprob_fn,
+            target_acceptance_rate=0.8,
+            num_integration_steps=10,
+        )
+        state, kernel, _ = warmup.run(rng_key, 1.0, 1000)
+
+        for _ in range(10):
+            rng_key, sample_key = jax.random.split(rng_key)
+            state, _ = kernel(sample_key, state)
+
+    def test_nuts_warmup(self):
         @chex.assert_max_traces(n=4)
         def logprob_fn(x):
             return jscipy.stats.norm.logpdf(x)
