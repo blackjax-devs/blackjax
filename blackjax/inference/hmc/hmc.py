@@ -9,7 +9,7 @@ import blackjax.inference.hmc.proposal as proposal
 import blackjax.inference.hmc.trajectory as trajectory
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["HMCState", "HMCInfo", "hmc_init", "hmc_kernel"]
+__all__ = ["HMCState", "HMCInfo", "init", "kernel"]
 
 
 class HMCState(NamedTuple):
@@ -63,7 +63,7 @@ class HMCInfo(NamedTuple):
     num_integration_steps: int
 
 
-def hmc_init(position: PyTree, logprob_fn: Callable):
+def init(position: PyTree, logprob_fn: Callable):
     def potential_fn(x):
         return -logprob_fn(x)
 
@@ -71,7 +71,7 @@ def hmc_init(position: PyTree, logprob_fn: Callable):
     return HMCState(position, potential_energy, potential_energy_grad)
 
 
-def hmc_kernel(
+def kernel(
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: float = 1000,
 ):
