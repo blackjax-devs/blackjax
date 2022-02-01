@@ -1,12 +1,13 @@
-"""Public API for the Rosenbluth-Metropolis-Hastings Kernel"""
+"""Public API for Rosenbluth-Metropolis-Hastings kernels."""
 from typing import Callable, NamedTuple, Optional, Tuple
 
+import jax
 import jax.numpy as jnp
-import jax.random
 
-from blackjax.types import PRNGKey, PyTree
+import blackjax.inference.rmh.proposals as proposals
+from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["RMHState", "RMHInfo", "rmh"]
+__all__ = ["RMHState", "RMHInfo", "init", "kernel"]
 
 
 class RMHState(NamedTuple):
@@ -43,7 +44,7 @@ class RMHInfo(NamedTuple):
     proposal: RMHState
 
 
-def new_rmh_state(position: PyTree, logprob_fn: Callable) -> RMHState:
+def init(position: PyTree, logprob_fn: Callable) -> RMHState:
     """Create a chain state from a position.
 
     Parameters:
@@ -56,6 +57,46 @@ def new_rmh_state(position: PyTree, logprob_fn: Callable) -> RMHState:
 
     """
     return RMHState(position, logprob_fn(position))
+
+
+def kernel():
+    def kernel(
+        rng_key: PRNGKey, state: RMHState, logprob_fn: Callable, sigma: Array
+    ) -> Tuple[RMHState, RMHInfo]:
+        """Build a Rosenbluth-Metropolis-Hastings kernel.
+
+        Parameters
+        ----------
+        logprob_fn
+            A function that returns the log-probability at a given position.
+        proposal_generator
+            A function that generates a new proposal.
+        proposal_logprob_fn:
+            For non-symmetric proposals, a function that returns the logprobability
+            to obtain a given proposal knowing the current state. If it is not
+            provided we assume the proposal is symmetric.
+
+        Returns
+        -------
+        A kernel that takes a rng_key and a Pytree that contains the current state
+        of the chain and that returns a new state of the chain along with
+        information about the transition.
+
+        """
+
+        proposal_generator = proposals.normal(sigma)
+        kernel = rmh(logprob_fn, proposal_generator)
+        return kernel(rng_key, state)
+
+    return kernel
+
+
+# -----------------------------------------------------------------------------
+# Rosenbluth-Metropolis-Hastings Step
+#
+# We keep this separate as the basis of a self-standing implementation of the
+# RMH correction step that can be re-used across the library.
+# -----------------------------------------------------------------------------
 
 
 def rmh(

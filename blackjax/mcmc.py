@@ -1,10 +1,10 @@
 from typing import Callable
 
 from blackjax.base import SamplingAlgorithm
-from blackjax.hmc_base import hmc_init, hmc_kernel
+from blackjax.inference.hmc import hmc as hmc_base
 from blackjax.inference.hmc import integrators
-from blackjax.nuts_base import nuts_kernel
-from blackjax.rmh_base import rmh_init, rmh_kernel
+from blackjax.inference.hmc import nuts as nuts_base
+from blackjax.inference.rmh import rmh as rmh_base
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["hmc", "nuts", "rmh"]
@@ -45,8 +45,8 @@ class hmc:
 
     """
 
-    new_kernel = staticmethod(hmc_kernel)
-    init = staticmethod(hmc_init)
+    new_kernel = staticmethod(hmc_base.kernel)
+    init = staticmethod(hmc_base.init)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -110,8 +110,8 @@ class nuts:
 
     """
 
-    new_kernel = staticmethod(nuts_kernel)
-    init = staticmethod(hmc_init)
+    new_kernel = staticmethod(nuts_base.kernel)
+    init = staticmethod(hmc_base.init)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -164,8 +164,8 @@ class rmh:
 
     """
 
-    new_kernel = staticmethod(rmh_kernel)
-    init = staticmethod(rmh_init)
+    new_kernel = staticmethod(rmh_base.kernel)
+    init = staticmethod(rmh_base.init)
 
     def __new__(  # type: ignore[misc]
         cls,

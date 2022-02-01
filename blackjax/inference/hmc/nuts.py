@@ -10,10 +10,10 @@ import blackjax.inference.hmc.metrics as metrics
 import blackjax.inference.hmc.proposal as proposal
 import blackjax.inference.hmc.termination as termination
 import blackjax.inference.hmc.trajectory as trajectory
-from blackjax.hmc_base import HMCState
+from blackjax.inference.hmc.hmc import HMCState
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["NUTSInfo", "nuts_kernel"]
+__all__ = ["NUTSInfo", "kernel"]
 
 
 class NUTSInfo(NamedTuple):
@@ -55,7 +55,7 @@ class NUTSInfo(NamedTuple):
     acceptance_probability: float
 
 
-def nuts_kernel(
+def kernel(
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: int = 1000,
     max_num_doublings: int = 10,
@@ -131,7 +131,6 @@ def nuts_kernel(
         proposal = HMCState(
             proposal.position, proposal.potential_energy, proposal.potential_energy_grad
         )
-
         return proposal, info
 
     return kernel

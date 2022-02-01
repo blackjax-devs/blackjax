@@ -3,9 +3,14 @@ from typing import Callable, Union
 import jax
 
 from blackjax import hmc, nuts
+from blackjax.adaptation.window_adaptation import (
+    window_adaptation_base,
+    window_adaptation_schedule,
+)
 from blackjax.base import AdaptationAlgorithm
-from blackjax.stan_warmup import window_adaptation_base, window_adaptation_schedule
 from blackjax.types import Array, PRNGKey, PyTree
+
+__all__ = ["window_adaptation"]
 
 
 def window_adaptation(

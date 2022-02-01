@@ -12,10 +12,10 @@ from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
     dual_averaging_adaptation,
 )
-from blackjax.hmc_base import HMCState
+from blackjax.inference.hmc.hmc import HMCState
 from blackjax.types import Array, PRNGKey
 
-__all__ = ["window_adaptation_base"]
+__all__ = ["window_adaptation_base", "window_adaptation_schedule"]
 
 
 class WindowAdaptationState(NamedTuple):
