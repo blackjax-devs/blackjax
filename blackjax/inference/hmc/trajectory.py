@@ -209,7 +209,9 @@ def dynamic_progressive_integration(
             # take one step to get the leftmost state of the tree.
             new_trajectory = jax.lax.cond(
                 step == 0,
-                lambda _: Trajectory(new_state, new_state, new_state.momentum, step+1),
+                lambda _: Trajectory(
+                    new_state, new_state, new_state.momentum, step + 1
+                ),
                 lambda _: append_to_trajectory(trajectory, new_state),
                 operand=None,
             )
@@ -237,7 +239,9 @@ def dynamic_progressive_integration(
             return (rng_key, new_integration_state, (is_diverging, has_terminated))
 
         proposal_placeholder, _ = generate_proposal(initial_energy, initial_state)
-        trajectory_placeholder = Trajectory(initial_state, initial_state, initial_state.momentum, 0)
+        trajectory_placeholder = Trajectory(
+            initial_state, initial_state, initial_state.momentum, 0
+        )
         integration_state_placeholder = DynamicIntegrationState(
             0,
             proposal_placeholder,
