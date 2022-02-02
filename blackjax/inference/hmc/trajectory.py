@@ -205,8 +205,20 @@ def dynamic_progressive_integration(
             new_state = integrator(trajectory.rightmost_state, direction * step_size)
             new_proposal, is_diverging = generate_proposal(initial_energy, new_state)
 
-            new_trajectory = append_to_trajectory(trajectory, new_state)
-            sampled_proposal = sample_proposal(proposal_key, proposal, new_proposal)
+            # At step 0, we always accept the proposal, since we
+            # take one step to get the leftmost state of the tree.
+            new_trajectory = jax.lax.cond(
+                step == 0,
+                lambda _: Trajectory(new_state, new_state, new_state.momentum, step+1),
+                lambda _: append_to_trajectory(trajectory, new_state),
+                operand=None,
+            )
+            sampled_proposal = jax.lax.cond(
+                step == 0,
+                lambda _: new_proposal,
+                lambda _: sample_proposal(proposal_key, proposal, new_proposal),
+                operand=None,
+            )
 
             new_termination_state = update_termination_state(
                 termination_state, new_trajectory.momentum_sum, new_state.momentum, step
@@ -224,29 +236,19 @@ def dynamic_progressive_integration(
 
             return (rng_key, new_integration_state, (is_diverging, has_terminated))
 
-        # Take the first step (step 0) that starts the new trajectory with proposal,
-        # so that at for step k > 0 in the while loop we can just append the new
-        # state to the trajectory and generate new proposal.
-        state_step0 = integrator(initial_state, direction * step_size)
-        initial_proposal, is_diverging = generate_proposal(initial_energy, state_step0)
-        trajectory0 = Trajectory(state_step0, state_step0, state_step0.momentum, 1)
-        termination_state0 = update_termination_state(
-            termination_state, trajectory0.momentum_sum, state_step0.momentum, 0
-        )
-        has_terminated = is_criterion_met(
-            termination_state0, trajectory0.momentum_sum, state_step0.momentum
-        )
-        initial_integration_state = DynamicIntegrationState(
-            1,
-            initial_proposal,
-            trajectory0,
-            termination_state0,
+        proposal_placeholder, _ = generate_proposal(initial_energy, initial_state)
+        trajectory_placeholder = Trajectory(initial_state, initial_state, initial_state.momentum, 0)
+        integration_state_placeholder = DynamicIntegrationState(
+            0,
+            proposal_placeholder,
+            trajectory_placeholder,
+            termination_state,
         )
 
         _, integration_state, (is_diverging, has_terminated) = jax.lax.while_loop(
             do_keep_integrating,
             add_one_state,
-            (rng_key, initial_integration_state, (is_diverging, has_terminated)),
+            (rng_key, integration_state_placeholder, (False, False)),
         )
         step, proposal, trajectory, termination_state = integration_state
 

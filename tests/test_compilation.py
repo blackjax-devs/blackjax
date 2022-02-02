@@ -37,7 +37,7 @@ class CompilationTest(chex.TestCase):
     def test_nuts(self):
         # Log probability function was traced twice as we call it
         # at Step 0 when building a new trajectory in tree doubling.
-        @chex.assert_max_traces(n=2)
+        @chex.assert_max_traces(n=1)
         def logprob_fn(x):
             return jscipy.stats.norm.logpdf(x)
 
