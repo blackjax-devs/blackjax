@@ -207,18 +207,16 @@ def dynamic_progressive_integration(
 
             # At step 0, we always accept the proposal, since we
             # take one step to get the leftmost state of the tree.
-            new_trajectory = jax.lax.cond(
+            (new_trajectory, sampled_proposal) = jax.lax.cond(
                 step == 0,
-                lambda _: Trajectory(
-                    new_state, new_state, new_state.momentum, step + 1
+                lambda _: (
+                    Trajectory(new_state, new_state, new_state.momentum, step + 1),
+                    new_proposal,
                 ),
-                lambda _: append_to_trajectory(trajectory, new_state),
-                operand=None,
-            )
-            sampled_proposal = jax.lax.cond(
-                step == 0,
-                lambda _: new_proposal,
-                lambda _: sample_proposal(proposal_key, proposal, new_proposal),
+                lambda _: (
+                    append_to_trajectory(trajectory, new_state),
+                    sample_proposal(proposal_key, proposal, new_proposal),
+                ),
                 operand=None,
             )
 
