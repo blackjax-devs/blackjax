@@ -187,7 +187,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(2351235)
+        self.key = jax.random.PRNGKey(20220203)
 
     def generate_multivariate_target(self, rng=None):
         """Genrate a Multivariate Normal distribution as target."""
