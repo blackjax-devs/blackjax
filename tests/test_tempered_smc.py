@@ -13,7 +13,7 @@ from absl.testing import absltest, parameterized
 import blackjax
 import blackjax.inference.smc.resampling as resampling
 import blackjax.inference.smc.solver as solver
-from blackjax.tempered_smc import TemperedSMCState, adaptive_tempered_smc, tempered_smc
+from blackjax.smc import TemperedSMCState, adaptive_tempered_smc, tempered_smc
 
 
 def inference_loop(kernel, rng_key, initial_state):
@@ -67,7 +67,7 @@ class TemperedSMCTest(chex.TestCase):
         mcmc_kernel_factory = lambda pot: blackjax.hmc(pot, 10e-2, jnp.eye(2), 50).step
 
         for target_ess in [0.5, 0.75]:
-            tempering_kernel = adaptive_tempered_smc(
+            tempering = adaptive_tempered_smc(
                 prior,
                 conditioned_logprob,
                 mcmc_kernel_factory,
@@ -78,11 +78,11 @@ class TemperedSMCTest(chex.TestCase):
                 use_log,
                 5,
             )
-            tempered_smc_state_init = TemperedSMCState(smc_state_init, 0.0)
+            init_state = tempering.init(smc_state_init)
 
             n_iter, result, log_likelihood = self.variant(
-                functools.partial(inference_loop, tempering_kernel)
-            )(self.key, tempered_smc_state_init)
+                functools.partial(inference_loop, tempering.step)
+            )(self.key, init_state)
             iterates.append(n_iter)
             results.append(result)
 
@@ -107,27 +107,25 @@ class TemperedSMCTest(chex.TestCase):
         lambda_schedule = np.logspace(-5, 0, n_schedule)
         mcmc_kernel_factory = lambda pot: blackjax.hmc(pot, 10e-2, jnp.eye(2), 50).step
 
-        tempering_kernel = self.variant(
-            tempered_smc(
-                prior,
-                conditionned_logprob,
-                mcmc_kernel_factory,
-                blackjax.hmc.init,
-                resampling.systematic,
-                10,
-            )
+        tempering = tempered_smc(
+            prior,
+            conditionned_logprob,
+            mcmc_kernel_factory,
+            blackjax.hmc.init,
+            resampling.systematic,
+            10,
         )
-        tempered_smc_state_init = TemperedSMCState(smc_state_init, 0.0)
+        init_state = tempering.init(smc_state_init)
+
+        kernel = self.variant(tempering.step)
 
         def body_fn(carry, lmbda):
             rng_key, state = carry
             _, rng_key = jax.random.split(rng_key)
-            new_state, info = tempering_kernel(rng_key, state, lmbda)
+            new_state, info = kernel(rng_key, state, lmbda)
             return (rng_key, new_state), (new_state, info)
 
-        (_, result), _ = jax.lax.scan(
-            body_fn, (self.key, tempered_smc_state_init), lambda_schedule
-        )
+        (_, result), _ = jax.lax.scan(body_fn, (self.key, init_state), lambda_schedule)
         np.testing.assert_allclose(np.mean(result.particles[0]), 1.0, rtol=1e-1)
         np.testing.assert_allclose(np.mean(result.particles[1]), 3.0, rtol=1e-1)
 
@@ -166,7 +164,7 @@ class NormalizingConstantTest(chex.TestCase):
 
         mcmc_kernel_factory = lambda pot: blackjax.hmc(pot, 1e-2, jnp.eye(dim), 50).step
 
-        tempering_kernel = adaptive_tempered_smc(
+        tempering = adaptive_tempered_smc(
             prior,
             conditionned_logprob,
             mcmc_kernel_factory,
@@ -177,9 +175,9 @@ class NormalizingConstantTest(chex.TestCase):
             True,
             10,
         )
-        tempered_smc_state_init = TemperedSMCState(x_init, 0.0)
+        tempered_smc_state_init = tempering.init(x_init)
         n_iter, result, log_likelihood = self.variant(
-            functools.partial(inference_loop, tempering_kernel)
+            functools.partial(inference_loop, tempering.step)
         )(rng_key, tempered_smc_state_init)
 
         expected_log_likelihood = -0.5 * np.linalg.slogdet(np.eye(dim) + cov)[
