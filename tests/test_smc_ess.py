@@ -8,8 +8,8 @@ import numpy as np
 from absl.testing import absltest, parameterized
 from jax.scipy.stats.norm import logpdf
 
-import blackjax.inference.smc.ess as ess
-import blackjax.inference.smc.solver as solver
+import blackjax.smc.ess as ess
+import blackjax.smc.solver as solver
 
 
 class SMCEffectiveSampleSizeTest(chex.TestCase):

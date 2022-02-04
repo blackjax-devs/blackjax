@@ -6,7 +6,7 @@ import jax
 import numpy as np
 from absl.testing import absltest, parameterized
 
-import blackjax.inference.smc.resampling as resampling
+import blackjax.smc.resampling as resampling
 
 resampling_methods = {
     "systematic": resampling.systematic,

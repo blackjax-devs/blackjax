@@ -26,7 +26,7 @@ class SMCInfo(NamedTuple):
     log_likelihood_increment: float
 
 
-def smc(
+def kernel(
     mcmc_kernel_factory: Callable,
     mcmc_state_generator: Callable,
     resampling_fn: Callable,
@@ -67,7 +67,7 @@ def smc(
 
     """
 
-    def kernel(
+    def one_step(
         rng_key: jnp.ndarray,
         particles: PyTree,
         logprob_fn: Callable,
@@ -125,7 +125,7 @@ def smc(
         )
         return particles, info
 
-    return kernel
+    return one_step
 
 
 def _normalize(log_weights):

@@ -3,8 +3,8 @@ import chex
 import jax.numpy as jnp
 from absl.testing import absltest, parameterized
 
-from blackjax.inference.hmc.metrics import gaussian_euclidean
-from blackjax.inference.hmc.termination import (
+from blackjax.mcmc.metrics import gaussian_euclidean
+from blackjax.mcmc.termination import (
     IterativeUTurnState,
     iterative_uturn_numpyro,
 )

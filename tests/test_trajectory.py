@@ -7,11 +7,11 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
 
-import blackjax.inference.hmc.integrators as integrators
-import blackjax.inference.hmc.metrics as metrics
-import blackjax.inference.hmc.proposal as proposal
-import blackjax.inference.hmc.termination as termination
-import blackjax.inference.hmc.trajectory as trajectory
+import blackjax.mcmc.integrators as integrators
+import blackjax.mcmc.metrics as metrics
+import blackjax.mcmc.proposal as proposal
+import blackjax.mcmc.termination as termination
+import blackjax.mcmc.trajectory as trajectory
 
 divergence_threshold = 1000
 

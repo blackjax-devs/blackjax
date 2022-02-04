@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest
 
-import blackjax
+import blackjax.mcmc.hmc as hmc
 from blackjax.adaptation.step_size import find_reasonable_step_size
 
 
@@ -20,11 +20,11 @@ class StepSizeTest(chex.TestCase):
         run_key0, run_key1 = jax.random.split(rng_key, 2)
 
         init_position = jnp.array([3.0])
-        reference_state = blackjax.hmc.init(init_position, logprob_fn)
+        reference_state = hmc.init(init_position, logprob_fn)
 
         inv_mass_matrix = jnp.array([1.0])
 
-        kernel = blackjax.hmc.new_kernel()
+        kernel = hmc.kernel()
 
         def kernel_generator(step_size: float):
             return functools.partial(

@@ -5,7 +5,7 @@ import jax
 import jax.numpy as jnp
 from absl.testing import absltest, parameterized
 
-import blackjax.inference.hmc.integrators as integrators
+import blackjax.mcmc.integrators as integrators
 
 
 def HarmonicOscillator(inv_mass_matrix, k=1.0, m=1.0):

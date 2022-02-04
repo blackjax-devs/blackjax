@@ -4,7 +4,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from blackjax.inference.hmc.integrators import IntegratorState
+from blackjax.mcmc.integrators import IntegratorState
 
 
 class Proposal(NamedTuple):

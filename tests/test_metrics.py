@@ -4,7 +4,7 @@ import numpy as np
 from absl.testing import absltest, parameterized
 from jax import random
 
-from blackjax.inference.hmc import metrics
+from blackjax.mcmc import metrics
 
 
 class GaussianEuclideanMetricsTest(chex.TestCase):

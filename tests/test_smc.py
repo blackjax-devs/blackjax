@@ -9,8 +9,8 @@ import numpy as np
 from absl.testing import absltest, parameterized
 
 import blackjax
-import blackjax.inference.smc.resampling as resampling
-from blackjax.inference.smc.base import _normalize, smc
+import blackjax.smc.resampling as resampling
+import blackjax.smc.base as base
 
 
 def kernel_logprob_fn(position):
@@ -39,7 +39,9 @@ class SMCTest(chex.TestCase):
 
         specialized_log_weights_fn = lambda tree: log_weights_fn(tree, 1.0)
 
-        kernel = smc(mcmc_factory, blackjax.hmc.init, resampling.systematic, 1000)
+        kernel = base.kernel(
+            mcmc_factory, blackjax.mcmc.hmc.init, resampling.systematic, 1000
+        )
 
         # Don't use exactly the invariant distribution for the MCMC kernel
         init_particles = 0.25 + np.random.randn(N)
@@ -65,7 +67,7 @@ class SMCTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_normalize(self):
         logw = jax.random.normal(self.key, shape=[1234])
-        w, loglikelihood_increment = self.variant(_normalize)(logw)
+        w, loglikelihood_increment = self.variant(base._normalize)(logw)
 
         np.testing.assert_allclose(np.sum(w), 1.0, rtol=1e-6)
         np.testing.assert_allclose(

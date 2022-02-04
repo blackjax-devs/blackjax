@@ -12,7 +12,7 @@ from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
     dual_averaging_adaptation,
 )
-from blackjax.inference.hmc.hmc import HMCState
+from blackjax.mcmc.hmc import HMCState
 from blackjax.types import Array, PRNGKey
 
 __all__ = ["window_adaptation_base", "window_adaptation_schedule"]
@@ -24,7 +24,7 @@ class WindowAdaptationState(NamedTuple):
     step: int
 
 
-def window_adaptation_base(
+def base(
     kernel_factory: Callable,
     schedule_fn: Callable,
     is_mass_matrix_diagonal: bool,
@@ -280,7 +280,7 @@ def slow_window(
     return init, update, final
 
 
-def window_adaptation_schedule(
+def schedule(
     num_steps: int,
     initial_buffer_size: int = 75,
     final_buffer_size: int = 50,
