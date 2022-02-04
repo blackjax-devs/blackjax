@@ -11,9 +11,9 @@ import numpy as np
 from absl.testing import absltest, parameterized
 
 import blackjax
-import blackjax.inference.smc.resampling as resampling
-import blackjax.inference.smc.solver as solver
-from blackjax.smc import TemperedSMCState, adaptive_tempered_smc, tempered_smc
+import blackjax.smc.resampling as resampling
+import blackjax.smc.solver as solver
+from blackjax import tempered_smc, adaptive_tempered_smc
 
 
 def inference_loop(kernel, rng_key, initial_state):
@@ -71,7 +71,7 @@ class TemperedSMCTest(chex.TestCase):
                 prior,
                 conditioned_logprob,
                 mcmc_kernel_factory,
-                blackjax.hmc.init,
+                blackjax.mcmc.hmc.init,
                 resampling.systematic,
                 target_ess,
                 solver.dichotomy,
@@ -111,7 +111,7 @@ class TemperedSMCTest(chex.TestCase):
             prior,
             conditionned_logprob,
             mcmc_kernel_factory,
-            blackjax.hmc.init,
+            blackjax.mcmc.hmc.init,
             resampling.systematic,
             10,
         )
@@ -168,7 +168,7 @@ class NormalizingConstantTest(chex.TestCase):
             prior,
             conditionned_logprob,
             mcmc_kernel_factory,
-            blackjax.hmc.init,
+            blackjax.mcmc.hmc.init,
             resampling.systematic,
             0.9,
             solver.dichotomy,

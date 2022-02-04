@@ -4,7 +4,7 @@ from typing import Callable, NamedTuple, Optional, Tuple
 import jax
 import jax.numpy as jnp
 
-import blackjax.inference.rmh.proposals as proposals
+import blackjax.mcmc.random_walk as random_walk
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["RMHState", "RMHInfo", "init", "kernel"]
@@ -60,7 +60,7 @@ def init(position: PyTree, logprob_fn: Callable) -> RMHState:
 
 
 def kernel():
-    def kernel(
+    def one_step(
         rng_key: PRNGKey, state: RMHState, logprob_fn: Callable, sigma: Array
     ) -> Tuple[RMHState, RMHInfo]:
         """Build a Rosenbluth-Metropolis-Hastings kernel.
@@ -84,11 +84,11 @@ def kernel():
 
         """
 
-        proposal_generator = proposals.normal(sigma)
+        proposal_generator = random_walk.normal(sigma)
         kernel = rmh(logprob_fn, proposal_generator)
         return kernel(rng_key, state)
 
-    return kernel
+    return one_step
 
 
 # -----------------------------------------------------------------------------
@@ -141,20 +141,23 @@ def rmh(
             )
 
     def kernel(rng_key: PRNGKey, state: RMHState) -> Tuple[RMHState, RMHInfo]:
-        """Moves the chain by one step using the Rosenbluth Metropolis Hastings algorithm.
+        """Move the chain by one step using the Rosenbluth Metropolis Hastings
+        algorithm.
 
         We temporarilly assume that the proposal distribution is symmetric.
 
         Parameters
         ----------
         rng_key:
-           The pseudo-random number generator key used to generate random numbers.
+           The pseudo-random number generator key used to generate random
+           numbers.
         state:
             The current state of the chain.
 
         Returns
         -------
-        The next state of the chain and additional information about the current step.
+        The next state of the chain and additional information about the current
+        step.
         """
         key_proposal, key_accept = jax.random.split(rng_key, 2)
 

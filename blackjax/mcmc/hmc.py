@@ -3,10 +3,10 @@ from typing import Callable, NamedTuple, Tuple
 
 import jax
 
-import blackjax.inference.hmc.integrators as integrators
-import blackjax.inference.hmc.metrics as metrics
-import blackjax.inference.hmc.proposal as proposal
-import blackjax.inference.hmc.trajectory as trajectory
+import blackjax.mcmc.integrators as integrators
+import blackjax.mcmc.metrics as metrics
+import blackjax.mcmc.proposal as proposal
+import blackjax.mcmc.trajectory as trajectory
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["HMCState", "HMCInfo", "init", "kernel"]
@@ -92,7 +92,7 @@ def kernel(
 
     """
 
-    def kernel(
+    def one_step(
         rng_key: PRNGKey,
         state: HMCState,
         logprob_fn: Callable,
@@ -132,7 +132,7 @@ def kernel(
 
         return proposal, info
 
-    return kernel
+    return one_step
 
 
 def hmc_proposal(

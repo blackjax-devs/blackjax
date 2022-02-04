@@ -5,15 +5,18 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-import blackjax.inference.hmc.integrators as integrators
-import blackjax.inference.hmc.metrics as metrics
-import blackjax.inference.hmc.proposal as proposal
-import blackjax.inference.hmc.termination as termination
-import blackjax.inference.hmc.trajectory as trajectory
-from blackjax.inference.hmc.hmc import HMCState
+import blackjax.mcmc.integrators as integrators
+import blackjax.mcmc.metrics as metrics
+import blackjax.mcmc.proposal as proposal
+import blackjax.mcmc.termination as termination
+import blackjax.mcmc.trajectory as trajectory
+import blackjax.mcmc.hmc as hmc
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["NUTSInfo", "kernel"]
+__all__ = ["NUTSInfo", "init", "kernel"]
+
+
+init = hmc.init
 
 
 class NUTSInfo(NamedTuple):
@@ -28,7 +31,8 @@ class NUTSInfo(NamedTuple):
         Whether the difference in energy between the original and the new state
         exceeded the divergence threshold.
     is_turning
-        Whether the sampling returned because the trajectory started turning back on itself.
+        Whether the sampling returned because the trajectory started turning
+        back on itself.
     energy:
         Energy of the transition.
     trajectory_leftmost_state
@@ -38,8 +42,8 @@ class NUTSInfo(NamedTuple):
     num_trajectory_expansions
         Number of subtrajectory samples that were taken.
     integration_steps
-        Number of integration steps that were taken. This is also the number of states
-        in the full trajectory.
+        Number of integration steps that were taken. This is also the number of
+        states in the full trajectory.
     acceptance_probability
         average acceptance probabilty across entire trajectory
     """
@@ -95,13 +99,13 @@ def kernel(
 
     """
 
-    def kernel(
+    def one_step(
         rng_key: PRNGKey,
-        state: HMCState,
+        state: hmc.HMCState,
         logprob_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
-    ) -> Tuple[HMCState, NUTSInfo]:
+    ) -> Tuple[hmc.HMCState, NUTSInfo]:
         def potential_fn(x):
             return -logprob_fn(x)
 
@@ -128,12 +132,12 @@ def kernel(
             position, momentum, potential_energy, potential_energy_grad
         )
         proposal, info = proposal_generator(key_integrator, integrator_state, step_size)
-        proposal = HMCState(
+        proposal = hmc.HMCState(
             proposal.position, proposal.potential_energy, proposal.potential_energy_grad
         )
         return proposal, info
 
-    return kernel
+    return one_step
 
 
 def iterative_nuts_proposal(
