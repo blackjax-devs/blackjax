@@ -210,7 +210,7 @@ def dynamic_progressive_integration(
             (new_trajectory, sampled_proposal) = jax.lax.cond(
                 step == 0,
                 lambda _: (
-                    Trajectory(new_state, new_state, new_state.momentum, step + 1),
+                    Trajectory(new_state, new_state, new_state.momentum,1),
                     new_proposal,
                 ),
                 lambda _: (
