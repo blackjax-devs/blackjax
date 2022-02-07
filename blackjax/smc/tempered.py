@@ -1,8 +1,7 @@
-from typing import NamedTuple, Callable, Tuple
+from typing import Callable, NamedTuple, Tuple
 
 import blackjax.smc as smc
-from blackjax.types import PyTree, PRNGKey
-
+from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["TemperedSMCState", "init", "kernel"]
 

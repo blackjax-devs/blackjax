@@ -13,7 +13,8 @@ from absl.testing import absltest, parameterized
 import blackjax
 import blackjax.smc.resampling as resampling
 import blackjax.smc.solver as solver
-from blackjax import tempered_smc, adaptive_tempered_smc
+from blackjax import adaptive_tempered_smc, tempered_smc
+from blackjax.smc.tempered import TemperedSMCState
 
 
 def inference_loop(kernel, rng_key, initial_state):

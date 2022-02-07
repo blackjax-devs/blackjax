@@ -9,8 +9,8 @@ import numpy as np
 from absl.testing import absltest, parameterized
 
 import blackjax
-import blackjax.smc.resampling as resampling
 import blackjax.smc.base as base
+import blackjax.smc.resampling as resampling
 
 
 def kernel_logprob_fn(position):

@@ -1,9 +1,8 @@
 """Make sure that the log probability function is only compiled/traced once.
 
-These are very important regression tests! JIT-compilation can dominate the
-total sampling time in some complex situations, and we need to make sure that
-internal changes do not trigger more compilations than is necessary. They also
-document the state of the library.
+These are very important regression tests! JIT-compilation dominates the
+total sampling time in many situations, and we need to make sure that
+internal changes do not trigger more compilations than is necessary.
 
 """
 import chex
@@ -46,8 +45,13 @@ class CompilationTest(chex.TestCase):
             state, _ = step(sample_key, state)
 
     def test_nuts(self):
-        # Log probability function was traced twice as we call it
-        # at Step 0 when building a new trajectory in tree doubling.
+        """Count the number of times the logprob is compiled when using NUTS.
+
+        The logprob is compiled twice: when initializing the state and when
+        compiling the kernel.
+
+        """
+
         @chex.assert_max_traces(n=2)
         def logprob_fn(x):
             return jscipy.stats.norm.logpdf(x)
@@ -67,10 +71,9 @@ class CompilationTest(chex.TestCase):
             state, _ = step(sample_key, state)
 
     def test_hmc_warmup(self):
-        """Counts the number of times the logprob is compiled when using
-        adaptation.
-
-        The adaptation only adds one extra compilation for HMC.
+        """Count the number of times the logprob is compiled when using window
+        adaptation to adapt the value of the step size and the inverse mass
+        matrix for the HMC algorithm.
 
         """
 
@@ -97,6 +100,12 @@ class CompilationTest(chex.TestCase):
             state, _ = kernel(sample_key, state)
 
     def test_nuts_warmup(self):
+        """Count the number of times the logprob is compiled when using window
+        adaptation to adapt the value of the step size and the inverse mass
+        matrix for the NUTS algorithm.
+
+        """
+
         @chex.assert_max_traces(n=3)
         def logprob_fn(x):
             return jscipy.stats.norm.logpdf(x)

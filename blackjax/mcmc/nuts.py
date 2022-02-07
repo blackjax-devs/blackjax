@@ -5,12 +5,12 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+import blackjax.mcmc.hmc as hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.termination as termination
 import blackjax.mcmc.trajectory as trajectory
-import blackjax.mcmc.hmc as hmc
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["NUTSInfo", "init", "kernel"]
@@ -106,6 +106,11 @@ def kernel(
         step_size: float,
         inverse_mass_matrix: Array,
     ) -> Tuple[hmc.HMCState, NUTSInfo]:
+        """Generate a new sample with the NUTS kernel.
+
+        TODO expand the docstring.
+        """
+
         def potential_fn(x):
             return -logprob_fn(x)
 

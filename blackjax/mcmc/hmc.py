@@ -81,7 +81,7 @@ def kernel(
     ----------
     integrator
         The symplectic integrator to use to integrate the Hamiltonian dynamics.
-    divergence
+    divergence_threshold
         Value of the difference in energy above which we consider that the transition is divergent.
 
     Returns
@@ -100,7 +100,10 @@ def kernel(
         inverse_mass_matrix: Array,
         num_integration_steps: int,
     ) -> Tuple[HMCState, HMCInfo]:
-        """HMC kernel"""
+        """Generate a new sample with the HMC kernel.
+
+        TODO expand the docstring.
+        """
 
         def potential_fn(x):
             return -logprob_fn(x)
