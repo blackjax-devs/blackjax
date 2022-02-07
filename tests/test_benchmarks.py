@@ -10,6 +10,7 @@ import functools
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
+import pytest
 
 import blackjax
 
@@ -60,6 +61,7 @@ def run_regression(algorithm, **parameters):
     return states
 
 
+@pytest.mark.benchmark
 def test_regression_nuts(benchmark):
     benchmark.extra_info["algorithm"] = "NUTS"
     benchmark.extra_info["num_warmup_steps"] = "1000"
@@ -67,6 +69,7 @@ def test_regression_nuts(benchmark):
     benchmark(run_regression, blackjax.nuts)
 
 
+@pytest.mark.benchmark
 def test_regression_hmc(benchmark):
     benchmark.extra_info["algorithm"] = "HMC"
     benchmark.extra_info["num_integration_steps"] = "10"
