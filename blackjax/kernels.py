@@ -2,10 +2,10 @@ from typing import Callable, Union
 
 import jax
 
-from blackjax.base import SamplingAlgorithm, AdaptationAlgorithm
 import blackjax.adaptation as adaptation
 import blackjax.mcmc as mcmc
 import blackjax.smc as smc
+from blackjax.base import AdaptationAlgorithm, SamplingAlgorithm
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = [
@@ -58,7 +58,7 @@ class tempered_smc:
                 lmbda,
             )
 
-        return SamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
 
 class adaptive_tempered_smc:
@@ -144,8 +144,8 @@ class hmc:
 
     """
 
-    kernel = staticmethod(mcmc.hmc.kernel)
     init = staticmethod(mcmc.hmc.init)
+    kernel = staticmethod(mcmc.hmc.kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -209,8 +209,8 @@ class nuts:
 
     """
 
-    kernel = staticmethod(mcmc.nuts.kernel)
     init = staticmethod(mcmc.hmc.init)
+    kernel = staticmethod(mcmc.nuts.kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -301,19 +301,21 @@ def window_adaptation(
 
         return kernel_fn
 
-    schedule_fn = adaptation.window_adaptation.schedule(num_steps)
+    schedule = adaptation.window_adaptation.schedule(num_steps)
     init, update, final = adaptation.window_adaptation.base(
         kernel_factory,
-        schedule_fn,
         is_mass_matrix_diagonal,
         target_acceptance_rate=target_acceptance_rate,
     )
 
     @jax.jit
-    def one_step(carry, rng_key):
-        state, warmup_state = carry
-        state, warmup_state, info = update(rng_key, state, warmup_state)
-        return ((state, warmup_state), (state, warmup_state, info))
+    def one_step(carry, xs):
+        rng_key, adaptation_stage = xs
+        state, adaptation_state = carry
+        state, adaptation_state, info = update(
+            rng_key, state, adaptation_state, adaptation_stage
+        )
+        return ((state, adaptation_state), (state, adaptation_state, info))
 
     def run(rng_key: PRNGKey, position: PyTree):
         init_state = algorithm.init(position, logprob_fn)
@@ -323,7 +325,7 @@ def window_adaptation(
         last_state, warmup_chain = jax.lax.scan(
             one_step,
             (init_state, init_warmup_state),
-            keys,
+            (keys, schedule),
         )
         last_chain_state, last_warmup_state = last_state
 
@@ -358,8 +360,8 @@ class rmh:
 
     """
 
-    kernel = staticmethod(mcmc.rmh.kernel)
     init = staticmethod(mcmc.rmh.init)
+    kernel = staticmethod(mcmc.rmh.kernel)
 
     def __new__(  # type: ignore[misc]
         cls,

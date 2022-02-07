@@ -1,5 +1,3 @@
-from . import hmc
-from . import nuts
-from . import rmh
+from . import hmc, nuts, rmh
 
 __all__ = ["hmc", "nuts", "rmh"]

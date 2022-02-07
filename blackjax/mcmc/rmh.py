@@ -60,29 +60,20 @@ def init(position: PyTree, logprob_fn: Callable) -> RMHState:
 
 
 def kernel():
+    """Build a Random Walk Rosenbluth-Metropolis-Hastings kernel with a gaussian
+    proposal distribution.
+
+    Returns
+    -------
+    A kernel that takes a rng_key and a Pytree that contains the current state
+    of the chain and that returns a new state of the chain along with
+    information about the transition.
+
+    """
+
     def one_step(
         rng_key: PRNGKey, state: RMHState, logprob_fn: Callable, sigma: Array
     ) -> Tuple[RMHState, RMHInfo]:
-        """Build a Rosenbluth-Metropolis-Hastings kernel.
-
-        Parameters
-        ----------
-        logprob_fn
-            A function that returns the log-probability at a given position.
-        proposal_generator
-            A function that generates a new proposal.
-        proposal_logprob_fn:
-            For non-symmetric proposals, a function that returns the logprobability
-            to obtain a given proposal knowing the current state. If it is not
-            provided we assume the proposal is symmetric.
-
-        Returns
-        -------
-        A kernel that takes a rng_key and a Pytree that contains the current state
-        of the chain and that returns a new state of the chain along with
-        information about the transition.
-
-        """
 
         proposal_generator = random_walk.normal(sigma)
         kernel = rmh(logprob_fn, proposal_generator)
@@ -96,6 +87,8 @@ def kernel():
 #
 # We keep this separate as the basis of a self-standing implementation of the
 # RMH correction step that can be re-used across the library.
+#
+# (TODO) Separate the RMH step from the proposal.
 # -----------------------------------------------------------------------------
 
 

@@ -3,14 +3,13 @@ from typing import Callable, Tuple
 import jax
 import jax.numpy as jnp
 
-import blackjax.smc.solver as solver
-import blackjax.smc.tempered as tempered
 import blackjax.smc.base as base
 import blackjax.smc.ess as ess
+import blackjax.smc.solver as solver
+import blackjax.smc.tempered as tempered
 from blackjax.types import PRNGKey
 
-
-__all__ = ["init", "kernel"]
+__all__ = ["kernel"]
 
 
 def kernel(

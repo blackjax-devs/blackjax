@@ -4,10 +4,7 @@ import jax.numpy as jnp
 from absl.testing import absltest, parameterized
 
 from blackjax.mcmc.metrics import gaussian_euclidean
-from blackjax.mcmc.termination import (
-    IterativeUTurnState,
-    iterative_uturn_numpyro,
-)
+from blackjax.mcmc.termination import IterativeUTurnState, iterative_uturn_numpyro
 
 
 class UTurnTest(chex.TestCase):

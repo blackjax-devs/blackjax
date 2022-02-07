@@ -1,5 +1,5 @@
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Any, Callable, NamedTuple, Tuple
+from typing import Any, Callable, List, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -15,18 +15,16 @@ from blackjax.adaptation.step_size import (
 from blackjax.mcmc.hmc import HMCState
 from blackjax.types import Array, PRNGKey
 
-__all__ = ["window_adaptation_base", "window_adaptation_schedule"]
+__all__ = ["base", "schedule"]
 
 
 class WindowAdaptationState(NamedTuple):
     da_state: DualAveragingAdaptationState
     mm_state: MassMatrixAdaptationState
-    step: int
 
 
 def base(
     kernel_factory: Callable,
-    schedule_fn: Callable,
     is_mass_matrix_diagonal: bool,
     target_acceptance_rate: float = 0.65,
 ):
@@ -69,7 +67,7 @@ def base(
         mass matrix.
     schedule_fn
         A function which returns the current window and whether it is the last
-        step in the window given a sep number.
+        step in the window given a step number.
     is_mass_matrix_diagonal
         Create and adapt a diagonal mass matrix if True, a dense matrix otherwise.
     target_acceptance_rate:
@@ -100,7 +98,7 @@ def base(
         """
         mm_state = slow_init(initial_state)
         da_state = fast_init(initial_step_size)
-        warmup_state = WindowAdaptationState(da_state, mm_state, 0)
+        warmup_state = WindowAdaptationState(da_state, mm_state)
 
         return warmup_state
 
@@ -108,6 +106,7 @@ def base(
         rng_key: PRNGKey,
         chain_state: HMCState,
         adaptation_state: WindowAdaptationState,
+        adaptation_stage: Tuple,
     ) -> Tuple[HMCState, WindowAdaptationState, NamedTuple]:
         """Move the warmup by one step.
 
@@ -142,7 +141,7 @@ def base(
 
         chain_state, chain_info = kernel(rng_key, chain_state)
 
-        stage, is_middle_window_end = schedule_fn(adaptation_state.step)
+        stage, is_middle_window_end = adaptation_stage
 
         warmup_state = jax.lax.switch(
             stage,
@@ -198,9 +197,7 @@ def fast_window(
         rng_key, state, info, warmup_state = fw_state
 
         new_da_state = da_update(warmup_state.da_state, info)
-        new_warmup_state = WindowAdaptationState(
-            new_da_state, warmup_state.mm_state, warmup_state.step + 1
-        )
+        new_warmup_state = WindowAdaptationState(new_da_state, warmup_state.mm_state)
 
         return new_warmup_state
 
@@ -256,9 +253,7 @@ def slow_window(
 
         new_da_state = da_update(warmup_state.da_state, info)
         new_mm_state = mm_update(warmup_state.mm_state, state.position)
-        new_warmup_state = WindowAdaptationState(
-            new_da_state, new_mm_state, warmup_state.step + 1
-        )
+        new_warmup_state = WindowAdaptationState(new_da_state, new_mm_state)
 
         return new_warmup_state
 
@@ -271,9 +266,7 @@ def slow_window(
         """
         new_mm_state = mm_final(warmup_state.mm_state)
         new_da_state = da_init(da_final(warmup_state.da_state))
-        new_warmup_state = WindowAdaptationState(
-            new_da_state, new_mm_state, warmup_state.step
-        )
+        new_warmup_state = WindowAdaptationState(new_da_state, new_mm_state)
 
         return new_warmup_state
 
@@ -285,7 +278,7 @@ def schedule(
     initial_buffer_size: int = 75,
     final_buffer_size: int = 50,
     first_window_size: int = 25,
-) -> Callable[[int], Tuple[int, bool]]:
+) -> List[Tuple[int, bool]]:
     """Return the schedule for Stan's warmup.
 
     The schedule below is intended to be as close as possible to Stan's _[1].
@@ -382,15 +375,4 @@ def schedule(
 
     schedule = jnp.array(schedule)
 
-    def schedule_fn(step):
-        """Return the current window and whether this step is the last in the window.
-
-        Passed the supposed last step we stay in the first window.
-
-        """
-        try:
-            return schedule[step]
-        except IndexError:
-            return (0, False)
-
-    return schedule_fn
+    return schedule
