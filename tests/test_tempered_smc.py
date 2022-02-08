@@ -55,9 +55,9 @@ class TemperedSMCTest(chex.TestCase):
         y_data = 3 * x_data + np.random.normal(size=x_data.shape)
         observations = {"x": x_data, "preds": y_data}
 
+        prior = lambda x: stats.expon.logpdf(x[0], 1, 1) + stats.norm.logpdf(x[1])
         conditioned_logprob = lambda x: self.logprob_fn(*x, **observations)
 
-        prior = lambda x: stats.expon.logpdf(x[0], 1, 1) + stats.norm.logpdf(x[1])
         scale_init = 1 + np.random.exponential(1, N)
         coeffs_init = 3 + 2 * np.random.randn(N)
         smc_state_init = [scale_init, coeffs_init]
@@ -65,14 +65,18 @@ class TemperedSMCTest(chex.TestCase):
         iterates = []
         results = []  # type: List[TemperedSMCState]
 
-        mcmc_kernel_factory = lambda pot: blackjax.hmc(pot, 10e-2, jnp.eye(2), 50).step
+        hmc_parameters = {
+            "step_size": 10e-2,
+            "inverse_mass_matrix": jnp.eye(2),
+            "num_integration_steps": 50,
+        }
 
         for target_ess in [0.5, 0.75]:
             tempering = adaptive_tempered_smc(
                 prior,
                 conditioned_logprob,
-                mcmc_kernel_factory,
-                blackjax.mcmc.hmc.init,
+                blackjax.hmc,
+                hmc_parameters,
                 resampling.systematic,
                 target_ess,
                 solver.dichotomy,
@@ -99,20 +103,25 @@ class TemperedSMCTest(chex.TestCase):
         y_data = 3 * x_data + np.random.normal(size=x_data.shape)
         observations = {"x": x_data, "preds": y_data}
 
-        conditionned_logprob = lambda x: self.logprob_fn(*x, **observations)
         prior = lambda x: stats.norm.logpdf(jnp.log(x[0])) + stats.norm.logpdf(x[1])
+        conditionned_logprob = lambda x: self.logprob_fn(*x, **observations)
+
         scale_init = np.exp(np.random.randn(N))
         coeffs_init = np.random.randn(N)
         smc_state_init = [scale_init, coeffs_init]
 
         lambda_schedule = np.logspace(-5, 0, n_schedule)
-        mcmc_kernel_factory = lambda pot: blackjax.hmc(pot, 10e-2, jnp.eye(2), 50).step
+        hmc_parameters = {
+            "step_size": 10e-2,
+            "inverse_mass_matrix": jnp.eye(2),
+            "num_integration_steps": 50,
+        }
 
         tempering = tempered_smc(
             prior,
             conditionned_logprob,
-            mcmc_kernel_factory,
-            blackjax.mcmc.hmc.init,
+            blackjax.hmc,
+            hmc_parameters,
             resampling.systematic,
             10,
         )
@@ -163,13 +172,17 @@ class NormalizingConstantTest(chex.TestCase):
         rng_key, init_key = jax.random.split(rng_key, 2)
         x_init = jax.random.normal(init_key, shape=(N, dim))
 
-        mcmc_kernel_factory = lambda pot: blackjax.hmc(pot, 1e-2, jnp.eye(dim), 50).step
+        hmc_parameters = {
+            "step_size": 10e-2,
+            "inverse_mass_matrix": jnp.eye(dim),
+            "num_integration_steps": 50,
+        }
 
         tempering = adaptive_tempered_smc(
             prior,
             conditionned_logprob,
-            mcmc_kernel_factory,
-            blackjax.mcmc.hmc.init,
+            blackjax.hmc,
+            hmc_parameters,
             resampling.systematic,
             0.9,
             solver.dichotomy,

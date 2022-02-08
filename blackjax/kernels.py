@@ -1,4 +1,4 @@
-from typing import Callable, Union
+from typing import Callable, Dict, Union
 
 import jax
 
@@ -33,20 +33,22 @@ class adaptive_tempered_smc:
         cls,
         logprior_fn: Callable,
         loglikelihood_fn: Callable,
-        mcmc_kernel_factory: Callable,
-        make_mcmc_state: Callable,
+        mcmc_algorithm: SamplingAlgorithm,
+        mcmc_parameters: Dict,
         resampling_fn: Callable,
         target_ess: float,
         root_solver: Callable = smc.solver.dichotomy,
         use_log_ess: bool = True,
         mcmc_iter: int = 10,
     ) -> SamplingAlgorithm:
+        def kernel_factory(logprob_fn):
+            return mcmc_algorithm(logprob_fn, **mcmc_parameters).step
 
         step = cls.kernel(
             logprior_fn,
             loglikelihood_fn,
-            mcmc_kernel_factory,
-            make_mcmc_state,
+            kernel_factory,
+            mcmc_algorithm.init,
             resampling_fn,
             target_ess,
             root_solver,
@@ -76,17 +78,19 @@ class tempered_smc:
         cls,
         logprior_fn: Callable,
         loglikelihood_fn: Callable,
-        mcmc_kernel_factory: Callable,
-        make_mcmc_state: Callable,
+        mcmc_algorithm: SamplingAlgorithm,
+        mcmc_parameters: Dict,
         resampling_fn: Callable,
         mcmc_iter: int = 10,
     ) -> SamplingAlgorithm:
+        def kernel_factory(logprob_fn):
+            return mcmc_algorithm(logprob_fn, **mcmc_parameters).step
 
         step = cls.kernel(
             logprior_fn,
             loglikelihood_fn,
-            mcmc_kernel_factory,
-            make_mcmc_state,
+            kernel_factory,
+            mcmc_algorithm.init,
             resampling_fn,
             mcmc_iter,
         )
