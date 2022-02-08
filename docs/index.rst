@@ -15,7 +15,7 @@ It integrates really well with PPLs as long as they can provide a (potentially u
    import jax.scipy.stats as stats
    import numpy as np
 
-   import blackjax.nuts as nuts
+   import blackjax
 
    observed = np.random.normal(10, 20, size=1_000)
    def logprob_fn(x):
@@ -25,18 +25,18 @@ It integrates really well with PPLs as long as they can provide a (potentially u
    # Build the kernel
    step_size = 1e-3
    inverse_mass_matrix = jnp.array([1., 1.])
-   kernel = nuts.kernel(logprob_fn, step_size, inverse_mass_matrix)
-   kernel = jax.jit(kernel)  # try without to see the speedup
+   nuts = blackjax.nuts(logprob_fn, step_size, inverse_mass_matrix)
 
    # Initialize the state
    initial_position = {"loc": 1., "scale": 2.}
-   state = nuts.new_state(initial_position, logprob_fn)
+   state = nuts.init(initial_position)
 
    # Iterate
    rng_key = jax.random.PRNGKey(0)
+   step = jax.jit(nuts.step)
    for _ in range(1_000):
       _, rng_key = jax.random.split(rng_key)
-      state, _ = kernel(rng_key, state)
+      state, _ = step(rng_key, state)
 
 Installation
 ============
@@ -69,7 +69,9 @@ Then install BlackJAX
    :maxdepth: 2
    :caption: API Documentation
 
-   api
+   sampling
+   adaptation
+   diagnostics
 
 
 Index
