@@ -143,8 +143,18 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../api.html">
-   Common Kernels
+  <a class="reference internal" href="../sampling.html">
+   Sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../adaptation.html">
+   Adaptation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../diagnostics.html">
+   Diagnostics
   </a>
  </li>
 </ul>
@@ -289,16 +299,7 @@
 <span class="kn">from</span> <span class="nn">numpyro.infer.reparam</span> <span class="kn">import</span> <span class="n">TransformReparam</span>
 <span class="kn">from</span> <span class="nn">numpyro.infer.util</span> <span class="kn">import</span> <span class="n">initialize_model</span>
 
-<span class="kn">import</span> <span class="nn">blackjax.nuts</span> <span class="k">as</span> <span class="nn">nuts</span>
-<span class="kn">import</span> <span class="nn">blackjax.stan_warmup</span> <span class="k">as</span> <span class="nn">stan_warmup</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/miniconda3/envs/blackjax/lib/python3.9/site-packages/jax/experimental/optimizers.py:28: FutureWarning: jax.experimental.optimizers is deprecated, import jax.example_libraries.optimizers instead
-  warnings.warn(&#39;jax.experimental.optimizers is deprecated, &#39;
-/opt/miniconda3/envs/blackjax/lib/python3.9/site-packages/jax/experimental/stax.py:28: FutureWarning: jax.experimental.stax is deprecated, import jax.example_libraries.stax instead
-  warnings.warn(&#39;jax.experimental.stax is deprecated, &#39;
+<span class="kn">import</span> <span class="nn">blackjax</span>
 </pre></div>
 </div>
 </div>
@@ -310,18 +311,13 @@
 <span class="c1"># We can use this notebook for simple benchmarking by setting</span>
 <span class="c1"># below to True and run from Terminal.</span>
 <span class="c1"># $ipython examples/use_with_numpyro.ipynb</span>
-<span class="n">RUN_BENCHMARK</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">RUN_BENCHMARK</span> <span class="o">=</span> <span class="kc">False</span>
 
 <span class="k">if</span> <span class="n">RUN_BENCHMARK</span><span class="p">:</span>
     <span class="n">num_sample</span> <span class="o">=</span> <span class="mi">5_000_000</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Benchmark with </span><span class="si">{</span><span class="n">num_warmup</span><span class="si">}</span><span class="s2"> warmup steps and </span><span class="si">{</span><span class="n">num_sample</span><span class="si">}</span><span class="s2"> sampling steps.&quot;</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="n">num_sample</span> <span class="o">=</span> <span class="mi">10_000</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Running 1000 warmup steps and 10000 sampling steps.
 </pre></div>
 </div>
 </div>
@@ -379,15 +375,6 @@
 <p>Now we create the potential using the <code class="docutils literal notranslate"><span class="pre">potential_fn_gen</span></code> provided by Numpyro and initialize the NUTS state with BlackJAX:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logprob</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">position</span><span class="p">:</span> <span class="o">-</span><span class="n">potential_fn_gen</span><span class="p">(</span><span class="n">J</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">y</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
-<span class="n">initial_position</span> <span class="o">=</span> <span class="n">init_params</span><span class="o">.</span><span class="n">z</span>
-<span class="n">initial_state</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">new_state</span><span class="p">(</span><span class="n">initial_position</span><span class="p">,</span> <span class="n">logprob</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">RUN_BENCHMARK</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Blackjax:&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&gt; Running warmup.&quot;</span><span class="p">)</span>
@@ -400,19 +387,19 @@
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 
-<span class="n">kernel_factory</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">nuts</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span>
-    <span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span>
-<span class="p">)</span>
+<span class="n">initial_position</span> <span class="o">=</span> <span class="n">init_params</span><span class="o">.</span><span class="n">z</span>
+<span class="n">logprob</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">position</span><span class="p">:</span> <span class="o">-</span><span class="n">potential_fn_gen</span><span class="p">(</span><span class="n">J</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">y</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
 
-<span class="n">last_state</span><span class="p">,</span> <span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stan_warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel_factory</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_warmup</span><span class="p">,</span> <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="mf">0.8</span>
+<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span>
+    <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob</span><span class="p">,</span> <span class="n">num_warmup</span><span class="p">,</span> <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="mf">0.8</span>
 <span class="p">)</span>
+<span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.08 s, sys: 46.4 ms, total: 3.13 s
-Wall time: 3.13 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.43 s, sys: 7.96 ms, total: 2.44 s
+Wall time: 2.42 s
 </pre></div>
 </div>
 </div>
@@ -429,11 +416,10 @@ Wall time: 3.13 s
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
 
-<span class="nd">@partial</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">,</span> <span class="n">static_argnums</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 <span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+    <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
     <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
@@ -448,9 +434,6 @@ Wall time: 3.13 s
     <span class="p">)</span>
 
 
-<span class="c1"># Build the kernel using the step size and inverse mass matrix returned from the window adaptation</span>
-<span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel_factory</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">)</span>
-
 <span class="c1"># Sample from the posterior distribution</span>
 <span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="n">num_sample</span><span class="p">)</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;mu&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
@@ -458,8 +441,8 @@ Wall time: 3.13 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.77 s, sys: 32.4 ms, total: 2.8 s
-Wall time: 2.8 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.25 s, sys: 30.2 ms, total: 2.28 s
+Wall time: 2.26 s
 </pre></div>
 </div>
 </div>
@@ -476,8 +459,7 @@ Wall time: 2.8 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Blackjax:
-Acceptance rate: 0.87
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Acceptance rate: 0.89
 0.02% divergent transitions
 </pre></div>
 </div>
@@ -503,7 +485,7 @@ Acceptance rate: 0.87
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/use_with_numpyro_22_0.png" src="../_images/use_with_numpyro_22_0.png" />
+<img alt="../_images/use_with_numpyro_21_0.png" src="../_images/use_with_numpyro_21_0.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -524,7 +506,7 @@ Acceptance rate: 0.87
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/use_with_numpyro_23_0.png" src="../_images/use_with_numpyro_23_0.png" />
+<img alt="../_images/use_with_numpyro_22_0.png" src="../_images/use_with_numpyro_22_0.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -538,13 +520,13 @@ Acceptance rate: 0.87
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Relative treatment effect for school 0: 0.32
-Relative treatment effect for school 1: 0.09
-Relative treatment effect for school 2: -0.08
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Relative treatment effect for school 0: 0.34
+Relative treatment effect for school 1: 0.11
+Relative treatment effect for school 2: -0.09
 Relative treatment effect for school 3: 0.07
 Relative treatment effect for school 4: -0.16
-Relative treatment effect for school 5: -0.08
-Relative treatment effect for school 6: 0.37
+Relative treatment effect for school 5: -0.07
+Relative treatment effect for school 6: 0.35
 Relative treatment effect for school 7: 0.07
 </pre></div>
 </div>
@@ -587,8 +569,8 @@ Relative treatment effect for school 7: 0.07
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.54 s, sys: 98.9 ms, total: 3.64 s
-Wall time: 3.59 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.43 s, sys: 30.8 ms, total: 2.46 s
+Wall time: 2.44 s
 </pre></div>
 </div>
 </div>
@@ -601,8 +583,7 @@ Wall time: 3.59 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Numpyro:
-Acceptance rate: 0.90
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Acceptance rate: 0.89
 0.00% divergent transitions
 </pre></div>
 </div>
@@ -618,8 +599,8 @@ Acceptance rate: 0.90
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Blackjax average 12.16 leapfrog per iteration.
-Numpyro average 10.90 leapfrog per iteration.
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Blackjax average 7.11 leapfrog per iteration.
+Numpyro average 8.91 leapfrog per iteration.
 </pre></div>
 </div>
 </div>

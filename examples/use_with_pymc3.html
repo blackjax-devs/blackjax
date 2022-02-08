@@ -143,8 +143,18 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../api.html">
-   Common Kernels
+  <a class="reference internal" href="../sampling.html">
+   Sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../adaptation.html">
+   Adaptation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../diagnostics.html">
+   Diagnostics
   </a>
  </li>
 </ul>
@@ -363,9 +373,6 @@ Successfully installed absl-py-0.13.0 jax-0.2.10 opt-einsum-3.3.0
 <span class="kn">import</span> <span class="nn">pymc3</span> <span class="k">as</span> <span class="nn">pm</span>
 <span class="kn">import</span> <span class="nn">pymc3.sampling_jax</span>
 
-<span class="kn">import</span> <span class="nn">blackjax.nuts</span> <span class="k">as</span> <span class="nn">nuts</span>
-<span class="kn">import</span> <span class="nn">blackjax.stan_warmup</span> <span class="k">as</span> <span class="nn">stan_warmup</span>
-
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running on PyMC3 v</span><span class="si">{</span><span class="n">pm</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -522,7 +529,6 @@ Wall time: 1min
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Then we transform the Jaxified input and FunctionGraph to a BlackJax NUTS sampler</span>
 <span class="n">logprob</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">logp_fn_jax</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">)</span>
 <span class="n">initial_position</span> <span class="o">=</span> <span class="n">init_state</span>
-<span class="n">initial_state</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">new_state</span><span class="p">(</span><span class="n">initial_position</span><span class="p">,</span> <span class="n">logprob</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -534,13 +540,12 @@ Wall time: 1min
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 
-<span class="n">kernel_factory</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">nuts</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span>
-    <span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span>
+<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span>
+    <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span>
+    <span class="n">logprob</span><span class="p">,</span>
+    <span class="mi">1000</span>
 <span class="p">)</span>
-
-<span class="n">last_state</span><span class="p">,</span> <span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stan_warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-    <span class="n">seed</span><span class="p">,</span> <span class="n">kernel_factory</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="mi">1000</span>
-<span class="p">)</span>
+<span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
@@ -553,9 +558,6 @@ Wall time: 1min
 
     <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="n">infos</span>
 
-
-<span class="c1"># Build the kernel using the step size and inverse mass matrix returned from the window adaptation</span>
-<span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel_factory</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">)</span>
 
 <span class="c1"># Sample from the posterior distribution</span>
 <span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="mi">50_000</span><span class="p">)</span>

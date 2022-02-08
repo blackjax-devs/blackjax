@@ -141,8 +141,18 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="api.html">
-   Common Kernels
+  <a class="reference internal" href="sampling.html">
+   Sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="adaptation.html">
+   Adaptation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="diagnostics.html">
+   Diagnostics
   </a>
  </li>
 </ul>
@@ -230,84 +240,19 @@
 
 <div class="genindex-jumpbox">
  <a href="#A"><strong>A</strong></a>
- | <a href="#B"><strong>B</strong></a>
- | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
- | <a href="#F"><strong>F</strong></a>
  | <a href="#H"><strong>H</strong></a>
- | <a href="#I"><strong>I</strong></a>
- | <a href="#K"><strong>K</strong></a>
- | <a href="#L"><strong>L</strong></a>
- | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#W"><strong>W</strong></a>
  
 </div>
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.hmc.HMCInfo.acceptance_probability">acceptance_probability (HMCInfo attribute)</a>
-
-      <ul>
-        <li><a href="api.html#blackjax.nuts.NUTSInfo.acceptance_probability">(NUTSInfo attribute)</a>
-</li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.tempered_smc.adaptive_tempered_smc">adaptive_tempered_smc() (in module blackjax.tempered_smc)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="B">B</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li>
-    blackjax.hmc
-
-      <ul>
-        <li><a href="api.html#module-blackjax.hmc">module</a>
-</li>
-      </ul></li>
-      <li>
-    blackjax.nuts
-
-      <ul>
-        <li><a href="api.html#module-blackjax.nuts">module</a>
-</li>
-      </ul></li>
-      <li>
-    blackjax.rmh
-
-      <ul>
-        <li><a href="api.html#module-blackjax.rmh">module</a>
-</li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li>
-    blackjax.stan_warmup
-
-      <ul>
-        <li><a href="api.html#module-blackjax.stan_warmup">module</a>
-</li>
-      </ul></li>
-      <li>
-    blackjax.tempered_smc
-
-      <ul>
-        <li><a href="api.html#module-blackjax.tempered_smc">module</a>
-</li>
-      </ul></li>
-  </ul></td>
-</tr></table>
-
-<h2 id="D">D</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.adaptation.step_size.dual_averaging_adaptation">dual_averaging_adaptation() (in module blackjax.adaptation.step_size)</a>
+      <li><a href="sampling.html#blackjax.adaptive_tempered_smc">adaptive_tempered_smc (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -315,23 +260,7 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.diagnostics.effective_sample_size">effective_sample_size() (in module blackjax.diagnostics)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.hmc.HMCInfo.energy">energy (HMCInfo attribute)</a>
-
-      <ul>
-        <li><a href="api.html#blackjax.nuts.NUTSInfo.energy">(NUTSInfo attribute)</a>
-</li>
-      </ul></li>
-  </ul></td>
-</tr></table>
-
-<h2 id="F">F</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.adaptation.step_size.find_reasonable_step_size">find_reasonable_step_size() (in module blackjax.adaptation.step_size)</a>
+      <li><a href="diagnostics.html#blackjax.diagnostics.effective_sample_size">effective_sample_size() (in module blackjax.diagnostics)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -339,102 +268,15 @@
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.hmc.HMCInfo">HMCInfo (class in blackjax.hmc)</a>
+      <li><a href="sampling.html#blackjax.hmc">hmc (class in blackjax)</a>
 </li>
-  </ul></td>
-</tr></table>
-
-<h2 id="I">I</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.nuts.NUTSInfo.integration_steps">integration_steps (NUTSInfo attribute)</a>
-</li>
-      <li><a href="api.html#blackjax.hmc.HMCInfo.is_accepted">is_accepted (HMCInfo attribute)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.hmc.HMCInfo.is_divergent">is_divergent (HMCInfo attribute)</a>
-
-      <ul>
-        <li><a href="api.html#blackjax.nuts.NUTSInfo.is_divergent">(NUTSInfo attribute)</a>
-</li>
-      </ul></li>
-      <li><a href="api.html#blackjax.nuts.NUTSInfo.is_turning">is_turning (NUTSInfo attribute)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="K">K</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.hmc.kernel">kernel() (in module blackjax.hmc)</a>
-
-      <ul>
-        <li><a href="api.html#blackjax.nuts.kernel">(in module blackjax.nuts)</a>
-</li>
-        <li><a href="api.html#blackjax.rmh.kernel">(in module blackjax.rmh)</a>
-</li>
-      </ul></li>
-  </ul></td>
-</tr></table>
-
-<h2 id="L">L</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.tempered_smc.TemperedSMCState.lmbda">lmbda (TemperedSMCState attribute)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="M">M</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.adaptation.mass_matrix.mass_matrix_adaptation">mass_matrix_adaptation() (in module blackjax.adaptation.mass_matrix)</a>
-</li>
-      <li>
-    module
-
-      <ul>
-        <li><a href="api.html#module-blackjax.hmc">blackjax.hmc</a>
-</li>
-        <li><a href="api.html#module-blackjax.nuts">blackjax.nuts</a>
-</li>
-        <li><a href="api.html#module-blackjax.rmh">blackjax.rmh</a>
-</li>
-        <li><a href="api.html#module-blackjax.stan_warmup">blackjax.stan_warmup</a>
-</li>
-        <li><a href="api.html#module-blackjax.tempered_smc">blackjax.tempered_smc</a>
-</li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.hmc.HMCInfo.momentum">momentum (HMCInfo attribute)</a>
-
-      <ul>
-        <li><a href="api.html#blackjax.nuts.NUTSInfo.momentum">(NUTSInfo attribute)</a>
-</li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.hmc.new_state">new_state() (in module blackjax.hmc)</a>
-
-      <ul>
-        <li><a href="api.html#blackjax.nuts.new_state">(in module blackjax.nuts)</a>
-</li>
-        <li><a href="api.html#blackjax.rmh.new_state">(in module blackjax.rmh)</a>
-</li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.hmc.HMCInfo.num_integration_steps">num_integration_steps (HMCInfo attribute)</a>
-</li>
-      <li><a href="api.html#blackjax.nuts.NUTSInfo.num_trajectory_expansions">num_trajectory_expansions (NUTSInfo attribute)</a>
-</li>
-      <li><a href="api.html#blackjax.nuts.NUTSInfo">NUTSInfo (class in blackjax.nuts)</a>
+      <li><a href="sampling.html#blackjax.nuts">nuts (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -442,13 +284,7 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.tempered_smc.TemperedSMCState.particles">particles (TemperedSMCState attribute)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.diagnostics.potential_scale_reduction">potential_scale_reduction() (in module blackjax.diagnostics)</a>
-</li>
-      <li><a href="api.html#blackjax.hmc.HMCInfo.proposal">proposal (HMCInfo attribute)</a>
+      <li><a href="diagnostics.html#blackjax.diagnostics.potential_scale_reduction">potential_scale_reduction() (in module blackjax.diagnostics)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -456,7 +292,7 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.stan_warmup.run">run() (in module blackjax.stan_warmup)</a>
+      <li><a href="sampling.html#blackjax.rmh">rmh (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -464,15 +300,15 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.tempered_smc.tempered_smc">tempered_smc() (in module blackjax.tempered_smc)</a>
-</li>
-      <li><a href="api.html#blackjax.tempered_smc.TemperedSMCState">TemperedSMCState (class in blackjax.tempered_smc)</a>
+      <li><a href="sampling.html#blackjax.tempered_smc">tempered_smc (class in blackjax)</a>
 </li>
   </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#blackjax.nuts.NUTSInfo.trajectory_leftmost_state">trajectory_leftmost_state (NUTSInfo attribute)</a>
-</li>
-      <li><a href="api.html#blackjax.nuts.NUTSInfo.trajectory_rightmost_state">trajectory_rightmost_state (NUTSInfo attribute)</a>
+      <li><a href="adaptation.html#blackjax.window_adaptation">window_adaptation (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>

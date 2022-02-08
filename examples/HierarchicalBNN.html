@@ -41,7 +41,7 @@
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Common Kernels" href="../api.html" />
+    <link rel="next" title="Sampling" href="../sampling.html" />
     <link rel="prev" title="Use BlackJAX with TFP" href="use_with_tfp.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -145,8 +145,18 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../api.html">
-   Common Kernels
+  <a class="reference internal" href="../sampling.html">
+   Sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../adaptation.html">
+   Adaptation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../diagnostics.html">
+   Diagnostics
   </a>
  </li>
 </ul>
@@ -344,37 +354,6 @@
 <h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pip install blackjax
-<span class="o">!</span>pip install distrax
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Defaulting to user installation because normal site-packages is not writeable
-Requirement already satisfied: blackjax in /home/remi/.local/lib/python3.9/site-packages (0.2.1)
-Defaulting to user installation because normal site-packages is not writeable
-Requirement already satisfied: distrax in /home/remi/.local/lib/python3.9/site-packages (0.0.2)
-Requirement already satisfied: tensorflow-probability&gt;=0.13.0rc0 in /home/remi/.local/lib/python3.9/site-packages (from distrax) (0.14.0)
-Requirement already satisfied: chex&gt;=0.0.7 in /home/remi/.local/lib/python3.9/site-packages (from distrax) (0.0.8)
-Requirement already satisfied: numpy&gt;=1.18.0 in /home/remi/.local/lib/python3.9/site-packages (from distrax) (1.20.3)
-Requirement already satisfied: absl-py&gt;=0.9.0 in /home/remi/.local/lib/python3.9/site-packages (from distrax) (0.14.0)
-Requirement already satisfied: jaxlib&gt;=0.1.67 in /home/remi/.local/lib/python3.9/site-packages (from distrax) (0.1.71)
-Requirement already satisfied: jax&gt;=0.2.13 in /home/remi/.local/lib/python3.9/site-packages (from distrax) (0.2.21)
-Requirement already satisfied: six in /usr/lib/python3.9/site-packages (from absl-py&gt;=0.9.0-&gt;distrax) (1.16.0)
-Requirement already satisfied: toolz&gt;=0.9.0 in /home/remi/.local/lib/python3.9/site-packages (from chex&gt;=0.0.7-&gt;distrax) (0.11.1)
-Requirement already satisfied: dm-tree&gt;=0.1.5 in /home/remi/.local/lib/python3.9/site-packages (from chex&gt;=0.0.7-&gt;distrax) (0.1.6)
-Requirement already satisfied: opt_einsum in /home/remi/.local/lib/python3.9/site-packages (from jax&gt;=0.2.13-&gt;distrax) (3.3.0)
-Requirement already satisfied: scipy&gt;=1.2.1 in /home/remi/.local/lib/python3.9/site-packages (from jax&gt;=0.2.13-&gt;distrax) (1.7.1)
-Requirement already satisfied: flatbuffers&lt;3.0,&gt;=1.12 in /home/remi/.local/lib/python3.9/site-packages (from jaxlib&gt;=0.1.67-&gt;distrax) (2.0)
-Requirement already satisfied: gast&gt;=0.3.2 in /home/remi/.local/lib/python3.9/site-packages (from tensorflow-probability&gt;=0.13.0rc0-&gt;distrax) (0.4.0)
-Requirement already satisfied: cloudpickle&gt;=1.3 in /home/remi/.local/lib/python3.9/site-packages (from tensorflow-probability&gt;=0.13.0rc0-&gt;distrax) (1.6.0)
-Requirement already satisfied: decorator in /usr/lib/python3.9/site-packages (from tensorflow-probability&gt;=0.13.0rc0-&gt;distrax) (5.1.0)
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">filterwarnings</span>
 
@@ -391,8 +370,7 @@ Requirement already satisfied: decorator in /usr/lib/python3.9/site-packages (fr
 <span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">make_moons</span>
 <span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">scale</span>
 
-<span class="kn">import</span> <span class="nn">blackjax.nuts</span> <span class="k">as</span> <span class="nn">nuts</span>
-<span class="kn">import</span> <span class="nn">blackjax.stan_warmup</span> <span class="k">as</span> <span class="nn">stan_warmup</span>
+<span class="kn">import</span> <span class="nn">blackjax</span>
 
 <span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s2">&quot;white&quot;</span><span class="p">)</span>
@@ -418,7 +396,7 @@ Requirement already satisfied: decorator in /usr/lib/python3.9/site-packages (fr
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/HierarchicalBNN_7_0.png" src="../_images/HierarchicalBNN_7_0.png" />
+<img alt="../_images/HierarchicalBNN_6_0.png" src="../_images/HierarchicalBNN_6_0.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -498,7 +476,7 @@ Requirement already satisfied: decorator in /usr/lib/python3.9/site-packages (fr
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/HierarchicalBNN_12_0.png" src="../_images/HierarchicalBNN_12_0.png" />
+<img alt="../_images/HierarchicalBNN_11_0.png" src="../_images/HierarchicalBNN_11_0.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -561,35 +539,28 @@ Requirement already satisfied: decorator in /usr/lib/python3.9/site-packages (fr
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">fit_and_eval</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">potential_fn</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">Y_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">n_groups</span><span class="o">=</span><span class="kc">None</span>
+    <span class="n">rng_key</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">Y_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">n_groups</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">):</span>
     <span class="n">init_key</span><span class="p">,</span> <span class="n">warmup_key</span><span class="p">,</span> <span class="n">inference_key</span><span class="p">,</span> <span class="n">train_key</span><span class="p">,</span> <span class="n">test_key</span><span class="p">,</span> <span class="n">grid_key</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">,</span> <span class="mi">6</span>
     <span class="p">)</span>
 
     <span class="c1"># initialization</span>
-    <span class="n">potential</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
-        <span class="n">potential_fn</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X_train</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y_train</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">n_hidden_layers</span><span class="o">=</span><span class="n">n_hidden_layers</span>
+    <span class="n">logprob</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+        <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X_train</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y_train</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">n_hidden_layers</span><span class="o">=</span><span class="n">n_hidden_layers</span>
     <span class="p">)</span>
     <span class="n">initial_position</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">init_bnn_params</span><span class="p">(</span><span class="n">layer_widths</span><span class="p">,</span> <span class="n">init_key</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">n_groups</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="k">else</span> <span class="n">init_hierarchical_params</span><span class="p">(</span><span class="n">layer_widths</span><span class="p">,</span> <span class="n">n_groups</span><span class="p">,</span> <span class="n">init_key</span><span class="p">)</span>
     <span class="p">)</span>
-    <span class="n">initial_state</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">new_state</span><span class="p">(</span><span class="n">initial_position</span><span class="p">,</span> <span class="n">potential</span><span class="p">)</span>
-
-    <span class="n">kernel_generator</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">nuts</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span>
-        <span class="n">potential</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span>
-    <span class="p">)</span>
 
     <span class="c1"># warm up</span>
-    <span class="n">final_state</span><span class="p">,</span> <span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">),</span> <span class="n">info</span> <span class="o">=</span> <span class="n">stan_warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-        <span class="n">warmup_key</span><span class="p">,</span> <span class="n">kernel_generator</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_warmup</span>
-    <span class="p">)</span>
+    <span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob</span><span class="p">,</span> <span class="n">num_warmup</span><span class="p">)</span>
+    <span class="n">final_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">warmup_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">)</span>
 
     <span class="c1"># inference</span>
-    <span class="n">nuts_kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nuts</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">potential</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">))</span>
-    <span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">inference_key</span><span class="p">,</span> <span class="n">nuts_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">inference_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">final_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
     <span class="n">samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span>
 
     <span class="c1"># evaluation</span>
@@ -771,7 +742,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/HierarchicalBNN_32_0.png" src="../_images/HierarchicalBNN_32_0.png" />
+<img alt="../_images/HierarchicalBNN_31_0.png" src="../_images/HierarchicalBNN_31_0.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -781,7 +752,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/HierarchicalBNN_33_0.png" src="../_images/HierarchicalBNN_33_0.png" />
+<img alt="../_images/HierarchicalBNN_32_0.png" src="../_images/HierarchicalBNN_32_0.png" />
 </div>
 </div>
 </div>
@@ -869,7 +840,9 @@ w^t_{ijl} = \mu_{ijl} + \epsilon^t_{ijl} \sigma_l
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rng_key</span> <span class="o">=</span> <span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">Ys_hierarchical_pred_train</span><span class="p">,</span> <span class="n">Ys_hierarchical_pred_test</span><span class="p">,</span> <span class="n">ppc_grid</span> <span class="o">=</span> <span class="n">fit_and_eval</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">,</span>
     <span class="n">hierarchical_model</span><span class="p">,</span>
@@ -880,6 +853,12 @@ w^t_{ijl} = \mu_{ijl} + \epsilon^t_{ijl} \sigma_l
     <span class="n">grid_3d</span><span class="p">,</span>
     <span class="n">n_groups</span><span class="o">=</span><span class="n">n_groups</span><span class="p">,</span>
 <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 41.7 s, sys: 998 ms, total: 42.7 s
+Wall time: 38.6 s
 </pre></div>
 </div>
 </div>
@@ -898,7 +877,7 @@ w^t_{ijl} = \mu_{ijl} + \epsilon^t_{ijl} \sigma_l
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Train accuracy = 91.00%
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Train accuracy = 90.89%
 </pre></div>
 </div>
 </div>
@@ -950,7 +929,7 @@ w^t_{ijl} = \mu_{ijl} + \epsilon^t_{ijl} \sigma_l
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/HierarchicalBNN_44_0.png" src="../_images/HierarchicalBNN_44_0.png" />
+<img alt="../_images/HierarchicalBNN_43_0.png" src="../_images/HierarchicalBNN_43_0.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -960,7 +939,7 @@ w^t_{ijl} = \mu_{ijl} + \epsilon^t_{ijl} \sigma_l
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/HierarchicalBNN_45_0.png" src="../_images/HierarchicalBNN_45_0.png" />
+<img alt="../_images/HierarchicalBNN_44_0.png" src="../_images/HierarchicalBNN_44_0.png" />
 </div>
 </div>
 </div>
@@ -980,10 +959,10 @@ w^t_{ijl} = \mu_{ijl} + \epsilon^t_{ijl} \sigma_l
             <p class="prev-next-title">Use BlackJAX with TFP</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="../api.html" title="next page">
+    <a class='right-next' id="next-link" href="../sampling.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Common Kernels</p>
+        <p class="prev-next-title">Sampling</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

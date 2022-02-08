@@ -142,8 +142,18 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="api.html">
-   Common Kernels
+  <a class="reference internal" href="sampling.html">
+   Sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="adaptation.html">
+   Adaptation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="diagnostics.html">
+   Diagnostics
   </a>
  </li>
 </ul>
@@ -289,7 +299,7 @@
 <span class="kn">import</span> <span class="nn">jax.scipy.stats</span> <span class="k">as</span> <span class="nn">stats</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<span class="kn">import</span> <span class="nn">blackjax.nuts</span> <span class="k">as</span> <span class="nn">nuts</span>
+<span class="kn">import</span> <span class="nn">blackjax</span>
 
 <span class="n">observed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1_000</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
@@ -299,18 +309,18 @@
 <span class="c1"># Build the kernel</span>
 <span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-3</span>
 <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">])</span>
-<span class="n">kernel</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">)</span>
-<span class="n">kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">kernel</span><span class="p">)</span>  <span class="c1"># try without to see the speedup</span>
+<span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">)</span>
 
 <span class="c1"># Initialize the state</span>
 <span class="n">initial_position</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">,</span> <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">2.</span><span class="p">}</span>
-<span class="n">state</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">new_state</span><span class="p">(</span><span class="n">initial_position</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
 
 <span class="c1"># Iterate</span>
 <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1_000</span><span class="p">):</span>
    <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-   <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+   <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -337,22 +347,20 @@ install JAX with the relevant hardware acceleration support.</p>
 <div class="toctree-wrapper compound">
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api.html">Common Kernels</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-blackjax.hmc">HMC</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-blackjax.nuts">NUTS</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-blackjax.rmh">RMH</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-blackjax.tempered_smc">Tempered SMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sampling.html">Sampling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#hmc">HMC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#nuts">NUTS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#rmh">RMH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sampling.html#tempered-smc">Tempered SMC</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api.html#adaptation">Adaptation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-blackjax.stan_warmup">Stan full warmup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#step-size-adataptation">Step-size adataptation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#mass-matrix-adataptation">Mass matrix adataptation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adaptation.html">Adaptation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="adaptation.html#window-adaptation">Window adaptation</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api.html#diagnostics">Diagnostics</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#effective-sample-size">Effective sample size</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#potential-scale-reduction">Potential scale reduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diagnostics.html">Diagnostics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="diagnostics.html#effective-sample-size">Effective sample size</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diagnostics.html#potential-scale-reduction">Potential scale reduction</a></li>
 </ul>
 </li>
 </ul>

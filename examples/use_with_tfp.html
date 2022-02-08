@@ -143,8 +143,18 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../api.html">
-   Common Kernels
+  <a class="reference internal" href="../sampling.html">
+   Sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../adaptation.html">
+   Adaptation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../diagnostics.html">
+   Diagnostics
   </a>
  </li>
 </ul>
@@ -289,8 +299,7 @@
 
 <span class="n">tfd</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">distributions</span>
 
-<span class="kn">import</span> <span class="nn">blackjax.hmc</span> <span class="k">as</span> <span class="nn">hmc</span>
-<span class="kn">import</span> <span class="nn">blackjax.stan_warmup</span> <span class="k">as</span> <span class="nn">stan_warmup</span>
+<span class="kn">import</span> <span class="nn">blackjax</span>
 </pre></div>
 </div>
 </div>
@@ -378,13 +387,19 @@
 <p>Let us first run the window adaptation to find a good value for the step size and for the inverse mass matrix. As in the original example we will run the integrator 3 times at each step.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">kernel_factory</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">hmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span>
-    <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="mi">3</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+
+<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span>
+    <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="o">=</span><span class="mi">3</span>
 <span class="p">)</span>
 
-<span class="n">last_state</span><span class="p">,</span> <span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stan_warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel_factory</span><span class="p">,</span> <span class="n">hmc</span><span class="o">.</span><span class="n">new_state</span><span class="p">(</span><span class="n">initial_position</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">),</span> <span class="mi">1_000</span>
-<span class="p">)</span>
+<span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.56 s, sys: 5.72 ms, total: 2.57 s
+Wall time: 2.54 s
 </pre></div>
 </div>
 </div>
@@ -406,9 +421,6 @@
     <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="n">infos</span>
 
 
-<span class="c1"># Build the kernel using the step size and inverse mass matrix returned from the window adaptation</span>
-<span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel_factory</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">)</span>
-
 <span class="c1"># Sample from the posterior distribution</span>
 <span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="mi">500_000</span><span class="p">)</span>
 <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;avg_effect&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
@@ -416,12 +428,12 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.39 s, sys: 78.2 ms, total: 1.47 s
-Wall time: 1.38 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.55 s, sys: 39 ms, total: 1.59 s
+Wall time: 1.55 s
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([ 5.607405 , 13.435591 ,  2.689533 , ..., -3.7106154,
-              8.764211 ,  2.737848 ], dtype=float32)
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([ 9.266757 , 14.293715 ,  6.9787436, ..., -4.236508 ,
+              2.6391485,  4.2122736], dtype=float32)
 </pre></div>
 </div>
 </div>
@@ -435,7 +447,7 @@ Wall time: 1.38 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Acceptance rate: 0.81
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Acceptance rate: 0.94
 </pre></div>
 </div>
 </div>
@@ -519,12 +531,12 @@ Wall time: 1.38 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/remi/.virtualenvs/blackjax/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/mcmc/sample.py:352: UserWarning: Tracing all kernel results by default is deprecated. Set the `trace_fn` argument to None (the future default value) or an explicit callback that traces the values you are interested in.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/remi/.virtualenvs/blackjax/lib/python3.9/site-packages/tensorflow_probability/substrates/jax/mcmc/sample.py:339: UserWarning: Tracing all kernel results by default is deprecated. Set the `trace_fn` argument to None (the future default value) or an explicit callback that traces the values you are interested in.
   warnings.warn(&#39;Tracing all kernel results by default is deprecated. Set &#39;
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.96 s, sys: 498 ms, total: 3.46 s
-Wall time: 3.41 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.4 s, sys: 598 ms, total: 4 s
+Wall time: 3.97 s
 </pre></div>
 </div>
 </div>

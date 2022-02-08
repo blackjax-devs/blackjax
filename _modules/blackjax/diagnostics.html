@@ -141,8 +141,18 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html">
-   Common Kernels
+  <a class="reference internal" href="../../sampling.html">
+   Sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../adaptation.html">
+   Adaptation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../diagnostics.html">
+   Diagnostics
   </a>
  </li>
 </ul>
@@ -237,7 +247,7 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;potential_scale_reduction&quot;</span><span class="p">,</span> <span class="s2">&quot;effective_sample_size&quot;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="potential_scale_reduction"><a class="viewcode-back" href="../../api.html#blackjax.diagnostics.potential_scale_reduction">[docs]</a><span class="k">def</span> <span class="nf">potential_scale_reduction</span><span class="p">(</span>
+<div class="viewcode-block" id="potential_scale_reduction"><a class="viewcode-back" href="../../diagnostics.html#blackjax.diagnostics.potential_scale_reduction">[docs]</a><span class="k">def</span> <span class="nf">potential_scale_reduction</span><span class="p">(</span>
     <span class="n">input_array</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">chain_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Gelman and Rubin (1992)&#39;s potential scale reduction for computing multiple MCMC chain convergence.</span>
@@ -295,7 +305,7 @@
     <span class="k">return</span> <span class="n">rhat_value</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="effective_sample_size"><a class="viewcode-back" href="../../api.html#blackjax.diagnostics.effective_sample_size">[docs]</a><span class="k">def</span> <span class="nf">effective_sample_size</span><span class="p">(</span>
+<div class="viewcode-block" id="effective_sample_size"><a class="viewcode-back" href="../../diagnostics.html#blackjax.diagnostics.effective_sample_size">[docs]</a><span class="k">def</span> <span class="nf">effective_sample_size</span><span class="p">(</span>
     <span class="n">input_array</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">chain_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Compute estimate of the effective sample size (ess).</span>

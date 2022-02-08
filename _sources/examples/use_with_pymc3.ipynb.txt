@@ -96,9 +96,6 @@
     "import pymc3 as pm\n",
     "import pymc3.sampling_jax\n",
     "\n",
-    "import blackjax.nuts as nuts\n",
-    "import blackjax.stan_warmup as stan_warmup\n",
-    "\n",
     "print(f\"Running on PyMC3 v{pm.__version__}\")"
    ]
   },
@@ -354,8 +351,7 @@
    "source": [
     "# Then we transform the Jaxified input and FunctionGraph to a BlackJax NUTS sampler\n",
     "logprob = lambda x: logp_fn_jax(*x)\n",
-    "initial_position = init_state\n",
-    "initial_state = nuts.new_state(initial_position, logprob)"
+    "initial_position = init_state"
    ]
   },
   {
@@ -392,13 +388,12 @@
    "source": [
     "%%time\n",
     "\n",
-    "kernel_factory = lambda step_size, inverse_mass_matrix: nuts.kernel(\n",
-    "    logprob, step_size, inverse_mass_matrix\n",
+    "adapt = blackjax.window_adaptation(\n",
+    "    blackjax.nuts\n",
+    "    logprob,\n",
+    "    1000\n",
     ")\n",
-    "\n",
-    "last_state, (step_size, inverse_mass_matrix), _ = stan_warmup.run(\n",
-    "    seed, kernel_factory, initial_state, 1000\n",
-    ")\n",
+    "last_state, kernel, _ = adapt.run(seed, initial_position)\n",
     "\n",
     "\n",
     "def inference_loop(rng_key, kernel, initial_state, num_samples):\n",
@@ -412,22 +407,9 @@
     "    return states, infos\n",
     "\n",
     "\n",
-    "# Build the kernel using the step size and inverse mass matrix returned from the window adaptation\n",
-    "kernel = kernel_factory(step_size, inverse_mass_matrix)\n",
-    "\n",
     "# Sample from the posterior distribution\n",
     "states, infos = inference_loop(seed, kernel, last_state, 50_000)"
    ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "id": "4207ff96",
-   "metadata": {
-    "id": "HoDBN7FX4amy"
-   },
-   "outputs": [],
-   "source": []
   }
  ],
  "metadata": {
@@ -437,8 +419,9 @@
    "provenance": []
   },
   "kernelspec": {
-   "display_name": "Python 3.7.10 64-bit ('blackjax': conda)",
-   "name": "python3710jvsc74a57bd0da83a268153c84bc9ca9703c2cea4521d98c583fc99858c9f792a1bd45c27e3c"
+   "display_name": "blackjax",
+   "language": "python",
+   "name": "blackjax"
   },
   "language_info": {
    "codemirror_mode": {
@@ -450,7 +433,7 @@
    "name": "python",
    "nbconvert_exporter": "python",
    "pygments_lexer": "ipython3",
-   "version": "3.7.10"
+   "version": "3.9.7"
   },
   "metadata": {
    "interpreter": {
