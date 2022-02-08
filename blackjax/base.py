@@ -109,4 +109,6 @@ class RunFn(Protocol):
 
 
 class AdaptationAlgorithm(NamedTuple):
+    """A function that implements an adaptation algorithm."""
+
     run: RunFn
