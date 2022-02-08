@@ -12,12 +12,12 @@ from .kernels import (
 __version__ = "0.3.0"
 
 __all__ = [
-    "hmc",
+    "hmc",  # mcmc
     "nuts",
     "rmh",
-    "window_adaptation",
-    "adaptive_tempered_smc",
+    "window_adaptation",  # mcmc adaptation
+    "adaptive_tempered_smc",  # smc
     "tempered_smc",
-    "ess",
+    "ess",  # diagnostics
     "rhat",
 ]

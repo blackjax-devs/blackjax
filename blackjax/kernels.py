@@ -9,56 +9,18 @@ from blackjax.base import AdaptationAlgorithm, SamplingAlgorithm
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = [
+    "adaptive_tempered_smc",
     "hmc",
     "nuts",
-    "window_adaptation",
     "rmh",
-    "adaptive_tempered_smc",
     "tempered_smc",
+    "window_adaptation",
 ]
 
 
 # -----------------------------------------------------------------------------
 #                           SEQUENTIAL MONTE CARLO
 # -----------------------------------------------------------------------------
-
-
-class tempered_smc:
-    """Implements the (basic) user interface for the Adaptive Tempered SMC kernel."""
-
-    init = staticmethod(smc.tempered.init)
-    kernel = staticmethod(smc.tempered.kernel)
-
-    def __new__(  # type: ignore[misc]
-        cls,
-        logprior_fn: Callable,
-        loglikelihood_fn: Callable,
-        mcmc_kernel_factory: Callable,
-        make_mcmc_state: Callable,
-        resampling_fn: Callable,
-        mcmc_iter: int = 10,
-    ) -> SamplingAlgorithm:
-
-        step = cls.kernel(
-            logprior_fn,
-            loglikelihood_fn,
-            mcmc_kernel_factory,
-            make_mcmc_state,
-            resampling_fn,
-            mcmc_iter,
-        )
-
-        def init_fn(position: PyTree):
-            return cls.init(position)
-
-        def step_fn(rng_key: PRNGKey, state, lmbda):
-            return step(
-                rng_key,
-                state,
-                lmbda,
-            )
-
-        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
 
 class adaptive_tempered_smc:
@@ -104,6 +66,44 @@ class adaptive_tempered_smc:
         return SamplingAlgorithm(init_fn, step_fn)
 
 
+class tempered_smc:
+    """Implements the (basic) user interface for the Adaptive Tempered SMC kernel."""
+
+    init = staticmethod(smc.tempered.init)
+    kernel = staticmethod(smc.tempered.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logprior_fn: Callable,
+        loglikelihood_fn: Callable,
+        mcmc_kernel_factory: Callable,
+        make_mcmc_state: Callable,
+        resampling_fn: Callable,
+        mcmc_iter: int = 10,
+    ) -> SamplingAlgorithm:
+
+        step = cls.kernel(
+            logprior_fn,
+            loglikelihood_fn,
+            mcmc_kernel_factory,
+            make_mcmc_state,
+            resampling_fn,
+            mcmc_iter,
+        )
+
+        def init_fn(position: PyTree):
+            return cls.init(position)
+
+        def step_fn(rng_key: PRNGKey, state, lmbda):
+            return step(
+                rng_key,
+                state,
+                lmbda,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+
+
 # -----------------------------------------------------------------------------
 #                         MARKOV CHAIN MONTE CARLO
 # -----------------------------------------------------------------------------
@@ -112,14 +112,13 @@ class adaptive_tempered_smc:
 class hmc:
     """Implements the (basic) user interface for the HMC kernel.
 
-    The general hmc kernel (:meth:`blackjax.hmc_base.hmc_kernel`) can be
+    The general hmc kernel (:meth:`blackjax.mcmc.hmc.kernel`, alias `blackjax.hmc.kernel`) can be
     cumbersome to manipulate. Since most users only need to specify the kernel
     parameters at initialization time, we provide a helper function that
     specializes the general kernel.
 
-    In addition, we add the general kernel as an attribute to this class so
-    users only need to pass `blackjax.hmc` to the algorithm, and thus don't need
-    to know about the existence of the base kernel.
+    We also add the general kernel and state generator as an attribute to this class so
+    users only need to pass `blackjax.hmc` to SMC, adaptation, etc. algorithms.
 
     Examples
     --------
@@ -132,13 +131,20 @@ class hmc:
         state = hmc.init(position)
         new_state, info = hmc.step(rng_key, state)
 
-    If we need to do something slightly fancier we can use the base kernel
-    directly. Here if we want to use Yoshida's symplectic integrator instead of
-    the usual velocity verlet:
+    Kernels are not jit-compiled by default so you will need to do it manually:
 
     .. code:
 
-       kernel = blackjax.hmc.new_kernel(integrators.yoshida)
+       step = jax.jit(hmc.step)
+       new_state, info = step(rng_key, state)
+
+    Should you need to you can always use the base kernel directly:
+
+    .. code:
+
+       import blackjax.mcmc.integrators as integrators
+
+       kernel = blackjax.hmc.kernel(integrators.mclachlan)
        state = blackjax.hmc.init(position, logprob_fn)
        state, info = kernel(rng_key, state, logprob_fn, step_size, inverse_mass_matrix, num_integration_steps)
 
@@ -197,15 +203,15 @@ class nuts:
         step = jax.jit(nuts.step)
         new_state, info = step(rng_key, state)
 
-    If we need to do something slightly fancier we can use the base kernel
-    directly. Here if we want to use Yoshida's symplectic integrator instead of
-    the usual velocity verlet:
+    You can always use the base kernel should you need to:
 
     .. code:
 
+       import blackjax.mcmc.integrators as integrators
+
+       kernel = blackjax.nuts.kernel(integrators.yoshida)
        state = blackjax.nuts.init(position, logprob_fn)
-       kernel = blackjax.nuts.new_kernel(integrators.yoshida)
-       state, info = kernel(rng_key, state, logprob_fn, step_size, inverse_mass_matrix, num_integration_steps)
+       state, info = kernel(rng_key, state, logprob_fn, step_size, inverse_mass_matrix)
 
     """
 
@@ -315,7 +321,7 @@ def window_adaptation(
         state, adaptation_state, info = update(
             rng_key, state, adaptation_state, adaptation_stage
         )
-        return ((state, adaptation_state), (state, adaptation_state, info))
+        return ((state, adaptation_state), (state, info, adaptation_state))
 
     def run(rng_key: PRNGKey, position: PyTree):
         init_state = algorithm.init(position, logprob_fn)
