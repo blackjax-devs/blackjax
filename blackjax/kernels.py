@@ -24,7 +24,13 @@ __all__ = [
 
 
 class adaptive_tempered_smc:
-    """Implements the (basic) user interface for the Adaptive Tempered SMC kernel."""
+    """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    """
 
     init = staticmethod(smc.tempered.init)
     kernel = staticmethod(smc.adaptive_tempered.kernel)
@@ -69,7 +75,14 @@ class adaptive_tempered_smc:
 
 
 class tempered_smc:
-    """Implements the (basic) user interface for the Adaptive Tempered SMC kernel."""
+    """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
+
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    """
 
     init = staticmethod(smc.tempered.init)
     kernel = staticmethod(smc.tempered.kernel)
@@ -129,7 +142,7 @@ class hmc:
 
     A new HMC kernel can be initialized and used with the following code:
 
-    .. code:
+    .. code::
 
         hmc = blackjax.hmc(logprob_fn step_size, inverse_mass_matrix, num_integration_steps)
         state = hmc.init(position)
@@ -137,14 +150,14 @@ class hmc:
 
     Kernels are not jit-compiled by default so you will need to do it manually:
 
-    .. code:
+    .. code::
 
        step = jax.jit(hmc.step)
        new_state, info = step(rng_key, state)
 
     Should you need to you can always use the base kernel directly:
 
-    .. code:
+    .. code::
 
        import blackjax.mcmc.integrators as integrators
 
@@ -152,6 +165,29 @@ class hmc:
        state = blackjax.hmc.init(position, logprob_fn)
        state, info = kernel(rng_key, state, logprob_fn, step_size, inverse_mass_matrix, num_integration_steps)
 
+    Parameters
+    ----------
+    logprob_fn
+        The logprobability density function we wish to draw samples from. This
+        is minus the potential function.
+    step_size
+        The value to use for the step size in the symplectic integrator.
+    inverse_mass_matrix
+        The value to use for the inverse mass matrix when drawing a value for
+        the momentum and computing the kinetic energy.
+    num_integration_steps
+        The number of steps we take with the symplectic integrator at each
+        sample step before returning a sample.
+    divergence_threshold
+        The absolute value of the difference in energy between two states above
+        which we say that the transition is divergent. The default value is
+        commonly found in other libraries, and yet is arbitrary.
+    integrator
+        (algorithm parameter) The symplectic integrator to use to integrate the trajectory.\
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
     """
 
     init = staticmethod(mcmc.hmc.init)
@@ -164,8 +200,8 @@ class hmc:
         inverse_mass_matrix: Array,
         num_integration_steps: int,
         *,
-        integrator: Callable = mcmc.integrators.velocity_verlet,
         divergence_threshold: int = 1000,
+        integrator: Callable = mcmc.integrators.velocity_verlet,
     ) -> SamplingAlgorithm:
 
         step = cls.kernel(integrator, divergence_threshold)
@@ -194,7 +230,7 @@ class nuts:
 
     A new NUTS kernel can be initialized and used with the following code:
 
-    .. code:
+    .. code::
 
         nuts = blackjax.nuts(logprob_fn step_size, inverse_mass_matrix)
         state = nuts.init(position)
@@ -202,20 +238,44 @@ class nuts:
 
     We can JIT-compile the step function for more speed:
 
-    .. code:
+    .. code::
 
         step = jax.jit(nuts.step)
         new_state, info = step(rng_key, state)
 
     You can always use the base kernel should you need to:
 
-    .. code:
+    .. code::
 
        import blackjax.mcmc.integrators as integrators
 
        kernel = blackjax.nuts.kernel(integrators.yoshida)
        state = blackjax.nuts.init(position, logprob_fn)
        state, info = kernel(rng_key, state, logprob_fn, step_size, inverse_mass_matrix)
+
+    Parameters
+    ----------
+    logprob_fn
+        The logprobability density function we wish to draw samples from. This
+        is minus the potential function.
+    step_size
+        The value to use for the step size in the symplectic integrator.
+    inverse_mass_matrix
+        The value to use for the inverse mass matrix when drawing a value for
+        the momentum and computing the kinetic energy.
+    max_num_doublings
+        The maximum number of times we double the length of the trajectory before
+        returning if no U-turn has been obserbed or no divergence has occured.
+    divergence_threshold
+        The absolute value of the difference in energy between two states above
+        which we say that the transition is divergent. The default value is
+        commonly found in other libraries, and yet is arbitrary.
+    integrator
+        (algorithm parameter) The symplectic integrator to use to integrate the trajectory.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -228,9 +288,9 @@ class nuts:
         step_size: float,
         inverse_mass_matrix: Array,
         *,
-        integrator: Callable = mcmc.integrators.velocity_verlet,
-        divergence_threshold: int = 1000,
         max_num_doublings: int = 10,
+        divergence_threshold: int = 1000,
+        integrator: Callable = mcmc.integrators.velocity_verlet,
     ) -> SamplingAlgorithm:
 
         step = cls.kernel(integrator, divergence_threshold, max_num_doublings)
@@ -291,8 +351,7 @@ def window_adaptation(
 
     Returns
     -------
-    A function that returns the last chain state and a sampling kernel with the
-    tuned parameter values from an initial state.
+    A function that returns the last chain state and a sampling kernel with the tuned parameter values from an initial state.
 
     """
 
@@ -355,7 +414,7 @@ class rmh:
 
     A new Gaussian Random Walk kernel can be initialized and used with the following code:
 
-    .. code:
+    .. code::
 
         rmh = blackjax.rmh(logprob_fn sigma)
         state = rmh.init(position)
@@ -363,10 +422,21 @@ class rmh:
 
     We can JIT-compile the step function for better performance
 
-    .. code:
+    .. code::
 
         step = jax.jit(rmh.step)
         new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    logprob_fn
+        The log density probability density function from which we wish to sample.
+    sigma
+        The value of the covariance matrix of the gaussian proposal distribution.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
 
     """
 
