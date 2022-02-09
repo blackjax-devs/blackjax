@@ -4,7 +4,7 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
-import blackjax.optimizers as optimizers
+import blackjax.adaptation as optimizers
 from blackjax.mcmc.hmc import HMCState
 
 __all__ = [
