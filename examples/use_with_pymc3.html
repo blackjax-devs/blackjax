@@ -331,57 +331,32 @@
 <h1>Use BlackJAX with PyMC3<a class="headerlink" href="#use-blackjax-with-pymc3" title="Permalink to this headline">¶</a></h1>
 <p>Author: Kaustubh Chaudhari</p>
 <p>BlackJAX can take any log-probability function as long as it is compatible with JAX’s JIT. In this notebook we show how we can use PyMC as a modeling language and BlackJAX as an inference library.</p>
-<p>For this notebook to run you will need to install PyMC3:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install pymc3
-</pre></div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Higher versions will have omnistaging disabled which will throw errors when using theano</span>
-<span class="o">!</span>pip install <span class="nv">jax</span><span class="o">==</span><span class="m">0</span>.2.10
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Looking in indexes: https://pypi.org/simple, https://pypi.ngc.nvidia.com
-Collecting jax==0.2.10
-  Downloading jax-0.2.10.tar.gz (589 kB)
-     |████████████████████████████████| 589 kB 170 kB/s 
-?25hRequirement already satisfied: numpy&gt;=1.12 in /home/kc611/anaconda3/lib/python3.8/site-packages (from jax==0.2.10) (1.21.1)
-Collecting absl-py
-  Downloading absl_py-0.13.0-py3-none-any.whl (132 kB)
-     |████████████████████████████████| 132 kB 112 kB/s 
-?25hCollecting opt_einsum
-  Downloading opt_einsum-3.3.0-py3-none-any.whl (65 kB)
-     |████████████████████████████████| 65 kB 120 kB/s 
-?25hRequirement already satisfied: six in /home/kc611/anaconda3/lib/python3.8/site-packages (from absl-py-&gt;jax==0.2.10) (1.12.0)
-Building wheels for collected packages: jax
-  Building wheel for jax (setup.py) ... ?25ldone
-?25h  Created wheel for jax: filename=jax-0.2.10-py3-none-any.whl size=679776 sha256=7dc83d3259a6fd548f0d859d4f88410777fe89b81c4c924670d9985883fcba40
-  Stored in directory: /tmp/pip-ephem-wheel-cache-43993739/wheels/42/76/93/4efdcc626990c35448e8163b3e988184f77a061ad0437f922d
-Successfully built jax
-Installing collected packages: opt-einsum, absl-py, jax
-Successfully installed absl-py-0.13.0 jax-0.2.10 opt-einsum-3.3.0
-</pre></div>
-</div>
-</div>
-</div>
+<p>This example relies on PyMC v4, see <a class="reference external" href="https://github.com/pymc-devs/pymc#installation">installation instructions</a> on the PyMC repository.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pymc3</span> <span class="k">as</span> <span class="nn">pm</span>
-<span class="kn">import</span> <span class="nn">pymc3.sampling_jax</span>
+<span class="kn">import</span> <span class="nn">pymc</span> <span class="k">as</span> <span class="nn">pm</span>
+<span class="kn">import</span> <span class="nn">pymc.sampling_jax</span>
+
+<span class="kn">import</span> <span class="nn">blackjax</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running on PyMC3 v</span><span class="si">{</span><span class="n">pm</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Running on PyMC3 v3.11.2
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/bin/ld: /tmp/tmpewbjudzh/tmp/tmpewbjudzh/source.o: in function `main&#39;:
+/tmp/tmpewbjudzh/source.c:6: undefined reference to `cblas_ddot&#39;
+collect2: error: ld returned 1 exit status
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/kc611/anaconda3/envs/blackjax/lib/python3.7/site-packages/pymc3/sampling_jax.py:24: UserWarning: This module is experimental.
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Running on PyMC3 v4.0.0b2
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/remi/.virtualenvs/blackjax/lib/python3.9/site-packages/aesara/link/jax/dispatch.py:86: UserWarning: JAX omnistaging couldn&#39;t be disabled: Disabling of omnistaging is no longer supported in JAX version 0.2.12 and higher: see https://github.com/google/jax/blob/main/design_notes/omnistaging.md.
+  warnings.warn(f&quot;JAX omnistaging couldn&#39;t be disabled: {e}&quot;)
+/home/remi/projects/pymc/pymc/sampling_jax.py:31: UserWarning: This module is experimental.
   warnings.warn(&quot;This module is experimental.&quot;)
 </pre></div>
 </div>
@@ -430,12 +405,10 @@ Successfully installed absl-py-0.13.0 jax-0.2.10 opt-einsum-3.3.0
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/kc611/anaconda3/envs/blackjax/lib/python3.7/site-packages/ipykernel_launcher.py:2: FutureWarning: In v4.0, pm.sample will return an `arviz.InferenceData` object instead of a `MultiTrace` by default. You can pass return_inferencedata=True or return_inferencedata=False to be safe and silence this warning.
-  
-Auto-assigning NUTS sampler...
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Auto-assigning NUTS sampler...
 Initializing NUTS using jitter+adapt_diag...
 Sequential sampling (1 chains in 1 job)
-NUTS: [theta, tau, mu]
+NUTS: [mu, tau, theta]
 </pre></div>
 </div>
 <div class="output text_html">
@@ -453,14 +426,14 @@ NUTS: [theta, tau, mu]
         }
     </style>
   <progress value='51000' class='' max='51000' style='width:300px; height:20px; vertical-align: middle;'></progress>
-  100.00% [51000/51000 00:53<00:00 Sampling chain 0, 0 divergences]
+  100.00% [51000/51000 00:29<00:00 Sampling chain 0, 0 divergences]
 </div>
-</div><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Sampling 1 chain for 1_000 tune and 50_000 draw iterations (1_000 + 50_000 draws total) took 54 seconds.
+</div><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Sampling 1 chain for 1_000 tune and 50_000 draw iterations (1_000 + 50_000 draws total) took 30 seconds.
 Only one chain was sampled, this makes it impossible to run some convergence checks
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 58.6 s, sys: 560 ms, total: 59.2 s
-Wall time: 1min
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 30.8 s, sys: 285 ms, total: 31.1 s
+Wall time: 32.9 s
 </pre></div>
 </div>
 </div>
@@ -474,16 +447,20 @@ Wall time: 1min
 
 <span class="k">with</span> <span class="n">model</span><span class="p">:</span>
     <span class="n">hierarchical_trace_jax</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">sampling_jax</span><span class="o">.</span><span class="n">sample_numpyro_nuts</span><span class="p">(</span>
-        <span class="mi">50_000</span><span class="p">,</span> <span class="n">target_accept</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">1</span>
+        <span class="mi">50_000</span><span class="p">,</span> <span class="n">target_accept</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">progress_bar</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Compiling...
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>sample: 100%|██████████| 51000/51000 [02:57&lt;00:00, 286.59it/s]
+Compilation time =  0 days 00:00:00.102013
+Sampling...
+Sampling time =  0 days 00:00:03.760742
+Transforming variables...
+Transformation time =  0 days 00:00:00.020388
+CPU times: user 3.98 s, sys: 43.6 ms, total: 4.03 s
+Wall time: 3.99 s
 </pre></div>
 </div>
 </div>
@@ -493,42 +470,14 @@ Wall time: 1min
 <h2>Sampling using BlackJax<a class="headerlink" href="#sampling-using-blackjax" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="configuring-the-model-for-blackjax">
 <h3>Configuring the model for BlackJax<a class="headerlink" href="#configuring-the-model-for-blackjax" title="Permalink to this headline">¶</a></h3>
+<p>We first need to transpile the PyMC model into a logprobability density function that is compatible with JAX:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">theano.graph.fg</span> <span class="kn">import</span> <span class="n">FunctionGraph</span>
-<span class="kn">from</span> <span class="nn">theano.link.jax.jax_dispatch</span> <span class="kn">import</span> <span class="n">jax_funcify</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rvs</span> <span class="o">=</span> <span class="p">[</span><span class="n">rv</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">rv</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">value_vars</span><span class="p">]</span>
+<span class="n">init_position_dict</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">compute_initial_point</span><span class="p">()</span>
+<span class="n">init_position</span> <span class="o">=</span> <span class="p">[</span><span class="n">init_position_dict</span><span class="p">[</span><span class="n">rv</span><span class="p">]</span> <span class="k">for</span> <span class="n">rv</span> <span class="ow">in</span> <span class="n">rvs</span><span class="p">]</span>
 
-<span class="n">seed</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1234</span><span class="p">)</span>
-<span class="n">chains</span> <span class="o">=</span> <span class="mi">1</span>
-
-<span class="c1"># Get the FunctionGraph of the model.</span>
-<span class="n">fgraph</span> <span class="o">=</span> <span class="n">FunctionGraph</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">free_RVs</span><span class="p">,</span> <span class="p">[</span><span class="n">model</span><span class="o">.</span><span class="n">logpt</span><span class="p">])</span>
-
-<span class="c1"># Jax funcify builds Jax variant of the FunctionGraph.</span>
-<span class="n">fns</span> <span class="o">=</span> <span class="n">jax_funcify</span><span class="p">(</span><span class="n">fgraph</span><span class="p">)</span>
-<span class="n">logp_fn_jax</span> <span class="o">=</span> <span class="n">fns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-<span class="c1"># Now we build a Jax variant of the initial state/inputs to the model.</span>
-<span class="n">rv_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">rv</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">rv</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">free_RVs</span><span class="p">]</span>
-<span class="n">init_state</span> <span class="o">=</span> <span class="p">[</span><span class="n">model</span><span class="o">.</span><span class="n">test_point</span><span class="p">[</span><span class="n">rv_name</span><span class="p">]</span> <span class="k">for</span> <span class="n">rv_name</span> <span class="ow">in</span> <span class="n">rv_names</span><span class="p">]</span>
-<span class="n">init_state_batched</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">chains</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">init_state</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/kc611/anaconda3/envs/blackjax/lib/python3.7/site-packages/jax/lib/xla_bridge.py:130: UserWarning: No GPU/TPU found, falling back to CPU.
-  warnings.warn(&#39;No GPU/TPU found, falling back to CPU.&#39;)
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Then we transform the Jaxified input and FunctionGraph to a BlackJax NUTS sampler</span>
-<span class="n">logprob</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">logp_fn_jax</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">)</span>
-<span class="n">initial_position</span> <span class="o">=</span> <span class="n">init_state</span>
+<span class="n">logprob_fn</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">sampling_jax</span><span class="o">.</span><span class="n">get_jaxified_logp</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -540,12 +489,10 @@ Wall time: 1min
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 
-<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span>
-    <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span>
-    <span class="n">logprob</span><span class="p">,</span>
-    <span class="mi">1000</span>
-<span class="p">)</span>
-<span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">)</span>
+<span class="n">seed</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1234</span><span class="p">)</span>
+
+<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">init_position</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
@@ -565,8 +512,8 @@ Wall time: 1min
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 18.3 s, sys: 126 ms, total: 18.5 s
-Wall time: 18.5 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 5.21 s, sys: 10.9 ms, total: 5.22 s
+Wall time: 5.17 s
 </pre></div>
 </div>
 </div>
