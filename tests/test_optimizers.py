@@ -3,7 +3,7 @@ import jax
 import jax.numpy as jnp
 from absl.testing import absltest
 
-import blackjax.optimizers as optimizers
+import blackjax.adaptation.optimizers as optimizers
 
 
 class DualAveragingTest(chex.TestCase):
