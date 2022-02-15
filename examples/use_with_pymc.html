@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Use BlackJAX with PyMC3 &#8212; Blackjax</title>
+    <title>Use BlackJAX with PyMC &#8212; Blackjax</title>
     
   <link href="../_static/css/theme.css" rel="stylesheet">
   <link href="../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
@@ -34,13 +34,14 @@
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
     <script src="../_static/togglebutton.js"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
     <script src="../_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Use BlackJAX with TFP" href="use_with_tfp.html" />
-    <link rel="prev" title="Use BlackJAX with Numpyro" href="use_with_numpyro.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -87,17 +88,17 @@
   Blackjax by example
  </span>
 </p>
-<ul class="current nav bd-sidenav">
- <li class="toctree-l1 current active has-children">
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1 has-children">
   <a class="reference internal" href="../examples.html">
    Examples
   </a>
-  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
   <label for="toctree-checkbox-1">
    <i class="fas fa-chevron-down">
    </i>
   </label>
-  <ul class="current">
+  <ul>
    <li class="toctree-l2">
     <a class="reference internal" href="Introduction.html">
      A quick introduction to Blackjax
@@ -116,11 +117,6 @@
    <li class="toctree-l2">
     <a class="reference internal" href="use_with_numpyro.html">
      Use BlackJAX with Numpyro
-    </a>
-   </li>
-   <li class="toctree-l2 current active">
-    <a class="current reference internal" href="#">
-     Use BlackJAX with PyMC3
     </a>
    </li>
    <li class="toctree-l2">
@@ -271,7 +267,7 @@
         <div class="col-12 col-md-9 pl-md-3 pr-md-0">
             <!-- Table of contents that is only displayed when printing the page -->
             <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Use BlackJAX with PyMC3</h1>
+                <h1>Use BlackJAX with PyMC</h1>
                 <!-- Table of contents -->
                 <div id="print-main-content">
                     <div id="jb-print-toc">
@@ -327,8 +323,8 @@
             
               <div>
                 
-  <div class="tex2jax_ignore mathjax_ignore section" id="use-blackjax-with-pymc3">
-<h1>Use BlackJAX with PyMC3<a class="headerlink" href="#use-blackjax-with-pymc3" title="Permalink to this headline">¶</a></h1>
+  <div class="tex2jax_ignore mathjax_ignore section" id="use-blackjax-with-pymc">
+<h1>Use BlackJAX with PyMC<a class="headerlink" href="#use-blackjax-with-pymc" title="Permalink to this headline">¶</a></h1>
 <p>Author: Kaustubh Chaudhari</p>
 <p>BlackJAX can take any log-probability function as long as it is compatible with JAX’s JIT. In this notebook we show how we can use PyMC as a modeling language and BlackJAX as an inference library.</p>
 <p>This example relies on PyMC v4, see <a class="reference external" href="https://github.com/pymc-devs/pymc#installation">installation instructions</a> on the PyMC repository.</p>
@@ -341,23 +337,7 @@
 
 <span class="kn">import</span> <span class="nn">blackjax</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running on PyMC3 v</span><span class="si">{</span><span class="n">pm</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/bin/ld: /tmp/tmpewbjudzh/tmp/tmpewbjudzh/source.o: in function `main&#39;:
-/tmp/tmpewbjudzh/source.c:6: undefined reference to `cblas_ddot&#39;
-collect2: error: ld returned 1 exit status
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Running on PyMC3 v4.0.0b2
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/remi/.virtualenvs/blackjax/lib/python3.9/site-packages/aesara/link/jax/dispatch.py:86: UserWarning: JAX omnistaging couldn&#39;t be disabled: Disabling of omnistaging is no longer supported in JAX version 0.2.12 and higher: see https://github.com/google/jax/blob/main/design_notes/omnistaging.md.
-  warnings.warn(f&quot;JAX omnistaging couldn&#39;t be disabled: {e}&quot;)
-/home/remi/projects/pymc/pymc/sampling_jax.py:31: UserWarning: This module is experimental.
-  warnings.warn(&quot;This module is experimental.&quot;)
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running on PyMC v</span><span class="si">{</span><span class="n">pm</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -404,39 +384,6 @@ collect2: error: ld returned 1 exit status
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Auto-assigning NUTS sampler...
-Initializing NUTS using jitter+adapt_diag...
-Sequential sampling (1 chains in 1 job)
-NUTS: [mu, tau, theta]
-</pre></div>
-</div>
-<div class="output text_html">
-<div>
-    <style>
-        /* Turns off some styling */
-        progress {
-            /* gets rid of default border in Firefox and Opera. */
-            border: none;
-            /* Needs to be in here for Safari polyfill so background images work as expected. */
-            background-size: auto;
-        }
-        .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
-            background: #F44336;
-        }
-    </style>
-  <progress value='51000' class='' max='51000' style='width:300px; height:20px; vertical-align: middle;'></progress>
-  100.00% [51000/51000 00:29<00:00 Sampling chain 0, 0 divergences]
-</div>
-</div><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Sampling 1 chain for 1_000 tune and 50_000 draw iterations (1_000 + 50_000 draws total) took 30 seconds.
-Only one chain was sampled, this makes it impossible to run some convergence checks
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 30.8 s, sys: 285 ms, total: 31.1 s
-Wall time: 32.9 s
-</pre></div>
-</div>
-</div>
 </div>
 </div>
 <div class="section" id="sampling-using-pymc-jax-numpyro-nuts-sampler">
@@ -452,18 +399,6 @@ Wall time: 32.9 s
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Compiling...
-Compilation time =  0 days 00:00:00.102013
-Sampling...
-Sampling time =  0 days 00:00:03.760742
-Transforming variables...
-Transformation time =  0 days 00:00:00.020388
-CPU times: user 3.98 s, sys: 43.6 ms, total: 4.03 s
-Wall time: 3.99 s
-</pre></div>
-</div>
-</div>
 </div>
 </div>
 <div class="section" id="sampling-using-blackjax">
@@ -473,11 +408,22 @@ Wall time: 3.99 s
 <p>We first need to transpile the PyMC model into a logprobability density function that is compatible with JAX:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rvs</span> <span class="o">=</span> <span class="p">[</span><span class="n">rv</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">rv</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">value_vars</span><span class="p">]</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pymc.sampling_jax</span> <span class="kn">import</span> <span class="n">get_jaxified_graph</span>
+
+<span class="n">rvs</span> <span class="o">=</span> <span class="p">[</span><span class="n">rv</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">rv</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">value_vars</span><span class="p">]</span>
 <span class="n">init_position_dict</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">compute_initial_point</span><span class="p">()</span>
 <span class="n">init_position</span> <span class="o">=</span> <span class="p">[</span><span class="n">init_position_dict</span><span class="p">[</span><span class="n">rv</span><span class="p">]</span> <span class="k">for</span> <span class="n">rv</span> <span class="ow">in</span> <span class="n">rvs</span><span class="p">]</span>
 
-<span class="n">logprob_fn</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">sampling_jax</span><span class="o">.</span><span class="n">get_jaxified_logp</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_jaxified_logp</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+
+    <span class="n">logp_fn</span> <span class="o">=</span> <span class="n">get_jaxified_graph</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">value_vars</span><span class="p">,</span> <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">model</span><span class="o">.</span><span class="n">logpt</span><span class="p">()])</span>
+
+    <span class="k">def</span> <span class="nf">logp_fn_wrap</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">logp_fn</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">logp_fn_wrap</span>
+
+<span class="n">logprob_fn</span> <span class="o">=</span> <span class="n">get_jaxified_logp</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -511,12 +457,6 @@ Wall time: 3.99 s
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 5.21 s, sys: 10.9 ms, total: 5.22 s
-Wall time: 5.17 s
-</pre></div>
-</div>
-</div>
 </div>
 </div>
 </div>
@@ -527,21 +467,7 @@ Wall time: 5.17 s
               
             
                 <!-- Previous / next buttons -->
-<div class='prev-next-area'> 
-    <a class='left-prev' id="prev-link" href="use_with_numpyro.html" title="previous page">
-        <i class="fas fa-angle-left"></i>
-        <div class="prev-next-info">
-            <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Use BlackJAX with Numpyro</p>
-        </div>
-    </a>
-    <a class='right-next' id="next-link" href="use_with_tfp.html" title="next page">
-    <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Use BlackJAX with TFP</p>
-    </div>
-    <i class="fas fa-angle-right"></i>
-    </a>
+<div class='prev-next-area'>
 </div>
             
         </div>
