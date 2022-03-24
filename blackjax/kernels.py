@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Union
+from typing import Callable, Dict, Sequence, Union
 
 import jax
 
@@ -15,6 +15,7 @@ __all__ = [
     "rmh",
     "tempered_smc",
     "window_adaptation",
+    "imcmc",
 ]
 
 
@@ -461,5 +462,69 @@ class rmh:
                 logprob_fn,
                 sigma,
             )
+
+        return SamplingAlgorithm(init_fn, step_fn)
+
+
+class imcmc:
+    """Implements the (basic) user interface for the involutive framework kernel
+
+    Examples
+    --------
+
+    A new involutive framework kernel can be initialized and used with the following code:
+
+    .. code::
+
+        imcmc = blackjax.imcmc(logprob_fn, aux_logprob_fn, aux_generator, involutions)
+        state = imcmc.init(position, auxiliary)
+        new_state, info = imcmc.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(imcmc.step)
+        new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    logprob_fn
+        The log density probability density function from which we wish to sample.
+    aux_logprob_fn
+
+    aux_generator
+
+    involutions
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(mcmc.imcmc.init)
+    kernel = staticmethod(mcmc.imcmc.kernel)
+
+    def __new__(
+        cls,
+        logprob_fn: Callable,
+        aux_logprob_fn: Callable,
+        aux_generator: Callable,
+        involutions: Sequence[Callable],
+    ) -> SamplingAlgorithm:
+        def potential_fn(x):
+            return -logprob_fn(x)
+
+        def aux_potential_fn(x):
+            return -aux_logprob_fn(x)
+
+        step = cls.kernel(aux_generator, aux_potential_fn, involutions)
+
+        def init_fn(position: PyTree, auxiliary: Dict):
+            return cls.init(position, potential_fn, auxiliary)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return step(rng_key, state)
 
         return SamplingAlgorithm(init_fn, step_fn)
