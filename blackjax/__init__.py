@@ -2,6 +2,7 @@ from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
 from .kernels import (
     adaptive_tempered_smc,
+    elliptical_slice,
     hmc,
     mala,
     nuts,
@@ -19,6 +20,7 @@ __all__ = [
     "nuts",
     "orbital_hmc",
     "rmh",
+    "elliptical_slice",
     "window_adaptation",  # mcmc adaptation
     "adaptive_tempered_smc",  # smc
     "tempered_smc",

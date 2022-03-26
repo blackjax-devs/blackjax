@@ -151,6 +151,13 @@ normal_test_cases = [
         "num_sampling_steps": 20_000,
         "burnin": 2_000,
     },
+    {
+        "algorithm": blackjax.elliptical_slice,
+        "initial_position": 1.0,
+        "parameters": {"cov": jnp.array([2.0**2]), "mean": 1.0},
+        "num_sampling_steps": 20_000,
+        "burnin": 5_000,
+    },
 ]
 
 
@@ -170,6 +177,8 @@ class UnivariateNormalTest(chex.TestCase):
         self, algorithm, initial_position, parameters, num_sampling_steps, burnin
     ):
         algo = algorithm(self.normal_logprob, **parameters)
+        if algorithm == blackjax.elliptical_slice:
+            algo = algorithm(lambda _: 1.0, **parameters)
         initial_state = algo.init(initial_position)
 
         kernel = algo.step

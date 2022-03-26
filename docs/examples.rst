@@ -12,3 +12,4 @@ Examples
    examples/use_with_tfp.ipynb
    examples/HierarchicalBNN.ipynb
    examples/PeriodicOrbitalMCMC.ipynb
+   examples/GP_EllipticalSliceSampler.ipynb

@@ -633,3 +633,63 @@ class orbital_hmc:
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
+
+
+class elliptical_slice:
+    """Implements the (basic) user interface for the Elliptical Slice sampling kernel
+
+    Examples
+    --------
+
+    A new Elliptical Slice sampling kernel can be initialized and used with the following code:
+
+    .. code::
+
+        ellip_slice = blackjax.elliptical_slice(loglikelihood_fn, cov_matrix)
+        state = ellip_slice.init(position)
+        new_state, info = ellip_slice.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(ellip_slice.step)
+        new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    loglikelihood_fn
+        Only the log likelihood function from the posterior distributon we wish to sample.
+    cov_matrix
+        The value of the covariance matrix of the gaussian prior distribution from the posterior we wish to sample.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(mcmc.elliptical_slice.init)
+    kernel = staticmethod(mcmc.elliptical_slice.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        loglikelihood_fn: Callable,
+        *,
+        mean: Array,
+        cov: Array,
+    ) -> SamplingAlgorithm:
+
+        step = cls.kernel(cov, mean)
+
+        def init_fn(position: PyTree):
+            return cls.init(position, loglikelihood_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return step(
+                rng_key,
+                state,
+                loglikelihood_fn,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)
