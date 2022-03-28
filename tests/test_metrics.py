@@ -42,8 +42,10 @@ class GaussianEuclideanMetricsTest(chex.TestCase):
         velocity = inverse_mass_matrix * momentum_val
         expected_kinetic_energy_val = 0.5 * velocity * momentum_val
 
-        assert momentum_val == expected_momentum_val
-        assert kinetic_energy_val == expected_kinetic_energy_val
+        np.testing.assert_allclose(expected_momentum_val, momentum_val, 1e-6)
+        np.testing.assert_allclose(
+            kinetic_energy_val, expected_kinetic_energy_val, 1e-6
+        )
 
     @chex.all_variants(with_pmap=False)
     def test_gaussian_euclidean_dim_2(self):
@@ -62,8 +64,10 @@ class GaussianEuclideanMetricsTest(chex.TestCase):
         velocity = jnp.dot(inverse_mass_matrix, momentum_val)
         expected_kinetic_energy_val = 0.5 * jnp.matmul(velocity, momentum_val)
 
-        np.testing.assert_allclose(expected_momentum_val, momentum_val)
-        np.testing.assert_allclose(kinetic_energy_val, expected_kinetic_energy_val)
+        np.testing.assert_allclose(expected_momentum_val, momentum_val, 1e-6)
+        np.testing.assert_allclose(
+            kinetic_energy_val, expected_kinetic_energy_val, 1e-6
+        )
 
 
 if __name__ == "__main__":
