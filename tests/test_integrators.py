@@ -42,7 +42,7 @@ def PlanetaryMotion(inv_mass_matrix):
 
     def kinetic_energy(p):
         z = jnp.stack([p["x"], p["y"]], axis=-1)
-        return 0.5 * jnp.dot(inv_mass_matrix, z ** 2)
+        return 0.5 * jnp.dot(inv_mass_matrix, z**2)
 
     return potential_energy, kinetic_energy
 

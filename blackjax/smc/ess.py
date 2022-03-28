@@ -29,7 +29,7 @@ def ess(log_weights: jnp.ndarray, log: bool = True) -> float:
         w2: jnp.ndarray = jnp.exp(2 * log_weights)
         res = 2 * jnp.log(w.sum()) - jnp.log(w2.sum())
     else:
-        res = jnp.sum(w) ** 2 / jnp.sum(w ** 2)
+        res = jnp.sum(w) ** 2 / jnp.sum(w**2)
     return res
 
 

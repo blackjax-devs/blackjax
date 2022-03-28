@@ -33,7 +33,7 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
         np.testing.assert_almost_equal(log_ess_val, log_normalized_ess_val, decimal=3)
         np.testing.assert_almost_equal(ess_val, normalized_ess_val, decimal=3)
         np.testing.assert_almost_equal(
-            ess_val, 1 / np.sum(normalized_w ** 2), decimal=3
+            ess_val, 1 / np.sum(normalized_w**2), decimal=3
         )
 
     @chex.all_variants(with_pmap=False)

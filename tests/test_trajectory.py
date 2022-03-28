@@ -157,7 +157,7 @@ class TrajectoryTest(chex.TestCase):
                 initial_state,
                 direction,
                 termination_state,
-                2 ** tree_depth,
+                2**tree_depth,
                 step_size,
                 initial_energy,
             )
@@ -206,7 +206,7 @@ class TrajectoryTest(chex.TestCase):
         rng_key = jax.random.PRNGKey(0)
 
         def potential_fn(x):
-            return 0.5 * x ** 2
+            return 0.5 * x**2
 
         position = 0.0
         inverse_mass_matrix = jnp.array([1.0])

@@ -35,8 +35,7 @@ class GaussianEuclideanMetricsTest(chex.TestCase):
         momentum_val = self.variant(momentum)(self.key, arbitrary_position)
 
         # 2 is square root inverse of 1/4
-        # -0.20584235 is random value returned with random key
-        expected_momentum_val = 2 * -0.20584235
+        expected_momentum_val = 2 * random.normal(self.key)
 
         kinetic_energy_val = self.variant(kinetic_energy)(momentum_val)
         velocity = inverse_mass_matrix * momentum_val
@@ -54,8 +53,8 @@ class GaussianEuclideanMetricsTest(chex.TestCase):
         arbitrary_position = jnp.asarray([12345, 23456], dtype=self.dtype)
         momentum_val = self.variant(momentum)(self.key, arbitrary_position)
 
-        expected_momentum_val = jnp.asarray([3, 2]) * jnp.asarray(
-            [-0.784766, 0.8564448]
+        expected_momentum_val = jnp.asarray([3, 2]) * random.normal(
+            self.key, shape=(2,)
         )
 
         kinetic_energy_val = self.variant(kinetic_energy)(momentum_val)
