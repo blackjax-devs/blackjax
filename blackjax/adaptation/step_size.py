@@ -249,7 +249,7 @@ def find_reasonable_step_size(
         rng_key, direction, _, step_size = rss_state
         _, rng_key = jax.random.split(rng_key)
 
-        step_size = (2.0 ** direction) * step_size
+        step_size = (2.0**direction) * step_size
         kernel = kernel_generator(step_size)
         _, info = kernel(rng_key, reference_state)
 

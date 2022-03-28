@@ -547,7 +547,7 @@ def dynamic_multiplicative_expansion(
                 start_state,
                 direction,
                 termination_state,
-                rate ** step,
+                rate**step,
                 step_size,
                 initial_energy,
             )
