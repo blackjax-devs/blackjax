@@ -5,8 +5,8 @@ test:
 
 # We launch the package release by tagging the master branch with the package's
 # new version number. The version number is read from `blackjax/__init__.py`
-publish:
-	git tag -a $(LIB_VERSION) -m $(LIB_VERSION)
+release:
+	git tag -a $(PKG_VERSION) -m $(PKG_VERSION)
 	git push --tag
 
 
