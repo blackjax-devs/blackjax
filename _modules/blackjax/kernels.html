@@ -276,6 +276,7 @@ title="Source repository"
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;adaptive_tempered_smc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;hmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mala&quot;</span><span class="p">,</span>
     <span class="s2">&quot;nuts&quot;</span><span class="p">,</span>
     <span class="s2">&quot;rmh&quot;</span><span class="p">,</span>
     <span class="s2">&quot;tempered_smc&quot;</span><span class="p">,</span>
@@ -483,6 +484,77 @@ title="Source repository"
                 <span class="n">inverse_mass_matrix</span><span class="p">,</span>
                 <span class="n">num_integration_steps</span><span class="p">,</span>
             <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="mala"><a class="viewcode-back" href="../../sampling.html#blackjax.mala">[docs]</a><span class="k">class</span> <span class="nc">mala</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the MALA kernel.</span>
+
+<span class="sd">    The general mala kernel (:meth:`blackjax.mcmc.mala.kernel`, alias `blackjax.mala.kernel`) can be</span>
+<span class="sd">    cumbersome to manipulate. Since most users only need to specify the kernel</span>
+<span class="sd">    parameters at initialization time, we provide a helper function that</span>
+<span class="sd">    specializes the general kernel.</span>
+
+<span class="sd">    We also add the general kernel and state generator as an attribute to this class so</span>
+<span class="sd">    users only need to pass `blackjax.mala` to SMC, adaptation, etc. algorithms.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    A new MALA kernel can be initialized and used with the following code:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        mala = blackjax.mala(logprob_fn, step_size)</span>
+<span class="sd">        state = mala.init(position)</span>
+<span class="sd">        new_state, info = mala.step(rng_key, state)</span>
+
+<span class="sd">    Kernels are not jit-compiled by default so you will need to do it manually:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">       step = jax.jit(mala.step)</span>
+<span class="sd">       new_state, info = step(rng_key, state)</span>
+
+<span class="sd">    Should you need to you can always use the base kernel directly:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">       kernel = blackjax.mala.kernel(logprob_fn)</span>
+<span class="sd">       state = blackjax.mala.init(position, logprob_fn)</span>
+<span class="sd">       state, info = kernel(rng_key, state, logprob_fn, step_size)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logprob_fn</span>
+<span class="sd">        The logprobability density function we wish to draw samples from. This</span>
+<span class="sd">        is minus the potential function.</span>
+<span class="sd">    step_size</span>
+<span class="sd">        The value to use for the step size in the symplectic integrator.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mala</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mala</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">logprob_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+
+        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 

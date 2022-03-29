@@ -269,6 +269,11 @@ title="Source repository"
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mala">
+   MALA
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#nuts">
    NUTS
   </a>
@@ -305,6 +310,11 @@ title="Source repository"
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#hmc">
    HMC
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mala">
+   MALA
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
@@ -346,13 +356,16 @@ title="Source repository"
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.nuts" title="blackjax.nuts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nuts</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the nuts kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.rmh" title="blackjax.rmh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mala" title="blackjax.mala"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mala</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the MALA kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.rmh" title="blackjax.rmh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the gaussian random walk kernel</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.tempered_smc" title="blackjax.tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.tempered_smc" title="blackjax.tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptive_tempered_smc" title="blackjax.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptive_tempered_smc" title="blackjax.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
 </tbody>
@@ -424,6 +437,51 @@ sample step before returning a sample.</p></li>
 which we say that the transition is divergent. The default value is
 commonly found in other libraries, and yet is arbitrary.</p></li>
 <li><p><strong>integrator</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – (algorithm parameter) The symplectic integrator to use to integrate the trajectory.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="mala">
+<h2>MALA<a class="headerlink" href="#mala" title="Permalink to this headline">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.mala">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mala</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprob_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#mala"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mala" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the MALA kernel.</p>
+<p>The general mala kernel (<code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.mala.kernel()</span></code>, alias <cite>blackjax.mala.kernel</cite>) can be
+cumbersome to manipulate. Since most users only need to specify the kernel
+parameters at initialization time, we provide a helper function that
+specializes the general kernel.</p>
+<p>We also add the general kernel and state generator as an attribute to this class so
+users only need to pass <cite>blackjax.mala</cite> to SMC, adaptation, etc. algorithms.</p>
+<p class="rubric">Examples</p>
+<p>A new MALA kernel can be initialized and used with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mala</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mala</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">mala</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mala</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Kernels are not jit-compiled by default so you will need to do it manually:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">mala</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Should you need to you can always use the base kernel directly:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mala</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mala</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
+<span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logprob_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – The logprobability density function we wish to draw samples from. This
+is minus the potential function.</p></li>
+<li><p><strong>step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The value to use for the step size in the symplectic integrator.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
