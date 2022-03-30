@@ -77,6 +77,7 @@ class LinearRegressionTest(chex.TestCase):
             logposterior_fn,
             case["num_warmup_steps"],
             is_mass_matrix_diagonal,
+            progress_bar=True,
             **case["parameters"],
         )
         state, kernel, _ = warmup.run(
