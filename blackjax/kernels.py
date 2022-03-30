@@ -1,11 +1,13 @@
 from typing import Callable, Dict, Union
 
 import jax
+import jax.numpy as jnp
 
 import blackjax.adaptation as adaptation
 import blackjax.mcmc as mcmc
 import blackjax.smc as smc
 from blackjax.base import AdaptationAlgorithm, SamplingAlgorithm
+from blackjax.progress_bar import progress_bar_scan
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = [
@@ -389,6 +391,7 @@ def window_adaptation(
     is_mass_matrix_diagonal: bool = True,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.65,
+    progress_bar: bool = False,
     **parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the parameters of algorithms in the HMC family.
@@ -417,6 +420,8 @@ def window_adaptation(
         The initial step size used in the algorithm.
     target_acceptance_rate
         The acceptance rate that we target during step size adaptation.
+    progress_bar
+        Whether we should display a progress bar.
     **parameters
         The extra parameters to pass to the algorithm, e.g. the number of
         integration steps for HMC.
@@ -449,9 +454,8 @@ def window_adaptation(
         target_acceptance_rate=target_acceptance_rate,
     )
 
-    @jax.jit
     def one_step(carry, xs):
-        rng_key, adaptation_stage = xs
+        _, rng_key, adaptation_stage = xs
         state, adaptation_state = carry
         state, adaptation_state, info = update(
             rng_key, state, adaptation_state, adaptation_stage
@@ -462,11 +466,17 @@ def window_adaptation(
         init_state = algorithm.init(position, logprob_fn)
         init_warmup_state = init(init_state, initial_step_size)
 
+        if progress_bar:
+            print("Running window adaptation")
+            one_step_ = jax.jit(progress_bar_scan(num_steps)(one_step))
+        else:
+            one_step_ = jax.jit(one_step)
+
         keys = jax.random.split(rng_key, num_steps)
         last_state, warmup_chain = jax.lax.scan(
-            one_step,
+            one_step_,
             (init_state, init_warmup_state),
-            (keys, schedule),
+            (jnp.arange(num_steps), keys, schedule),
         )
         last_chain_state, last_warmup_state = last_state
 
