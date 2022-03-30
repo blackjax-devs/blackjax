@@ -12,6 +12,7 @@ Sampling
   mala
   orbital_hmc
   rmh
+  sgld
   tempered_smc
   adaptive_tempered_smc
 
@@ -77,6 +78,11 @@ RMH
 ~~~
 
 .. autoclass:: blackjax.rmh
+
+Stochastic Gradient Langeving Dynamics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: blackjax.sgld
 
 Tempered SMC
 ~~~~~~~~~~~~
