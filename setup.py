@@ -37,8 +37,6 @@ def get_version(rel_path):
         raise RuntimeError("Unable to find version string.")
 
 
-INSTALL_REQS = read("requirements.txt").splitlines()
-
 setuptools.setup(
     name="blackjax",
     author="The BlackJAX team",
@@ -46,7 +44,7 @@ setuptools.setup(
     description="Flexible and fast inference in Python",
     long_description=long_description,
     packages=setuptools.find_packages(),
-    install_requires=INSTALL_REQS,
+    install_requires=[],
     long_description_content_type="text/markdown",
     keywords="probabilistic machine learning bayesian statistics sampling algorithms",
     license="Apache License 2.0",
