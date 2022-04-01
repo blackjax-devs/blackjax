@@ -1,0 +1,7 @@
+-e ./
+pre-commit
+pytest
+pytest-benchmark
+pytest-cov
+pytest-xdist
+chex

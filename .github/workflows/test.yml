@@ -23,7 +23,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install .
           pip install -r requirements-jax.txt
-          less requirements-dev.txt | grep 'pytest\|chex' | xargs -i -t pip install {}
+          less requirements.txt | grep 'pytest\|chex' | xargs -i -t pip install {}
       - name: Run the tests with pytest
         run: |
           pytest -n 4 -vv -m "not benchmark" --cov=blackjax --cov-report=xml --cov-report=term tests
@@ -51,7 +51,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install .
           pip install -r requirements-jax.txt
-          less requirements-dev.txt | grep 'pytest\|chex' | xargs -i -t pip install {}
+          less requirements.txt | grep 'pytest\|chex' | xargs -i -t pip install {}
       - name: Run the benchmarks with pytest-benchmark
         run: |
           pytest -n 4 -vv -m benchmark --cov=blackjax --cov-report=xml --cov-report=term tests
