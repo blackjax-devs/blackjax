@@ -21,6 +21,7 @@ class MALAState(NamedTuple):
     """
 
     position: PyTree
+    logprob: float
     logprob_grad: PyTree
 
 
@@ -43,9 +44,9 @@ class MALAInfo(NamedTuple):
 
 
 def init(position: PyTree, logprob_fn: Callable) -> MALAState:
-    grad_fn = jax.grad(logprob_fn)
-    logprob_grad = grad_fn(position)
-    return MALAState(position, logprob_grad)
+    grad_fn = jax.value_and_grad(logprob_fn)
+    logprob, logprob_grad = grad_fn(position)
+    return MALAState(position, logprob, logprob_grad)
 
 
 def kernel():
@@ -72,7 +73,7 @@ def kernel():
         TODO expand the docstring.
 
         """
-        grad_fn = jax.grad(logprob_fn)
+        grad_fn = jax.value_and_grad(logprob_fn)
         integrator = overdamped_langevin(grad_fn)
 
         key_integrator, key_rmh = jax.random.split(rng_key)
@@ -80,8 +81,8 @@ def kernel():
         new_state = integrator(key_integrator, state, step_size)
 
         delta = (
-            logprob_fn(new_state.position)
-            - logprob_fn(state.position)
+            new_state.logprob
+            - state.logprob
             + transition_probability(new_state, state, step_size)
             - transition_probability(state, new_state, step_size)
         )

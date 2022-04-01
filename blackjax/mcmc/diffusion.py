@@ -11,6 +11,7 @@ __all__ = ["overdamped_langevin"]
 
 class DiffusionState(NamedTuple):
     position: PyTree
+    logprob: float
     logprob_grad: PyTree
 
 
@@ -24,7 +25,7 @@ def overdamped_langevin(logprob_grad_fn):
     """Euler solver for overdamped Langevin diffusion."""
 
     def one_step(rng_key, state: DiffusionState, step_size: float, batch: tuple = ()):
-        position, logprob_grad = state
+        position, _, logprob_grad = state
         noise = generate_gaussian_noise(rng_key, position)
         position = jax.tree_util.tree_multimap(
             lambda p, g, n: p + step_size * g + jnp.sqrt(2 * step_size) * n,
@@ -33,7 +34,7 @@ def overdamped_langevin(logprob_grad_fn):
             noise,
         )
 
-        logprob_grad = logprob_grad_fn(position, *batch)
-        return DiffusionState(position, logprob_grad)
+        logprob, logprob_grad = logprob_grad_fn(position, *batch)
+        return DiffusionState(position, logprob, logprob_grad)
 
     return one_step
