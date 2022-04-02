@@ -18,6 +18,7 @@ __all__ = [
     "tempered_smc",
     "window_adaptation",
     "pathfinder"
+    "pathfinder_adaptation",
 ]
 
 
@@ -447,7 +448,7 @@ def window_adaptation(
     schedule = adaptation.window_adaptation.schedule(num_steps)
     init, update, final = adaptation.window_adaptation.base(
         kernel_factory,
-        is_mass_matrix_diagonal,
+        logprob_fn,
         target_acceptance_rate=target_acceptance_rate,
     )
 
@@ -594,3 +595,106 @@ class pathfinder:
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
+
+def pathfinder_adaptation(
+    algorithm: Union[hmc, nuts],
+    logprob_fn: Callable,
+    num_steps: int = 400,
+    initial_step_size: float = 1.0,
+    target_acceptance_rate: float = 0.65,
+    **parameters,
+) -> AdaptationAlgorithm:
+    """Adapt the parameters of algorithms in the HMC family.
+
+    Algorithms in the HMC family on a euclidean manifold depend on the value of
+    at least two parameters: the step size, related to the trajectory
+    integrator, and the mass matrix, linked to the euclidean metric.
+
+    Good tuning is very important, especially for algorithms like NUTS which can
+    be extremely inefficient with the wrong parameter values. 
+    This function tunes the values of these parameters according to this schema:
+        * pathfinder algorithm is run and an estimation of the inverse mass matrix
+          is derived, as well as an initialization point for the markov chain
+        * Nesterov's dual averaging adaptation is then run to tune the step size  
+
+    Parameters
+    ----------
+    algorithm
+        The algorithm whose parameters are being tuned.
+    logprob_fn
+        The log density probability density function from which we wish to sample.
+    num_steps
+        The number of adaptation steps for the dual averaging adaptation scheme.
+    initial_step_size
+        The initial step size used in the algorithm.
+    target_acceptance_rate
+        The acceptance rate that we target during step size adaptation.
+    **parameters
+        The extra parameters to pass to the algorithm, e.g. the number of
+        integration steps for HMC.
+
+    Returns
+    -------
+    A function that returns the last chain state and a sampling kernel with the tuned parameter values from an initial state.
+
+    """
+
+    kernel = algorithm.kernel()
+
+    def kernel_factory(step_size: float, inverse_mass_matrix: Array):
+        def kernel_fn(rng_key, state):
+            return kernel(
+                rng_key,
+                state,
+                logprob_fn,
+                step_size,
+                inverse_mass_matrix,
+                **parameters,
+            )
+
+        return kernel_fn
+
+    init, update, final = adaptation.pathfinder_adaptation.base(
+        kernel_factory,
+        logprob_fn,
+        target_acceptance_rate=target_acceptance_rate,
+    )
+
+    @jax.jit
+    def one_step(carry, rng_key):
+        state, adaptation_state = carry
+        state, adaptation_state, info = update(
+            rng_key, state, adaptation_state
+        )
+        return ((state, adaptation_state), (state, info, adaptation_state.da_state))
+
+    def run(rng_key: PRNGKey, position: PyTree):
+
+        rng_key_init, rng_key_chain = jax.random.split(rng_key, 2)
+
+        init_warmup_state, init_position = init(rng_key, position, initial_step_size)
+        init_state = algorithm.init(init_position, logprob_fn)
+
+        keys = jax.random.split(rng_key, num_steps)
+        last_state, warmup_chain = jax.lax.scan(
+            one_step,
+            (init_state, init_warmup_state),
+            keys,
+        )
+        last_chain_state, last_warmup_state = last_state
+        history_state, history_info, history_da = warmup_chain
+
+        warmup_chain = (
+                history_state,
+                history_info,
+                last_warmup_state._replace(
+                    da_state=history_da
+                    )
+                )
+
+        step_size, inverse_mass_matrix = final(last_warmup_state)
+        kernel = kernel_factory(step_size, inverse_mass_matrix)
+
+        return last_chain_state, kernel, warmup_chain
+
+    return AdaptationAlgorithm(run)
