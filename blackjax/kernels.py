@@ -5,6 +5,7 @@ import jax
 import blackjax.adaptation as adaptation
 import blackjax.mcmc as mcmc
 import blackjax.smc as smc
+import blackjax.vi as vi
 from blackjax.base import AdaptationAlgorithm, SamplingAlgorithm
 from blackjax.types import Array, PRNGKey, PyTree
 
@@ -16,6 +17,7 @@ __all__ = [
     "rmh",
     "tempered_smc",
     "window_adaptation",
+    "pathfinder"
 ]
 
 
@@ -532,6 +534,63 @@ class rmh:
                 state,
                 logprob_fn,
                 sigma,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)
+
+
+# -----------------------------------------------------------------------------
+#                           VARIATIONAL INFERENCE
+# -----------------------------------------------------------------------------
+
+
+class pathfinder:
+    """Implements the (basic) user interface for the pathfinder kernel.
+
+    Pathfinder locates normal approximations to the target density along a
+    quasi-Newton optimization path, with local covariance estimated using
+    the inverse Hessian estimates produced by the L-BFGS optimizer.
+    Pathfinder returns draws from the approximation with the lowest estimated
+    Kullback-Leibler (KL) divergence to the true posterior.
+
+    Note: all the heavy processing in performed in the init function, step
+    function is just a drawing a sample from a normal distribution
+
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(vi.pathfinder.init)
+    kernel = staticmethod(vi.pathfinder.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        rng_key: PRNGKey,
+        logprob_fn: Callable,
+        M: int = 200,
+        **lbfgs_kwargs
+    ) -> SamplingAlgorithm:
+
+        step = cls.kernel(
+        )
+
+        def init_fn(position: PyTree):
+            return cls.init(
+                    rng_key,
+                    logprob_fn,
+                    position,
+                    M,
+                    False,
+                    **lbfgs_kwargs
+                    )
+
+        def step_fn(rng_key: PRNGKey, state):
+            return step(
+                rng_key,
+                state,
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
