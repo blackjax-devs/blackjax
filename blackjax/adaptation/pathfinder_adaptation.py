@@ -31,15 +31,14 @@ def base(
     target_acceptance_rate: float = 0.65,
 ):
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
-    This function tunes the values of these parameters accordign to this schema:
+    This function tunes the values of the step size and the mass matrix according 
+    to this schema:
         * pathfinder algorithm is run and an estimation of the inverse mass matrix
           is derived, as well as an initialization point for the markov chain
         * Nesterov's dual averaging adaptation is then run to tune the step size
 
     Parameters
     ----------
-    rng_key
-        PRPNG key
     kernel_factory
         A function which returns a transition kernel given a step size and a
         mass matrix.
@@ -68,7 +67,7 @@ def base(
         """Initialize the warmup.
 
         To initialize the warmup we use pathfinder to estimate the inverse mass matrix and
-        then we initialize the dual averaging algorithm
+        then we set up the dual averaging adaptation algorithm
         """
         da_state = da_init(initial_step_size)
 
@@ -99,7 +98,8 @@ def base(
         """Move the warmup by one step.
 
         We first create a new kernel with the current values of the step size
-        and mass matrix and move the chain one step. Then, 
+        and mass matrix and move the chain one step. Then, we update the dual
+        averaging adaptation algorithm.
 
         Parameters
         ----------

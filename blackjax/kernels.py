@@ -611,11 +611,11 @@ def pathfinder_adaptation(
     integrator, and the mass matrix, linked to the euclidean metric.
 
     Good tuning is very important, especially for algorithms like NUTS which can
-    be extremely inefficient with the wrong parameter values. 
+    be extremely inefficient with the wrong parameter values.
     This function tunes the values of these parameters according to this schema:
         * pathfinder algorithm is run and an estimation of the inverse mass matrix
           is derived, as well as an initialization point for the markov chain
-        * Nesterov's dual averaging adaptation is then run to tune the step size  
+        * Nesterov's dual averaging adaptation is then run to tune the step size
 
     Parameters
     ----------
