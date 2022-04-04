@@ -134,7 +134,7 @@ We value the following contributions:
 
 ### How to contribute?
 
-1. Run `pip install -r requirements-dev.txt` to install all the dev
+1. Run `pip install -r requirements.txt` to install all the dev
    dependencies.
 2. Run `pre-commit run --all-files` and `make test` before pushing on the repo; CI should pass if
    these pass locally.
