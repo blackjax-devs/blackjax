@@ -1,4 +1,4 @@
-"""Implementation of the Stan warmup for the HMC family of sampling algorithms."""
+"""Implementation of the Pathinder warmup for the HMC family of sampling algorithms."""
 from typing import Any, Callable, List, NamedTuple, Tuple
 
 import jax
