@@ -22,9 +22,6 @@ from blackjax.kernels import pathfinder
 from jax.flatten_util import ravel_pytree
 
 
-
-
-
 class PathfinderTest(chex.TestCase):
 
     @parameterized.parameters(
@@ -159,8 +156,8 @@ class PathfinderTest(chex.TestCase):
 
         sim_p, log_p = lbfgs_sample(rng_key_pathfinder,
                                     10_000,
-                                    out.x,
-                                    out.g,
+                                    out.position,
+                                    out.grad_position,
                                     out.alpha,
                                     out.beta,
                                     out.gamma)

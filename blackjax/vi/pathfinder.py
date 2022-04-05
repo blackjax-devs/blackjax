@@ -32,17 +32,17 @@ class PathfinderState(NamedTuple):
         ELBO of approximation wrt target distribution
     i:
         iteration of the L-BFGS optimizer
-    x:
+    position:
         position
-    g:
+    grad_position:
         gradient of target distribution wrt position
     alpha, beta, gamma:
         factored rappresentation of the inverse hessian
     """
     elbo: Array
     i: int
-    x: PyTree
-    g: PyTree
+    position: PyTree
+    grad_position: PyTree
     alpha: Array
     beta: Array
     gamma: Array
@@ -51,8 +51,8 @@ class PathfinderState(NamedTuple):
 def init(
         rng_key: PRNGKey,
         logprob_fn: Callable,
-        x0: PyTree,
-        M: int = 200,
+        initial_position: PyTree,
+        num_samples: int = 200,
         return_path: bool = False,
         **lbfgs_kwargs
         ) -> PathfinderState:
@@ -73,9 +73,9 @@ def init(
     logprob_fn
         (un-normalized) log densify function of target distribution to take
         approximate samples from
-    x0
+    initial_position
         starting point of the L-BFGS optimization routine
-    M
+    num_samples
         number of samples to draw to estimate ELBO
     return_path
         if False output only iteration that maximize ELBO, otherwise output
@@ -91,24 +91,24 @@ def init(
     in the optimization path whose approximate samples yields the highest ELBO
     """
 
-    x0_flatten, unravel_fn = ravel_pytree(x0)
+    initial_position_flatten, unravel_fn = ravel_pytree(initial_position)
     objective_fn = lambda x: - logprob_fn(unravel_fn(x))
-    dim = x0_flatten.shape[0]
+    param_dims = initial_position_flatten.shape[0]
 
     if 'maxiter' not in lbfgs_kwargs:
         lbfgs_kwargs['maxiter'] = 10
     if 'maxcor' not in lbfgs_kwargs:
         lbfgs_kwargs['maxcor'] = 10
 
-    status, history = minimize_lbfgs(objective_fn, x0_flatten, **lbfgs_kwargs)
+    status, history = minimize_lbfgs(objective_fn, initial_position_flatten, **lbfgs_kwargs)
 
-    x,  g, alpha_scalar = history.x, history.g, history.gamma
+    position,  grad_position, alpha_scalar = history.x, history.g, history.gamma
 
     # set difference between empty zero states and initial point x0 to zero
     # this is beacuse here we are working with static shapes and keeping all
     # the zero states in the arrays
-    s = jnp.diff(x, axis=0).at[status.k-1].set(0.)
-    z = jnp.diff(g, axis=0).at[status.k-1].set(0.)
+    s = jnp.diff(position, axis=0).at[status.k-1].set(0.)
+    z = jnp.diff(grad_position, axis=0).at[status.k-1].set(0.)
 
     maxiter = lbfgs_kwargs['maxiter']
     maxcor = lbfgs_kwargs['maxcor']
@@ -117,16 +117,16 @@ def init(
 
     def pathfinder_inner_step(i):
         i_offset = maxcor + i
-        S = lax.dynamic_slice(s, (i_offset - maxcor, 0), (maxcor, dim)).T
-        Z = lax.dynamic_slice(z, (i_offset - maxcor, 0), (maxcor, dim)).T
-        alpha = alpha_scalar[i_offset] * jnp.ones(x[i_offset].shape[-1])
+        S = lax.dynamic_slice(s, (i_offset - maxcor, 0), (maxcor, param_dims)).T
+        Z = lax.dynamic_slice(z, (i_offset - maxcor, 0), (maxcor, param_dims)).T
+        alpha = alpha_scalar[i_offset] * jnp.ones(param_dims)
         beta, gamma = lbfgs_inverse_hessian_factors(S, Z, alpha)
 
         phi, logq = lbfgs_sample(
                 rng_key=rng_keys[i],
-                M=M,
-                theta=x[i_offset],
-                grad_theta=g[i_offset],
+                num_samples=num_samples,
+                position=position[i_offset],
+                grad_position=grad_position[i_offset],
                 alpha=alpha,
                 beta=beta,
                 gamma=gamma)
@@ -137,8 +137,8 @@ def init(
         state = PathfinderState(
                 i=jnp.where(i-maxiter+status.k < 0, -1, i-maxiter+status.k),
                 elbo=elbo,
-                x=unravel_fn(x[i_offset]),
-                g=unravel_fn(g[i_offset]),
+                position=unravel_fn(position[i_offset]),
+                grad_position=unravel_fn(grad_position[i_offset]),
                 alpha=alpha,
                 beta=beta,
                 gamma=gamma
@@ -174,7 +174,7 @@ def kernel():
         return state, sample_from_state(
                             rng_key,
                             state,
-                            M=1)[0]
+                            num_samples=1)[0]
 
     return one_step
 
@@ -182,7 +182,7 @@ def kernel():
 def sample_from_state(
         rng_key: PRNGKey,
         state: PathfinderState,
-        M: int):
+        num_samples: int):
     """
     Draws samples of the target distribution using approixmation from
     pathfinder algorithm.
@@ -193,22 +193,22 @@ def sample_from_state(
         PRNG key
     state
         PathfinderState containing information for sampling
-    M
+    num_samples 
         Number of samples to draw
 
     Returns
     -------
-    M samples drawn from the approximate Pathfinder distribution
+    samples drawn from the approximate Pathfinder distribution
     """
 
-    x_flatten, unravel_fn = ravel_pytree(state.x)
-    g_flatten, _ = ravel_pytree(state.g)
+    position_flatten, unravel_fn = ravel_pytree(state.position)
+    grad_position_flatten, _ = ravel_pytree(state.grad_position)
 
     phi, _ = lbfgs_sample(
             rng_key,
-            M,
-            x_flatten,
-            g_flatten,
+            num_samples,
+            position_flatten,
+            grad_position_flatten,
             state.alpha,
             state.beta,
             state.gamma)
@@ -403,9 +403,9 @@ def lbfgs_inverse_hessian_factors(S, Z, alpha):
 
     Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
     """
-    J = S.shape[1]
+    param_dims = S.shape[1]
     StZ = S.T @ Z
-    R = jnp.triu(StZ) + jnp.eye(J) * jnp.finfo(S.dtype).eps
+    R = jnp.triu(StZ) + jnp.eye(param_dims) * jnp.finfo(S.dtype).eps
 
     eta = jnp.diag(StZ)
 
@@ -414,7 +414,7 @@ def lbfgs_inverse_hessian_factors(S, Z, alpha):
     minvR = -jnp.linalg.inv(R)
     alphaZ = jnp.diag(jnp.sqrt(alpha)) @ Z
     block_dd = minvR.T @ (alphaZ.T @ alphaZ + jnp.diag(eta)) @ minvR
-    gamma = jnp.block([[jnp.zeros((J, J)), minvR],
+    gamma = jnp.block([[jnp.zeros((param_dims, param_dims)), minvR],
                        [minvR.T, block_dd]])
     return beta, gamma
 
@@ -434,15 +434,15 @@ def lbfgs_inverse_hessian_formula_2(alpha, beta, gamma):
 
     Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
     """
-    N = alpha.shape[0]
+    param_dims = alpha.shape[0]
     dsqrt_alpha = jnp.diag(jnp.sqrt(alpha))
     idsqrt_alpha = jnp.diag(1/jnp.sqrt(alpha))
-    return dsqrt_alpha @ (jnp.eye(N) +
+    return dsqrt_alpha @ (jnp.eye(param_dims) +
                           idsqrt_alpha @ beta @ gamma @ beta.T @ idsqrt_alpha
                           ) @ dsqrt_alpha
 
 
-def lbfgs_sample(rng_key, M, theta, grad_theta, alpha, beta, gamma):
+def lbfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gamma):
     """
     Draws approximate samples of target distribution.
     It implements algorithm of figure 8 in:
@@ -451,20 +451,20 @@ def lbfgs_sample(rng_key, M, theta, grad_theta, alpha, beta, gamma):
     """
 
     Q, R = jnp.linalg.qr(jnp.diag(jnp.sqrt(1/alpha)) @ beta)
-    J = beta.shape[0]
-    L = jnp.linalg.cholesky(jnp.eye(J) + R @ gamma @ R.T)
+    param_dims = beta.shape[0]
+    L = jnp.linalg.cholesky(jnp.eye(param_dims) + R @ gamma @ R.T)
 
     logdet = jnp.log(jnp.prod(alpha)) + 2*jnp.log(jnp.linalg.det(L))
-    mu = theta + jnp.diag(alpha) @ grad_theta + \
-        beta @ gamma @ beta.T @ grad_theta
+    mu = position + jnp.diag(alpha) @ grad_position + \
+        beta @ gamma @ beta.T @ grad_position
 
-    u = jax.random.normal(rng_key, (M, J, 1))
+    u = jax.random.normal(rng_key, (num_samples, param_dims, 1))
     phi = (mu[..., :, None] + jnp.diag(jnp.sqrt(alpha)) @ (
         Q @ L @ Q.T @ u + u - (Q @ Q.T @ u)
         ))[..., 0]
 
     logq = -.5 * (logdet + jnp.einsum('mji,mji->m', u, u)
-                  + J*jnp.log(2.*jnp.pi))
+                  + param_dims * jnp.log(2.*jnp.pi))
     return phi, logq
 
 

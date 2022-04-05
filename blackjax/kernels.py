@@ -571,7 +571,7 @@ class pathfinder:
         cls,
         rng_key: PRNGKey,
         logprob_fn: Callable,
-        M: int = 200,
+        num_samples: int = 200,
         **lbfgs_kwargs
     ) -> SamplingAlgorithm:
 
@@ -583,7 +583,7 @@ class pathfinder:
                     rng_key,
                     logprob_fn,
                     position,
-                    M,
+                    num_samples,
                     False,
                     **lbfgs_kwargs
                     )
