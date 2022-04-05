@@ -683,13 +683,12 @@ def pathfinder_adaptation(
         )
         last_chain_state, last_warmup_state = last_state
         history_state, history_info, history_da = warmup_chain
+        history_adaptation = last_warmup_state._replace(da_state=history_da)
 
         warmup_chain = (
                 history_state,
                 history_info,
-                last_warmup_state._replace(
-                    da_state=history_da
-                    )
+                history_adaptation
                 )
 
         step_size, inverse_mass_matrix = final(last_warmup_state)
