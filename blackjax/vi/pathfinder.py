@@ -132,7 +132,7 @@ def init(
                 gamma=gamma)
 
         logp = -jax.lax.map(objective_fn, phi)  # cannot vmap pytrees
-        elbo = ELBO(logp, logq)
+        elbo = (logp - logq).mean()  # algorithm of figure 9 of the paper
 
         state = PathfinderState(
                 i=jnp.where(i-maxiter+status.k < 0, -1, i-maxiter+status.k),
@@ -467,12 +467,3 @@ def lbfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gam
                   + param_dims * jnp.log(2.*jnp.pi))
     return phi, logq
 
-
-def ELBO(logp, logq):
-    """
-    Calculates approximate ELBO using monte carlo.
-    It implements algorithm of figure 9 in:
-
-    Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
-    """
-    return (logp - logq).mean()
