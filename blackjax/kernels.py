@@ -448,7 +448,7 @@ def window_adaptation(
     schedule = adaptation.window_adaptation.schedule(num_steps)
     init, update, final = adaptation.window_adaptation.base(
         kernel_factory,
-        logprob_fn,
+        is_mass_matrix_diagonal,
         target_acceptance_rate=target_acceptance_rate,
     )
 
