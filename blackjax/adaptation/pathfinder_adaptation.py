@@ -79,7 +79,10 @@ def base(
         new_initial_position = sample_from_state(
                 sample_rng_key,
                 pathfinder_state,
-                1)[0]
+                1)
+        new_initial_position_no_leading_dim = jax.tree_map(
+                lambda x: x[0],
+                new_initial_position)
         inverse_mass_matrix = lbfgs_inverse_hessian_formula_1(
                 pathfinder_state.alpha,
                 pathfinder_state.beta,
@@ -88,7 +91,7 @@ def base(
 
         warmup_state = PathfinderAdaptationState(da_state, inverse_mass_matrix)
 
-        return warmup_state, new_initial_position
+        return warmup_state, new_initial_position_no_leading_dim
 
     def update(
         rng_key: PRNGKey,

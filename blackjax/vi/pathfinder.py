@@ -171,10 +171,9 @@ def kernel():
             state: PathfinderState
             ):
 
-        return state, sample_from_state(
-                            rng_key,
-                            state,
-                            num_samples=1)[0]
+        sample = sample_from_state(rng_key, state, num_samples=1)
+        sample_no_leading_dim = jax.tree_map(lambda x: x[0], sample)
+        return state, sample_no_leading_dim
 
     return one_step
 
