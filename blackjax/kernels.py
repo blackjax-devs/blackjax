@@ -17,7 +17,7 @@ __all__ = [
     "rmh",
     "tempered_smc",
     "window_adaptation",
-    "pathfinder"
+    "pathfinder",
     "pathfinder_adaptation",
 ]
 
@@ -572,21 +572,15 @@ class pathfinder:
         rng_key: PRNGKey,
         logprob_fn: Callable,
         num_samples: int = 200,
-        **lbfgs_kwargs
+        **lbfgs_kwargs,
     ) -> SamplingAlgorithm:
 
-        step = cls.kernel(
-        )
+        step = cls.kernel()
 
         def init_fn(position: PyTree):
             return cls.init(
-                    rng_key,
-                    logprob_fn,
-                    position,
-                    num_samples,
-                    False,
-                    **lbfgs_kwargs
-                    )
+                rng_key, logprob_fn, position, num_samples, False, **lbfgs_kwargs
+            )
 
         def step_fn(rng_key: PRNGKey, state):
             return step(
@@ -595,6 +589,7 @@ class pathfinder:
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
+
 
 def pathfinder_adaptation(
     algorithm: Union[hmc, nuts],
@@ -663,9 +658,7 @@ def pathfinder_adaptation(
     @jax.jit
     def one_step(carry, rng_key):
         state, adaptation_state = carry
-        state, adaptation_state, info = update(
-            rng_key, state, adaptation_state
-        )
+        state, adaptation_state, info = update(rng_key, state, adaptation_state)
         return ((state, adaptation_state), (state, info, adaptation_state.da_state))
 
     def run(rng_key: PRNGKey, position: PyTree):
@@ -685,11 +678,7 @@ def pathfinder_adaptation(
         history_state, history_info, history_da = warmup_chain
         history_adaptation = last_warmup_state._replace(da_state=history_da)
 
-        warmup_chain = (
-                history_state,
-                history_info,
-                history_adaptation
-                )
+        warmup_chain = (history_state, history_info, history_adaptation)
 
         step_size, inverse_mass_matrix = final(last_warmup_state)
         kernel = kernel_factory(step_size, inverse_mass_matrix)

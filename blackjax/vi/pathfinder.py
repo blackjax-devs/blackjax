@@ -6,16 +6,16 @@ import jax.numpy as jnp
 from jax import lax
 from jax._src.scipy.optimize.line_search import line_search
 from jax._src.scipy.optimize._lbfgs import (
-        LBFGSResults,
-        _dot,
-        _two_loop_recursion,
-        _update_history_vectors,
-        _update_history_scalars
-        )
+    LBFGSResults,
+    _dot,
+    _two_loop_recursion,
+    _update_history_vectors,
+    _update_history_scalars,
+)
 from jax.flatten_util import ravel_pytree
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ['PathfinderState', 'init', 'kernel', 'sample_from_state']
+__all__ = ["PathfinderState", "init", "kernel", "sample_from_state"]
 
 
 class PathfinderState(NamedTuple):
@@ -39,6 +39,7 @@ class PathfinderState(NamedTuple):
     alpha, beta, gamma:
         factored rappresentation of the inverse hessian
     """
+
     elbo: Array
     i: int
     position: PyTree
@@ -49,13 +50,13 @@ class PathfinderState(NamedTuple):
 
 
 def init(
-        rng_key: PRNGKey,
-        logprob_fn: Callable,
-        initial_position: PyTree,
-        num_samples: int = 200,
-        return_path: bool = False,
-        **lbfgs_kwargs
-        ) -> PathfinderState:
+    rng_key: PRNGKey,
+    logprob_fn: Callable,
+    initial_position: PyTree,
+    num_samples: int = 200,
+    return_path: bool = False,
+    **lbfgs_kwargs
+) -> PathfinderState:
     """
     Pathfinder variational inference algorithm:
     pathfinder locates normal approximations to the target density along a
@@ -92,26 +93,28 @@ def init(
     """
 
     initial_position_flatten, unravel_fn = ravel_pytree(initial_position)
-    objective_fn = lambda x: - logprob_fn(unravel_fn(x))
+    objective_fn = lambda x: -logprob_fn(unravel_fn(x))
     param_dims = initial_position_flatten.shape[0]
 
-    if 'maxiter' not in lbfgs_kwargs:
-        lbfgs_kwargs['maxiter'] = 10
-    if 'maxcor' not in lbfgs_kwargs:
-        lbfgs_kwargs['maxcor'] = 10
+    if "maxiter" not in lbfgs_kwargs:
+        lbfgs_kwargs["maxiter"] = 10
+    if "maxcor" not in lbfgs_kwargs:
+        lbfgs_kwargs["maxcor"] = 10
 
-    status, history = minimize_lbfgs(objective_fn, initial_position_flatten, **lbfgs_kwargs)
+    status, history = minimize_lbfgs(
+        objective_fn, initial_position_flatten, **lbfgs_kwargs
+    )
 
-    position,  grad_position, alpha_scalar = history.x, history.g, history.gamma
+    position, grad_position, alpha_scalar = history.x, history.g, history.gamma
 
     # set difference between empty zero states and initial point x0 to zero
     # this is beacuse here we are working with static shapes and keeping all
     # the zero states in the arrays
-    s = jnp.diff(position, axis=0).at[status.k-1].set(0.)
-    z = jnp.diff(grad_position, axis=0).at[status.k-1].set(0.)
+    s = jnp.diff(position, axis=0).at[status.k - 1].set(0.0)
+    z = jnp.diff(grad_position, axis=0).at[status.k - 1].set(0.0)
 
-    maxiter = lbfgs_kwargs['maxiter']
-    maxcor = lbfgs_kwargs['maxcor']
+    maxiter = lbfgs_kwargs["maxiter"]
+    maxcor = lbfgs_kwargs["maxcor"]
 
     rng_keys = jax.random.split(rng_key, maxiter)
 
@@ -123,26 +126,27 @@ def init(
         beta, gamma = lbfgs_inverse_hessian_factors(S, Z, alpha)
 
         phi, logq = lbfgs_sample(
-                rng_key=rng_keys[i],
-                num_samples=num_samples,
-                position=position[i_offset],
-                grad_position=grad_position[i_offset],
-                alpha=alpha,
-                beta=beta,
-                gamma=gamma)
+            rng_key=rng_keys[i],
+            num_samples=num_samples,
+            position=position[i_offset],
+            grad_position=grad_position[i_offset],
+            alpha=alpha,
+            beta=beta,
+            gamma=gamma,
+        )
 
         logp = -jax.lax.map(objective_fn, phi)  # cannot vmap pytrees
         elbo = (logp - logq).mean()  # algorithm of figure 9 of the paper
 
         state = PathfinderState(
-                i=jnp.where(i-maxiter+status.k < 0, -1, i-maxiter+status.k),
-                elbo=elbo,
-                position=unravel_fn(position[i_offset]),
-                grad_position=unravel_fn(grad_position[i_offset]),
-                alpha=alpha,
-                beta=beta,
-                gamma=gamma
-                )
+            i=jnp.where(i - maxiter + status.k < 0, -1, i - maxiter + status.k),
+            elbo=elbo,
+            position=unravel_fn(position[i_offset]),
+            grad_position=unravel_fn(grad_position[i_offset]),
+            alpha=alpha,
+            beta=beta,
+            gamma=gamma,
+        )
         return state
 
     # LBFGS maximum iteration condition is always checked after running a step
@@ -151,9 +155,7 @@ def init(
     if return_path:
         return out
     else:
-        best_i = jnp.argmax(
-                jnp.where(out.i > 0, out.elbo, -jnp.inf)
-                )
+        best_i = jnp.argmax(jnp.where(out.i > 0, out.elbo, -jnp.inf))
         return jax.tree_map(lambda x: x[best_i], out)
 
 
@@ -166,10 +168,7 @@ def kernel():
     the pathfinder state and a draw from the approximate distribution
     """
 
-    def one_step(
-            rng_key: PRNGKey,
-            state: PathfinderState
-            ):
+    def one_step(rng_key: PRNGKey, state: PathfinderState):
 
         sample = sample_from_state(rng_key, state, num_samples=1)
         sample_no_leading_dim = jax.tree_map(lambda x: x[0], sample)
@@ -178,10 +177,7 @@ def kernel():
     return one_step
 
 
-def sample_from_state(
-        rng_key: PRNGKey,
-        state: PathfinderState,
-        num_samples: int):
+def sample_from_state(rng_key: PRNGKey, state: PathfinderState, num_samples: int):
     """
     Draws samples of the target distribution using approixmation from
     pathfinder algorithm.
@@ -192,7 +188,7 @@ def sample_from_state(
         PRNG key
     state
         PathfinderState containing information for sampling
-    num_samples 
+    num_samples
         Number of samples to draw
 
     Returns
@@ -204,13 +200,14 @@ def sample_from_state(
     grad_position_flatten, _ = ravel_pytree(state.grad_position)
 
     phi, _ = lbfgs_sample(
-            rng_key,
-            num_samples,
-            position_flatten,
-            grad_position_flatten,
-            state.alpha,
-            state.beta,
-            state.gamma)
+        rng_key,
+        num_samples,
+        position_flatten,
+        grad_position_flatten,
+        state.alpha,
+        state.beta,
+        state.gamma,
+    )
 
     return jax.lax.map(unravel_fn, phi)
 
@@ -413,8 +410,9 @@ def lbfgs_inverse_hessian_factors(S, Z, alpha):
     minvR = -jnp.linalg.inv(R)
     alphaZ = jnp.diag(jnp.sqrt(alpha)) @ Z
     block_dd = minvR.T @ (alphaZ.T @ alphaZ + jnp.diag(eta)) @ minvR
-    gamma = jnp.block([[jnp.zeros((param_dims, param_dims)), minvR],
-                       [minvR.T, block_dd]])
+    gamma = jnp.block(
+        [[jnp.zeros((param_dims, param_dims)), minvR], [minvR.T, block_dd]]
+    )
     return beta, gamma
 
 
@@ -435,10 +433,12 @@ def lbfgs_inverse_hessian_formula_2(alpha, beta, gamma):
     """
     param_dims = alpha.shape[0]
     dsqrt_alpha = jnp.diag(jnp.sqrt(alpha))
-    idsqrt_alpha = jnp.diag(1/jnp.sqrt(alpha))
-    return dsqrt_alpha @ (jnp.eye(param_dims) +
-                          idsqrt_alpha @ beta @ gamma @ beta.T @ idsqrt_alpha
-                          ) @ dsqrt_alpha
+    idsqrt_alpha = jnp.diag(1 / jnp.sqrt(alpha))
+    return (
+        dsqrt_alpha
+        @ (jnp.eye(param_dims) + idsqrt_alpha @ beta @ gamma @ beta.T @ idsqrt_alpha)
+        @ dsqrt_alpha
+    )
 
 
 def lbfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gamma):
@@ -449,20 +449,24 @@ def lbfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gam
     Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
     """
 
-    Q, R = jnp.linalg.qr(jnp.diag(jnp.sqrt(1/alpha)) @ beta)
+    Q, R = jnp.linalg.qr(jnp.diag(jnp.sqrt(1 / alpha)) @ beta)
     param_dims = beta.shape[0]
     L = jnp.linalg.cholesky(jnp.eye(param_dims) + R @ gamma @ R.T)
 
-    logdet = jnp.log(jnp.prod(alpha)) + 2*jnp.log(jnp.linalg.det(L))
-    mu = position + jnp.diag(alpha) @ grad_position + \
-        beta @ gamma @ beta.T @ grad_position
+    logdet = jnp.log(jnp.prod(alpha)) + 2 * jnp.log(jnp.linalg.det(L))
+    mu = (
+        position
+        + jnp.diag(alpha) @ grad_position
+        + beta @ gamma @ beta.T @ grad_position
+    )
 
     u = jax.random.normal(rng_key, (num_samples, param_dims, 1))
-    phi = (mu[..., :, None] + jnp.diag(jnp.sqrt(alpha)) @ (
-        Q @ L @ Q.T @ u + u - (Q @ Q.T @ u)
-        ))[..., 0]
+    phi = (
+        mu[..., :, None]
+        + jnp.diag(jnp.sqrt(alpha)) @ (Q @ L @ Q.T @ u + u - (Q @ Q.T @ u))
+    )[..., 0]
 
-    logq = -.5 * (logdet + jnp.einsum('mji,mji->m', u, u)
-                  + param_dims * jnp.log(2.*jnp.pi))
+    logq = -0.5 * (
+        logdet + jnp.einsum("mji,mji->m", u, u) + param_dims * jnp.log(2.0 * jnp.pi)
+    )
     return phi, logq
-

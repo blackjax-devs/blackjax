@@ -7,8 +7,8 @@ import jax.numpy as jnp
 from blackjax.vi.pathfinder import (
     init as pathfinder_init_fn,
     sample_from_state,
-    lbfgs_inverse_hessian_formula_1
-    )
+    lbfgs_inverse_hessian_formula_1,
+)
 
 from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
@@ -31,38 +31,38 @@ def base(
     target_acceptance_rate: float = 0.65,
 ):
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
-    This function tunes the values of the step size and the mass matrix according 
-    to this schema:
-        * pathfinder algorithm is run and an estimation of the inverse mass matrix
-          is derived, as well as an initialization point for the markov chain
-        * Nesterov's dual averaging adaptation is then run to tune the step size
+     This function tunes the values of the step size and the mass matrix according
+     to this schema:
+         * pathfinder algorithm is run and an estimation of the inverse mass matrix
+           is derived, as well as an initialization point for the markov chain
+         * Nesterov's dual averaging adaptation is then run to tune the step size
 
-    Parameters
-    ----------
-    kernel_factory
-        A function which returns a transition kernel given a step size and a
-        mass matrix.
-   logprob_fn
-        The log density probability density function from which we wish to sample.
-    target_acceptance_rate:
-        The target acceptance rate for the step size adaptation.
+     Parameters
+     ----------
+     kernel_factory
+         A function which returns a transition kernel given a step size and a
+         mass matrix.
+    logprob_fn
+         The log density probability density function from which we wish to sample.
+     target_acceptance_rate:
+         The target acceptance rate for the step size adaptation.
 
-    Returns
-    -------
-    init
-        Function that initializes the warmup.
-    update
-        Function that moves the warmup one step.
-    final
-        Function that returns the step size and mass matrix given a warmup state.
+     Returns
+     -------
+     init
+         Function that initializes the warmup.
+     update
+         Function that moves the warmup one step.
+     final
+         Function that returns the step size and mass matrix given a warmup state.
 
     """
-    da_init, da_update, da_final = dual_averaging_adaptation(target=target_acceptance_rate)
+    da_init, da_update, da_final = dual_averaging_adaptation(
+        target=target_acceptance_rate
+    )
 
     def init(
-        rng_key: PRNGKey,
-        initial_position: Array,
-        initial_step_size: float
+        rng_key: PRNGKey, initial_position: Array, initial_step_size: float
     ) -> PathfinderAdaptationState:
         """Initialize the warmup.
 
@@ -73,21 +73,15 @@ def base(
 
         pathfinder_rng_key, sample_rng_key = jax.random.split(rng_key, 2)
         pathfinder_state = pathfinder_init_fn(
-                pathfinder_rng_key,
-                logprob_fn,
-                initial_position)
-        new_initial_position = sample_from_state(
-                sample_rng_key,
-                pathfinder_state,
-                1)
+            pathfinder_rng_key, logprob_fn, initial_position
+        )
+        new_initial_position = sample_from_state(sample_rng_key, pathfinder_state, 1)
         new_initial_position_no_leading_dim = jax.tree_map(
-                lambda x: x[0],
-                new_initial_position)
+            lambda x: x[0], new_initial_position
+        )
         inverse_mass_matrix = lbfgs_inverse_hessian_formula_1(
-                pathfinder_state.alpha,
-                pathfinder_state.beta,
-                pathfinder_state.gamma
-                )
+            pathfinder_state.alpha, pathfinder_state.beta, pathfinder_state.gamma
+        )
 
         warmup_state = PathfinderAdaptationState(da_state, inverse_mass_matrix)
 
@@ -125,9 +119,8 @@ def base(
         chain_state, chain_info = kernel(rng_key, chain_state)
         new_da_state = da_update(adaptation_state.da_state, chain_info)
         new_warmup_state = PathfinderAdaptationState(
-                new_da_state,
-                adaptation_state.inverse_mass_matrix
-                )
+            new_da_state, adaptation_state.inverse_mass_matrix
+        )
 
         return chain_state, new_warmup_state, chain_info
 
