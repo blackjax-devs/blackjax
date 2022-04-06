@@ -180,22 +180,11 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "from pymc.sampling_jax import get_jaxified_graph\n",
+    "from pymc.sampling_jax import get_jaxified_logp\n",
     "\n",
     "rvs = [rv.name for rv in model.value_vars]\n",
     "init_position_dict = model.compute_initial_point()\n",
     "init_position = [init_position_dict[rv] for rv in rvs]\n",
-    "\n",
-    "\n",
-    "def get_jaxified_logp(model):\n",
-    "\n",
-    "    logp_fn = get_jaxified_graph(inputs=model.value_vars, outputs=[model.logpt()])\n",
-    "\n",
-    "    def logp_fn_wrap(x):\n",
-    "        return logp_fn(*x)[0]\n",
-    "\n",
-    "    return logp_fn_wrap\n",
-    "\n",
     "\n",
     "logprob_fn = get_jaxified_logp(model)"
    ]
@@ -243,7 +232,7 @@
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "aa558fa7-d323-4b4e-813c-a4e8ab8f519a",
+   "id": "97d2dd91-b8ef-43b4-a2a2-087be44a66e5",
    "metadata": {},
    "outputs": [],
    "source": []
