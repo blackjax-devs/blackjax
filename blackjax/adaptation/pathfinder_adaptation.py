@@ -76,6 +76,8 @@ def base(
             pathfinder_rng_key, logprob_fn, initial_position
         )
         new_initial_position = sample_from_state(sample_rng_key, pathfinder_state, 1)
+        # new_initial_position is a pyteee with leaf arrays' shape (1, param_dims)
+        # we use tree_map and indexing to remove the leading dimension
         new_initial_position_no_leading_dim = jax.tree_map(
             lambda x: x[0], new_initial_position
         )
