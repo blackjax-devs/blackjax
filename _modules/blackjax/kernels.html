@@ -21,8 +21,8 @@
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=62ba249389abaaa9ffc34bf36a076bdc1d65ee18" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
     
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -135,6 +135,11 @@
    <li class="toctree-l2">
     <a class="reference internal" href="../../examples/HierarchicalBNN.html">
      Hierarchical Bayesian neural networks
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/PeriodicOrbitalMCMC.html">
+     Periodic Orbital MCMC
     </a>
    </li>
   </ul>
@@ -280,6 +285,7 @@ title="Source repository"
     <span class="s2">&quot;hmc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;mala&quot;</span><span class="p">,</span>
     <span class="s2">&quot;nuts&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;orbital_hmc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;rmh&quot;</span><span class="p">,</span>
     <span class="s2">&quot;tempered_smc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;window_adaptation&quot;</span><span class="p">,</span>
@@ -807,6 +813,84 @@ title="Source repository"
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">logprob_fn</span><span class="p">,</span>
                 <span class="n">sigma</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="orbital_hmc"><a class="viewcode-back" href="../../sampling.html#blackjax.orbital_hmc">[docs]</a><span class="k">class</span> <span class="nc">orbital_hmc</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Periodic orbital MCMC kernel</span>
+
+<span class="sd">    Each iteration of the periodic orbital MCMC outputs ``period`` weighted samples from</span>
+<span class="sd">    a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable</span>
+<span class="sd">    with precision matrix ``inverse_mass_matrix``, evaluated using the ``bijection`` as an</span>
+<span class="sd">    integrator with discretization parameter ``step_size``.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    A new Periodic orbital MCMC kernel can be initialized and used with the following code:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        per_orbit = blackjax.orbital_hmc(logprob_fn, step_size, inverse_mass_matrix, period)</span>
+<span class="sd">        state = per_orbit.init(position)</span>
+<span class="sd">        new_state, info = per_orbit.step(rng_key, state)</span>
+
+<span class="sd">    We can JIT-compile the step function for better performance</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        step = jax.jit(per_orbit.step)</span>
+<span class="sd">        new_state, info = step(rng_key, state)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logprob_fn</span>
+<span class="sd">        The logarithm of the probability density function we wish to draw samples from. This</span>
+<span class="sd">        is minus the potential energy function.</span>
+<span class="sd">    step_size</span>
+<span class="sd">        The value to use for the step size in for the symplectic integrator to buid the orbit.</span>
+<span class="sd">    inverse_mass_matrix</span>
+<span class="sd">        The value to use for the inverse mass matrix when drawing a value for</span>
+<span class="sd">        the momentum and computing the kinetic energy.</span>
+<span class="sd">    period</span>
+<span class="sd">        The number of steps used to build the orbit.</span>
+<span class="sd">    bijection</span>
+<span class="sd">        (algorithm parameter) The symplectic integrator to use to build the orbit.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">periodic_orbital</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">periodic_orbital</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">logprob_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>  <span class="c1"># assume momentum is always Gaussian</span>
+        <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">bijection</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+
+        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">bijection</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">logprob_fn</span><span class="p">,</span>
+                <span class="n">step_size</span><span class="p">,</span>
+                <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+                <span class="n">period</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>

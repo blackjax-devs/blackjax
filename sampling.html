@@ -22,8 +22,8 @@
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=62ba249389abaaa9ffc34bf36a076bdc1d65ee18" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css" />
     
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -42,7 +42,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Adaptation" href="adaptation.html" />
-    <link rel="prev" title="Hierarchical Bayesian neural networks" href="examples/HierarchicalBNN.html" />
+    <link rel="prev" title="Periodic Orbital MCMC" href="examples/PeriodicOrbitalMCMC.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -138,6 +138,11 @@
    <li class="toctree-l2">
     <a class="reference internal" href="examples/HierarchicalBNN.html">
      Hierarchical Bayesian neural networks
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/PeriodicOrbitalMCMC.html">
+     Periodic Orbital MCMC
     </a>
    </li>
   </ul>
@@ -279,6 +284,11 @@ title="Source repository"
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#periodic-orbital">
+   Periodic Orbital
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#rmh">
    RMH
   </a>
@@ -323,6 +333,11 @@ title="Source repository"
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#periodic-orbital">
+   Periodic Orbital
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#rmh">
    RMH
   </a>
@@ -359,13 +374,16 @@ title="Source repository"
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mala" title="blackjax.mala"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mala</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the MALA kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.rmh" title="blackjax.rmh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.orbital_hmc" title="blackjax.orbital_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">orbital_hmc</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.rmh" title="blackjax.rmh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the gaussian random walk kernel</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.tempered_smc" title="blackjax.tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.tempered_smc" title="blackjax.tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptive_tempered_smc" title="blackjax.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptive_tempered_smc" title="blackjax.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
 </tbody>
@@ -540,6 +558,47 @@ commonly found in other libraries, and yet is arbitrary.</p></li>
 </dd></dl>
 
 </section>
+<section id="periodic-orbital">
+<h2>Periodic Orbital<a class="headerlink" href="#periodic-orbital" title="Permalink to this headline">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.orbital_hmc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">orbital_hmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprob_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bijection=&lt;function</span> <span class="pre">velocity_verlet&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#orbital_hmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.orbital_hmc" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel</p>
+<p>Each iteration of the periodic orbital MCMC outputs <code class="docutils literal notranslate"><span class="pre">period</span></code> weighted samples from
+a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable
+with precision matrix <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code>, evaluated using the <code class="docutils literal notranslate"><span class="pre">bijection</span></code> as an
+integrator with discretization parameter <code class="docutils literal notranslate"><span class="pre">step_size</span></code>.</p>
+<p class="rubric">Examples</p>
+<p>A new Periodic orbital MCMC kernel can be initialized and used with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">per_orbit</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">orbital_hmc</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">per_orbit</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">per_orbit</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can JIT-compile the step function for better performance</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">per_orbit</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logprob_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – The logarithm of the probability density function we wish to draw samples from. This
+is minus the potential energy function.</p></li>
+<li><p><strong>step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The value to use for the step size in for the symplectic integrator to buid the orbit.</p></li>
+<li><p><strong>inverse_mass_matrix</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><em>Union</em></a><em>[</em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.22)"><em>numpy.ndarray</em></a><em>, </em><a class="reference external" href="https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.ndarray.html#jax.numpy.ndarray" title="(in JAX)"><em>jax._src.numpy.ndarray.ndarray</em></a><em>]</em>) – The value to use for the inverse mass matrix when drawing a value for
+the momentum and computing the kinetic energy.</p></li>
+<li><p><strong>period</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of steps used to build the orbit.</p></li>
+<li><p><strong>bijection</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – (algorithm parameter) The symplectic integrator to use to build the orbit.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 <section id="rmh">
 <h2>RMH<a class="headerlink" href="#rmh" title="Permalink to this headline">#</a></h2>
 <dl class="py class">
@@ -630,11 +689,11 @@ commonly found in other libraries, and yet is arbitrary.</p></li>
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="examples/HierarchicalBNN.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="examples/PeriodicOrbitalMCMC.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Hierarchical Bayesian neural networks</p>
+            <p class="prev-next-title">Periodic Orbital MCMC</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="adaptation.html" title="next page">

@@ -22,8 +22,8 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=62ba249389abaaa9ffc34bf36a076bdc1d65ee18" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
     
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -39,8 +39,6 @@
     <script src="../_static/togglebutton.js"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?digest=f31d14ad54b65d19161ba51d4ffff3a77ae00456"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
-    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Use Tempered SMC to improve exploration of MCMC methods." href="TemperedSMC.html" />
@@ -140,6 +138,11 @@
    <li class="toctree-l2">
     <a class="reference internal" href="HierarchicalBNN.html">
      Hierarchical Bayesian neural networks
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="PeriodicOrbitalMCMC.html">
+     Periodic Orbital MCMC
     </a>
    </li>
   </ul>
@@ -338,7 +341,7 @@ title="Source repository"
                 
               <div>
                 
-  <section class="tex2jax_ignore mathjax_ignore" id="bayesian-logistic-regression">
+  <section id="bayesian-logistic-regression">
 <h1>Bayesian Logistic Regression<a class="headerlink" href="#bayesian-logistic-regression" title="Permalink to this headline">#</a></h1>
 <p>In this notebook we demonstrate the use of the random walk Rosenbluth-Metropolis-Hasting algorithm on a simple logistic regression.</p>
 <div class="cell docutils container">
@@ -416,28 +419,25 @@ Architecture: 64bit
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/LogisticRegression_7_0.png" src="../_images/LogisticRegression_7_0.png" />
+<img alt="../_images/722c1f1597bac82b850c4263039566136b02fcf2e418f08815a0834e2f9b88ac.png" src="../_images/722c1f1597bac82b850c4263039566136b02fcf2e418f08815a0834e2f9b88ac.png" />
 </div>
 </div>
 </section>
 <section id="the-model">
 <h2>The model<a class="headerlink" href="#the-model" title="Permalink to this headline">#</a></h2>
-<p>We use a simple logistic regression model to infer to which cluster each of the points belongs. We note <span class="math notranslate nohighlight">\(y\)</span> a binary variable that indicates whether a point belongs to the first cluster :</p>
-<div class="math notranslate nohighlight">
-\[
+<p>We use a simple logistic regression model to infer to which cluster each of the points belongs. We note $y$ a binary variable that indicates whether a point belongs to the first cluster :</p>
+<p>$$
 y \sim \operatorname{Bernoulli}(p)
-\]</div>
-<p>The probability <span class="math notranslate nohighlight">\(p\)</span> to belong to the first cluster commes from a logistic regression:</p>
-<div class="math notranslate nohighlight">
-\[
-p = \operatorname{logistic}(\Phi\,\boldsymbol{w})
-\]</div>
-<p>where <span class="math notranslate nohighlight">\(w\)</span> is a vector of weights whose priors are a normal prior centered on 0:</p>
-<div class="math notranslate nohighlight">
-\[
+$$</p>
+<p>The probability $p$ to belong to the first cluster commes from a logistic regression:</p>
+<p>$$
+p = \operatorname{logistic}(\Phi,\boldsymbol{w})
+$$</p>
+<p>where $w$ is a vector of weights whose priors are a normal prior centered on 0:</p>
+<p>$$
 \boldsymbol{w} \sim \operatorname{Normal}(0, \sigma)
-\]</div>
-<p>And <span class="math notranslate nohighlight">\(\Phi\)</span> is the matrix that contains the data, so each row <span class="math notranslate nohighlight">\(\Phi_{i,:}\)</span> is the vector <span class="math notranslate nohighlight">\(\left[1, X_0^i, X_1^i\right]\)</span></p>
+$$</p>
+<p>And $\Phi$ is the matrix that contains the data, so each row $\Phi_{i,:}$ is the vector $\left[1, X_0^i, X_1^i\right]$</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Phi</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_points</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">X</span><span class="p">]</span>
@@ -526,7 +526,7 @@ p = \operatorname{logistic}(\Phi\,\boldsymbol{w})
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/LogisticRegression_18_0.png" src="../_images/LogisticRegression_18_0.png" />
+<img alt="../_images/08322e54428c1c0b7e0f2dac23f3931286fba0fbadb548fd7053f9a4938e34c9.png" src="../_images/08322e54428c1c0b7e0f2dac23f3931286fba0fbadb548fd7053f9a4938e34c9.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -539,7 +539,7 @@ p = \operatorname{logistic}(\Phi\,\boldsymbol{w})
 </div>
 <section id="predictive-distribution">
 <h3>Predictive distribution<a class="headerlink" href="#predictive-distribution" title="Permalink to this headline">#</a></h3>
-<p>Having infered the posterior distribution of the regression’s coefficients we can compute the probability to belong to the first cluster at each position <span class="math notranslate nohighlight">\((X_0, X_1)\)</span>.</p>
+<p>Having infered the posterior distribution of the regression’s coefficients we can compute the probability to belong to the first cluster at each position $(X_0, X_1)$.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a meshgrid</span>
@@ -568,7 +568,7 @@ p = \operatorname{logistic}(\Phi\,\boldsymbol{w})
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/LogisticRegression_22_0.png" src="../_images/LogisticRegression_22_0.png" />
+<img alt="../_images/91c8fb956ab2cd6c02e046a35c5db105dfe9e886ae8a7e0f6d6498e688e11bc1.png" src="../_images/91c8fb956ab2cd6c02e046a35c5db105dfe9e886ae8a7e0f6d6498e688e11bc1.png" />
 </div>
 </div>
 </section>

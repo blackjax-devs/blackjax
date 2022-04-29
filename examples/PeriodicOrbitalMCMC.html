@@ -1,0 +1,1086 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Periodic Orbital MCMC &#8212; Blackjax</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=62ba249389abaaa9ffc34bf36a076bdc1d65ee18" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?digest=f31d14ad54b65d19161ba51d4ffff3a77ae00456"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Sampling" href="../sampling.html" />
+    <link rel="prev" title="Hierarchical Bayesian neural networks" href="HierarchicalBNN.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="../_static/blackjax.png" class="logo" alt="logo">
+      
+      
+      <h1 class="site-logo" id="site-title">Blackjax</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Blackjax by example
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active has-children">
+  <a class="reference internal" href="../examples.html">
+   Examples
+  </a>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul class="current">
+   <li class="toctree-l2">
+    <a class="reference internal" href="Introduction.html">
+     A quick introduction to Blackjax
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="LogisticRegression.html">
+     Bayesian Logistic Regression
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="TemperedSMC.html">
+     Use Tempered SMC to improve exploration of MCMC methods.
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="use_with_numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="use_with_tfp.html">
+     Use BlackJAX with TFP
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="HierarchicalBNN.html">
+     Hierarchical Bayesian neural networks
+    </a>
+   </li>
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
+     Periodic Orbital MCMC
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API Documentation
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sampling.html">
+   Sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../adaptation.html">
+   Adaptation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../diagnostics.html">
+   Diagnostics
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+<a href="https://github.com/blackjax-devs/blackjax"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="bottom"
+title="Source repository"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+<label for="__page-toc"
+  class="headerbtn headerbtn-page-toc"
+  
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-list"></i>
+  </span>
+
+</label>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+    <div class="tocsection onthispage pt-5 pb-3">
+        <i class="fas fa-list"></i> Contents
+    </div>
+    <nav id="bd-toc-nav" aria-label="Page">
+        <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#useful-functions">
+   Useful functions
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#banana-density">
+   Banana density
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#initial-state-and-sampler-parameters">
+   Initial state and sampler parameters
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#velocity-verlet">
+   Velocity Verlet
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mclachlan">
+   McLachlan
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#yoshida">
+   Yoshida
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#ellipsis">
+   Ellipsis
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#ellipsis-iaf">
+   Ellipsis + IAF
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#some-utility-functions">
+     Some utility functions
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </nav>
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Periodic Orbital MCMC</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#useful-functions">
+   Useful functions
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#banana-density">
+   Banana density
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#initial-state-and-sampler-parameters">
+   Initial state and sampler parameters
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#velocity-verlet">
+   Velocity Verlet
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mclachlan">
+   McLachlan
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#yoshida">
+   Yoshida
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#ellipsis">
+   Ellipsis
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#ellipsis-iaf">
+   Ellipsis + IAF
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#some-utility-functions">
+     Some utility functions
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <section id="periodic-orbital-mcmc">
+<h1>Periodic Orbital MCMC<a class="headerlink" href="#periodic-orbital-mcmc" title="Permalink to this headline">#</a></h1>
+<p>Illustrating the usage of Algorithm 2 of <a class="reference external" href="https://arxiv.org/abs/2010.08047">Neklyudov &amp; Welling, (2021)</a> on the Banana density</p>
+<p>$$p(x) = p(x_1, x_2) = N(x_1|0, 8)N(x_2|1/4x_1^2, 1).$$</p>
+<p>Bijection functions $f(x, v)$ used for sampling are the velocity Verlet, McLachlan and Yoshida integrators for the Hamiltonian function</p>
+<p>$$ H(x, v) = \frac{1}{2}\left(\frac{x_1^2}{8} + \left(x_2 - \frac{1}{4}x_1^2\right)^2\right) + \frac{1}{2}v^Tv. $$</p>
+<p>Using any of these integrators amounts to doing vanilla HMC (traditionally done with the velocity Verlet integrator) but sampling various points from an orbit that discretizes the Hamiltonian dynamics to then weigh these samples in order to ensure we target the correct distribution (where in vanilla HMC we would choose a sample from the discretized orbit and perform a Metropolis-Hastings acceptance step on that sample to ensure the target distribution is left invariant).</p>
+<p>The benefits of sampling the whole orbit instead of a single point in it are: efficiency, since we build a trajectory around an orbit and use all if it instead of discarding most of it; and wider reach, since even unlikely points will be sampled and given small weights, making the sampler more likely to explore the tails of our target. This at the cost of higher memory consumption since we have <code class="docutils literal notranslate"><span class="pre">period</span></code> samples per iteration, instead of only one, and the lack of diagnostics, theoretical guarantees and heuristic methods developed for traditional HMC and its adaptive mechanisms (such as NUTS) during the past decades.</p>
+<p>It is also illustrated the usage of normalizing flows, specifically the Masked Autoregressive flow (<a class="reference external" href="https://arxiv.org/abs/1705.07057">MAF</a>), as a preconditioning step for the algorithm; using as a bijection function the ellipsis</p>
+<p>$$
+x(t) = x(0) \cos(t) + v(t) \sin(t) \
+v(t) = v(0) \cos(t) - x(t) \sin(t),
+$$</p>
+<p>i.e. the solution of Hamilton’s equations for $p(x,v) = N(x|0,I)N(v|0,I)$,</p>
+<p>$$
+\frac{d x}{d t} = v \
+\frac{d v}{d t} = -x.
+$$</p>
+<p>As it is later demonstrated, these dynamics alone fail to capture all the volume of our banana density. They are, however, cheap and easy to use, since these dynamics are both gradient-free (don’t require the computation of gradients of our target distribution) and tuning-free (have no tuning parameters); in contrast with the integrators mentioned above, which need to compute gradients at each iteration and require tuning of the discretization step size and number of steps (when used for periodic orbital MCMC, these values are represented by the <code class="docutils literal notranslate"><span class="pre">step_size</span></code> and <code class="docutils literal notranslate"><span class="pre">period</span></code>). Paired with a preconditioning step which transforms our target to approximate $N(x|0,I)$, our cheap and easy dynamics can efficienty sample from the whole volume of our banana density while delegating the expensive gradients and cumbersome tuning to an optimization problem performed pre-sampling.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">jax.scipy.stats</span> <span class="k">as</span> <span class="nn">stats</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">import</span> <span class="nn">blackjax.mcmc.integrators</span> <span class="k">as</span> <span class="nn">integrators</span>
+<span class="kn">from</span> <span class="nn">blackjax</span> <span class="kn">import</span> <span class="n">orbital_hmc</span> <span class="k">as</span> <span class="n">orbital</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">load_ext</span> watermark
+<span class="o">%</span><span class="k">watermark</span> -d -m -v -p jax,jaxlib,blackjax
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Python implementation: CPython
+Python version       : 3.8.10
+IPython version      : 7.28.0
+
+jax     : 0.3.7
+jaxlib  : 0.3.7
+blackjax: 0.4.0
+
+Compiler    : GCC 9.4.0
+OS          : Linux
+Release     : 5.4.0-107-generic
+Machine     : x86_64
+Processor   : x86_64
+CPU cores   : 8
+Architecture: 64bit
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jax</span><span class="o">.</span><span class="n">devices</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+</pre></div>
+</div>
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[CpuDevice(id=0)]
+</pre></div>
+</div>
+</div>
+</div>
+<section id="useful-functions">
+<h2>Useful functions<a class="headerlink" href="#useful-functions" title="Permalink to this headline">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Contour plots for density w/ or w/o samples.&quot;&quot;&quot;</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="o">-</span><span class="mf">7.5</span><span class="p">,</span> <span class="mf">7.5</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mf">12.5</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
+        <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">logprob</span><span class="p">({</span><span class="s2">&quot;x1&quot;</span><span class="p">:</span> <span class="n">x1</span><span class="p">,</span> <span class="s2">&quot;x2&quot;</span><span class="p">:</span> <span class="n">x2</span><span class="p">})),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
+        <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="p">)(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">17</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+    <span class="n">CS0</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">clabel</span><span class="p">(</span><span class="n">CS0</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">CS1</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">clabel</span><span class="p">(</span><span class="n">CS1</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">orbits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Unweighted samples&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">orbits</span><span class="p">[</span><span class="s2">&quot;x1&quot;</span><span class="p">],</span> <span class="n">orbits</span><span class="p">[</span><span class="s2">&quot;x2&quot;</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Weighted samples&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">orbits</span><span class="p">[</span><span class="s2">&quot;x1&quot;</span><span class="p">],</span> <span class="n">orbits</span><span class="p">[</span><span class="s2">&quot;x2&quot;</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sequantially draws samples given the kernel of choice.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">state</span>
+
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">states</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">states</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="banana-density">
+<h2>Banana density<a class="headerlink" href="#banana-density" title="Permalink to this headline">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Banana density&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">8.0</span><span class="p">))</span> <span class="o">+</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span>
+        <span class="n">x2</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">x1</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="mf">1.0</span>
+    <span class="p">)</span>
+
+
+<span class="n">logprob</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">logprob_fn</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">)</span>
+<span class="n">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/6d0bf9d70ebbd64e93851b5017736d4281168657ff1c10721c683404fff6f7d5.png" src="../_images/6d0bf9d70ebbd64e93851b5017736d4281168657ff1c10721c683404fff6f7d5.png" />
+</div>
+</div>
+</section>
+<section id="initial-state-and-sampler-parameters">
+<h2>Initial state and sampler parameters<a class="headerlink" href="#initial-state-and-sampler-parameters" title="Permalink to this headline">#</a></h2>
+<p>Since the algorithm doesn’t have an accept/reject step, we can’t tune the parameters of the bijection according to its acceptance probability. By weighing the samples we are are doing, in a sense, importance sampling; hence, an alternative would be develop and adaptive procedure that aims at reducing the variance of the weights.</p>
+<p>The algorithm samples orbits of length <code class="docutils literal notranslate"><span class="pre">period</span></code>. Each iteration, starting from an initial point sampled from the previous orbit, shifts its initial point’s position in the orbit, hence making the algorithm irreversible, and samples the whole orbit, forwards and backwards in order to cover the whole period, for steps of length <code class="docutils literal notranslate"><span class="pre">step_size</span></code>. The samples are then weighted and returned with its corresponding weights.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inv_mass_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">period</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-1</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">initial_position</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;x1&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;x2&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="velocity-verlet">
+<h2>Velocity Verlet<a class="headerlink" href="#velocity-verlet" title="Permalink to this headline">#</a></h2>
+<p>The integrator usually found in implementations of HMC. It creates an orbit by discretizing the solution to Hamilton’s equations of the Hamiltonian function</p>
+<p>$$ H(x, v) = \frac{1}{2}\left(\frac{x_1^2}{8} + \left(x_2 - \frac{1}{4}x_1^2\right)^2\right) + \frac{1}{2}v^Tv .$$</p>
+<p>The plots include the unweighted samples to get an idea of how the integrator is exploring the sample space before the weight’s “correction”.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">init_fn</span><span class="p">,</span> <span class="n">vv_kernel</span> <span class="o">=</span> <span class="n">orbital</span><span class="p">(</span>
+    <span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">bijection</span><span class="o">=</span><span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span>
+<span class="p">)</span>
+<span class="n">initial_state</span> <span class="o">=</span> <span class="n">init_fn</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
+<span class="n">vv_kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">vv_kernel</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 557 ms, sys: 5.59 ms, total: 563 ms
+Wall time: 567 ms
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">vv_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
+
+<span class="n">samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">positions</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">weights</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/cabezasg/.local/lib/python3.8/site-packages/jax/_src/tree_util.py:188: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
+  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.7 s, sys: 27.3 ms, total: 2.73 s
+Wall time: 2.76 s
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/6c69e0a6fb1863b5d0263bdaf14dacb2a119a42d346cb04a1bee2a4fc25b782f.png" src="../_images/6c69e0a6fb1863b5d0263bdaf14dacb2a119a42d346cb04a1bee2a4fc25b782f.png" />
+</div>
+</div>
+</section>
+<section id="mclachlan">
+<h2>McLachlan<a class="headerlink" href="#mclachlan" title="Permalink to this headline">#</a></h2>
+<p>A different method of discretizing the solution to Hamilton’s equations, see <a class="reference external" href="https://arxiv.org/abs/1405.3153">Blanes, Casas &amp; Sanz-Serna (2014)</a></p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">init_fn</span><span class="p">,</span> <span class="n">ml_kernel</span> <span class="o">=</span> <span class="n">orbital</span><span class="p">(</span>
+    <span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">bijection</span><span class="o">=</span><span class="n">integrators</span><span class="o">.</span><span class="n">mclachlan</span>
+<span class="p">)</span>
+<span class="n">initial_state</span> <span class="o">=</span> <span class="n">init_fn</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
+<span class="n">ml_kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">ml_kernel</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 29.8 ms, sys: 3.73 ms, total: 33.5 ms
+Wall time: 32.5 ms
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">ml_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
+
+<span class="n">samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">positions</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">weights</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/cabezasg/.local/lib/python3.8/site-packages/jax/_src/tree_util.py:188: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
+  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.5 s, sys: 997 µs, total: 2.5 s
+Wall time: 2.6 s
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/6fcba74c726e1b7ea0753d19dbf1247cf5ee4153afe0fc77c2901135729ead81.png" src="../_images/6fcba74c726e1b7ea0753d19dbf1247cf5ee4153afe0fc77c2901135729ead81.png" />
+</div>
+</div>
+</section>
+<section id="yoshida">
+<h2>Yoshida<a class="headerlink" href="#yoshida" title="Permalink to this headline">#</a></h2>
+<p>A different method of discretizing the solution to Hamilton’s equations, see <a class="reference external" href="https://arxiv.org/abs/1405.3153">Blanes, Casas &amp; Sanz-Serna (2014)</a></p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">init_fn</span><span class="p">,</span> <span class="n">yo_kernel</span> <span class="o">=</span> <span class="n">orbital</span><span class="p">(</span>
+    <span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">bijection</span><span class="o">=</span><span class="n">integrators</span><span class="o">.</span><span class="n">yoshida</span>
+<span class="p">)</span>
+<span class="n">initial_state</span> <span class="o">=</span> <span class="n">init_fn</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
+<span class="n">yo_kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">yo_kernel</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 29.2 ms, sys: 547 µs, total: 29.7 ms
+Wall time: 30.5 ms
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">yo_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
+
+<span class="n">samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">positions</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">weights</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/cabezasg/.local/lib/python3.8/site-packages/jax/_src/tree_util.py:188: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
+  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.65 s, sys: 4.8 ms, total: 2.65 s
+Wall time: 2.76 s
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/93c65d3f2fc36494cf2b6ecb0cad29660575237cb5970c61eefb30ab57fccaad.png" src="../_images/93c65d3f2fc36494cf2b6ecb0cad29660575237cb5970c61eefb30ab57fccaad.png" />
+</div>
+</div>
+</section>
+<section id="ellipsis">
+<h2>Ellipsis<a class="headerlink" href="#ellipsis" title="Permalink to this headline">#</a></h2>
+<p>We now create and use a bijection given by an ellipsis using the <code class="docutils literal notranslate"><span class="pre">IntegratorState</span></code> class. The bijection must have as inputs the potential and kinetic energy functions, which are the negative log densities of our target posterior and the auxiliary distribution used for the momentum variable. In the case of our banana density, we are targeting the “posterior” $N(x_1|0, 8)N(x_2|1/4x_1^2, 1)$ and using a standard normal distribution for our momentum variable, hence our potential and kinetic energies are $1/2\left(x_1^2/8 + \left(x_2 - 1/4x_1^2\right)^2\right)$ and $1/2v^Tv$, respectively. However, the orbit we build now is independent of these two energies and moves around an ellipsis given by</p>
+<p>$$
+x(t) = x(0) \cos(t) + v(t) \sin(t) \
+v(t) = v(0) \cos(t) - x(t) \sin(t),
+$$</p>
+<p>which returns to its initial position every $t=2\pi$ radians. The <code class="docutils literal notranslate"><span class="pre">step_size</span></code> for this orbit is set to cover the entire ellipsis. This ellipsis actually targets a potential and kinetic energy given by the product measure of two standard normal distributions, hence its inefficiency at exploring the real target measure.</p>
+<p>The bijection must output a function which takes as input an <code class="docutils literal notranslate"><span class="pre">IntegratorState</span></code>, composed of a position, momentum, potential energy (negative log density of our target evaluated at position) and the gradient of the potential energy, and a step size; and outputs a proposed <code class="docutils literal notranslate"><span class="pre">IntegratorState</span></code>. Even if the dynamics of our bijection are independent of the real potential energy, we need to return the potential energy at the proposed position for the computation of the sampler’s weights. But, as our dynamics are gradient-free, we can return the same gradient as the previous state to avoid unnecessary computations.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">elliptical_bijection</span><span class="p">(</span><span class="n">potential_fn</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span><span class="p">,</span> <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span><span class="p">:</span>
+        <span class="n">_position</span><span class="p">,</span> <span class="n">_momentum</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">grad</span> <span class="o">=</span> <span class="n">state</span>
+
+        <span class="n">position</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_multimap</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">:</span> <span class="n">position</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">step_size</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">momentum</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">step_size</span><span class="p">),</span>
+            <span class="n">_position</span><span class="p">,</span>
+            <span class="n">_momentum</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_multimap</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">:</span> <span class="n">momentum</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">step_size</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">position</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">step_size</span><span class="p">),</span>
+            <span class="n">_position</span><span class="p">,</span>
+            <span class="n">_momentum</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span><span class="p">(</span>
+            <span class="n">position</span><span class="p">,</span>
+            <span class="n">momentum</span><span class="p">,</span>
+            <span class="n">potential_fn</span><span class="p">(</span><span class="n">position</span><span class="p">),</span>
+            <span class="n">grad</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">one_step</span>
+
+
+<span class="n">step_size</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">period</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">init_fn</span><span class="p">,</span> <span class="n">ellip_kernel</span> <span class="o">=</span> <span class="n">orbital</span><span class="p">(</span>
+    <span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">bijection</span><span class="o">=</span><span class="n">elliptical_bijection</span>
+<span class="p">)</span>
+<span class="n">initial_state</span> <span class="o">=</span> <span class="n">init_fn</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
+<span class="n">ellip_kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">ellip_kernel</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 25 ms, sys: 94 µs, total: 25.1 ms
+Wall time: 29.6 ms
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">ellip_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
+
+<span class="n">samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">positions</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">weights</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/cabezasg/.local/lib/python3.8/site-packages/jax/_src/tree_util.py:188: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
+  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.57 s, sys: 7.87 ms, total: 2.58 s
+Wall time: 2.66 s
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/66a5f87d4ec48e90d75ee5026668649eb1261898f08af79b31e81022e29c8dbc.png" src="../_images/66a5f87d4ec48e90d75ee5026668649eb1261898f08af79b31e81022e29c8dbc.png" />
+</div>
+</div>
+</section>
+<section id="ellipsis-iaf">
+<h2>Ellipsis + IAF<a class="headerlink" href="#ellipsis-iaf" title="Permalink to this headline">#</a></h2>
+<p>The ellipsis used to build the orbit on the previous algorithm solves Hamilton’s equations for $p(x,v) = N(x|0,I)N(v|0,I)$. We can use normalizing flows to approximate the pullback density of our target to a standard normal, thus allowing the algorithm to sample from a density similar to what it is targeting.</p>
+<p>To do this we parametrize a diffeomorphism as an <a class="reference external" href="https://arxiv.org/abs/1705.07057">MAF</a> and optimize its parameters by minimizing the the Kullback-Liebler divergence between the pullback density and a standard normal (equivalently maximizing the Evidence Lower BOund (ELBO) or the Variational Lower Bound).</p>
+<p>Once we have a diffeomorphism that “transports” our target to something close enough to a standard normal, we can use our orbital MCMC sampler travelling around the ellipsis to sample from our target pullback density (the target density “transported” to a standard normal). This will be equivalent to sampling using periodic orbital MCMC where the bijection used to move around the orbit is the composition of: first the inverse diffeomorphism which transports samples from our target to the standard normal, then the ellipsis solving Hamilton’s equations for $p(x,v) = N(x|0,I)N(v|0,I)$, and finally the diffeomorphism which transports standard normal samples back to samples from our target. Formally, if there is a smooth, invertible transformation $T$ such that for $x$, a random variable distributed as our target density $\pi(x)$, we have that</p>
+<p>$$
+z \sim \phi(z), \quad x \approx T(z),
+$$</p>
+<p>where $\phi(z)$ indicates the standard normal density. This implies that</p>
+<p>$$
+\phi(z) \approx \pi(T(z)) |\det \nabla T(z)|,
+$$</p>
+<p>where the right hand side of the equation is what we call the pullback density of our target. Thus, letting the bijection $f(x,v) = (x(t), v(t))$ for</p>
+<p>$$
+x(t) = x(0) \cos(t) + v(t) \sin(t) \
+v(t) = v(0) \cos(t) - x(t) \sin(t),
+$$</p>
+<p>we have that using the periodic orbital MCMC on the pullback with bijection $f(x,v)$ is equivalent to using the periodic orbital MCMC on our target density with bijection $T \circ f \circ T^{-1}$.</p>
+<p>First we define our parametrized MAF bijection using autoregressive neural networks.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">optax</span>
+<span class="kn">from</span> <span class="nn">numpyro.nn</span> <span class="kn">import</span> <span class="n">AutoregressiveNN</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">iaf_hidden_dims</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+<span class="n">iaf_nonlinearity</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">example_libraries</span><span class="o">.</span><span class="n">stax</span><span class="o">.</span><span class="n">Elu</span>
+<span class="n">init_fun</span><span class="p">,</span> <span class="n">apply_fun</span> <span class="o">=</span> <span class="n">AutoregressiveNN</span><span class="p">(</span>
+    <span class="mi">2</span><span class="p">,</span> <span class="n">iaf_hidden_dims</span><span class="p">,</span> <span class="n">nonlinearity</span><span class="o">=</span><span class="n">iaf_nonlinearity</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Then we initialize the parameters of our MAF transformation and define our reference density as a standard normal.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">_</span><span class="p">,</span> <span class="n">unraveler</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
+<span class="n">_</span><span class="p">,</span> <span class="n">initial_parameters</span> <span class="o">=</span> <span class="n">init_fun</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">log_reference</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="some-utility-functions">
+<h3>Some utility functions<a class="headerlink" href="#some-utility-functions" title="Permalink to this headline">#</a></h3>
+<p>Define the log pullback density, our loss function (negative ELBO) and the optimization loop used to train our transformation.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logpullback</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+    <span class="n">mean</span><span class="p">,</span> <span class="n">log_sd</span> <span class="o">=</span> <span class="n">apply_fun</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_sd</span><span class="p">)</span> <span class="o">*</span> <span class="n">z</span> <span class="o">+</span> <span class="n">mean</span>
+    <span class="k">return</span> <span class="n">logprob</span><span class="p">(</span><span class="n">unraveler</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">log_sd</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">nelbo_loss</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">log_pullback</span><span class="p">,</span> <span class="n">lognorm</span><span class="p">):</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">log_pullback</span><span class="p">,</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))(</span><span class="n">param</span><span class="p">,</span> <span class="n">Z</span><span class="p">)</span> <span class="o">-</span> <span class="n">lognorm</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">param_optim</span><span class="p">(</span>
+    <span class="n">rng</span><span class="p">,</span> <span class="n">init_param</span><span class="p">,</span> <span class="n">log_pullback</span><span class="p">,</span> <span class="n">learning_rate</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">,</span> <span class="n">n_atoms</span><span class="p">,</span> <span class="n">n_epochs</span>
+<span class="p">):</span>
+    <span class="n">epoch_size</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">divmod</span><span class="p">(</span><span class="n">n_iter</span><span class="p">,</span> <span class="n">n_epochs</span><span class="p">)</span>
+    <span class="n">n_iter</span> <span class="o">=</span> <span class="n">epoch_size</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="n">remainder</span><span class="p">)</span>
+    <span class="n">rngs</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">n_epochs</span><span class="p">)</span>
+
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optax</span><span class="o">.</span><span class="n">adam</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">)</span>
+    <span class="n">init_state</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">init_param</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_epoch</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">rng</span><span class="p">):</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="n">Z</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="p">(</span><span class="n">n_atoms</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">lognorm</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">log_reference</span><span class="p">)(</span><span class="n">Z</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_iter</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+            <span class="n">state</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">carry</span>
+            <span class="n">grads</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">nelbo_loss</span><span class="p">)(</span><span class="n">params</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">log_pullback</span><span class="p">,</span> <span class="n">lognorm</span><span class="p">)</span>
+            <span class="n">updates</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">grads</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">optax</span><span class="o">.</span><span class="n">apply_updates</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">updates</span><span class="p">)</span>
+            <span class="n">nelbo</span> <span class="o">=</span> <span class="n">nelbo_loss</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">log_pullback</span><span class="p">,</span> <span class="n">lognorm</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">nelbo</span>
+
+        <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">nelbo</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_iter</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_iter</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">nelbo</span>
+
+    <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">nelbo</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_epoch</span><span class="p">,</span> <span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">init_param</span><span class="p">),</span> <span class="n">rngs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">nelbo</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>We train the parameters of our transformation by minimizing the negative ELBO. A plot of the loss shows convergence.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">parameters</span><span class="p">,</span> <span class="n">nelbo</span> <span class="o">=</span> <span class="n">param_optim</span><span class="p">(</span>
+    <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+    <span class="n">initial_parameters</span><span class="p">,</span>
+    <span class="n">logpullback</span><span class="p">,</span>
+    <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+    <span class="n">n_iter</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">n_atoms</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">n_epochs</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Negative ELBO (KL divergence) over iterations&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">nelbo</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/22f607ca230db3d1f927d406df11e805d7ffb2cd0f5d9adf0bc2481ed5dd0b3c.png" src="../_images/22f607ca230db3d1f927d406df11e805d7ffb2cd0f5d9adf0bc2481ed5dd0b3c.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.32 s, sys: 164 ms, total: 6.48 s
+Wall time: 6.57 s
+</pre></div>
+</div>
+</div>
+</div>
+<p>We define our log pullback given the learned parameters of the transformation and use the periodic orbital MCMC with an ellipsis to sample from this log pullback density.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logpullback_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">logpullback</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">]))</span>
+<span class="n">logpull</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="n">logpullback_fn</span><span class="p">(</span><span class="o">**</span><span class="n">z</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">init_fn</span><span class="p">,</span> <span class="n">ellip_kernel</span> <span class="o">=</span> <span class="n">orbital</span><span class="p">(</span>
+    <span class="n">logpull</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">bijection</span><span class="o">=</span><span class="n">elliptical_bijection</span>
+<span class="p">)</span>
+<span class="n">initial_state</span> <span class="o">=</span> <span class="n">init_fn</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
+<span class="n">ellip_kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">ellip_kernel</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.54 s, sys: 1.96 ms, total: 1.54 s
+Wall time: 1.61 s
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">ellip_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
+
+<span class="n">pullback_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">positions</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">weights</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/cabezasg/.local/lib/python3.8/site-packages/jax/_src/tree_util.py:188: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
+  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.87 s, sys: 21.7 ms, total: 2.89 s
+Wall time: 3.07 s
+</pre></div>
+</div>
+</div>
+</div>
+<p>We need to push the samples through the learned MAF transformation to have samples from the target density (banana) and not the pullback.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">push_samples</span><span class="p">(</span><span class="n">z1</span><span class="p">,</span> <span class="n">z2</span><span class="p">):</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">z1</span><span class="p">,</span> <span class="n">z2</span><span class="p">])</span>
+    <span class="n">mean</span><span class="p">,</span> <span class="n">log_sd</span> <span class="o">=</span> <span class="n">apply_fun</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_sd</span><span class="p">)</span> <span class="o">*</span> <span class="n">z</span> <span class="o">+</span> <span class="n">mean</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samplesx1</span><span class="p">,</span> <span class="n">samplesx2</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">push_samples</span><span class="p">))(</span>
+    <span class="n">pullback_samples</span><span class="p">[</span><span class="s2">&quot;x1&quot;</span><span class="p">],</span> <span class="n">pullback_samples</span><span class="p">[</span><span class="s2">&quot;x2&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="n">samples</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;x1&quot;</span><span class="p">:</span> <span class="n">samplesx1</span><span class="p">,</span> <span class="s2">&quot;x2&quot;</span><span class="p">:</span> <span class="n">samplesx2</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>The pushed samples are much better at targeting the banana density than the algorithm without a preconditioning step. The transformation helps the sampler stay close to the same density level when moving around the ellipsis, thus reducing the variance of the step’s weights along it. This preconditioning serves, in a way, as an adaptive step that tunes the parameters of the sampler through a transformation. Notice that if we move around the whole ellipsis there are no tuning parameters, only the number of samples we choose to extract at each iteration, in contrast with choosing step sizes and number of steps in the case of the other numerical integrators. Of course, we still need to choose a gradient descent algorithm, learning rates, number of iterations, and epochs for the optimization!</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/3d87cc7485e2cb44f1aec48f9191b07a9d5576c7d96961b7b1bb033b31e80511.png" src="../_images/3d87cc7485e2cb44f1aec48f9191b07a9d5576c7d96961b7b1bb033b31e80511.png" />
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="HierarchicalBNN.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Hierarchical Bayesian neural networks</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="../sampling.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Sampling</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By The Blackjax developers<br/>
+  
+      &copy; Copyright 2022, The Blackjax developers.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>

@@ -22,8 +22,8 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=62ba249389abaaa9ffc34bf36a076bdc1d65ee18" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
     
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -39,8 +39,6 @@
     <script src="../_static/togglebutton.js"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?digest=f31d14ad54b65d19161ba51d4ffff3a77ae00456"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
-    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Use BlackJAX with Numpyro" href="use_with_numpyro.html" />
@@ -140,6 +138,11 @@
    <li class="toctree-l2">
     <a class="reference internal" href="HierarchicalBNN.html">
      Hierarchical Bayesian neural networks
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="PeriodicOrbitalMCMC.html">
+     Periodic Orbital MCMC
     </a>
    </li>
   </ul>
@@ -412,15 +415,14 @@ title="Source repository"
                 
               <div>
                 
-  <section class="tex2jax_ignore mathjax_ignore" id="use-tempered-smc-to-improve-exploration-of-mcmc-methods">
+  <section id="use-tempered-smc-to-improve-exploration-of-mcmc-methods">
 <h1>Use Tempered SMC to improve exploration of MCMC methods.<a class="headerlink" href="#use-tempered-smc-to-improve-exploration-of-mcmc-methods" title="Permalink to this headline">#</a></h1>
 <p>Multimodal distributions are typically hard to sample from, in particular using energy based methods such as HMC,
 as you need high energy levels to escape a potential well.</p>
 <p>Tempered SMC helps with this by considering a sequence of
 distributions:</p>
-<div class="math notranslate nohighlight">
-\[p_{\lambda_k}(x) \propto p_0(x) \exp(-\lambda_k V(x))\]</div>
-<p>where the tempering parameter <span class="math notranslate nohighlight">\(\lambda_k\)</span> takes increasing values between <span class="math notranslate nohighlight">\(0\)</span> and <span class="math notranslate nohighlight">\(1\)</span>. Tempered SMC will also particularly shine when the MCMC step
+<p>$$p_{\lambda_k}(x) \propto p_0(x) \exp(-\lambda_k V(x))$$</p>
+<p>where the tempering parameter $\lambda_k$ takes increasing values between $0$ and $1$. Tempered SMC will also particularly shine when the MCMC step
 is not well calibrated (too small step size, etc) like in the example below.</p>
 <section id="imports">
 <h2>Imports<a class="headerlink" href="#imports" title="Permalink to this headline">#</a></h2>
@@ -445,8 +447,8 @@ is not well calibrated (too small step size, etc) like in the example below.</p>
 <h2>Sampling from a bimodal potential<a class="headerlink" href="#sampling-from-a-bimodal-potential" title="Permalink to this headline">#</a></h2>
 <section id="experimental-setup">
 <h3>Experimental setup<a class="headerlink" href="#experimental-setup" title="Permalink to this headline">#</a></h3>
-<p>We consider a prior distribution <span class="math notranslate nohighlight">\(p_0(x) = \mathcal{N}(x \mid 0, 1)\)</span> and a potential function <span class="math notranslate nohighlight">\(V(x) = (x^2 - 1)^2\)</span>.</p>
-<p>This corresponds to the following distribution. We plot the resulting tempered density for 5 different values of <span class="math notranslate nohighlight">\(\lambda_k\)</span>: from <span class="math notranslate nohighlight">\(\lambda_k =1\)</span> which correponds to the original density to <span class="math notranslate nohighlight">\(\lambda_k=0\)</span>. The lower the value of <span class="math notranslate nohighlight">\(\lambda_k\)</span> the easier it is to sampler from the posterior density.</p>
+<p>We consider a prior distribution $p_0(x) = \mathcal{N}(x \mid 0, 1)$ and a potential function $V(x) = (x^2 - 1)^2$.</p>
+<p>This corresponds to the following distribution. We plot the resulting tempered density for 5 different values of $\lambda_k$: from $\lambda_k =1$ which correponds to the original density to $\lambda_k=0$. The lower the value of $\lambda_k$ the easier it is to sampler from the posterior density.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">V</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
@@ -482,7 +484,7 @@ is not well calibrated (too small step size, etc) like in the example below.</p>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f0c5075c040&gt;
 </pre></div>
 </div>
-<img alt="../_images/TemperedSMC_4_1.png" src="../_images/TemperedSMC_4_1.png" />
+<img alt="../_images/8bccb1c804da190df5397f65f58e3506fa58517020a1c6c7e18bcd663b3fe183.png" src="../_images/8bccb1c804da190df5397f65f58e3506fa58517020a1c6c7e18bcd663b3fe183.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -538,7 +540,7 @@ is not well calibrated (too small step size, etc) like in the example below.</p>
 Wall time: 1.21 s
 </pre></div>
 </div>
-<img alt="../_images/TemperedSMC_7_1.png" src="../_images/TemperedSMC_7_1.png" />
+<img alt="../_images/881855ef6c97fecb35aef319954e24df1d7c5b2282867f1077441355e7b2d03b.png" src="../_images/881855ef6c97fecb35aef319954e24df1d7c5b2282867f1077441355e7b2d03b.png" />
 </div>
 </div>
 </section>
@@ -566,14 +568,14 @@ Wall time: 1.21 s
 Wall time: 5.63 s
 </pre></div>
 </div>
-<img alt="../_images/TemperedSMC_9_1.png" src="../_images/TemperedSMC_9_1.png" />
+<img alt="../_images/07b332a800aafffed7d5a3eef8a60e50128c6858578fa190cfdd9e29ace34c3b.png" src="../_images/07b332a800aafffed7d5a3eef8a60e50128c6858578fa190cfdd9e29ace34c3b.png" />
 </div>
 </div>
 </section>
 </section>
 <section id="tempered-smc-with-hmc-kernel">
 <h2>Tempered SMC with HMC kernel<a class="headerlink" href="#tempered-smc-with-hmc-kernel" title="Permalink to this headline">#</a></h2>
-<p>We now use the adaptive tempered SMC algorithm with an HMC kernel. We only take one HMC step before resampling. The algorithm is run until <span class="math notranslate nohighlight">\(\lambda_k\)</span> crosses the <span class="math notranslate nohighlight">\(\lambda_k = 1\)</span> limit.</p>
+<p>We now use the adaptive tempered SMC algorithm with an HMC kernel. We only take one HMC step before resampling. The algorithm is run until $\lambda_k$ crosses the $\lambda_k = 1$ limit.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">smc_inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">smc_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">):</span>
@@ -643,7 +645,7 @@ CPU times: user 2.85 s, sys: 1.91 s, total: 4.76 s
 Wall time: 2.25 s
 </pre></div>
 </div>
-<img alt="../_images/TemperedSMC_12_1.png" src="../_images/TemperedSMC_12_1.png" />
+<img alt="../_images/0bf29793088a5204dbb1556ac6353f899171d3e0d4ce10e17752a67ed93f24a0.png" src="../_images/0bf29793088a5204dbb1556ac6353f899171d3e0d4ce10e17752a67ed93f24a0.png" />
 </div>
 </div>
 </section>
@@ -651,8 +653,8 @@ Wall time: 2.25 s
 <h2>Sampling from the Rastrigin potential<a class="headerlink" href="#sampling-from-the-rastrigin-potential" title="Permalink to this headline">#</a></h2>
 <section id="id1">
 <h3>Experimental setup<a class="headerlink" href="#id1" title="Permalink to this headline">#</a></h3>
-<p>We consider a prior distribution <span class="math notranslate nohighlight">\(p_0(x) = \mathcal{N}(x \mid 0_2, 2 I_2)\)</span> and we want to sample from a Rastrigin type potential function <span class="math notranslate nohighlight">\(V(x) = -2 A + \sum_{i=1}^2x_i^2 - A  \cos(2 \pi x_i)\)</span> where we choose <span class="math notranslate nohighlight">\(A=10\)</span>. These potential functions are known to be particularly hard to sample.</p>
-<p>We plot the resulting tempered density for 5 different values of <span class="math notranslate nohighlight">\(\lambda_k\)</span>: from <span class="math notranslate nohighlight">\(\lambda_k =1\)</span> which correponds to the original density to <span class="math notranslate nohighlight">\(\lambda_k=0\)</span>. The lower the value of <span class="math notranslate nohighlight">\(\lambda_k\)</span> the easier it is to sampler from the posterior log-density.</p>
+<p>We consider a prior distribution $p_0(x) = \mathcal{N}(x \mid 0_2, 2 I_2)$ and we want to sample from a Rastrigin type potential function $V(x) = -2 A + \sum_{i=1}^2x_i^2 - A  \cos(2 \pi x_i)$ where we choose $A=10$. These potential functions are known to be particularly hard to sample.</p>
+<p>We plot the resulting tempered density for 5 different values of $\lambda_k$: from $\lambda_k =1$ which correponds to the original density to $\lambda_k=0$. The lower the value of $\lambda_k$ the easier it is to sampler from the posterior log-density.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">prior_log_prob</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
@@ -687,7 +689,7 @@ Wall time: 2.25 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f0c30438a60&gt;
 </pre></div>
 </div>
-<img alt="../_images/TemperedSMC_14_1.png" src="../_images/TemperedSMC_14_1.png" />
+<img alt="../_images/af542b77e7289995d04e78d43719eb7a354f2d5d43eca43bfecffb55de76053c.png" src="../_images/af542b77e7289995d04e78d43719eb7a354f2d5d43eca43bfecffb55de76053c.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -741,7 +743,7 @@ Wall time: 2.25 s
 Wall time: 917 ms
 </pre></div>
 </div>
-<img alt="../_images/TemperedSMC_17_1.png" src="../_images/TemperedSMC_17_1.png" />
+<img alt="../_images/c02e76a066faee93a9d0900c4ac90f019a09da22bd3056e9600efa7e29a94b7f.png" src="../_images/c02e76a066faee93a9d0900c4ac90f019a09da22bd3056e9600efa7e29a94b7f.png" />
 </div>
 </div>
 </section>
@@ -770,13 +772,13 @@ Wall time: 917 ms
 Wall time: 1.34 s
 </pre></div>
 </div>
-<img alt="../_images/TemperedSMC_19_1.png" src="../_images/TemperedSMC_19_1.png" />
+<img alt="../_images/6145896ce2a2633da20e196f2b7fbe86514bc651c0127ea323b41edfb50e8881.png" src="../_images/6145896ce2a2633da20e196f2b7fbe86514bc651c0127ea323b41edfb50e8881.png" />
 </div>
 </div>
 </section>
 <section id="id2">
 <h3>Tempered SMC with HMC kernel<a class="headerlink" href="#id2" title="Permalink to this headline">#</a></h3>
-<p>We now use the adaptive tempered SMC algorithm with an HMC kernel. We only take one HMC step before resampling. The algorithm is run until <span class="math notranslate nohighlight">\(\lambda_k\)</span> crosses the <span class="math notranslate nohighlight">\(\lambda_k = 1\)</span> limit.
+<p>We now use the adaptive tempered SMC algorithm with an HMC kernel. We only take one HMC step before resampling. The algorithm is run until $\lambda_k$ crosses the $\lambda_k = 1$ limit.
 We correct the bias introduced by the (arbitrary) prior.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -819,7 +821,7 @@ CPU times: user 2.37 s, sys: 14.3 ms, total: 2.38 s
 Wall time: 2.35 s
 </pre></div>
 </div>
-<img alt="../_images/TemperedSMC_21_1.png" src="../_images/TemperedSMC_21_1.png" />
+<img alt="../_images/5ad9c1eb59730beb0d4f61c568ca84dcfa23ec5130efd5df8f5ac5dc622aa0e2.png" src="../_images/5ad9c1eb59730beb0d4f61c568ca84dcfa23ec5130efd5df8f5ac5dc622aa0e2.png" />
 </div>
 </div>
 <p>The tempered SMC algorithm with the HMC kernel clearly outperfoms the HMC and NUTS kernels alone.</p>
