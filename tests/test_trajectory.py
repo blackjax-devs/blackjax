@@ -177,7 +177,7 @@ class TrajectoryTest(chex.TestCase):
                 initial_energy,
             )
             # Assert that the trajectory being built is the same
-            jax.tree_multimap(
+            jax.tree_map(
                 functools.partial(np.testing.assert_allclose, rtol=1e-5),
                 trajectory0,
                 trajectory1,

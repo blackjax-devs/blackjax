@@ -186,9 +186,7 @@ def hmc_proposal(
         should indeed retrieve the initial state (with flipped momentum).
 
         """
-        flipped_momentum = jax.tree_util.tree_multimap(
-            lambda m: -1.0 * m, state.momentum
-        )
+        flipped_momentum = jax.tree_util.tree_map(lambda m: -1.0 * m, state.momentum)
         return integrators.IntegratorState(
             state.position,
             flipped_momentum,

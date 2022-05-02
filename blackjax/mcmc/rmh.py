@@ -155,9 +155,7 @@ def rmh(
         key_proposal, key_accept = jax.random.split(rng_key, 2)
 
         move_proposal = proposal_generator(key_proposal, state.position)
-        new_position = jax.tree_util.tree_multimap(
-            jnp.add, state.position, move_proposal
-        )
+        new_position = jax.tree_util.tree_map(jnp.add, state.position, move_proposal)
         new_log_probability = logprob_fn(new_position)
         new_state = RMHState(new_position, new_log_probability)
 
