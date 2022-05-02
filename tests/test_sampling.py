@@ -268,7 +268,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             true_scale[0] * true_scale[1]
         )
 
-        _ = jax.tree_multimap(
+        _ = jax.tree_map(
             self.mcse_test,
             [posterior_samples, posterior_variance, posterior_correlation],
             [true_loc, true_scale**2, true_rho],
