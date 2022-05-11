@@ -1,5 +1,5 @@
 """Public API for the NUTS Kernel"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple, Optional, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -105,6 +105,7 @@ def kernel(
         logprob_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
+        logprob_grad_fn: Optional[Callable] = None,
     ) -> Tuple[hmc.HMCState, NUTSInfo]:
         """Generate a new sample with the NUTS kernel.
 
@@ -119,7 +120,9 @@ def kernel(
             kinetic_energy_fn,
             uturn_check_fn,
         ) = metrics.gaussian_euclidean(inverse_mass_matrix)
-        symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
+        symplectic_integrator = integrator(
+            potential_fn, kinetic_energy_fn, logprob_grad_fn
+        )
         proposal_generator = iterative_nuts_proposal(
             symplectic_integrator,
             kinetic_energy_fn,

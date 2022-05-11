@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Union
+from typing import Callable, Dict, Optional, Union
 
 import jax
 import jax.numpy as jnp
@@ -206,6 +206,7 @@ class hmc:
         *,
         divergence_threshold: int = 1000,
         integrator: Callable = mcmc.integrators.velocity_verlet,
+        logprob_grad_fn: Optional[Callable] = None,
     ) -> SamplingAlgorithm:
 
         step = cls.kernel(integrator, divergence_threshold)
@@ -221,6 +222,7 @@ class hmc:
                 step_size,
                 inverse_mass_matrix,
                 num_integration_steps,
+                logprob_grad_fn=logprob_grad_fn,
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
@@ -366,6 +368,7 @@ class nuts:
         max_num_doublings: int = 10,
         divergence_threshold: int = 1000,
         integrator: Callable = mcmc.integrators.velocity_verlet,
+        logprob_grad_fn: Optional[Callable] = None,
     ) -> SamplingAlgorithm:
 
         step = cls.kernel(integrator, divergence_threshold, max_num_doublings)
@@ -380,6 +383,7 @@ class nuts:
                 logprob_fn,
                 step_size,
                 inverse_mass_matrix,
+                logprob_grad_fn=logprob_grad_fn,
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
@@ -393,6 +397,7 @@ def window_adaptation(
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.65,
     progress_bar: bool = False,
+    logprob_grad_fn: Optional[Callable] = None,
     **parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the parameters of algorithms in the HMC family.
@@ -423,6 +428,9 @@ def window_adaptation(
         The acceptance rate that we target during step size adaptation.
     progress_bar
         Whether we should display a progress bar.
+    logprob_grad_fn
+        The gradient of logprob_fn.  If it's not provided, it will be computed
+        by jax using reverse mode autodiff (jax.grad).
     **parameters
         The extra parameters to pass to the algorithm, e.g. the number of
         integration steps for HMC.
@@ -443,6 +451,7 @@ def window_adaptation(
                 logprob_fn,
                 step_size,
                 inverse_mass_matrix,
+                logprob_grad_fn=logprob_grad_fn,
                 **parameters,
             )
 
@@ -464,7 +473,7 @@ def window_adaptation(
         return ((state, adaptation_state), (state, info, adaptation_state))
 
     def run(rng_key: PRNGKey, position: PyTree):
-        init_state = algorithm.init(position, logprob_fn)
+        init_state = algorithm.init(position, logprob_fn, logprob_grad_fn)
         init_warmup_state = init(init_state, initial_step_size)
 
         if progress_bar:

@@ -196,10 +196,17 @@ mcse_test_cases = [
             "step_size": 1.0,
             "num_integration_steps": 32,
         },
+        "custom_gradients": False,
     },
     {
         "algorithm": blackjax.nuts,
         "parameters": {"step_size": 1.0},
+        "custom_gradients": False,
+    },
+    {
+        "algorithm": blackjax.nuts,
+        "parameters": {"step_size": 1.0},
+        "custom_gradients": True,
     },
 ]
 
@@ -223,7 +230,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             scale = jnp.abs(jax.random.normal(scale_rng, [2])) * 2.5
             rho = jax.random.uniform(rho_rng, [], minval=-1.0, maxval=1.0)
 
-        cov = jnp.diag(scale ** 2)
+        cov = jnp.diag(scale**2)
         cov = cov.at[0, 1].set(rho * scale[0] * scale[1])
         cov = cov.at[1, 0].set(rho * scale[0] * scale[1])
 
@@ -244,15 +251,26 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         return scaled_error
 
     @parameterized.parameters(mcse_test_cases)
-    def test_mcse(self, algorithm, parameters):
+    def test_mcse(self, algorithm, parameters, custom_gradients):
         """Test convergence using Monte Carlo CLT across multiple chains."""
         init_fn_key, pos_init_key, sample_key = jax.random.split(self.key, 3)
         logprob_fn, true_loc, true_scale, true_rho = self.generate_multivariate_target(
             None
         )
+        if custom_gradients:
+            logprob_grad_fn = jax.jacfwd(logprob_fn)
+        else:
+            logprob_grad_fn = None
+
+        kernel = algorithm(
+            logprob_fn,
+            inverse_mass_matrix=true_scale,
+            logprob_grad_fn=logprob_grad_fn,
+            **parameters,
+        )
+
         num_chains = 10
         initial_positions = jax.random.normal(pos_init_key, [num_chains, 2])
-        kernel = algorithm(logprob_fn, inverse_mass_matrix=true_scale, **parameters)
         initial_states = jax.vmap(kernel.init, in_axes=(0,))(initial_positions)
         multi_chain_sample_key = jax.random.split(sample_key, num_chains)
 
@@ -263,7 +281,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
 
         posterior_samples = states.position[:, -1000:]
         posterior_delta = posterior_samples - true_loc
-        posterior_variance = posterior_delta ** 2.0
+        posterior_variance = posterior_delta**2.0
         posterior_correlation = jnp.prod(posterior_delta, axis=-1, keepdims=True) / (
             true_scale[0] * true_scale[1]
         )
@@ -271,7 +289,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         _ = jax.tree_map(
             self.mcse_test,
             [posterior_samples, posterior_variance, posterior_correlation],
-            [true_loc, true_scale ** 2, true_rho],
+            [true_loc, true_scale**2, true_rho],
         )
 
 
