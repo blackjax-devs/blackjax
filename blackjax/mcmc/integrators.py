@@ -1,5 +1,5 @@
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Optional
 
 import jax
 
@@ -30,7 +30,9 @@ def new_integrator_state(potential_fn, position, momentum):
 
 
 def velocity_verlet(
-    potential_fn: Callable, kinetic_energy_fn: EuclideanKineticEnergy
+    potential_fn: Callable,
+    kinetic_energy_fn: EuclideanKineticEnergy,
+    grad_potential_fn: Optional[Callable] = None,
 ) -> EuclideanIntegrator:
     """The velocity Verlet (or Verlet-Störmer) integrator.
 
@@ -67,7 +69,10 @@ def velocity_verlet(
     b1 = 0.5
     a2 = 1 - 2 * a1
 
-    potential_grad_fn = jax.value_and_grad(potential_fn)
+    if grad_potential_fn:
+        potential_grad_fn = lambda x: (potential_fn(x), grad_potential_fn(x))
+    else:
+        potential_grad_fn = jax.value_and_grad(potential_fn)
     kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
@@ -101,7 +106,9 @@ def velocity_verlet(
 
 
 def mclachlan(
-    potential_fn: Callable, kinetic_energy_fn: Callable
+    potential_fn: Callable,
+    kinetic_energy_fn: Callable,
+    grad_potential_fn: Optional[Callable] = None,
 ) -> EuclideanIntegrator:
     """Two-stage palindromic symplectic integrator derived in [1]_
 
@@ -125,7 +132,11 @@ def mclachlan(
     a1 = 0.5
     b2 = 1 - 2 * b1
 
-    potential_grad_fn = jax.jit(jax.value_and_grad(potential_fn))
+    if grad_potential_fn:
+        potential_grad_fn = jax.jit(lambda x: (potential_fn(x), grad_potential_fn(x)))
+
+    else:
+        potential_grad_fn = jax.jit(jax.value_and_grad(potential_fn))
     kinetic_energy_grad_fn = jax.jit(jax.grad(kinetic_energy_fn))
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
@@ -172,7 +183,11 @@ def mclachlan(
     return one_step
 
 
-def yoshida(potential_fn: Callable, kinetic_energy_fn: Callable) -> EuclideanIntegrator:
+def yoshida(
+    potential_fn: Callable,
+    kinetic_energy_fn: Callable,
+    logprob_grad_fn: Optional[Callable] = None,
+) -> EuclideanIntegrator:
     """Three stages palindromic symplectic integrator derived in [1]_
 
     The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of
@@ -193,7 +208,11 @@ def yoshida(potential_fn: Callable, kinetic_energy_fn: Callable) -> EuclideanInt
     b2 = 0.5 - b1
     a2 = 1 - 2 * a1
 
-    potential_grad_fn = jax.jit(jax.value_and_grad(potential_fn))
+    if logprob_grad_fn:
+        potential_grad_fn = jax.jit(lambda x: (potential_fn(x), logprob_grad_fn(x)))
+
+    else:
+        potential_grad_fn = jax.jit(jax.value_and_grad(potential_fn))
     kinetic_energy_grad_fn = jax.jit(jax.grad(kinetic_energy_fn))
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
