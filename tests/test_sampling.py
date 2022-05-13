@@ -193,13 +193,13 @@ mcse_test_cases = [
     {
         "algorithm": blackjax.hmc,
         "parameters": {
-            "step_size": 0.1,
+            "step_size": 1.0,
             "num_integration_steps": 32,
         },
     },
     {
         "algorithm": blackjax.nuts,
-        "parameters": {"step_size": 0.07},
+        "parameters": {"step_size": 1.0},
     },
 ]
 
@@ -223,7 +223,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             scale = jnp.abs(jax.random.normal(scale_rng, [2])) * 2.5
             rho = jax.random.uniform(rho_rng, [], minval=-1.0, maxval=1.0)
 
-        cov = jnp.diag(scale**2)
+        cov = jnp.diag(scale ** 2)
         cov = cov.at[0, 1].set(rho * scale[0] * scale[1])
         cov = cov.at[1, 0].set(rho * scale[0] * scale[1])
 
@@ -263,7 +263,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
 
         posterior_samples = states.position[:, -1000:]
         posterior_delta = posterior_samples - true_loc
-        posterior_variance = posterior_delta**2.0
+        posterior_variance = posterior_delta ** 2.0
         posterior_correlation = jnp.prod(posterior_delta, axis=-1, keepdims=True) / (
             true_scale[0] * true_scale[1]
         )
@@ -271,7 +271,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         _ = jax.tree_map(
             self.mcse_test,
             [posterior_samples, posterior_variance, posterior_correlation],
-            [true_loc, true_scale**2, true_rho],
+            [true_loc, true_scale ** 2, true_rho],
         )
 
 
