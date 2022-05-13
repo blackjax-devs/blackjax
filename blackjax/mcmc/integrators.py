@@ -133,13 +133,11 @@ def mclachlan(
     b2 = 1 - 2 * b1
 
     if potential_grad_fn:
-        potential_and_grad_fn = jax.jit(
-            lambda x: (potential_fn(x), potential_grad_fn(x))
-        )
+        potential_and_grad_fn = lambda x: (potential_fn(x), potential_grad_fn(x))
 
     else:
-        potential_and_grad_fn = jax.jit(jax.value_and_grad(potential_fn))
-    kinetic_energy_grad_fn = jax.jit(jax.grad(kinetic_energy_fn))
+        potential_and_grad_fn = jax.value_and_grad(potential_fn)
+    kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
         position, momentum, _, potential_energy_grad = state
@@ -211,13 +209,11 @@ def yoshida(
     a2 = 1 - 2 * a1
 
     if potential_grad_fn:
-        potential_and_grad_fn = jax.jit(
-            lambda x: (potential_fn(x), potential_grad_fn(x))
-        )
+        potential_and_grad_fn = lambda x: (potential_fn(x), potential_grad_fn(x))
 
     else:
-        potential_and_grad_fn = jax.jit(jax.value_and_grad(potential_fn))
-    kinetic_energy_grad_fn = jax.jit(jax.grad(kinetic_energy_fn))
+        potential_and_grad_fn = jax.value_and_grad(potential_fn)
+    kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
         position, momentum, _, potential_energy_grad = state
