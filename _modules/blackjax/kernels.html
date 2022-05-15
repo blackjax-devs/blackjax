@@ -268,7 +268,7 @@ title="Source repository"
               <div>
                 
   <h1>Source code for blackjax.kernels</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -476,6 +476,7 @@ title="Source repository"
         <span class="o">*</span><span class="p">,</span>
         <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
         <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
+        <span class="n">logprob_grad_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 
         <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
@@ -491,6 +492,7 @@ title="Source repository"
                 <span class="n">step_size</span><span class="p">,</span>
                 <span class="n">inverse_mass_matrix</span><span class="p">,</span>
                 <span class="n">num_integration_steps</span><span class="p">,</span>
+                <span class="n">logprob_grad_fn</span><span class="o">=</span><span class="n">logprob_grad_fn</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
@@ -636,6 +638,7 @@ title="Source repository"
         <span class="n">max_num_doublings</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
         <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
         <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
+        <span class="n">logprob_grad_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 
         <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">max_num_doublings</span><span class="p">)</span>
@@ -650,6 +653,7 @@ title="Source repository"
                 <span class="n">logprob_fn</span><span class="p">,</span>
                 <span class="n">step_size</span><span class="p">,</span>
                 <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+                <span class="n">logprob_grad_fn</span><span class="o">=</span><span class="n">logprob_grad_fn</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
@@ -663,6 +667,7 @@ title="Source repository"
     <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.65</span><span class="p">,</span>
     <span class="n">progress_bar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">logprob_grad_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">parameters</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdaptationAlgorithm</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Adapt the parameters of algorithms in the HMC family.</span>
@@ -693,6 +698,9 @@ title="Source repository"
 <span class="sd">        The acceptance rate that we target during step size adaptation.</span>
 <span class="sd">    progress_bar</span>
 <span class="sd">        Whether we should display a progress bar.</span>
+<span class="sd">    logprob_grad_fn</span>
+<span class="sd">        The gradient of logprob_fn.  If it&#39;s not provided, it will be computed</span>
+<span class="sd">        by jax using reverse mode autodiff (jax.grad).</span>
 <span class="sd">    **parameters</span>
 <span class="sd">        The extra parameters to pass to the algorithm, e.g. the number of</span>
 <span class="sd">        integration steps for HMC.</span>
@@ -713,6 +721,7 @@ title="Source repository"
                 <span class="n">logprob_fn</span><span class="p">,</span>
                 <span class="n">step_size</span><span class="p">,</span>
                 <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+                <span class="n">logprob_grad_fn</span><span class="o">=</span><span class="n">logprob_grad_fn</span><span class="p">,</span>
                 <span class="o">**</span><span class="n">parameters</span><span class="p">,</span>
             <span class="p">)</span>
 
@@ -734,7 +743,7 @@ title="Source repository"
         <span class="k">return</span> <span class="p">((</span><span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">),</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
-        <span class="n">init_state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
+        <span class="n">init_state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">logprob_grad_fn</span><span class="p">)</span>
         <span class="n">init_warmup_state</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">initial_step_size</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">progress_bar</span><span class="p">:</span>
