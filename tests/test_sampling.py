@@ -110,21 +110,21 @@ class LinearRegressionTest(chex.TestCase):
 normal_test_cases = [
     {
         "algorithm": blackjax.hmc,
-        "initial_position": jnp.array(100.0),
+        "initial_position": jnp.array(3.0),
         "parameters": {
-            "step_size": 0.1,
-            "inverse_mass_matrix": jnp.array([0.1]),
-            "num_integration_steps": 100,
+            "step_size": 3.9,
+            "inverse_mass_matrix": jnp.array([1.0]),
+            "num_integration_steps": 30,
         },
         "num_sampling_steps": 6000,
-        "burnin": 5_000,
+        "burnin": 1_000,
     },
     {
         "algorithm": blackjax.nuts,
-        "initial_position": jnp.array(100.0),
-        "parameters": {"step_size": 0.1, "inverse_mass_matrix": jnp.array([0.1])},
+        "initial_position": jnp.array(3.0),
+        "parameters": {"step_size": 4.0, "inverse_mass_matrix": jnp.array([1.0])},
         "num_sampling_steps": 6000,
-        "burnin": 5_000,
+        "burnin": 1_000,
     },
     {
         "algorithm": blackjax.orbital_hmc,
