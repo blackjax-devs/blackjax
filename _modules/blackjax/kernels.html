@@ -142,6 +142,11 @@
      Periodic Orbital MCMC
     </a>
    </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/GP_EllipticalSliceSampler.html">
+     Gaussian regression with the Elliptical Slice sampler
+    </a>
+   </li>
   </ul>
  </li>
 </ul>
@@ -900,6 +905,66 @@ title="Source repository"
                 <span class="n">step_size</span><span class="p">,</span>
                 <span class="n">inverse_mass_matrix</span><span class="p">,</span>
                 <span class="n">period</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="elliptical_slice"><a class="viewcode-back" href="../../sampling.html#blackjax.elliptical_slice">[docs]</a><span class="k">class</span> <span class="nc">elliptical_slice</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Elliptical Slice sampling kernel</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    A new Elliptical Slice sampling kernel can be initialized and used with the following code:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        ellip_slice = blackjax.elliptical_slice(loglikelihood_fn, cov_matrix)</span>
+<span class="sd">        state = ellip_slice.init(position)</span>
+<span class="sd">        new_state, info = ellip_slice.step(rng_key, state)</span>
+
+<span class="sd">    We can JIT-compile the step function for better performance</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        step = jax.jit(ellip_slice.step)</span>
+<span class="sd">        new_state, info = step(rng_key, state)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    loglikelihood_fn</span>
+<span class="sd">        Only the log likelihood function from the posterior distributon we wish to sample.</span>
+<span class="sd">    cov_matrix</span>
+<span class="sd">        The value of the covariance matrix of the gaussian prior distribution from the posterior we wish to sample.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">elliptical_slice</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">elliptical_slice</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">loglikelihood_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">cov</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+
+        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">cov</span><span class="p">,</span> <span class="n">mean</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">loglikelihood_fn</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
