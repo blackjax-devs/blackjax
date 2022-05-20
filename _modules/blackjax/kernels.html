@@ -280,6 +280,7 @@ title="Source repository"
 
 <span class="kn">import</span> <span class="nn">blackjax.adaptation</span> <span class="k">as</span> <span class="nn">adaptation</span>
 <span class="kn">import</span> <span class="nn">blackjax.mcmc</span> <span class="k">as</span> <span class="nn">mcmc</span>
+<span class="kn">import</span> <span class="nn">blackjax.sgmcmc</span> <span class="k">as</span> <span class="nn">sgmcmc</span>
 <span class="kn">import</span> <span class="nn">blackjax.smc</span> <span class="k">as</span> <span class="nn">smc</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">AdaptationAlgorithm</span><span class="p">,</span> <span class="n">SamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.progress_bar</span> <span class="kn">import</span> <span class="n">progress_bar_scan</span>
@@ -292,6 +293,7 @@ title="Source repository"
     <span class="s2">&quot;nuts&quot;</span><span class="p">,</span>
     <span class="s2">&quot;orbital_hmc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;rmh&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sgld&quot;</span><span class="p">,</span>
     <span class="s2">&quot;tempered_smc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;window_adaptation&quot;</span><span class="p">,</span>
 <span class="p">]</span>
@@ -662,6 +664,92 @@ title="Source repository"
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
+
+
+<span class="c1"># -----------------------------------------------------------------------------</span>
+<span class="c1">#                        STOCHASTIC GRADIENT MCMC</span>
+<span class="c1"># -----------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="sgld"><a class="viewcode-back" href="../../sampling.html#blackjax.sgld">[docs]</a><span class="k">class</span> <span class="nc">sgld</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the SGLD kernel.</span>
+
+<span class="sd">    The general sgld kernel (:meth:`blackjax.mcmc.sgld.kernel`, alias `blackjax.sgld.kernel`) can be</span>
+<span class="sd">    cumbersome to manipulate. Since most users only need to specify the kernel</span>
+<span class="sd">    parameters at initialization time, we provide a helper function that</span>
+<span class="sd">    specializes the general kernel.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    To initialize a SGLD kernel one needs to specify a schedule function, which</span>
+<span class="sd">    returns a step size at each sampling step, and a gradient estimator</span>
+<span class="sd">    function. Here for a constant step size, and `data_size` data samples:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        schedule_fn = lambda _: 1e-3</span>
+<span class="sd">        grad_fn = blackjax.sgmcmc.gradients.grad_estimator(logprior_fn, loglikelihood_fn, data_size)</span>
+
+<span class="sd">    We can now initialize the sgld kernel and the state:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        sgld = blackjax.sgld(grad_fn, schedule_fn)</span>
+<span class="sd">        state = sgld.init(position)</span>
+
+<span class="sd">    Assuming we have an iterator `batches` that yields batches of data we can perform one step:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        data_batch = next(batches)</span>
+<span class="sd">        new_state = sgld.step(rng_key, state, data_batch)</span>
+
+<span class="sd">    Kernels are not jit-compiled by default so you will need to do it manually:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">       step = jax.jit(sgld.step)</span>
+<span class="sd">       new_state, info = step(rng_key, state)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gradient_estimator_fn</span>
+<span class="sd">       A function which, given a position and a batch of data, returns an estimation</span>
+<span class="sd">       of the value of the gradient of the log-posterior distribution at this position.</span>
+<span class="sd">    schedule_fn</span>
+<span class="sd">       A function which returns a step size given a step number.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">sgld</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">sgld</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">grad_estimator_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">schedule_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+
+        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">grad_estimator_fn</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">,</span> <span class="n">grad_estimator_fn</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+            <span class="n">step_size</span> <span class="o">=</span> <span class="n">schedule_fn</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
+
+
+<span class="c1"># -----------------------------------------------------------------------------</span>
+<span class="c1">#                                 ADAPTATION</span>
+<span class="c1"># -----------------------------------------------------------------------------</span>
 
 
 <div class="viewcode-block" id="window_adaptation"><a class="viewcode-back" href="../../adaptation.html#blackjax.window_adaptation">[docs]</a><span class="k">def</span> <span class="nf">window_adaptation</span><span class="p">(</span>

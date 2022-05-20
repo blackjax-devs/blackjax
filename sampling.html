@@ -304,6 +304,11 @@ title="Source repository"
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#stochastic-gradient-langeving-dynamics">
+   Stochastic Gradient Langeving Dynamics
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#tempered-smc">
    Tempered SMC
   </a>
@@ -358,6 +363,11 @@ title="Source repository"
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#stochastic-gradient-langeving-dynamics">
+   Stochastic Gradient Langeving Dynamics
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#tempered-smc">
    Tempered SMC
   </a>
@@ -398,10 +408,13 @@ title="Source repository"
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.rmh" title="blackjax.rmh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the gaussian random walk kernel</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.tempered_smc" title="blackjax.tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgld" title="blackjax.sgld"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgld</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the SGLD kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.tempered_smc" title="blackjax.tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptive_tempered_smc" title="blackjax.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptive_tempered_smc" title="blackjax.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
 </tbody>
@@ -676,6 +689,55 @@ the momentum and computing the kinetic energy.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>logprob_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – The log density probability density function from which we wish to sample.</p></li>
 <li><p><strong>sigma</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><em>Union</em></a><em>[</em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.22)"><em>numpy.ndarray</em></a><em>, </em><a class="reference external" href="https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.ndarray.html#jax.numpy.ndarray" title="(in JAX)"><em>jax._src.numpy.ndarray.ndarray</em></a><em>]</em>) – The value of the covariance matrix of the gaussian proposal distribution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="stochastic-gradient-langeving-dynamics">
+<h2>Stochastic Gradient Langeving Dynamics<a class="headerlink" href="#stochastic-gradient-langeving-dynamics" title="Permalink to this headline">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.sgld">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sgld</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grad_estimator_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule_fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#sgld"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgld" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the SGLD kernel.</p>
+<p>The general sgld kernel (<code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.sgld.kernel()</span></code>, alias <cite>blackjax.sgld.kernel</cite>) can be
+cumbersome to manipulate. Since most users only need to specify the kernel
+parameters at initialization time, we provide a helper function that
+specializes the general kernel.</p>
+<p class="rubric">Example</p>
+<p>To initialize a SGLD kernel one needs to specify a schedule function, which
+returns a step size at each sampling step, and a gradient estimator
+function. Here for a constant step size, and <cite>data_size</cite> data samples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">schedule_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="mf">1e-3</span>
+<span class="n">grad_fn</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">gradients</span><span class="o">.</span><span class="n">grad_estimator</span><span class="p">(</span><span class="n">logprior_fn</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">data_size</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can now initialize the sgld kernel and the state:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sgld</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sgld</span><span class="p">(</span><span class="n">grad_fn</span><span class="p">,</span> <span class="n">schedule_fn</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">sgld</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Assuming we have an iterator <cite>batches</cite> that yields batches of data we can perform one step:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data_batch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span>
+<span class="n">new_state</span> <span class="o">=</span> <span class="n">sgld</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Kernels are not jit-compiled by default so you will need to do it manually:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">sgld</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gradient_estimator_fn</strong> – A function which, given a position and a batch of data, returns an estimation
+of the value of the gradient of the log-posterior distribution at this position.</p></li>
+<li><p><strong>schedule_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – A function which returns a step size given a step number.</p></li>
+<li><p><strong>grad_estimator_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
