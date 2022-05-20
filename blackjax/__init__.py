@@ -8,6 +8,7 @@ from .kernels import (
     nuts,
     orbital_hmc,
     rmh,
+    sgld,
     tempered_smc,
     window_adaptation,
 )
@@ -21,6 +22,7 @@ __all__ = [
     "orbital_hmc",
     "rmh",
     "elliptical_slice",
+    "sgld",  # stochastic gradient mcmc
     "window_adaptation",  # mcmc adaptation
     "adaptive_tempered_smc",  # smc
     "tempered_smc",

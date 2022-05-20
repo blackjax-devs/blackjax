@@ -107,24 +107,62 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
 
+class SGMCMCTest(chex.TestCase):
+    """Test sampling of a linear regression model."""
+
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.PRNGKey(19)
+
+    def logprior_fn(self, position):
+        return -0.5 * jnp.dot(position, position) * 0.01
+
+    def loglikelihood_fn(self, position, x):
+        w = x - position
+        return -0.5 * jnp.dot(w, w)
+
+    def test_linear_regression(self):
+        """Test the HMC kernel and the Stan warmup."""
+        import blackjax.sgmcmc.gradients
+
+        rng_key, data_key = jax.random.split(self.key, 2)
+
+        data_size = 1000
+        X_data = jax.random.normal(data_key, shape=(data_size, 5))
+
+        schedule_fn = lambda _: 1e-3
+        grad_fn = blackjax.sgmcmc.gradients.grad_estimator(
+            self.logprior_fn, self.loglikelihood_fn, data_size
+        )
+        sgld = blackjax.sgld(grad_fn, schedule_fn)
+
+        init_position = 1.0
+        data_batch = X_data[:100, :]
+        init_state = sgld.init(init_position, data_batch)
+
+        _, rng_key = jax.random.split(rng_key)
+        data_batch = X_data[100:200, :]
+        _ = sgld.step(rng_key, init_state, data_batch)
+
+
 normal_test_cases = [
     {
         "algorithm": blackjax.hmc,
-        "initial_position": jnp.array(100.0),
+        "initial_position": jnp.array(3.0),
         "parameters": {
-            "step_size": 0.1,
-            "inverse_mass_matrix": jnp.array([0.1]),
-            "num_integration_steps": 100,
+            "step_size": 3.9,
+            "inverse_mass_matrix": jnp.array([1.0]),
+            "num_integration_steps": 30,
         },
         "num_sampling_steps": 6000,
-        "burnin": 5_000,
+        "burnin": 1_000,
     },
     {
         "algorithm": blackjax.nuts,
-        "initial_position": jnp.array(100.0),
-        "parameters": {"step_size": 0.1, "inverse_mass_matrix": jnp.array([0.1])},
+        "initial_position": jnp.array(3.0),
+        "parameters": {"step_size": 4.0, "inverse_mass_matrix": jnp.array([1.0])},
         "num_sampling_steps": 6000,
-        "burnin": 5_000,
+        "burnin": 1_000,
     },
     {
         "algorithm": blackjax.orbital_hmc,
