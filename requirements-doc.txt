@@ -1,6 +1,7 @@
 -e ./
 jax
 jaxlib
+jaxopt
 myst_nb
 sphinx
 sphinx-autobuild
