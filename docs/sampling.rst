@@ -6,10 +6,13 @@ Sampling
 .. autosummary::
   :nosignatures:
 
+  elliptical_slice
   hmc
   nuts
   mala
+  orbital_hmc
   rmh
+  sgld
   tempered_smc
   adaptive_tempered_smc
 
@@ -46,6 +49,11 @@ Under the hood, kernels have a signature of the form ``kernel(rng_key, state, lo
 
 The ``algorithm_parameters`` are different from the kernel ``parameters`` above. They characterize the structure of the kernel, and can be for instance the choice of integrator or metric for algorithms in the HMC family.
 
+Elliptical Slice Sampler
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: blackjax.elliptical_slice
+
 HMC
 ~~~
 
@@ -61,10 +69,20 @@ NUTS
 
 .. autoclass:: blackjax.nuts
 
+Periodic Orbital
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: blackjax.orbital_hmc
+
 RMH
 ~~~
 
 .. autoclass:: blackjax.rmh
+
+Stochastic Gradient Langeving Dynamics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: blackjax.sgld
 
 Tempered SMC
 ~~~~~~~~~~~~

@@ -44,7 +44,7 @@ setuptools.setup(
     description="Flexible and fast inference in Python",
     long_description=long_description,
     packages=setuptools.find_packages(),
-    install_requires=[],
+    install_requires=["fastprogress>=0.2.0"],
     long_description_content_type="text/markdown",
     keywords="probabilistic machine learning bayesian statistics sampling algorithms",
     license="Apache License 2.0",

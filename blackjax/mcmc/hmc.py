@@ -1,5 +1,5 @@
 """Public API for the HMC Kernel"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple, Optional, Tuple
 
 import jax
 
@@ -63,11 +63,21 @@ class HMCInfo(NamedTuple):
     num_integration_steps: int
 
 
-def init(position: PyTree, logprob_fn: Callable):
+def init(
+    position: PyTree, logprob_fn: Callable, logprob_grad_fn: Optional[Callable] = None
+):
     def potential_fn(x):
         return -logprob_fn(x)
 
-    potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
+    if logprob_grad_fn:
+        # Need to flip the sign the same way we do for potential_fn
+        potential_energy_grad = -logprob_grad_fn(position)
+        potential_energy = potential_fn(position)
+
+    else:
+        potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(
+            position
+        )
     return HMCState(position, potential_energy, potential_energy_grad)
 
 
@@ -99,6 +109,7 @@ def kernel(
         step_size: float,
         inverse_mass_matrix: Array,
         num_integration_steps: int,
+        logprob_grad_fn: Optional[Callable] = None,
     ) -> Tuple[HMCState, HMCInfo]:
         """Generate a new sample with the HMC kernel.
 
@@ -111,7 +122,9 @@ def kernel(
         momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
             inverse_mass_matrix
         )
-        symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
+        symplectic_integrator = integrator(
+            potential_fn, kinetic_energy_fn, logprob_grad_fn
+        )
         proposal_generator = hmc_proposal(
             symplectic_integrator,
             kinetic_energy_fn,
@@ -186,9 +199,7 @@ def hmc_proposal(
         should indeed retrieve the initial state (with flipped momentum).
 
         """
-        flipped_momentum = jax.tree_util.tree_multimap(
-            lambda m: -1.0 * m, state.momentum
-        )
+        flipped_momentum = jax.tree_util.tree_map(lambda m: -1.0 * m, state.momentum)
         return integrators.IntegratorState(
             state.position,
             flipped_momentum,

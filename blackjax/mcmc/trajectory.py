@@ -51,7 +51,7 @@ class Trajectory(NamedTuple):
 
 def append_to_trajectory(trajectory: Trajectory, state: IntegratorState) -> Trajectory:
     """Append a state to the (right of the) trajectory to form a new trajectory."""
-    momentum_sum = jax.tree_util.tree_multimap(
+    momentum_sum = jax.tree_util.tree_map(
         jnp.add, trajectory.momentum_sum, state.momentum
     )
     return Trajectory(
@@ -78,7 +78,7 @@ def reorder_trajectories(
 
 
 def merge_trajectories(left_trajectory: Trajectory, right_trajectory: Trajectory):
-    momentum_sum = jax.tree_util.tree_multimap(
+    momentum_sum = jax.tree_util.tree_map(
         jnp.add, left_trajectory.momentum_sum, right_trajectory.momentum_sum
     )
     return Trajectory(
@@ -405,7 +405,7 @@ def dynamic_recursive_integration(
                         trajectory.momentum_sum,
                     )
                     if use_robust_uturn_check & (tree_depth - 1 > 0):
-                        momentum_sum_left = jax.tree_util.tree_multimap(
+                        momentum_sum_left = jax.tree_util.tree_map(
                             jnp.add,
                             left_trajectory.momentum_sum,
                             right_trajectory.leftmost_state.momentum,
@@ -415,7 +415,7 @@ def dynamic_recursive_integration(
                             right_trajectory.leftmost_state.momentum,
                             momentum_sum_left,
                         )
-                        momentum_sum_right = jax.tree_util.tree_multimap(
+                        momentum_sum_right = jax.tree_util.tree_map(
                             jnp.add,
                             left_trajectory.rightmost_state.momentum,
                             right_trajectory.momentum_sum,
@@ -518,8 +518,6 @@ def dynamic_multiplicative_expansion(
             the subtrajectory.
 
             """
-            # Q: Should this function be aware of all the elements that need to
-            # be passed downstream?
             rng_key, expansion_state, _ = loop_state
             step, proposal, trajectory, termination_state = expansion_state
 
@@ -552,15 +550,11 @@ def dynamic_multiplicative_expansion(
                 initial_energy,
             )
 
-            left_trajectory, right_trajectory = reorder_trajectories(
-                direction, trajectory, new_trajectory
-            )
-
-            merged_trajectory = merge_trajectories(left_trajectory, right_trajectory)
-
-            # update the proposal
-            # we reject proposals coming from diverging or turning subtrajectories,
-            # but accumulate average acceptance probabilty across entire trajectory
+            # Update the proposal
+            #
+            # We do not accept proposals that come from diverging or turning subtrajectories.
+            # However the definition of the acceptance probability is such that the
+            # acceptance probability needs to be computed across the entire trajectory.
             def update_sum_log_p_accept(inputs):
                 _, proposal, new_proposal = inputs
                 return Proposal(
@@ -572,12 +566,22 @@ def dynamic_multiplicative_expansion(
                     ),
                 )
 
-            sampled_proposal = jax.lax.cond(
+            updated_proposal = jax.lax.cond(
                 is_diverging | is_turning_subtree,
                 update_sum_log_p_accept,
                 lambda x: proposal_sampler(*x),
                 operand=(proposal_key, proposal, new_proposal),
             )
+
+            # Is the full trajectory making a U-Turn?
+            #
+            # We first merge the subtrajectory that was just generated with the trajectory
+            # and check the U-Turn criterior on the whole trajectory.
+            left_trajectory, right_trajectory = reorder_trajectories(
+                direction, trajectory, new_trajectory
+            )
+
+            merged_trajectory = merge_trajectories(left_trajectory, right_trajectory)
 
             is_turning = uturn_check_fn(
                 merged_trajectory.leftmost_state.momentum,
@@ -586,7 +590,7 @@ def dynamic_multiplicative_expansion(
             )
 
             new_state = DynamicExpansionState(
-                step + 1, sampled_proposal, merged_trajectory, termination_state
+                step + 1, updated_proposal, merged_trajectory, termination_state
             )
             info = (is_diverging, is_turning_subtree | is_turning)
 

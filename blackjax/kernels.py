@@ -1,12 +1,15 @@
-from typing import Callable, Dict, Union
+from typing import Callable, Dict, Optional, Union
 
 import jax
+import jax.numpy as jnp
 
 import blackjax.adaptation as adaptation
 import blackjax.mcmc as mcmc
+import blackjax.sgmcmc as sgmcmc
 import blackjax.smc as smc
 import blackjax.vi as vi
 from blackjax.base import AdaptationAlgorithm, SamplingAlgorithm
+from blackjax.progress_bar import progress_bar_scan
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = [
@@ -14,7 +17,9 @@ __all__ = [
     "hmc",
     "mala",
     "nuts",
+    "orbital_hmc",
     "rmh",
+    "sgld",
     "tempered_smc",
     "window_adaptation",
     "pathfinder",
@@ -206,6 +211,7 @@ class hmc:
         *,
         divergence_threshold: int = 1000,
         integrator: Callable = mcmc.integrators.velocity_verlet,
+        logprob_grad_fn: Optional[Callable] = None,
     ) -> SamplingAlgorithm:
 
         step = cls.kernel(integrator, divergence_threshold)
@@ -221,6 +227,7 @@ class hmc:
                 step_size,
                 inverse_mass_matrix,
                 num_integration_steps,
+                logprob_grad_fn=logprob_grad_fn,
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
@@ -366,6 +373,7 @@ class nuts:
         max_num_doublings: int = 10,
         divergence_threshold: int = 1000,
         integrator: Callable = mcmc.integrators.velocity_verlet,
+        logprob_grad_fn: Optional[Callable] = None,
     ) -> SamplingAlgorithm:
 
         step = cls.kernel(integrator, divergence_threshold, max_num_doublings)
@@ -380,9 +388,96 @@ class nuts:
                 logprob_fn,
                 step_size,
                 inverse_mass_matrix,
+                logprob_grad_fn=logprob_grad_fn,
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
+
+
+# -----------------------------------------------------------------------------
+#                        STOCHASTIC GRADIENT MCMC
+# -----------------------------------------------------------------------------
+
+
+class sgld:
+    """Implements the (basic) user interface for the SGLD kernel.
+
+    The general sgld kernel (:meth:`blackjax.mcmc.sgld.kernel`, alias `blackjax.sgld.kernel`) can be
+    cumbersome to manipulate. Since most users only need to specify the kernel
+    parameters at initialization time, we provide a helper function that
+    specializes the general kernel.
+
+    Example
+    -------
+
+    To initialize a SGLD kernel one needs to specify a schedule function, which
+    returns a step size at each sampling step, and a gradient estimator
+    function. Here for a constant step size, and `data_size` data samples:
+
+    .. code::
+
+        schedule_fn = lambda _: 1e-3
+        grad_fn = blackjax.sgmcmc.gradients.grad_estimator(logprior_fn, loglikelihood_fn, data_size)
+
+    We can now initialize the sgld kernel and the state:
+
+    .. code::
+
+        sgld = blackjax.sgld(grad_fn, schedule_fn)
+        state = sgld.init(position)
+
+    Assuming we have an iterator `batches` that yields batches of data we can perform one step:
+
+    .. code::
+
+        data_batch = next(batches)
+        new_state = sgld.step(rng_key, state, data_batch)
+
+    Kernels are not jit-compiled by default so you will need to do it manually:
+
+    .. code::
+
+       step = jax.jit(sgld.step)
+       new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    gradient_estimator_fn
+       A function which, given a position and a batch of data, returns an estimation
+       of the value of the gradient of the log-posterior distribution at this position.
+    schedule_fn
+       A function which returns a step size given a step number.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(sgmcmc.sgld.init)
+    kernel = staticmethod(sgmcmc.sgld.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        grad_estimator_fn: Callable,
+        schedule_fn: Callable,
+    ) -> SamplingAlgorithm:
+
+        step = cls.kernel(grad_estimator_fn)
+
+        def init_fn(position: PyTree, data_batch: PyTree):
+            return cls.init(position, data_batch, grad_estimator_fn)
+
+        def step_fn(rng_key: PRNGKey, state, data_batch: PyTree):
+            step_size = schedule_fn(state.step)
+            return step(rng_key, state, data_batch, step_size)
+
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+
+
+# -----------------------------------------------------------------------------
+#                                 ADAPTATION
+# -----------------------------------------------------------------------------
 
 
 def window_adaptation(
@@ -392,6 +487,8 @@ def window_adaptation(
     is_mass_matrix_diagonal: bool = True,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.65,
+    progress_bar: bool = False,
+    logprob_grad_fn: Optional[Callable] = None,
     **parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the parameters of algorithms in the HMC family.
@@ -420,6 +517,11 @@ def window_adaptation(
         The initial step size used in the algorithm.
     target_acceptance_rate
         The acceptance rate that we target during step size adaptation.
+    progress_bar
+        Whether we should display a progress bar.
+    logprob_grad_fn
+        The gradient of logprob_fn.  If it's not provided, it will be computed
+        by jax using reverse mode autodiff (jax.grad).
     **parameters
         The extra parameters to pass to the algorithm, e.g. the number of
         integration steps for HMC.
@@ -440,6 +542,7 @@ def window_adaptation(
                 logprob_fn,
                 step_size,
                 inverse_mass_matrix,
+                logprob_grad_fn=logprob_grad_fn,
                 **parameters,
             )
 
@@ -452,9 +555,8 @@ def window_adaptation(
         target_acceptance_rate=target_acceptance_rate,
     )
 
-    @jax.jit
     def one_step(carry, xs):
-        rng_key, adaptation_stage = xs
+        _, rng_key, adaptation_stage = xs
         state, adaptation_state = carry
         state, adaptation_state, info = update(
             rng_key, state, adaptation_state, adaptation_stage
@@ -462,14 +564,20 @@ def window_adaptation(
         return ((state, adaptation_state), (state, info, adaptation_state))
 
     def run(rng_key: PRNGKey, position: PyTree):
-        init_state = algorithm.init(position, logprob_fn)
+        init_state = algorithm.init(position, logprob_fn, logprob_grad_fn)
         init_warmup_state = init(init_state, initial_step_size)
+
+        if progress_bar:
+            print("Running window adaptation")
+            one_step_ = jax.jit(progress_bar_scan(num_steps)(one_step))
+        else:
+            one_step_ = jax.jit(one_step)
 
         keys = jax.random.split(rng_key, num_steps)
         last_state, warmup_chain = jax.lax.scan(
-            one_step,
+            one_step_,
             (init_state, init_warmup_state),
-            (keys, schedule),
+            (jnp.arange(num_steps), keys, schedule),
         )
         last_chain_state, last_warmup_state = last_state
 
@@ -540,6 +648,123 @@ class rmh:
         return SamplingAlgorithm(init_fn, step_fn)
 
 
+class orbital_hmc:
+    """Implements the (basic) user interface for the Periodic orbital MCMC kernel
+    Each iteration of the periodic orbital MCMC outputs ``period`` weighted samples from
+    a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable
+    with precision matrix ``inverse_mass_matrix``, evaluated using the ``bijection`` as an
+    integrator with discretization parameter ``step_size``.
+    Examples
+    --------
+    A new Periodic orbital MCMC kernel can be initialized and used with the following code:
+    .. code::
+        per_orbit = blackjax.orbital_hmc(logprob_fn, step_size, inverse_mass_matrix, period)
+        state = per_orbit.init(position)
+        new_state, info = per_orbit.step(rng_key, state)
+    We can JIT-compile the step function for better performance
+    .. code::
+        step = jax.jit(per_orbit.step)
+        new_state, info = step(rng_key, state)
+    Parameters
+    ----------
+    logprob_fn
+        The logarithm of the probability density function we wish to draw samples from. This
+        is minus the potential energy function.
+    step_size
+        The value to use for the step size in for the symplectic integrator to buid the orbit.
+    inverse_mass_matrix
+        The value to use for the inverse mass matrix when drawing a value for
+        the momentum and computing the kinetic energy.
+    period
+        The number of steps used to build the orbit.
+    bijection
+        (algorithm parameter) The symplectic integrator to use to build the orbit.
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+    """
+
+    init = staticmethod(mcmc.periodic_orbital.init)
+    kernel = staticmethod(mcmc.periodic_orbital.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logprob_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: Array,  # assume momentum is always Gaussian
+        period: int,
+        *,
+        bijection: Callable = mcmc.integrators.velocity_verlet,
+    ) -> SamplingAlgorithm:
+
+        step = cls.kernel(bijection)
+
+        def init_fn(position: PyTree):
+            return cls.init(position, logprob_fn, period)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return step(
+                rng_key,
+                state,
+                logprob_fn,
+                step_size,
+                inverse_mass_matrix,
+                period,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)
+
+
+class elliptical_slice:
+    """Implements the (basic) user interface for the Elliptical Slice sampling kernel
+    Examples
+    --------
+    A new Elliptical Slice sampling kernel can be initialized and used with the following code:
+    .. code::
+        ellip_slice = blackjax.elliptical_slice(loglikelihood_fn, cov_matrix)
+        state = ellip_slice.init(position)
+        new_state, info = ellip_slice.step(rng_key, state)
+    We can JIT-compile the step function for better performance
+    .. code::
+        step = jax.jit(ellip_slice.step)
+        new_state, info = step(rng_key, state)
+    Parameters
+    ----------
+    loglikelihood_fn
+        Only the log likelihood function from the posterior distributon we wish to sample.
+    cov_matrix
+        The value of the covariance matrix of the gaussian prior distribution from the posterior we wish to sample.
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+    """
+
+    init = staticmethod(mcmc.elliptical_slice.init)
+    kernel = staticmethod(mcmc.elliptical_slice.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        loglikelihood_fn: Callable,
+        *,
+        mean: Array,
+        cov: Array,
+    ) -> SamplingAlgorithm:
+
+        step = cls.kernel(cov, mean)
+
+        def init_fn(position: PyTree):
+            return cls.init(position, loglikelihood_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return step(
+                rng_key,
+                state,
+                loglikelihood_fn,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)
+
+      
 # -----------------------------------------------------------------------------
 #                           VARIATIONAL INFERENCE
 # -----------------------------------------------------------------------------

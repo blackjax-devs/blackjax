@@ -1,3 +1,3 @@
-from . import hmc, mala, nuts, rmh
+from . import elliptical_slice, hmc, mala, nuts, periodic_orbital, rmh
 
-__all__ = ["hmc", "mala", "nuts", "rmh"]
+__all__ = ["elliptical_slice", "hmc", "mala", "nuts", "periodic_orbital", "rmh"]

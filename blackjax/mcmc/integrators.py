@@ -1,5 +1,5 @@
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Optional
 
 import jax
 
@@ -30,7 +30,9 @@ def new_integrator_state(potential_fn, position, momentum):
 
 
 def velocity_verlet(
-    potential_fn: Callable, kinetic_energy_fn: EuclideanKineticEnergy
+    potential_fn: Callable,
+    kinetic_energy_fn: EuclideanKineticEnergy,
+    potential_grad_fn: Optional[Callable] = None,
 ) -> EuclideanIntegrator:
     """The velocity Verlet (or Verlet-Störmer) integrator.
 
@@ -67,27 +69,30 @@ def velocity_verlet(
     b1 = 0.5
     a2 = 1 - 2 * a1
 
-    potential_grad_fn = jax.value_and_grad(potential_fn)
+    if potential_grad_fn:
+        potential_and_grad_fn = lambda x: (potential_fn(x), potential_grad_fn(x))
+    else:
+        potential_and_grad_fn = jax.value_and_grad(potential_fn)
     kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
         position, momentum, _, potential_energy_grad = state
 
-        momentum = jax.tree_util.tree_multimap(
+        momentum = jax.tree_util.tree_map(
             lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
             momentum,
             potential_energy_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
-        position = jax.tree_util.tree_multimap(
+        position = jax.tree_util.tree_map(
             lambda position, kinetic_grad: position + a2 * step_size * kinetic_grad,
             position,
             kinetic_grad,
         )
 
-        potential_energy, potential_energy_grad = potential_grad_fn(position)
-        momentum = jax.tree_util.tree_multimap(
+        potential_energy, potential_energy_grad = potential_and_grad_fn(position)
+        momentum = jax.tree_util.tree_map(
             lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
             momentum,
             potential_energy_grad,
@@ -101,7 +106,9 @@ def velocity_verlet(
 
 
 def mclachlan(
-    potential_fn: Callable, kinetic_energy_fn: Callable
+    potential_fn: Callable,
+    kinetic_energy_fn: Callable,
+    potential_grad_fn: Optional[Callable] = None,
 ) -> EuclideanIntegrator:
     """Two-stage palindromic symplectic integrator derived in [1]_
 
@@ -125,41 +132,45 @@ def mclachlan(
     a1 = 0.5
     b2 = 1 - 2 * b1
 
-    potential_grad_fn = jax.jit(jax.value_and_grad(potential_fn))
-    kinetic_energy_grad_fn = jax.jit(jax.grad(kinetic_energy_fn))
+    if potential_grad_fn:
+        potential_and_grad_fn = lambda x: (potential_fn(x), potential_grad_fn(x))
+
+    else:
+        potential_and_grad_fn = jax.value_and_grad(potential_fn)
+    kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
         position, momentum, _, potential_energy_grad = state
 
-        momentum = jax.tree_util.tree_multimap(
+        momentum = jax.tree_util.tree_map(
             lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
             momentum,
             potential_energy_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
-        position = jax.tree_util.tree_multimap(
+        position = jax.tree_util.tree_map(
             lambda position, kinetic_grad: position + a1 * step_size * kinetic_grad,
             position,
             kinetic_grad,
         )
 
-        _, potential_energy_grad = potential_grad_fn(position)
-        momentum = jax.tree_util.tree_multimap(
+        _, potential_energy_grad = potential_and_grad_fn(position)
+        momentum = jax.tree_util.tree_map(
             lambda momentum, potential_grad: momentum - b2 * step_size * potential_grad,
             momentum,
             potential_energy_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
-        position = jax.tree_util.tree_multimap(
+        position = jax.tree_util.tree_map(
             lambda position, kinetic_grad: position + a1 * step_size * kinetic_grad,
             position,
             kinetic_grad,
         )
 
-        potential_energy, potential_energy_grad = potential_grad_fn(position)
-        momentum = jax.tree_util.tree_multimap(
+        potential_energy, potential_energy_grad = potential_and_grad_fn(position)
+        momentum = jax.tree_util.tree_map(
             lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
             momentum,
             potential_energy_grad,
@@ -172,7 +183,11 @@ def mclachlan(
     return one_step
 
 
-def yoshida(potential_fn: Callable, kinetic_energy_fn: Callable) -> EuclideanIntegrator:
+def yoshida(
+    potential_fn: Callable,
+    kinetic_energy_fn: Callable,
+    potential_grad_fn: Optional[Callable] = None,
+) -> EuclideanIntegrator:
     """Three stages palindromic symplectic integrator derived in [1]_
 
     The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of
@@ -193,55 +208,59 @@ def yoshida(potential_fn: Callable, kinetic_energy_fn: Callable) -> EuclideanInt
     b2 = 0.5 - b1
     a2 = 1 - 2 * a1
 
-    potential_grad_fn = jax.jit(jax.value_and_grad(potential_fn))
-    kinetic_energy_grad_fn = jax.jit(jax.grad(kinetic_energy_fn))
+    if potential_grad_fn:
+        potential_and_grad_fn = lambda x: (potential_fn(x), potential_grad_fn(x))
+
+    else:
+        potential_and_grad_fn = jax.value_and_grad(potential_fn)
+    kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
         position, momentum, _, potential_energy_grad = state
 
-        momentum = jax.tree_util.tree_multimap(
+        momentum = jax.tree_util.tree_map(
             lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
             momentum,
             potential_energy_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
-        position = jax.tree_util.tree_multimap(
+        position = jax.tree_util.tree_map(
             lambda position, kinetic_grad: position + a1 * step_size * kinetic_grad,
             position,
             kinetic_grad,
         )
 
-        _, potential_energy_grad = potential_grad_fn(position)
-        momentum = jax.tree_util.tree_multimap(
+        _, potential_energy_grad = potential_and_grad_fn(position)
+        momentum = jax.tree_util.tree_map(
             lambda momentum, potential_grad: momentum - b2 * step_size * potential_grad,
             momentum,
             potential_energy_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
-        position = jax.tree_util.tree_multimap(
+        position = jax.tree_util.tree_map(
             lambda position, kinetic_grad: position + a2 * step_size * kinetic_grad,
             position,
             kinetic_grad,
         )
 
-        _, potential_energy_grad = potential_grad_fn(position)
-        momentum = jax.tree_util.tree_multimap(
+        _, potential_energy_grad = potential_and_grad_fn(position)
+        momentum = jax.tree_util.tree_map(
             lambda momentum, potential_grad: momentum - b2 * step_size * potential_grad,
             momentum,
             potential_energy_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
-        position = jax.tree_util.tree_multimap(
+        position = jax.tree_util.tree_map(
             lambda position, kinetic_grad: position + a1 * step_size * kinetic_grad,
             position,
             kinetic_grad,
         )
 
-        potential_energy, potential_energy_grad = potential_grad_fn(position)
-        momentum = jax.tree_util.tree_multimap(
+        potential_energy, potential_energy_grad = potential_and_grad_fn(position)
+        momentum = jax.tree_util.tree_map(
             lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
             momentum,
             potential_energy_grad,

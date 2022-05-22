@@ -24,6 +24,17 @@ def inference_loop(kernel, num_samples, rng_key, initial_state):
     return states
 
 
+def orbit_samples(orbits, weights, rng_key):
+    def sample_orbit(orbit, weights, rng_key):
+        sample = jax.random.choice(rng_key, orbit, p=weights)
+        return sample
+
+    keys = jax.random.split(rng_key, orbits.shape[0])
+    samples = jax.vmap(sample_orbit)(orbits, weights, keys)
+
+    return samples
+
+
 regresion_test_cases = [
     {
         "algorithm": blackjax.hmc,
@@ -77,6 +88,7 @@ class LinearRegressionTest(chex.TestCase):
             logposterior_fn,
             case["num_warmup_steps"],
             is_mass_matrix_diagonal,
+            progress_bar=True,
             **case["parameters"],
         )
         state, kernel, _ = warmup.run(
@@ -95,24 +107,73 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
 
+class SGMCMCTest(chex.TestCase):
+    """Test sampling of a linear regression model."""
+
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.PRNGKey(19)
+
+    def logprior_fn(self, position):
+        return -0.5 * jnp.dot(position, position) * 0.01
+
+    def loglikelihood_fn(self, position, x):
+        w = x - position
+        return -0.5 * jnp.dot(w, w)
+
+    def test_linear_regression(self):
+        """Test the HMC kernel and the Stan warmup."""
+        import blackjax.sgmcmc.gradients
+
+        rng_key, data_key = jax.random.split(self.key, 2)
+
+        data_size = 1000
+        X_data = jax.random.normal(data_key, shape=(data_size, 5))
+
+        schedule_fn = lambda _: 1e-3
+        grad_fn = blackjax.sgmcmc.gradients.grad_estimator(
+            self.logprior_fn, self.loglikelihood_fn, data_size
+        )
+        sgld = blackjax.sgld(grad_fn, schedule_fn)
+
+        init_position = 1.0
+        data_batch = X_data[:100, :]
+        init_state = sgld.init(init_position, data_batch)
+
+        _, rng_key = jax.random.split(rng_key)
+        data_batch = X_data[100:200, :]
+        _ = sgld.step(rng_key, init_state, data_batch)
+
+
 normal_test_cases = [
     {
         "algorithm": blackjax.hmc,
+        "initial_position": jnp.array(3.0),
+        "parameters": {
+            "step_size": 3.9,
+            "inverse_mass_matrix": jnp.array([1.0]),
+            "num_integration_steps": 30,
+        },
+        "num_sampling_steps": 6000,
+        "burnin": 1_000,
+    },
+    {
+        "algorithm": blackjax.nuts,
+        "initial_position": jnp.array(3.0),
+        "parameters": {"step_size": 4.0, "inverse_mass_matrix": jnp.array([1.0])},
+        "num_sampling_steps": 6000,
+        "burnin": 1_000,
+    },
+    {
+        "algorithm": blackjax.orbital_hmc,
         "initial_position": jnp.array(100.0),
         "parameters": {
             "step_size": 0.1,
             "inverse_mass_matrix": jnp.array([0.1]),
-            "num_integration_steps": 100,
+            "period": 100,
         },
-        "num_sampling_steps": 6000,
-        "burnin": 5_000,
-    },
-    {
-        "algorithm": blackjax.nuts,
-        "initial_position": jnp.array(100.0),
-        "parameters": {"step_size": 0.1, "inverse_mass_matrix": jnp.array([0.1])},
-        "num_sampling_steps": 6000,
-        "burnin": 5_000,
+        "num_sampling_steps": 20_000,
+        "burnin": 15_000,
     },
     {
         "algorithm": blackjax.rmh,
@@ -127,6 +188,13 @@ normal_test_cases = [
         "parameters": {"step_size": 1e-1},
         "num_sampling_steps": 20_000,
         "burnin": 2_000,
+    },
+    {
+        "algorithm": blackjax.elliptical_slice,
+        "initial_position": 1.0,
+        "parameters": {"cov": jnp.array([2.0**2]), "mean": 1.0},
+        "num_sampling_steps": 20_000,
+        "burnin": 5_000,
     },
 ]
 
@@ -147,6 +215,8 @@ class UnivariateNormalTest(chex.TestCase):
         self, algorithm, initial_position, parameters, num_sampling_steps, burnin
     ):
         algo = algorithm(self.normal_logprob, **parameters)
+        if algorithm == blackjax.elliptical_slice:
+            algo = algorithm(lambda _: 1.0, **parameters)
         initial_state = algo.init(initial_position)
 
         kernel = algo.step
@@ -154,7 +224,13 @@ class UnivariateNormalTest(chex.TestCase):
             functools.partial(inference_loop, kernel, num_sampling_steps)
         )(self.key, initial_state)
 
-        samples = states.position[burnin:]
+        if algorithm == blackjax.orbital_hmc:
+            _, orbit_key = jax.random.split(self.key)
+            samples = orbit_samples(
+                states.positions[burnin:], states.weights[burnin:], orbit_key
+            )
+        else:
+            samples = states.position[burnin:]
 
         np.testing.assert_allclose(np.mean(samples), 1.0, rtol=1e-1)
         np.testing.assert_allclose(np.var(samples), 4.0, rtol=1e-1)
@@ -164,13 +240,20 @@ mcse_test_cases = [
     {
         "algorithm": blackjax.hmc,
         "parameters": {
-            "step_size": 0.1,
+            "step_size": 1.0,
             "num_integration_steps": 32,
         },
+        "custom_gradients": False,
     },
     {
         "algorithm": blackjax.nuts,
-        "parameters": {"step_size": 0.07},
+        "parameters": {"step_size": 1.0},
+        "custom_gradients": False,
+    },
+    {
+        "algorithm": blackjax.nuts,
+        "parameters": {"step_size": 1.0},
+        "custom_gradients": True,
     },
 ]
 
@@ -205,7 +288,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
 
     def mcse_test(self, samples, true_param, p_val=0.01):
         posterior_mean = jnp.mean(samples, axis=[0, 1])
-        ess = diagnostics.effective_sample_size(samples, chain_axis=1, sample_axis=0)
+        ess = diagnostics.effective_sample_size(samples, chain_axis=0, sample_axis=1)
         posterior_sd = jnp.std(samples, axis=0, ddof=1)
         avg_monte_carlo_standard_error = jnp.mean(posterior_sd, axis=0) / jnp.sqrt(ess)
         scaled_error = (
@@ -215,15 +298,26 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         return scaled_error
 
     @parameterized.parameters(mcse_test_cases)
-    def test_mcse(self, algorithm, parameters):
+    def test_mcse(self, algorithm, parameters, custom_gradients):
         """Test convergence using Monte Carlo CLT across multiple chains."""
         init_fn_key, pos_init_key, sample_key = jax.random.split(self.key, 3)
         logprob_fn, true_loc, true_scale, true_rho = self.generate_multivariate_target(
             None
         )
+        if custom_gradients:
+            logprob_grad_fn = jax.jacfwd(logprob_fn)
+        else:
+            logprob_grad_fn = None
+
+        kernel = algorithm(
+            logprob_fn,
+            inverse_mass_matrix=true_scale,
+            logprob_grad_fn=logprob_grad_fn,
+            **parameters,
+        )
+
         num_chains = 10
         initial_positions = jax.random.normal(pos_init_key, [num_chains, 2])
-        kernel = algorithm(logprob_fn, inverse_mass_matrix=true_scale, **parameters)
         initial_states = jax.vmap(kernel.init, in_axes=(0,))(initial_positions)
         multi_chain_sample_key = jax.random.split(sample_key, num_chains)
 
@@ -232,14 +326,14 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         )
         states = inference_loop_multiple_chains(multi_chain_sample_key, initial_states)
 
-        posterior_samples = states.position[-1000:]
+        posterior_samples = states.position[:, -1000:]
         posterior_delta = posterior_samples - true_loc
         posterior_variance = posterior_delta**2.0
         posterior_correlation = jnp.prod(posterior_delta, axis=-1, keepdims=True) / (
             true_scale[0] * true_scale[1]
         )
 
-        _ = jax.tree_multimap(
+        _ = jax.tree_map(
             self.mcse_test,
             [posterior_samples, posterior_variance, posterior_correlation],
             [true_loc, true_scale**2, true_rho],
