@@ -1,21 +1,17 @@
 """Implementation of the Pathinder warmup for the HMC family of sampling algorithms."""
-from typing import Any, Callable, List, NamedTuple, Tuple
+from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
-
-from blackjax.vi.pathfinder import (
-    init as pathfinder_init_fn,
-    sample_from_state,
-    lbfgs_inverse_hessian_formula_1,
-)
 
 from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
     dual_averaging_adaptation,
 )
 from blackjax.mcmc.hmc import HMCState
-from blackjax.types import Array, PRNGKey
+from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.vi.pathfinder import init as pathfinder_init_fn
+from blackjax.vi.pathfinder import lbfgs_inverse_hessian_formula_1, sample_from_state
 
 __all__ = ["base"]
 
@@ -63,7 +59,7 @@ def base(
 
     def init(
         rng_key: PRNGKey, initial_position: Array, initial_step_size: float
-    ) -> PathfinderAdaptationState:
+    ) -> Tuple[PathfinderAdaptationState, PyTree]:
         """Initialize the warmup.
 
         To initialize the warmup we use pathfinder to estimate the inverse mass matrix and

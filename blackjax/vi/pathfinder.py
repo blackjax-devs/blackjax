@@ -1,11 +1,11 @@
-from pdb import set_trace
-from typing import NamedTuple, Callable, Tuple
+from typing import Callable, NamedTuple, Tuple
+
 import jax
-import jax.random
 import jax.numpy as jnp
+import jax.random
+import jaxopt
 from jax import lax
 from jax.flatten_util import ravel_pytree
-import jaxopt
 from jaxopt._src.lbfgs import compute_gamma
 from jaxopt.base import OptStep
 
@@ -187,7 +187,9 @@ def kernel():
     return one_step
 
 
-def sample_from_state(rng_key: PRNGKey, state: PathfinderState, num_samples: int):
+def sample_from_state(
+    rng_key: PRNGKey, state: PathfinderState, num_samples: int
+) -> PyTree:
     """
     Draws samples of the target distribution using approixmation from
     pathfinder algorithm.

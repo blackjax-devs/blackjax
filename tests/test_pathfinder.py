@@ -1,21 +1,23 @@
 """Test the pathfinder algorithm."""
-import numpy as np
+import functools
+
 import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
-import functools
+import numpy as np
 from absl.testing import absltest, parameterized
-from jaxopt._src.lbfgs import inv_hessian_product, compute_gamma
+from jax.flatten_util import ravel_pytree
+from jaxopt._src.lbfgs import inv_hessian_product
+
+from blackjax.kernels import pathfinder
 from blackjax.vi.pathfinder import (
-    minimize_lbfgs,
     lbfgs_inverse_hessian_factors,
     lbfgs_inverse_hessian_formula_1,
     lbfgs_inverse_hessian_formula_2,
     lbfgs_sample,
+    minimize_lbfgs,
 )
-from blackjax.kernels import pathfinder
-from jax.flatten_util import ravel_pytree
 
 
 class PathfinderTest(chex.TestCase):
@@ -126,7 +128,7 @@ class PathfinderTest(chex.TestCase):
         true_prec = jnp.linalg.pinv(true_cov)
 
         prior_mu = jnp.zeros(ndim)
-        prior_prec = prior_cov = jnp.eye(ndim)
+        prior_prec = jnp.eye(ndim)
 
         observed = jax.random.multivariate_normal(
             rng_key_observed, true_mu, true_cov, shape=(10_000,)
