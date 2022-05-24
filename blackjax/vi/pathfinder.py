@@ -1,4 +1,4 @@
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple, Tuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -185,7 +185,9 @@ def kernel():
 
 
 def sample_from_state(
-    rng_key: PRNGKey, state: PathfinderState, num_samples: Tuple[int] = ()
+    rng_key: PRNGKey,
+    state: PathfinderState,
+    num_samples: Union[int, Tuple[()], Tuple[int]] = (),
 ) -> PyTree:
     """
     Draws samples of the target distribution using approixmation from
@@ -409,6 +411,8 @@ def lbfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gam
     )[..., 0]
 
     logq = -0.5 * (
-        logdet + jnp.einsum("...ji,...ji->...", u, u) + param_dims * jnp.log(2.0 * jnp.pi)
+        logdet
+        + jnp.einsum("...ji,...ji->...", u, u)
+        + param_dims * jnp.log(2.0 * jnp.pi)
     )
     return phi, logq
