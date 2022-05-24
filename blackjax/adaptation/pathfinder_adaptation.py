@@ -71,19 +71,14 @@ def base(
         pathfinder_state = pathfinder_init_fn(
             pathfinder_rng_key, logprob_fn, initial_position
         )
-        new_initial_position = sample_from_state(sample_rng_key, pathfinder_state, 1)
-        # new_initial_position is a pyteee with leaf arrays' shape (1, param_dims)
-        # we use tree_map and indexing to remove the leading dimension
-        new_initial_position_no_leading_dim = jax.tree_map(
-            lambda x: x[0], new_initial_position
-        )
+        new_initial_position = sample_from_state(sample_rng_key, pathfinder_state)
         inverse_mass_matrix = lbfgs_inverse_hessian_formula_1(
             pathfinder_state.alpha, pathfinder_state.beta, pathfinder_state.gamma
         )
 
         warmup_state = PathfinderAdaptationState(da_state, inverse_mass_matrix)
 
-        return warmup_state, new_initial_position_no_leading_dim
+        return warmup_state, new_initial_position
 
     def update(
         rng_key: PRNGKey,

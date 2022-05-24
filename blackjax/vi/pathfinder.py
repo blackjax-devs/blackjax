@@ -178,17 +178,14 @@ def kernel():
 
     def one_step(rng_key: PRNGKey, state: PathfinderState):
 
-        sample = sample_from_state(rng_key, state, num_samples=1)
-        # sample is a pyteee with leaf arrays' shape (1, param_dims)
-        # we use tree_map and indexing to remove the leading dimension
-        sample_no_leading_dim = jax.tree_map(lambda x: x[0], sample)
-        return state, sample_no_leading_dim
+        sample = sample_from_state(rng_key, state, num_samples=())
+        return state, sample
 
     return one_step
 
 
 def sample_from_state(
-    rng_key: PRNGKey, state: PathfinderState, num_samples: int
+    rng_key: PRNGKey, state: PathfinderState, num_samples: Tuple[int] = ()
 ) -> PyTree:
     """
     Draws samples of the target distribution using approixmation from
@@ -391,6 +388,8 @@ def lbfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gam
 
     Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
     """
+    if not isinstance(num_samples, tuple):
+        num_samples = (num_samples,)
 
     Q, R = jnp.linalg.qr(jnp.diag(jnp.sqrt(1 / alpha)) @ beta)
     param_dims = beta.shape[0]
@@ -403,13 +402,13 @@ def lbfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gam
         + beta @ gamma @ beta.T @ grad_position
     )
 
-    u = jax.random.normal(rng_key, (num_samples, param_dims, 1))
+    u = jax.random.normal(rng_key, num_samples + (param_dims, 1))
     phi = (
-        mu[..., :, None]
+        mu[..., None]
         + jnp.diag(jnp.sqrt(alpha)) @ (Q @ L @ Q.T @ u + u - (Q @ Q.T @ u))
     )[..., 0]
 
     logq = -0.5 * (
-        logdet + jnp.einsum("mji,mji->m", u, u) + param_dims * jnp.log(2.0 * jnp.pi)
+        logdet + jnp.einsum("...ji,...ji->...", u, u) + param_dims * jnp.log(2.0 * jnp.pi)
     )
     return phi, logq

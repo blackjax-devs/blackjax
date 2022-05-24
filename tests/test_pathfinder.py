@@ -21,6 +21,10 @@ from blackjax.vi.pathfinder import (
 
 
 class PathfinderTest(chex.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.PRNGKey(1)
+
     @parameterized.parameters(
         [(1, 10), (10, 1), (10, 20)],
     )
@@ -38,9 +42,8 @@ class PathfinderTest(chex.TestCase):
             logpdf += stats.norm.logpdf(preds, y, scale)
             return jnp.sum(logpdf)
 
-        def regression_model():
-            key = jax.random.PRNGKey(0)
-            rng_key, init_key0, init_key1 = jax.random.split(key, 3)
+        def regression_model(key):
+            init_key0, init_key1 = jax.random.split(key, 2)
             x_data = jax.random.normal(init_key0, shape=(10_000, 1))
             y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
 
@@ -51,7 +54,7 @@ class PathfinderTest(chex.TestCase):
 
             return logposterior_fn
 
-        fn = regression_model()
+        fn = regression_model(self.key)
         b0 = {"scale": 1.0, "coefs": 2.0}
         b0_flatten, unravel_fn = ravel_pytree(b0)
         objective_fn = lambda x: -fn(unravel_fn(x))
@@ -119,7 +122,7 @@ class PathfinderTest(chex.TestCase):
             return logp
 
         rng_key_chol, rng_key_observed, rng_key_pathfinder = jax.random.split(
-            jax.random.PRNGKey(1), 3
+            self.key, 3
         )
 
         L = jnp.tril(jax.random.normal(rng_key_chol, (ndim, ndim)))
