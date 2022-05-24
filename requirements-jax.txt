@@ -1,2 +1,3 @@
 jax
 jaxlib
+jaxopt
