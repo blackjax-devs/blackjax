@@ -20,6 +20,7 @@ __all__ = [
     "orbital_hmc",
     "rmh",
     "sgld",
+    "sghmc",
     "tempered_smc",
     "window_adaptation",
     "pathfinder",
@@ -471,6 +472,83 @@ class sgld:
         def step_fn(rng_key: PRNGKey, state, data_batch: PyTree):
             step_size = schedule_fn(state.step)
             return step(rng_key, state, data_batch, step_size)
+
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+
+
+class sghmc:
+    """Implements the (basic) user interface for the SGHMC kernel.
+
+    The general sghmc kernel (:meth:`blackjax.mcmc.sghmc.kernel`, alias `blackjax.sghmc.kernel`) can be
+    cumbersome to manipulate. Since most users only need to specify the kernel
+    parameters at initialization time, we provide a helper function that
+    specializes the general kernel.
+
+    Example
+    -------
+
+    To initialize a SGHMC kernel one needs to specify a schedule function, which
+    returns a step size at each sampling step, and a gradient estimator
+    function. Here for a constant step size, and `data_size` data samples:
+
+    .. code::
+
+        schedule_fn = lambda _: 1e-3
+        grad_fn = blackjax.sgmcmc.gradients.grad_estimator(logprior_fn, loglikelihood_fn, data_size)
+
+    We can now initialize the sghmc kernel and the state. Like HMC, SGHMC needs the user to specify a number of integration steps.
+
+    .. code::
+
+        sghmc = blackjax.sghmc(grad_fn, schedule_fn, num_integration_steps)
+        state = sghmc.init(position)
+
+    Assuming we have an iterator `batches` that yields batches of data we can perform one step:
+
+    .. code::
+
+        data_batch = next(batches)
+        new_state = sghmc.step(rng_key, state, data_batch)
+
+    Kernels are not jit-compiled by default so you will need to do it manually:
+
+    .. code::
+
+       step = jax.jit(sghmc.step)
+       new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    gradient_estimator_fn
+       A function which, given a position and a batch of data, returns an estimation
+       of the value of the gradient of the log-posterior distribution at this position.
+    schedule_fn
+       A function which returns a step size given a step number.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(sgmcmc.sgld.init)
+    kernel = staticmethod(sgmcmc.sghmc.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        grad_estimator_fn: Callable,
+        schedule_fn: Callable,
+        num_integration_steps: int,
+    ) -> SamplingAlgorithm:
+
+        step = cls.kernel(grad_estimator_fn)
+
+        def init_fn(position: PyTree, data_batch: PyTree):
+            return cls.init(position, data_batch, grad_estimator_fn)
+
+        def step_fn(rng_key: PRNGKey, state, data_batch: PyTree):
+            step_size = schedule_fn(state.step)
+            return step(rng_key, state, data_batch, step_size, num_integration_steps)
 
         return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 

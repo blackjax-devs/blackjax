@@ -9,6 +9,7 @@ from .kernels import (
     orbital_hmc,
     pathfinder_adaptation,
     rmh,
+    sghmc,
     sgld,
     tempered_smc,
     window_adaptation,
@@ -27,10 +28,11 @@ __all__ = [
     "rmh",
     "elliptical_slice",
     "sgld",  # stochastic gradient mcmc
+    "sghmc",
     "window_adaptation",  # mcmc adaptation
+    "pathfinder_adaptation",
     "adaptive_tempered_smc",  # smc
     "tempered_smc",
     "ess",  # diagnostics
     "rhat",
-    "pathfinder_adaptation",
 ]

@@ -39,3 +39,45 @@ def overdamped_langevin(logprob_grad_fn):
         return DiffusionState(position, logprob_grad)
 
     return one_step
+
+
+class SGHMCState(NamedTuple):
+    position: PyTree
+    momentum: PyTree
+    logprob_grad: PyTree
+
+
+def sghmc(logprob_grad_fn, alpha: float = 0.01, beta: float = 0):
+    """Solver for the diffusion equation of the SGHMC algorithm [0]_.
+
+    References
+    ----------
+    .. [0]:  Chen, T., Fox, E., & Guestrin, C. (2014, June). Stochastic
+             gradient hamiltonian monte carlo. In International conference on
+             machine learning (pp. 1683-1691). PMLR.
+
+    """
+
+    def one_step(
+        rng_key: PRNGKey, state: SGHMCState, step_size: float, batch: tuple = ()
+    ) -> SGHMCState:
+        position, momentum, logprob_grad = state
+        noise = generate_gaussian_noise(rng_key, position)
+        position = jax.tree_util.tree_multimap(lambda x, p: x + p, position, momentum)
+        momentum = jax.tree_util.tree_multimap(
+            lambda p, g, n: (1.0 - alpha) * p
+            + step_size * g
+            + jnp.sqrt(2 * step_size * (alpha - beta)) * n,
+            momentum,
+            logprob_grad,
+            noise,
+        )
+
+        logprob_grad = logprob_grad_fn(position, batch)
+        return SGHMCState(
+            position,
+            momentum,
+            logprob_grad,
+        )
+
+    return one_step
