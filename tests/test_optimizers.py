@@ -3,7 +3,7 @@ import jax
 import jax.numpy as jnp
 from absl.testing import absltest
 
-import blackjax.adaptation.optimizers as optimizers
+import blackjax.optimizers.dual_averaging as dual_averaging
 
 
 class DualAveragingTest(chex.TestCase):
@@ -20,7 +20,7 @@ class DualAveragingTest(chex.TestCase):
 
         # Our target gradient is 0. we increase the rate of convergence by
         # increasing the value of gamma (see documentation of the algorithm).
-        init, update, final = optimizers.dual_averaging(gamma=0.3)
+        init, update, final = dual_averaging.dual_averaging(gamma=0.3)
         unpdate_fn = self.variant(update)
 
         da_state = init(3)

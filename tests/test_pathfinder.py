@@ -11,7 +11,7 @@ from jax.flatten_util import ravel_pytree
 from jaxopt._src.lbfgs import inv_hessian_product
 
 from blackjax.kernels import pathfinder
-from blackjax.vi.pathfinder import (
+from blackjax.optimizers.lbfgs import (
     lbfgs_inverse_hessian_factors,
     lbfgs_inverse_hessian_formula_1,
     lbfgs_inverse_hessian_formula_2,

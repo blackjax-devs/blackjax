@@ -9,9 +9,10 @@ from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
 )
 from blackjax.mcmc.hmc import HMCState
+from blackjax.optimizers.lbfgs import lbfgs_inverse_hessian_formula_1
 from blackjax.types import Array, PRNGKey, PyTree
 from blackjax.vi.pathfinder import init as pathfinder_init_fn
-from blackjax.vi.pathfinder import lbfgs_inverse_hessian_formula_1, sample_from_state
+from blackjax.vi.pathfinder import sample_from_state
 
 __all__ = ["base"]
 
