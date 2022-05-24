@@ -282,6 +282,7 @@ title="Source repository"
 <span class="kn">import</span> <span class="nn">blackjax.mcmc</span> <span class="k">as</span> <span class="nn">mcmc</span>
 <span class="kn">import</span> <span class="nn">blackjax.sgmcmc</span> <span class="k">as</span> <span class="nn">sgmcmc</span>
 <span class="kn">import</span> <span class="nn">blackjax.smc</span> <span class="k">as</span> <span class="nn">smc</span>
+<span class="kn">import</span> <span class="nn">blackjax.vi</span> <span class="k">as</span> <span class="nn">vi</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">AdaptationAlgorithm</span><span class="p">,</span> <span class="n">SamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.progress_bar</span> <span class="kn">import</span> <span class="n">progress_bar_scan</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
@@ -296,6 +297,8 @@ title="Source repository"
     <span class="s2">&quot;sgld&quot;</span><span class="p">,</span>
     <span class="s2">&quot;tempered_smc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;window_adaptation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pathfinder&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pathfinder_adaptation&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -922,30 +925,21 @@ title="Source repository"
 
 <div class="viewcode-block" id="orbital_hmc"><a class="viewcode-back" href="../../sampling.html#blackjax.orbital_hmc">[docs]</a><span class="k">class</span> <span class="nc">orbital_hmc</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Periodic orbital MCMC kernel</span>
-
 <span class="sd">    Each iteration of the periodic orbital MCMC outputs ``period`` weighted samples from</span>
 <span class="sd">    a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable</span>
 <span class="sd">    with precision matrix ``inverse_mass_matrix``, evaluated using the ``bijection`` as an</span>
 <span class="sd">    integrator with discretization parameter ``step_size``.</span>
-
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-
 <span class="sd">    A new Periodic orbital MCMC kernel can be initialized and used with the following code:</span>
-
 <span class="sd">    .. code::</span>
-
 <span class="sd">        per_orbit = blackjax.orbital_hmc(logprob_fn, step_size, inverse_mass_matrix, period)</span>
 <span class="sd">        state = per_orbit.init(position)</span>
 <span class="sd">        new_state, info = per_orbit.step(rng_key, state)</span>
-
 <span class="sd">    We can JIT-compile the step function for better performance</span>
-
 <span class="sd">    .. code::</span>
-
 <span class="sd">        step = jax.jit(per_orbit.step)</span>
 <span class="sd">        new_state, info = step(rng_key, state)</span>
-
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    logprob_fn</span>
@@ -960,11 +954,9 @@ title="Source repository"
 <span class="sd">        The number of steps used to build the orbit.</span>
 <span class="sd">    bijection</span>
 <span class="sd">        (algorithm parameter) The symplectic integrator to use to build the orbit.</span>
-
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
-
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">periodic_orbital</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
@@ -1000,36 +992,26 @@ title="Source repository"
 
 <div class="viewcode-block" id="elliptical_slice"><a class="viewcode-back" href="../../sampling.html#blackjax.elliptical_slice">[docs]</a><span class="k">class</span> <span class="nc">elliptical_slice</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Elliptical Slice sampling kernel</span>
-
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-
 <span class="sd">    A new Elliptical Slice sampling kernel can be initialized and used with the following code:</span>
-
 <span class="sd">    .. code::</span>
-
 <span class="sd">        ellip_slice = blackjax.elliptical_slice(loglikelihood_fn, cov_matrix)</span>
 <span class="sd">        state = ellip_slice.init(position)</span>
 <span class="sd">        new_state, info = ellip_slice.step(rng_key, state)</span>
-
 <span class="sd">    We can JIT-compile the step function for better performance</span>
-
 <span class="sd">    .. code::</span>
-
 <span class="sd">        step = jax.jit(ellip_slice.step)</span>
 <span class="sd">        new_state, info = step(rng_key, state)</span>
-
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    loglikelihood_fn</span>
 <span class="sd">        Only the log likelihood function from the posterior distributon we wish to sample.</span>
 <span class="sd">    cov_matrix</span>
 <span class="sd">        The value of the covariance matrix of the gaussian prior distribution from the posterior we wish to sample.</span>
-
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
-
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">elliptical_slice</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
@@ -1056,6 +1038,154 @@ title="Source repository"
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
+
+
+<span class="c1"># -----------------------------------------------------------------------------</span>
+<span class="c1">#                           VARIATIONAL INFERENCE</span>
+<span class="c1"># -----------------------------------------------------------------------------</span>
+
+
+<span class="k">class</span> <span class="nc">pathfinder</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the pathfinder kernel.</span>
+
+<span class="sd">    Pathfinder locates normal approximations to the target density along a</span>
+<span class="sd">    quasi-Newton optimization path, with local covariance estimated using</span>
+<span class="sd">    the inverse Hessian estimates produced by the L-BFGS optimizer.</span>
+<span class="sd">    Pathfinder returns draws from the approximation with the lowest estimated</span>
+<span class="sd">    Kullback-Leibler (KL) divergence to the true posterior.</span>
+
+<span class="sd">    Note: all the heavy processing in performed in the init function, step</span>
+<span class="sd">    function is just a drawing a sample from a normal distribution</span>
+
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">logprob_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">lbfgs_kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+
+        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">lbfgs_kwargs</span>
+            <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">state</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">pathfinder_adaptation</span><span class="p">(</span>
+    <span class="n">algorithm</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hmc</span><span class="p">,</span> <span class="n">nuts</span><span class="p">],</span>
+    <span class="n">logprob_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
+    <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.65</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">parameters</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdaptationAlgorithm</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Adapt the parameters of algorithms in the HMC family.</span>
+
+<span class="sd">    Algorithms in the HMC family on a euclidean manifold depend on the value of</span>
+<span class="sd">    at least two parameters: the step size, related to the trajectory</span>
+<span class="sd">    integrator, and the mass matrix, linked to the euclidean metric.</span>
+
+<span class="sd">    Good tuning is very important, especially for algorithms like NUTS which can</span>
+<span class="sd">    be extremely inefficient with the wrong parameter values.</span>
+<span class="sd">    This function tunes the values of these parameters according to this schema:</span>
+<span class="sd">        * pathfinder algorithm is run and an estimation of the inverse mass matrix</span>
+<span class="sd">          is derived, as well as an initialization point for the markov chain</span>
+<span class="sd">        * Nesterov&#39;s dual averaging adaptation is then run to tune the step size</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    algorithm</span>
+<span class="sd">        The algorithm whose parameters are being tuned.</span>
+<span class="sd">    logprob_fn</span>
+<span class="sd">        The log density probability density function from which we wish to sample.</span>
+<span class="sd">    num_steps</span>
+<span class="sd">        The number of adaptation steps for the dual averaging adaptation scheme.</span>
+<span class="sd">    initial_step_size</span>
+<span class="sd">        The initial step size used in the algorithm.</span>
+<span class="sd">    target_acceptance_rate</span>
+<span class="sd">        The acceptance rate that we target during step size adaptation.</span>
+<span class="sd">    **parameters</span>
+<span class="sd">        The extra parameters to pass to the algorithm, e.g. the number of</span>
+<span class="sd">        integration steps for HMC.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A function that returns the last chain state and a sampling kernel with the tuned parameter values from an initial state.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">kernel_factory</span><span class="p">(</span><span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">kernel_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">logprob_fn</span><span class="p">,</span>
+                <span class="n">step_size</span><span class="p">,</span>
+                <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">parameters</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">kernel_fn</span>
+
+    <span class="n">init</span><span class="p">,</span> <span class="n">update</span><span class="p">,</span> <span class="n">final</span> <span class="o">=</span> <span class="n">adaptation</span><span class="o">.</span><span class="n">pathfinder_adaptation</span><span class="o">.</span><span class="n">base</span><span class="p">(</span>
+        <span class="n">kernel_factory</span><span class="p">,</span>
+        <span class="n">logprob_fn</span><span class="p">,</span>
+        <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="n">target_acceptance_rate</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
+    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">update</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">((</span><span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">),</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">da_state</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+
+        <span class="n">rng_key_init</span><span class="p">,</span> <span class="n">rng_key_chain</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">init_warmup_state</span><span class="p">,</span> <span class="n">init_position</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">initial_step_size</span><span class="p">)</span>
+        <span class="n">init_state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">init_position</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
+        <span class="n">last_state</span><span class="p">,</span> <span class="n">warmup_chain</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+            <span class="n">one_step</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">init_warmup_state</span><span class="p">),</span>
+            <span class="n">keys</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">last_chain_state</span><span class="p">,</span> <span class="n">last_warmup_state</span> <span class="o">=</span> <span class="n">last_state</span>
+        <span class="n">history_state</span><span class="p">,</span> <span class="n">history_info</span><span class="p">,</span> <span class="n">history_da</span> <span class="o">=</span> <span class="n">warmup_chain</span>
+        <span class="n">history_adaptation</span> <span class="o">=</span> <span class="n">last_warmup_state</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">da_state</span><span class="o">=</span><span class="n">history_da</span><span class="p">)</span>
+
+        <span class="n">warmup_chain</span> <span class="o">=</span> <span class="p">(</span><span class="n">history_state</span><span class="p">,</span> <span class="n">history_info</span><span class="p">,</span> <span class="n">history_adaptation</span><span class="p">)</span>
+
+        <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">final</span><span class="p">(</span><span class="n">last_warmup_state</span><span class="p">)</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel_factory</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">last_chain_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">warmup_chain</span>
+
+    <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>
 </pre></div>
 
               </div>

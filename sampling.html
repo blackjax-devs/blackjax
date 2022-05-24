@@ -391,7 +391,7 @@ title="Source repository"
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.elliptical_slice" title="blackjax.elliptical_slice"><code class="xref py py-obj docutils literal notranslate"><span class="pre">elliptical_slice</span></code></a></p></td>
-<td><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel</p></td>
+<td><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel .</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.hmc" title="blackjax.hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hmc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the HMC kernel.</p></td>
@@ -403,7 +403,7 @@ title="Source repository"
 <td><p>Implements the (basic) user interface for the MALA kernel.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.orbital_hmc" title="blackjax.orbital_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">orbital_hmc</span></code></a></p></td>
-<td><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel</p></td>
+<td><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel Each iteration of the periodic orbital MCMC outputs <code class="docutils literal notranslate"><span class="pre">period</span></code> weighted samples from a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable with precision matrix <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code>, evaluated using the <code class="docutils literal notranslate"><span class="pre">bijection</span></code> as an integrator with discretization parameter <code class="docutils literal notranslate"><span class="pre">step_size</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.rmh" title="blackjax.rmh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the gaussian random walk kernel</p></td>
@@ -445,15 +445,17 @@ title="Source repository"
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.elliptical_slice">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">elliptical_slice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#elliptical_slice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.elliptical_slice" title="Permalink to this definition">#</a></dt>
-<dd><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel</p>
-<p class="rubric">Examples</p>
-<p>A new Elliptical Slice sampling kernel can be initialized and used with the following code:</p>
+<dd><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel
+.. rubric:: Examples</p>
+<p>A new Elliptical Slice sampling kernel can be initialized and used with the following code:
+.. code:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ellip_slice</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">elliptical_slice</span><span class="p">(</span><span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">cov_matrix</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">ellip_slice</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">ellip_slice</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>We can JIT-compile the step function for better performance</p>
+<p>We can JIT-compile the step function for better performance
+.. code:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">ellip_slice</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
 <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
@@ -630,19 +632,21 @@ commonly found in other libraries, and yet is arbitrary.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.orbital_hmc">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">orbital_hmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprob_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bijection=&lt;function</span> <span class="pre">velocity_verlet&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#orbital_hmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.orbital_hmc" title="Permalink to this definition">#</a></dt>
-<dd><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel</p>
-<p>Each iteration of the periodic orbital MCMC outputs <code class="docutils literal notranslate"><span class="pre">period</span></code> weighted samples from
+<dd><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel
+Each iteration of the periodic orbital MCMC outputs <code class="docutils literal notranslate"><span class="pre">period</span></code> weighted samples from
 a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable
 with precision matrix <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code>, evaluated using the <code class="docutils literal notranslate"><span class="pre">bijection</span></code> as an
-integrator with discretization parameter <code class="docutils literal notranslate"><span class="pre">step_size</span></code>.</p>
-<p class="rubric">Examples</p>
-<p>A new Periodic orbital MCMC kernel can be initialized and used with the following code:</p>
+integrator with discretization parameter <code class="docutils literal notranslate"><span class="pre">step_size</span></code>.
+.. rubric:: Examples</p>
+<p>A new Periodic orbital MCMC kernel can be initialized and used with the following code:
+.. code:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">per_orbit</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">orbital_hmc</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">per_orbit</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">per_orbit</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>We can JIT-compile the step function for better performance</p>
+<p>We can JIT-compile the step function for better performance
+.. code:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">per_orbit</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
 <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
