@@ -1,4 +1,4 @@
-from typing import Callable, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -10,7 +10,15 @@ from jaxopt.base import OptStep
 
 from blackjax.types import Array
 
-__all__ = ["LBFGSHistory", "minimize_lbfgs", "lbfgs_inverse_hessian_factors", "lbfgs_inverse_hessian_formula_1", "lbfgs_inverse_hessian_formula_2", "lbfgs_sample"]
+__all__ = [
+    "LBFGSHistory",
+    "minimize_lbfgs",
+    "lbfgs_inverse_hessian_factors",
+    "lbfgs_inverse_hessian_formula_1",
+    "lbfgs_inverse_hessian_formula_2",
+    "lbfgs_sample",
+]
+
 
 class LBFGSHistory(NamedTuple):
     "Container for the optimization path of a L-BFGS run"
