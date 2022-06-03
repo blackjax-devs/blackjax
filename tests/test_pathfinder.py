@@ -87,7 +87,7 @@ class PathfinderTest(chex.TestCase):
         )
 
         kl = (log_p - log_q).mean()
-        self.assertAlmostEqual(kl, 0.0, delta=2.)
+        self.assertAlmostEqual(kl, 0.0, delta=2.0)
 
 
 if __name__ == "__main__":

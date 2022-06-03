@@ -1,7 +1,5 @@
 from typing import Callable, NamedTuple, Tuple, Union
 
-import numpy as np
-
 import jax
 import jax.numpy as jnp
 import jax.random
@@ -151,7 +149,7 @@ def init(
     # Index and reshape S and Z to be sliding window view shape=(maxiter, maxcor, param_dim),
     # so we can vmap over all the iterations.
     # This is in effect numpy.lib.stride_tricks.sliding_window_view
-    path_size = maxiter+1
+    path_size = maxiter + 1
     index = jnp.arange(path_size)[:, None] + jnp.arange(maxcor)[None, :]
     s_j = s_padded[index.reshape(path_size, maxcor)].reshape(path_size, maxcor, -1)
     z_j = z_padded[index.reshape(path_size, maxcor)].reshape(path_size, maxcor, -1)
