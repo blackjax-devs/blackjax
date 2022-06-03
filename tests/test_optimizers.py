@@ -8,13 +8,14 @@ import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest, parameterized
 from jax.flatten_util import ravel_pytree
-from jaxopt._src.lbfgs import inv_hessian_product
+from jaxopt._src.lbfgs import compute_gamma, inv_hessian_product
 
 import blackjax.optimizers.dual_averaging as dual_averaging
 from blackjax.optimizers.lbfgs import (
     lbfgs_inverse_hessian_factors,
     lbfgs_inverse_hessian_formula_1,
     lbfgs_inverse_hessian_formula_2,
+    lbfgs_recover_alpha,
     minimize_lbfgs,
 )
 
@@ -48,10 +49,11 @@ class OptimizerTest(chex.TestCase):
 
         self.assertAlmostEqual(final(da_state), 1.0, delta=1e-1)
 
+    @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
-        [(1, 10), (10, 1), (10, 20)],
+        [(2, 10), (10, 1), (10, 20)],
     )
-    def test_lbfgs_inverse_hessian(self, maxiter, maxcor):
+    def test_minimize_lbfgs(self, maxiter, maxcor):
         """Test if dot product between approximate inverse hessian and gradient is
         the same between two loop recursion algorthm of LBFGS and formulas of the
         pathfinder paper"""
@@ -81,40 +83,76 @@ class OptimizerTest(chex.TestCase):
         b0 = {"scale": 1.0, "coefs": 2.0}
         b0_flatten, unravel_fn = ravel_pytree(b0)
         objective_fn = lambda x: -fn(unravel_fn(x))
-        (result, status), history = minimize_lbfgs(
-            objective_fn, b0_flatten, maxiter=maxiter, maxcor=maxcor
-        )
+        (_, status), history = self.variant(
+            functools.partial(
+                minimize_lbfgs, objective_fn, maxiter=maxiter, maxcor=maxcor
+            )
+        )(b0_flatten)
+        history = jax.tree_map(lambda x: x[: status.iter_num + 1], history)
 
-        i = status.iter_num
-        i_offset = history.x.shape[0] - status.iter_num + i - 2
+        # Test recover alpha
+        S = jnp.diff(history.x, axis=0)
+        Z = jnp.diff(history.g, axis=0)
+        alpha0 = history.alpha[0]
 
-        pk = inv_hessian_product(
-            -history.g[i_offset + 1],
-            status.s_history,
-            status.y_history,
-            status.rho_history,
-            history.gamma[i_offset],
-            status.iter_num % maxcor,
-        )
+        def scan_fn(alpha, val):
+            alpha_l, mask_l = lbfgs_recover_alpha(alpha, *val)
+            return alpha_l, (alpha_l, mask_l)
 
-        s = jnp.diff(history.x.T).at[:, -status.iter_num - 1].set(0.0)
-        z = jnp.diff(history.g.T).at[:, -status.iter_num - 1].set(0.0)
+        _, (alpha, mask) = jax.lax.scan(scan_fn, alpha0, (S, Z))
+        np.testing.assert_array_almost_equal(alpha, history.alpha[1:])
+        np.testing.assert_array_equal(mask, history.update_mask[1:])
 
-        S = jax.lax.dynamic_slice(s, (0, i_offset - maxcor + 1), (2, maxcor))
-        Z = jax.lax.dynamic_slice(z, (0, i_offset - maxcor + 1), (2, maxcor))
+        # Test inverse hessian product
+        S_partial = S[-maxcor:].T
+        Z_partial = Z[-maxcor:].T
+        alpha = history.alpha[-1]
 
-        alpha_scalar = history.gamma[i_offset + 1]
-        alpha = alpha_scalar * jnp.ones(S.shape[0])
-        beta, gamma = lbfgs_inverse_hessian_factors(S, Z, alpha)
+        beta, gamma = lbfgs_inverse_hessian_factors(S_partial, Z_partial, alpha)
         inv_hess_1 = lbfgs_inverse_hessian_formula_1(alpha, beta, gamma)
         inv_hess_2 = lbfgs_inverse_hessian_formula_2(alpha, beta, gamma)
 
-        np.testing.assert_array_almost_equal(
-            pk, -inv_hess_1 @ history.g[i_offset + 1], decimal=3
+        gamma = compute_gamma(S_partial, Z_partial, -1)
+        pk = inv_hessian_product(
+            -history.g[-1],
+            status.s_history,
+            status.y_history,
+            status.rho_history,
+            gamma,
+            status.iter_num % maxcor,
         )
-        np.testing.assert_array_almost_equal(
-            pk, -inv_hess_2 @ history.g[i_offset + 1], decimal=3
-        )
+
+        np.testing.assert_array_almost_equal(pk, -inv_hess_1 @ history.g[-1], decimal=3)
+        np.testing.assert_array_almost_equal(pk, -inv_hess_2 @ history.g[-1], decimal=3)
+
+    @chex.all_variants(with_pmap=False)
+    def test_recover_diag_inv_hess(self):
+        "Compare inverse Hessian estimation from LBFGS with known groundtruth."
+        nd = 5
+        mean = np.linspace(3.0, 50.0, nd)
+        cov = np.diag(np.linspace(1.0, 10.0, nd))
+
+        def loss_fn(x):
+            return -stats.multivariate_normal.logpdf(x, mean, cov)
+
+        (result, status), history = self.variant(
+            functools.partial(minimize_lbfgs, loss_fn, maxiter=50)
+        )(np.zeros(nd))
+        history = jax.tree_map(lambda x: x[: status.iter_num + 1], history)
+
+        np.testing.assert_allclose(result, mean, rtol=0.01)
+
+        S_partial = jnp.diff(history.x, axis=0)[-10:].T
+        Z_partial = jnp.diff(history.g, axis=0)[-10:].T
+        alpha = history.alpha[-1]
+        np.testing.assert_allclose(alpha, np.diag(cov), rtol=0.01)
+
+        beta, gamma = lbfgs_inverse_hessian_factors(S_partial, Z_partial, alpha)
+        inv_hess_1 = lbfgs_inverse_hessian_formula_1(alpha, beta, gamma)
+        inv_hess_2 = lbfgs_inverse_hessian_formula_2(alpha, beta, gamma)
+
+        np.testing.assert_allclose(np.diag(inv_hess_1), np.diag(cov), rtol=0.01)
+        np.testing.assert_allclose(inv_hess_1, inv_hess_2, rtol=0.01)
 
 
 if __name__ == "__main__":

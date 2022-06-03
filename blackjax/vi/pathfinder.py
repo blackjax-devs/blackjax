@@ -1,14 +1,15 @@
 from typing import Callable, NamedTuple, Tuple, Union
 
+import numpy as np
+
 import jax
 import jax.numpy as jnp
 import jax.random
-from jax import lax
 from jax.flatten_util import ravel_pytree
 
 from blackjax.optimizers.lbfgs import (
+    bfgs_sample,
     lbfgs_inverse_hessian_factors,
-    lbfgs_sample,
     minimize_lbfgs,
 )
 from blackjax.types import Array, PRNGKey, PyTree
@@ -28,8 +29,6 @@ class PathfinderState(NamedTuple):
 
     elbo:
         ELBO of approximation wrt target distribution
-    i:
-        iteration of the L-BFGS optimizer
     position:
         position
     grad_position:
@@ -39,7 +38,6 @@ class PathfinderState(NamedTuple):
     """
 
     elbo: Array
-    i: int
     position: PyTree
     grad_position: PyTree
     alpha: Array
@@ -61,7 +59,7 @@ def init(
     quasi-Newton optimization path, with local covariance estimated using
     the inverse Hessian estimates produced by the L-BFGS optimizer.
 
-    function implements algorithm in figure 3 of:
+    Function implements Algorithm 3 in [1]:
 
     Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
 
@@ -93,11 +91,16 @@ def init(
     on the optimization path
     if return_path=False a PathfinderState with information on the iteration
     in the optimization path whose approximate samples yields the highest ELBO
+
+    References
+    ----------
+
+    .. [1]: Pathfinder: Parallel quasi-newton variational inference,
+            Lu Zhang et al., arXiv:2108.03782
     """
 
     initial_position_flatten, unravel_fn = ravel_pytree(initial_position)
     objective_fn = lambda x: -logprob_fn(unravel_fn(x))
-    param_dims = initial_position_flatten.shape[0]
 
     if "maxiter" not in lbfgs_kwargs:
         lbfgs_kwargs["maxiter"] = 30
@@ -108,65 +111,75 @@ def init(
         # that are sums over (large number of) observations' likelihood
         lbfgs_kwargs["maxls"] = 1000
 
-    (result, status), history = minimize_lbfgs(
+    maxiter = lbfgs_kwargs["maxiter"]
+    maxcor = lbfgs_kwargs["maxcor"]
+    (_, status), history = minimize_lbfgs(
         objective_fn, initial_position_flatten, **lbfgs_kwargs
     )
 
-    position, grad_position, alpha_scalar = history.x, history.g, history.gamma
+    # Get postions and gradients of the optimization path (including the starting point).
+    position = history.x
+    grad_position = history.g
+    alpha = history.alpha
+    # Get the update of position and gradient.
+    update_mask = history.update_mask[1:]
+    s = jnp.diff(position, axis=0)
+    z = jnp.diff(grad_position, axis=0)
+    # Account for the mask
+    s_masked = jnp.where(update_mask, s, jnp.zeros_like(s))
+    z_masked = jnp.where(update_mask, z, jnp.zeros_like(z))
+    # Pad 0 to leading dimension so we have constant shape output
+    s_padded = jnp.pad(s_masked, ((maxcor, 0), (0, 0)), mode="constant")
+    z_padded = jnp.pad(z_masked, ((maxcor, 0), (0, 0)), mode="constant")
 
-    # set difference between empty zero states and initial point x0 to zero
-    # this is beacuse here we are working with static shapes and keeping all
-    # the zero states in the arrays
-    s = jnp.diff(position, axis=0).at[-status.iter_num - 1].set(0.0)
-    z = jnp.diff(grad_position, axis=0).at[-status.iter_num - 1].set(0.0)
-
-    maxiter = lbfgs_kwargs["maxiter"]
-    maxcor = lbfgs_kwargs["maxcor"]
-
-    rng_keys = jax.random.split(rng_key, maxiter)
-
-    def pathfinder_inner_step(i):
-
-        i_offset = position.shape[0] + i - 2 - maxiter
-        S = lax.dynamic_slice(s, (i_offset - maxcor, 0 + 1), (maxcor, param_dims)).T
-        Z = lax.dynamic_slice(z, (i_offset - maxcor, 0 + 1), (maxcor, param_dims)).T
-        alpha = alpha_scalar[i_offset + 1] * jnp.ones(param_dims)
-        beta, gamma = lbfgs_inverse_hessian_factors(S, Z, alpha)
-
-        phi, logq = lbfgs_sample(
-            rng_key=rng_keys[i],
+    def path_finder_body_fn(rng_key, S, Z, alpha_l, theta, theta_grad):
+        """The for loop body in Algorithm 1 of the Pathfinder paper."""
+        beta, gamma = lbfgs_inverse_hessian_factors(S.T, Z.T, alpha_l)
+        phi, logq = bfgs_sample(
+            rng_key=rng_key,
             num_samples=num_samples,
-            position=position[i_offset + 1],
-            grad_position=grad_position[i_offset + 1],
-            alpha=alpha,
+            position=theta,
+            grad_position=theta_grad,
+            alpha=alpha_l,
             beta=beta,
             gamma=gamma,
         )
+        logp = -jax.vmap(objective_fn)(phi)
+        elbo = (logp - logq).mean()  # Algorithm 7 of the paper
+        return elbo, beta, gamma
 
-        logp = -jax.lax.map(objective_fn, phi)  # cannot vmap pytrees
-        elbo = (logp - logq).mean()  # algorithm of figure 9 of the paper
+    # Index and reshape S and Z to be sliding window view shape=(maxiter, maxcor, param_dim),
+    # so we can vmap over all the iterations.
+    # This is in effect numpy.lib.stride_tricks.sliding_window_view
+    path_size = maxiter+1
+    index = jnp.arange(path_size)[:, None] + jnp.arange(maxcor)[None, :]
+    s_j = s_padded[index.reshape(path_size, maxcor)].reshape(path_size, maxcor, -1)
+    z_j = z_padded[index.reshape(path_size, maxcor)].reshape(path_size, maxcor, -1)
+    rng_keys = jax.random.split(rng_key, path_size)
+    elbo, beta, gamma = jax.vmap(path_finder_body_fn)(
+        rng_keys, s_j, z_j, alpha, position, grad_position
+    )
+    elbo = jnp.where(
+        (jnp.arange(path_size) < (status.iter_num)) & jnp.isfinite(elbo),
+        elbo,
+        -jnp.inf,
+    )
 
-        state = PathfinderState(
-            i=jnp.where(
-                i - maxiter + status.iter_num < 0, -1, i - maxiter + status.iter_num
-            ),
-            elbo=elbo,
-            position=unravel_fn(position[i_offset + 1]),
-            grad_position=unravel_fn(grad_position[i_offset + 1]),
-            alpha=alpha,
-            beta=beta,
-            gamma=gamma,
-        )
-        return state
+    unravel_fn_mapped = jax.vmap(unravel_fn)
+    pathfinder_result = PathfinderState(
+        elbo=elbo,
+        position=unravel_fn_mapped(position),
+        grad_position=unravel_fn_mapped(grad_position),
+        alpha=alpha,
+        beta=beta,
+        gamma=gamma,
+    )
 
-    # LBFGS maximum iteration condition is always checked after running a step
-    # hence given max iter, max iter+1 LBFGS steps are run at maximum
-    out = lax.map(pathfinder_inner_step, jnp.arange(maxiter + 1))
     if return_path:
-        return out
+        return pathfinder_result
     else:
-        best_i = jnp.argmax(jnp.where(out.i > 0, out.elbo, -jnp.inf))
-        return jax.tree_map(lambda x: x[best_i], out)
+        best_i = jnp.argmax(elbo)
+        return jax.tree_map(lambda x: x[best_i], pathfinder_result)
 
 
 def kernel():
@@ -212,7 +225,7 @@ def sample_from_state(
     position_flatten, unravel_fn = ravel_pytree(state.position)
     grad_position_flatten, _ = ravel_pytree(state.grad_position)
 
-    phi, _ = lbfgs_sample(
+    phi, _ = bfgs_sample(
         rng_key,
         num_samples,
         position_flatten,
@@ -222,4 +235,7 @@ def sample_from_state(
         state.gamma,
     )
 
-    return jax.lax.map(unravel_fn, phi)
+    if num_samples == ():
+        return unravel_fn(phi)
+    else:
+        return jax.vmap(unravel_fn)(phi)

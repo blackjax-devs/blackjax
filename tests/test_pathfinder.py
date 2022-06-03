@@ -8,7 +8,7 @@ import jax.scipy.stats as stats
 from absl.testing import absltest, parameterized
 
 from blackjax.kernels import pathfinder
-from blackjax.optimizers.lbfgs import lbfgs_sample
+from blackjax.optimizers.lbfgs import bfgs_sample
 
 
 class PathfinderTest(chex.TestCase):
@@ -72,7 +72,7 @@ class PathfinderTest(chex.TestCase):
         kernel = pathfinder(rng_key_pathfinder, logp_model)
         out = self.variant(kernel.init)(x0)
 
-        sim_p, log_p = lbfgs_sample(
+        sim_p, log_p = bfgs_sample(
             rng_key_pathfinder,
             10_000,
             out.position,
@@ -87,7 +87,7 @@ class PathfinderTest(chex.TestCase):
         )
 
         kl = (log_p - log_q).mean()
-        self.assertAlmostEqual(kl, 0.0, delta=1e-0)
+        self.assertAlmostEqual(kl, 0.0, delta=2.)
 
 
 if __name__ == "__main__":

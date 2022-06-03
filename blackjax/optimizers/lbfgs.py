@@ -5,7 +5,6 @@ import jax.numpy as jnp
 import jax.random
 import jaxopt
 from jax import lax
-from jaxopt._src.lbfgs import compute_gamma
 from jaxopt.base import OptStep
 
 from blackjax.types import Array
@@ -16,24 +15,32 @@ __all__ = [
     "lbfgs_inverse_hessian_factors",
     "lbfgs_inverse_hessian_formula_1",
     "lbfgs_inverse_hessian_formula_2",
-    "lbfgs_sample",
+    "bfgs_sample",
 ]
+
+INIT_STEP_SIZE = 1.0
+MIN_STEP_SIZE = 1e-3
 
 
 class LBFGSHistory(NamedTuple):
-    "Container for the optimization path of a L-BFGS run"
+    """Container for the optimization path of a L-BFGS run
+
+    Attributes
+    ---------
+    x: History of positions
+    f: History of objective values
+    g: History of gradient values
+    alpha: History of the diagonal elements of the inverse Hessian approximation.
+    update_mask: The indicator of whether the updates of position and gradient are
+                 included in the inverse-Hessian approximation or not.
+                 This is Xi in the paper.
+    """
+
     x: Array
     f: Array
     g: Array
-    gamma: Array
-
-
-_update_history_vectors = (
-    lambda history, new: jnp.roll(history, -1, axis=0).at[-1, :].set(new)
-)
-_update_history_scalar = (
-    lambda history, new: jnp.roll(history, -1, axis=0).at[-1].set(new)
-)
+    alpha: Array
+    update_mask: Array
 
 
 def minimize_lbfgs(
@@ -41,8 +48,8 @@ def minimize_lbfgs(
     x0: Array,
     maxiter: int = 30,
     maxcor: float = 10,
-    gtol: float = 1e-03,
-    ftol: float = 1e-02,
+    gtol: float = 1e-08,
+    ftol: float = 1e-05,
     maxls: int = 1000,
 ) -> Tuple[OptStep, LBFGSHistory]:
     """
@@ -70,75 +77,147 @@ def minimize_lbfgs(
     -------
     Optimization results and optimization path
     """
-    d = len(x0)
-    dtype = jnp.dtype(x0)
-    grad_fun = jax.grad(fun)
 
-    def cond_fun(inputs):
-        (_, state), i, history = inputs
-        return (
-            (state.error > gtol)
-            & (((history.f[-2] - history.f[-1]) > ftol) | (i == 0))
-            & (i < maxiter)
-        ).all()
-
-    def body_fun(inputs):
-        (params, state), i, history = inputs
+    def lbfgs_one_step(carry, i):
+        (params, state), previous_history = carry
 
         # this is to help optimization when using log-likelihoods, especially for float 32
-        # it resets stepsize of the line search algorithm back to stating value (1.0) if
+        # it resets stepsize of the line search algorithm back to stating value (INIT_STEP_SIZE) if
         # it get stuck in very small values
         state = state._replace(
-            stepsize=jnp.where(state.stepsize < 1e-3, 1.0, state.stepsize)
+            stepsize=jnp.where(
+                state.stepsize < MIN_STEP_SIZE, INIT_STEP_SIZE, state.stepsize
+            )
         )
+        # LBFGS use a rolling history, getting the correct index here.
         last = (state.iter_num % maxcor + maxcor) % maxcor
-        gamma = compute_gamma(state.s_history, state.y_history, last)
-        new_opt = solver.update(params, state)
+        next_params, next_state = solver.update(params, state)
 
-        i += 1
+        # Recover alpha and update mask
+        s_l = next_state.s_history[last]
+        z_l = next_state.y_history[last]
+        alpha_lm1 = previous_history.alpha
 
-        history = history._replace(
-            x=_update_history_vectors(history=history.x, new=new_opt.params),
-            f=_update_history_scalar(history=history.f, new=fun(new_opt.params)),
-            g=_update_history_vectors(history=history.g, new=grad_fun(new_opt.params)),
-            gamma=_update_history_scalar(history=history.gamma, new=gamma),
+        alpha_l, mask_l = lbfgs_recover_alpha(alpha_lm1, s_l, z_l)
+
+        current_grad = previous_history.g + z_l
+        history = LBFGSHistory(
+            x=next_params,
+            f=next_state.value,
+            g=current_grad,
+            alpha=alpha_l,
+            update_mask=mask_l,
         )
-        return (new_opt, i, history)
+        # check convergence
+        f_delta = (
+            jnp.abs(state.value - next_state.value)
+            / jnp.asarray([jnp.abs(state.value), jnp.abs(next_state.value), 1.0]).max()
+        )
+        not_converged = (next_state.error > gtol) & (f_delta > ftol) & (i < maxiter)
+        return (OptStep(params=next_params, state=next_state), history), not_converged
 
-    history_initial = LBFGSHistory(
-        x=_update_history_vectors(
-            jnp.zeros((maxiter + maxcor + 2, d), dtype=dtype), x0
-        ),
-        f=_update_history_scalar(
-            jnp.zeros((maxiter + maxcor + 2), dtype=dtype), fun(x0)
-        ),
-        g=_update_history_vectors(
-            jnp.zeros((maxiter + maxcor + 2, d), dtype=dtype), grad_fun(x0)
-        ),
-        gamma=_update_history_scalar(jnp.zeros(maxiter + maxcor + 2, dtype=dtype), 1.0),
-    )
+    def non_op(carry, it):
+        return carry, False
+
+    def scan_body(tup, it):
+        carry, not_converged = tup
+        # When cond is met, we start doing no-ops.
+        next_tup = lax.cond(not_converged, lbfgs_one_step, non_op, carry, it)
+        return next_tup, next_tup[0][-1]
 
     solver = jaxopt.LBFGS(fun=fun, maxiter=maxiter, maxls=maxls, history_size=maxcor)
+    value0, grad0 = jax.value_and_grad(fun)(x0)
     state = solver.init_state(x0)
-    state = state._replace(stepsize=state.stepsize / 1.5)
-    zero_step = OptStep(params=x0, state=state)
-    init_val = (zero_step, 0, history_initial)
 
-    state, _, history = lax.while_loop(
-        cond_fun=cond_fun, body_fun=body_fun, init_val=init_val
+    value0, grad0 = jax.value_and_grad(fun)(x0)
+    # LBFGS update overwirte value internally, here is to set the value for checking condition
+    state = state._replace(
+        value=value0,
+        stepsize=state.stepsize / 1.5
+    )
+    init_step = OptStep(params=x0, state=state)
+    initial_history = LBFGSHistory(
+        x=x0,
+        f=value0,
+        g=grad0,
+        alpha=jnp.ones_like(x0),
+        update_mask=jnp.zeros_like(x0, dtype=bool),
     )
 
-    return state, history
+    ((last_step, _), _), history = lax.scan(
+        scan_body, ((init_step, initial_history), True), jnp.arange(maxiter)
+    )
+    # Append initial state to history.
+    history = jax.tree_map(
+        lambda x, y: jnp.concatenate([x[None, ...], y], axis=0),
+        initial_history,
+        history,
+    )
+    return last_step, history
+
+
+def lbfgs_recover_alpha(alpha_lm1, s_l, z_l, epsilon=1e-12):
+    """
+    Compute diagonal elements of the inverse Hessian approximation from optimation path.
+    It implements the inner loop body of Algorithm 3 in [1].
+
+    Parameters
+    ----------
+    alpha_lm1
+        The diagonal element of the inverse Hessian approximation of the previous iteration
+    s_l
+        The update of the position (current position - previous position)
+    z_l
+        The update of the gradient (current gradient - previous gradient). Note that in [1]
+        it is defined as the negative of the update of the gradient, but since we are optimizing
+        the negative log prob function taking the update of the gradient is correct here.
+
+    Returns
+    -------
+    alpha_l
+        The diagonal element of the inverse Hessian approximation of the current iteration
+    mask_l
+        The indicator of whether the update of position and gradient are included in
+        the inverse-Hessian approximation or not.
+
+    References
+    ----------
+
+    .. [1]: Pathfinder: Parallel quasi-newton variational inference,
+            Lu Zhang et al., arXiv:2108.03782
+    """
+
+    def compute_next_alpha(s_l, z_l, alpha_lm1):
+        a = z_l.T @ jnp.diag(alpha_lm1) @ z_l
+        b = z_l.T @ s_l
+        c = s_l.T @ jnp.diag(1.0 / alpha_lm1) @ s_l
+        inv_alpha_l = (
+            a / (b * alpha_lm1)
+            + z_l**2 / b
+            - (a * s_l**2) / (b * c * alpha_lm1**2)
+        )
+        return 1.0 / inv_alpha_l
+
+    pred = s_l.T @ z_l > (epsilon * jnp.linalg.norm(z_l, 2))
+    alpha_l = lax.cond(
+        pred, compute_next_alpha, lambda *_: alpha_lm1, s_l, z_l, alpha_lm1
+    )
+    mask_l = jnp.where(
+        pred,
+        jnp.ones_like(alpha_lm1, dtype=bool),
+        jnp.zeros_like(alpha_lm1, dtype=bool),
+    )
+    return alpha_l, mask_l
 
 
 def lbfgs_inverse_hessian_factors(S, Z, alpha):
     """
     Calculates factors for inverse hessian factored representation.
-    It implements algorithm of figure 7 in:
+    It implements formula II.2 of:
 
     Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
     """
-    param_dims = S.shape[1]
+    param_dims = S.shape[-1]
     StZ = S.T @ Z
     R = jnp.triu(StZ) + jnp.eye(param_dims) * jnp.finfo(S.dtype).eps
 
@@ -157,7 +236,7 @@ def lbfgs_inverse_hessian_factors(S, Z, alpha):
 
 def lbfgs_inverse_hessian_formula_1(alpha, beta, gamma):
     """
-    Calculates inverse hessian from factors as in figure 7 of:
+    Calculates inverse hessian from factors as in formula II.1 of:
 
     Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
     """
@@ -166,7 +245,7 @@ def lbfgs_inverse_hessian_formula_1(alpha, beta, gamma):
 
 def lbfgs_inverse_hessian_formula_2(alpha, beta, gamma):
     """
-    Calculates inverse hessian from factors as in formula II.1 of:
+    Calculates inverse hessian from factors as in formula II.3 of:
 
     Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
     """
@@ -180,10 +259,10 @@ def lbfgs_inverse_hessian_formula_2(alpha, beta, gamma):
     )
 
 
-def lbfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gamma):
+def bfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gamma):
     """
     Draws approximate samples of target distribution.
-    It implements algorithm of figure 8 in:
+    It implements Algorithm 4 in:
 
     Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
     """
@@ -192,7 +271,8 @@ def lbfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gam
 
     Q, R = jnp.linalg.qr(jnp.diag(jnp.sqrt(1 / alpha)) @ beta)
     param_dims = beta.shape[0]
-    L = jnp.linalg.cholesky(jnp.eye(param_dims) + R @ gamma @ R.T)
+    Id = jnp.identity(R.shape[0])
+    L = jnp.linalg.cholesky(Id + R @ gamma @ R.T)
 
     logdet = jnp.log(jnp.prod(alpha)) + 2 * jnp.log(jnp.linalg.det(L))
     mu = (
@@ -202,14 +282,11 @@ def lbfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gam
     )
 
     u = jax.random.normal(rng_key, num_samples + (param_dims, 1))
-    phi = (
-        mu[..., None]
-        + jnp.diag(jnp.sqrt(alpha)) @ (Q @ L @ Q.T @ u + u - (Q @ Q.T @ u))
-    )[..., 0]
+    phi = mu[..., None] + jnp.diag(jnp.sqrt(alpha)) @ (Q @ (L - Id) @ (Q.T @ u) + u)
 
     logq = -0.5 * (
         logdet
         + jnp.einsum("...ji,...ji->...", u, u)
         + param_dims * jnp.log(2.0 * jnp.pi)
     )
-    return phi, logq
+    return phi[..., 0], logq
