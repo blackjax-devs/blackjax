@@ -131,7 +131,7 @@ def minimize_lbfgs(
 
     value0, grad0 = jax.value_and_grad(fun)(x0)
     # LBFGS update overwirte value internally, here is to set the value for checking condition
-    state = state._replace(value=value0, stepsize=state.stepsize / 1.5)
+    state = state._replace(value=value0)
     init_step = OptStep(params=x0, state=state)
     initial_history = LBFGSHistory(
         x=x0,
