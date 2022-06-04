@@ -72,7 +72,7 @@ def base(
         pathfinder_state = pathfinder_init_fn(
             pathfinder_rng_key, logprob_fn, initial_position
         )
-        new_initial_position = sample_from_state(sample_rng_key, pathfinder_state)
+        new_initial_position, _ = sample_from_state(sample_rng_key, pathfinder_state)
         inverse_mass_matrix = lbfgs_inverse_hessian_formula_1(
             pathfinder_state.alpha, pathfinder_state.beta, pathfinder_state.gamma
         )

@@ -191,7 +191,7 @@ def kernel():
 
     def one_step(rng_key: PRNGKey, state: PathfinderState):
 
-        sample = sample_from_state(rng_key, state, num_samples=())
+        sample, _ = sample_from_state(rng_key, state, num_samples=())
         return state, sample
 
     return one_step
@@ -223,7 +223,7 @@ def sample_from_state(
     position_flatten, unravel_fn = ravel_pytree(state.position)
     grad_position_flatten, _ = ravel_pytree(state.grad_position)
 
-    phi, _ = bfgs_sample(
+    phi, logq = bfgs_sample(
         rng_key,
         num_samples,
         position_flatten,
@@ -234,6 +234,6 @@ def sample_from_state(
     )
 
     if num_samples == ():
-        return unravel_fn(phi)
+        return unravel_fn(phi), logq
     else:
-        return jax.vmap(unravel_fn)(phi)
+        return jax.vmap(unravel_fn)(phi), logq
