@@ -7,6 +7,7 @@ from .kernels import (
     mala,
     nuts,
     orbital_hmc,
+    pathfinder_adaptation,
     rmh,
     sgld,
     tempered_smc,
@@ -28,4 +29,5 @@ __all__ = [
     "tempered_smc",
     "ess",  # diagnostics
     "rhat",
+    "pathfinder_adaptation",
 ]

@@ -48,7 +48,7 @@ regresion_test_cases = [
         "initial_position": {"scale": 1.0, "coefs": 2.0},
         "parameters": {},
         "num_warmup_steps": 1_000,
-        "num_sampling_steps": 500,
+        "num_sampling_steps": 1_000,
     },
 ]
 
@@ -70,7 +70,7 @@ class LinearRegressionTest(chex.TestCase):
         return jnp.sum(logpdf)
 
     @parameterized.parameters(itertools.product(regresion_test_cases, [True, False]))
-    def test_linear_regression(self, case, is_mass_matrix_diagonal):
+    def test_window_adaptation(self, case, is_mass_matrix_diagonal):
         """Test the HMC kernel and the Stan warmup."""
         rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
         x_data = jax.random.normal(init_key0, shape=(1000, 1))
@@ -99,6 +99,46 @@ class LinearRegressionTest(chex.TestCase):
         states = inference_loop(
             kernel, case["num_sampling_steps"], inference_key, state
         )
+
+        coefs_samples = states.position["coefs"]
+        scale_samples = states.position["scale"]
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+
+    @parameterized.parameters(regresion_test_cases)
+    def test_pathfinder_adaptation(
+        self,
+        algorithm,
+        num_warmup_steps,
+        initial_position,
+        num_sampling_steps,
+        parameters,
+    ):
+        """Test the HMC kernel and the Stan warmup."""
+        rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logposterior_fn = lambda x: logposterior_fn_(**x)
+
+        warmup_key, inference_key = jax.random.split(rng_key, 2)
+
+        warmup = blackjax.pathfinder_adaptation(
+            algorithm,
+            logposterior_fn,
+            num_warmup_steps,
+            **parameters,
+        )
+        state, kernel, _ = warmup.run(
+            warmup_key,
+            initial_position,
+        )
+
+        states = inference_loop(kernel, num_sampling_steps, inference_key, state)
 
         coefs_samples = states.position["coefs"]
         scale_samples = states.position["scale"]
