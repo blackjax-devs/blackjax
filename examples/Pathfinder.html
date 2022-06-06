@@ -400,19 +400,19 @@ title="Source repository"
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Python implementation: CPython
-Python version       : 3.9.5
-IPython version      : 7.28.0
+Python version       : 3.9.7
+IPython version      : 7.29.0
 
-jax     : 0.2.24
-jaxlib  : 0.1.73
-blackjax: 0.4.0
+jax     : 0.3.13
+jaxlib  : 0.3.10
+blackjax: 0.7.0
 
-Compiler    : GCC 7.5.0
-OS          : Linux
-Release     : 5.4.72-microsoft-standard-WSL2
+Compiler    : Clang 10.0.0 
+OS          : Darwin
+Release     : 21.5.0
 Machine     : x86_64
-Processor   : 
-CPU cores   : 8
+Processor   : i386
+CPU cores   : 16
 Architecture: 64bit
 </pre></div>
 </div>
@@ -443,7 +443,7 @@ Architecture: 64bit
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/1db3c59c133c718788eb0bd232370176a88af845cacaec2ef75d9a30d420e1e3.png" src="../_images/1db3c59c133c718788eb0bd232370176a88af845cacaec2ef75d9a30d420e1e3.png" />
+<img alt="../_images/e03d676a925101ae942540a1c4d4c68d6f9c1d242c982050b0f1a6aa62e52624.png" src="../_images/e03d676a925101ae942540a1c4d4c68d6f9c1d242c982050b0f1a6aa62e52624.png" />
 </div>
 </div>
 </section>
@@ -507,6 +507,8 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+/opt/miniconda3/envs/blackjax/lib/python3.9/site-packages/jax/_src/tree_util.py:188: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
+  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
 </pre></div>
 </div>
 </div>
@@ -540,17 +542,16 @@ The optimizer is the limited memory BFGS algorithm.</p>
 <span class="n">levels_</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">logp_</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 
 
-<span class="n">steps</span> <span class="o">=</span> <span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">steps</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">elbo</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 <span class="n">rows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">steps</span> <span class="o">/</span> <span class="mi">3</span><span class="p">))</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">rows</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">offset</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
 
 <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">axs</span><span class="o">.</span><span class="n">flatten</span><span class="p">()):</span>
 
     <span class="n">ax</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">x_</span><span class="p">,</span> <span class="n">y_</span><span class="p">,</span> <span class="n">logp_</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="n">levels_</span><span class="p">)</span>
-    <span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">offset</span> <span class="o">+</span> <span class="n">i</span><span class="p">],</span> <span class="n">path</span><span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">path</span><span class="p">)</span>
     <span class="n">sample_state</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">sample_from_state</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
-    <span class="n">position_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="n">offset</span> <span class="p">:</span> <span class="n">offset</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">position_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">position</span><span class="p">[:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
         <span class="n">position_path</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
         <span class="n">position_path</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
@@ -560,13 +561,17 @@ The optimizer is the limited memory BFGS algorithm.</p>
     <span class="p">)</span>
     <span class="n">mu_i</span><span class="p">,</span> <span class="n">cov_i</span> <span class="o">=</span> <span class="n">sample_state</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span><span class="n">sample_state</span><span class="p">,</span> <span class="n">rowvar</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">ellipse_confidence</span><span class="p">(</span><span class="n">mu_i</span><span class="p">,</span> <span class="n">cov_i</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Iteration: </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="se">\n</span><span class="s2">Estimated ELBO: </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">elbo</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Iteration: </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="se">\n</span><span class="s2">Estimated ELBO: </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">elbo</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/94489b52d055afbabcd6bf312228e6865607cb2c1d98fa91e8cf5e11563289a7.png" src="../_images/94489b52d055afbabcd6bf312228e6865607cb2c1d98fa91e8cf5e11563289a7.png" />
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/var/folders/7p/srk5qjp563l5f9mrjtp44bh800jqsw/T/ipykernel_10842/1374804785.py:48: UserWarning: Matplotlib is currently using module://matplotlib_inline.backend_inline, which is a non-GUI backend, so cannot show the figure.
+  fig.show()
+</pre></div>
+</div>
+<img alt="../_images/3d61bef84b4d0326401362f38fa74385ccb7cec6841c4fabe05cfa4c50c121e9.png" src="../_images/3d61bef84b4d0326401362f38fa74385ccb7cec6841c4fabe05cfa4c50c121e9.png" />
 </div>
 </div>
 </section>
@@ -577,6 +582,12 @@ The optimizer is the limited memory BFGS algorithm.</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pathfinder</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">kernels</span><span class="o">.</span><span class="n">pathfinder</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">ftol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">pathfinder</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/miniconda3/envs/blackjax/lib/python3.9/site-packages/jax/_src/tree_util.py:188: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
+  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
 </pre></div>
 </div>
 </div>
@@ -617,7 +628,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/aa0d4faedb696f91bc2cbb8e461c37cd5c9e955c12c83000193bcbbac2da5e27.png" src="../_images/aa0d4faedb696f91bc2cbb8e461c37cd5c9e955c12c83000193bcbbac2da5e27.png" />
+<img alt="../_images/f0a34ab7634036f68518d748e02cec78f6406cca2f20ebebe59c8e0c9e443a83.png" src="../_images/f0a34ab7634036f68518d748e02cec78f6406cca2f20ebebe59c8e0c9e443a83.png" />
 </div>
 </div>
 <p>Please note that pathfinder is implemented as follows:</p>
@@ -630,6 +641,12 @@ The optimizer is the limited memory BFGS algorithm.</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">init</span><span class="p">)(</span><span class="n">w0</span><span class="p">)</span>
 <span class="n">samples</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">sample_from_state</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">5_000</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/miniconda3/envs/blackjax/lib/python3.9/site-packages/jax/_src/tree_util.py:188: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
+  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
 </pre></div>
 </div>
 </div>
@@ -660,7 +677,11 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/197c9889f48e043e46d6dda1c51aa231e1b8751abf709ad3818339fe362f7713.png" src="../_images/197c9889f48e043e46d6dda1c51aa231e1b8751abf709ad3818339fe362f7713.png" />
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/var/folders/7p/srk5qjp563l5f9mrjtp44bh800jqsw/T/ipykernel_10842/3917388734.py:10: UserWarning: Matplotlib is currently using module://matplotlib_inline.backend_inline, which is a non-GUI backend, so cannot show the figure.
+  fig.show()
+</pre></div>
+</div>
+<img alt="../_images/6d9b71dc83ad35770873d56e2caf2c6f8901d1a2df835198e6f661321f9e969c.png" src="../_images/6d9b71dc83ad35770873d56e2caf2c6f8901d1a2df835198e6f661321f9e969c.png" />
 </div>
 </div>
 <section id="pathfinder-as-an-initialization-tool-for-mcmc-kernels">
@@ -669,7 +690,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 <p>We can calculate explicitly this inverse hessian matrix for a step of the optimization path using the <code class="docutils literal notranslate"><span class="pre">blackjax.vi.pathfinder.lbfgs_inverse_hessian_formula_1</span></code> function:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">blackjax.vi.pathfinder</span> <span class="kn">import</span> <span class="n">lbfgs_inverse_hessian_formula_1</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">blackjax.optimizers.lbfgs</span> <span class="kn">import</span> <span class="n">lbfgs_inverse_hessian_formula_1</span>
 
 <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">lbfgs_inverse_hessian_formula_1</span><span class="p">(</span>
     <span class="n">state</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">gamma</span>
@@ -679,8 +700,8 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([[ 0.19070369, -0.06992386],
-             [-0.0699237 ,  0.23383427]], dtype=float32)
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([[ 0.18838295, -0.07859283],
+             [-0.07859287,  0.23782793]], dtype=float32)
 </pre></div>
 </div>
 </div>
@@ -691,6 +712,12 @@ The optimizer is the limited memory BFGS algorithm.</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">kernels</span><span class="o">.</span><span class="n">pathfinder_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
 <span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">w0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/miniconda3/envs/blackjax/lib/python3.9/site-packages/jax/_src/tree_util.py:188: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
+  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
 </pre></div>
 </div>
 </div>
