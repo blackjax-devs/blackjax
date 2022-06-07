@@ -106,6 +106,29 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
+    def test_mala(self):
+        """Test the MALA kernel."""
+        rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logposterior_fn = lambda x: logposterior_fn_(**x)
+
+        warmup_key, inference_key = jax.random.split(rng_key, 2)
+
+        mala = blackjax.mala(logposterior_fn, 1e-5)
+        state = mala.init({"coefs": 1.0, "scale": 2.0})
+        states = inference_loop(mala.step, 10_000, inference_key, state)
+
+        coefs_samples = states.position["coefs"][3000:]
+        scale_samples = states.position["scale"][3000:]
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+
     @parameterized.parameters(regresion_test_cases)
     def test_pathfinder_adaptation(
         self,
