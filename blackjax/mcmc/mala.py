@@ -3,6 +3,7 @@ from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
+from jax.flatten_util import ravel_pytree
 
 from blackjax.mcmc.diffusion import overdamped_langevin
 from blackjax.types import PRNGKey, PyTree
@@ -62,8 +63,14 @@ def kernel():
 
     def transition_probability(state, new_state, step_size):
         """Transition probability to go from `state` to `new_state`"""
-        theta = new_state.position - state.position - step_size * state.logprob_grad
-        return -0.25 * (1.0 / step_size) * jnp.dot(theta, theta)
+        theta = jax.tree_util.tree_map(
+            lambda new_x, x, g: new_x - x - step_size * g,
+            new_state.position,
+            state.position,
+            state.logprob_grad,
+        )
+        theta_ravel, _ = ravel_pytree(theta)
+        return -0.25 * (1.0 / step_size) * jnp.dot(theta_ravel, theta_ravel)
 
     def one_step(
         rng_key: PRNGKey, state: MALAState, logprob_fn: Callable, step_size: float
