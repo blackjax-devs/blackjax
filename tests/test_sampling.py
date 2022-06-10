@@ -40,8 +40,8 @@ regresion_test_cases = [
         "algorithm": blackjax.hmc,
         "initial_position": {"scale": 1.0, "coefs": 2.0},
         "parameters": {"num_integration_steps": 90},
-        "num_warmup_steps": 3_000,
-        "num_sampling_steps": 2_000,
+        "num_warmup_steps": 1_000,
+        "num_sampling_steps": 3_000,
     },
     {
         "algorithm": blackjax.nuts,
