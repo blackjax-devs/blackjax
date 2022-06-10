@@ -26,7 +26,7 @@ class WindowAdaptationState(NamedTuple):
 def base(
     kernel_factory: Callable,
     is_mass_matrix_diagonal: bool,
-    target_acceptance_rate: float = 0.65,
+    target_acceptance_rate: float = 0.80,
 ):
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
     The schedule and algorithms used match Stan's [1]_ as closely as possible.

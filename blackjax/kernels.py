@@ -486,7 +486,7 @@ def window_adaptation(
     num_steps: int = 1000,
     is_mass_matrix_diagonal: bool = True,
     initial_step_size: float = 1.0,
-    target_acceptance_rate: float = 0.65,
+    target_acceptance_rate: float = 0.80,
     progress_bar: bool = False,
     logprob_grad_fn: Optional[Callable] = None,
     **parameters,
