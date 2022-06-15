@@ -51,7 +51,7 @@ class OptimizerTest(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
-        [(2, 10), (10, 1), (10, 20)],
+        [(5, 10), (10, 1), (10, 20)],
     )
     def test_minimize_lbfgs(self, maxiter, maxcor):
         """Test if dot product between approximate inverse hessian and gradient is
@@ -122,8 +122,8 @@ class OptimizerTest(chex.TestCase):
             status.iter_num % maxcor,
         )
 
-        np.testing.assert_array_almost_equal(pk, -inv_hess_1 @ history.g[-1], decimal=3)
-        np.testing.assert_array_almost_equal(pk, -inv_hess_2 @ history.g[-1], decimal=3)
+        np.testing.assert_allclose(pk, -inv_hess_1 @ history.g[-1], atol=1e-3)
+        np.testing.assert_allclose(pk, -inv_hess_2 @ history.g[-1], atol=1e-3)
 
     @chex.all_variants(with_pmap=False)
     def test_recover_diag_inv_hess(self):
@@ -145,7 +145,6 @@ class OptimizerTest(chex.TestCase):
         S_partial = jnp.diff(history.x, axis=0)[-10:].T
         Z_partial = jnp.diff(history.g, axis=0)[-10:].T
         alpha = history.alpha[-1]
-        np.testing.assert_allclose(alpha, np.diag(cov), rtol=0.01)
 
         beta, gamma = lbfgs_inverse_hessian_factors(S_partial, Z_partial, alpha)
         inv_hess_1 = lbfgs_inverse_hessian_formula_1(alpha, beta, gamma)
