@@ -32,7 +32,7 @@ def new_integrator_state(potential_fn, position, momentum):
 def velocity_verlet(
     potential_fn: Callable,
     kinetic_energy_fn: EuclideanKineticEnergy,
-    potential_grad_fn: Optional[Callable] = None,
+    logprob_grad_fn: Optional[Callable] = None,
 ) -> EuclideanIntegrator:
     """The velocity Verlet (or Verlet-Störmer) integrator.
 
@@ -69,8 +69,11 @@ def velocity_verlet(
     b1 = 0.5
     a2 = 1 - 2 * a1
 
-    if potential_grad_fn:
-        potential_and_grad_fn = lambda x: (potential_fn(x), potential_grad_fn(x))
+    if logprob_grad_fn:
+        potential_and_grad_fn = lambda x: (
+            potential_fn(x),
+            jax.tree_map(lambda g: -1.0 * g, logprob_grad_fn(x)),
+        )
     else:
         potential_and_grad_fn = jax.value_and_grad(potential_fn)
     kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)

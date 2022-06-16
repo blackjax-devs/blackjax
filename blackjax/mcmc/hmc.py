@@ -1,5 +1,5 @@
 """Public API for the HMC Kernel"""
-from typing import Callable, NamedTuple, Optional, Tuple
+from typing import Callable, NamedTuple, Optional, Tuple, Union
 
 import jax
 
@@ -71,7 +71,9 @@ def init(
 
     if logprob_grad_fn:
         # Need to flip the sign the same way we do for potential_fn
-        potential_energy_grad = -logprob_grad_fn(position)
+        potential_energy_grad = jax.tree_map(
+            lambda g: -1.0 * g, logprob_grad_fn(position)
+        )
         potential_energy = potential_fn(position)
 
     else:
@@ -154,9 +156,11 @@ def kernel(
 def hmc_proposal(
     integrator: Callable,
     kinetic_energy: Callable,
-    step_size: float,
+    step_size: Union[float, PyTree],
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,
+    *,
+    sample_proposal: Callable = proposal.static_binomial_sampling,
 ) -> Callable:
     """Vanilla HMC algorithm.
 
@@ -188,24 +192,6 @@ def hmc_proposal(
     init_proposal, generate_proposal = proposal.proposal_generator(
         kinetic_energy, divergence_threshold
     )
-    sample_proposal = proposal.static_binomial_sampling
-
-    def flip_momentum(
-        state: integrators.IntegratorState,
-    ) -> integrators.IntegratorState:
-        """To guarantee time-reversibility (hence detailed balance) we
-        need to flip the last state's momentum. If we run the hamiltonian
-        dynamics starting from the last state with flipped momentum we
-        should indeed retrieve the initial state (with flipped momentum).
-
-        """
-        flipped_momentum = jax.tree_util.tree_map(lambda m: -1.0 * m, state.momentum)
-        return integrators.IntegratorState(
-            state.position,
-            flipped_momentum,
-            state.potential_energy,
-            state.potential_energy_grad,
-        )
 
     def generate(
         rng_key, state: integrators.IntegratorState
@@ -231,3 +217,21 @@ def hmc_proposal(
         return sampled_proposal.state, info
 
     return generate
+
+
+def flip_momentum(
+    state: integrators.IntegratorState,
+) -> integrators.IntegratorState:
+    """To guarantee time-reversibility (hence detailed balance) we
+    need to flip the last state's momentum. If we run the hamiltonian
+    dynamics starting from the last state with flipped momentum we
+    should indeed retrieve the initial state (with flipped momentum).
+
+    """
+    flipped_momentum = jax.tree_util.tree_map(lambda m: -1.0 * m, state.momentum)
+    return integrators.IntegratorState(
+        state.position,
+        flipped_momentum,
+        state.potential_energy,
+        state.potential_energy_grad,
+    )

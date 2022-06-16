@@ -106,7 +106,9 @@ def static_integration(
     def integrate(
         initial_state: IntegratorState, step_size, num_integration_steps
     ) -> IntegratorState:
-        directed_step_size = direction * step_size
+        directed_step_size = jax.tree_map(
+            lambda step_size: direction * step_size, step_size
+        )
 
         def one_step(state, _):
             state = integrator(state, directed_step_size)
