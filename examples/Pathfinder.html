@@ -405,7 +405,7 @@ IPython version      : 7.29.0
 
 jax     : 0.3.13
 jaxlib  : 0.3.10
-blackjax: 0.7.0
+blackjax: 0.8.1
 
 Compiler    : Clang 10.0.0 
 OS          : Darwin
@@ -507,8 +507,6 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-/opt/miniconda3/envs/blackjax/lib/python3.9/site-packages/jax/_src/tree_util.py:188: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
-  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
 </pre></div>
 </div>
 </div>
@@ -550,7 +548,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 
     <span class="n">ax</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">x_</span><span class="p">,</span> <span class="n">y_</span><span class="p">,</span> <span class="n">logp_</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="n">levels_</span><span class="p">)</span>
     <span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">path</span><span class="p">)</span>
-    <span class="n">sample_state</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">sample_from_state</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
+    <span class="n">sample_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">sample_from_state</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
     <span class="n">position_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">position</span><span class="p">[:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
         <span class="n">position_path</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
@@ -567,11 +565,11 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/var/folders/7p/srk5qjp563l5f9mrjtp44bh800jqsw/T/ipykernel_10842/1374804785.py:48: UserWarning: Matplotlib is currently using module://matplotlib_inline.backend_inline, which is a non-GUI backend, so cannot show the figure.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/var/folders/7p/srk5qjp563l5f9mrjtp44bh800jqsw/T/ipykernel_81696/1169223605.py:48: UserWarning: Matplotlib is currently using module://matplotlib_inline.backend_inline, which is a non-GUI backend, so cannot show the figure.
   fig.show()
 </pre></div>
 </div>
-<img alt="../_images/3d61bef84b4d0326401362f38fa74385ccb7cec6841c4fabe05cfa4c50c121e9.png" src="../_images/3d61bef84b4d0326401362f38fa74385ccb7cec6841c4fabe05cfa4c50c121e9.png" />
+<img alt="../_images/ee063015e76224aa12c37eda04ae3c4c67aed7e87eac0eef6b4f1a3f806df73a.png" src="../_images/ee063015e76224aa12c37eda04ae3c4c67aed7e87eac0eef6b4f1a3f806df73a.png" />
 </div>
 </div>
 </section>
@@ -582,12 +580,6 @@ The optimizer is the limited memory BFGS algorithm.</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pathfinder</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">kernels</span><span class="o">.</span><span class="n">pathfinder</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">ftol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">pathfinder</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/miniconda3/envs/blackjax/lib/python3.9/site-packages/jax/_src/tree_util.py:188: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
-  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
 </pre></div>
 </div>
 </div>
@@ -628,7 +620,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/f0a34ab7634036f68518d748e02cec78f6406cca2f20ebebe59c8e0c9e443a83.png" src="../_images/f0a34ab7634036f68518d748e02cec78f6406cca2f20ebebe59c8e0c9e443a83.png" />
+<img alt="../_images/663ed94f7e7ac88a4b77acbb66da2be8d57de460a027c34f389b94da80be558d.png" src="../_images/663ed94f7e7ac88a4b77acbb66da2be8d57de460a027c34f389b94da80be558d.png" />
 </div>
 </div>
 <p>Please note that pathfinder is implemented as follows:</p>
@@ -640,13 +632,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">init</span><span class="p">)(</span><span class="n">w0</span><span class="p">)</span>
-<span class="n">samples</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">sample_from_state</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">5_000</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/miniconda3/envs/blackjax/lib/python3.9/site-packages/jax/_src/tree_util.py:188: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
-  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
+<span class="n">samples</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">sample_from_state</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">5_000</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -677,11 +663,11 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/var/folders/7p/srk5qjp563l5f9mrjtp44bh800jqsw/T/ipykernel_10842/3917388734.py:10: UserWarning: Matplotlib is currently using module://matplotlib_inline.backend_inline, which is a non-GUI backend, so cannot show the figure.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/var/folders/7p/srk5qjp563l5f9mrjtp44bh800jqsw/T/ipykernel_81696/3917388734.py:10: UserWarning: Matplotlib is currently using module://matplotlib_inline.backend_inline, which is a non-GUI backend, so cannot show the figure.
   fig.show()
 </pre></div>
 </div>
-<img alt="../_images/6d9b71dc83ad35770873d56e2caf2c6f8901d1a2df835198e6f661321f9e969c.png" src="../_images/6d9b71dc83ad35770873d56e2caf2c6f8901d1a2df835198e6f661321f9e969c.png" />
+<img alt="../_images/b4b1603abd79df1224bdc0b565884e347ca64b477670ac29f102dc354f688200.png" src="../_images/b4b1603abd79df1224bdc0b565884e347ca64b477670ac29f102dc354f688200.png" />
 </div>
 </div>
 <section id="pathfinder-as-an-initialization-tool-for-mcmc-kernels">
@@ -700,8 +686,8 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([[ 0.18838295, -0.07859283],
-             [-0.07859287,  0.23782793]], dtype=float32)
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([[ 0.19426703, -0.08033269],
+             [-0.08033268,  0.23308638]], dtype=float32)
 </pre></div>
 </div>
 </div>
@@ -712,12 +698,6 @@ The optimizer is the limited memory BFGS algorithm.</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">kernels</span><span class="o">.</span><span class="n">pathfinder_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
 <span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">w0</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/miniconda3/envs/blackjax/lib/python3.9/site-packages/jax/_src/tree_util.py:188: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
-  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
 </pre></div>
 </div>
 </div>
