@@ -13,10 +13,13 @@ from .kernels import (
     tempered_smc,
     window_adaptation,
 )
+from .optimizers import dual_averaging, lbfgs
 
 __version__ = "0.8.1"
 
 __all__ = [
+    "dual_averaging",
+    "lbfgs",
     "hmc",  # mcmc
     "mala",
     "nuts",
