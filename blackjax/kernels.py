@@ -219,7 +219,7 @@ class hmc:
         step = cls.kernel(integrator, divergence_threshold)
 
         def init_fn(position: PyTree):
-            return cls.init(position, logprob_fn)
+            return cls.init(position, logprob_fn, logprob_grad_fn)
 
         def step_fn(rng_key: PRNGKey, state):
             return step(
@@ -730,6 +730,108 @@ def window_adaptation(
     return AdaptationAlgorithm(run)
 
 
+def meads(
+    logprob_fn: Callable,
+    num_chain: int,
+    num_steps: int = 1000,
+    *,
+    divergence_threshold: int = 1000,
+    logprob_grad_fn: Optional[Callable] = None,
+    batch_fn: Callable = jax.vmap,
+) -> AdaptationAlgorithm:
+    """Adapt the parameters of the Generalized HMC algorithm.
+
+    The Generalized HMC algorithm depends on three parameters, each controlling
+    one element of its behaviour: step size controls the integrator's dynamics,
+    alpha controls the persistency of the momentum variable, and delta controls
+    the deterministic transformation of the slice variable used to perform the
+    non-reversible Metropolis-Hastings accept/reject step.
+
+    The step size parameter is chosen to ensure the stability of the velocity
+    verlet integrator, the alpha parameter to make the influence of the current
+    state on future states of the momentum variable to decay exponentially, and
+    the delta parameter to maximize the acceptance of proposal but with good
+    mixing properties for the slice variable. These characteristics are targeted
+    by controlling heuristics based on the maximum eigenvalues of the correlation
+    and gradient matrices of the cross-chain samples, under simpifyng assumptions.
+
+    Good tuning is fundamental for the non-reversible Generalized HMC sampling
+    algorithm to explore the target space efficienty and output uncorrelated, or
+    as uncorrelated as possible, samples from the target space. Furthermore, the
+    single integrator step of the algorithm lends itself for fast sampling
+    on parallel computer architectures.
+
+    Parameters
+    ----------
+    logprob_fn
+        The log density probability density function from which we wish to sample.
+    num_chain
+        Number of chains used for cross-chain warm-up training.
+    num_steps
+        The number of adaptation steps.
+    divergence_threshold
+        Value of the difference in energy above which we consider that the
+        transition is divergent.
+    logprob_grad_fn
+        The gradient of logprob_fn.  If it's not provided, it will be computed
+        by jax using reverse mode autodiff (jax.grad).
+    batch_fn
+        Either jax.vmap or jax.pmap to perform parallel operations.
+
+    Returns
+    -------
+    A function that returns the last cross-chain state, a sampling kernel with the
+    tuned parameter values, and all the warm-up states for diagnostics.
+
+    """
+
+    kernel = ghmc.kernel(divergence_threshold=divergence_threshold)
+
+    def kernel_factory(step_size: PyTree, alpha: float, delta: float):
+        def kernel_fn(rng_key, state):
+            return kernel(
+                rng_key,
+                state,
+                logprob_fn,
+                step_size,
+                alpha,
+                delta,
+                logprob_grad_fn=logprob_grad_fn,
+            )
+
+        return kernel_fn
+
+    init, update, final = adaptation.meads.base(
+        kernel_factory,
+        logprob_grad_fn or jax.grad(logprob_fn),
+        num_chain,
+        batch_fn,
+    )
+
+    batch_init = batch_fn(lambda r, p: ghmc.init(r, p, logprob_fn, logprob_grad_fn))
+
+    def one_step(state, rng_key):
+        state, parameters, infos = update(rng_key, state)
+        return state, (state, parameters, infos)
+
+    def run(rng_key: PRNGKey, positions: PyTree):
+
+        key_init, key_warm = jax.random.split(rng_key)
+        rng_keys = jax.random.split(key_init, num_chain)
+        states = batch_init(rng_keys, positions)
+        init_state = init(states)
+
+        keys = jax.random.split(key_warm, num_steps)
+        last_state, (warmup_states, parameters, info) = jax.lax.scan(
+            one_step, init_state, keys
+        )
+        kernel = final(last_state)
+
+        return last_state, kernel, warmup_states
+
+    return AdaptationAlgorithm(run)  # type: ignore[arg-type]
+
+
 class rmh:
     """Implements the (basic) user interface for the gaussian random walk kernel
 
@@ -844,22 +946,31 @@ class irmh:
 
 
 class orbital_hmc:
-    """Implements the (basic) user interface for the Periodic orbital MCMC kernel
+    """Implements the (basic) user interface for the Periodic orbital MCMC kernel.
+
     Each iteration of the periodic orbital MCMC outputs ``period`` weighted samples from
     a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable
     with precision matrix ``inverse_mass_matrix``, evaluated using the ``bijection`` as an
     integrator with discretization parameter ``step_size``.
+
     Examples
     --------
+
     A new Periodic orbital MCMC kernel can be initialized and used with the following code:
+
     .. code::
+
         per_orbit = blackjax.orbital_hmc(logprob_fn, step_size, inverse_mass_matrix, period)
         state = per_orbit.init(position)
         new_state, info = per_orbit.step(rng_key, state)
+
     We can JIT-compile the step function for better performance
+
     .. code::
+
         step = jax.jit(per_orbit.step)
         new_state, info = step(rng_key, state)
+
     Parameters
     ----------
     logprob_fn
@@ -874,6 +985,7 @@ class orbital_hmc:
         The number of steps used to build the orbit.
     bijection
         (algorithm parameter) The symplectic integrator to use to build the orbit.
+
     Returns
     -------
     A ``SamplingAlgorithm``.
@@ -910,24 +1022,33 @@ class orbital_hmc:
 
 
 class elliptical_slice:
-    """Implements the (basic) user interface for the Elliptical Slice sampling kernel
+    """Implements the (basic) user interface for the Elliptical Slice sampling kernel.
+
     Examples
     --------
+
     A new Elliptical Slice sampling kernel can be initialized and used with the following code:
+
     .. code::
+
         ellip_slice = blackjax.elliptical_slice(loglikelihood_fn, cov_matrix)
         state = ellip_slice.init(position)
         new_state, info = ellip_slice.step(rng_key, state)
+
     We can JIT-compile the step function for better performance
+
     .. code::
+
         step = jax.jit(ellip_slice.step)
         new_state, info = step(rng_key, state)
+
     Parameters
     ----------
     loglikelihood_fn
         Only the log likelihood function from the posterior distributon we wish to sample.
     cov_matrix
         The value of the covariance matrix of the gaussian prior distribution from the posterior we wish to sample.
+
     Returns
     -------
     A ``SamplingAlgorithm``.
@@ -956,6 +1077,99 @@ class elliptical_slice:
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
+
+
+class ghmc:
+    """Implements the (basic) user interface for the Generalized HMC kernel.
+
+    The Generalized HMC kernel performs a similar procedure to the standard HMC
+    kernel with the difference of a persistent momentum variable and a non-reversible
+    Metropolis-Hastings step instead of the standard Metropolis-Hastings acceptance
+    step.
+
+    This means that the sampling of the momentum variable depends on the previous
+    momentum, the rate of persistence depends on the alpha parameter, and that the
+    Metropolis-Hastings accept/reject step is done through slice sampling with a
+    non-reversible slice variable also dependent on the previous slice, the determinisitc
+    transformation is defined by the delta parameter.
+
+    The Generalized HMC does not have a trajectory length parameter, it always performs
+    one iteration of the velocity verlet integrator with a given step size, making
+    the algorithm a good candiate for running many chains in parallel.
+
+    Examples
+    --------
+
+    A new Generalized HMC kernel can be initialized and used with the following code:
+
+    .. code::
+
+        ghmc_kernel = blackjax.ghmc(logprob_fn, step_size, alpha, delta)
+        state = ghmc_kernel.init(rng_key, position)
+        new_state, info = ghmc_kernel.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(ghmc_kernel.step)
+        new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    logprob_fn
+        The logprobability density function we wish to draw samples from. This
+        is minus the potential function.
+    step_size
+        A PyTree of the same structure as the target PyTree (position) with the
+        values used for as a step size for each dimension of the target space in
+        the velocity verlet integrator.
+    alpha
+        The value defining the persistence of the momentum variable.
+    delta
+        The value defining the deterministic translation of the slice variable.
+    divergence_threshold
+        The absolute value of the difference in energy between two states above
+        which we say that the transition is divergent. The default value is
+        commonly found in other libraries, and yet is arbitrary.
+    noise_gn
+        A function that takes as input the slice variable and outputs a random
+        variable used as a noise correction of the persistent slice update.
+        The parameter defaults to a random variable with a single atom at 0.
+    logprob_grad_fn
+        Optional function customizing the gradients of the target log density.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+    """
+
+    init = staticmethod(mcmc.ghmc.init)
+    kernel = staticmethod(mcmc.ghmc.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logprob_fn: Callable,
+        step_size: PyTree,
+        alpha: float,
+        delta: float,
+        *,
+        divergence_threshold: int = 1000,
+        noise_gn: Callable = lambda _: 0.0,
+        logprob_grad_fn: Optional[Callable] = None,
+    ) -> SamplingAlgorithm:
+
+        step = cls.kernel(noise_gn, divergence_threshold)
+
+        def init_fn(position: PyTree, rng_key: PRNGKey):
+            return cls.init(rng_key, position, logprob_fn, logprob_grad_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return step(
+                rng_key, state, logprob_fn, step_size, alpha, delta, logprob_grad_fn
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
 
 # -----------------------------------------------------------------------------

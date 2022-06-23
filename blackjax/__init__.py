@@ -7,6 +7,7 @@ from .kernels import (
     hmc,
     irmh,
     mala,
+    meads,
     mgrad_gaussian,
     nuts,
     orbital_hmc,

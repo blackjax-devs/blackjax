@@ -177,6 +177,43 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
+    def test_meads(self):
+        """Test the MEADS adaptation w/ GHMC kernel."""
+        rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logposterior_fn = lambda x: logposterior_fn_(**x)
+
+        init_key, warmup_key, inference_key = jax.random.split(rng_key, 3)
+
+        warmup = blackjax.meads(
+            logposterior_fn,
+            num_chain=128,
+            num_steps=100,
+        )
+        scale_key, coefs_key = jax.random.split(init_key, 2)
+        scales = 1.0 + jax.random.normal(scale_key, (128,))
+        coefs = 3.0 + jax.random.normal(coefs_key, (128,))
+        initial_positions = {"scale": scales, "coefs": coefs}
+        chains_state, kernel, _ = warmup.run(
+            warmup_key,
+            initial_positions,
+        )
+
+        states = jax.vmap(
+            lambda state: inference_loop(kernel, 100, inference_key, state)
+        )(chains_state.states)
+
+        coefs_samples = states.position["coefs"]
+        scale_samples = states.position["scale"]
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+
 
 class SGMCMCTest(chex.TestCase):
     """Test sampling of a linear regression model."""
@@ -329,6 +366,17 @@ normal_test_cases = [
         "num_sampling_steps": 50_000,
         "burnin": 5_000,
     },
+    {
+        "algorithm": blackjax.ghmc,
+        "initial_position": jnp.array(1.0),
+        "parameters": {
+            "step_size": jnp.array(1.0),
+            "alpha": 0.8,
+            "delta": 2.0,
+        },
+        "num_sampling_steps": 6000,
+        "burnin": 1_000,
+    },
 ]
 
 
@@ -353,7 +401,10 @@ class UnivariateNormalTest(chex.TestCase):
         algo = algorithm(self.normal_logprob, **parameters)
         if algorithm == blackjax.elliptical_slice:
             algo = algorithm(lambda _: 1.0, **parameters)
-        initial_state = algo.init(initial_position)
+        if algorithm == blackjax.ghmc:
+            initial_state = algo.init(initial_position, self.key)
+        else:
+            initial_state = algo.init(initial_position)
 
         kernel = algo.step
         states = self.variant(
