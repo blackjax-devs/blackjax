@@ -1,0 +1,65 @@
+import jax
+import jax.scipy.stats as stats
+import numpy as np
+import numpy.testing as np_testing
+import pytest
+
+from blackjax.mcmc.latent_gaussian import init_and_kernel
+
+
+@pytest.mark.parametrize("seed", [1234, 5678])
+@pytest.mark.parametrize("use_inverse", [True, False])
+@pytest.mark.parametrize("mean", [True, False])
+def test_gaussian(seed, use_inverse, mean):
+    n_samples = 500_000
+
+    KEY = jax.random.PRNGKey(42)
+    D = 5
+    np.random.seed(seed)
+    C = np.random.randn(D, D ** 2)
+    C = C @ C.T
+    prior_mean = np.random.randn(D) if mean else None
+    R = np.random.randn(D, D ** 2)  # uninformative covariance
+    R = R @ R.T
+
+    obs = np.random.randn(D)
+    log_pdf = lambda x: stats.multivariate_normal.logpdf(x, obs, R)
+
+    DELTA = 75.
+
+    if use_inverse:
+        C_inv = np.linalg.inv(C)
+        init, step = init_and_kernel(log_pdf, C_inv, use_inverse=True, mean=prior_mean)
+    else:
+        init, step = init_and_kernel(log_pdf, C, use_inverse=False, mean=prior_mean)
+    step = jax.jit(step)
+
+    init_x = np.zeros((D,))
+    init_state = init(init_x)
+
+    keys = jax.random.split(KEY, n_samples)
+
+    def body(carry, key):
+        curr_n_accepted, state = carry
+        state, info = step(key, state, DELTA)
+        carry = curr_n_accepted + info.is_accepted, state
+        return carry, state
+
+    (n_accepted, _), states = jax.lax.scan(body, (0, init_state), keys)
+    print(n_accepted / n_samples)
+    assert 0.4 < n_accepted / n_samples < 0.6
+    if mean:
+        expected_mean, expected_cov = _expected_mean_and_cov(prior_mean, C, obs, R)
+    else:
+        expected_mean, expected_cov = _expected_mean_and_cov(np.zeros((D,)), C, obs, R)
+
+    np_testing.assert_allclose(np.mean(states.x, 0), expected_mean, atol=1e-1, rtol=1e-2)
+    np_testing.assert_allclose(np.cov(states.x, rowvar=False), expected_cov, atol=1e-1, rtol=1e-1)
+
+
+def _expected_mean_and_cov(prior_mean, prior_cov, obs, obs_cov):
+    S = obs_cov + prior_cov
+    gain = prior_cov @ np.linalg.inv(S)
+    mean = prior_mean + gain @ (obs - prior_mean)
+    cov = prior_cov - gain @ prior_cov
+    return mean, cov
