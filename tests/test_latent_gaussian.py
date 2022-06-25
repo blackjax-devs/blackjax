@@ -1,8 +1,8 @@
 import jax
 import jax.scipy.stats as stats
 import numpy as np
-import numpy.testing as np_testing
 import pytest
+import chex
 
 from blackjax.mcmc.latent_gaussian import init_and_kernel
 
@@ -46,15 +46,14 @@ def test_gaussian(seed, use_inverse, mean):
         return carry, state
 
     (n_accepted, _), states = jax.lax.scan(body, (0, init_state), keys)
-    print(n_accepted / n_samples)
     assert 0.4 < n_accepted / n_samples < 0.6
     if mean:
         expected_mean, expected_cov = _expected_mean_and_cov(prior_mean, C, obs, R)
     else:
         expected_mean, expected_cov = _expected_mean_and_cov(np.zeros((D,)), C, obs, R)
 
-    np_testing.assert_allclose(np.mean(states.x, 0), expected_mean, atol=1e-1, rtol=1e-2)
-    np_testing.assert_allclose(np.cov(states.x, rowvar=False), expected_cov, atol=1e-1, rtol=1e-1)
+    chex.assert_tree_all_close(np.mean(states.x, 0), expected_mean, atol=1e-1, rtol=1e-2)
+    chex.assert_tree_all_close(np.cov(states.x, rowvar=False), expected_cov, atol=1e-1, rtol=1e-1)
 
 
 def _expected_mean_and_cov(prior_mean, prior_cov, obs, obs_cov):
