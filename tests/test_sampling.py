@@ -208,6 +208,38 @@ class SGMCMCTest(chex.TestCase):
         _ = sgld.step(rng_key, init_state, data_batch)
 
 
+class LatentGaussianTest(chex.TestCase):
+    """Test sampling of a linear regression model."""
+
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.PRNGKey(19)
+        self.C = 2.0 * np.eye(1)
+        self.delta = 5.0
+        self.sampling_steps = 25_000
+        self.burnin = 5_000
+
+    @chex.all_variants(with_pmap=False)
+    def test_latent_gaussian(self):
+        from blackjax import latent_gaussian
+
+        init, step = latent_gaussian(lambda x: -0.5 * jnp.sum((x - 1.0) ** 2), self.C)
+
+        kernel = lambda key, x: step(key, x, self.delta)
+        initial_state = init(jnp.zeros((1,)))
+
+        states = self.variant(
+            functools.partial(inference_loop, kernel, self.sampling_steps),
+        )(self.key, initial_state)
+
+        np.testing.assert_allclose(
+            np.var(states.x[self.burnin :]), 1 / (1 + 0.5), rtol=1e-2, atol=1e-2
+        )
+        np.testing.assert_allclose(
+            np.mean(states.x[self.burnin :]), 2 / 3, rtol=1e-2, atol=1e-2
+        )
+
+
 normal_test_cases = [
     {
         "algorithm": blackjax.hmc,
