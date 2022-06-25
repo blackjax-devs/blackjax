@@ -70,10 +70,12 @@ def init_and_kernel(log_pdf, C_or_C_inv, use_inverse=False, mean=None):
 
     U, Gamma, U_t = jnp.linalg.svd(C_or_C_inv, hermitian=True)
     if use_inverse:
-        Gamma = 1. / Gamma
+        Gamma = 1.0 / Gamma
 
     if mean is not None:
-        shift = C_or_C_inv @ mean if use_inverse else solve(C_or_C_inv, mean, sym_pos=True)
+        shift = (
+            C_or_C_inv @ mean if use_inverse else solve(C_or_C_inv, mean, sym_pos=True)
+        )
         val_and_grad = jax.value_and_grad(lambda x: log_pdf(x) + jnp.dot(x, shift))
     else:
         val_and_grad = jax.value_and_grad(log_pdf)
@@ -113,10 +115,7 @@ def init_and_kernel(log_pdf, C_or_C_inv, use_inverse=False, mean=None):
         accept = jax.random.uniform(u_key) < alpha
 
         proposed_state = MarginalState(y, log_p_y, grad_y, U_y, U_grad_y)
-        state = jax.lax.cond(accept,
-                             lambda _: proposed_state,
-                             lambda _: state,
-                             None)
+        state = jax.lax.cond(accept, lambda _: proposed_state, lambda _: state, None)
         info = MarginalInfo(alpha, accept, proposed_state)
         return state, info
 

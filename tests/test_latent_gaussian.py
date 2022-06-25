@@ -1,59 +1,70 @@
+import itertools
+
+import chex
 import jax
 import jax.scipy.stats as stats
 import numpy as np
-import pytest
-import chex
+from absl.testing import absltest, parameterized
 
 from blackjax.mcmc.latent_gaussian import init_and_kernel
 
 
-@pytest.mark.parametrize("seed", [1234, 5678])
-@pytest.mark.parametrize("use_inverse", [True, False])
-@pytest.mark.parametrize("mean", [True, False])
-def test_gaussian(seed, use_inverse, mean):
-    n_samples = 500_000
+class GaussianTest(chex.TestCase):
+    @parameterized.parameters(
+        itertools.product([1234, 5678], [True, False], [True, False])
+    )
+    def test_gaussian(self, seed, use_inverse, mean):
+        n_samples = 500_000
 
-    KEY = jax.random.PRNGKey(42)
-    D = 5
-    np.random.seed(seed)
-    C = np.random.randn(D, D ** 2)
-    C = C @ C.T
-    prior_mean = np.random.randn(D) if mean else None
-    R = np.random.randn(D, D ** 2)  # uninformative covariance
-    R = R @ R.T
+        KEY = jax.random.PRNGKey(42)
+        D = 5
+        np.random.seed(seed)
+        C = np.random.randn(D, D**2)
+        C = C @ C.T
+        prior_mean = np.random.randn(D) if mean else None
+        R = np.random.randn(D, D**2)  # uninformative covariance
+        R = R @ R.T
 
-    obs = np.random.randn(D)
-    log_pdf = lambda x: stats.multivariate_normal.logpdf(x, obs, R)
+        obs = np.random.randn(D)
+        log_pdf = lambda x: stats.multivariate_normal.logpdf(x, obs, R)
 
-    DELTA = 75.
+        DELTA = 75.0
 
-    if use_inverse:
-        C_inv = np.linalg.inv(C)
-        init, step = init_and_kernel(log_pdf, C_inv, use_inverse=True, mean=prior_mean)
-    else:
-        init, step = init_and_kernel(log_pdf, C, use_inverse=False, mean=prior_mean)
-    step = jax.jit(step)
+        if use_inverse:
+            C_inv = np.linalg.inv(C)
+            init, step = init_and_kernel(
+                log_pdf, C_inv, use_inverse=True, mean=prior_mean
+            )
+        else:
+            init, step = init_and_kernel(log_pdf, C, use_inverse=False, mean=prior_mean)
+        step = jax.jit(step)
 
-    init_x = np.zeros((D,))
-    init_state = init(init_x)
+        init_x = np.zeros((D,))
+        init_state = init(init_x)
 
-    keys = jax.random.split(KEY, n_samples)
+        keys = jax.random.split(KEY, n_samples)
 
-    def body(carry, key):
-        curr_n_accepted, state = carry
-        state, info = step(key, state, DELTA)
-        carry = curr_n_accepted + info.is_accepted, state
-        return carry, state
+        def body(carry, key):
+            curr_n_accepted, state = carry
+            state, info = step(key, state, DELTA)
+            carry = curr_n_accepted + info.is_accepted, state
+            return carry, state
 
-    (n_accepted, _), states = jax.lax.scan(body, (0, init_state), keys)
-    assert 0.4 < n_accepted / n_samples < 0.6
-    if mean:
-        expected_mean, expected_cov = _expected_mean_and_cov(prior_mean, C, obs, R)
-    else:
-        expected_mean, expected_cov = _expected_mean_and_cov(np.zeros((D,)), C, obs, R)
+        (n_accepted, _), states = jax.lax.scan(body, (0, init_state), keys)
+        assert 0.4 < n_accepted / n_samples < 0.6
+        if mean:
+            expected_mean, expected_cov = _expected_mean_and_cov(prior_mean, C, obs, R)
+        else:
+            expected_mean, expected_cov = _expected_mean_and_cov(
+                np.zeros((D,)), C, obs, R
+            )
 
-    chex.assert_tree_all_close(np.mean(states.x, 0), expected_mean, atol=1e-1, rtol=1e-2)
-    chex.assert_tree_all_close(np.cov(states.x, rowvar=False), expected_cov, atol=1e-1, rtol=1e-1)
+        chex.assert_tree_all_close(
+            np.mean(states.x, 0), expected_mean, atol=1e-1, rtol=1e-2
+        )
+        chex.assert_tree_all_close(
+            np.cov(states.x, rowvar=False), expected_cov, atol=1e-1, rtol=1e-1
+        )
 
 
 def _expected_mean_and_cov(prior_mean, prior_cov, obs, obs_cov):
@@ -62,3 +73,7 @@ def _expected_mean_and_cov(prior_mean, prior_cov, obs, obs_cov):
     mean = prior_mean + gain @ (obs - prior_mean)
     cov = prior_cov - gain @ prior_cov
     return mean, cov
+
+
+if __name__ == "__main__":
+    absltest.main()

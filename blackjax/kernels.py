@@ -24,6 +24,7 @@ __all__ = [
     "window_adaptation",
     "pathfinder",
     "pathfinder_adaptation",
+    "latent_gaussian",
 ]
 
 
@@ -213,7 +214,6 @@ class hmc:
         integrator: Callable = mcmc.integrators.velocity_verlet,
         logprob_grad_fn: Optional[Callable] = None,
     ) -> SamplingAlgorithm:
-
         step = cls.kernel(integrator, divergence_threshold)
 
         def init_fn(position: PyTree):
@@ -292,7 +292,6 @@ class mala:
         logprob_fn: Callable,
         step_size: float,
     ) -> SamplingAlgorithm:
-
         step = cls.kernel()
 
         def init_fn(position: PyTree):
@@ -375,7 +374,6 @@ class nuts:
         integrator: Callable = mcmc.integrators.velocity_verlet,
         logprob_grad_fn: Optional[Callable] = None,
     ) -> SamplingAlgorithm:
-
         step = cls.kernel(integrator, divergence_threshold, max_num_doublings)
 
         def init_fn(position: PyTree):
@@ -392,6 +390,69 @@ class nuts:
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
+
+
+class latent_gaussian:
+    """Implements the marginal sampler for latent Gaussian model of [1].
+    It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
+    Interestingly, the only parameter that needs calibrating is the "step size" delta, which can be done very efficiently.
+    Calibrating it to have an acceptance rate of roughly 50% is a good starting point.
+
+    Examples
+    --------
+    A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C) can be initialized and
+    used for a given "step size" delta with the following code:
+    .. code::
+        latent_gaussian = blackjax.latent_gaussian(f, C, use_inverse=False, mean=m)
+        state = latent_gaussian.init(zeros)  # Starting at the mean of the prior
+        new_state, info = latent_gaussian.step(rng_key, state, delta)
+    We can JIT-compile the step function for better performance
+    .. code::
+        step = jax.jit(latent_gaussian.step)
+        new_state, info = step(rng_key, state, delta)
+
+    Parameters
+    ----------
+    log_pdf
+        The logarithm of the likelihood function for the latent Gaussian model.
+    covariance_matrix
+        The covariance of the prior Gaussian model. This can be given as the precision matrix, in which case `use_inverse` needs to be set to True.
+    use_inverse: optional
+        Flag saying that the covariance matrix is given in terms of the precision matrix. Default is False.
+    mean: optional
+        Mean of the prior Gaussian density. Default is zero.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    References
+    ----------
+    [1]: Titsias, M.K. and Papaspiliopoulos, O. (2018), Auxiliary gradient-based sampling algorithms. J. R. Stat. Soc. B, 80: 749-767. https://doi.org/10.1111/rssb.12269
+    """
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        log_pdf: Callable,
+        covariance_matrix: Array,
+        use_inverse: bool = False,
+        mean: Optional[Array] = None,
+    ) -> SamplingAlgorithm:
+        init, step = mcmc.latent_gaussian.init_and_kernel(
+            log_pdf, covariance_matrix, use_inverse, mean
+        )
+
+        def init_fn(position: Array):
+            return init(position)
+
+        def step_fn(rng_key: PRNGKey, state, delta: float):
+            return step(
+                rng_key,
+                state,
+                delta,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
 
 # -----------------------------------------------------------------------------
@@ -462,7 +523,6 @@ class sgld:
         grad_estimator_fn: Callable,
         schedule_fn: Callable,
     ) -> SamplingAlgorithm:
-
         step = cls.kernel(grad_estimator_fn)
 
         def init_fn(position: PyTree, data_batch: PyTree):
@@ -631,7 +691,6 @@ class rmh:
         logprob_fn: Callable,
         sigma: Array,
     ) -> SamplingAlgorithm:
-
         step = cls.kernel()
 
         def init_fn(position: PyTree):
@@ -696,7 +755,6 @@ class orbital_hmc:
         *,
         bijection: Callable = mcmc.integrators.velocity_verlet,
     ) -> SamplingAlgorithm:
-
         step = cls.kernel(bijection)
 
         def init_fn(position: PyTree):
@@ -749,7 +807,6 @@ class elliptical_slice:
         mean: Array,
         cov: Array,
     ) -> SamplingAlgorithm:
-
         step = cls.kernel(cov, mean)
 
         def init_fn(position: PyTree):
@@ -799,7 +856,6 @@ class pathfinder:
         num_samples: int = 200,
         **lbfgs_kwargs,
     ) -> SamplingAlgorithm:
-
         step = cls.kernel()
 
         def init_fn(position: PyTree):
@@ -887,7 +943,6 @@ def pathfinder_adaptation(
         return ((state, adaptation_state), (state, info, adaptation_state.da_state))
 
     def run(rng_key: PRNGKey, position: PyTree):
-
         rng_key_init, rng_key_chain = jax.random.split(rng_key, 2)
 
         init_warmup_state, init_position = init(rng_key, position, initial_step_size)
