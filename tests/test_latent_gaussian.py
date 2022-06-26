@@ -10,7 +10,6 @@ from blackjax.mcmc.latent_gaussian import init_and_kernel
 
 
 class GaussianTest(chex.TestCase):
-
     @parameterized.parameters(
         itertools.product([1234, 5678], [True, False], [True, False])
     )
