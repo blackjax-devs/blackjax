@@ -10,25 +10,27 @@ from blackjax.mcmc.latent_gaussian import init_and_kernel
 
 
 class GaussianTest(chex.TestCase):
+
     @parameterized.parameters(
         itertools.product([1234, 5678], [True, False], [True, False])
     )
     def test_gaussian(self, seed, use_inverse, mean):
         n_samples = 500_000
 
-        KEY = jax.random.PRNGKey(42)
+        key = jax.random.PRNGKey(seed)
+        key1, key2, key3, key4, key5 = jax.random.split(key, 5)
+
         D = 5
-        np.random.seed(seed)
-        C = np.random.randn(D, D**2)
+        C = jax.random.normal(key1, (D, D**2))
         C = C @ C.T
-        prior_mean = np.random.randn(D) if mean else None
-        R = np.random.randn(D, D**2)  # uninformative covariance
+        prior_mean = jax.random.normal(key2, (D,)) if mean else None
+        R = jax.random.normal(key3, (D, D**2))
         R = R @ R.T
 
-        obs = np.random.randn(D)
+        obs = jax.random.normal(key4, (D,))
         log_pdf = lambda x: stats.multivariate_normal.logpdf(x, obs, R)
 
-        DELTA = 75.0
+        DELTA = 50.0
 
         if use_inverse:
             C_inv = np.linalg.inv(C)
@@ -42,7 +44,7 @@ class GaussianTest(chex.TestCase):
         init_x = np.zeros((D,))
         init_state = init(init_x)
 
-        keys = jax.random.split(KEY, n_samples)
+        keys = jax.random.split(key5, n_samples)
 
         def body(carry, key):
             curr_n_accepted, state = carry
@@ -51,7 +53,6 @@ class GaussianTest(chex.TestCase):
             return carry, state
 
         (n_accepted, _), states = jax.lax.scan(body, (0, init_state), keys)
-        assert 0.4 < n_accepted / n_samples < 0.6
         if mean:
             expected_mean, expected_cov = _expected_mean_and_cov(prior_mean, C, obs, R)
         else:
