@@ -1,12 +1,21 @@
 # What Does This PR Do?
 
-Fixes (Please add link to [issue](https://github.com/blackjax-devs/blackjax/issues))
+Please replace PR title wtih a descriptiive title for changes in PR
+## Description
 
- <!-- You may tag other contributors who may be interested in this PR to review. -->
+Please provide:
+
+- A High-Level description of the changes
+- Background on changes.
+- Links to relevent issues and discussions
 
 ## Before Submitting
 
-- [ ] Please provide background on this fix. If this PR is Typo, or Documentation improvement, you can dismiss other checks.
-- [ ] If necessary, you can tag other contributors who may be interested in this PR.
-- [ ] Consider adding/updating related (examples)[https://github.com/blackjax-devs/blackjax/tree/main/examples]
-- [ ] Make sure this PR follows [Contribution Guideline].(https://github.com/blackjax-devs/blackjax#contributions)
+- [ ] If this PR is Typo, or Documentation improvement, you can dismiss other checks
+- [ ] Title and Description are clear and comprehensible enough for anyone to understand the changes in this PR
+- [ ] PR Branch is rebased on the latest `main` commit
+- [ ] Consider open a **Draft PR** if you would like some feedback from other contributers.
+- [ ] Commit messages follow these [guidelines](https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html)
+- [ ] Pre-commit should be installed and run before pushing to the branch
+- [ ] Make sure there are tests covering the chnages
+- [ ] Consider adding/updating related [examples](https://github.com/blackjax-devs/blackjax/tree/main/examples)
