@@ -6,8 +6,8 @@ import jax.random
 import jaxopt
 from jax import lax
 from jax.flatten_util import ravel_pytree
-from jaxopt.base import OptStep
 from jaxopt._src.lbfgs import LbfgsState
+from jaxopt.base import OptStep
 
 from blackjax.types import Array, PyTree
 
@@ -79,7 +79,7 @@ def minimize_lbfgs(
     -------
     Optimization results and optimization path
     """
-    
+
     # Ravel pytree into flat array.
     x0_raveled, unravel_fn = ravel_pytree(x0)
     unravel_fn_mapped = jax.vmap(unravel_fn)
@@ -103,16 +103,11 @@ def minimize_lbfgs(
             value=last_step_raveled.state.value,
             stepsize=last_step_raveled.state.stepsize,
             error=last_step_raveled.state.error,
-            s_history=unravel_fn_mapped(
-                last_step_raveled.state.s_history
-            ),
-            y_history=unravel_fn_mapped(
-                last_step_raveled.state.y_history
-            ),
+            s_history=unravel_fn_mapped(last_step_raveled.state.s_history),
+            y_history=unravel_fn_mapped(last_step_raveled.state.y_history),
             rho_history=last_step_raveled.state.rho_history,
-            aux=last_step_raveled.state.aux
-        )
-        
+            aux=last_step_raveled.state.aux,
+        ),
     )
 
     # Unravel optimization path history.
@@ -122,8 +117,8 @@ def minimize_lbfgs(
         g=unravel_fn_mapped(history_raveled.g),
         alpha=unravel_fn_mapped(history_raveled.alpha),
         update_mask=jax.tree_map(
-            lambda x: x.astype(history_raveled.update_mask.dtype), 
-            unravel_fn_mapped(history_raveled.update_mask.astype(x0_raveled.dtype))
+            lambda x: x.astype(history_raveled.update_mask.dtype),
+            unravel_fn_mapped(history_raveled.update_mask.astype(x0_raveled.dtype)),
         ),
     )
 
@@ -139,7 +134,6 @@ def _minimize_lbfgs(
     ftol: float,
     maxls: int,
 ) -> Tuple[OptStep, LBFGSHistory]:
-
     def lbfgs_one_step(carry, i):
         (params, state), previous_history = carry
 

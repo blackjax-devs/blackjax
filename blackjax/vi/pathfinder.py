@@ -6,9 +6,9 @@ import jax.random
 from jax.flatten_util import ravel_pytree
 
 from blackjax.optimizers.lbfgs import (
+    _minimize_lbfgs,
     bfgs_sample,
     lbfgs_inverse_hessian_factors,
-    minimize_lbfgs,
 )
 from blackjax.types import Array, PRNGKey, PyTree
 
@@ -111,7 +111,7 @@ def init(
 
     maxiter = lbfgs_kwargs["maxiter"]
     maxcor = lbfgs_kwargs["maxcor"]
-    (_, status), history = minimize_lbfgs(
+    (_, status), history = _minimize_lbfgs(
         objective_fn, initial_position_flatten, **lbfgs_kwargs
     )
 
