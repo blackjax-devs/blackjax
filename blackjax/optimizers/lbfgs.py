@@ -121,9 +121,10 @@ def minimize_lbfgs(
         f=history_raveled.f,
         g=unravel_fn_mapped(history_raveled.g),
         alpha=unravel_fn_mapped(history_raveled.alpha),
-        update_mask=unravel_fn_mapped(
-            history_raveled.update_mask.astype(x0_raveled.dtype)
-        ).astype(history_raveled.update_mask.dtype),
+        update_mask=jax.tree_map(
+            lambda x: x.astype(history_raveled.update_mask.dtype), 
+            unravel_fn_mapped(history_raveled.update_mask.astype(x0_raveled.dtype))
+        ),
     )
 
     return last_step, history
