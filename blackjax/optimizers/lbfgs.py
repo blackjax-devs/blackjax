@@ -5,9 +5,11 @@ import jax.numpy as jnp
 import jax.random
 import jaxopt
 from jax import lax
+from jax.flatten_util import ravel_pytree
+from jaxopt._src.lbfgs import LbfgsState
 from jaxopt.base import OptStep
 
-from blackjax.types import Array
+from blackjax.types import Array, PyTree
 
 __all__ = [
     "LBFGSHistory",
@@ -45,7 +47,7 @@ class LBFGSHistory(NamedTuple):
 
 def minimize_lbfgs(
     fun: Callable,
-    x0: Array,
+    x0: PyTree,
     maxiter: int = 30,
     maxcor: float = 10,
     gtol: float = 1e-08,
@@ -58,7 +60,7 @@ def minimize_lbfgs(
     Parameters
     ----------
     fun:
-        function of the form f(x) where x is a flat ndarray and returns a real scalar.
+        function of the form f(x) where x is a pytree and returns a real scalar.
         The function should be composed of operations with vjp defined.
     x0:
         initial guess
@@ -78,6 +80,60 @@ def minimize_lbfgs(
     Optimization results and optimization path
     """
 
+    # Ravel pytree into flat array.
+    x0_raveled, unravel_fn = ravel_pytree(x0)
+    unravel_fn_mapped = jax.vmap(unravel_fn)
+
+    # Run LBFGS optimizer on flat input.
+    last_step_raveled, history_raveled = _minimize_lbfgs(
+        lambda x: fun(unravel_fn(x)),
+        x0_raveled,
+        maxiter,
+        maxcor,
+        gtol,
+        ftol,
+        maxls,
+    )
+
+    # Unravel final optimization step.
+    last_step = OptStep(
+        params=unravel_fn(last_step_raveled.params),
+        state=LbfgsState(
+            iter_num=last_step_raveled.state.iter_num,
+            value=last_step_raveled.state.value,
+            stepsize=last_step_raveled.state.stepsize,
+            error=last_step_raveled.state.error,
+            s_history=unravel_fn_mapped(last_step_raveled.state.s_history),
+            y_history=unravel_fn_mapped(last_step_raveled.state.y_history),
+            rho_history=last_step_raveled.state.rho_history,
+            aux=last_step_raveled.state.aux,
+        ),
+    )
+
+    # Unravel optimization path history.
+    history = LBFGSHistory(
+        x=unravel_fn_mapped(history_raveled.x),
+        f=history_raveled.f,
+        g=unravel_fn_mapped(history_raveled.g),
+        alpha=unravel_fn_mapped(history_raveled.alpha),
+        update_mask=jax.tree_map(
+            lambda x: x.astype(history_raveled.update_mask.dtype),
+            unravel_fn_mapped(history_raveled.update_mask.astype(x0_raveled.dtype)),
+        ),
+    )
+
+    return last_step, history
+
+
+def _minimize_lbfgs(
+    fun: Callable,
+    x0: Array,
+    maxiter: int,
+    maxcor: float,
+    gtol: float,
+    ftol: float,
+    maxls: int,
+) -> Tuple[OptStep, LBFGSHistory]:
     def lbfgs_one_step(carry, i):
         (params, state), previous_history = carry
 
