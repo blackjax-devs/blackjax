@@ -6,9 +6,9 @@ import jax.random
 from jax.flatten_util import ravel_pytree
 
 from blackjax.optimizers.lbfgs import (
+    _minimize_lbfgs,
     bfgs_sample,
     lbfgs_inverse_hessian_factors,
-    minimize_lbfgs,
 )
 from blackjax.types import Array, PRNGKey, PyTree
 
@@ -76,7 +76,7 @@ def init(
         if False output only iteration that maximize ELBO, otherwise output
         all iterations
     lbfgs_kwargs:
-        kwargs passed to the internal call to lbfgs_minimize, avaiable params:
+        kwargs passed to the internal call to lbfgs_minimize, available params:
             maxiter: maximum number of iterations
             maxcor: maximum number of metric corrections ("history size")
             ftol: terminates the minimization when `(f_k - f_{k+1}) < ftol`
@@ -108,11 +108,21 @@ def init(
         # high max line search steps helps optimizing negative log likelihoods
         # that are sums over (large number of) observations' likelihood
         lbfgs_kwargs["maxls"] = 1000
+    if "gtol" not in lbfgs_kwargs:
+        lbfgs_kwargs["gtol"] = 1e-08
+    if "ftol" not in lbfgs_kwargs:
+        lbfgs_kwargs["ftol"] = 1e-05
 
     maxiter = lbfgs_kwargs["maxiter"]
     maxcor = lbfgs_kwargs["maxcor"]
-    (_, status), history = minimize_lbfgs(
-        objective_fn, initial_position_flatten, **lbfgs_kwargs
+    (_, status), history = _minimize_lbfgs(
+        objective_fn,
+        initial_position_flatten,
+        lbfgs_kwargs["maxiter"],
+        lbfgs_kwargs["maxcor"],
+        lbfgs_kwargs["gtol"],
+        lbfgs_kwargs["ftol"],
+        lbfgs_kwargs["maxls"],
     )
 
     # Get postions and gradients of the optimization path (including the starting point).
