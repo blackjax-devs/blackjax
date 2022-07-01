@@ -4,12 +4,12 @@ import itertools
 
 import chex
 import jax
+import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
-from jax.scipy.stats.norm import logpdf as univariate_logpdf
 from jax.scipy.stats.multivariate_normal import logpdf as multivariate_logpdf
+from jax.scipy.stats.norm import logpdf as univariate_logpdf
 
-import jax.numpy as jnp
 import blackjax.smc.ess as ess
 import blackjax.smc.solver as solver
 
@@ -53,7 +53,9 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
         cov = jnp.diag(jnp.array([1, 1]))
         potential_fn = lambda pytree: -multivariate_logpdf(pytree, mean=mean, cov=cov)
         potential = jax.vmap(lambda x: potential_fn(x), in_axes=[0], out_axes=0)
-        particles = np.random.multivariate_normal(mean=[0., 0.], cov=[[1., 0.], [0., 1.]], size=N)
+        particles = np.random.multivariate_normal(
+            mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=N
+        )
         self.ess_solver_test_case(potential, particles, target_ess, N, 10.0)
 
     @chex.all_variants(with_pmap=False)
@@ -67,12 +69,19 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
         cov = jnp.diag(jnp.array([1, 1]))
 
         def potential_fn(pytree):
-            return -multivariate_logpdf(pytree[0], mean=mean, cov=cov) - \
-                   multivariate_logpdf(pytree[1], mean=mean, cov=cov)
+            return -multivariate_logpdf(
+                pytree[0], mean=mean, cov=cov
+            ) - multivariate_logpdf(pytree[1], mean=mean, cov=cov)
 
         potential = jax.vmap(potential_fn, in_axes=[0], out_axes=0)
-        particles = [np.random.multivariate_normal(mean=[0., 0.], cov=[[1., 0.], [0., 1.]], size=N),
-                     np.random.multivariate_normal(mean=[0., 0.], cov=[[1., 0.], [0., 1.]], size=N)]
+        particles = [
+            np.random.multivariate_normal(
+                mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=N
+            ),
+            np.random.multivariate_normal(
+                mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=N
+            ),
+        ]
         self.ess_solver_test_case(potential, particles, target_ess, N, 10.0)
 
     def ess_solver_test_case(self, potential, particles, target_ess, N, max_delta):
