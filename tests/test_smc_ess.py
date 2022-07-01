@@ -49,6 +49,10 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(itertools.product([0.25, 0.5], [100, 1000, 5000]))
     def test_ess_solver_multivariate(self, target_ess, N):
+        """
+        Posterior with more than one variable. Let's assume we want to
+        sample from P(x) x ~ N(mean, cov) x in R^{2}
+        """
         mean = jnp.zeros((1, 2))
         cov = jnp.diag(jnp.array([1, 1]))
         potential_fn = lambda pytree: -multivariate_logpdf(pytree, mean=mean, cov=cov)
