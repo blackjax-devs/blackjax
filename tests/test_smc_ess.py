@@ -88,12 +88,9 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
             functools.partial(ess_solver_fn, use_log_ess=True)
         )
         ess_solver = self.variant(functools.partial(ess_solver_fn, use_log_ess=False))
-
         delta_log = log_ess_solver(particles)
         delta = ess_solver(particles)
-
         assert delta_log > 0
-
         np.testing.assert_allclose(delta_log, delta, atol=1e-3, rtol=1e-3)
         log_ess = ess.ess(-delta_log * potential(particles), log=True)
         np.testing.assert_allclose(
