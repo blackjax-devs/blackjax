@@ -249,7 +249,7 @@
     "    return states, (\n",
     "        infos.acceptance_probability,\n",
     "        infos.is_divergent,\n",
-    "        infos.integration_steps,\n",
+    "        infos.num_integration_steps,\n",
     "    )\n",
     "\n",
     "\n",
