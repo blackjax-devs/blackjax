@@ -41,7 +41,7 @@ class NUTSInfo(NamedTuple):
         The rightmost state of the full trajectory.
     num_trajectory_expansions
         Number of subtrajectory samples that were taken.
-    integration_steps
+    num_integration_steps
         Number of integration steps that were taken. This is also the number of
         states in the full trajectory.
     acceptance_probability
@@ -55,7 +55,7 @@ class NUTSInfo(NamedTuple):
     trajectory_leftmost_state: integrators.IntegratorState
     trajectory_rightmost_state: integrators.IntegratorState
     num_trajectory_expansions: int
-    integration_steps: int
+    num_integration_steps: int
     acceptance_probability: float
 
 
