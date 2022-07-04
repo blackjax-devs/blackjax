@@ -214,31 +214,31 @@ class LatentGaussianTest(chex.TestCase):
     def setUp(self):
         super().setUp()
         self.key = jax.random.PRNGKey(19)
-        self.C = 2.0 * np.eye(1)
-        self.delta = 5.0
-        self.sampling_steps = 25_000
-        self.burnin = 5_000
 
     @chex.all_variants(with_pmap=False)
     def test_latent_gaussian(self):
-        from blackjax import marginal_latent_gaussian
 
-        init, step = marginal_latent_gaussian(
-            lambda x: -0.5 * jnp.sum((x - 1.0) ** 2), self.C
+        covariance = 2.0 * np.eye(1)
+        step_size = 5.0
+        num_sampling_steps = 25_000
+        burnin = 5_000
+
+        init, step = blackjax.marginal_latent_gaussian(
+            lambda x: -0.5 * jnp.sum((x - 1.0) ** 2), covariance
         )
 
-        kernel = lambda key, x: step(key, x, self.delta)
+        kernel = lambda key, x: step(key, x, step_size)
         initial_state = init(jnp.zeros((1,)))
 
         states = self.variant(
-            functools.partial(inference_loop, kernel, self.sampling_steps),
+            functools.partial(inference_loop, kernel, num_sampling_steps),
         )(self.key, initial_state)
 
         np.testing.assert_allclose(
-            np.var(states.x[self.burnin :]), 1 / (1 + 0.5), rtol=1e-2, atol=1e-2
+            np.var(states.position[burnin:]), 1 / (1 + 0.5), rtol=1e-2, atol=1e-2
         )
         np.testing.assert_allclose(
-            np.mean(states.x[self.burnin :]), 2 / 3, rtol=1e-2, atol=1e-2
+            np.mean(states.position[burnin:]), 2 / 3, rtol=1e-2, atol=1e-2
         )
 
 

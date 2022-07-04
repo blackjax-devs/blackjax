@@ -393,16 +393,18 @@ class nuts:
 
 
 class marginal_latent_gaussian:
-    """Implements the marginal sampler for latent Gaussian model of [1].
+    r"""Implements the marginal sampler for latent Gaussian model of [1].
 
-    It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
-    Interestingly, the only parameter that needs calibrating is the "step size" delta, which can be done very efficiently.
-    Calibrating it to have an acceptance rate of roughly 50% is a good starting point.
+    It uses a first order approximation to the log_likelihood of a model with
+    Gaussian prior.  Interestingly, the only parameter that needs calibrating is
+    the "step size" delta, which can be done very efficiently.  Calibrating it
+    to have an acceptance rate of roughly 50% is a good starting point.
 
     Examples
     --------
-    A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C) can be initialized and
+    A new marginal latent Gaussian MCMC kernel for a model $q(x) \propto \exp\left(f(x)\right) \operatorname{N}\left(x; m, C\right) can be initialized and
     used for a given "step size" delta with the following code:
+
     .. code::
 
         latent_gaussian = blackjax.latent_gaussian(f, C, use_inverse=False, mean=m)
@@ -417,12 +419,10 @@ class marginal_latent_gaussian:
 
     Parameters
     ----------
-    log_pdf
+    logpdf
         The logarithm of the likelihood function for the latent Gaussian model.
     covariance_matrix
         The covariance of the prior Gaussian model. This can be given as the precision matrix, in which case `use_inverse` needs to be set to True.
-    use_inverse: optional
-        Flag saying that the covariance matrix is given in terms of the precision matrix. Default is False.
     mean: optional
         Mean of the prior Gaussian density. Default is zero.
 
@@ -437,23 +437,23 @@ class marginal_latent_gaussian:
 
     def __new__(  # type: ignore[misc]
         cls,
-        log_pdf: Callable,
-        covariance_matrix: Array,
-        use_inverse: bool = False,
+        logprob_fn: Callable,
+        covariance: Array,
         mean: Optional[Array] = None,
     ) -> SamplingAlgorithm:
+
         init, step = mcmc.marginal_latent_gaussian.init_and_kernel(
-            log_pdf, covariance_matrix, use_inverse, mean
+            logprob_fn, covariance, mean
         )
 
         def init_fn(position: Array):
             return init(position)
 
-        def step_fn(rng_key: PRNGKey, state, delta: float):
+        def step_fn(rng_key: PRNGKey, state, step_size: float):
             return step(
                 rng_key,
                 state,
-                delta,
+                step_size,
             )
 
         return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
