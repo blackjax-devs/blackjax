@@ -6,7 +6,7 @@ import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest, parameterized
 
-from blackjax.mcmc.latent_gaussian import init_and_kernel
+from blackjax.mcmc.marginal_latent_gaussian import init_and_kernel
 
 
 class GaussianTest(chex.TestCase):

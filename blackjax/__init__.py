@@ -4,7 +4,7 @@ from .kernels import (
     adaptive_tempered_smc,
     elliptical_slice,
     hmc,
-    latent_gaussian,
+    marginal_latent_gaussian,
     mala,
     nuts,
     orbital_hmc,
@@ -34,5 +34,5 @@ __all__ = [
     "ess",  # diagnostics
     "rhat",
     "pathfinder_adaptation",
-    "latent_gaussian",
+    "marginal_latent_gaussian",
 ]

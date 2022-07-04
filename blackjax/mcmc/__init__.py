@@ -1,4 +1,4 @@
-from . import elliptical_slice, hmc, latent_gaussian, mala, nuts, periodic_orbital, rmh
+from . import elliptical_slice, hmc, marginal_latent_gaussian, mala, nuts, periodic_orbital, rmh
 
 __all__ = [
     "elliptical_slice",
@@ -7,5 +7,5 @@ __all__ = [
     "nuts",
     "periodic_orbital",
     "rmh",
-    "latent_gaussian",
+    "marginal_latent_gaussian",
 ]

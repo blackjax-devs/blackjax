@@ -24,7 +24,7 @@ __all__ = [
     "window_adaptation",
     "pathfinder",
     "pathfinder_adaptation",
-    "latent_gaussian",
+    "marginal_latent_gaussian",
 ]
 
 
@@ -392,7 +392,7 @@ class nuts:
         return SamplingAlgorithm(init_fn, step_fn)
 
 
-class latent_gaussian:
+class marginal_latent_gaussian:
     """Implements the marginal sampler for latent Gaussian model of [1].
 
     It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
@@ -442,7 +442,7 @@ class latent_gaussian:
         use_inverse: bool = False,
         mean: Optional[Array] = None,
     ) -> SamplingAlgorithm:
-        init, step = mcmc.latent_gaussian.init_and_kernel(
+        init, step = mcmc.marginal_latent_gaussian.init_and_kernel(
             log_pdf, covariance_matrix, use_inverse, mean
         )
 
