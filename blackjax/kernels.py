@@ -404,10 +404,13 @@ class latent_gaussian:
     A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C) can be initialized and
     used for a given "step size" delta with the following code:
     .. code::
+    
         latent_gaussian = blackjax.latent_gaussian(f, C, use_inverse=False, mean=m)
         state = latent_gaussian.init(zeros)  # Starting at the mean of the prior
         new_state, info = latent_gaussian.step(rng_key, state, delta)
+        
     We can JIT-compile the step function for better performance
+    
     .. code::
         step = jax.jit(latent_gaussian.step)
         new_state, info = step(rng_key, state, delta)
