@@ -223,7 +223,9 @@ class LatentGaussianTest(chex.TestCase):
     def test_latent_gaussian(self):
         from blackjax import marginal_latent_gaussian
 
-        init, step = marginal_latent_gaussian(lambda x: -0.5 * jnp.sum((x - 1.0) ** 2), self.C)
+        init, step = marginal_latent_gaussian(
+            lambda x: -0.5 * jnp.sum((x - 1.0) ** 2), self.C
+        )
 
         kernel = lambda key, x: step(key, x, self.delta)
         initial_state = init(jnp.zeros((1,)))
