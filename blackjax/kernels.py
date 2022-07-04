@@ -394,6 +394,7 @@ class nuts:
 
 class latent_gaussian:
     """Implements the marginal sampler for latent Gaussian model of [1].
+    
     It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
     Interestingly, the only parameter that needs calibrating is the "step size" delta, which can be done very efficiently.
     Calibrating it to have an acceptance rate of roughly 50% is a good starting point.
