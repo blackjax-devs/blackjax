@@ -6,6 +6,7 @@ Examples
 
    examples/Introduction.ipynb
    examples/LogisticRegression.ipynb
+   examples/LogisticRegressionWithLatentGaussianSampler.ipynb
    examples/TemperedSMC.ipynb
    examples/use_with_numpyro.ipynb
    examples/use_with_pymc3.ipynb
