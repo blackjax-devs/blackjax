@@ -1,12 +1,12 @@
 from . import (
     elliptical_slice,
     hmc,
+    irmh,
     mala,
     marginal_latent_gaussian,
     nuts,
     periodic_orbital,
     rmh,
-    irmh
 )
 
 __all__ = [
@@ -17,5 +17,5 @@ __all__ = [
     "periodic_orbital",
     "rmh",
     "marginal_latent_gaussian",
-    "irmh"
+    "irmh",
 ]
