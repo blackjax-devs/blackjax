@@ -35,7 +35,15 @@ def orbit_samples(orbits, weights, rng_key):
     return samples
 
 
-regresion_test_cases = [
+def irmh_proposal_distribution(rng_key):
+    """
+    The proposal distribution is chosen to be wider than the target, so that the RMH rejection
+    doesn't make the sample overemphasize the center of the target distribution.
+    """
+    return 1.0 + jax.random.normal(rng_key) * 25.0
+
+
+regression_test_cases = [
     {
         "algorithm": blackjax.hmc,
         "initial_position": {"scale": 1.0, "coefs": 2.0},
@@ -69,7 +77,7 @@ class LinearRegressionTest(chex.TestCase):
         logpdf += stats.norm.logpdf(preds, y, scale)
         return jnp.sum(logpdf)
 
-    @parameterized.parameters(itertools.product(regresion_test_cases, [True, False]))
+    @parameterized.parameters(itertools.product(regression_test_cases, [True, False]))
     def test_window_adaptation(self, case, is_mass_matrix_diagonal):
         """Test the HMC kernel and the Stan warmup."""
         rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
@@ -129,7 +137,7 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
-    @parameterized.parameters(regresion_test_cases)
+    @parameterized.parameters(regression_test_cases)
     def test_pathfinder_adaptation(
         self,
         algorithm,
@@ -208,6 +216,38 @@ class SGMCMCTest(chex.TestCase):
         _ = sgld.step(rng_key, init_state, data_batch)
 
 
+class LatentGaussianTest(chex.TestCase):
+    """Test sampling of a linear regression model."""
+
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.PRNGKey(19)
+        self.C = 2.0 * np.eye(1)
+        self.delta = 5.0
+        self.sampling_steps = 25_000
+        self.burnin = 5_000
+
+    @chex.all_variants(with_pmap=False)
+    def test_latent_gaussian(self):
+        from blackjax import mgrad_gaussian
+
+        init, step = mgrad_gaussian(lambda x: -0.5 * jnp.sum((x - 1.0) ** 2), self.C)
+
+        kernel = lambda key, x: step(key, x, self.delta)
+        initial_state = init(jnp.zeros((1,)))
+
+        states = self.variant(
+            functools.partial(inference_loop, kernel, self.sampling_steps),
+        )(self.key, initial_state)
+
+        np.testing.assert_allclose(
+            np.var(states.position[self.burnin :]), 1 / (1 + 0.5), rtol=1e-2, atol=1e-2
+        )
+        np.testing.assert_allclose(
+            np.mean(states.position[self.burnin :]), 2 / 3, rtol=1e-2, atol=1e-2
+        )
+
+
 normal_test_cases = [
     {
         "algorithm": blackjax.hmc,
@@ -259,6 +299,13 @@ normal_test_cases = [
         "num_sampling_steps": 20_000,
         "burnin": 5_000,
     },
+    {
+        "algorithm": blackjax.irmh,
+        "initial_position": jnp.array(1.0),
+        "parameters": {},
+        "num_sampling_steps": 50_000,
+        "burnin": 5_000,
+    },
 ]
 
 
@@ -277,6 +324,9 @@ class UnivariateNormalTest(chex.TestCase):
     def test_univariate_normal(
         self, algorithm, initial_position, parameters, num_sampling_steps, burnin
     ):
+        if algorithm == blackjax.irmh:
+            parameters["proposal_distribution"] = irmh_proposal_distribution
+
         algo = algorithm(self.normal_logprob, **parameters)
         if algorithm == blackjax.elliptical_slice:
             algo = algorithm(lambda _: 1.0, **parameters)
