@@ -35,7 +35,15 @@ def orbit_samples(orbits, weights, rng_key):
     return samples
 
 
-regresion_test_cases = [
+def irmh_proposal_distribution(rng_key):
+    """
+    The proposal distribution is chosen to be wider than the target, so that the RMH rejection
+    doesn't make the sample overemphasize the center of the target distribution.
+    """
+    return 1.0 + jax.random.normal(rng_key) * 25.0
+
+
+regression_test_cases = [
     {
         "algorithm": blackjax.hmc,
         "initial_position": {"scale": 1.0, "coefs": 2.0},
@@ -69,7 +77,7 @@ class LinearRegressionTest(chex.TestCase):
         logpdf += stats.norm.logpdf(preds, y, scale)
         return jnp.sum(logpdf)
 
-    @parameterized.parameters(itertools.product(regresion_test_cases, [True, False]))
+    @parameterized.parameters(itertools.product(regression_test_cases, [True, False]))
     def test_window_adaptation(self, case, is_mass_matrix_diagonal):
         """Test the HMC kernel and the Stan warmup."""
         rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
@@ -129,7 +137,7 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
-    @parameterized.parameters(regresion_test_cases)
+    @parameterized.parameters(regression_test_cases)
     def test_pathfinder_adaptation(
         self,
         algorithm,
@@ -291,6 +299,13 @@ normal_test_cases = [
         "num_sampling_steps": 20_000,
         "burnin": 5_000,
     },
+    {
+        "algorithm": blackjax.irmh,
+        "initial_position": jnp.array(1.0),
+        "parameters": {},
+        "num_sampling_steps": 50_000,
+        "burnin": 5_000,
+    },
 ]
 
 
@@ -309,6 +324,9 @@ class UnivariateNormalTest(chex.TestCase):
     def test_univariate_normal(
         self, algorithm, initial_position, parameters, num_sampling_steps, burnin
     ):
+        if algorithm == blackjax.irmh:
+            parameters["proposal_distribution"] = irmh_proposal_distribution
+
         algo = algorithm(self.normal_logprob, **parameters)
         if algorithm == blackjax.elliptical_slice:
             algo = algorithm(lambda _: 1.0, **parameters)

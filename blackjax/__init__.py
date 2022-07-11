@@ -4,6 +4,7 @@ from .kernels import (
     adaptive_tempered_smc,
     elliptical_slice,
     hmc,
+    irmh,
     mala,
     mgrad_gaussian,
     nuts,
@@ -27,6 +28,7 @@ __all__ = [
     "nuts",
     "orbital_hmc",
     "rmh",
+    "irmh",
     "elliptical_slice",
     "sgld",  # stochastic gradient mcmc
     "window_adaptation",  # mcmc adaptation

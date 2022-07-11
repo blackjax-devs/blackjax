@@ -2,9 +2,8 @@
 from typing import Callable, NamedTuple, Optional, Tuple
 
 import jax
-import jax.numpy as jnp
+from jax import numpy as jnp
 
-import blackjax.mcmc.random_walk as random_walk
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["RMHState", "RMHInfo", "init", "kernel"]
@@ -75,7 +74,13 @@ def kernel():
         rng_key: PRNGKey, state: RMHState, logprob_fn: Callable, sigma: Array
     ) -> Tuple[RMHState, RMHInfo]:
 
-        proposal_generator = random_walk.normal(sigma)
+        move_proposal_generator = normal(sigma)
+
+        def proposal_generator(key_proposal, position):
+            move_proposal = move_proposal_generator(key_proposal, position)
+            new_position = jax.tree_util.tree_map(jnp.add, position, move_proposal)
+            return new_position
+
         kernel = rmh(logprob_fn, proposal_generator)
         return kernel(rng_key, state)
 
@@ -104,7 +109,7 @@ def rmh(
     logprob_fn
         A function that returns the log-probability at a given position.
     proposal_generator
-        A function that generates a new proposal.
+        A function that generates a candidate transition for the markov chain.
     proposal_logprob_fn:
         For non-symmetric proposals, a function that returns the logprobability
         to obtain a given proposal knowing the current state. If it is not
@@ -115,7 +120,6 @@ def rmh(
     A kernel that takes a rng_key and a Pytree that contains the current state
     of the chain and that returns a new state of the chain along with
     information about the transition.
-
     """
 
     if proposal_logprob_fn is None:
@@ -137,7 +141,7 @@ def rmh(
         """Move the chain by one step using the Rosenbluth Metropolis Hastings
         algorithm.
 
-        We temporarilly assume that the proposal distribution is symmetric.
+        We temporarily assume that the proposal distribution is symmetric.
 
         Parameters
         ----------
@@ -154,8 +158,7 @@ def rmh(
         """
         key_proposal, key_accept = jax.random.split(rng_key, 2)
 
-        move_proposal = proposal_generator(key_proposal, state.position)
-        new_position = jax.tree_util.tree_map(jnp.add, state.position, move_proposal)
+        new_position = proposal_generator(rng_key, state.position)
         new_log_probability = logprob_fn(new_position)
         new_state = RMHState(new_position, new_log_probability)
 
@@ -172,3 +175,36 @@ def rmh(
         )
 
     return kernel
+
+
+def normal(sigma: Array) -> Callable:
+    """Normal Random Walk proposal.
+
+    Propose a new position such that its distance to the current position is
+    normally distributed. Suitable for continuous variables.
+
+    Parameter
+    ---------
+    sigma:
+        vector or matrix that contains the standard deviation of the centered
+        normal distribution from which we draw the move proposals.
+
+    """
+    ndim = jnp.ndim(sigma)  # type: ignore[arg-type]
+    shape = jnp.shape(jnp.atleast_1d(sigma))[:1]
+
+    if ndim == 1:
+        dot = jnp.multiply
+    elif ndim == 2:
+        dot = jnp.dot
+    else:
+        raise ValueError
+
+    def propose(rng_key: PRNGKey, position: PyTree) -> PyTree:
+        _, unravel_fn = jax.flatten_util.ravel_pytree(position)
+        sample = jax.random.normal(rng_key, shape)
+        move_sample = dot(sigma, sample)
+        move_unravel = unravel_fn(move_sample)
+        return move_unravel
+
+    return propose

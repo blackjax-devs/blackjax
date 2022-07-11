@@ -22,6 +22,7 @@ __all__ = [
     "sgld",
     "tempered_smc",
     "window_adaptation",
+    "irmh",
     "pathfinder",
     "pathfinder_adaptation",
     "mgrad_gaussian",
@@ -705,6 +706,61 @@ class rmh:
                 logprob_fn,
                 sigma,
             )
+
+        return SamplingAlgorithm(init_fn, step_fn)
+
+
+class irmh:
+    """Implements the (basic) user interface for the independent RMH.
+
+    Examples
+    --------
+
+    A new kernel can be initialized and used with the following code:
+
+    .. code::
+
+        rmh = blackjax.irmh(logprob_fn, proposal_distribution)
+        state = rmh.init(position)
+        new_state, info = rmh.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(rmh.step)
+        new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    logprob_fn
+        The log density probability density function from which we wish to sample.
+    proposal_distribution
+        A Callable that takes a random number generator and produces a new proposal. The
+        proposal is independent of the sampler's current state.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(mcmc.rmh.init)
+    kernel = staticmethod(mcmc.irmh.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logprob_fn: Callable,
+        proposal_distribution: Callable,
+    ) -> SamplingAlgorithm:
+
+        step = cls.kernel(proposal_distribution)
+
+        def init_fn(position: PyTree):
+            return cls.init(position, logprob_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return step(rng_key, state, logprob_fn)
 
         return SamplingAlgorithm(init_fn, step_fn)
 
