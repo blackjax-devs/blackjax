@@ -134,6 +134,21 @@ We value the following contributions:
 2. Run `pre-commit run --all-files` and `make test` before pushing on the repo; CI should pass if
    these pass locally.
 
+## Citing Blackjax
+
+To cite this repository:
+
+```
+@software{blackjax2020github,
+  author = {Lao, Junpeng and Louf, R\'emi},
+  title = {{B}lackjax: A sampling library for {JAX}},
+  url = {http://github.com/blackjax-devs/blackjax},
+  version = {0.8.2},
+  year = {2020},
+}
+```
+In the above bibtex entry, names are in alphabetical order, the version number
+is intended to be that from [blackjax/__init__.py](https://github.com/blackjax-devs/blackjax/blob/main/blackjax/__init__.py), and the year corresponds to the project's open-source release.
 
 ## Acknowledgements
 
