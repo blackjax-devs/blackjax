@@ -128,16 +128,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="../../examples/use_with_numpyro.html">
-     Use BlackJAX with Numpyro
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../../examples/use_with_tfp.html">
-     Use BlackJAX with TFP
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="../../examples/HierarchicalBNN.html">
      Hierarchical Bayesian neural networks
     </a>
@@ -150,6 +140,26 @@
    <li class="toctree-l2">
     <a class="reference internal" href="../../examples/GP_EllipticalSliceSampler.html">
      Gaussian regression with the Elliptical Slice sampler
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/SGMCMC.html">
+     MNIST digit recognition with a 3-layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/Pathfinder.html">
+     Pathfinder
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/use_with_numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/use_with_tfp.html">
+     Use BlackJAX with TFP
     </a>
    </li>
   </ul>
@@ -300,6 +310,7 @@ title="Source repository"
     <span class="s2">&quot;orbital_hmc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;rmh&quot;</span><span class="p">,</span>
     <span class="s2">&quot;sgld&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sghmc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;tempered_smc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;window_adaptation&quot;</span><span class="p">,</span>
     <span class="s2">&quot;irmh&quot;</span><span class="p">,</span>
@@ -814,6 +825,83 @@ title="Source repository"
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
             <span class="n">step_size</span> <span class="o">=</span> <span class="n">schedule_fn</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
+
+
+<div class="viewcode-block" id="sghmc"><a class="viewcode-back" href="../../sampling.html#blackjax.sghmc">[docs]</a><span class="k">class</span> <span class="nc">sghmc</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the SGHMC kernel.</span>
+
+<span class="sd">    The general sghmc kernel (:meth:`blackjax.mcmc.sghmc.kernel`, alias `blackjax.sghmc.kernel`) can be</span>
+<span class="sd">    cumbersome to manipulate. Since most users only need to specify the kernel</span>
+<span class="sd">    parameters at initialization time, we provide a helper function that</span>
+<span class="sd">    specializes the general kernel.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    To initialize a SGHMC kernel one needs to specify a schedule function, which</span>
+<span class="sd">    returns a step size at each sampling step, and a gradient estimator</span>
+<span class="sd">    function. Here for a constant step size, and `data_size` data samples:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        schedule_fn = lambda _: 1e-3</span>
+<span class="sd">        grad_fn = blackjax.sgmcmc.gradients.grad_estimator(logprior_fn, loglikelihood_fn, data_size)</span>
+
+<span class="sd">    We can now initialize the sghmc kernel and the state. Like HMC, SGHMC needs the user to specify a number of integration steps.</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        sghmc = blackjax.sghmc(grad_fn, schedule_fn, num_integration_steps)</span>
+<span class="sd">        state = sghmc.init(position)</span>
+
+<span class="sd">    Assuming we have an iterator `batches` that yields batches of data we can perform one step:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        data_batch = next(batches)</span>
+<span class="sd">        new_state = sghmc.step(rng_key, state, data_batch)</span>
+
+<span class="sd">    Kernels are not jit-compiled by default so you will need to do it manually:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">       step = jax.jit(sghmc.step)</span>
+<span class="sd">       new_state, info = step(rng_key, state)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gradient_estimator_fn</span>
+<span class="sd">       A function which, given a position and a batch of data, returns an estimation</span>
+<span class="sd">       of the value of the gradient of the log-posterior distribution at this position.</span>
+<span class="sd">    schedule_fn</span>
+<span class="sd">       A function which returns a step size given a step number.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">sgld</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">sghmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">grad_estimator_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">schedule_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+
+        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">grad_estimator_fn</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">,</span> <span class="n">grad_estimator_fn</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+            <span class="n">step_size</span> <span class="o">=</span> <span class="n">schedule_fn</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 

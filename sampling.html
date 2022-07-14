@@ -42,7 +42,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Adaptation" href="adaptation.html" />
-    <link rel="prev" title="Gaussian regression with the Elliptical Slice sampler" href="examples/GP_EllipticalSliceSampler.html" />
+    <link rel="prev" title="Use BlackJAX with TFP" href="examples/use_with_tfp.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -131,16 +131,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="examples/use_with_numpyro.html">
-     Use BlackJAX with Numpyro
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="examples/use_with_tfp.html">
-     Use BlackJAX with TFP
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="examples/HierarchicalBNN.html">
      Hierarchical Bayesian neural networks
     </a>
@@ -153,6 +143,26 @@
    <li class="toctree-l2">
     <a class="reference internal" href="examples/GP_EllipticalSliceSampler.html">
      Gaussian regression with the Elliptical Slice sampler
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/SGMCMC.html">
+     MNIST digit recognition with a 3-layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/Pathfinder.html">
+     Pathfinder
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/use_with_numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/use_with_tfp.html">
+     Use BlackJAX with TFP
     </a>
    </li>
   </ul>
@@ -314,6 +324,11 @@ title="Source repository"
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#stochastic-gradient-hmc">
+   Stochastic Gradient HMC
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#tempered-smc">
    Tempered SMC
   </a>
@@ -373,6 +388,11 @@ title="Source repository"
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#stochastic-gradient-hmc">
+   Stochastic Gradient HMC
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#tempered-smc">
    Tempered SMC
   </a>
@@ -416,10 +436,13 @@ title="Source repository"
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgld" title="blackjax.sgld"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgld</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the SGLD kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.tempered_smc" title="blackjax.tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.sghmc" title="blackjax.sghmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sghmc</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the SGHMC kernel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.tempered_smc" title="blackjax.tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptive_tempered_smc" title="blackjax.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptive_tempered_smc" title="blackjax.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
 </tbody>
@@ -756,6 +779,56 @@ of the value of the gradient of the log-posterior distribution at this position.
 </dd></dl>
 
 </section>
+<section id="stochastic-gradient-hmc">
+<h2>Stochastic Gradient HMC<a class="headerlink" href="#stochastic-gradient-hmc" title="Permalink to this headline">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.sghmc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sghmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grad_estimator_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#sghmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sghmc" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the SGHMC kernel.</p>
+<p>The general sghmc kernel (<code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.sghmc.kernel()</span></code>, alias <cite>blackjax.sghmc.kernel</cite>) can be
+cumbersome to manipulate. Since most users only need to specify the kernel
+parameters at initialization time, we provide a helper function that
+specializes the general kernel.</p>
+<p class="rubric">Example</p>
+<p>To initialize a SGHMC kernel one needs to specify a schedule function, which
+returns a step size at each sampling step, and a gradient estimator
+function. Here for a constant step size, and <cite>data_size</cite> data samples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">schedule_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="mf">1e-3</span>
+<span class="n">grad_fn</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">gradients</span><span class="o">.</span><span class="n">grad_estimator</span><span class="p">(</span><span class="n">logprior_fn</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">data_size</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can now initialize the sghmc kernel and the state. Like HMC, SGHMC needs the user to specify a number of integration steps.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sghmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sghmc</span><span class="p">(</span><span class="n">grad_fn</span><span class="p">,</span> <span class="n">schedule_fn</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">sghmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Assuming we have an iterator <cite>batches</cite> that yields batches of data we can perform one step:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data_batch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span>
+<span class="n">new_state</span> <span class="o">=</span> <span class="n">sghmc</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Kernels are not jit-compiled by default so you will need to do it manually:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">sghmc</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gradient_estimator_fn</strong> – A function which, given a position and a batch of data, returns an estimation
+of the value of the gradient of the log-posterior distribution at this position.</p></li>
+<li><p><strong>schedule_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – A function which returns a step size given a step number.</p></li>
+<li><p><strong>grad_estimator_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – </p></li>
+<li><p><strong>num_integration_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 <section id="tempered-smc">
 <h2>Tempered SMC<a class="headerlink" href="#tempered-smc" title="Permalink to this headline">#</a></h2>
 <dl class="py class">
@@ -814,11 +887,11 @@ of the value of the gradient of the log-posterior distribution at this position.
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="examples/GP_EllipticalSliceSampler.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="examples/use_with_tfp.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Gaussian regression with the Elliptical Slice sampler</p>
+            <p class="prev-next-title">Use BlackJAX with TFP</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="adaptation.html" title="next page">

@@ -41,6 +41,8 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Pathfinder" href="Pathfinder.html" />
+    <link rel="prev" title="Gaussian regression with the Elliptical Slice sampler" href="GP_EllipticalSliceSampler.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -97,17 +99,17 @@
   Blackjax by example
  </span>
 </p>
-<ul class="nav bd-sidenav">
- <li class="toctree-l1 has-children">
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active has-children">
   <a class="reference internal" href="../examples.html">
    Examples
   </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
   <label for="toctree-checkbox-1">
    <i class="fas fa-chevron-down">
    </i>
   </label>
-  <ul>
+  <ul class="current">
    <li class="toctree-l2">
     <a class="reference internal" href="Introduction.html">
      A quick introduction to Blackjax
@@ -129,16 +131,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="use_with_numpyro.html">
-     Use BlackJAX with Numpyro
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="use_with_tfp.html">
-     Use BlackJAX with TFP
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="HierarchicalBNN.html">
      Hierarchical Bayesian neural networks
     </a>
@@ -151,6 +143,26 @@
    <li class="toctree-l2">
     <a class="reference internal" href="GP_EllipticalSliceSampler.html">
      Gaussian regression with the Elliptical Slice sampler
+    </a>
+   </li>
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
+     MNIST digit recognition with a 3-layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="Pathfinder.html">
+     Pathfinder
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="use_with_numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="use_with_tfp.html">
+     Use BlackJAX with TFP
     </a>
    </li>
   </ul>
@@ -290,6 +302,18 @@ title="Source repository"
   <a class="reference internal nav-link" href="#sample-from-the-posterior-distribution-of-the-perceptron-s-weights">
    Sample from the posterior distribution of the perceptron’s weights
   </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#using-sgld">
+     Using SGLD
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#using-sghmc">
+     Using SGHMC
+    </a>
+   </li>
+  </ul>
  </li>
 </ul>
 
@@ -324,6 +348,18 @@ title="Source repository"
   <a class="reference internal nav-link" href="#sample-from-the-posterior-distribution-of-the-perceptron-s-weights">
    Sample from the posterior distribution of the perceptron’s weights
   </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#using-sgld">
+     Using SGLD
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#using-sghmc">
+     Using SGHMC
+    </a>
+   </li>
+  </ul>
  </li>
 </ul>
 
@@ -361,6 +397,12 @@ title="Source repository"
 <span class="p">)</span>
 <span class="n">mnist_data</span> <span class="o">=</span> <span class="n">tfds</span><span class="o">.</span><span class="n">as_numpy</span><span class="p">(</span><span class="n">mnist_data</span><span class="p">)</span>
 <span class="n">data_train</span><span class="p">,</span> <span class="n">data_test</span> <span class="o">=</span> <span class="n">mnist_data</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">],</span> <span class="n">mnist_data</span><span class="p">[</span><span class="s2">&quot;test&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/remi/.virtualenvs/blackjax/lib/python3.10/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
 </pre></div>
 </div>
 </div>
@@ -502,6 +544,8 @@ title="Source repository"
 </div>
 </div>
 </div>
+<section id="using-sgld">
+<h3>Using SGLD<a class="headerlink" href="#using-sgld" title="Permalink to this headline">#</a></h3>
 <p>We now sample from the model’s posteriors. We discard the first 1000 samples until the sampler has reached the typical set, and then take 2000 samples. We record the model’s accuracy with the current values every 100 steps.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -529,6 +573,7 @@ title="Source repository"
 <span class="c1"># Set the initial state</span>
 <span class="n">init_positions</span> <span class="o">=</span> <span class="n">init_parameters</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">layer_sizes</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">sgld</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">init_positions</span><span class="p">,</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">))</span>
+<span class="n">step_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">sgld</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
 
 <span class="c1"># Sample from the posterior</span>
 <span class="n">accuracies</span> <span class="o">=</span> <span class="p">[]</span>
@@ -537,7 +582,7 @@ title="Source repository"
 <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_samples</span> <span class="o">+</span> <span class="n">num_warmup</span><span class="p">):</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
     <span class="n">batch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span>
-    <span class="n">state</span> <span class="o">=</span> <span class="n">sgld</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">accuracy</span> <span class="o">=</span> <span class="n">compute_accuracy</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
         <span class="n">accuracies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">accuracy</span><span class="p">)</span>
@@ -548,8 +593,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2min 5s, sys: 7.18 s, total: 2min 13s
-Wall time: 1min 2s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 20s, sys: 9.39 s, total: 1min 30s
+Wall time: 16.6 s
 </pre></div>
 </div>
 </div>
@@ -576,7 +621,7 @@ Wall time: 1min 2s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[]
 </pre></div>
 </div>
-<img alt="../_images/f35eb8cccd31f89a2099ca578c863752529fb9c4632c62957dc878bbc222ac2d.png" src="../_images/f35eb8cccd31f89a2099ca578c863752529fb9c4632c62957dc878bbc222ac2d.png" />
+<img alt="../_images/9b4c0ccbd522e818457d1e872dd71cf5e6f96d87640cd4cd185a26771920b971.png" src="../_images/9b4c0ccbd522e818457d1e872dd71cf5e6f96d87640cd4cd185a26771920b971.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -598,16 +643,12 @@ Wall time: 1min 2s
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">predicted_class</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
     <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">predict_fn</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))(</span><span class="n">s</span><span class="p">,</span> <span class="n">X_test</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">])</span>
 <span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">max_predicted</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">predicted_class</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">60000</span><span class="p">)]</span>
+
+<span class="n">max_predicted</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">predicted_class</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">60000</span><span class="p">)]</span>
 <span class="n">freq_max_predicted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
     <span class="p">[</span>
-        <span class="p">(</span><span class="n">max_predicted</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">max_predicted</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2000</span>
+        <span class="p">(</span><span class="n">max_predicted</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">max_predicted</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="o">/</span> <span class="n">num_samples</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">60000</span><span class="p">)</span>
     <span class="p">]</span>
 <span class="p">)</span>
@@ -622,7 +663,7 @@ Wall time: 1min 2s
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">most_uncertain_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">freq_max_predicted</span><span class="p">)</span>
 
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">max_predicted</span><span class="p">[</span><span class="n">most_uncertain_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span> <span class="o">/</span> <span class="mi">2000</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">max_predicted</span><span class="p">[</span><span class="n">most_uncertain_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span> <span class="o">/</span> <span class="n">num_samples</span><span class="p">)</span>
     <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">X_test</span><span class="p">[</span><span class="n">most_uncertain_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
@@ -630,46 +671,46 @@ Wall time: 1min 2s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.1765 0.129  0.     0.194  0.015  0.212  0.     0.153  0.12  ]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.128  0.07   0.     0.214  0.0775 0.2115 0.     0.1755 0.123 ]
 </pre></div>
 </div>
-<img alt="../_images/7db6d0ed0bcf16663f68b115ace40efbbf7704340faf23e2ba369b218cb2a4be.png" src="../_images/7db6d0ed0bcf16663f68b115ace40efbbf7704340faf23e2ba369b218cb2a4be.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.1355 0.053  0.2045 0.     0.201  0.0095 0.     0.254  0.142 ]
+<img alt="../_images/1cfe9d959195110531d9ee3579b18aaa58ab094a9a73c754ef86261904470576.png" src="../_images/1cfe9d959195110531d9ee3579b18aaa58ab094a9a73c754ef86261904470576.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.2265 0.     0.     0.1665 0.     0.145  0.     0.1025 0.1445 0.2145]
 </pre></div>
 </div>
-<img alt="../_images/4b5cb8b43dde38ccd3f80f8ec3439e48457e505c880e47b44100955d1def8e48.png" src="../_images/4b5cb8b43dde38ccd3f80f8ec3439e48457e505c880e47b44100955d1def8e48.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.239  0.     0.072  0.006  0.     0.23   0.     0.     0.188  0.2645]
+<img alt="../_images/6ea1797ff8f76df4f73b64c0643f3730880f86fbdfceee209327ed729e4344bc.png" src="../_images/6ea1797ff8f76df4f73b64c0643f3730880f86fbdfceee209327ed729e4344bc.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.     0.1945 0.222  0.0055 0.237  0.171  0.0115 0.158 ]
 </pre></div>
 </div>
-<img alt="../_images/44545d09e0e06537141379b7777d395ad35aeaf4d65c71bedfce160602dcd321.png" src="../_images/44545d09e0e06537141379b7777d395ad35aeaf4d65c71bedfce160602dcd321.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.2475 0.     0.022  0.0705 0.     0.235  0.     0.0015 0.2645 0.1585]
+<img alt="../_images/aabadb2a5de5ba6b077eca273812739d3a7cd45b563d3b34e42ce871f3167984.png" src="../_images/aabadb2a5de5ba6b077eca273812739d3a7cd45b563d3b34e42ce871f3167984.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.1055 0.0475 0.179  0.0005 0.201  0.0035 0.     0.252  0.2105]
 </pre></div>
 </div>
-<img alt="../_images/5fdf829ee94327d57ce46b4576f53ab25187c4571f84a523b0f06d86a3d5f5fd.png" src="../_images/5fdf829ee94327d57ce46b4576f53ab25187c4571f84a523b0f06d86a3d5f5fd.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.04   0.     0.151  0.1755 0.     0.0505 0.1725 0.269  0.0015 0.1395]
+<img alt="../_images/60987c16e7563aff12b15be6ee47ff0894e6c8954426e2312e862203532905b4.png" src="../_images/60987c16e7563aff12b15be6ee47ff0894e6c8954426e2312e862203532905b4.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.056  0.     0.229  0.065  0.     0.0065 0.0155 0.157  0.2145 0.256 ]
 </pre></div>
 </div>
-<img alt="../_images/4d92bf6cb1409098b5f359aab08dfdae34b5220736af9bcbf61ce15c22b5d89f.png" src="../_images/4d92bf6cb1409098b5f359aab08dfdae34b5220736af9bcbf61ce15c22b5d89f.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.     0.078  0.2245 0.     0.236  0.2765 0.     0.1795 0.005 ]
+<img alt="../_images/9117a492097343bdf218be7ee54e899114cdfdd0114d6bcd81c8cd8966208b80.png" src="../_images/9117a492097343bdf218be7ee54e899114cdfdd0114d6bcd81c8cd8966208b80.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.     0.254  0.24   0.     0.2645 0.     0.     0.2345 0.0065]
 </pre></div>
 </div>
-<img alt="../_images/1b0aac07359595930904a7657d454c7bee6bc3b37a786935e6ffcdf13be6562e.png" src="../_images/1b0aac07359595930904a7657d454c7bee6bc3b37a786935e6ffcdf13be6562e.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.0565 0.     0.008  0.0905 0.156  0.1565 0.     0.278  0.037  0.217 ]
+<img alt="../_images/c80b3f80756d439fcfbe6eeb9bd602a4eea27b421742c275e1b622b5d1b976ba.png" src="../_images/c80b3f80756d439fcfbe6eeb9bd602a4eea27b421742c275e1b622b5d1b976ba.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.263  0.     0.     0.1295 0.2655 0.     0.038  0.1725 0.131 ]
 </pre></div>
 </div>
-<img alt="../_images/fe7393ae7ce4dfe7a1980d8080f3a332ac1c741fad99715418054012e2b5de59.png" src="../_images/fe7393ae7ce4dfe7a1980d8080f3a332ac1c741fad99715418054012e2b5de59.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.2785 0.     0.2955 0.0725 0.     0.     0.151  0.     0.     0.202 ]
+<img alt="../_images/8062abea1b801dafc4f0816c546b8ced7080f2da87d47be10b3d12b0a0b3b1b1.png" src="../_images/8062abea1b801dafc4f0816c546b8ced7080f2da87d47be10b3d12b0a0b3b1b1.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.     0.0985 0.222  0.     0.     0.     0.271  0.1435 0.2645]
 </pre></div>
 </div>
-<img alt="../_images/9d01f704bca3695648eaf4e86effc24275fec5889d3f79971176c855aa8094c8.png" src="../_images/9d01f704bca3695648eaf4e86effc24275fec5889d3f79971176c855aa8094c8.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.168  0.     0.007  0.2935 0.     0.     0.     0.1005 0.2975 0.133 ]
+<img alt="../_images/ff30f6e20d5bd4d33475ebc3f24e9dc9f471904dd2bfc6d8949adc0ebe714407.png" src="../_images/ff30f6e20d5bd4d33475ebc3f24e9dc9f471904dd2bfc6d8949adc0ebe714407.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.     0.273  0.007  0.0325 0.097  0.001  0.2045 0.137  0.2475]
 </pre></div>
 </div>
-<img alt="../_images/dc9a6d2044758a1339a86c36b3371c5b8a322a90fe8c1d2e17d74f67e28c0921.png" src="../_images/dc9a6d2044758a1339a86c36b3371c5b8a322a90fe8c1d2e17d74f67e28c0921.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.     0.1835 0.0175 0.034  0.018  0.0015 0.3025 0.15   0.2925]
+<img alt="../_images/31e020e15406fdeb6c72b47dade456379a96772ab7c2f853ee474d86f230faef.png" src="../_images/31e020e15406fdeb6c72b47dade456379a96772ab7c2f853ee474d86f230faef.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.2775 0.2355 0.     0.1395 0.012  0.004  0.0075 0.1785 0.145 ]
 </pre></div>
 </div>
-<img alt="../_images/c6f8a0cbc06826b19e999f692cb34837002a3b2688d0833561d7392a0c2071a9.png" src="../_images/c6f8a0cbc06826b19e999f692cb34837002a3b2688d0833561d7392a0c2071a9.png" />
+<img alt="../_images/11c11cdae2f0e7194e5f2f5fb54aa6ebfe508106e9c2281ebf1869d28b788d6b.png" src="../_images/11c11cdae2f0e7194e5f2f5fb54aa6ebfe508106e9c2281ebf1869d28b788d6b.png" />
 </div>
 </div>
 <p>And now compute the average accuracy over all the samples without these uncertain predictions:</p>
@@ -678,24 +719,213 @@ Wall time: 1min 2s
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">avg_accuracy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
     <span class="p">[</span><span class="n">compute_accuracy</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">X_test</span><span class="p">[</span><span class="n">certain_mask</span><span class="p">],</span> <span class="n">y_test</span><span class="p">[</span><span class="n">certain_mask</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">]</span>
 <span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span>
+
+<span class="nb">print</span><span class="p">(</span>
     <span class="sa">f</span><span class="s2">&quot;The average accuracy removing the samples for which the model is uncertain is </span><span class="si">{</span><span class="n">avg_accuracy</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;The model was unsure about </span><span class="si">{</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">certain_mask</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">certain_mask</span><span class="p">))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">certain_mask</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">% of the examples&quot;</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The average accuracy removing the samples for which the model is uncertain is 0.983
+The model was unsure about 13.4% of the examples
 </pre></div>
 </div>
 </div>
 </div>
+</section>
+<section id="using-sghmc">
+<h3>Using SGHMC<a class="headerlink" href="#using-sghmc" title="Permalink to this headline">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax</span>
+<span class="kn">from</span> <span class="nn">blackjax.sgmcmc.gradients</span> <span class="kn">import</span> <span class="n">grad_estimator</span>
+
+<span class="n">data_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_train</span><span class="p">)</span>
+<span class="n">batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.01</span> <span class="o">*</span> <span class="n">data_size</span><span class="p">)</span>
+<span class="n">layer_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="mi">784</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
+<span class="n">num_warmup</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">num_samples</span> <span class="o">=</span> <span class="mi">1000</span>
+
+
+<span class="c1"># Batch the data</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">batches</span> <span class="o">=</span> <span class="n">batch_data</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">data_size</span><span class="p">)</span>
+
+<span class="c1"># Build the SGLD kernel</span>
+<span class="n">step_size</span> <span class="o">=</span> <span class="mf">9e-6</span>
+<span class="n">num_integration_steps</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">schedule_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">step_size</span>  <span class="c1"># constant step size</span>
+<span class="n">grad_fn</span> <span class="o">=</span> <span class="n">grad_estimator</span><span class="p">(</span><span class="n">logprior_fn</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">data_size</span><span class="p">)</span>
+<span class="n">sghmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sghmc</span><span class="p">(</span><span class="n">grad_fn</span><span class="p">,</span> <span class="n">schedule_fn</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
+
+<span class="c1"># Set the initial state</span>
+<span class="n">init_positions</span> <span class="o">=</span> <span class="n">init_parameters</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">layer_sizes</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">sghmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">init_positions</span><span class="p">,</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">))</span>
+<span class="n">step_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">sghmc</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+
+<span class="c1"># Sample from the posterior</span>
+<span class="n">accuracies</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">samples</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">steps</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_warmup</span> <span class="o">+</span> <span class="n">num_samples</span><span class="p">):</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">accuracy</span> <span class="o">=</span> <span class="n">compute_accuracy</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+        <span class="n">accuracies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">accuracy</span><span class="p">)</span>
+        <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">step</span> <span class="o">&gt;</span> <span class="n">num_warmup</span><span class="p">:</span>
+        <span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/remi/.virtualenvs/blackjax/lib/python3.10/site-packages/jax/_src/tree_util.py:200: FutureWarning: jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() instead as a drop-in replacement.
+  warnings.warn(&#39;jax.tree_util.tree_multimap() is deprecated. Please use jax.tree_util.tree_map() &#39;
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">accuracies</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Number of sampling steps&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Prediction accuracy&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_warmup</span> <span class="o">+</span> <span class="n">num_samples</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Sample from 3-layer MLP posterior (MNIST dataset) with SgLD&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[]
+</pre></div>
+</div>
+<img alt="../_images/f22877aa8fea82fc8f0c11de84edaff689020988e1c422d87da598679391405f.png" src="../_images/f22877aa8fea82fc8f0c11de84edaff689020988e1c422d87da598679391405f.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The average accuracy in the sampling phase is </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">accuracies</span><span class="p">[</span><span class="mi">10</span><span class="p">:])</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The average accuracy in the sampling phase is 0.94
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">predicted_class</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">predict_fn</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))(</span><span class="n">s</span><span class="p">,</span> <span class="n">X_test</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">])</span>
+<span class="p">)</span>
+
+<span class="n">max_predicted</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">predicted_class</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">60000</span><span class="p">)]</span>
+<span class="n">freq_max_predicted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">(</span><span class="n">max_predicted</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">max_predicted</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="o">/</span> <span class="n">num_samples</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">60000</span><span class="p">)</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">certain_mask</span> <span class="o">=</span> <span class="n">freq_max_predicted</span> <span class="o">&gt;</span> <span class="mf">0.95</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">most_uncertain_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">freq_max_predicted</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">max_predicted</span><span class="p">[</span><span class="n">most_uncertain_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span> <span class="o">/</span> <span class="n">num_samples</span><span class="p">)</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">X_test</span><span class="p">[</span><span class="n">most_uncertain_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.227 0.202 0.006 0.136 0.006 0.099 0.195 0.001 0.046 0.081]
+</pre></div>
+</div>
+<img alt="../_images/2eca2a10c610dad6ffdd11dcff6427d66799a87fd5e8aa6bf7d67a8f70aebb22.png" src="../_images/2eca2a10c610dad6ffdd11dcff6427d66799a87fd5e8aa6bf7d67a8f70aebb22.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.    0.    0.251 0.028 0.274 0.    0.236 0.    0.081 0.129]
+</pre></div>
+</div>
+<img alt="../_images/ec9e3cc745e4446f0886e50d83652b13583660b8ea9b55444908d77c8a7f8b15.png" src="../_images/ec9e3cc745e4446f0886e50d83652b13583660b8ea9b55444908d77c8a7f8b15.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.    0.    0.063 0.252 0.    0.    0.    0.167 0.237 0.28 ]
+</pre></div>
+</div>
+<img alt="../_images/006a13bc7df282e837d1d59fe740db5013cd41e81048a76485c0a96a26410049.png" src="../_images/006a13bc7df282e837d1d59fe740db5013cd41e81048a76485c0a96a26410049.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.    0.139 0.274 0.039 0.    0.    0.    0.286 0.261]
+</pre></div>
+</div>
+<img alt="../_images/a13dd494e422d99ec327089510831ec62acea60eef4ca917bf4f5bf380bb75dc.png" src="../_images/a13dd494e422d99ec327089510831ec62acea60eef4ca917bf4f5bf380bb75dc.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.    0.    0.283 0.248 0.    0.286 0.    0.    0.182]
+</pre></div>
+</div>
+<img alt="../_images/032b30b8483b8418a54928ad2f851469cfcb185e319e633c5f71a2f1175f404b.png" src="../_images/032b30b8483b8418a54928ad2f851469cfcb185e319e633c5f71a2f1175f404b.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.009 0.    0.    0.209 0.    0.291 0.    0.    0.287 0.203]
+</pre></div>
+</div>
+<img alt="../_images/231ec73d7cdea9146c459a8f233f43f2571ed6553f82901b246744c6ba208fea.png" src="../_images/231ec73d7cdea9146c459a8f233f43f2571ed6553f82901b246744c6ba208fea.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.    0.    0.102 0.174 0.158 0.233 0.004 0.    0.294 0.034]
+</pre></div>
+</div>
+<img alt="../_images/12211f0fd5e3ba0bab2d006a94eb611fdf272cd3d30d14d5d92e98bce7368b6c.png" src="../_images/12211f0fd5e3ba0bab2d006a94eb611fdf272cd3d30d14d5d92e98bce7368b6c.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.266 0.    0.059 0.004 0.001 0.117 0.256 0.    0.296]
+</pre></div>
+</div>
+<img alt="../_images/8190bedabb1739cec6ebefa9d854add356c6e3b1102a91dae188a0be0f05a49f.png" src="../_images/8190bedabb1739cec6ebefa9d854add356c6e3b1102a91dae188a0be0f05a49f.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.    0.    0.121 0.008 0.002 0.297 0.205 0.018 0.267 0.081]
+</pre></div>
+</div>
+<img alt="../_images/f20bd3cd11f3f3f8b8f4310cd7688aa2ce8e6915421cd9d7022f5ae3fb81a634.png" src="../_images/f20bd3cd11f3f3f8b8f4310cd7688aa2ce8e6915421cd9d7022f5ae3fb81a634.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.295 0.    0.303 0.018 0.001 0.003 0.161 0.    0.218]
+</pre></div>
+</div>
+<img alt="../_images/5734ab1ee6620dcaba14d8dfb52437d9582a2c4f6858ba75d7f04570675900d8.png" src="../_images/5734ab1ee6620dcaba14d8dfb52437d9582a2c4f6858ba75d7f04570675900d8.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">avg_accuracy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">compute_accuracy</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">X_test</span><span class="p">[</span><span class="n">certain_mask</span><span class="p">],</span> <span class="n">y_test</span><span class="p">[</span><span class="n">certain_mask</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;The average accuracy removing the samples for which the model is uncertain is </span><span class="si">{</span><span class="n">avg_accuracy</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;The model was unsure about </span><span class="si">{</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">certain_mask</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">certain_mask</span><span class="p">))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">certain_mask</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">% of the examples&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The average accuracy removing the samples for which the model is uncertain is 0.988
+The model was unsure about 13.8% of the examples
+</pre></div>
+</div>
+</div>
+</div>
+</section>
 </section>
 </section>
 
@@ -707,6 +937,20 @@ Wall time: 1min 2s
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="GP_EllipticalSliceSampler.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Gaussian regression with the Elliptical Slice sampler</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="Pathfinder.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Pathfinder</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
 </div>
             </footer>
         </div>
