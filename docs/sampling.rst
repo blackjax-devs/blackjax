@@ -13,6 +13,7 @@ Sampling
   orbital_hmc
   rmh
   sgld
+  sghmc
   tempered_smc
   adaptive_tempered_smc
 
@@ -83,6 +84,11 @@ Stochastic Gradient Langeving Dynamics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: blackjax.sgld
+
+Stochastic Gradient HMC
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: blackjax.sghmc
 
 Tempered SMC
 ~~~~~~~~~~~~
