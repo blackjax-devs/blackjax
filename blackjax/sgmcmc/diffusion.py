@@ -63,8 +63,8 @@ def sghmc(logprob_grad_fn, alpha: float = 0.01, beta: float = 0):
     ) -> SGHMCState:
         position, momentum, logprob_grad = state
         noise = generate_gaussian_noise(rng_key, position)
-        position = jax.tree_util.tree_multimap(lambda x, p: x + p, position, momentum)
-        momentum = jax.tree_util.tree_multimap(
+        position = jax.tree_util.tree_map(lambda x, p: x + p, position, momentum)
+        momentum = jax.tree_util.tree_map(
             lambda p, g, n: (1.0 - alpha) * p
             + step_size * g
             + jnp.sqrt(2 * step_size * (alpha - beta)) * n,
