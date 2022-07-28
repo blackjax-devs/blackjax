@@ -1,22 +1,21 @@
 ---
-jupyter:
-  jupytext:
-    text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: '1.3'
-      jupytext_version: 1.13.8
-  kernelspec:
-    display_name: Python 3.9.7 ('blackjax')
-    language: python
-    name: python3
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.14.0
+kernelspec:
+  display_name: Python 3.9.7 ('blackjax')
+  language: python
+  name: python3
 ---
 
 # Pathfinder
 
 In this notebook we introduce the pathfinder algorithm and we show how to use it as a variational inference method or as an initialization tool for MCMC kernels.
 
-```python
+```{code-cell} ipython3
 import jax
 import jax.numpy as jnp
 import jax.random as random
@@ -27,24 +26,23 @@ from sklearn.datasets import make_biclusters
 import blackjax
 ```
 
-```python
+```{code-cell} ipython3
 %config InlineBackend.figure_format = "retina"
 plt.rcParams["axes.spines.right"] = False
 plt.rcParams["axes.spines.top"] = False
 plt.rcParams["figure.figsize"] = (10, 6)
 ```
 
-```python
+```{code-cell} ipython3
 %load_ext watermark
 %watermark -d -m -v -p jax,jaxlib,blackjax
 ```
 
-## The data
-
+## The Data
 
 We create two clusters of points using [scikit-learn's `make_bicluster` function](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_biclusters.html?highlight=bicluster%20data#sklearn.datasets.make_biclusters).
 
-```python
+```{code-cell} ipython3
 num_points = 50
 X, rows, cols = make_biclusters(
     (num_points, 2), 2, noise=0.6, random_state=314, minval=-3, maxval=3
@@ -52,7 +50,7 @@ X, rows, cols = make_biclusters(
 y = rows[0] * 1.0  # y[i] = whether point i belongs to cluster 1
 ```
 
-```python
+```{code-cell} ipython3
 colors = ["tab:red" if el else "tab:blue" for el in rows[0]]
 plt.scatter(*X.T, edgecolors=colors, c="none")
 plt.xlabel(r"$X_0$")
@@ -60,10 +58,9 @@ plt.ylabel(r"$X_1$")
 plt.show()
 ```
 
-## The model
+## The Model
 
-
-We use a simple logistic regression model to infer to which cluster each of the points belongs. We note $y$ a binary variable that indicates whether a point belongs to the first cluster :
+We use a simple logistic regression model to infer to which cluster each of the points belongs. We note $ y $ a binary variable that indicates whether a point belongs to the first cluster:
 
 $$
 y \sim \operatorname{Bernoulli}(p)
@@ -83,7 +80,7 @@ $$
 
 And $\Phi$ is the matrix that contains the data, so each row $\Phi_{i,:}$ is the vector $\left[X_0^i, X_1^i\right]$
 
-```python
+```{code-cell} ipython3
 Phi = X
 N, M = Phi.shape
 
@@ -106,7 +103,7 @@ def logprob_fn(w, alpha=1.0):
     return -prior_term + log_likelihood_term.sum()
 ```
 
-## Pathfinder: parallel quasi-newton variational inference
+## Pathfinder: Parallel Quasi-Newton Variational Inference
 
 Starting from a random initialization, Pathfinder locates normal approximations to the target
 density along a quasi-Newton optimization path, with local covariance estimated using the inverse Hessian
@@ -116,13 +113,13 @@ The optimizer is the limited memory BFGS algorithm.
 
 To help understand the approximations that pathfinder evaluates during its run, here we plot for each step of the L-BFGS optimizer the approximation of the posterior distribution of the model derived by pathfinder and its ELBO:
 
-```python
+```{code-cell} ipython3
 rng_key = random.PRNGKey(314)
 w0 = random.multivariate_normal(rng_key, 2.0 + jnp.zeros(M), jnp.eye(M))
 path = blackjax.vi.pathfinder.init(rng_key, logprob_fn, w0, return_path=True, ftol=1e-4)
 ```
 
-```python
+```{code-cell} ipython3
 def ellipse_confidence(mu, cov, ax, c, n_std=2.0):
     import numpy as np
 
@@ -173,18 +170,18 @@ for i, ax in zip(range(1, steps + 1), axs.flatten()):
 fig.show()
 ```
 
-## Pathfinder as a variational inference method
+## Pathfinder as a Variational Inference Method
 
 Pathfinder can be used as a variational inference method, using its kernel API:
 
-```python
+```{code-cell} ipython3
 pathfinder = blackjax.kernels.pathfinder(rng_key, logprob_fn, ftol=1e-4)
 state = pathfinder.init(w0)
 ```
 
 Since `blackjax` does not provide an inference loop we need to implement one ourselves:
 
-```python
+```{code-cell} ipython3
 def inference_loop(rng_key, kernel, initial_state, num_samples):
     @jax.jit
     def one_step(state, rng_key):
@@ -197,14 +194,14 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
 
 We can now run the inference:
 
-```python
+```{code-cell} ipython3
 _, rng_key = random.split(rng_key)
 _, (_, samples) = inference_loop(rng_key, pathfinder.step, state, 5_000)
 ```
 
 And display the trace:
 
-```python
+```{code-cell} ipython3
 fig, ax = plt.subplots(1, 2, figsize=(8, 2), sharey=True)
 for i, axi in enumerate(ax):
     axi.plot(samples[:, i])
@@ -212,29 +209,27 @@ for i, axi in enumerate(ax):
 plt.show()
 ```
 
-<!-- #region -->
 Please note that pathfinder is implemented as follows:
 * it runs L-BFGS optimization and finds the best approximation in the `init` phase
 * `step` phase it's just sampling from a multinormal distribution, whose parameters have been already estimated
 
 
 hence it makes sense to `jit` the `init` function and then use the `blackjax.vi.pathfinder.sample_from_state` helper function instead of implementing the inference loop:
-<!-- #endregion -->
 
-```python
+```{code-cell} ipython3
 state = jax.jit(pathfinder.init)(w0)
 samples, _ = blackjax.vi.pathfinder.sample_from_state(rng_key, state, 5_000)
 ```
 
 Quick comparison against `rmh` kernel:
 
-```python
+```{code-cell} ipython3
 rmh = blackjax.kernels.rmh(logprob_fn, sigma=jnp.ones(M) * 0.7)
 state_rmh = rmh.init(w0)
 _, (samples_rmh, _) = inference_loop(rng_key, rmh.step, state_rmh, 5_000)
 ```
 
-```python
+```{code-cell} ipython3
 fig, ax = plt.subplots(2, 2, figsize=(10, 4), sharey=True)
 for i in range(2):
     ax[i, 0].plot(samples_rmh.position[:, i])
@@ -247,13 +242,13 @@ ax[0, 1].set_title("Pathfinder")
 fig.show()
 ```
 
-### Pathfinder as an initialization tool for MCMC kernels
+### Pathfinder as an Initialization Tool for MCMC Kernels
 
 Pathfinder uses internally the inverse hessian estimation of the L-BFGS optimizer to evaluate the approximations to the target distribution along the quasi-Newton optimization path.
 
 We can calculate explicitly this inverse hessian matrix for a step of the optimization path using the `blackjax.vi.pathfinder.lbfgs_inverse_hessian_formula_1` function:
 
-```python
+```{code-cell} ipython3
 from blackjax.optimizers.lbfgs import lbfgs_inverse_hessian_formula_1
 
 inverse_mass_matrix = lbfgs_inverse_hessian_formula_1(
@@ -266,12 +261,12 @@ This estimation of the inverse mass matrix, coupled with Nesterov's dual averagi
 
 This scheme is implemented in `blackjax.kernel.pathfinder_adaptation` function:
 
-```python
+```{code-cell} ipython3
 adapt = blackjax.kernels.pathfinder_adaptation(blackjax.nuts, logprob_fn)
 state, kernel, info = adapt.run(rng_key, w0)
 ```
 
-## Some caveats
+## Some Caveats
 
 
 * L-BFGS algorithm struggles with float32s and log-likelihood functions; it's suggested to use double precision numbers. In order to do that in `jax` a configuration variable needs to be set up at initialization time (see [here](https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html#double-64bit-precision))

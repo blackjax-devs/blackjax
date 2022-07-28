@@ -1,42 +1,42 @@
 ---
-jupyter:
-  jupytext:
-    text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: '1.3'
-      jupytext_version: 1.13.8
-  kernelspec:
-    display_name: imcmc_blackjax
-    language: python
-    name: imcmc_blackjax
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.14.0
+kernelspec:
+  display_name: imcmc_blackjax
+  language: python
+  name: python3
 ---
 
-# Gaussian regression with the Elliptical Slice sampler
+# Gaussian Regression with the Elliptical Slice Sampler
 
-Given a vector of obervations $\mathbf{y}$ with known variance $\sigma^2\mathbb{I}$ and Gaussian likelihood, we model the mean parameter of these observations as a Gaussian process given input/feature matrix $\mathbf{X}$
+Given a vector of obervations $ \mathbf{y} $ with known variance $\sigma^2\mathbb{I}$ and Gaussian likelihood, we model the mean parameter of these observations as a Gaussian process given input/feature matrix $\mathbf{X}$
 
-\begin{align*}
-\mathbf{y}|\mathbf{f} &\sim N(\mathbf{f}, \sigma^2\mathbb{I}) \\
+$$\begin{align*}
+\mathbf{y}|\mathbf{f} &\sim N(\mathbf{f}, \sigma^2\mathbb{I})
 \mathbf{f} &\sim GP(0, \Sigma),
-\end{align*}
+\end{align*}$$
 
 where $\Sigma$ is a covariance function of the feature vector derived from the squared exponential kenel. Thus, for any pair of observations $i$ and $j$ the covariance of these two observations is given by
-$$
-\Sigma_{i,j} = \sigma^2_f \exp\left(-\frac{||\mathbf{X}_{i, \cdot} - \mathbf{X}_{j, \cdot}||^2}{2 l^2}\right),
-$$
+
+$$\Sigma_{i,j} = \sigma^2_f \exp\left(-\frac{||\mathbf{X}_{i, \cdot} - \mathbf{X}_{j, \cdot}||^2}{2 l^2}\right)$$
+
 for some lengthscale parameter $l$ and signal variance parameter $\sigma_f^2$.
 
 In this example we will limit our analysis to the posterior distribution of the mean parameter $\mathbf{f}$, by conjugacy the posterior is Gaussian with mean and covariance
-\begin{align*}
+
+$$\begin{align*}
 \mathbf{f}|\mathbf{y} &\sim N(\mu_f, \Sigma_f) \\
 \Sigma_f^{-1} &= \Sigma^{-1} + \sigma^{-2}\mathbf{I} \\
 \mu_f &= \sigma^{-2} \Sigma_f \mathbf{y}.
-\end{align*}
+\end{align*}$$
 
 Using this analytic result we can check the correct convergence of our sampler towards the posterior distribution. It is important to note, however, that the Elliptical Slice sampler can be used to sample from any vector of parameters so long as these parameters have a prior Multivariate Gaussian distribution.
 
-```python
+```{code-cell} ipython3
 import jax
 import jax.numpy as jnp
 import jax.random as jrnd
@@ -46,13 +46,13 @@ import numpy as np
 from blackjax import elliptical_slice, nuts, window_adaptation
 ```
 
-```python
+```{code-cell} ipython3
 def squared_exponential(x, y, length, scale):
     dot_diff = jnp.dot(x, x) + jnp.dot(y, y) - 2 * jnp.dot(x, y)
     return scale**2 * jnp.exp(-0.5 * dot_diff / length**2)
 ```
 
-```python
+```{code-cell} ipython3
 def inference_loop(rng, init_state, kernel, n_iter):
     keys = jrnd.split(rng, n_iter)
 
@@ -66,7 +66,7 @@ def inference_loop(rng, init_state, kernel, n_iter):
 
 We fix the lengthscale $l$, signal variance $\sigma_f^2$ and likelihood variance $\sigma^2$ parameters to 1. and generate data from the model described above. Deliberately, we set a large value (2000) for the dimension of the target variable $\mathbf{f}$ to showcase the gradient-free Elliptical Slice sampler on a situation where its efficiency is apparent in comparison to gradient-based black box samplers such as NUTS. The dynamics of the sampler are equivalent to those of the [preconditioned Crank–Nicolson algorithm](https://en.wikipedia.org/wiki/Preconditioned_Crank%E2%80%93Nicolson_algorithm) (with its Metropolis-Hastings step replaced by a slice sampling step), thus making it robust to increasing dimensionality.
 
-```python
+```{code-cell} ipython3
 n, d = 2000, 2
 length, scale = 1.0, 1.0
 y_sd = 1.0
@@ -93,7 +93,7 @@ plt.title("Histogram of data.")
 plt.show()
 ```
 
-### Sampling
+## Sampling
 
 The Elliptical Slice sampler samples a latent parameter from the Gaussian prior, builds an ellipse passing though the previous position and the latent variable, and samples points from this ellipse which it then corrects for the likelihood using slice sampling. More details can be found in the [original paper](https://arxiv.org/abs/1001.0175).
 
@@ -101,13 +101,13 @@ We compare the sampling time to NUTS, notice the difference in computation times
 - The Elliptical slice sampler takes as input the likelihood function and the mean and covariance $\Sigma$ parameters of the Gaussian prior separetley, since **the sampler assumes that the prior is Gaussian**. On the contrary case of NUTS, the algorithm takes as input the unnormalized posterior distribution, i.e. the likelihood times the prior density.
 - The Ellipical slice sampler is tuning-free, the warm up iterations are needed only for the sampler to start from a sensible initial position. While for NUTS the warm up samples are necessary not only to find a sensible initial position but also to tune the parameters of the algorithm, aiming at some average acceptance probability of its Metropolis-Hastings step. This additional tuning also contributes to the longer computation time.
 
-```python
+```{code-cell} ipython3
 # sampling parameters
 n_warm = 2000
 n_iter = 8000
 ```
 
-```python
+```{code-cell} ipython3
 %%time
 loglikelihood_fn = lambda f: -0.5 * jnp.dot(y - f, y - f) / y_sd**2
 init, kernel = elliptical_slice(loglikelihood_fn, mean=jnp.zeros(n), cov=Sigma)
@@ -115,7 +115,7 @@ states, info = inference_loop(jrnd.PRNGKey(0), init(f), kernel, n_warm + n_iter)
 samples = states.position[n_warm:]
 ```
 
-```python
+```{code-cell} ipython3
 %%time
 logprob_fn = lambda f: loglikelihood_fn(f) - 0.5 * jnp.dot(f @ invSigma, f)
 warmup = window_adaptation(nuts, logprob_fn, n_warm, target_acceptance_rate=0.8)
@@ -126,7 +126,7 @@ states, _ = inference_loop(key_sample, state, kernel, n_iter)
 
 We check that the sampler is targeting the correct distribution by comparing the sample's mean and covariance to the conjugate results, and plotting the predictive distribution of our samples over the real observations.
 
-```python
+```{code-cell} ipython3
 error_mean = jnp.mean((samples.mean(axis=0) - posterior_mean) ** 2)
 error_cov = jnp.mean((jnp.cov(samples, rowvar=False) - posterior_cov) ** 2)
 print(
@@ -134,7 +134,7 @@ print(
 )
 ```
 
-```python
+```{code-cell} ipython3
 keys = jrnd.split(rng, 1000)
 predictive = jax.vmap(lambda k, f: f + jrnd.normal(k, (n,)) * y_sd)(
     keys, samples[-1000:]
@@ -147,7 +147,7 @@ plt.title("Predictive distribution")
 plt.show()
 ```
 
-### Diagnostics
+## Diagnostics
 
 The Elliptical slice sampler does not have a Metropolis-Hastings step, at every iteration it proposes a new position using slice sampling on the likelihood. The sampler is more efficient the less informative the likelihood is in comparison to the prior.
 
@@ -157,7 +157,7 @@ Another parameter of interest for diagnostics is the location on the ellipse the
 
 Since the likelihood's variance is set at 1., it is quite informative. Increasing the likelihood's variance leads to less sub iterations per iteration of the Elliptical Slice sampler and the parameter theta becoming more uniform on its range.
 
-```python
+```{code-cell} ipython3
 plt.figure(figsize=(10, 5))
 plt.hist(np.array(info.subiter), bins=50)
 plt.xlabel("Sub iterations")
@@ -165,7 +165,7 @@ plt.title("Counts of number of sub iterations needed per sample.")
 plt.show()
 ```
 
-```python
+```{code-cell} ipython3
 plt.figure(figsize=(10, 5))
 plt.hist(np.array(info.theta), bins=100)
 plt.xlabel("theta")
@@ -173,8 +173,4 @@ plt.title(
     "Histogram of theta parameter, i.e. location on the circumference of the ellipsis."
 )
 plt.show()
-```
-
-```python
-
 ```

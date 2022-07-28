@@ -1,20 +1,18 @@
 ---
-jupyter:
-  jupytext:
-    text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: '1.3'
-      jupytext_version: 1.13.8
-  kernelspec:
-    display_name: Python 3 (ipykernel)
-    language: python
-    name: python3
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.14.0
+kernelspec:
+  display_name: Python 3 (ipykernel)
+  language: python
+  name: python3
 ---
 
 # Use BlackJAX with TFP
 
-<!-- #region -->
 BlackJAX can take any log-probability function as long as it is compatible with JAX's JIT. In this notebook we show how we can use tensorflow-probability as a modeling language and BlackJAX as an inference library.
 
 We reproduce the Eight Schools example from the [TFP documentation](https://www.tensorflow.org/probability/examples/Eight_Schools) (all credit for the model goes to the TFP team). For this notebook to run you will need to install tfp-nightly:
@@ -22,9 +20,8 @@ We reproduce the Eight Schools example from the [TFP documentation](https://www.
 ```bash
 pip install tfp-nightly
 ```
-<!-- #endregion -->
 
-```python
+```{code-cell} ipython3
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -39,7 +36,7 @@ import blackjax
 
 Please refer to the [original TFP example](https://www.tensorflow.org/probability/examples/Eight_Schools) for a description of the problem and the model that is used. This notebook focuses exclusively on the possibility to use TFP as a modeling language and BlackJAX as an inference library.
 
-```python
+```{code-cell} ipython3
 num_schools = 8  # number of schools
 treatment_effects = np.array(
     [28, 8, -3, 7, -1, 1, 18, 12], dtype=np.float32
@@ -51,7 +48,7 @@ treatment_stddevs = np.array(
 
 ## Model
 
-```python
+```{code-cell} ipython3
 model = tfd.JointDistributionSequential(
     [
         tfd.Normal(loc=0.0, scale=10.0, name="avg_effect"),  # `mu` above
@@ -92,7 +89,7 @@ def target_logprob_fn(avg_effect, avg_stddev, school_effects_standard):
 logprob_fn = lambda x: target_logprob_fn(**x)
 ```
 
-```python
+```{code-cell} ipython3
 rng_key = jax.random.PRNGKey(0)
 initial_position = {
     "avg_effect": jnp.zeros([]),
@@ -103,7 +100,7 @@ initial_position = {
 
 Let us first run the window adaptation to find a good value for the step size and for the inverse mass matrix. As in the original example we will run the integrator 3 times at each step.
 
-```python
+```{code-cell} ipython3
 %%time
 
 adapt = blackjax.window_adaptation(
@@ -115,7 +112,7 @@ last_state, kernel, _ = adapt.run(rng_key, initial_position)
 
 BlackJAX does not come with an inference loop (yet) so you have to implement it yourself, which just takes a few lines with JAX:
 
-```python
+```{code-cell} ipython3
 %%time
 
 
@@ -137,14 +134,14 @@ states.position["avg_effect"].block_until_ready()
 
 Extra information about the inference is contained in the `infos` namedtuple. Let us compute the average acceptance rate:
 
-```python
+```{code-cell} ipython3
 acceptance_rate = np.mean(infos.acceptance_probability)
 print(f"Acceptance rate: {acceptance_rate:.2f}")
 ```
 
 The samples are contained as a dictionnary in `states.position`. Let us compute the posterior of the school treatment effect:
 
-```python
+```{code-cell} ipython3
 samples = states.position
 school_effects_samples = (
     samples["avg_effect"][:, np.newaxis]
@@ -154,7 +151,7 @@ school_effects_samples = (
 
 And now let us plot the correponding chains and distributions:
 
-```python
+```{code-cell} ipython3
 import seaborn as sns
 from matplotlib import pyplot as plt
 
@@ -171,15 +168,15 @@ fig.tight_layout()
 plt.show()
 ```
 
-## Compare sampling time with TFP
+## Compare Sampling Time with TFP
 
-```python
+```{code-cell} ipython3
 import tensorflow.compat.v2 as tf
 
 tf.enable_v2_behavior()
 ```
 
-```python
+```{code-cell} ipython3
 %%time
 
 num_results = 500_000

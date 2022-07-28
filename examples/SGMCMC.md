@@ -1,23 +1,20 @@
 ---
-jupyter:
-  jupytext:
-    text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: '1.3'
-      jupytext_version: 1.13.8
-  kernelspec:
-    display_name: blackjax
-    language: python
-    name: blackjax
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.14.0
+kernelspec:
+  display_name: blackjax
+  language: python
+  name: python3
 ---
-
-# MNIST digit recognition with a 3-layer Perceptron
-
+# MNIST Digit Recognition With a 3-Layer Perceptron
 
 This example is inspired form [this notebook](https://github.com/jeremiecoullon/SGMCMCJax/blob/master/docs/nbs/BNN.ipynb) in the SGMCMCJax repository. We try to use a 3-layer neural network to recognise the digits in the MNIST dataset.
 
-```python
+```{code-cell} ipython3
 import jax
 import jax.nn as nn
 import jax.numpy as jnp
@@ -25,12 +22,11 @@ import jax.scipy.stats as stats
 import numpy as np
 ```
 
-## Data preparation
-
+## Data Preparation
 
 We download the MNIST data using `tensorflow-datasets`:
 
-```python
+```{code-cell} ipython3
 import tensorflow_datasets as tfds
 
 mnist_data, _ = tfds.load(
@@ -45,7 +41,7 @@ Now we need to apply several transformations to the dataset before splitting it 
 - The images are arrays of RGB codes between 0 and 255. We normalize them by the maximum value to get a range between 0 and 1;
 - We hot-encode category numbers.
 
-```python
+```{code-cell} ipython3
 def one_hot_encode(x, k, dtype=np.float32):
     "Create a one-hot encoding of x of size k."
     return np.array(x[:, None] == np.arange(k), dtype)
@@ -78,8 +74,7 @@ X_train, y_train, N_train = prepare_data(data_train)
 X_test, y_test, N_test = prepare_data(data_train)
 ```
 
-## Model:  3-layer perceptron
-
+## Model: 3-layer Perceptron
 
 We will use a very simple (bayesian) neural network in this example: A MLP with gaussian priors on the weights. We first need a function that computes the model's logposterior density given the data and the current values of the parameters. If we note $X$ the array that represents an image and $y$ the array such that $y_i = 0$  if the image is in category $i$, $y_i=1$ otherwise, the model can be written as:
 
@@ -88,7 +83,7 @@ We will use a very simple (bayesian) neural network in this example: A MLP with 
   \boldsymbol{y} &\sim \operatorname{Categorical}(\boldsymbol{p})
 \end{align*}
 
-```python
+```{code-cell} ipython3
 def predict_fn(parameters, X):
     """Returns the probability for the image represented by X
     to be in each category given the MLP's weights vakues.
@@ -131,12 +126,11 @@ def compute_accuracy(parameters, X, y):
     return jnp.mean(predicted_class == target_class)
 ```
 
-## Sample from the posterior distribution of the perceptron's weights
-
+## Sample From the Posterior Distribution of the Perceptron's Weights
 
 Now we need to get initial values for the parameters, and we simply sample from their prior distribution:
 
-```python
+```{code-cell} ipython3
 def init_parameters(rng_key, sizes):
     """
 
@@ -167,7 +161,7 @@ def init_layer(rng_key, m, n, scale=1e-2):
 
 We now sample from the model's posteriors. We discard the first 1000 samples until the sampler has reached the typical set, and then take 2000 samples. We record the model's accuracy with the current values every 100 steps.
 
-```python
+```{code-cell} ipython3
 %%time
 
 import blackjax
@@ -211,7 +205,7 @@ for step in range(num_samples + num_warmup):
 
 Let us plot the accuracy at different points in the sampling process:
 
-```python
+```{code-cell} ipython3
 import matplotlib.pylab as plt
 
 fig = plt.figure(figsize=(12, 8))
@@ -226,7 +220,7 @@ plt.title("Sample from 3-layer MLP posterior (MNIST dataset) with SgLD")
 plt.plot()
 ```
 
-```python
+```{code-cell} ipython3
 print(f"The average accuracy in the sampling phase is {np.mean(accuracies[10:]):.2f}")
 ```
 
@@ -234,13 +228,13 @@ Which is not a bad accuracy at all for such a simple model and after only 1000 s
 
 Here we will say that the model is unsure of its prediction for a given image if the digit that is most often predicted for this image is predicted less tham 95% of the time.
 
-```python
+```{code-cell} ipython3
 predicted_class = np.exp(
     np.stack([jax.vmap(predict_fn, in_axes=(None, 0))(s, X_test) for s in samples])
 )
 ```
 
-```python
+```{code-cell} ipython3
 max_predicted = [np.argmax(predicted_class[:, i, :], axis=1) for i in range(60000)]
 freq_max_predicted = np.array(
     [
@@ -253,7 +247,7 @@ certain_mask = freq_max_predicted > 0.95
 
 Let's plot a few examples where the model was very uncertain:
 
-```python
+```{code-cell} ipython3
 most_uncertain_idx = np.argsort(freq_max_predicted)
 
 for i in range(10):
@@ -265,13 +259,13 @@ for i in range(10):
 
 And now compute the average accuracy over all the samples without these uncertain predictions:
 
-```python
+```{code-cell} ipython3
 avg_accuracy = np.mean(
     [compute_accuracy(s, X_test[certain_mask], y_test[certain_mask]) for s in samples]
 )
 ```
 
-```python
+```{code-cell} ipython3
 print(
     f"The average accuracy removing the samples for which the model is uncertain is {avg_accuracy:.3f}"
 )

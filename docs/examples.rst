@@ -4,15 +4,13 @@ Examples
 .. toctree::
    :caption: Examples
 
-   examples/Introduction.ipynb
-   examples/LogisticRegression.ipynb
-   examples/LogisticRegressionWithLatentGaussianSampler.ipynb
-   examples/TemperedSMC.ipynb
-   examples/HierarchicalBNN.ipynb
-   examples/PeriodicOrbitalMCMC.ipynb
-   examples/GP_EllipticalSliceSampler.ipynb
-   examples/SGMCMC.ipynb
-   examples/Pathfinder.ipynb
-   examples/use_with_numpyro.ipynb
-   examples/use_with_pymc3.ipynb
-   examples/use_with_tfp.ipynb
+   examples/Introduction.md
+   examples/LogisticRegression.md
+   examples/LogisticRegressionWithLatentGaussianSampler.md
+   examples/TemperedSMC.md
+   examples/HierarchicalBNN.md
+   examples/PeriodicOrbitalMCMC.md
+   examples/GP_EllipticalSliceSampler.md
+   examples/SGMCMC.md
+   examples/change_of_variable_hmc.md
+   examples/Pathfinder.md

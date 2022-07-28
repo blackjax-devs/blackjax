@@ -1,8 +1,17 @@
 -e ./
+arviz
+distrax
 jax
 jaxlib
 jaxopt
 myst_nb
+optax
+scikit-learn
+seaborn
 sphinx
 sphinx-autobuild
 sphinx-book-theme
+sphinx-math-dollar
+tensorflow
+tensorflow-datasets
+watermark
