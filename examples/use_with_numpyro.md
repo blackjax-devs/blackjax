@@ -1,20 +1,18 @@
 ---
-jupyter:
-  jupytext:
-    text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: '1.3'
-      jupytext_version: 1.13.8
-  kernelspec:
-    display_name: Python 3 (ipykernel)
-    language: python
-    name: python3
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.14.0
+kernelspec:
+  display_name: Python 3 (ipykernel)
+  language: python
+  name: python3
 ---
 
 # Use BlackJAX with Numpyro
 
-<!-- #region -->
 BlackJAX can take any log-probability function as long as it is compatible with JAX's JIT. In this notebook we show how we can use Numpyro as a modeling language and BlackJAX as an inference library.
 
 We reproduce the Eight Schools example from the [Numpyro documentation](https://github.com/pyro-ppl/numpyro) (all credit for the model goes to the Numpyro team). For this notebook to run you will need to install Numpyro:
@@ -22,9 +20,8 @@ We reproduce the Eight Schools example from the [Numpyro documentation](https://
 ```bash
 pip install numpyro
 ```
-<!-- #endregion -->
 
-```python
+```{code-cell} ipython3
 import jax
 import numpy as np
 import numpyro
@@ -35,7 +32,7 @@ from numpyro.infer.util import initialize_model
 import blackjax
 ```
 
-```python
+```{code-cell} ipython3
 num_warmup = 1000
 
 # We can use this notebook for simple benchmarking by setting
@@ -52,7 +49,7 @@ else:
 
 ## Data
 
-```python
+```{code-cell} ipython3
 # Data of the Eight Schools Model
 J = 8
 y = np.array([28.0, 8.0, -3.0, 7.0, -1.0, 1.0, 18.0, 12.0])
@@ -61,10 +58,9 @@ sigma = np.array([15.0, 10.0, 16.0, 11.0, 9.0, 11.0, 10.0, 18.0])
 
 ## Model
 
-
 We use the non-centered version of the model described towards the end of the README on Numpyro's repository:
 
-```python
+```{code-cell} ipython3
 # Eight Schools example - Non-centered Reparametrization
 def eight_schools_noncentered(J, sigma, y=None):
     mu = numpyro.sample("mu", dist.Normal(0, 5))
@@ -82,7 +78,7 @@ def eight_schools_noncentered(J, sigma, y=None):
 
 We need to translate the model into a log-probability function that will be used by BlackJAX to perform inference. For that we use the `initialize_model` function in Numpyro's internals. We will also use the initial position it returns:
 
-```python
+```{code-cell} ipython3
 rng_key = jax.random.PRNGKey(0)
 
 init_params, potential_fn_gen, *_ = initialize_model(
@@ -95,7 +91,7 @@ init_params, potential_fn_gen, *_ = initialize_model(
 
 Now we create the potential using the `potential_fn_gen` provided by Numpyro and initialize the NUTS state with BlackJAX:
 
-```python
+```{code-cell} ipython3
 if RUN_BENCHMARK:
     print("\nBlackjax:")
     print("-> Running warmup.")
@@ -103,7 +99,7 @@ if RUN_BENCHMARK:
 
 We now run the window adaptation in BlackJAX:
 
-```python
+```{code-cell} ipython3
 %%time
 
 initial_position = init_params.z
@@ -117,14 +113,13 @@ last_state, kernel, _ = adapt.run(rng_key, initial_position)
 
 Let us now perform inference using the previously computed step size and inverse mass matrix. We also time the sampling to give you an idea of how fast BlackJAX can be on simple models:
 
-```python
+```{code-cell} ipython3
 if RUN_BENCHMARK:
     print("-> Running sampling.")
 ```
 
-```python
+```{code-cell} ipython3
 %%time
-
 
 def inference_loop(rng_key, kernel, initial_state, num_samples):
     @jax.jit
@@ -138,7 +133,7 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     return states, (
         infos.acceptance_probability,
         infos.is_divergent,
-        infos.integration_steps,
+        infos.num_integration_steps,
     )
 
 
@@ -149,7 +144,7 @@ _ = states.position["mu"].block_until_ready()
 
 Let us compute the average acceptance probability and check the number of divergences (to make sure that the model sampled correctly, and that the sampling time is not a result of a majority of divergent transitions):
 
-```python
+```{code-cell} ipython3
 acceptance_rate = np.mean(infos[0])
 num_divergent = np.mean(infos[1])
 
@@ -159,7 +154,7 @@ print(f"{100*num_divergent:.2f}% divergent transitions")
 
 Let us now plot the distribution of the parameters. Note that since we use a transformed variable, Numpyro does not output the school treatment effect directly:
 
-```python
+```{code-cell} ipython3
 if not RUN_BENCHMARK:
     import seaborn as sns
     from matplotlib import pyplot as plt
@@ -175,7 +170,7 @@ if not RUN_BENCHMARK:
     fig.tight_layout()
 ```
 
-```python
+```{code-cell} ipython3
 if not RUN_BENCHMARK:
     fig, axes = plt.subplots(8, 2, sharex="col", sharey="col")
     fig.set_size_inches(12, 10)
@@ -190,7 +185,7 @@ if not RUN_BENCHMARK:
     plt.show()
 ```
 
-```python
+```{code-cell} ipython3
 if not RUN_BENCHMARK:
     for i in range(J):
         print(
@@ -198,21 +193,21 @@ if not RUN_BENCHMARK:
         )
 ```
 
-## Compare sampling time with Numpyro
+## Compare Sampling Time with Numpyro
 
 We compare the time it took BlackJAX to do the warmup for 1,000 iterations and then taking 100,000 samples with Numpyro's:
 
-```python
+```{code-cell} ipython3
 from numpyro.infer import MCMC, NUTS
 ```
 
-```python
+```{code-cell} ipython3
 if RUN_BENCHMARK:
     print("\nNumpyro:")
     print("-> Running warmup+sampling.")
 ```
 
-```python
+```{code-cell} ipython3
 %%time
 
 nuts_kernel = NUTS(eight_schools_noncentered, target_accept_prob=0.8)
@@ -226,12 +221,12 @@ samples = mcmc.get_samples()
 _ = samples["mu"].block_until_ready()
 ```
 
-```python
+```{code-cell} ipython3
 print(f"\nAcceptance rate: {mcmc.get_extra_fields()['accept_prob'].mean():.2f}")
 print(f"{100*mcmc.get_extra_fields()['diverging'].mean():.2f}% divergent transitions")
 ```
 
-```python
+```{code-cell} ipython3
 print(f"\nBlackjax average {infos[2].mean():.2f} leapfrog per iteration.")
 print(
     f"Numpyro average {mcmc.get_extra_fields()['num_steps'].mean():.2f} leapfrog per iteration."

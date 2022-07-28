@@ -11,4 +11,5 @@ release:
 
 
 build-docs:
+	pip install -r requirements-doc.txt
 	sphinx-build -b html docs docs/_build/html

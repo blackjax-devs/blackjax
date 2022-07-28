@@ -38,6 +38,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
+    "sphinx_math_dollar",
+    "sphinx.ext.mathjax",
     "myst_nb",
 ]
 
@@ -86,4 +88,10 @@ add_module_names = False
 
 source_suffix = {".rst": "restructuredtext", ".ipynb": "myst-nb", ".md": "myst-nb"}
 
-jupyter_execute_notebooks = "off"
+nb_execution_mode = "auto"
+nb_execution_timeout = 300
+suppress_warnings = ["mystnb.unknown_mime_type"]
+
+nb_custom_formats = {
+    ".md": ["jupytext.reads", {"fmt": "mystnb"}],
+}
