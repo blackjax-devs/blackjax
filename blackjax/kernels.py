@@ -58,10 +58,10 @@ class adaptive_tempered_smc:
         root_solver: Callable = smc.solver.dichotomy,
         use_log_ess: bool = True,
         mcmc_iter: int = 10,
-        with_parameter_tunning: Callable = no_tunning,
+        kernel_parameter_tunning: Callable = no_tunning,
     ) -> SamplingAlgorithm:
 
-        kernel_factory = with_parameter_tunning(mcmc_algorithm, mcmc_parameters)
+        kernel_factory = kernel_parameter_tunning(mcmc_algorithm, mcmc_parameters)
 
         step = cls.kernel(
             logprior_fn,
@@ -108,10 +108,10 @@ class tempered_smc:
         mcmc_parameters: Dict,
         resampling_fn: Callable,
         mcmc_iter: int = 10,
-        with_parameter_tunning: Callable = no_tunning,
+        kernel_parameter_tunning: Callable = no_tunning,
     ) -> SamplingAlgorithm:
 
-        kernel_factory = with_parameter_tunning(mcmc_algorithm, mcmc_parameters)
+        kernel_factory = kernel_parameter_tunning(mcmc_algorithm, mcmc_parameters)
 
         step = cls.kernel(
             logprior_fn,

@@ -91,8 +91,8 @@ class TemperedSMCTest(chex.TestCase):
             iterates.append(n_iter)
             results.append(result)
 
-            np.testing.assert_allclose(np.mean(result.particles[0]), 1.0, rtol=1e-1)
-            np.testing.assert_allclose(np.mean(result.particles[1]), 3.0, rtol=1e-1)
+            np.testing.assert_allclose(np.mean(result.get_particles[0]), 1.0, rtol=1e-1)
+            np.testing.assert_allclose(np.mean(result.get_particles[1]), 3.0, rtol=1e-1)
 
         assert iterates[1] >= iterates[0]
 
@@ -136,8 +136,8 @@ class TemperedSMCTest(chex.TestCase):
             return (rng_key, new_state), (new_state, info)
 
         (_, result), _ = jax.lax.scan(body_fn, (self.key, init_state), lambda_schedule)
-        np.testing.assert_allclose(np.mean(result.particles[0]), 1.0, rtol=1e-1)
-        np.testing.assert_allclose(np.mean(result.particles[1]), 3.0, rtol=1e-1)
+        np.testing.assert_allclose(np.mean(result.get_particles[0]), 1.0, rtol=1e-1)
+        np.testing.assert_allclose(np.mean(result.get_particles[1]), 3.0, rtol=1e-1)
 
 
 def normal_logprob_fn(x, chol_cov):

@@ -20,7 +20,7 @@ from blackjax.smc.parameter_tunning import (
     proposal_distribution_tunning,
 )
 from blackjax.types import PyTree
-from tests.smc_test_utils import MultivariableParticlesGenerator
+from tests.smc_test_utils import MultivariableParticlesDistribution
 
 
 def kernel_logprob_fn(position):
@@ -207,7 +207,7 @@ class NormalProposalOnParticlesTest(chex.TestCase):
         )
 
     def test_normal_on_multivariable_posterior_particles(self):
-        generator = MultivariableParticlesGenerator(
+        generator = MultivariableParticlesDistribution(
             50000,
             mean_x=[10.0, 3.0],
             mean_y=[5.0, 20.0],
@@ -215,7 +215,7 @@ class NormalProposalOnParticlesTest(chex.TestCase):
         )
 
         proposal_distribution = normal_proposal_from_particles(
-            kernel_logprob_fn, generator.particles()
+            kernel_logprob_fn, generator.get_particles()
         )
 
         samples = np.array(
