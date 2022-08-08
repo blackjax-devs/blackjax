@@ -1,3 +1,3 @@
-from . import sgld
+from . import sghmc, sgld
 
-__all__ = ["sgld"]
+__all__ = ["sgld", "sghmc"]
