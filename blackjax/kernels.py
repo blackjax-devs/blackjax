@@ -10,7 +10,7 @@ import blackjax.smc as smc
 import blackjax.vi as vi
 from blackjax.base import AdaptationAlgorithm, SamplingAlgorithm
 from blackjax.progress_bar import progress_bar_scan
-from blackjax.smc.parameter_tunning import no_tunning
+from blackjax.smc.parameter_tuning import no_tuning
 from blackjax.types import Array, LogProbFn, PRNGKey, PyTree
 
 __all__ = [
@@ -58,10 +58,10 @@ class adaptive_tempered_smc:
         root_solver: Callable = smc.solver.dichotomy,
         use_log_ess: bool = True,
         mcmc_iter: int = 10,
-        kernel_parameter_tunning: Callable = no_tunning,
+        kernel_parameter_tuning: Callable = no_tuning,
     ) -> SamplingAlgorithm:
 
-        kernel_factory = kernel_parameter_tunning(mcmc_algorithm, mcmc_parameters)
+        kernel_factory = kernel_parameter_tuning(mcmc_algorithm, mcmc_parameters)
 
         step = cls.kernel(
             logprior_fn,
@@ -108,7 +108,7 @@ class tempered_smc:
         mcmc_parameters: Dict,
         resampling_fn: Callable,
         mcmc_iter: int = 10,
-        kernel_parameter_tunning: Callable = no_tunning,
+        kernel_parameter_tunning: Callable = no_tuning,
     ) -> SamplingAlgorithm:
 
         kernel_factory = kernel_parameter_tunning(mcmc_algorithm, mcmc_parameters)

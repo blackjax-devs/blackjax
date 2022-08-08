@@ -2,14 +2,16 @@
 strategies to tune the parameters of mcmc kernels
 used within smc, based on particles
 """
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
 
+from blackjax.types import LogProbFn
 
-def no_tunning(mcmc_algorithm, mcmc_parameters):
-    """
-    default implementation that will not take particles
+
+def no_tuning(mcmc_algorithm, mcmc_parameters) -> Callable:
+    """default implementation that will not take particles
     into consideration to build a mcmc algorithm.
     """
 
@@ -19,9 +21,8 @@ def no_tunning(mcmc_algorithm, mcmc_parameters):
     return kernel_factory
 
 
-def proposal_distribution_tunning(mcmc_algorithm, mcmc_parameters):
-    """
-    tunes the proposal distribution based on particles, in order
+def proposal_distribution_tuning(mcmc_algorithm, mcmc_parameters) -> Callable:
+    """tunes the proposal distribution based on particles, in order
     to be used, an mcmc_parameter called "proposal_distribution_factory"
     needs to be in place.
     """
@@ -43,13 +44,21 @@ def proposal_distribution_tunning(mcmc_algorithm, mcmc_parameters):
     return kernel_factory
 
 
-def normal_proposal_from_particles(logprob_fn, particles):
-    """
-    builds a new normal proposal distribution based on
-    particles mean and std. since particles
+def normal_proposal_from_particles(logprob_fn: LogProbFn, particles) -> Callable:
+    """builds a new normal proposal distribution based on
+    particles mean and std since particles
     are represented as lists with one element
     per posterior variable, we need to calculate
     mean/std per variable.
+
+    Parameters
+    ----------
+    logprob_fn: unused parameter, present only for polymorphism
+    particles: population of samples that will be mutated in an SMC step
+
+    Returns
+    -------
+    a proposal distribution
     """
     _, unravel_fn = jax.flatten_util.ravel_pytree(particles)
 

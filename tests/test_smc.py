@@ -14,10 +14,10 @@ import blackjax
 import blackjax.smc.base as base
 import blackjax.smc.resampling as resampling
 from blackjax.base import SamplingAlgorithm
-from blackjax.smc.parameter_tunning import (
-    no_tunning,
+from blackjax.smc.parameter_tuning import (
+    no_tuning,
     normal_proposal_from_particles,
-    proposal_distribution_tunning,
+    proposal_distribution_tuning,
 )
 from blackjax.types import PyTree
 from tests.smc_test_utils import MultivariableParticlesDistribution
@@ -116,7 +116,7 @@ class ParameterTunningStrategiesTest(chex.TestCase):
             mcmc_with_proposal_distribution, return_value=to_return
         )
         mock_proposal_distribution = MagicMock()
-        factory = no_tunning(
+        factory = no_tuning(
             mock_mcmc_algorithm, {"proposal_distribution": mock_proposal_distribution}
         )
         tuned_mcmc = factory(kernel_logprob_fn, 0.25 + np.random.randn(50))
@@ -143,7 +143,7 @@ class ParameterTunningStrategiesTest(chex.TestCase):
         mcmc_factory.return_value = sampling_algorithm
         sampling_algorithm.step = step_fn
 
-        tunned_mcmc_factory = proposal_distribution_tunning(
+        tunned_mcmc_factory = proposal_distribution_tuning(
             mcmc_factory, {"proposal_distribution_factory": proposal_factory}
         )
         tuned_mcmc = tunned_mcmc_factory(logprob_fn, particles)
@@ -156,7 +156,7 @@ class ParameterTunningStrategiesTest(chex.TestCase):
 
     def test_proposal_distribution_tunning_no_param(self):
         with self.assertRaises(ValueError) as context:
-            tuned_factory = proposal_distribution_tunning(MagicMock(), {})
+            tuned_factory = proposal_distribution_tuning(MagicMock(), {})
             tuned_factory(kernel_logprob_fn, None)
         self.assertTrue(
             "you need to include a 'proposal_distribution_factory' parameter "
@@ -266,7 +266,7 @@ class IRMHProposalTunningTest(chex.TestCase):
         mean converges to the target mean, and the std
         converges to zero.
         """
-        mcmc_factory = proposal_distribution_tunning(
+        mcmc_factory = proposal_distribution_tuning(
             blackjax.irmh,
             mcmc_parameters={
                 "proposal_distribution_factory": normal_proposal_from_particles
