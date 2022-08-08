@@ -10,7 +10,8 @@ import blackjax.smc as smc
 import blackjax.vi as vi
 from blackjax.base import AdaptationAlgorithm, SamplingAlgorithm
 from blackjax.progress_bar import progress_bar_scan
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.smc.parameter_tunning import no_tunning
+from blackjax.types import Array, LogProbFn, PRNGKey, PyTree
 
 __all__ = [
     "adaptive_tempered_smc",
@@ -57,9 +58,10 @@ class adaptive_tempered_smc:
         root_solver: Callable = smc.solver.dichotomy,
         use_log_ess: bool = True,
         mcmc_iter: int = 10,
+        with_parameter_tunning: Callable = no_tunning,
     ) -> SamplingAlgorithm:
-        def kernel_factory(logprob_fn):
-            return mcmc_algorithm(logprob_fn, **mcmc_parameters).step
+
+        kernel_factory = with_parameter_tunning(mcmc_algorithm, mcmc_parameters)
 
         step = cls.kernel(
             logprior_fn,
@@ -106,9 +108,10 @@ class tempered_smc:
         mcmc_parameters: Dict,
         resampling_fn: Callable,
         mcmc_iter: int = 10,
+        with_parameter_tunning: Callable = no_tunning,
     ) -> SamplingAlgorithm:
-        def kernel_factory(logprob_fn):
-            return mcmc_algorithm(logprob_fn, **mcmc_parameters).step
+
+        kernel_factory = with_parameter_tunning(mcmc_algorithm, mcmc_parameters)
 
         step = cls.kernel(
             logprior_fn,
@@ -691,7 +694,7 @@ class rmh:
 
     def __new__(  # type: ignore[misc]
         cls,
-        logprob_fn: Callable,
+        logprob_fn: LogProbFn,
         sigma: Array,
     ) -> SamplingAlgorithm:
         step = cls.kernel()

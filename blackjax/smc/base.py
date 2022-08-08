@@ -3,6 +3,7 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
+from blackjax.smc.particle_utils import number_of_particles
 from blackjax.types import PyTree
 
 
@@ -94,11 +95,11 @@ def kernel(
             Additional information on the SMC step
         """
 
-        num_particles = jax.tree_flatten(particles)[0][0].shape[0]
+        num_particles = number_of_particles(particles)
         scan_key, resampling_key = jax.random.split(rng_key, 2)
 
         # First advance the particles using the MCMC kernel
-        mcmc_kernel = mcmc_kernel_factory(logprob_fn)
+        mcmc_kernel = mcmc_kernel_factory(logprob_fn, particles)
 
         def mcmc_body_fn(curr_particles, curr_key):
             keys = jax.random.split(curr_key, num_particles)

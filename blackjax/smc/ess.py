@@ -1,9 +1,9 @@
 """All things related to SMC effective sample size"""
 from typing import Callable
 
-import jax
 import jax.numpy as jnp
 
+from blackjax.smc.particle_utils import number_of_particles
 from blackjax.types import PyTree
 
 
@@ -66,7 +66,7 @@ def ess_solver(
         The increment that solves for the target ESS
     """
 
-    n_particles = jax.tree_flatten(particles)[0][0].shape[0]
+    n_particles = number_of_particles(particles)
 
     logprob = logprob_fn(particles)
     if use_log_ess:

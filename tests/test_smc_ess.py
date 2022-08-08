@@ -12,6 +12,7 @@ from jax.scipy.stats.norm import logpdf as univariate_logpdf
 
 import blackjax.smc.ess as ess
 import blackjax.smc.solver as solver
+from tests.smc_test_utils import particles_from_multivariable_posterior
 
 
 class SMCEffectiveSampleSizeTest(chex.TestCase):
@@ -78,14 +79,7 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
             ) - multivariate_logpdf(pytree[1], mean=mean, cov=cov)
 
         potential = jax.vmap(potential_fn, in_axes=[0], out_axes=0)
-        particles = [
-            np.random.multivariate_normal(
-                mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=N
-            ),
-            np.random.multivariate_normal(
-                mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=N
-            ),
-        ]
+        particles = particles_from_multivariable_posterior(N)
         self.ess_solver_test_case(potential, particles, target_ess, N, 10.0)
 
     def ess_solver_test_case(self, potential, particles, target_ess, N, max_delta):

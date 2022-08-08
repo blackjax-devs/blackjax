@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Mapping, Union
+from typing import Any, Callable, Iterable, Mapping, Union
 
 import jax._src.prng as prng
 import jax.numpy as jnp
@@ -15,3 +15,6 @@ PyTree = Union[Array, Iterable[Array], Mapping[Any, Array]]
 
 #: JAX PRNGKey
 PRNGKey = prng.PRNGKeyArray
+
+LogProbFn = Callable
+# We require log_prob_fn output a (batch of) scalar output.
