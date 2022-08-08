@@ -224,25 +224,25 @@ class NormalProposalOnParticlesTest(chex.TestCase):
 
         np.testing.assert_allclose(
             np.mean([sample[0] for sample in samples.tolist()], axis=0),
-            particles_distribution .mean_x,
+            particles_distribution.mean_x,
             rtol=1e-1,
         )
 
         np.testing.assert_allclose(
             np.mean([sample[1] for sample in samples.tolist()], axis=0),
-            particles_distribution .mean_y,
+            particles_distribution.mean_y,
             rtol=1e-1,
         )
 
         np.testing.assert_allclose(
             np.std([sample[0] for sample in samples.tolist()], axis=0),
-            np.sqrt(np.diag(particles_distribution .cov_x)),
+            np.sqrt(np.diag(particles_distribution.cov_x)),
             rtol=1e-1,
         )
 
         np.testing.assert_allclose(
             np.std([sample[1] for sample in samples.tolist()], axis=0),
-            np.sqrt(np.diag(particles_distribution .cov_y)),
+            np.sqrt(np.diag(particles_distribution.cov_y)),
             rtol=1e-1,
         )
 
