@@ -1,6 +1,6 @@
 """Test the generic SMC sampler"""
 import functools
-from collections import Callable
+from typing import Callable
 from unittest.mock import MagicMock, create_autospec
 
 import chex
