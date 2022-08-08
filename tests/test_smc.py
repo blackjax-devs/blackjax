@@ -207,7 +207,7 @@ class NormalProposalOnParticlesTest(chex.TestCase):
         )
 
     def test_normal_on_multivariable_posterior_particles(self):
-        generator = MultivariableParticlesDistribution(
+        particles_distribution = MultivariableParticlesDistribution(
             50000,
             mean_x=[10.0, 3.0],
             mean_y=[5.0, 20.0],
@@ -215,7 +215,7 @@ class NormalProposalOnParticlesTest(chex.TestCase):
         )
 
         proposal_distribution = normal_proposal_from_particles(
-            kernel_logprob_fn, generator.get_particles()
+            kernel_logprob_fn, particles_distribution.get_particles()
         )
 
         samples = np.array(
@@ -224,25 +224,25 @@ class NormalProposalOnParticlesTest(chex.TestCase):
 
         np.testing.assert_allclose(
             np.mean([sample[0] for sample in samples.tolist()], axis=0),
-            generator.mean_x,
+            particles_distribution .mean_x,
             rtol=1e-1,
         )
 
         np.testing.assert_allclose(
             np.mean([sample[1] for sample in samples.tolist()], axis=0),
-            generator.mean_y,
+            particles_distribution .mean_y,
             rtol=1e-1,
         )
 
         np.testing.assert_allclose(
             np.std([sample[0] for sample in samples.tolist()], axis=0),
-            np.sqrt(np.diag(generator.cov_x)),
+            np.sqrt(np.diag(particles_distribution .cov_x)),
             rtol=1e-1,
         )
 
         np.testing.assert_allclose(
             np.std([sample[1] for sample in samples.tolist()], axis=0),
-            np.sqrt(np.diag(generator.cov_y)),
+            np.sqrt(np.diag(particles_distribution .cov_y)),
             rtol=1e-1,
         )
 
