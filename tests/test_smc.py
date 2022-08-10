@@ -19,6 +19,10 @@ from blackjax.smc.parameter_tuning import (
     normal_proposal_from_particles,
     proposal_distribution_tuning,
 )
+from blackjax.smc.particle_utils import (
+    number_of_particles,
+    number_of_posterior_variables,
+)
 from blackjax.types import PyTree
 from tests.smc_test_utils import MultivariableParticlesDistribution
 
@@ -302,6 +306,33 @@ class IRMHProposalTunningTest(chex.TestCase):
             expected_mean, np.mean(states[-1]), rtol=1e-2, atol=1e-1
         )
         np.testing.assert_allclose(0, np.std(states[-1]), rtol=1e-2, atol=1e-1)
+
+
+class TestParticleUtils(parameterized.TestCase):
+    @parameterized.parameters(
+        [
+            ([np.array([[1.0, 2.0]]), np.array([[3.0, 4.0, 5.0]])], 1),
+            (np.array([1.0, 2.0, 3.0, 4.0, 5.0]), 5),
+            (np.array([[1.0, 2.0], [3.0, 4.0]]), 2),
+        ]
+    )
+    def test_number_of_particles(self, particles, expected_number):
+        assert number_of_particles(particles) == expected_number
+
+    @parameterized.parameters(
+        [
+            (MultivariableParticlesDistribution(2).get_particles(), 2),
+            (np.array([1.0, 2.0]), 1),
+            (np.array([[1.0, 2.0]]), 1),
+            (np.array([[1.0, 2.0], [3.0, 4.0]]), 1),
+        ]
+    )
+    def test_number_of_posterior_variables(
+        self, particles, expected_n_posterior_variables
+    ):
+        assert (
+            number_of_posterior_variables(particles) == expected_n_posterior_variables
+        )
 
 
 if __name__ == "__main__":

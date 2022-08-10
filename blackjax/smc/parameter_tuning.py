@@ -7,8 +7,6 @@ from typing import Callable
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import LogProbFn
-
 
 def no_tuning(mcmc_algorithm, mcmc_parameters) -> Callable:
     """default implementation that will not take particles
@@ -44,7 +42,7 @@ def proposal_distribution_tuning(mcmc_algorithm, mcmc_parameters) -> Callable:
     return kernel_factory
 
 
-def normal_proposal_from_particles(logprob_fn: LogProbFn, particles) -> Callable:
+def normal_proposal_from_particles(logprob_fn: Callable, particles) -> Callable:
     """builds a new normal proposal distribution based on
     particles mean and std since particles
     are represented as lists with one element

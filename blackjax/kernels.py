@@ -11,7 +11,7 @@ import blackjax.vi as vi
 from blackjax.base import AdaptationAlgorithm, SamplingAlgorithm
 from blackjax.progress_bar import progress_bar_scan
 from blackjax.smc.parameter_tuning import no_tuning
-from blackjax.types import Array, LogProbFn, PRNGKey, PyTree
+from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = [
     "adaptive_tempered_smc",
@@ -772,7 +772,7 @@ class rmh:
 
     def __new__(  # type: ignore[misc]
         cls,
-        logprob_fn: LogProbFn,
+        logprob_fn: Callable,
         sigma: Array,
     ) -> SamplingAlgorithm:
         step = cls.kernel()

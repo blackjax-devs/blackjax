@@ -16,7 +16,7 @@ def number_of_particles(particles: PyTree) -> int:
     return jax.tree_flatten(particles)[0][0].shape[0]
 
 
-def posterior_variables(particles: PyTree) -> int:
+def number_of_posterior_variables(particles: PyTree) -> int:
     if isinstance(particles, list):
         return len(particles)
     else:
