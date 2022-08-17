@@ -740,7 +740,7 @@ class rmh:
 
     .. code::
 
-        rmh = blackjax.rmh(logprob_fn sigma)
+        rmh = blackjax.rmh(logprob_fn, sigma)
         state = rmh.init(position)
         new_state, info = rmh.step(rng_key, state)
 
