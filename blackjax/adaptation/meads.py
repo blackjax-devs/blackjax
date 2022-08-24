@@ -12,7 +12,6 @@ from blackjax.types import PyTree
 def base(
     kernel_factory: Callable,
     logprob_grad_fn: Callable,
-    num_chain: int,
     batch_fn: Callable = jax.vmap,
 ):
     """Maximum-Eigenvalue Adaptation of Damping and Step size for the Generalized
@@ -31,8 +30,8 @@ def base(
     kernel_factory
         Function that takes as input the step size, alpha and delta parameters
         and outputs a Generalized HMC kernel that generates new samples.
-    num_chain
-        Number of chains used for cross-chain warm-up training.
+    logprob_grad_fn
+        The gradient of logprob_fn, outputs the gradient PyTree for sample.
     batch_fn
         Either jax.vmap or jax.pmap to perform parallel operations.
 
@@ -112,7 +111,8 @@ def base(
         return step_size, alpha, delta
 
     init, update = chain_adaptation.cross_chain(
-        kernel_factory, parameter_gn, num_chain, batch_fn
+        lambda *parameters: batch_fn(kernel_factory(*parameters)),
+        parameter_gn,
     )
 
     def final(last_state: chain_adaptation.ChainState) -> PyTree:

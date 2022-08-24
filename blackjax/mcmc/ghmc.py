@@ -145,7 +145,7 @@ def kernel(
         key_momentum, key_noise = jax.random.split(rng_key)
         position, momentum, potential_energy, potential_energy_grad, slice = state
         # New momentum is persistent
-        momentum = update_momentum(key_momentum, position, momentum, alpha)
+        momentum = update_momentum(key_momentum, state, alpha)
         # Slice is non-reversible
         slice = ((slice + 1.0 + delta + noise_gn(key_noise)) % 2) - 1.0
 
@@ -230,7 +230,7 @@ def velocity_verlet(
     return one_step
 
 
-def update_momentum(rng_key, position, momentum, alpha):
+def update_momentum(rng_key, state, alpha):
     """Persistent update of the momentum variable.
 
     Performs a persistent update of the momentum, taking as input the previous
@@ -239,6 +239,8 @@ def update_momentum(rng_key, position, momentum, alpha):
     from a Gaussian density (dependent on alpha). The weights of the mixture of
     these two components are a function of alpha.
     """
+
+    position, momentum, *_ = state
 
     m, _ = ravel_pytree(momentum)
     momentum_generator, *_ = metrics.gaussian_euclidean(

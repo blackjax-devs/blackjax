@@ -14,3 +14,5 @@ Examples
    examples/SGMCMC.md
    examples/change_of_variable_hmc.md
    examples/Pathfinder.md
+   examples/RegimeSwitchingModel.md
+   examples/SparseLogisticRegression.md

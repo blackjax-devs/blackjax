@@ -804,8 +804,6 @@ def meads(
     init, update, final = adaptation.meads.base(
         kernel_factory,
         logprob_grad_fn or jax.grad(logprob_fn),
-        num_chain,
-        batch_fn,
     )
 
     batch_init = batch_fn(lambda r, p: ghmc.init(r, p, logprob_fn, logprob_grad_fn))
