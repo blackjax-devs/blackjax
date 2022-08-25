@@ -340,7 +340,7 @@ def schedule(
 
     # Give up on mass matrix adaptation when the number of warmup steps is too small.
     if num_steps < 20:
-        schedule += [(0, False)] * (num_steps - 1)
+        schedule += [(0, False)] * num_steps
     else:
         # When the number of warmup steps is smaller that the sum of the provided (or default)
         # window sizes we need to resize the different windows.
