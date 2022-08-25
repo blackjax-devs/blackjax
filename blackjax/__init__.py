@@ -18,7 +18,7 @@ from .kernels import (
 )
 from .optimizers import dual_averaging, lbfgs
 
-__version__ = "0.8.2"
+__version__ = "0.8.3"
 
 __all__ = [
     "dual_averaging",  # optimizers
