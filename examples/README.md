@@ -1,34 +1,54 @@
 # Examples
 
-When you add a new sampling fuctions, please add an Exmaple Notebook to describe how the function is used. Before push your function and its corresponding notebook to `Main` branch, please convert the notebook into text file.
+The Blackjax repository provides examples in the form of Markdown documents. [Jupytext](https://github.com/mwouts/jupytext) can be used by the users to convert their Jupyter notebooks to this format, or convert these documents to Jupyter notebooks. Examples are rendered in the [documentation](https://blackjax-devs.github.io/blackjax/).
 
-## Converting Notebook Files to Text Files
 
-Please convert your `.ipynb` to `markdown` before commit your example to this repo. You can use the command below:
+## For users
 
-```python
+### Load examples in a Jupyter notebook
+
+To convert any example file to a Jupyter notebook you can use:
+
+```shell
+jupytext examples/your_example_file.md --to notebook
+```
+
+you can then interact with the resulting notebook just like with any notebook.
+
+
+## For contributors
+
+### Convert my Jupyter notebook to markdown
+
+If you implemented your example in a Jupyter notebook you can convert your `.ipynb` file to Markdown using the command below:
+
+```shell
 jupytext example/your_example_notebook.ipynb --to myst
 ```
 
-The script will produce the `Markdown` version of your example notebook. Please make sure you add only the `Markdown` version to your commit.
+Once the example file is converted to a Markdown file, you have two options for editing:
+
+1. Edit the Markdown version as it is a regular Markdown file.
+2. Edit the Notebook version then convert it to a Markdown file once you finish editing with the command above. Jupytext can handle the change if the example has the same file name.
+
+**Please make sure to only commit the  Markdown file.**
 
 ## Composing Documentation on Sphinx-Doc
 
-We use `Sphinx` to generate document for this repo. You may also want to test whether all examples are executed correctly for documentation. We are highly encoruge you to do so on your local machine when you make change to any notebooks in `Examples`. Please follow instructions below:
+We use `Sphinx` to generate document for this repo. We highly encourage you to check how your changes to the examples are rendered in the documentation:
 
 1. Add your documentation to `docs/examples.rst`
-
 2. Run the command below:
 
-    ```shell
-    make build-docs
-    ```
+```shell
+ make build-docs
+```
 
-3. Verify the generated documentation in `docs/builds`
+3. Check the generated documentation in `docs/builds`
 
 ### Execution Times
 
-Since we store the example notebooks in `Markdown` format, but we will need outputs of in the documentations. `Sphinx` will handles all executions for you. The table below shows the execution times of example notebooks for your reference. These execution times were run on M1 machine.
+`Sphinx` handles the conversion from Markdown to the rendered pages. The table below shows the execution times of example notebooks on a laptop to give you an idea of what to expect:
 
 |Examples                       | Execution Time (seconds) |
 |-------------------------------|--------|
