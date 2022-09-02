@@ -4,6 +4,7 @@ distrax
 jax
 jaxlib
 jaxopt
+jupytext
 myst_nb
 optax
 scikit-learn
