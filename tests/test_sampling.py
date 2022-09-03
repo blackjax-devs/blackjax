@@ -70,12 +70,12 @@ class LinearRegressionTest(chex.TestCase):
 
     def regression_logprob(self, scale, coefs, preds, x):
         """Linear regression"""
-        logpdf = 0
-        logpdf += stats.expon.logpdf(scale, 1, 1)
-        logpdf += stats.norm.logpdf(coefs, 3 * jnp.ones(x.shape[-1]), 2)
+        scale_prior = stats.expon.logpdf(scale, 1, 1)
+        coefs_prior = stats.norm.logpdf(coefs, 0, 5)
         y = jnp.dot(x, coefs)
-        logpdf += stats.norm.logpdf(preds, y, scale)
-        return jnp.sum(logpdf)
+        logpdf = stats.norm.logpdf(preds, y, scale)
+        # reduce sum otherwise broacasting will make the logprob biased.
+        return sum(x.sum() for x in [scale_prior, coefs_prior, logpdf])
 
     @parameterized.parameters(itertools.product(regression_test_cases, [True, False]))
     def test_window_adaptation(self, case, is_mass_matrix_diagonal):
