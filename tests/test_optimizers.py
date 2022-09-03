@@ -51,7 +51,7 @@ class OptimizerTest(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
-        [(5, 10), (10, 1), (10, 20)],
+        [(5, 10), (10, 2), (10, 20)],
     )
     def test_minimize_lbfgs(self, maxiter, maxcor):
         """Test if dot product between approximate inverse hessian and gradient is

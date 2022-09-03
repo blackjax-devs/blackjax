@@ -1080,9 +1080,6 @@ def pathfinder_adaptation(
         return ((state, adaptation_state), (state, info, adaptation_state.da_state))
 
     def run(rng_key: PRNGKey, position: PyTree):
-
-        rng_key_init, rng_key_chain = jax.random.split(rng_key, 2)
-
         init_warmup_state, init_position = init(rng_key, position, initial_step_size)
         init_state = algorithm.init(init_position, logprob_fn)
 
