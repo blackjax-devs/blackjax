@@ -17,12 +17,11 @@ import blackjax
 
 def regression_logprob(scale, coefs, preds, x):
     """Linear regression"""
-    logpdf = 0
-    logpdf += stats.expon.logpdf(scale, 1, 1)
-    logpdf += stats.norm.logpdf(coefs, 3 * jnp.ones(x.shape[-1]), 2)
+    scale_prior = stats.expon.logpdf(scale, 1, 1)
+    coefs_prior = stats.norm.logpdf(coefs, 0, 5)
     y = jnp.dot(x, coefs)
-    logpdf += stats.norm.logpdf(preds, y, scale)
-    return jnp.sum(logpdf)
+    logpdf = stats.norm.logpdf(preds, y, scale)
+    return sum(x.sum() for x in [scale_prior, coefs_prior, logpdf])
 
 
 def inference_loop(kernel, num_samples, rng_key, initial_state):
