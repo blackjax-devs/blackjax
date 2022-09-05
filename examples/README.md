@@ -54,7 +54,8 @@ We use `Sphinx` to generate document for this repo. We highly encourage you to c
 |-------------------------------|--------|
 | GP_EllipticalSliceSampler     | 235.20 |
 | HierarchicalBNN               | 84.45  |
-| Introduction                  | 108.55 |
+| Introduction                  | 13.81  |
+| MultipleChains                | 233.77 |
 | LogisticRegression            | 7.06   |
 | LogisticRegressionWithLatentGaussianSampler              | 7.10  |
 | Pathfinder                    | 18.11  |
