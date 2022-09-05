@@ -196,7 +196,7 @@ states.position["loc"].shape
 E.g. to get the `loc` samples for the second chain:
 
 ```{code-cell} ipython3
-samples = states.position["loc"][1, :]
+samples = states.position["loc"][:, 1]
 samples
 ```
 
@@ -207,8 +207,8 @@ samples.shape
 ```{code-cell} ipython3
 fig, ax = plt.subplots(figsize=(15, 6))
 
-ax.plot(states.position["loc"][0, :], color="blue", alpha=0.25)
-ax.plot(states.position["loc"][1, :], color="red", alpha=0.25)
+ax.plot(states.position["loc"][:, 0], color="blue", alpha=0.25)
+ax.plot(states.position["loc"][:, 1], color="red", alpha=0.25)
 ax.set_xlabel("Samples")
 ax.set_ylabel("loc")
 ax.legend(["Chain 1", "Chain 2"])
@@ -216,8 +216,7 @@ ax.legend(["Chain 1", "Chain 2"])
 
 ### Using `pmap`
 
-In case of `pmap`, we can simply choose to apply the transformation to the original,
-high level `inference_loop` function.states.position["loc"][1, :]
+In case of `pmap`, we can simply choose to apply the transformation directly to the original `inference_loop` function.
 
 ```{code-cell} ipython3
 inference_loop_multiple_chains = jax.pmap(inference_loop, in_axes=(0, None, 0, None), static_broadcasted_argnums=(1, 3))
@@ -240,7 +239,7 @@ pmap_states = inference_loop_multiple_chains(
 _ = pmap_states.position["loc"].block_until_ready()
 ```
 
-The returned data looks identical to the `vmap` case
+Note that the samples are transposed compared to the `vmap` case
 
 ```{code-cell} ipython3
 pmap_states.position["loc"].shape
