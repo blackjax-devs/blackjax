@@ -39,10 +39,11 @@
     <script src="../_static/togglebutton.js"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Gaussian regression with the Elliptical Slice sampler" href="GP_EllipticalSliceSampler.html" />
-    <link rel="prev" title="Hierarchical Bayesian neural networks" href="HierarchicalBNN.html" />
+    <link rel="next" title="Gaussian Regression with the Elliptical Slice Sampler" href="GP_EllipticalSliceSampler.html" />
+    <link rel="prev" title="Hierarchical Bayesian Neural Networks" href="HierarchicalBNN.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -112,7 +113,7 @@
   <ul class="current">
    <li class="toctree-l2">
     <a class="reference internal" href="Introduction.html">
-     A quick introduction to Blackjax
+     A Quick Introduction to Blackjax
     </a>
    </li>
    <li class="toctree-l2">
@@ -122,17 +123,17 @@
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="LogisticRegressionWithLatentGaussianSampler.html">
-     Bayesian Logistic Regression
+     Bayesian Logistic Regression With Latent Gaussian Sampler
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="TemperedSMC.html">
-     Use Tempered SMC to improve exploration of MCMC methods.
+     Use Tempered SMC to Improve Exploration of MCMC Methods.
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="HierarchicalBNN.html">
-     Hierarchical Bayesian neural networks
+     Hierarchical Bayesian Neural Networks
     </a>
    </li>
    <li class="toctree-l2 current active">
@@ -142,27 +143,22 @@
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="GP_EllipticalSliceSampler.html">
-     Gaussian regression with the Elliptical Slice sampler
+     Gaussian Regression with the Elliptical Slice Sampler
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="SGMCMC.html">
-     MNIST digit recognition with a 3-layer Perceptron
+     MNIST Digit Recognition With a 3-Layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="change_of_variable_hmc.html">
+     Change of Variable in HMC
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="Pathfinder.html">
      Pathfinder
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="use_with_numpyro.html">
-     Use BlackJAX with Numpyro
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="use_with_tfp.html">
-     Use BlackJAX with TFP
     </a>
    </li>
   </ul>
@@ -290,17 +286,17 @@ title="Source repository"
         <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#useful-functions">
-   Useful functions
+   Useful Functions
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#banana-density">
-   Banana density
+   Banana Density
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#initial-state-and-sampler-parameters">
-   Initial state and sampler parameters
+   Initial State and Sampler Parameters
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
@@ -330,7 +326,7 @@ title="Source repository"
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#some-utility-functions">
-     Some utility functions
+     Some Utility Functions
     </a>
    </li>
   </ul>
@@ -356,17 +352,17 @@ title="Source repository"
                             <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#useful-functions">
-   Useful functions
+   Useful Functions
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#banana-density">
-   Banana density
+   Banana Density
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#initial-state-and-sampler-parameters">
-   Initial state and sampler parameters
+   Initial State and Sampler Parameters
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
@@ -396,7 +392,7 @@ title="Source repository"
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#some-utility-functions">
-     Some utility functions
+     Some Utility Functions
     </a>
    </li>
   </ul>
@@ -414,8 +410,10 @@ title="Source repository"
   <section id="periodic-orbital-mcmc">
 <h1>Periodic Orbital MCMC<a class="headerlink" href="#periodic-orbital-mcmc" title="Permalink to this headline">#</a></h1>
 <p>Illustrating the usage of Algorithm 2 of <a class="reference external" href="https://arxiv.org/abs/2010.08047">Neklyudov &amp; Welling, (2021)</a> on the Banana density</p>
-<p>$$p(x) = p(x_1, x_2) = N(x_1|0, 8)N(x_2|1/4x_1^2, 1).$$</p>
-<p>Bijection functions $f(x, v)$ used for sampling are the velocity Verlet, McLachlan and Yoshida integrators for the Hamiltonian function</p>
+<p><div class="math notranslate nohighlight">
+\[p(x) = p(x_1, x_2) = N(x_1|0, 8)N(x_2|1/4x_1^2, 1).\]</div>
+</p>
+<p>Bijection functions <span class="math notranslate nohighlight">\(f(x, v)\)</span> used for sampling are the velocity Verlet, McLachlan and Yoshida integrators for the Hamiltonian function</p>
 <p>$$ H(x, v) = \frac{1}{2}\left(\frac{x_1^2}{8} + \left(x_2 - \frac{1}{4}x_1^2\right)^2\right) + \frac{1}{2}v^Tv. $$</p>
 <p>Using any of these integrators amounts to doing vanilla HMC (traditionally done with the velocity Verlet integrator) but sampling various points from an orbit that discretizes the Hamiltonian dynamics to then weigh these samples in order to ensure we target the correct distribution (where in vanilla HMC we would choose a sample from the discretized orbit and perform a Metropolis-Hastings acceptance step on that sample to ensure the target distribution is left invariant).</p>
 <p>The benefits of sampling the whole orbit instead of a single point in it are: efficiency, since we build a trajectory around an orbit and use all if it instead of discarding most of it; and wider reach, since even unlikely points will be sampled and given small weights, making the sampler more likely to explore the tails of our target. This at the cost of higher memory consumption since we have <code class="docutils literal notranslate"><span class="pre">period</span></code> samples per iteration, instead of only one, and the lack of diagnostics, theoretical guarantees and heuristic methods developed for traditional HMC and its adaptive mechanisms (such as NUTS) during the past decades.</p>
@@ -424,12 +422,12 @@ title="Source repository"
 x(t) = x(0) \cos(t) + v(t) \sin(t) \
 v(t) = v(0) \cos(t) - x(t) \sin(t),
 $$</p>
-<p>i.e. the solution of Hamilton’s equations for $p(x,v) = N(x|0,I)N(v|0,I)$,</p>
+<p>i.e. the solution of Hamilton’s equations for <span class="math notranslate nohighlight">\(p(x,v) = N(x|0,I)N(v|0,I)\)</span>,</p>
 <p>$$
 \frac{d x}{d t} = v \
 \frac{d v}{d t} = -x.
 $$</p>
-<p>As it is later demonstrated, these dynamics alone fail to capture all the volume of our banana density. They are, however, cheap and easy to use, since these dynamics are both gradient-free (don’t require the computation of gradients of our target distribution) and tuning-free (have no tuning parameters); in contrast with the integrators mentioned above, which need to compute gradients at each iteration and require tuning of the discretization step size and number of steps (when used for periodic orbital MCMC, these values are represented by the <code class="docutils literal notranslate"><span class="pre">step_size</span></code> and <code class="docutils literal notranslate"><span class="pre">period</span></code>). Paired with a preconditioning step which transforms our target to approximate $N(x|0,I)$, our cheap and easy dynamics can efficienty sample from the whole volume of our banana density while delegating the expensive gradients and cumbersome tuning to an optimization problem performed pre-sampling.</p>
+<p>As it is later demonstrated, these dynamics alone fail to capture all the volume of our banana density. They are, however, cheap and easy to use, since these dynamics are both gradient-free (don’t require the computation of gradients of our target distribution) and tuning-free (have no tuning parameters); in contrast with the integrators mentioned above, which need to compute gradients at each iteration and require tuning of the discretization step size and number of steps (when used for periodic orbital MCMC, these values are represented by the <code class="docutils literal notranslate"><span class="pre">step_size</span></code> and <code class="docutils literal notranslate"><span class="pre">period</span></code>). Paired with a preconditioning step which transforms our target to approximate <span class="math notranslate nohighlight">\(N(x|0,I)\)</span>, our cheap and easy dynamics can efficienty sample from the whole volume of our banana density while delegating the expensive gradients and cumbersome tuning to an optimization problem performed pre-sampling.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
@@ -452,19 +450,19 @@ $$</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Python implementation: CPython
-Python version       : 3.10.4
-IPython version      : 8.3.0
+Python version       : 3.9.13
+IPython version      : 8.4.0
 
-jax     : 0.3.8
-jaxlib  : 0.3.7
-blackjax: 0.5.0
+jax     : 0.3.17
+jaxlib  : 0.3.15
+blackjax: 0.8.3
 
-Compiler    : GCC 11.2.1 20220127 (Red Hat 11.2.1-9)
+Compiler    : GCC 9.4.0
 OS          : Linux
-Release     : 5.17.4-200.fc35.x86_64
+Release     : 5.15.0-1017-azure
 Machine     : x86_64
 Processor   : x86_64
-CPU cores   : 8
+CPU cores   : 2
 Architecture: 64bit
 </pre></div>
 </div>
@@ -486,7 +484,7 @@ Architecture: 64bit
 </div>
 </div>
 <section id="useful-functions">
-<h2>Useful functions<a class="headerlink" href="#useful-functions" title="Permalink to this headline">#</a></h2>
+<h2>Useful Functions<a class="headerlink" href="#useful-functions" title="Permalink to this headline">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -531,7 +529,7 @@ Architecture: 64bit
 </div>
 </section>
 <section id="banana-density">
-<h2>Banana density<a class="headerlink" href="#banana-density" title="Permalink to this headline">#</a></h2>
+<h2>Banana Density<a class="headerlink" href="#banana-density" title="Permalink to this headline">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">):</span>
@@ -547,12 +545,12 @@ Architecture: 64bit
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/6d0bf9d70ebbd64e93851b5017736d4281168657ff1c10721c683404fff6f7d5.png" src="../_images/6d0bf9d70ebbd64e93851b5017736d4281168657ff1c10721c683404fff6f7d5.png" />
+<img alt="../_images/c5cb5238a11b34998852b621154390514ff150662f3bf8d9fbbb66a472248dee.png" src="../_images/c5cb5238a11b34998852b621154390514ff150662f3bf8d9fbbb66a472248dee.png" />
 </div>
 </div>
 </section>
 <section id="initial-state-and-sampler-parameters">
-<h2>Initial state and sampler parameters<a class="headerlink" href="#initial-state-and-sampler-parameters" title="Permalink to this headline">#</a></h2>
+<h2>Initial State and Sampler Parameters<a class="headerlink" href="#initial-state-and-sampler-parameters" title="Permalink to this headline">#</a></h2>
 <p>Since the algorithm doesn’t have an accept/reject step, we can’t tune the parameters of the bijection according to its acceptance probability. By weighing the samples we are are doing, in a sense, importance sampling; hence, an alternative would be develop and adaptive procedure that aims at reducing the variance of the weights.</p>
 <p>The algorithm samples orbits of length <code class="docutils literal notranslate"><span class="pre">period</span></code>. Each iteration, starting from an initial point sampled from the previous orbit, shifts its initial point’s position in the orbit, hence making the algorithm irreversible, and samples the whole orbit, forwards and backwards in order to cover the whole period, for steps of length <code class="docutils literal notranslate"><span class="pre">step_size</span></code>. The samples are then weighted and returned with its corresponding weights.</p>
 <div class="cell docutils container">
@@ -589,8 +587,8 @@ Architecture: 64bit
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 183 ms, sys: 1.19 ms, total: 184 ms
-Wall time: 183 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 290 ms, sys: 341 µs, total: 290 ms
+Wall time: 288 ms
 </pre></div>
 </div>
 </div>
@@ -607,8 +605,8 @@ Wall time: 183 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 646 ms, sys: 5.98 ms, total: 652 ms
-Wall time: 643 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.2 s, sys: 8.77 ms, total: 1.21 s
+Wall time: 1.2 s
 </pre></div>
 </div>
 </div>
@@ -620,7 +618,7 @@ Wall time: 643 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/6c69e0a6fb1863b5d0263bdaf14dacb2a119a42d346cb04a1bee2a4fc25b782f.png" src="../_images/6c69e0a6fb1863b5d0263bdaf14dacb2a119a42d346cb04a1bee2a4fc25b782f.png" />
+<img alt="../_images/1c9690355d8837ca9d6a9b54feb430f6edb0f9d5ee5fc5cf4fec933fcbee23e6.png" src="../_images/1c9690355d8837ca9d6a9b54feb430f6edb0f9d5ee5fc5cf4fec933fcbee23e6.png" />
 </div>
 </div>
 </section>
@@ -639,8 +637,8 @@ Wall time: 643 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.8 ms, sys: 886 µs, total: 7.69 ms
-Wall time: 7.33 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17 ms, sys: 0 ns, total: 17 ms
+Wall time: 16.7 ms
 </pre></div>
 </div>
 </div>
@@ -657,8 +655,8 @@ Wall time: 7.33 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 536 ms, sys: 5.71 ms, total: 542 ms
-Wall time: 532 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.13 s, sys: 3.95 ms, total: 1.13 s
+Wall time: 1.13 s
 </pre></div>
 </div>
 </div>
@@ -670,7 +668,7 @@ Wall time: 532 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/6fcba74c726e1b7ea0753d19dbf1247cf5ee4153afe0fc77c2901135729ead81.png" src="../_images/6fcba74c726e1b7ea0753d19dbf1247cf5ee4153afe0fc77c2901135729ead81.png" />
+<img alt="../_images/5fefc8dcdf0378a02e0518f5ed9a1677f5dd44788407b1786458857e619e78a8.png" src="../_images/5fefc8dcdf0378a02e0518f5ed9a1677f5dd44788407b1786458857e619e78a8.png" />
 </div>
 </div>
 </section>
@@ -689,8 +687,8 @@ Wall time: 532 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.54 ms, sys: 1.26 ms, total: 7.8 ms
-Wall time: 7.1 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 16.6 ms, sys: 284 µs, total: 16.9 ms
+Wall time: 16.6 ms
 </pre></div>
 </div>
 </div>
@@ -707,8 +705,8 @@ Wall time: 7.1 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 585 ms, sys: 333 µs, total: 586 ms
-Wall time: 578 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.15 s, sys: 8.36 ms, total: 1.16 s
+Wall time: 1.15 s
 </pre></div>
 </div>
 </div>
@@ -720,18 +718,18 @@ Wall time: 578 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/93c65d3f2fc36494cf2b6ecb0cad29660575237cb5970c61eefb30ab57fccaad.png" src="../_images/93c65d3f2fc36494cf2b6ecb0cad29660575237cb5970c61eefb30ab57fccaad.png" />
+<img alt="../_images/e539d08e64460998fac48ced98158d8ec7c118245152a4f5f1341a493cd15d76.png" src="../_images/e539d08e64460998fac48ced98158d8ec7c118245152a4f5f1341a493cd15d76.png" />
 </div>
 </div>
 </section>
 <section id="ellipsis">
 <h2>Ellipsis<a class="headerlink" href="#ellipsis" title="Permalink to this headline">#</a></h2>
-<p>We now create and use a bijection given by an ellipsis using the <code class="docutils literal notranslate"><span class="pre">IntegratorState</span></code> class. The bijection must have as inputs the potential and kinetic energy functions, which are the negative log densities of our target posterior and the auxiliary distribution used for the momentum variable. In the case of our banana density, we are targeting the “posterior” $N(x_1|0, 8)N(x_2|1/4x_1^2, 1)$ and using a standard normal distribution for our momentum variable, hence our potential and kinetic energies are $1/2\left(x_1^2/8 + \left(x_2 - 1/4x_1^2\right)^2\right)$ and $1/2v^Tv$, respectively. However, the orbit we build now is independent of these two energies and moves around an ellipsis given by</p>
+<p>We now create and use a bijection given by an ellipsis using the <code class="docutils literal notranslate"><span class="pre">IntegratorState</span></code> class. The bijection must have as inputs the potential and kinetic energy functions, which are the negative log densities of our target posterior and the auxiliary distribution used for the momentum variable. In the case of our banana density, we are targeting the “posterior” <span class="math notranslate nohighlight">\(N(x_1|0, 8)N(x_2|1/4x_1^2, 1)\)</span> and using a standard normal distribution for our momentum variable, hence our potential and kinetic energies are <span class="math notranslate nohighlight">\(1/2\left(x_1^2/8 + \left(x_2 - 1/4x_1^2\right)^2\right)\)</span> and <span class="math notranslate nohighlight">\(1/2v^Tv\)</span>, respectively. However, the orbit we build now is independent of these two energies and moves around an ellipsis given by</p>
 <p>$$
 x(t) = x(0) \cos(t) + v(t) \sin(t) \
 v(t) = v(0) \cos(t) - x(t) \sin(t),
 $$</p>
-<p>which returns to its initial position every $t=2\pi$ radians. The <code class="docutils literal notranslate"><span class="pre">step_size</span></code> for this orbit is set to cover the entire ellipsis. This ellipsis actually targets a potential and kinetic energy given by the product measure of two standard normal distributions, hence its inefficiency at exploring the real target measure.</p>
+<p>which returns to its initial position every <span class="math notranslate nohighlight">\(t=2\pi\)</span> radians. The <code class="docutils literal notranslate"><span class="pre">step_size</span></code> for this orbit is set to cover the entire ellipsis. This ellipsis actually targets a potential and kinetic energy given by the product measure of two standard normal distributions, hence its inefficiency at exploring the real target measure.</p>
 <p>The bijection must output a function which takes as input an <code class="docutils literal notranslate"><span class="pre">IntegratorState</span></code>, composed of a position, momentum, potential energy (negative log density of our target evaluated at position) and the gradient of the potential energy, and a step size; and outputs a proposed <code class="docutils literal notranslate"><span class="pre">IntegratorState</span></code>. Even if the dynamics of our bijection are independent of the real potential energy, we need to return the potential energy at the proposed position for the computation of the sampler’s weights. But, as our dynamics are gradient-free, we can return the same gradient as the previous state to avoid unnecessary computations.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -782,8 +780,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.88 ms, sys: 958 µs, total: 8.83 ms
-Wall time: 8.22 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 16.7 ms, sys: 39 µs, total: 16.7 ms
+Wall time: 16.4 ms
 </pre></div>
 </div>
 </div>
@@ -800,8 +798,8 @@ Wall time: 8.22 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 492 ms, sys: 4.91 ms, total: 496 ms
-Wall time: 489 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 895 ms, sys: 105 µs, total: 895 ms
+Wall time: 890 ms
 </pre></div>
 </div>
 </div>
@@ -813,33 +811,44 @@ Wall time: 489 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/66a5f87d4ec48e90d75ee5026668649eb1261898f08af79b31e81022e29c8dbc.png" src="../_images/66a5f87d4ec48e90d75ee5026668649eb1261898f08af79b31e81022e29c8dbc.png" />
+<img alt="../_images/6b614b07d5b9962c8d863015a182ca1f3942eefe81c63fa297764f84f073d8a0.png" src="../_images/6b614b07d5b9962c8d863015a182ca1f3942eefe81c63fa297764f84f073d8a0.png" />
 </div>
 </div>
 </section>
 <section id="ellipsis-iaf">
 <h2>Ellipsis + IAF<a class="headerlink" href="#ellipsis-iaf" title="Permalink to this headline">#</a></h2>
-<p>The ellipsis used to build the orbit on the previous algorithm solves Hamilton’s equations for $p(x,v) = N(x|0,I)N(v|0,I)$. We can use normalizing flows to approximate the pullback density of our target to a standard normal, thus allowing the algorithm to sample from a density similar to what it is targeting.</p>
+<p>The ellipsis used to build the orbit on the previous algorithm solves Hamilton’s equations for <span class="math notranslate nohighlight">\(p(x,v) = N(x|0,I)N(v|0,I)\)</span>. We can use normalizing flows to approximate the pullback density of our target to a standard normal, thus allowing the algorithm to sample from a density similar to what it is targeting.</p>
 <p>To do this we parametrize a diffeomorphism as an <a class="reference external" href="https://arxiv.org/abs/1705.07057">MAF</a> and optimize its parameters by minimizing the the Kullback-Liebler divergence between the pullback density and a standard normal (equivalently maximizing the Evidence Lower BOund (ELBO) or the Variational Lower Bound).</p>
-<p>Once we have a diffeomorphism that “transports” our target to something close enough to a standard normal, we can use our orbital MCMC sampler travelling around the ellipsis to sample from our target pullback density (the target density “transported” to a standard normal). This will be equivalent to sampling using periodic orbital MCMC where the bijection used to move around the orbit is the composition of: first the inverse diffeomorphism which transports samples from our target to the standard normal, then the ellipsis solving Hamilton’s equations for $p(x,v) = N(x|0,I)N(v|0,I)$, and finally the diffeomorphism which transports standard normal samples back to samples from our target. Formally, if there is a smooth, invertible transformation $T$ such that for $x$, a random variable distributed as our target density $\pi(x)$, we have that</p>
+<p>Once we have a diffeomorphism that “transports” our target to something close enough to a standard normal, we can use our orbital MCMC sampler travelling around the ellipsis to sample from our target pullback density (the target density “transported” to a standard normal). This will be equivalent to sampling using periodic orbital MCMC where the bijection used to move around the orbit is the composition of: first the inverse diffeomorphism which transports samples from our target to the standard normal, then the ellipsis solving Hamilton’s equations for <span class="math notranslate nohighlight">\(p(x,v) = N(x|0,I)N(v|0,I)\)</span>, and finally the diffeomorphism which transports standard normal samples back to samples from our target. Formally, if there is a smooth, invertible transformation <span class="math notranslate nohighlight">\(T\)</span> such that for <span class="math notranslate nohighlight">\(x\)</span>, a random variable distributed as our target density <span class="math notranslate nohighlight">\(\pi(x)\)</span>, we have that</p>
 <p>$$
 z \sim \phi(z), \quad x \approx T(z),
 $$</p>
-<p>where $\phi(z)$ indicates the standard normal density. This implies that</p>
+<p>where <span class="math notranslate nohighlight">\(\phi(z)\)</span> indicates the standard normal density. This implies that</p>
 <p>$$
 \phi(z) \approx \pi(T(z)) |\det \nabla T(z)|,
 $$</p>
-<p>where the right hand side of the equation is what we call the pullback density of our target. Thus, letting the bijection $f(x,v) = (x(t), v(t))$ for</p>
+<p>where the right hand side of the equation is what we call the pullback density of our target. Thus, letting the bijection <span class="math notranslate nohighlight">\(f(x,v) = (x(t), v(t))\)</span> for</p>
 <p>$$
 x(t) = x(0) \cos(t) + v(t) \sin(t) \
 v(t) = v(0) \cos(t) - x(t) \sin(t),
 $$</p>
-<p>we have that using the periodic orbital MCMC on the pullback with bijection $f(x,v)$ is equivalent to using the periodic orbital MCMC on our target density with bijection $T \circ f \circ T^{-1}$.</p>
+<p>we have that using the periodic orbital MCMC on the pullback with bijection <span class="math notranslate nohighlight">\(f(x,v)\)</span> is equivalent to using the periodic orbital MCMC on our target density with bijection <span class="math notranslate nohighlight">\(T \circ f \circ T^{-1}\)</span>.</p>
 <p>First we define our parametrized MAF bijection using autoregressive neural networks.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">optax</span>
 <span class="kn">from</span> <span class="nn">numpyro.nn</span> <span class="kn">import</span> <span class="n">AutoregressiveNN</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
+<span class="nn">Input In [22],</span> in <span class="ni">&lt;cell line: 2&gt;</span><span class="nt">()</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">import</span> <span class="nn">optax</span>
+<span class="ne">----&gt; </span><span class="mi">2</span> <span class="kn">from</span> <span class="nn">numpyro.nn</span> <span class="kn">import</span> <span class="n">AutoregressiveNN</span>
+
+<span class="ne">ModuleNotFoundError</span>: No module named &#39;numpyro&#39;
 </pre></div>
 </div>
 </div>
@@ -872,7 +881,7 @@ $$</p>
 </div>
 </div>
 <section id="some-utility-functions">
-<h3>Some utility functions<a class="headerlink" href="#some-utility-functions" title="Permalink to this headline">#</a></h3>
+<h3>Some Utility Functions<a class="headerlink" href="#some-utility-functions" title="Permalink to this headline">#</a></h3>
 <p>Define the log pullback density, our loss function (negative ELBO) and the optimization loop used to train our transformation.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -946,13 +955,6 @@ $$</p>
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<img alt="../_images/88e4d5e3b975d866c10cb5cb411e8829896531999269428486a071bec41478d6.png" src="../_images/88e4d5e3b975d866c10cb5cb411e8829896531999269428486a071bec41478d6.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.32 s, sys: 84.8 ms, total: 1.4 s
-Wall time: 1.3 s
-</pre></div>
-</div>
-</div>
 </div>
 <p>We define our log pullback given the learned parameters of the transformation and use the periodic orbital MCMC with an ellipsis to sample from this log pullback density.</p>
 <div class="cell docutils container">
@@ -974,12 +976,6 @@ Wall time: 1.3 s
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 524 ms, sys: 149 ms, total: 673 ms
-Wall time: 498 ms
-</pre></div>
-</div>
-</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -989,12 +985,6 @@ Wall time: 498 ms
 
 <span class="n">pullback_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">positions</span>
 <span class="n">weights</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">weights</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 629 ms, sys: 689 µs, total: 630 ms
-Wall time: 624 ms
 </pre></div>
 </div>
 </div>
@@ -1028,9 +1018,6 @@ Wall time: 624 ms
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<img alt="../_images/59143bb3a0b5bcfb554c66e73114da2c0abffdb517e437d960442d84f81c9b3d.png" src="../_images/59143bb3a0b5bcfb554c66e73114da2c0abffdb517e437d960442d84f81c9b3d.png" />
-</div>
 </div>
 </section>
 </section>
@@ -1048,13 +1035,13 @@ Wall time: 624 ms
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Hierarchical Bayesian neural networks</p>
+            <p class="prev-next-title">Hierarchical Bayesian Neural Networks</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="GP_EllipticalSliceSampler.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Gaussian regression with the Elliptical Slice sampler</p>
+        <p class="prev-next-title">Gaussian Regression with the Elliptical Slice Sampler</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

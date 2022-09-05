@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Change of variable in HMC &#8212; Blackjax</title>
+    <title>Change of Variable in HMC &#8212; Blackjax</title>
     
   <!-- Loaded before other Sphinx assets -->
   <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
@@ -39,8 +39,11 @@
     <script src="../_static/togglebutton.js"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Pathfinder" href="Pathfinder.html" />
+    <link rel="prev" title="MNIST Digit Recognition With a 3-Layer Perceptron" href="SGMCMC.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -97,20 +100,20 @@
   Blackjax by example
  </span>
 </p>
-<ul class="nav bd-sidenav">
- <li class="toctree-l1 has-children">
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active has-children">
   <a class="reference internal" href="../examples.html">
    Examples
   </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
   <label for="toctree-checkbox-1">
    <i class="fas fa-chevron-down">
    </i>
   </label>
-  <ul>
+  <ul class="current">
    <li class="toctree-l2">
     <a class="reference internal" href="Introduction.html">
-     A quick introduction to Blackjax
+     A Quick Introduction to Blackjax
     </a>
    </li>
    <li class="toctree-l2">
@@ -120,17 +123,17 @@
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="LogisticRegressionWithLatentGaussianSampler.html">
-     Bayesian Logistic Regression
+     Bayesian Logistic Regression With Latent Gaussian Sampler
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="TemperedSMC.html">
-     Use Tempered SMC to improve exploration of MCMC methods.
+     Use Tempered SMC to Improve Exploration of MCMC Methods.
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="HierarchicalBNN.html">
-     Hierarchical Bayesian neural networks
+     Hierarchical Bayesian Neural Networks
     </a>
    </li>
    <li class="toctree-l2">
@@ -140,27 +143,22 @@
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="GP_EllipticalSliceSampler.html">
-     Gaussian regression with the Elliptical Slice sampler
+     Gaussian Regression with the Elliptical Slice Sampler
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="SGMCMC.html">
-     MNIST digit recognition with a 3-layer Perceptron
+     MNIST Digit Recognition With a 3-Layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
+     Change of Variable in HMC
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="Pathfinder.html">
      Pathfinder
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="use_with_numpyro.html">
-     Use BlackJAX with Numpyro
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="use_with_tfp.html">
-     Use BlackJAX with TFP
     </a>
    </li>
   </ul>
@@ -293,17 +291,17 @@ title="Source repository"
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#posterior-sampling">
-   Posterior sampling
+   Posterior Sampling
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#arviz-plots">
-   Arviz plots
+   Arviz Plots
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#change-of-variable">
-   Change of variable
+   Change of Variable
   </a>
  </li>
 </ul>
@@ -315,7 +313,7 @@ title="Source repository"
         <div class="col pl-md-3 pl-lg-5 content-container">
             <!-- Table of contents that is only displayed when printing the page -->
             <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Change of variable in HMC</h1>
+                <h1>Change of Variable in HMC</h1>
                 <!-- Table of contents -->
                 <div id="print-main-content">
                     <div id="jb-print-toc">
@@ -332,17 +330,17 @@ title="Source repository"
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#posterior-sampling">
-   Posterior sampling
+   Posterior Sampling
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#arviz-plots">
-   Arviz plots
+   Arviz Plots
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#change-of-variable">
-   Change of variable
+   Change of Variable
   </a>
  </li>
 </ul>
@@ -356,9 +354,9 @@ title="Source repository"
               <div>
                 
   <section id="change-of-variable-in-hmc">
-<h1>Change of variable in HMC<a class="headerlink" href="#change-of-variable-in-hmc" title="Permalink to this headline">#</a></h1>
-<p><strong>Rat tumor problem:</strong> We have J certain kinds of rat tumor diseases. For each kind of tumor, we test $N_{j}$ people/animals and among those $y_{j}$ tested positive. Here we assume that $y_{j}$ is distrubuted with <strong>Binom</strong>($N_{i}$, $\theta_{i}$). Our objective is to approximate $\theta_{j}$ for each type of tumor.</p>
-<p>In particular we use following binomial hierarchical model where $y_{j}$ and $N_{j}$ are observed variables.</p>
+<h1>Change of Variable in HMC<a class="headerlink" href="#change-of-variable-in-hmc" title="Permalink to this headline">#</a></h1>
+<p><strong>Rat tumor problem:</strong> We have J certain kinds of rat tumor diseases. For each kind of tumor, we test <span class="math notranslate nohighlight">\(N_{j}\)</span> people/animals and among those <span class="math notranslate nohighlight">\(y_{j}\)</span> tested positive. Here we assume that <span class="math notranslate nohighlight">\(y_{j}\)</span> is distrubuted with <strong>Binom</strong>(<span class="math notranslate nohighlight">\(N_{i}\)</span>, <span class="math notranslate nohighlight">\(\theta_{i}\)</span>). Our objective is to approximate <span class="math notranslate nohighlight">\(\theta_{j}\)</span> for each type of tumor.</p>
+<p>In particular we use following binomial hierarchical model where <span class="math notranslate nohighlight">\(y_{j}\)</span> and <span class="math notranslate nohighlight">\(N_{j}\)</span> are observed variables.</p>
 <table>
 <tr>
 </tr>
@@ -400,6 +398,11 @@ p(a, b) &amp;\propto (a+b)^{-5/2}
 <span class="n">tfd</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">distributions</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s2">&quot;xtick&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>  <span class="c1"># fontsize of the xtick labels</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s2">&quot;ytick&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>  <span class="c1"># fontsize of the tyick labels</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-05 15:31:24.470284: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libcudart.so.11.0&#39;; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory
 </pre></div>
 </div>
 </div>
@@ -586,7 +589,7 @@ p(a, b) &amp;\propto (a+b)^{-5/2}
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/c466a6755320a0824bf99bff579fd59f11eb3e051d3234d3df754e237001d275.png" src="../_images/c466a6755320a0824bf99bff579fd59f11eb3e051d3234d3df754e237001d275.png" />
+<img alt="../_images/873477c4170c983c4aeca458cd7876b37971cc328c1f63c9326539cdd6b142ad.png" src="../_images/873477c4170c983c4aeca458cd7876b37971cc328c1f63c9326539cdd6b142ad.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -600,13 +603,13 @@ p(a, b) &amp;\propto (a+b)^{-5/2}
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/9899850c409635e1818f0b59f62cf7f01a323b904ce24c585456e1338388fd48.png" src="../_images/9899850c409635e1818f0b59f62cf7f01a323b904ce24c585456e1338388fd48.png" />
+<img alt="../_images/61eb2cbd961b5568894f4a74c2bb662af95201cf0b992b25c404193a46988466.png" src="../_images/61eb2cbd961b5568894f4a74c2bb662af95201cf0b992b25c404193a46988466.png" />
 </div>
 </div>
 </section>
 <section id="posterior-sampling">
-<h2>Posterior sampling<a class="headerlink" href="#posterior-sampling" title="Permalink to this headline">#</a></h2>
-<p>Now we use Blackjax’s NUTS algorithm to get posterior samples of $a$, $b$, and $\theta$</p>
+<h2>Posterior Sampling<a class="headerlink" href="#posterior-sampling" title="Permalink to this headline">#</a></h2>
+<p>Now we use Blackjax’s NUTS algorithm to get posterior samples of <span class="math notranslate nohighlight">\(a\)</span>, <span class="math notranslate nohighlight">\(b\)</span>, and <span class="math notranslate nohighlight">\(\theta\)</span></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">joint_logprob</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
@@ -681,8 +684,8 @@ p(a, b) &amp;\propto (a+b)^{-5/2}
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 18.1 s, sys: 283 ms, total: 18.4 s
-Wall time: 18.2 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 23.1 s, sys: 111 ms, total: 23.2 s
+Wall time: 23.1 s
 </pre></div>
 </div>
 </div>
@@ -718,8 +721,8 @@ Wall time: 18.2 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.79 s, sys: 55.5 ms, total: 7.85 s
-Wall time: 7.77 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.6 s, sys: 67.1 ms, total: 9.66 s
+Wall time: 9.65 s
 </pre></div>
 </div>
 </div>
@@ -738,7 +741,7 @@ Wall time: 7.77 s
 </div>
 </section>
 <section id="arviz-plots">
-<h2>Arviz plots<a class="headerlink" href="#arviz-plots" title="Permalink to this headline">#</a></h2>
+<h2>Arviz Plots<a class="headerlink" href="#arviz-plots" title="Permalink to this headline">#</a></h2>
 <p>We have all our posterior samples stored in <code class="docutils literal notranslate"><span class="pre">states.position</span></code> dictionary and <code class="docutils literal notranslate"><span class="pre">infos</span></code> store additional information like acceptance probability, divergence, etc. Now, we can use certain diagnostics to judge if our MCMC samples are converged on stationary distribution. Some of widely diagnostics are trace plots, potential scale reduction factor (R hat), divergences, etc. <code class="docutils literal notranslate"><span class="pre">Arviz</span></code> library provides quicker ways to anaylze these diagnostics. We can use <code class="docutils literal notranslate"><span class="pre">arviz.summary()</span></code> and <code class="docutils literal notranslate"><span class="pre">arviz_plot_trace()</span></code>, but these functions take specific format (arviz’s trace) as a input. So now first we will convert <code class="docutils literal notranslate"><span class="pre">states</span></code> and <code class="docutils literal notranslate"><span class="pre">infos</span></code> into <code class="docutils literal notranslate"><span class="pre">trace</span></code>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -821,879 +824,879 @@ Wall time: 7.77 s
   <tbody>
     <tr>
       <th>a</th>
-      <td>0.746</td>
-      <td>0.071</td>
-      <td>0.623</td>
-      <td>0.837</td>
-      <td>0.035</td>
-      <td>0.027</td>
-      <td>4.0</td>
-      <td>12.0</td>
-      <td>3.31</td>
+      <td>0.669</td>
+      <td>0.061</td>
+      <td>0.550</td>
+      <td>0.733</td>
+      <td>0.029</td>
+      <td>0.022</td>
+      <td>6.0</td>
+      <td>26.0</td>
+      <td>1.70</td>
     </tr>
     <tr>
       <th>b</th>
-      <td>2.000</td>
-      <td>0.340</td>
-      <td>1.750</td>
-      <td>2.627</td>
-      <td>0.169</td>
-      <td>0.129</td>
+      <td>2.148</td>
+      <td>0.429</td>
+      <td>1.756</td>
+      <td>2.935</td>
+      <td>0.212</td>
+      <td>0.162</td>
       <td>5.0</td>
-      <td>14.0</td>
-      <td>2.03</td>
+      <td>19.0</td>
+      <td>2.55</td>
     </tr>
     <tr>
       <th>thetas[0]</th>
-      <td>0.014</td>
-      <td>0.019</td>
+      <td>0.031</td>
+      <td>0.022</td>
       <td>0.000</td>
-      <td>0.061</td>
-      <td>0.009</td>
-      <td>0.007</td>
-      <td>6.0</td>
-      <td>19.0</td>
-      <td>1.85</td>
+      <td>0.065</td>
+      <td>0.010</td>
+      <td>0.008</td>
+      <td>5.0</td>
+      <td>12.0</td>
+      <td>2.34</td>
     </tr>
     <tr>
       <th>thetas[1]</th>
-      <td>0.156</td>
-      <td>0.103</td>
+      <td>0.027</td>
+      <td>0.034</td>
       <td>0.000</td>
-      <td>0.313</td>
-      <td>0.051</td>
-      <td>0.039</td>
-      <td>4.0</td>
+      <td>0.113</td>
+      <td>0.015</td>
+      <td>0.012</td>
+      <td>7.0</td>
       <td>14.0</td>
-      <td>3.72</td>
+      <td>1.61</td>
     </tr>
     <tr>
       <th>thetas[2]</th>
+      <td>0.151</td>
+      <td>0.102</td>
       <td>0.035</td>
-      <td>0.020</td>
+      <td>0.314</td>
+      <td>0.051</td>
+      <td>0.039</td>
+      <td>5.0</td>
+      <td>27.0</td>
+      <td>2.95</td>
+    </tr>
+    <tr>
+      <th>thetas[3]</th>
+      <td>0.025</td>
+      <td>0.021</td>
       <td>0.000</td>
-      <td>0.066</td>
+      <td>0.064</td>
       <td>0.008</td>
       <td>0.006</td>
       <td>6.0</td>
       <td>24.0</td>
-      <td>1.70</td>
-    </tr>
-    <tr>
-      <th>thetas[3]</th>
-      <td>0.031</td>
-      <td>0.028</td>
-      <td>0.000</td>
-      <td>0.082</td>
-      <td>0.006</td>
-      <td>0.004</td>
-      <td>20.0</td>
-      <td>56.0</td>
-      <td>1.14</td>
+      <td>1.79</td>
     </tr>
     <tr>
       <th>thetas[4]</th>
-      <td>0.058</td>
-      <td>0.042</td>
+      <td>0.020</td>
+      <td>0.010</td>
       <td>0.000</td>
-      <td>0.126</td>
-      <td>0.009</td>
-      <td>0.006</td>
-      <td>26.0</td>
-      <td>19.0</td>
-      <td>1.12</td>
+      <td>0.037</td>
+      <td>0.004</td>
+      <td>0.003</td>
+      <td>10.0</td>
+      <td>30.0</td>
+      <td>1.32</td>
     </tr>
     <tr>
       <th>thetas[5]</th>
-      <td>0.027</td>
-      <td>0.027</td>
+      <td>0.144</td>
+      <td>0.162</td>
       <td>0.000</td>
-      <td>0.074</td>
-      <td>0.007</td>
-      <td>0.005</td>
-      <td>15.0</td>
-      <td>19.0</td>
-      <td>1.20</td>
+      <td>0.435</td>
+      <td>0.081</td>
+      <td>0.062</td>
+      <td>5.0</td>
+      <td>11.0</td>
+      <td>2.69</td>
     </tr>
     <tr>
       <th>thetas[6]</th>
-      <td>0.115</td>
-      <td>0.127</td>
+      <td>0.019</td>
+      <td>0.019</td>
       <td>0.000</td>
-      <td>0.344</td>
-      <td>0.063</td>
-      <td>0.048</td>
-      <td>5.0</td>
-      <td>16.0</td>
-      <td>2.32</td>
-    </tr>
-    <tr>
-      <th>thetas[7]</th>
-      <td>0.065</td>
-      <td>0.049</td>
-      <td>0.000</td>
-      <td>0.165</td>
-      <td>0.024</td>
-      <td>0.018</td>
-      <td>5.0</td>
-      <td>14.0</td>
-      <td>3.02</td>
-    </tr>
-    <tr>
-      <th>thetas[8]</th>
-      <td>0.049</td>
-      <td>0.060</td>
-      <td>0.000</td>
-      <td>0.198</td>
-      <td>0.028</td>
-      <td>0.021</td>
-      <td>7.0</td>
-      <td>11.0</td>
-      <td>1.53</td>
-    </tr>
-    <tr>
-      <th>thetas[9]</th>
-      <td>0.042</td>
-      <td>0.064</td>
-      <td>0.000</td>
-      <td>0.219</td>
-      <td>0.030</td>
-      <td>0.023</td>
-      <td>7.0</td>
-      <td>11.0</td>
-      <td>1.51</td>
-    </tr>
-    <tr>
-      <th>thetas[10]</th>
-      <td>0.025</td>
-      <td>0.022</td>
-      <td>0.000</td>
-      <td>0.061</td>
+      <td>0.058</td>
       <td>0.009</td>
       <td>0.007</td>
-      <td>7.0</td>
-      <td>59.0</td>
-      <td>1.66</td>
-    </tr>
-    <tr>
-      <th>thetas[11]</th>
-      <td>0.042</td>
-      <td>0.063</td>
-      <td>0.000</td>
-      <td>0.175</td>
-      <td>0.030</td>
-      <td>0.023</td>
       <td>6.0</td>
-      <td>13.0</td>
-      <td>1.73</td>
-    </tr>
-    <tr>
-      <th>thetas[12]</th>
-      <td>0.033</td>
-      <td>0.026</td>
-      <td>0.000</td>
-      <td>0.087</td>
-      <td>0.012</td>
-      <td>0.010</td>
-      <td>5.0</td>
-      <td>16.0</td>
-      <td>2.40</td>
-    </tr>
-    <tr>
-      <th>thetas[13]</th>
-      <td>0.055</td>
-      <td>0.038</td>
-      <td>0.000</td>
-      <td>0.123</td>
-      <td>0.019</td>
-      <td>0.014</td>
-      <td>5.0</td>
       <td>14.0</td>
-      <td>2.83</td>
-    </tr>
-    <tr>
-      <th>thetas[14]</th>
-      <td>0.137</td>
-      <td>0.104</td>
-      <td>0.005</td>
-      <td>0.338</td>
-      <td>0.049</td>
-      <td>0.037</td>
-      <td>5.0</td>
-      <td>18.0</td>
       <td>2.07</td>
     </tr>
     <tr>
-      <th>thetas[15]</th>
-      <td>0.070</td>
-      <td>0.056</td>
-      <td>0.001</td>
-      <td>0.186</td>
-      <td>0.022</td>
-      <td>0.016</td>
-      <td>7.0</td>
-      <td>20.0</td>
-      <td>1.51</td>
-    </tr>
-    <tr>
-      <th>thetas[16]</th>
-      <td>0.080</td>
-      <td>0.040</td>
-      <td>0.024</td>
-      <td>0.151</td>
-      <td>0.018</td>
-      <td>0.014</td>
-      <td>6.0</td>
-      <td>23.0</td>
-      <td>1.94</td>
-    </tr>
-    <tr>
-      <th>thetas[17]</th>
-      <td>0.092</td>
-      <td>0.060</td>
-      <td>0.020</td>
-      <td>0.213</td>
-      <td>0.028</td>
-      <td>0.021</td>
+      <th>thetas[7]</th>
+      <td>0.094</td>
+      <td>0.090</td>
+      <td>0.000</td>
+      <td>0.271</td>
+      <td>0.044</td>
+      <td>0.034</td>
       <td>5.0</td>
-      <td>13.0</td>
+      <td>11.0</td>
+      <td>3.01</td>
+    </tr>
+    <tr>
+      <th>thetas[8]</th>
+      <td>0.051</td>
+      <td>0.063</td>
+      <td>0.001</td>
+      <td>0.164</td>
+      <td>0.031</td>
+      <td>0.024</td>
+      <td>6.0</td>
+      <td>14.0</td>
+      <td>1.67</td>
+    </tr>
+    <tr>
+      <th>thetas[9]</th>
+      <td>0.097</td>
+      <td>0.100</td>
+      <td>0.000</td>
+      <td>0.264</td>
+      <td>0.049</td>
+      <td>0.038</td>
+      <td>5.0</td>
+      <td>14.0</td>
+      <td>2.86</td>
+    </tr>
+    <tr>
+      <th>thetas[10]</th>
+      <td>0.017</td>
+      <td>0.015</td>
+      <td>0.000</td>
+      <td>0.041</td>
+      <td>0.005</td>
+      <td>0.004</td>
+      <td>8.0</td>
+      <td>23.0</td>
+      <td>1.44</td>
+    </tr>
+    <tr>
+      <th>thetas[11]</th>
+      <td>0.013</td>
+      <td>0.015</td>
+      <td>0.000</td>
+      <td>0.041</td>
+      <td>0.005</td>
+      <td>0.004</td>
+      <td>10.0</td>
+      <td>21.0</td>
+      <td>1.32</td>
+    </tr>
+    <tr>
+      <th>thetas[12]</th>
+      <td>0.021</td>
+      <td>0.018</td>
+      <td>0.000</td>
+      <td>0.061</td>
+      <td>0.008</td>
+      <td>0.006</td>
+      <td>6.0</td>
+      <td>12.0</td>
+      <td>1.91</td>
+    </tr>
+    <tr>
+      <th>thetas[13]</th>
+      <td>0.087</td>
+      <td>0.073</td>
+      <td>0.000</td>
+      <td>0.196</td>
+      <td>0.035</td>
+      <td>0.027</td>
+      <td>5.0</td>
+      <td>16.0</td>
       <td>2.30</td>
     </tr>
     <tr>
-      <th>thetas[18]</th>
-      <td>0.131</td>
-      <td>0.073</td>
-      <td>0.004</td>
-      <td>0.270</td>
-      <td>0.034</td>
-      <td>0.026</td>
+      <th>thetas[14]</th>
+      <td>0.053</td>
+      <td>0.031</td>
+      <td>0.002</td>
+      <td>0.093</td>
+      <td>0.015</td>
+      <td>0.011</td>
       <td>5.0</td>
-      <td>11.0</td>
-      <td>2.65</td>
+      <td>15.0</td>
+      <td>2.18</td>
     </tr>
     <tr>
-      <th>thetas[19]</th>
-      <td>0.156</td>
-      <td>0.054</td>
-      <td>0.081</td>
-      <td>0.273</td>
-      <td>0.023</td>
+      <th>thetas[15]</th>
+      <td>0.071</td>
+      <td>0.052</td>
+      <td>0.006</td>
+      <td>0.144</td>
+      <td>0.024</td>
       <td>0.018</td>
-      <td>6.0</td>
-      <td>11.0</td>
-      <td>1.90</td>
-    </tr>
-    <tr>
-      <th>thetas[20]</th>
-      <td>0.112</td>
-      <td>0.058</td>
-      <td>0.006</td>
-      <td>0.226</td>
-      <td>0.022</td>
-      <td>0.016</td>
-      <td>7.0</td>
-      <td>15.0</td>
-      <td>1.62</td>
-    </tr>
-    <tr>
-      <th>thetas[21]</th>
-      <td>0.136</td>
-      <td>0.079</td>
-      <td>0.037</td>
-      <td>0.266</td>
-      <td>0.039</td>
-      <td>0.030</td>
-      <td>4.0</td>
-      <td>12.0</td>
-      <td>3.52</td>
-    </tr>
-    <tr>
-      <th>thetas[22]</th>
-      <td>0.096</td>
-      <td>0.045</td>
-      <td>0.027</td>
-      <td>0.172</td>
-      <td>0.020</td>
-      <td>0.015</td>
-      <td>6.0</td>
-      <td>16.0</td>
-      <td>1.97</td>
-    </tr>
-    <tr>
-      <th>thetas[23]</th>
-      <td>0.182</td>
-      <td>0.076</td>
-      <td>0.094</td>
-      <td>0.322</td>
-      <td>0.036</td>
-      <td>0.028</td>
-      <td>6.0</td>
-      <td>22.0</td>
-      <td>1.80</td>
-    </tr>
-    <tr>
-      <th>thetas[24]</th>
-      <td>0.188</td>
-      <td>0.102</td>
-      <td>0.087</td>
-      <td>0.380</td>
-      <td>0.050</td>
-      <td>0.039</td>
       <td>5.0</td>
-      <td>20.0</td>
-      <td>2.89</td>
-    </tr>
-    <tr>
-      <th>thetas[25]</th>
-      <td>0.272</td>
-      <td>0.197</td>
-      <td>0.065</td>
-      <td>0.626</td>
-      <td>0.098</td>
-      <td>0.075</td>
-      <td>4.0</td>
-      <td>12.0</td>
-      <td>3.75</td>
-    </tr>
-    <tr>
-      <th>thetas[26]</th>
-      <td>0.129</td>
-      <td>0.054</td>
-      <td>0.046</td>
-      <td>0.266</td>
-      <td>0.024</td>
-      <td>0.019</td>
-      <td>5.0</td>
-      <td>12.0</td>
-      <td>2.12</td>
-    </tr>
-    <tr>
-      <th>thetas[27]</th>
-      <td>0.091</td>
-      <td>0.041</td>
-      <td>0.032</td>
-      <td>0.170</td>
-      <td>0.014</td>
-      <td>0.011</td>
-      <td>11.0</td>
-      <td>65.0</td>
-      <td>1.33</td>
-    </tr>
-    <tr>
-      <th>thetas[28]</th>
-      <td>0.151</td>
-      <td>0.087</td>
-      <td>0.032</td>
-      <td>0.301</td>
-      <td>0.035</td>
-      <td>0.026</td>
-      <td>6.0</td>
       <td>19.0</td>
-      <td>1.77</td>
+      <td>2.54</td>
     </tr>
     <tr>
-      <th>thetas[29]</th>
-      <td>0.155</td>
-      <td>0.072</td>
-      <td>0.028</td>
-      <td>0.260</td>
-      <td>0.032</td>
-      <td>0.024</td>
+      <th>thetas[16]</th>
+      <td>0.086</td>
+      <td>0.087</td>
+      <td>0.005</td>
+      <td>0.243</td>
+      <td>0.042</td>
+      <td>0.033</td>
       <td>6.0</td>
-      <td>33.0</td>
-      <td>1.85</td>
-    </tr>
-    <tr>
-      <th>thetas[30]</th>
-      <td>0.146</td>
-      <td>0.074</td>
-      <td>0.030</td>
-      <td>0.266</td>
-      <td>0.028</td>
-      <td>0.021</td>
-      <td>8.0</td>
-      <td>31.0</td>
-      <td>1.50</td>
-    </tr>
-    <tr>
-      <th>thetas[31]</th>
-      <td>0.162</td>
-      <td>0.084</td>
-      <td>0.019</td>
-      <td>0.271</td>
-      <td>0.041</td>
-      <td>0.032</td>
-      <td>4.0</td>
-      <td>20.0</td>
-      <td>3.20</td>
-    </tr>
-    <tr>
-      <th>thetas[32]</th>
-      <td>0.124</td>
-      <td>0.039</td>
-      <td>0.052</td>
-      <td>0.177</td>
-      <td>0.017</td>
-      <td>0.013</td>
-      <td>6.0</td>
-      <td>28.0</td>
-      <td>1.92</td>
-    </tr>
-    <tr>
-      <th>thetas[33]</th>
-      <td>0.191</td>
-      <td>0.098</td>
-      <td>0.045</td>
-      <td>0.338</td>
-      <td>0.048</td>
-      <td>0.037</td>
-      <td>4.0</td>
-      <td>11.0</td>
-      <td>4.03</td>
-    </tr>
-    <tr>
-      <th>thetas[34]</th>
-      <td>0.138</td>
-      <td>0.041</td>
-      <td>0.073</td>
-      <td>0.201</td>
-      <td>0.019</td>
-      <td>0.015</td>
-      <td>5.0</td>
       <td>18.0</td>
-      <td>2.55</td>
+      <td>2.02</td>
     </tr>
     <tr>
-      <th>thetas[35]</th>
-      <td>0.096</td>
-      <td>0.041</td>
-      <td>0.028</td>
-      <td>0.167</td>
-      <td>0.014</td>
-      <td>0.011</td>
-      <td>9.0</td>
-      <td>29.0</td>
-      <td>1.47</td>
-    </tr>
-    <tr>
-      <th>thetas[36]</th>
-      <td>0.142</td>
-      <td>0.061</td>
-      <td>0.054</td>
-      <td>0.222</td>
-      <td>0.030</td>
-      <td>0.023</td>
-      <td>5.0</td>
-      <td>15.0</td>
-      <td>2.73</td>
-    </tr>
-    <tr>
-      <th>thetas[37]</th>
-      <td>0.131</td>
-      <td>0.035</td>
-      <td>0.073</td>
-      <td>0.205</td>
-      <td>0.014</td>
-      <td>0.010</td>
-      <td>7.0</td>
-      <td>12.0</td>
-      <td>1.51</td>
-    </tr>
-    <tr>
-      <th>thetas[38]</th>
-      <td>0.160</td>
-      <td>0.046</td>
-      <td>0.060</td>
-      <td>0.232</td>
-      <td>0.009</td>
-      <td>0.006</td>
-      <td>28.0</td>
-      <td>21.0</td>
-      <td>1.12</td>
-    </tr>
-    <tr>
-      <th>thetas[39]</th>
-      <td>0.276</td>
-      <td>0.106</td>
-      <td>0.163</td>
-      <td>0.481</td>
-      <td>0.052</td>
-      <td>0.040</td>
-      <td>5.0</td>
-      <td>14.0</td>
-      <td>3.07</td>
-    </tr>
-    <tr>
-      <th>thetas[40]</th>
-      <td>0.225</td>
-      <td>0.103</td>
-      <td>0.076</td>
-      <td>0.420</td>
-      <td>0.047</td>
+      <th>thetas[17]</th>
+      <td>0.071</td>
       <td>0.036</td>
+      <td>0.001</td>
+      <td>0.124</td>
+      <td>0.016</td>
+      <td>0.012</td>
       <td>5.0</td>
-      <td>15.0</td>
-      <td>2.24</td>
+      <td>19.0</td>
+      <td>2.01</td>
     </tr>
     <tr>
-      <th>thetas[41]</th>
-      <td>0.257</td>
-      <td>0.170</td>
-      <td>0.106</td>
-      <td>0.595</td>
-      <td>0.084</td>
-      <td>0.065</td>
+      <th>thetas[18]</th>
+      <td>0.183</td>
+      <td>0.121</td>
+      <td>0.031</td>
+      <td>0.377</td>
+      <td>0.060</td>
+      <td>0.046</td>
       <td>5.0</td>
-      <td>14.0</td>
+      <td>32.0</td>
       <td>2.98</td>
     </tr>
     <tr>
-      <th>thetas[42]</th>
-      <td>0.214</td>
-      <td>0.056</td>
-      <td>0.131</td>
-      <td>0.343</td>
-      <td>0.017</td>
-      <td>0.013</td>
-      <td>11.0</td>
-      <td>21.0</td>
-      <td>1.41</td>
+      <th>thetas[19]</th>
+      <td>0.094</td>
+      <td>0.067</td>
+      <td>0.012</td>
+      <td>0.210</td>
+      <td>0.032</td>
+      <td>0.025</td>
+      <td>5.0</td>
+      <td>17.0</td>
+      <td>2.38</td>
     </tr>
     <tr>
-      <th>thetas[43]</th>
-      <td>0.202</td>
-      <td>0.068</td>
-      <td>0.098</td>
-      <td>0.340</td>
+      <th>thetas[20]</th>
+      <td>0.066</td>
+      <td>0.036</td>
+      <td>0.020</td>
+      <td>0.117</td>
+      <td>0.018</td>
+      <td>0.014</td>
+      <td>5.0</td>
+      <td>23.0</td>
+      <td>2.22</td>
+    </tr>
+    <tr>
+      <th>thetas[21]</th>
+      <td>0.104</td>
+      <td>0.079</td>
+      <td>0.009</td>
+      <td>0.252</td>
+      <td>0.039</td>
       <td>0.030</td>
+      <td>5.0</td>
+      <td>13.0</td>
+      <td>2.64</td>
+    </tr>
+    <tr>
+      <th>thetas[22]</th>
+      <td>0.128</td>
+      <td>0.062</td>
+      <td>0.025</td>
+      <td>0.232</td>
+      <td>0.028</td>
       <td>0.022</td>
+      <td>5.0</td>
+      <td>11.0</td>
+      <td>2.54</td>
+    </tr>
+    <tr>
+      <th>thetas[23]</th>
+      <td>0.205</td>
+      <td>0.121</td>
+      <td>0.066</td>
+      <td>0.412</td>
+      <td>0.060</td>
+      <td>0.046</td>
+      <td>5.0</td>
+      <td>12.0</td>
+      <td>2.98</td>
+    </tr>
+    <tr>
+      <th>thetas[24]</th>
+      <td>0.158</td>
+      <td>0.053</td>
+      <td>0.110</td>
+      <td>0.284</td>
+      <td>0.026</td>
+      <td>0.020</td>
+      <td>5.0</td>
+      <td>12.0</td>
+      <td>1.98</td>
+    </tr>
+    <tr>
+      <th>thetas[25]</th>
+      <td>0.164</td>
+      <td>0.152</td>
+      <td>0.030</td>
+      <td>0.418</td>
+      <td>0.076</td>
+      <td>0.058</td>
+      <td>5.0</td>
+      <td>15.0</td>
+      <td>3.13</td>
+    </tr>
+    <tr>
+      <th>thetas[26]</th>
+      <td>0.172</td>
+      <td>0.044</td>
+      <td>0.111</td>
+      <td>0.251</td>
+      <td>0.022</td>
+      <td>0.017</td>
+      <td>4.0</td>
+      <td>11.0</td>
+      <td>4.00</td>
+    </tr>
+    <tr>
+      <th>thetas[27]</th>
+      <td>0.080</td>
+      <td>0.027</td>
+      <td>0.024</td>
+      <td>0.114</td>
+      <td>0.012</td>
+      <td>0.009</td>
+      <td>5.0</td>
+      <td>23.0</td>
+      <td>2.25</td>
+    </tr>
+    <tr>
+      <th>thetas[28]</th>
+      <td>0.126</td>
+      <td>0.053</td>
+      <td>0.033</td>
+      <td>0.196</td>
+      <td>0.025</td>
+      <td>0.019</td>
+      <td>5.0</td>
+      <td>14.0</td>
+      <td>2.24</td>
+    </tr>
+    <tr>
+      <th>thetas[29]</th>
+      <td>0.165</td>
+      <td>0.066</td>
+      <td>0.070</td>
+      <td>0.281</td>
+      <td>0.032</td>
+      <td>0.025</td>
+      <td>5.0</td>
+      <td>22.0</td>
+      <td>2.71</td>
+    </tr>
+    <tr>
+      <th>thetas[30]</th>
+      <td>0.099</td>
+      <td>0.048</td>
+      <td>0.033</td>
+      <td>0.166</td>
+      <td>0.022</td>
+      <td>0.017</td>
+      <td>5.0</td>
+      <td>27.0</td>
+      <td>2.17</td>
+    </tr>
+    <tr>
+      <th>thetas[31]</th>
+      <td>0.146</td>
+      <td>0.098</td>
+      <td>0.016</td>
+      <td>0.348</td>
+      <td>0.047</td>
+      <td>0.036</td>
+      <td>5.0</td>
+      <td>11.0</td>
+      <td>3.10</td>
+    </tr>
+    <tr>
+      <th>thetas[32]</th>
+      <td>0.128</td>
+      <td>0.050</td>
+      <td>0.027</td>
+      <td>0.214</td>
+      <td>0.021</td>
+      <td>0.016</td>
+      <td>5.0</td>
+      <td>21.0</td>
+      <td>2.05</td>
+    </tr>
+    <tr>
+      <th>thetas[33]</th>
+      <td>0.156</td>
+      <td>0.087</td>
+      <td>0.023</td>
+      <td>0.260</td>
+      <td>0.043</td>
+      <td>0.033</td>
+      <td>4.0</td>
+      <td>13.0</td>
+      <td>3.25</td>
+    </tr>
+    <tr>
+      <th>thetas[34]</th>
+      <td>0.117</td>
+      <td>0.035</td>
+      <td>0.054</td>
+      <td>0.181</td>
+      <td>0.015</td>
+      <td>0.012</td>
+      <td>5.0</td>
+      <td>14.0</td>
+      <td>2.01</td>
+    </tr>
+    <tr>
+      <th>thetas[35]</th>
+      <td>0.124</td>
+      <td>0.057</td>
+      <td>0.052</td>
+      <td>0.238</td>
+      <td>0.027</td>
+      <td>0.020</td>
+      <td>5.0</td>
+      <td>25.0</td>
+      <td>2.14</td>
+    </tr>
+    <tr>
+      <th>thetas[36]</th>
+      <td>0.123</td>
+      <td>0.063</td>
+      <td>0.058</td>
+      <td>0.235</td>
+      <td>0.031</td>
+      <td>0.024</td>
+      <td>5.0</td>
+      <td>14.0</td>
+      <td>2.58</td>
+    </tr>
+    <tr>
+      <th>thetas[37]</th>
+      <td>0.142</td>
+      <td>0.040</td>
+      <td>0.073</td>
+      <td>0.200</td>
+      <td>0.016</td>
+      <td>0.012</td>
+      <td>7.0</td>
+      <td>42.0</td>
+      <td>1.67</td>
+    </tr>
+    <tr>
+      <th>thetas[38]</th>
+      <td>0.131</td>
+      <td>0.030</td>
+      <td>0.087</td>
+      <td>0.174</td>
+      <td>0.014</td>
+      <td>0.011</td>
+      <td>5.0</td>
+      <td>11.0</td>
+      <td>2.31</td>
+    </tr>
+    <tr>
+      <th>thetas[39]</th>
+      <td>0.212</td>
+      <td>0.085</td>
+      <td>0.072</td>
+      <td>0.317</td>
+      <td>0.039</td>
+      <td>0.029</td>
       <td>6.0</td>
       <td>13.0</td>
       <td>1.93</td>
     </tr>
     <tr>
-      <th>thetas[44]</th>
-      <td>0.284</td>
-      <td>0.058</td>
-      <td>0.187</td>
-      <td>0.376</td>
-      <td>0.028</td>
-      <td>0.021</td>
+      <th>thetas[40]</th>
+      <td>0.165</td>
+      <td>0.070</td>
+      <td>0.077</td>
+      <td>0.279</td>
+      <td>0.033</td>
+      <td>0.025</td>
       <td>5.0</td>
-      <td>12.0</td>
-      <td>2.83</td>
+      <td>25.0</td>
+      <td>2.15</td>
+    </tr>
+    <tr>
+      <th>thetas[41]</th>
+      <td>0.181</td>
+      <td>0.071</td>
+      <td>0.067</td>
+      <td>0.259</td>
+      <td>0.035</td>
+      <td>0.027</td>
+      <td>5.0</td>
+      <td>23.0</td>
+      <td>3.05</td>
+    </tr>
+    <tr>
+      <th>thetas[42]</th>
+      <td>0.244</td>
+      <td>0.052</td>
+      <td>0.140</td>
+      <td>0.328</td>
+      <td>0.025</td>
+      <td>0.019</td>
+      <td>5.0</td>
+      <td>16.0</td>
+      <td>2.79</td>
+    </tr>
+    <tr>
+      <th>thetas[43]</th>
+      <td>0.241</td>
+      <td>0.078</td>
+      <td>0.139</td>
+      <td>0.364</td>
+      <td>0.039</td>
+      <td>0.030</td>
+      <td>5.0</td>
+      <td>26.0</td>
+      <td>3.16</td>
+    </tr>
+    <tr>
+      <th>thetas[44]</th>
+      <td>0.179</td>
+      <td>0.068</td>
+      <td>0.088</td>
+      <td>0.292</td>
+      <td>0.033</td>
+      <td>0.025</td>
+      <td>4.0</td>
+      <td>15.0</td>
+      <td>3.22</td>
     </tr>
     <tr>
       <th>thetas[45]</th>
-      <td>0.187</td>
-      <td>0.057</td>
-      <td>0.117</td>
-      <td>0.305</td>
-      <td>0.026</td>
-      <td>0.019</td>
-      <td>6.0</td>
-      <td>29.0</td>
-      <td>1.85</td>
+      <td>0.178</td>
+      <td>0.040</td>
+      <td>0.124</td>
+      <td>0.240</td>
+      <td>0.018</td>
+      <td>0.014</td>
+      <td>5.0</td>
+      <td>22.0</td>
+      <td>2.23</td>
     </tr>
     <tr>
       <th>thetas[46]</th>
-      <td>0.297</td>
-      <td>0.080</td>
-      <td>0.169</td>
-      <td>0.427</td>
-      <td>0.038</td>
-      <td>0.029</td>
+      <td>0.276</td>
+      <td>0.060</td>
+      <td>0.176</td>
+      <td>0.345</td>
+      <td>0.030</td>
+      <td>0.023</td>
       <td>5.0</td>
-      <td>15.0</td>
-      <td>2.71</td>
+      <td>23.0</td>
+      <td>2.29</td>
     </tr>
     <tr>
       <th>thetas[47]</th>
-      <td>0.226</td>
-      <td>0.126</td>
-      <td>0.057</td>
-      <td>0.442</td>
+      <td>0.234</td>
+      <td>0.124</td>
+      <td>0.147</td>
+      <td>0.458</td>
       <td>0.062</td>
       <td>0.047</td>
-      <td>4.0</td>
-      <td>14.0</td>
-      <td>3.46</td>
+      <td>5.0</td>
+      <td>19.0</td>
+      <td>2.62</td>
     </tr>
     <tr>
       <th>thetas[48]</th>
-      <td>0.256</td>
-      <td>0.089</td>
-      <td>0.125</td>
-      <td>0.386</td>
-      <td>0.041</td>
-      <td>0.031</td>
-      <td>6.0</td>
-      <td>22.0</td>
-      <td>1.92</td>
+      <td>0.253</td>
+      <td>0.075</td>
+      <td>0.119</td>
+      <td>0.372</td>
+      <td>0.035</td>
+      <td>0.027</td>
+      <td>5.0</td>
+      <td>12.0</td>
+      <td>2.41</td>
     </tr>
     <tr>
       <th>thetas[49]</th>
-      <td>0.232</td>
-      <td>0.092</td>
-      <td>0.107</td>
-      <td>0.367</td>
-      <td>0.046</td>
-      <td>0.035</td>
-      <td>5.0</td>
-      <td>27.0</td>
-      <td>2.93</td>
+      <td>0.216</td>
+      <td>0.085</td>
+      <td>0.095</td>
+      <td>0.350</td>
+      <td>0.036</td>
+      <td>0.027</td>
+      <td>7.0</td>
+      <td>25.0</td>
+      <td>1.61</td>
     </tr>
     <tr>
       <th>thetas[50]</th>
-      <td>0.338</td>
-      <td>0.086</td>
-      <td>0.186</td>
-      <td>0.498</td>
-      <td>0.042</td>
-      <td>0.032</td>
-      <td>4.0</td>
-      <td>13.0</td>
-      <td>3.54</td>
+      <td>0.250</td>
+      <td>0.073</td>
+      <td>0.139</td>
+      <td>0.364</td>
+      <td>0.035</td>
+      <td>0.027</td>
+      <td>5.0</td>
+      <td>24.0</td>
+      <td>2.81</td>
     </tr>
     <tr>
       <th>thetas[51]</th>
-      <td>0.205</td>
-      <td>0.027</td>
-      <td>0.160</td>
-      <td>0.265</td>
-      <td>0.008</td>
-      <td>0.006</td>
-      <td>11.0</td>
-      <td>22.0</td>
-      <td>1.29</td>
+      <td>0.203</td>
+      <td>0.033</td>
+      <td>0.151</td>
+      <td>0.251</td>
+      <td>0.015</td>
+      <td>0.012</td>
+      <td>5.0</td>
+      <td>17.0</td>
+      <td>2.43</td>
     </tr>
     <tr>
       <th>thetas[52]</th>
-      <td>0.284</td>
-      <td>0.117</td>
-      <td>0.122</td>
-      <td>0.559</td>
-      <td>0.055</td>
-      <td>0.042</td>
+      <td>0.342</td>
+      <td>0.061</td>
+      <td>0.235</td>
+      <td>0.416</td>
+      <td>0.030</td>
+      <td>0.023</td>
       <td>5.0</td>
-      <td>12.0</td>
-      <td>2.48</td>
+      <td>13.0</td>
+      <td>2.79</td>
     </tr>
     <tr>
       <th>thetas[53]</th>
-      <td>0.200</td>
-      <td>0.047</td>
-      <td>0.121</td>
-      <td>0.285</td>
-      <td>0.018</td>
-      <td>0.013</td>
-      <td>8.0</td>
-      <td>28.0</td>
-      <td>1.47</td>
+      <td>0.184</td>
+      <td>0.101</td>
+      <td>0.078</td>
+      <td>0.379</td>
+      <td>0.050</td>
+      <td>0.038</td>
+      <td>5.0</td>
+      <td>13.0</td>
+      <td>2.70</td>
     </tr>
     <tr>
       <th>thetas[54]</th>
-      <td>0.251</td>
-      <td>0.045</td>
-      <td>0.175</td>
-      <td>0.315</td>
-      <td>0.022</td>
-      <td>0.017</td>
-      <td>5.0</td>
-      <td>11.0</td>
-      <td>2.88</td>
+      <td>0.225</td>
+      <td>0.096</td>
+      <td>0.127</td>
+      <td>0.404</td>
+      <td>0.046</td>
+      <td>0.036</td>
+      <td>6.0</td>
+      <td>31.0</td>
+      <td>1.73</td>
     </tr>
     <tr>
       <th>thetas[55]</th>
-      <td>0.292</td>
-      <td>0.082</td>
-      <td>0.157</td>
-      <td>0.429</td>
-      <td>0.040</td>
-      <td>0.030</td>
-      <td>5.0</td>
-      <td>11.0</td>
-      <td>3.03</td>
+      <td>0.204</td>
+      <td>0.070</td>
+      <td>0.088</td>
+      <td>0.324</td>
+      <td>0.027</td>
+      <td>0.020</td>
+      <td>7.0</td>
+      <td>20.0</td>
+      <td>1.62</td>
     </tr>
     <tr>
       <th>thetas[56]</th>
-      <td>0.254</td>
-      <td>0.068</td>
-      <td>0.153</td>
-      <td>0.363</td>
-      <td>0.032</td>
-      <td>0.025</td>
-      <td>5.0</td>
-      <td>11.0</td>
-      <td>3.12</td>
+      <td>0.267</td>
+      <td>0.087</td>
+      <td>0.123</td>
+      <td>0.402</td>
+      <td>0.042</td>
+      <td>0.033</td>
+      <td>4.0</td>
+      <td>16.0</td>
+      <td>3.60</td>
     </tr>
     <tr>
       <th>thetas[57]</th>
-      <td>0.225</td>
-      <td>0.036</td>
+      <td>0.234</td>
+      <td>0.045</td>
       <td>0.156</td>
-      <td>0.295</td>
-      <td>0.017</td>
-      <td>0.013</td>
+      <td>0.330</td>
+      <td>0.021</td>
+      <td>0.016</td>
       <td>5.0</td>
-      <td>12.0</td>
-      <td>2.71</td>
+      <td>15.0</td>
+      <td>2.37</td>
     </tr>
     <tr>
       <th>thetas[58]</th>
-      <td>0.256</td>
-      <td>0.065</td>
-      <td>0.132</td>
-      <td>0.335</td>
-      <td>0.032</td>
-      <td>0.024</td>
-      <td>4.0</td>
+      <td>0.233</td>
+      <td>0.073</td>
+      <td>0.106</td>
+      <td>0.323</td>
+      <td>0.036</td>
+      <td>0.028</td>
+      <td>5.0</td>
       <td>11.0</td>
-      <td>3.80</td>
+      <td>3.16</td>
     </tr>
     <tr>
       <th>thetas[59]</th>
-      <td>0.245</td>
-      <td>0.124</td>
-      <td>0.078</td>
-      <td>0.436</td>
-      <td>0.060</td>
-      <td>0.045</td>
-      <td>5.0</td>
-      <td>23.0</td>
-      <td>2.38</td>
+      <td>0.249</td>
+      <td>0.068</td>
+      <td>0.092</td>
+      <td>0.340</td>
+      <td>0.028</td>
+      <td>0.021</td>
+      <td>7.0</td>
+      <td>28.0</td>
+      <td>1.68</td>
     </tr>
     <tr>
       <th>thetas[60]</th>
-      <td>0.305</td>
-      <td>0.128</td>
-      <td>0.105</td>
-      <td>0.507</td>
-      <td>0.061</td>
-      <td>0.046</td>
+      <td>0.275</td>
+      <td>0.052</td>
+      <td>0.192</td>
+      <td>0.347</td>
+      <td>0.025</td>
+      <td>0.019</td>
       <td>5.0</td>
-      <td>12.0</td>
-      <td>2.44</td>
+      <td>19.0</td>
+      <td>2.54</td>
     </tr>
     <tr>
       <th>thetas[61]</th>
-      <td>0.210</td>
-      <td>0.048</td>
-      <td>0.136</td>
-      <td>0.280</td>
-      <td>0.024</td>
-      <td>0.018</td>
-      <td>5.0</td>
-      <td>12.0</td>
-      <td>2.47</td>
-    </tr>
-    <tr>
-      <th>thetas[62]</th>
-      <td>0.211</td>
-      <td>0.040</td>
-      <td>0.125</td>
-      <td>0.267</td>
-      <td>0.016</td>
-      <td>0.012</td>
-      <td>7.0</td>
-      <td>16.0</td>
-      <td>1.57</td>
-    </tr>
-    <tr>
-      <th>thetas[63]</th>
-      <td>0.235</td>
-      <td>0.071</td>
-      <td>0.130</td>
-      <td>0.334</td>
+      <td>0.258</td>
       <td>0.034</td>
-      <td>0.026</td>
-      <td>6.0</td>
-      <td>13.0</td>
-      <td>1.81</td>
-    </tr>
-    <tr>
-      <th>thetas[64]</th>
-      <td>0.350</td>
-      <td>0.088</td>
-      <td>0.218</td>
-      <td>0.519</td>
-      <td>0.039</td>
-      <td>0.029</td>
-      <td>6.0</td>
-      <td>18.0</td>
-      <td>1.94</td>
-    </tr>
-    <tr>
-      <th>thetas[65]</th>
-      <td>0.335</td>
-      <td>0.102</td>
-      <td>0.194</td>
-      <td>0.549</td>
-      <td>0.049</td>
-      <td>0.037</td>
-      <td>5.0</td>
-      <td>11.0</td>
-      <td>2.78</td>
-    </tr>
-    <tr>
-      <th>thetas[66]</th>
-      <td>0.322</td>
-      <td>0.075</td>
-      <td>0.187</td>
-      <td>0.433</td>
-      <td>0.035</td>
-      <td>0.026</td>
-      <td>5.0</td>
-      <td>15.0</td>
-      <td>2.38</td>
-    </tr>
-    <tr>
-      <th>thetas[67]</th>
-      <td>0.327</td>
-      <td>0.076</td>
-      <td>0.214</td>
-      <td>0.459</td>
-      <td>0.033</td>
-      <td>0.025</td>
-      <td>6.0</td>
-      <td>14.0</td>
-      <td>1.81</td>
-    </tr>
-    <tr>
-      <th>thetas[68]</th>
-      <td>0.393</td>
-      <td>0.058</td>
-      <td>0.286</td>
-      <td>0.493</td>
+      <td>0.203</td>
+      <td>0.316</td>
       <td>0.015</td>
-      <td>0.012</td>
-      <td>13.0</td>
-      <td>46.0</td>
-      <td>1.23</td>
-    </tr>
-    <tr>
-      <th>thetas[69]</th>
-      <td>0.422</td>
-      <td>0.081</td>
-      <td>0.249</td>
-      <td>0.537</td>
-      <td>0.036</td>
-      <td>0.027</td>
+      <td>0.011</td>
       <td>5.0</td>
-      <td>11.0</td>
+      <td>14.0</td>
       <td>2.16</td>
     </tr>
     <tr>
-      <th>thetas[70]</th>
-      <td>0.319</td>
-      <td>0.049</td>
-      <td>0.223</td>
-      <td>0.389</td>
-      <td>0.021</td>
-      <td>0.016</td>
+      <th>thetas[62]</th>
+      <td>0.237</td>
+      <td>0.068</td>
+      <td>0.117</td>
+      <td>0.302</td>
+      <td>0.034</td>
+      <td>0.026</td>
+      <td>5.0</td>
+      <td>35.0</td>
+      <td>2.53</td>
+    </tr>
+    <tr>
+      <th>thetas[63]</th>
+      <td>0.246</td>
+      <td>0.107</td>
+      <td>0.076</td>
+      <td>0.417</td>
+      <td>0.050</td>
+      <td>0.038</td>
+      <td>5.0</td>
+      <td>13.0</td>
+      <td>2.37</td>
+    </tr>
+    <tr>
+      <th>thetas[64]</th>
+      <td>0.301</td>
+      <td>0.104</td>
+      <td>0.143</td>
+      <td>0.460</td>
+      <td>0.051</td>
+      <td>0.039</td>
+      <td>5.0</td>
+      <td>12.0</td>
+      <td>3.10</td>
+    </tr>
+    <tr>
+      <th>thetas[65]</th>
+      <td>0.233</td>
+      <td>0.052</td>
+      <td>0.165</td>
+      <td>0.332</td>
+      <td>0.024</td>
+      <td>0.019</td>
+      <td>5.0</td>
+      <td>29.0</td>
+      <td>2.26</td>
+    </tr>
+    <tr>
+      <th>thetas[66]</th>
+      <td>0.309</td>
+      <td>0.052</td>
+      <td>0.229</td>
+      <td>0.394</td>
+      <td>0.025</td>
+      <td>0.019</td>
+      <td>5.0</td>
+      <td>12.0</td>
+      <td>2.62</td>
+    </tr>
+    <tr>
+      <th>thetas[67]</th>
+      <td>0.292</td>
+      <td>0.045</td>
+      <td>0.225</td>
+      <td>0.395</td>
+      <td>0.019</td>
+      <td>0.015</td>
       <td>6.0</td>
-      <td>19.0</td>
+      <td>13.0</td>
       <td>1.79</td>
+    </tr>
+    <tr>
+      <th>thetas[68]</th>
+      <td>0.326</td>
+      <td>0.053</td>
+      <td>0.250</td>
+      <td>0.416</td>
+      <td>0.025</td>
+      <td>0.019</td>
+      <td>5.0</td>
+      <td>14.0</td>
+      <td>2.73</td>
+    </tr>
+    <tr>
+      <th>thetas[69]</th>
+      <td>0.417</td>
+      <td>0.029</td>
+      <td>0.386</td>
+      <td>0.480</td>
+      <td>0.014</td>
+      <td>0.011</td>
+      <td>5.0</td>
+      <td>12.0</td>
+      <td>2.24</td>
+    </tr>
+    <tr>
+      <th>thetas[70]</th>
+      <td>0.329</td>
+      <td>0.073</td>
+      <td>0.214</td>
+      <td>0.439</td>
+      <td>0.035</td>
+      <td>0.026</td>
+      <td>5.0</td>
+      <td>20.0</td>
+      <td>2.50</td>
     </tr>
   </tbody>
 </table>
@@ -1708,14 +1711,14 @@ Wall time: 7.77 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/6c4920625fda23b5a9974bb13b361ba1b5fec2f2c01dc54a3538f8617a1b4ebf.png" src="../_images/6c4920625fda23b5a9974bb13b361ba1b5fec2f2c01dc54a3538f8617a1b4ebf.png" />
+<img alt="../_images/6fe366d15153f12426441b5626b7b379eef510d3ffa1835239a5fe5408cb323d.png" src="../_images/6fe366d15153f12426441b5626b7b379eef510d3ffa1835239a5fe5408cb323d.png" />
 </div>
 </div>
 <p>Trace plots also looks terrible and does not seems to be converged! Also, black band shows that every sample is diverged from original distribution. So <strong>what’s wrong happeing here?</strong></p>
 <p>Well, it’s related to support of latent variable. In HMC, the latent variable must be in an unconstrained space, but in above model <code class="docutils literal notranslate"><span class="pre">theta</span></code> is constrained in between 0 to 1. We can use change of variable trick to solve above problem</p>
 </section>
 <section id="change-of-variable">
-<h2>Change of variable<a class="headerlink" href="#change-of-variable" title="Permalink to this headline">#</a></h2>
+<h2>Change of Variable<a class="headerlink" href="#change-of-variable" title="Permalink to this headline">#</a></h2>
 <p>We can sample from logits which is in unconstrained space and in <code class="docutils literal notranslate"><span class="pre">joint_logprob()</span></code> we can convert logits to theta by suitable bijector (sigmoid). We calculate jacobian (first order derivaive) of bijector to tranform one probability distribution to another</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -1798,8 +1801,8 @@ Wall time: 7.77 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 15.8 s, sys: 334 ms, total: 16.1 s
-Wall time: 15.9 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 20.7 s, sys: 43.2 ms, total: 20.8 s
+Wall time: 20.7 s
 </pre></div>
 </div>
 </div>
@@ -1815,8 +1818,8 @@ Wall time: 15.9 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.23 s, sys: 137 ms, total: 8.36 s
-Wall time: 8.28 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10 s, sys: 39.7 ms, total: 10.1 s
+Wall time: 10.1 s
 </pre></div>
 </div>
 </div>
@@ -1872,878 +1875,878 @@ Wall time: 8.28 s
   <tbody>
     <tr>
       <th>a</th>
-      <td>2.423</td>
-      <td>0.887</td>
-      <td>1.008</td>
-      <td>4.128</td>
-      <td>0.037</td>
-      <td>0.028</td>
-      <td>703.0</td>
-      <td>640.0</td>
+      <td>2.462</td>
+      <td>0.989</td>
+      <td>0.987</td>
+      <td>4.076</td>
+      <td>0.053</td>
+      <td>0.045</td>
+      <td>526.0</td>
+      <td>505.0</td>
       <td>1.01</td>
     </tr>
     <tr>
       <th>b</th>
-      <td>14.448</td>
-      <td>5.271</td>
-      <td>5.837</td>
-      <td>24.424</td>
-      <td>0.216</td>
-      <td>0.160</td>
-      <td>707.0</td>
-      <td>641.0</td>
+      <td>14.643</td>
+      <td>5.836</td>
+      <td>5.722</td>
+      <td>24.597</td>
+      <td>0.304</td>
+      <td>0.257</td>
+      <td>548.0</td>
+      <td>530.0</td>
       <td>1.01</td>
     </tr>
     <tr>
       <th>thetas[0]</th>
       <td>0.064</td>
       <td>0.042</td>
-      <td>0.002</td>
-      <td>0.139</td>
       <td>0.001</td>
-      <td>0.000</td>
-      <td>3027.0</td>
-      <td>2383.0</td>
+      <td>0.140</td>
+      <td>0.001</td>
+      <td>0.001</td>
+      <td>2829.0</td>
+      <td>1961.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[1]</th>
-      <td>0.064</td>
-      <td>0.041</td>
-      <td>0.001</td>
-      <td>0.135</td>
-      <td>0.001</td>
+      <td>0.065</td>
+      <td>0.042</td>
       <td>0.000</td>
-      <td>3328.0</td>
-      <td>2528.0</td>
+      <td>0.139</td>
+      <td>0.001</td>
+      <td>0.001</td>
+      <td>2342.0</td>
+      <td>1973.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[2]</th>
-      <td>0.064</td>
-      <td>0.043</td>
+      <td>0.063</td>
+      <td>0.042</td>
+      <td>0.002</td>
+      <td>0.137</td>
       <td>0.001</td>
-      <td>0.138</td>
       <td>0.001</td>
-      <td>0.001</td>
-      <td>3211.0</td>
-      <td>2061.0</td>
+      <td>2802.0</td>
+      <td>2184.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[3]</th>
       <td>0.064</td>
-      <td>0.042</td>
-      <td>0.001</td>
+      <td>0.043</td>
+      <td>0.000</td>
       <td>0.139</td>
       <td>0.001</td>
-      <td>0.000</td>
-      <td>3079.0</td>
-      <td>2205.0</td>
+      <td>0.001</td>
+      <td>2377.0</td>
+      <td>2013.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[4]</th>
-      <td>0.063</td>
-      <td>0.040</td>
+      <td>0.064</td>
+      <td>0.041</td>
+      <td>0.002</td>
+      <td>0.136</td>
       <td>0.001</td>
-      <td>0.133</td>
       <td>0.001</td>
-      <td>0.000</td>
-      <td>2969.0</td>
-      <td>2100.0</td>
+      <td>2361.0</td>
+      <td>2025.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[5]</th>
-      <td>0.064</td>
+      <td>0.063</td>
       <td>0.041</td>
-      <td>0.002</td>
-      <td>0.137</td>
+      <td>0.004</td>
+      <td>0.140</td>
       <td>0.001</td>
-      <td>0.000</td>
-      <td>2902.0</td>
-      <td>1767.0</td>
+      <td>0.001</td>
+      <td>2575.0</td>
+      <td>1866.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[6]</th>
       <td>0.063</td>
       <td>0.041</td>
-      <td>0.000</td>
-      <td>0.136</td>
+      <td>0.001</td>
+      <td>0.135</td>
       <td>0.001</td>
       <td>0.000</td>
-      <td>2739.0</td>
-      <td>1504.0</td>
+      <td>2407.0</td>
+      <td>1668.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[7]</th>
-      <td>0.066</td>
-      <td>0.043</td>
-      <td>0.002</td>
-      <td>0.144</td>
+      <td>0.065</td>
+      <td>0.042</td>
+      <td>0.001</td>
+      <td>0.141</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>2855.0</td>
-      <td>2096.0</td>
+      <td>2366.0</td>
+      <td>1987.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[8]</th>
       <td>0.066</td>
-      <td>0.043</td>
+      <td>0.044</td>
+      <td>0.002</td>
+      <td>0.144</td>
       <td>0.001</td>
-      <td>0.143</td>
       <td>0.001</td>
-      <td>0.001</td>
-      <td>3233.0</td>
-      <td>2388.0</td>
+      <td>2977.0</td>
+      <td>2341.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[9]</th>
-      <td>0.066</td>
-      <td>0.044</td>
+      <td>0.065</td>
+      <td>0.043</td>
+      <td>0.000</td>
+      <td>0.140</td>
       <td>0.001</td>
-      <td>0.146</td>
       <td>0.001</td>
-      <td>0.001</td>
-      <td>2517.0</td>
-      <td>1871.0</td>
+      <td>2217.0</td>
+      <td>1723.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[10]</th>
       <td>0.066</td>
       <td>0.043</td>
-      <td>0.000</td>
-      <td>0.141</td>
+      <td>0.002</td>
+      <td>0.143</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>3041.0</td>
-      <td>2103.0</td>
+      <td>2915.0</td>
+      <td>2347.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[11]</th>
       <td>0.068</td>
       <td>0.044</td>
-      <td>0.003</td>
-      <td>0.146</td>
+      <td>0.001</td>
+      <td>0.145</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>2704.0</td>
-      <td>2052.0</td>
+      <td>2698.0</td>
+      <td>1867.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[12]</th>
-      <td>0.068</td>
-      <td>0.044</td>
+      <td>0.069</td>
+      <td>0.045</td>
       <td>0.002</td>
-      <td>0.147</td>
+      <td>0.149</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>3258.0</td>
-      <td>1858.0</td>
+      <td>3017.0</td>
+      <td>1881.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[13]</th>
-      <td>0.069</td>
-      <td>0.045</td>
+      <td>0.070</td>
+      <td>0.046</td>
       <td>0.000</td>
-      <td>0.149</td>
+      <td>0.150</td>
       <td>0.001</td>
-      <td>0.000</td>
-      <td>2943.0</td>
-      <td>1518.0</td>
+      <td>0.001</td>
+      <td>2497.0</td>
+      <td>1584.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[14]</th>
-      <td>0.093</td>
-      <td>0.051</td>
-      <td>0.009</td>
-      <td>0.184</td>
+      <td>0.091</td>
+      <td>0.048</td>
+      <td>0.014</td>
+      <td>0.182</td>
       <td>0.001</td>
-      <td>0.001</td>
-      <td>5133.0</td>
-      <td>1514.0</td>
+      <td>0.000</td>
+      <td>5065.0</td>
+      <td>2184.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[15]</th>
       <td>0.092</td>
       <td>0.047</td>
-      <td>0.017</td>
-      <td>0.179</td>
+      <td>0.013</td>
+      <td>0.178</td>
       <td>0.001</td>
       <td>0.000</td>
-      <td>5383.0</td>
-      <td>2559.0</td>
+      <td>4865.0</td>
+      <td>2084.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[16]</th>
-      <td>0.091</td>
-      <td>0.047</td>
-      <td>0.010</td>
+      <td>0.090</td>
+      <td>0.046</td>
+      <td>0.013</td>
       <td>0.174</td>
       <td>0.001</td>
-      <td>0.001</td>
-      <td>5223.0</td>
-      <td>1945.0</td>
+      <td>0.000</td>
+      <td>3971.0</td>
+      <td>2094.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[17]</th>
-      <td>0.091</td>
-      <td>0.048</td>
-      <td>0.010</td>
-      <td>0.176</td>
+      <td>0.092</td>
+      <td>0.049</td>
+      <td>0.009</td>
+      <td>0.179</td>
       <td>0.001</td>
-      <td>0.001</td>
-      <td>4571.0</td>
-      <td>2097.0</td>
+      <td>0.000</td>
+      <td>5146.0</td>
+      <td>2263.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[18]</th>
-      <td>0.093</td>
+      <td>0.094</td>
       <td>0.049</td>
-      <td>0.012</td>
-      <td>0.180</td>
+      <td>0.014</td>
+      <td>0.183</td>
       <td>0.001</td>
-      <td>0.001</td>
-      <td>5790.0</td>
-      <td>2258.0</td>
+      <td>0.000</td>
+      <td>5509.0</td>
+      <td>2360.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[19]</th>
       <td>0.095</td>
-      <td>0.050</td>
-      <td>0.011</td>
-      <td>0.181</td>
+      <td>0.049</td>
+      <td>0.013</td>
+      <td>0.183</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>5023.0</td>
-      <td>2531.0</td>
+      <td>4226.0</td>
+      <td>1708.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[20]</th>
-      <td>0.098</td>
+      <td>0.097</td>
       <td>0.051</td>
-      <td>0.012</td>
+      <td>0.015</td>
       <td>0.192</td>
       <td>0.001</td>
-      <td>0.001</td>
-      <td>4203.0</td>
-      <td>2050.0</td>
+      <td>0.000</td>
+      <td>5367.0</td>
+      <td>2076.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[21]</th>
       <td>0.097</td>
-      <td>0.052</td>
-      <td>0.015</td>
-      <td>0.194</td>
+      <td>0.051</td>
+      <td>0.012</td>
+      <td>0.189</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>4734.0</td>
-      <td>2614.0</td>
+      <td>4888.0</td>
+      <td>2517.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[22]</th>
-      <td>0.106</td>
-      <td>0.048</td>
-      <td>0.024</td>
-      <td>0.194</td>
+      <td>0.105</td>
+      <td>0.049</td>
+      <td>0.020</td>
+      <td>0.192</td>
       <td>0.001</td>
       <td>0.000</td>
-      <td>5014.0</td>
-      <td>2330.0</td>
+      <td>5404.0</td>
+      <td>2072.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[23]</th>
       <td>0.107</td>
       <td>0.048</td>
-      <td>0.030</td>
-      <td>0.199</td>
+      <td>0.027</td>
+      <td>0.196</td>
       <td>0.001</td>
       <td>0.000</td>
-      <td>6307.0</td>
-      <td>2259.0</td>
+      <td>5993.0</td>
+      <td>2303.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[24]</th>
       <td>0.111</td>
-      <td>0.050</td>
-      <td>0.029</td>
-      <td>0.206</td>
+      <td>0.049</td>
+      <td>0.026</td>
+      <td>0.201</td>
       <td>0.001</td>
-      <td>0.001</td>
-      <td>6217.0</td>
-      <td>2845.0</td>
+      <td>0.000</td>
+      <td>5686.0</td>
+      <td>2498.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[25]</th>
-      <td>0.119</td>
-      <td>0.054</td>
-      <td>0.025</td>
-      <td>0.215</td>
+      <td>0.120</td>
+      <td>0.053</td>
+      <td>0.027</td>
+      <td>0.216</td>
       <td>0.001</td>
-      <td>0.000</td>
-      <td>7068.0</td>
-      <td>2499.0</td>
+      <td>0.001</td>
+      <td>7176.0</td>
+      <td>2558.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[26]</th>
       <td>0.119</td>
-      <td>0.052</td>
-      <td>0.028</td>
-      <td>0.213</td>
+      <td>0.053</td>
+      <td>0.029</td>
+      <td>0.217</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6114.0</td>
-      <td>2691.0</td>
+      <td>5593.0</td>
+      <td>2497.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[27]</th>
-      <td>0.121</td>
-      <td>0.055</td>
-      <td>0.032</td>
-      <td>0.224</td>
+      <td>0.120</td>
+      <td>0.054</td>
+      <td>0.033</td>
+      <td>0.226</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6416.0</td>
-      <td>2520.0</td>
+      <td>6758.0</td>
+      <td>2603.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[28]</th>
-      <td>0.120</td>
-      <td>0.055</td>
-      <td>0.028</td>
-      <td>0.224</td>
+      <td>0.119</td>
+      <td>0.053</td>
+      <td>0.022</td>
+      <td>0.212</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6961.0</td>
-      <td>2374.0</td>
+      <td>5915.0</td>
+      <td>2312.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[29]</th>
       <td>0.119</td>
-      <td>0.054</td>
-      <td>0.026</td>
-      <td>0.216</td>
+      <td>0.055</td>
+      <td>0.030</td>
+      <td>0.219</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>7305.0</td>
-      <td>2286.0</td>
+      <td>8167.0</td>
+      <td>1921.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[30]</th>
       <td>0.120</td>
       <td>0.054</td>
-      <td>0.032</td>
-      <td>0.222</td>
+      <td>0.028</td>
+      <td>0.221</td>
       <td>0.001</td>
-      <td>0.001</td>
-      <td>6178.0</td>
-      <td>2498.0</td>
+      <td>0.000</td>
+      <td>7447.0</td>
+      <td>2366.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[31]</th>
-      <td>0.127</td>
-      <td>0.062</td>
-      <td>0.021</td>
-      <td>0.239</td>
+      <td>0.126</td>
+      <td>0.063</td>
+      <td>0.014</td>
+      <td>0.235</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6517.0</td>
-      <td>2399.0</td>
+      <td>5361.0</td>
+      <td>2436.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[32]</th>
       <td>0.113</td>
-      <td>0.039</td>
+      <td>0.037</td>
       <td>0.045</td>
-      <td>0.184</td>
+      <td>0.181</td>
       <td>0.000</td>
       <td>0.000</td>
-      <td>6353.0</td>
-      <td>2664.0</td>
+      <td>7152.0</td>
+      <td>2540.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[33]</th>
       <td>0.123</td>
       <td>0.053</td>
-      <td>0.033</td>
-      <td>0.223</td>
+      <td>0.030</td>
+      <td>0.219</td>
       <td>0.001</td>
       <td>0.000</td>
-      <td>7068.0</td>
-      <td>2807.0</td>
+      <td>7042.0</td>
+      <td>2469.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[34]</th>
       <td>0.118</td>
-      <td>0.040</td>
-      <td>0.047</td>
-      <td>0.192</td>
-      <td>0.001</td>
+      <td>0.041</td>
+      <td>0.044</td>
+      <td>0.193</td>
       <td>0.000</td>
-      <td>6133.0</td>
-      <td>2142.0</td>
+      <td>0.000</td>
+      <td>6880.0</td>
+      <td>2839.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[35]</th>
       <td>0.123</td>
       <td>0.050</td>
-      <td>0.037</td>
+      <td>0.034</td>
       <td>0.215</td>
       <td>0.001</td>
       <td>0.000</td>
-      <td>6828.0</td>
-      <td>2674.0</td>
+      <td>6443.0</td>
+      <td>2613.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[36]</th>
       <td>0.131</td>
-      <td>0.057</td>
-      <td>0.033</td>
-      <td>0.236</td>
+      <td>0.056</td>
+      <td>0.039</td>
+      <td>0.237</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6281.0</td>
-      <td>2614.0</td>
+      <td>6880.0</td>
+      <td>2492.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[37]</th>
       <td>0.143</td>
       <td>0.043</td>
-      <td>0.067</td>
+      <td>0.063</td>
       <td>0.224</td>
-      <td>0.001</td>
       <td>0.000</td>
-      <td>6974.0</td>
-      <td>2450.0</td>
+      <td>0.000</td>
+      <td>9065.0</td>
+      <td>2456.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[38]</th>
       <td>0.148</td>
-      <td>0.043</td>
+      <td>0.044</td>
       <td>0.070</td>
-      <td>0.227</td>
+      <td>0.230</td>
       <td>0.000</td>
       <td>0.000</td>
-      <td>7228.0</td>
-      <td>2618.0</td>
+      <td>7589.0</td>
+      <td>2877.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[39]</th>
-      <td>0.148</td>
-      <td>0.061</td>
-      <td>0.040</td>
-      <td>0.261</td>
+      <td>0.147</td>
+      <td>0.059</td>
+      <td>0.043</td>
+      <td>0.259</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6923.0</td>
-      <td>1939.0</td>
-      <td>1.00</td>
+      <td>7504.0</td>
+      <td>2012.0</td>
+      <td>1.01</td>
     </tr>
     <tr>
       <th>thetas[40]</th>
-      <td>0.147</td>
+      <td>0.148</td>
       <td>0.059</td>
-      <td>0.044</td>
-      <td>0.258</td>
+      <td>0.042</td>
+      <td>0.255</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6922.0</td>
-      <td>2427.0</td>
+      <td>6642.0</td>
+      <td>2876.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[41]</th>
-      <td>0.151</td>
-      <td>0.067</td>
-      <td>0.032</td>
-      <td>0.271</td>
+      <td>0.150</td>
+      <td>0.066</td>
+      <td>0.040</td>
+      <td>0.274</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>8686.0</td>
-      <td>2505.0</td>
+      <td>8647.0</td>
+      <td>2608.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[42]</th>
-      <td>0.176</td>
-      <td>0.048</td>
-      <td>0.090</td>
-      <td>0.267</td>
+      <td>0.177</td>
+      <td>0.047</td>
+      <td>0.089</td>
+      <td>0.262</td>
       <td>0.001</td>
       <td>0.000</td>
-      <td>7846.0</td>
-      <td>2478.0</td>
+      <td>6834.0</td>
+      <td>2760.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[43]</th>
       <td>0.185</td>
       <td>0.046</td>
-      <td>0.103</td>
-      <td>0.274</td>
+      <td>0.100</td>
+      <td>0.271</td>
       <td>0.001</td>
       <td>0.000</td>
-      <td>6315.0</td>
-      <td>2056.0</td>
+      <td>8221.0</td>
+      <td>2201.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[44]</th>
-      <td>0.177</td>
-      <td>0.063</td>
-      <td>0.066</td>
-      <td>0.293</td>
+      <td>0.176</td>
+      <td>0.064</td>
+      <td>0.064</td>
+      <td>0.297</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>7899.0</td>
-      <td>2812.0</td>
+      <td>8205.0</td>
+      <td>2454.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[45]</th>
-      <td>0.175</td>
-      <td>0.065</td>
+      <td>0.174</td>
       <td>0.063</td>
-      <td>0.294</td>
+      <td>0.065</td>
+      <td>0.297</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>8066.0</td>
-      <td>2759.0</td>
+      <td>7163.0</td>
+      <td>2569.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[46]</th>
       <td>0.175</td>
-      <td>0.064</td>
       <td>0.062</td>
-      <td>0.297</td>
+      <td>0.065</td>
+      <td>0.291</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>7142.0</td>
-      <td>2516.0</td>
+      <td>8019.0</td>
+      <td>2842.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[47]</th>
       <td>0.175</td>
       <td>0.063</td>
-      <td>0.068</td>
-      <td>0.298</td>
+      <td>0.062</td>
+      <td>0.290</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>7928.0</td>
-      <td>2962.0</td>
+      <td>8888.0</td>
+      <td>2764.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[48]</th>
       <td>0.175</td>
-      <td>0.062</td>
-      <td>0.067</td>
-      <td>0.291</td>
+      <td>0.065</td>
+      <td>0.064</td>
+      <td>0.300</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6939.0</td>
-      <td>2283.0</td>
+      <td>5794.0</td>
+      <td>2664.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[49]</th>
-      <td>0.175</td>
-      <td>0.064</td>
-      <td>0.064</td>
-      <td>0.292</td>
+      <td>0.176</td>
+      <td>0.063</td>
+      <td>0.067</td>
+      <td>0.295</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6413.0</td>
-      <td>2556.0</td>
+      <td>7197.0</td>
+      <td>2719.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[50]</th>
-      <td>0.176</td>
-      <td>0.064</td>
-      <td>0.058</td>
-      <td>0.292</td>
+      <td>0.175</td>
+      <td>0.063</td>
+      <td>0.066</td>
+      <td>0.296</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6923.0</td>
-      <td>2512.0</td>
+      <td>7907.0</td>
+      <td>2149.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[51]</th>
-      <td>0.191</td>
-      <td>0.048</td>
-      <td>0.106</td>
-      <td>0.284</td>
+      <td>0.192</td>
+      <td>0.049</td>
+      <td>0.108</td>
+      <td>0.291</td>
       <td>0.001</td>
       <td>0.000</td>
-      <td>7497.0</td>
-      <td>2321.0</td>
+      <td>7109.0</td>
+      <td>2693.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[52]</th>
       <td>0.180</td>
       <td>0.064</td>
-      <td>0.066</td>
-      <td>0.297</td>
+      <td>0.063</td>
+      <td>0.294</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6555.0</td>
-      <td>2664.0</td>
+      <td>7721.0</td>
+      <td>2728.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[53]</th>
-      <td>0.181</td>
-      <td>0.065</td>
-      <td>0.066</td>
-      <td>0.303</td>
+      <td>0.180</td>
+      <td>0.064</td>
+      <td>0.069</td>
+      <td>0.298</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>8016.0</td>
-      <td>2681.0</td>
+      <td>7725.0</td>
+      <td>2966.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[54]</th>
       <td>0.180</td>
       <td>0.066</td>
-      <td>0.066</td>
-      <td>0.304</td>
+      <td>0.065</td>
+      <td>0.301</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>7520.0</td>
-      <td>2869.0</td>
+      <td>7448.0</td>
+      <td>2665.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[55]</th>
-      <td>0.193</td>
+      <td>0.192</td>
       <td>0.065</td>
-      <td>0.078</td>
-      <td>0.316</td>
+      <td>0.074</td>
+      <td>0.308</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>7421.0</td>
-      <td>2052.0</td>
-      <td>1.00</td>
+      <td>7691.0</td>
+      <td>2332.0</td>
+      <td>1.01</td>
     </tr>
     <tr>
       <th>thetas[56]</th>
       <td>0.214</td>
       <td>0.052</td>
-      <td>0.121</td>
+      <td>0.125</td>
       <td>0.312</td>
       <td>0.001</td>
       <td>0.000</td>
-      <td>6497.0</td>
-      <td>2673.0</td>
+      <td>6836.0</td>
+      <td>3001.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[57]</th>
-      <td>0.219</td>
+      <td>0.220</td>
       <td>0.052</td>
-      <td>0.129</td>
-      <td>0.324</td>
+      <td>0.120</td>
+      <td>0.312</td>
       <td>0.001</td>
       <td>0.000</td>
-      <td>7329.0</td>
-      <td>2502.0</td>
+      <td>6995.0</td>
+      <td>2821.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[58]</th>
-      <td>0.202</td>
+      <td>0.203</td>
       <td>0.068</td>
-      <td>0.078</td>
-      <td>0.326</td>
+      <td>0.085</td>
+      <td>0.336</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6149.0</td>
-      <td>2535.0</td>
+      <td>7709.0</td>
+      <td>2366.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[59]</th>
       <td>0.203</td>
-      <td>0.066</td>
-      <td>0.086</td>
-      <td>0.328</td>
+      <td>0.068</td>
+      <td>0.081</td>
+      <td>0.329</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6166.0</td>
-      <td>2548.0</td>
+      <td>6447.0</td>
+      <td>2429.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[60]</th>
       <td>0.212</td>
-      <td>0.065</td>
-      <td>0.102</td>
-      <td>0.337</td>
+      <td>0.067</td>
+      <td>0.088</td>
+      <td>0.335</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>5954.0</td>
-      <td>2852.0</td>
+      <td>6387.0</td>
+      <td>2458.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[61]</th>
-      <td>0.210</td>
-      <td>0.071</td>
-      <td>0.079</td>
+      <td>0.209</td>
+      <td>0.069</td>
+      <td>0.084</td>
       <td>0.333</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>7916.0</td>
-      <td>2214.0</td>
+      <td>7440.0</td>
+      <td>2506.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[62]</th>
-      <td>0.219</td>
+      <td>0.220</td>
       <td>0.068</td>
-      <td>0.093</td>
-      <td>0.341</td>
+      <td>0.102</td>
+      <td>0.347</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>7053.0</td>
-      <td>2717.0</td>
+      <td>6950.0</td>
+      <td>2915.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[63]</th>
-      <td>0.232</td>
-      <td>0.071</td>
-      <td>0.108</td>
-      <td>0.367</td>
+      <td>0.231</td>
+      <td>0.073</td>
+      <td>0.104</td>
+      <td>0.371</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>5964.0</td>
-      <td>2696.0</td>
+      <td>5787.0</td>
+      <td>2506.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[64]</th>
-      <td>0.231</td>
+      <td>0.230</td>
       <td>0.072</td>
-      <td>0.099</td>
+      <td>0.103</td>
       <td>0.361</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>5550.0</td>
-      <td>2775.0</td>
+      <td>5660.0</td>
+      <td>2837.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[65]</th>
       <td>0.231</td>
-      <td>0.072</td>
-      <td>0.106</td>
-      <td>0.368</td>
+      <td>0.070</td>
+      <td>0.114</td>
+      <td>0.371</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>6535.0</td>
-      <td>2524.0</td>
+      <td>5129.0</td>
+      <td>2907.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[66]</th>
       <td>0.268</td>
       <td>0.055</td>
-      <td>0.162</td>
-      <td>0.367</td>
+      <td>0.168</td>
+      <td>0.370</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>5391.0</td>
-      <td>2885.0</td>
+      <td>5994.0</td>
+      <td>2561.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[67]</th>
-      <td>0.277</td>
+      <td>0.278</td>
       <td>0.057</td>
-      <td>0.176</td>
-      <td>0.392</td>
+      <td>0.173</td>
+      <td>0.389</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>5121.0</td>
-      <td>2636.0</td>
+      <td>4698.0</td>
+      <td>2548.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[68]</th>
-      <td>0.275</td>
-      <td>0.056</td>
-      <td>0.168</td>
-      <td>0.378</td>
+      <td>0.274</td>
+      <td>0.058</td>
+      <td>0.174</td>
+      <td>0.389</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>5472.0</td>
-      <td>2844.0</td>
+      <td>4463.0</td>
+      <td>2567.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[69]</th>
       <td>0.282</td>
-      <td>0.073</td>
-      <td>0.146</td>
-      <td>0.419</td>
+      <td>0.071</td>
+      <td>0.159</td>
+      <td>0.424</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>5195.0</td>
-      <td>2521.0</td>
+      <td>3706.0</td>
+      <td>2447.0</td>
       <td>1.00</td>
     </tr>
     <tr>
       <th>thetas[70]</th>
-      <td>0.210</td>
+      <td>0.211</td>
       <td>0.076</td>
-      <td>0.078</td>
-      <td>0.353</td>
+      <td>0.081</td>
+      <td>0.354</td>
       <td>0.001</td>
       <td>0.001</td>
-      <td>7364.0</td>
-      <td>2832.0</td>
+      <td>8008.0</td>
+      <td>2704.0</td>
       <td>1.00</td>
     </tr>
   </tbody>
@@ -2758,7 +2761,7 @@ Wall time: 8.28 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/1a8c0e54fb1ea43065752998985c51f127a60cb199f7fb7b296bad2863e3be13.png" src="../_images/1a8c0e54fb1ea43065752998985c51f127a60cb199f7fb7b296bad2863e3be13.png" />
+<img alt="../_images/c2effc7fe9c1208856b82bb4f3929393b562c5f84cfc15e21c4a7ba5e31d4bb7.png" src="../_images/c2effc7fe9c1208856b82bb4f3929393b562c5f84cfc15e21c4a7ba5e31d4bb7.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -2768,7 +2771,7 @@ Wall time: 8.28 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of divergence: 2
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of divergence: 0
 </pre></div>
 </div>
 </div>
@@ -2785,6 +2788,20 @@ Wall time: 8.28 s
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="SGMCMC.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">MNIST Digit Recognition With a 3-Layer Perceptron</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="Pathfinder.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Pathfinder</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
 </div>
             </footer>
         </div>

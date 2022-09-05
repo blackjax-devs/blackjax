@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Use Tempered SMC to improve exploration of MCMC methods. &#8212; Blackjax</title>
+    <title>Use Tempered SMC to Improve Exploration of MCMC Methods. &#8212; Blackjax</title>
     
   <!-- Loaded before other Sphinx assets -->
   <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
@@ -39,10 +39,11 @@
     <script src="../_static/togglebutton.js"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Hierarchical Bayesian neural networks" href="HierarchicalBNN.html" />
-    <link rel="prev" title="Bayesian Logistic Regression" href="LogisticRegressionWithLatentGaussianSampler.html" />
+    <link rel="next" title="Hierarchical Bayesian Neural Networks" href="HierarchicalBNN.html" />
+    <link rel="prev" title="Bayesian Logistic Regression With Latent Gaussian Sampler" href="LogisticRegressionWithLatentGaussianSampler.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -112,7 +113,7 @@
   <ul class="current">
    <li class="toctree-l2">
     <a class="reference internal" href="Introduction.html">
-     A quick introduction to Blackjax
+     A Quick Introduction to Blackjax
     </a>
    </li>
    <li class="toctree-l2">
@@ -122,17 +123,17 @@
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="LogisticRegressionWithLatentGaussianSampler.html">
-     Bayesian Logistic Regression
+     Bayesian Logistic Regression With Latent Gaussian Sampler
     </a>
    </li>
    <li class="toctree-l2 current active">
     <a class="current reference internal" href="#">
-     Use Tempered SMC to improve exploration of MCMC methods.
+     Use Tempered SMC to Improve Exploration of MCMC Methods.
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="HierarchicalBNN.html">
-     Hierarchical Bayesian neural networks
+     Hierarchical Bayesian Neural Networks
     </a>
    </li>
    <li class="toctree-l2">
@@ -142,27 +143,22 @@
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="GP_EllipticalSliceSampler.html">
-     Gaussian regression with the Elliptical Slice sampler
+     Gaussian Regression with the Elliptical Slice Sampler
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="SGMCMC.html">
-     MNIST digit recognition with a 3-layer Perceptron
+     MNIST Digit Recognition With a 3-Layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="change_of_variable_hmc.html">
+     Change of Variable in HMC
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="Pathfinder.html">
      Pathfinder
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="use_with_numpyro.html">
-     Use BlackJAX with Numpyro
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="use_with_tfp.html">
-     Use BlackJAX with TFP
     </a>
    </li>
   </ul>
@@ -295,12 +291,12 @@ title="Source repository"
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#sampling-from-a-bimodal-potential">
-   Sampling from a bimodal potential
+   Sampling From a Bimodal Potential
   </a>
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#experimental-setup">
-     Experimental setup
+     Experimental Setup
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
@@ -317,32 +313,32 @@ title="Source repository"
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#tempered-smc-with-hmc-kernel">
-   Tempered SMC with HMC kernel
+   Tempered SMC with HMC Kernel
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#sampling-from-the-rastrigin-potential">
-   Sampling from the Rastrigin potential
+   Sampling from the Rastrigin Potential
   </a>
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#id1">
-     Experimental setup
+     Experimental Setup
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#hmc-sampler">
-     HMC sampler
+     HMC Sampler
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#nuts-sampler">
-     NUTS sampler
+     NUTS Sampler
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#id2">
-     Tempered SMC with HMC kernel
+     Tempered SMC with HMC Kernel
     </a>
    </li>
   </ul>
@@ -356,7 +352,7 @@ title="Source repository"
         <div class="col pl-md-3 pl-lg-5 content-container">
             <!-- Table of contents that is only displayed when printing the page -->
             <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Use Tempered SMC to improve exploration of MCMC methods.</h1>
+                <h1>Use Tempered SMC to Improve Exploration of MCMC Methods.</h1>
                 <!-- Table of contents -->
                 <div id="print-main-content">
                     <div id="jb-print-toc">
@@ -373,12 +369,12 @@ title="Source repository"
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#sampling-from-a-bimodal-potential">
-   Sampling from a bimodal potential
+   Sampling From a Bimodal Potential
   </a>
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#experimental-setup">
-     Experimental setup
+     Experimental Setup
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
@@ -395,32 +391,32 @@ title="Source repository"
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#tempered-smc-with-hmc-kernel">
-   Tempered SMC with HMC kernel
+   Tempered SMC with HMC Kernel
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#sampling-from-the-rastrigin-potential">
-   Sampling from the Rastrigin potential
+   Sampling from the Rastrigin Potential
   </a>
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#id1">
-     Experimental setup
+     Experimental Setup
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#hmc-sampler">
-     HMC sampler
+     HMC Sampler
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#nuts-sampler">
-     NUTS sampler
+     NUTS Sampler
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#id2">
-     Tempered SMC with HMC kernel
+     Tempered SMC with HMC Kernel
     </a>
    </li>
   </ul>
@@ -436,13 +432,15 @@ title="Source repository"
               <div>
                 
   <section id="use-tempered-smc-to-improve-exploration-of-mcmc-methods">
-<h1>Use Tempered SMC to improve exploration of MCMC methods.<a class="headerlink" href="#use-tempered-smc-to-improve-exploration-of-mcmc-methods" title="Permalink to this headline">#</a></h1>
+<h1>Use Tempered SMC to Improve Exploration of MCMC Methods.<a class="headerlink" href="#use-tempered-smc-to-improve-exploration-of-mcmc-methods" title="Permalink to this headline">#</a></h1>
 <p>Multimodal distributions are typically hard to sample from, in particular using energy based methods such as HMC,
 as you need high energy levels to escape a potential well.</p>
 <p>Tempered SMC helps with this by considering a sequence of
 distributions:</p>
-<p>$$p_{\lambda_k}(x) \propto p_0(x) \exp(-\lambda_k V(x))$$</p>
-<p>where the tempering parameter $\lambda_k$ takes increasing values between $0$ and $1$. Tempered SMC will also particularly shine when the MCMC step
+<p>$$
+p_{\lambda_k}(x) \propto p_0(x) \exp(-\lambda_k V(x))
+$$</p>
+<p>where the tempering parameter $ \lambda_k $ takes increasing values between <span class="math notranslate nohighlight">\(0\)</span> and <span class="math notranslate nohighlight">\(1\)</span>. Tempered SMC will also particularly shine when the MCMC step
 is not well calibrated (too small step size, etc) like in the example below.</p>
 <section id="imports">
 <h2>Imports<a class="headerlink" href="#imports" title="Permalink to this headline">#</a></h2>
@@ -464,11 +462,20 @@ is not well calibrated (too small step size, etc) like in the example below.</p>
 </div>
 </section>
 <section id="sampling-from-a-bimodal-potential">
-<h2>Sampling from a bimodal potential<a class="headerlink" href="#sampling-from-a-bimodal-potential" title="Permalink to this headline">#</a></h2>
+<h2>Sampling From a Bimodal Potential<a class="headerlink" href="#sampling-from-a-bimodal-potential" title="Permalink to this headline">#</a></h2>
 <section id="experimental-setup">
-<h3>Experimental setup<a class="headerlink" href="#experimental-setup" title="Permalink to this headline">#</a></h3>
-<p>We consider a prior distribution $p_0(x) = \mathcal{N}(x \mid 0, 1)$ and a potential function $V(x) = (x^2 - 1)^2$.</p>
-<p>This corresponds to the following distribution. We plot the resulting tempered density for 5 different values of $\lambda_k$: from $\lambda_k =1$ which correponds to the original density to $\lambda_k=0$. The lower the value of $\lambda_k$ the easier it is to sampler from the posterior density.</p>
+<h3>Experimental Setup<a class="headerlink" href="#experimental-setup" title="Permalink to this headline">#</a></h3>
+<p>We consider a prior distribution</p>
+<p>$$
+p_0(x) = \mathcal{N}(x \mid 0, 1)
+$$</p>
+<p>and a potential function</p>
+<p>$$
+V(x) = (x^2 - 1)^2
+$$</p>
+<p>This corresponds to the following distribution. We plot the resulting tempered density for 5 different values of <div class="math notranslate nohighlight">
+\[\lambda_k\]</div>
+ : from <span class="math notranslate nohighlight">\(\lambda_k =1\)</span> which correponds to the original density to <span class="math notranslate nohighlight">\(\lambda_k=0\)</span>. The lower the value of <span class="math notranslate nohighlight">\(\lambda_k\)</span> the easier it is to sampler from the posterior density.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">V</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
@@ -501,10 +508,10 @@ is not well calibrated (too small step size, etc) like in the example below.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f0c5075c040&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fc488b2ac10&gt;
 </pre></div>
 </div>
-<img alt="../_images/8bccb1c804da190df5397f65f58e3506fa58517020a1c6c7e18bcd663b3fe183.png" src="../_images/8bccb1c804da190df5397f65f58e3506fa58517020a1c6c7e18bcd663b3fe183.png" />
+<img alt="../_images/9e3a50880e6192d20eff8bd0df02e6ca36bcffd5b51ca4ed157356c83a20d404.png" src="../_images/9e3a50880e6192d20eff8bd0df02e6ca36bcffd5b51ca4ed157356c83a20d404.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -556,11 +563,11 @@ is not well calibrated (too small step size, etc) like in the example below.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.23 s, sys: 0 ns, total: 1.23 s
-Wall time: 1.21 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.71 s, sys: 4.44 ms, total: 1.71 s
+Wall time: 1.71 s
 </pre></div>
 </div>
-<img alt="../_images/881855ef6c97fecb35aef319954e24df1d7c5b2282867f1077441355e7b2d03b.png" src="../_images/881855ef6c97fecb35aef319954e24df1d7c5b2282867f1077441355e7b2d03b.png" />
+<img alt="../_images/f6acf7bbfe8181f7d3e0adf43b304877dc1de60eeb8c894c323a139fa80b0782.png" src="../_images/f6acf7bbfe8181f7d3e0adf43b304877dc1de60eeb8c894c323a139fa80b0782.png" />
 </div>
 </div>
 </section>
@@ -584,18 +591,18 @@ Wall time: 1.21 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 5.65 s, sys: 0 ns, total: 5.65 s
-Wall time: 5.63 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.92 s, sys: 13.6 ms, total: 7.93 s
+Wall time: 7.92 s
 </pre></div>
 </div>
-<img alt="../_images/07b332a800aafffed7d5a3eef8a60e50128c6858578fa190cfdd9e29ace34c3b.png" src="../_images/07b332a800aafffed7d5a3eef8a60e50128c6858578fa190cfdd9e29ace34c3b.png" />
+<img alt="../_images/4e7704d7cfef8610bb2b2c0b2087c9003aef0ce0b3ac352f59e683253e5372b3.png" src="../_images/4e7704d7cfef8610bb2b2c0b2087c9003aef0ce0b3ac352f59e683253e5372b3.png" />
 </div>
 </div>
 </section>
 </section>
 <section id="tempered-smc-with-hmc-kernel">
-<h2>Tempered SMC with HMC kernel<a class="headerlink" href="#tempered-smc-with-hmc-kernel" title="Permalink to this headline">#</a></h2>
-<p>We now use the adaptive tempered SMC algorithm with an HMC kernel. We only take one HMC step before resampling. The algorithm is run until $\lambda_k$ crosses the $\lambda_k = 1$ limit.</p>
+<h2>Tempered SMC with HMC Kernel<a class="headerlink" href="#tempered-smc-with-hmc-kernel" title="Permalink to this headline">#</a></h2>
+<p>We now use the adaptive tempered SMC algorithm with an HMC kernel. We only take one HMC step before resampling. The algorithm is run until <span class="math notranslate nohighlight">\(\lambda_k\)</span> crosses the <span class="math notranslate nohighlight">\(\lambda_k = 1\)</span> limit.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">smc_inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">smc_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">):</span>
@@ -660,21 +667,27 @@ Wall time: 5.63 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  9
-CPU times: user 2.85 s, sys: 1.91 s, total: 4.76 s
-Wall time: 2.25 s
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/blackjax/blackjax/blackjax/smc/ess.py:69: FutureWarning: jax.tree_flatten is deprecated, and will be removed in a future release. Use jax.tree_util.tree_flatten instead.
+  n_particles = jax.tree_flatten(particles)[0][0].shape[0]
+/home/runner/work/blackjax/blackjax/blackjax/smc/base.py:97: FutureWarning: jax.tree_flatten is deprecated, and will be removed in a future release. Use jax.tree_util.tree_flatten instead.
+  num_particles = jax.tree_flatten(particles)[0][0].shape[0]
 </pre></div>
 </div>
-<img alt="../_images/0bf29793088a5204dbb1556ac6353f899171d3e0d4ce10e17752a67ed93f24a0.png" src="../_images/0bf29793088a5204dbb1556ac6353f899171d3e0d4ce10e17752a67ed93f24a0.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  9
+CPU times: user 3.76 s, sys: 63.5 ms, total: 3.82 s
+Wall time: 3.68 s
+</pre></div>
+</div>
+<img alt="../_images/32d6734e082d7c97ef3adadcd2b773349bd4405b3ae04c62995337914413066c.png" src="../_images/32d6734e082d7c97ef3adadcd2b773349bd4405b3ae04c62995337914413066c.png" />
 </div>
 </div>
 </section>
 <section id="sampling-from-the-rastrigin-potential">
-<h2>Sampling from the Rastrigin potential<a class="headerlink" href="#sampling-from-the-rastrigin-potential" title="Permalink to this headline">#</a></h2>
+<h2>Sampling from the Rastrigin Potential<a class="headerlink" href="#sampling-from-the-rastrigin-potential" title="Permalink to this headline">#</a></h2>
 <section id="id1">
-<h3>Experimental setup<a class="headerlink" href="#id1" title="Permalink to this headline">#</a></h3>
-<p>We consider a prior distribution $p_0(x) = \mathcal{N}(x \mid 0_2, 2 I_2)$ and we want to sample from a Rastrigin type potential function $V(x) = -2 A + \sum_{i=1}^2x_i^2 - A  \cos(2 \pi x_i)$ where we choose $A=10$. These potential functions are known to be particularly hard to sample.</p>
-<p>We plot the resulting tempered density for 5 different values of $\lambda_k$: from $\lambda_k =1$ which correponds to the original density to $\lambda_k=0$. The lower the value of $\lambda_k$ the easier it is to sampler from the posterior log-density.</p>
+<h3>Experimental Setup<a class="headerlink" href="#id1" title="Permalink to this headline">#</a></h3>
+<p>We consider a prior distribution <span class="math notranslate nohighlight">\(p_0(x) = \mathcal{N}(x \mid 0_2, 2 I_2)\)</span> and we want to sample from a Rastrigin type potential function <span class="math notranslate nohighlight">\(V(x) = -2 A + \sum_{i=1}^2x_i^2 - A  \cos(2 \pi x_i)\)</span> where we choose <span class="math notranslate nohighlight">\(A=10\)</span>. These potential functions are known to be particularly hard to sample.</p>
+<p>We plot the resulting tempered density for 5 different values of <span class="math notranslate nohighlight">\(\lambda_k\)</span>: from <span class="math notranslate nohighlight">\(\lambda_k =1\)</span> which correponds to the original density to <span class="math notranslate nohighlight">\(\lambda_k=0\)</span>. The lower the value of <span class="math notranslate nohighlight">\(\lambda_k\)</span> the easier it is to sampler from the posterior log-density.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">prior_log_prob</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
@@ -706,10 +719,10 @@ Wall time: 2.25 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f0c30438a60&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fc480f62f10&gt;
 </pre></div>
 </div>
-<img alt="../_images/af542b77e7289995d04e78d43719eb7a354f2d5d43eca43bfecffb55de76053c.png" src="../_images/af542b77e7289995d04e78d43719eb7a354f2d5d43eca43bfecffb55de76053c.png" />
+<img alt="../_images/d276b736694b360f98219d362e5cdbf114a24d3bff877e2f43862c458a9b3b8e.png" src="../_images/d276b736694b360f98219d362e5cdbf114a24d3bff877e2f43862c458a9b3b8e.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -733,7 +746,7 @@ Wall time: 2.25 s
 </div>
 </section>
 <section id="hmc-sampler">
-<h3>HMC sampler<a class="headerlink" href="#hmc-sampler" title="Permalink to this headline">#</a></h3>
+<h3>HMC Sampler<a class="headerlink" href="#hmc-sampler" title="Permalink to this headline">#</a></h3>
 <p>We first try to sample from the posterior density using an HMC kernel.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -759,16 +772,16 @@ Wall time: 2.25 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 920 ms, sys: 10.3 ms, total: 930 ms
-Wall time: 917 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.25 s, sys: 7.7 ms, total: 1.26 s
+Wall time: 1.26 s
 </pre></div>
 </div>
-<img alt="../_images/c02e76a066faee93a9d0900c4ac90f019a09da22bd3056e9600efa7e29a94b7f.png" src="../_images/c02e76a066faee93a9d0900c4ac90f019a09da22bd3056e9600efa7e29a94b7f.png" />
+<img alt="../_images/083af0563dc6291f3a4b92fd5cd6b7baa15cb5234eef94730844fb4c31ccae0f.png" src="../_images/083af0563dc6291f3a4b92fd5cd6b7baa15cb5234eef94730844fb4c31ccae0f.png" />
 </div>
 </div>
 </section>
 <section id="nuts-sampler">
-<h3>NUTS sampler<a class="headerlink" href="#nuts-sampler" title="Permalink to this headline">#</a></h3>
+<h3>NUTS Sampler<a class="headerlink" href="#nuts-sampler" title="Permalink to this headline">#</a></h3>
 <p>We do the same using a NUTS kernel.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -788,17 +801,17 @@ Wall time: 917 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.35 s, sys: 9.6 ms, total: 1.36 s
-Wall time: 1.34 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.96 s, sys: 15.6 ms, total: 1.97 s
+Wall time: 1.97 s
 </pre></div>
 </div>
-<img alt="../_images/6145896ce2a2633da20e196f2b7fbe86514bc651c0127ea323b41edfb50e8881.png" src="../_images/6145896ce2a2633da20e196f2b7fbe86514bc651c0127ea323b41edfb50e8881.png" />
+<img alt="../_images/5bd93cb3189b10e05e95902297aa58eb2a06c21724602913a4057b5bd32ab797.png" src="../_images/5bd93cb3189b10e05e95902297aa58eb2a06c21724602913a4057b5bd32ab797.png" />
 </div>
 </div>
 </section>
 <section id="id2">
-<h3>Tempered SMC with HMC kernel<a class="headerlink" href="#id2" title="Permalink to this headline">#</a></h3>
-<p>We now use the adaptive tempered SMC algorithm with an HMC kernel. We only take one HMC step before resampling. The algorithm is run until $\lambda_k$ crosses the $\lambda_k = 1$ limit.
+<h3>Tempered SMC with HMC Kernel<a class="headerlink" href="#id2" title="Permalink to this headline">#</a></h3>
+<p>We now use the adaptive tempered SMC algorithm with an HMC kernel. We only take one HMC step before resampling. The algorithm is run until <span class="math notranslate nohighlight">\(\lambda_k\)</span> crosses the <span class="math notranslate nohighlight">\(\lambda_k = 1\)</span> limit.
 We correct the bias introduced by the (arbitrary) prior.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -837,11 +850,11 @@ We correct the bias introduced by the (arbitrary) prior.</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  8
-CPU times: user 2.37 s, sys: 14.3 ms, total: 2.38 s
-Wall time: 2.35 s
+CPU times: user 3.41 s, sys: 27.1 ms, total: 3.43 s
+Wall time: 3.42 s
 </pre></div>
 </div>
-<img alt="../_images/5ad9c1eb59730beb0d4f61c568ca84dcfa23ec5130efd5df8f5ac5dc622aa0e2.png" src="../_images/5ad9c1eb59730beb0d4f61c568ca84dcfa23ec5130efd5df8f5ac5dc622aa0e2.png" />
+<img alt="../_images/164f0c0958b25bd9a7ca43c533bd995565e9c1291522f8db64da0cefe1e513c7.png" src="../_images/164f0c0958b25bd9a7ca43c533bd995565e9c1291522f8db64da0cefe1e513c7.png" />
 </div>
 </div>
 <p>The tempered SMC algorithm with the HMC kernel clearly outperfoms the HMC and NUTS kernels alone.</p>
@@ -861,13 +874,13 @@ Wall time: 2.35 s
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Bayesian Logistic Regression</p>
+            <p class="prev-next-title">Bayesian Logistic Regression With Latent Gaussian Sampler</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="HierarchicalBNN.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Hierarchical Bayesian neural networks</p>
+        <p class="prev-next-title">Hierarchical Bayesian Neural Networks</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

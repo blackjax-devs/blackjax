@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Gaussian regression with the Elliptical Slice sampler &#8212; Blackjax</title>
+    <title>Gaussian Regression with the Elliptical Slice Sampler &#8212; Blackjax</title>
     
   <!-- Loaded before other Sphinx assets -->
   <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
@@ -39,9 +39,10 @@
     <script src="../_static/togglebutton.js"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="MNIST digit recognition with a 3-layer Perceptron" href="SGMCMC.html" />
+    <link rel="next" title="MNIST Digit Recognition With a 3-Layer Perceptron" href="SGMCMC.html" />
     <link rel="prev" title="Periodic Orbital MCMC" href="PeriodicOrbitalMCMC.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -112,7 +113,7 @@
   <ul class="current">
    <li class="toctree-l2">
     <a class="reference internal" href="Introduction.html">
-     A quick introduction to Blackjax
+     A Quick Introduction to Blackjax
     </a>
    </li>
    <li class="toctree-l2">
@@ -122,17 +123,17 @@
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="LogisticRegressionWithLatentGaussianSampler.html">
-     Bayesian Logistic Regression
+     Bayesian Logistic Regression With Latent Gaussian Sampler
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="TemperedSMC.html">
-     Use Tempered SMC to improve exploration of MCMC methods.
+     Use Tempered SMC to Improve Exploration of MCMC Methods.
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="HierarchicalBNN.html">
-     Hierarchical Bayesian neural networks
+     Hierarchical Bayesian Neural Networks
     </a>
    </li>
    <li class="toctree-l2">
@@ -142,27 +143,22 @@
    </li>
    <li class="toctree-l2 current active">
     <a class="current reference internal" href="#">
-     Gaussian regression with the Elliptical Slice sampler
+     Gaussian Regression with the Elliptical Slice Sampler
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="SGMCMC.html">
-     MNIST digit recognition with a 3-layer Perceptron
+     MNIST Digit Recognition With a 3-Layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="change_of_variable_hmc.html">
+     Change of Variable in HMC
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="Pathfinder.html">
      Pathfinder
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="use_with_numpyro.html">
-     Use BlackJAX with Numpyro
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="use_with_tfp.html">
-     Use BlackJAX with TFP
     </a>
    </li>
   </ul>
@@ -307,7 +303,7 @@ title="Source repository"
         <div class="col pl-md-3 pl-lg-5 content-container">
             <!-- Table of contents that is only displayed when printing the page -->
             <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Gaussian regression with the Elliptical Slice sampler</h1>
+                <h1>Gaussian Regression with the Elliptical Slice Sampler</h1>
                 <!-- Table of contents -->
                 <div id="print-main-content">
                     <div id="jb-print-toc">
@@ -338,23 +334,21 @@ title="Source repository"
               <div>
                 
   <section id="gaussian-regression-with-the-elliptical-slice-sampler">
-<h1>Gaussian regression with the Elliptical Slice sampler<a class="headerlink" href="#gaussian-regression-with-the-elliptical-slice-sampler" title="Permalink to this headline">#</a></h1>
-<p>Given a vector of obervations $\mathbf{y}$ with known variance $\sigma^2\mathbb{I}$ and Gaussian likelihood, we model the mean parameter of these observations as a Gaussian process given input/feature matrix $\mathbf{X}$</p>
-<p>\begin{align*}
-\mathbf{y}|\mathbf{f} &amp;\sim N(\mathbf{f}, \sigma^2\mathbb{I}) \
+<h1>Gaussian Regression with the Elliptical Slice Sampler<a class="headerlink" href="#gaussian-regression-with-the-elliptical-slice-sampler" title="Permalink to this headline">#</a></h1>
+<p>Given a vector of obervations $ \mathbf{y} $ with known variance <span class="math notranslate nohighlight">\(\sigma^2\mathbb{I}\)</span> and Gaussian likelihood, we model the mean parameter of these observations as a Gaussian process given input/feature matrix <span class="math notranslate nohighlight">\(\mathbf{X}\)</span></p>
+<p>$$\begin{align*}
+\mathbf{y}|\mathbf{f} &amp;\sim N(\mathbf{f}, \sigma^2\mathbb{I})
 \mathbf{f} &amp;\sim GP(0, \Sigma),
-\end{align*}</p>
-<p>where $\Sigma$ is a covariance function of the feature vector derived from the squared exponential kenel. Thus, for any pair of observations $i$ and $j$ the covariance of these two observations is given by
-$$
-\Sigma_{i,j} = \sigma^2_f \exp\left(-\frac{||\mathbf{X}<em>{i, \cdot} - \mathbf{X}</em>{j, \cdot}||^2}{2 l^2}\right),
-$$
-for some lengthscale parameter $l$ and signal variance parameter $\sigma_f^2$.</p>
-<p>In this example we will limit our analysis to the posterior distribution of the mean parameter $\mathbf{f}$, by conjugacy the posterior is Gaussian with mean and covariance
-\begin{align*}
+\end{align*}$$</p>
+<p>where <span class="math notranslate nohighlight">\(\Sigma\)</span> is a covariance function of the feature vector derived from the squared exponential kenel. Thus, for any pair of observations <span class="math notranslate nohighlight">\(i\)</span> and <span class="math notranslate nohighlight">\(j\)</span> the covariance of these two observations is given by</p>
+<p>$$\Sigma_{i,j} = \sigma^2_f \exp\left(-\frac{||\mathbf{X}<em>{i, \cdot} - \mathbf{X}</em>{j, \cdot}||^2}{2 l^2}\right)$$</p>
+<p>for some lengthscale parameter <span class="math notranslate nohighlight">\(l\)</span> and signal variance parameter <span class="math notranslate nohighlight">\(\sigma_f^2\)</span>.</p>
+<p>In this example we will limit our analysis to the posterior distribution of the mean parameter <span class="math notranslate nohighlight">\(\mathbf{f}\)</span>, by conjugacy the posterior is Gaussian with mean and covariance</p>
+<p>$$\begin{align*}
 \mathbf{f}|\mathbf{y} &amp;\sim N(\mu_f, \Sigma_f) \
 \Sigma_f^{-1} &amp;= \Sigma^{-1} + \sigma^{-2}\mathbf{I} \
 \mu_f &amp;= \sigma^{-2} \Sigma_f \mathbf{y}.
-\end{align*}</p>
+\end{align*}$$</p>
 <p>Using this analytic result we can check the correct convergence of our sampler towards the posterior distribution. It is important to note, however, that the Elliptical Slice sampler can be used to sample from any vector of parameters so long as these parameters have a prior Multivariate Gaussian distribution.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -393,7 +387,7 @@ for some lengthscale parameter $l$ and signal variance parameter $\sigma_f^2$.</
 </div>
 </div>
 </div>
-<p>We fix the lengthscale $l$, signal variance $\sigma_f^2$ and likelihood variance $\sigma^2$ parameters to 1. and generate data from the model described above. Deliberately, we set a large value (2000) for the dimension of the target variable $\mathbf{f}$ to showcase the gradient-free Elliptical Slice sampler on a situation where its efficiency is apparent in comparison to gradient-based black box samplers such as NUTS. The dynamics of the sampler are equivalent to those of the <a class="reference external" href="https://en.wikipedia.org/wiki/Preconditioned_Crank%E2%80%93Nicolson_algorithm">preconditioned Crank–Nicolson algorithm</a> (with its Metropolis-Hastings step replaced by a slice sampling step), thus making it robust to increasing dimensionality.</p>
+<p>We fix the lengthscale <span class="math notranslate nohighlight">\(l\)</span>, signal variance <span class="math notranslate nohighlight">\(\sigma_f^2\)</span> and likelihood variance <span class="math notranslate nohighlight">\(\sigma^2\)</span> parameters to 1. and generate data from the model described above. Deliberately, we set a large value (2000) for the dimension of the target variable <span class="math notranslate nohighlight">\(\mathbf{f}\)</span> to showcase the gradient-free Elliptical Slice sampler on a situation where its efficiency is apparent in comparison to gradient-based black box samplers such as NUTS. The dynamics of the sampler are equivalent to those of the <a class="reference external" href="https://en.wikipedia.org/wiki/Preconditioned_Crank%E2%80%93Nicolson_algorithm">preconditioned Crank–Nicolson algorithm</a> (with its Metropolis-Hastings step replaced by a slice sampling step), thus making it robust to increasing dimensionality.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">2</span>
@@ -427,7 +421,7 @@ for some lengthscale parameter $l$ and signal variance parameter $\sigma_f^2$.</
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<img alt="../_images/b7babaab3f1c8edc1b17805906bf3ed2f4a8ee0b1d5380ea1545791f01b0c297.png" src="../_images/b7babaab3f1c8edc1b17805906bf3ed2f4a8ee0b1d5380ea1545791f01b0c297.png" />
+<img alt="../_images/3454c6f5c2668a3fc100e2f0e32822db9a48d90b4b3c20e7fe8bbb044a31f111.png" src="../_images/3454c6f5c2668a3fc100e2f0e32822db9a48d90b4b3c20e7fe8bbb044a31f111.png" />
 </div>
 </div>
 <section id="sampling">
@@ -435,7 +429,7 @@ for some lengthscale parameter $l$ and signal variance parameter $\sigma_f^2$.</
 <p>The Elliptical Slice sampler samples a latent parameter from the Gaussian prior, builds an ellipse passing though the previous position and the latent variable, and samples points from this ellipse which it then corrects for the likelihood using slice sampling. More details can be found in the <a class="reference external" href="https://arxiv.org/abs/1001.0175">original paper</a>.</p>
 <p>We compare the sampling time to NUTS, notice the difference in computation times. A couple of important considerations when using the elliptical slice sampler:</p>
 <ul class="simple">
-<li><p>The Elliptical slice sampler takes as input the likelihood function and the mean and covariance $\Sigma$ parameters of the Gaussian prior separetley, since <strong>the sampler assumes that the prior is Gaussian</strong>. On the contrary case of NUTS, the algorithm takes as input the unnormalized posterior distribution, i.e. the likelihood times the prior density.</p></li>
+<li><p>The Elliptical slice sampler takes as input the likelihood function and the mean and covariance <span class="math notranslate nohighlight">\(\Sigma\)</span> parameters of the Gaussian prior separetley, since <strong>the sampler assumes that the prior is Gaussian</strong>. On the contrary case of NUTS, the algorithm takes as input the unnormalized posterior distribution, i.e. the likelihood times the prior density.</p></li>
 <li><p>The Ellipical slice sampler is tuning-free, the warm up iterations are needed only for the sampler to start from a sensible initial position. While for NUTS the warm up samples are necessary not only to find a sensible initial position but also to tune the parameters of the algorithm, aiming at some average acceptance probability of its Metropolis-Hastings step. This additional tuning also contributes to the longer computation time.</p></li>
 </ul>
 <div class="cell docutils container">
@@ -458,8 +452,8 @@ for some lengthscale parameter $l$ and signal variance parameter $\sigma_f^2$.</
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.4 s, sys: 1.03 s, total: 15.5 s
-Wall time: 13.9 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.8 s, sys: 390 ms, total: 10.2 s
+Wall time: 9.38 s
 </pre></div>
 </div>
 </div>
@@ -475,12 +469,6 @@ Wall time: 13.9 s
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10min 12s, sys: 580 ms, total: 10min 12s
-Wall time: 10min 11s
-</pre></div>
-</div>
-</div>
 </div>
 <p>We check that the sampler is targeting the correct distribution by comparing the sample’s mean and covariance to the conjugate results, and plotting the predictive distribution of our samples over the real observations.</p>
 <div class="cell docutils container">
@@ -490,11 +478,6 @@ Wall time: 10min 11s
 <span class="nb">print</span><span class="p">(</span>
     <span class="sa">f</span><span class="s2">&quot;Mean squared error for the mean vector </span><span class="si">{</span><span class="n">error_mean</span><span class="si">}</span><span class="s2"> and covariance matrix </span><span class="si">{</span><span class="n">error_cov</span><span class="si">}</span><span class="s2">&quot;</span>
 <span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Mean squared error for the mean vector 0.0001699214626569301 and covariance matrix 2.0051408000654192e-07
 </pre></div>
 </div>
 </div>
@@ -514,16 +497,13 @@ Wall time: 10min 11s
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<img alt="../_images/3b29c98ea6620bec61a94a4edc0838d01a0e16c1bea9e2cc396d97dfecb9345e.png" src="../_images/3b29c98ea6620bec61a94a4edc0838d01a0e16c1bea9e2cc396d97dfecb9345e.png" />
-</div>
 </div>
 </section>
 <section id="diagnostics">
 <h2>Diagnostics<a class="headerlink" href="#diagnostics" title="Permalink to this headline">#</a></h2>
 <p>The Elliptical slice sampler does not have a Metropolis-Hastings step, at every iteration it proposes a new position using slice sampling on the likelihood. The sampler is more efficient the less informative the likelihood is in comparison to the prior.</p>
-<p>Assuming the degenerate case when the likelihood is always equal to 1 (infinite variance, not informative), we have that the slice sampler will always accept the first point it samples from the ellipsis, hence the number of sub iterations per iteration of the sampler will always be 1. To see this, notice that all the points on the ellipsis keep the joint distribution given by the <em>prior</em> measure for the target variable $\mathbf{f}$ and the same measure but for the latent variable, invariant. We can get an idea of how efficient the sampler is by looking at the number of sub iterations per iteration of the sampler, below we plot a histogram for our current example.</p>
-<p>Another parameter of interest for diagnostics is the location on the ellipse the returned sample is from. This parameter, dubbed theta, is expressed in radians hence putting it on the interval $[-2\pi, 2\pi]$ (i.e. moving around the ellipse clockwise for positive numbers and counter clockwise for negative numbers). If theta $\in {0, -2\pi, 2\pi}$ we are at the initial position of the iteration, i.e. the closer theta is to any of these three values the closer the new sample is to the previous one. A histogram for this parameter is plotted below.</p>
+<p>Assuming the degenerate case when the likelihood is always equal to 1 (infinite variance, not informative), we have that the slice sampler will always accept the first point it samples from the ellipsis, hence the number of sub iterations per iteration of the sampler will always be 1. To see this, notice that all the points on the ellipsis keep the joint distribution given by the <em>prior</em> measure for the target variable <span class="math notranslate nohighlight">\(\mathbf{f}\)</span> and the same measure but for the latent variable, invariant. We can get an idea of how efficient the sampler is by looking at the number of sub iterations per iteration of the sampler, below we plot a histogram for our current example.</p>
+<p>Another parameter of interest for diagnostics is the location on the ellipse the returned sample is from. This parameter, dubbed theta, is expressed in radians hence putting it on the interval <span class="math notranslate nohighlight">\([-2\pi, 2\pi]\)</span> (i.e. moving around the ellipse clockwise for positive numbers and counter clockwise for negative numbers). If theta <span class="math notranslate nohighlight">\(\in {0, -2\pi, 2\pi}\)</span> we are at the initial position of the iteration, i.e. the closer theta is to any of these three values the closer the new sample is to the previous one. A histogram for this parameter is plotted below.</p>
 <p>Since the likelihood’s variance is set at 1., it is quite informative. Increasing the likelihood’s variance leads to less sub iterations per iteration of the Elliptical Slice sampler and the parameter theta becoming more uniform on its range.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -534,9 +514,6 @@ Wall time: 10min 11s
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../_images/279b306e259212650e3eca273f1696b1bbc8d5a9a3f441ee51c11c1c9af2737d.png" src="../_images/279b306e259212650e3eca273f1696b1bbc8d5a9a3f441ee51c11c1c9af2737d.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -550,9 +527,6 @@ Wall time: 10min 11s
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../_images/b972df9f2d39e98235e0fd1653af54f0e8773302838481852d5dfb5eababc645.png" src="../_images/b972df9f2d39e98235e0fd1653af54f0e8773302838481852d5dfb5eababc645.png" />
 </div>
 </div>
 </section>
@@ -576,7 +550,7 @@ Wall time: 10min 11s
     <a class='right-next' id="next-link" href="SGMCMC.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">MNIST digit recognition with a 3-layer Perceptron</p>
+        <p class="prev-next-title">MNIST Digit Recognition With a 3-Layer Perceptron</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

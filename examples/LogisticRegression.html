@@ -39,10 +39,11 @@
     <script src="../_static/togglebutton.js"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Bayesian Logistic Regression" href="LogisticRegressionWithLatentGaussianSampler.html" />
-    <link rel="prev" title="A quick introduction to Blackjax" href="Introduction.html" />
+    <link rel="next" title="Bayesian Logistic Regression With Latent Gaussian Sampler" href="LogisticRegressionWithLatentGaussianSampler.html" />
+    <link rel="prev" title="A Quick Introduction to Blackjax" href="Introduction.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -112,7 +113,7 @@
   <ul class="current">
    <li class="toctree-l2">
     <a class="reference internal" href="Introduction.html">
-     A quick introduction to Blackjax
+     A Quick Introduction to Blackjax
     </a>
    </li>
    <li class="toctree-l2 current active">
@@ -122,17 +123,17 @@
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="LogisticRegressionWithLatentGaussianSampler.html">
-     Bayesian Logistic Regression
+     Bayesian Logistic Regression With Latent Gaussian Sampler
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="TemperedSMC.html">
-     Use Tempered SMC to improve exploration of MCMC methods.
+     Use Tempered SMC to Improve Exploration of MCMC Methods.
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="HierarchicalBNN.html">
-     Hierarchical Bayesian neural networks
+     Hierarchical Bayesian Neural Networks
     </a>
    </li>
    <li class="toctree-l2">
@@ -142,27 +143,22 @@
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="GP_EllipticalSliceSampler.html">
-     Gaussian regression with the Elliptical Slice sampler
+     Gaussian Regression with the Elliptical Slice Sampler
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="SGMCMC.html">
-     MNIST digit recognition with a 3-layer Perceptron
+     MNIST Digit Recognition With a 3-Layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="change_of_variable_hmc.html">
+     Change of Variable in HMC
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="Pathfinder.html">
      Pathfinder
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="use_with_numpyro.html">
-     Use BlackJAX with Numpyro
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="use_with_tfp.html">
-     Use BlackJAX with TFP
     </a>
    </li>
   </ul>
@@ -290,22 +286,22 @@ title="Source repository"
         <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#the-data">
-   The data
+   The Data
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#the-model">
-   The model
+   The Model
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#posterior-sampling">
-   Posterior sampling
+   Posterior Sampling
   </a>
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#predictive-distribution">
-     Predictive distribution
+     Predictive Distribution
     </a>
    </li>
   </ul>
@@ -331,22 +327,22 @@ title="Source repository"
                             <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#the-data">
-   The data
+   The Data
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#the-model">
-   The model
+   The Model
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#posterior-sampling">
-   Posterior sampling
+   Posterior Sampling
   </a>
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#predictive-distribution">
-     Predictive distribution
+     Predictive Distribution
     </a>
    </li>
   </ul>
@@ -396,26 +392,26 @@ title="Source repository"
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Python implementation: CPython
-Python version       : 3.9.7
-IPython version      : 8.0.1
+Python version       : 3.9.13
+IPython version      : 8.4.0
 
-jax     : 0.2.28
-jaxlib  : 0.1.76
-blackjax: 0.3.0
+jax     : 0.3.17
+jaxlib  : 0.3.15
+blackjax: 0.8.3
 
-Compiler    : GCC 11.1.0
+Compiler    : GCC 9.4.0
 OS          : Linux
-Release     : 5.15.4-arch1-1
+Release     : 5.15.0-1017-azure
 Machine     : x86_64
-Processor   : 
-CPU cores   : 24
+Processor   : x86_64
+CPU cores   : 2
 Architecture: 64bit
 </pre></div>
 </div>
 </div>
 </div>
 <section id="the-data">
-<h2>The data<a class="headerlink" href="#the-data" title="Permalink to this headline">#</a></h2>
+<h2>The Data<a class="headerlink" href="#the-data" title="Permalink to this headline">#</a></h2>
 <p>We create two clusters of points using <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_biclusters.html?highlight=bicluster%20data#sklearn.datasets.make_biclusters">scikit-learn’s <code class="docutils literal notranslate"><span class="pre">make_bicluster</span></code> function</a>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -439,25 +435,25 @@ Architecture: 64bit
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/722c1f1597bac82b850c4263039566136b02fcf2e418f08815a0834e2f9b88ac.png" src="../_images/722c1f1597bac82b850c4263039566136b02fcf2e418f08815a0834e2f9b88ac.png" />
+<img alt="../_images/48c5598e10deebdee192e92014833265bb2450f5a97997411fd6ec1b9c33edb7.png" src="../_images/48c5598e10deebdee192e92014833265bb2450f5a97997411fd6ec1b9c33edb7.png" />
 </div>
 </div>
 </section>
 <section id="the-model">
-<h2>The model<a class="headerlink" href="#the-model" title="Permalink to this headline">#</a></h2>
-<p>We use a simple logistic regression model to infer to which cluster each of the points belongs. We note $y$ a binary variable that indicates whether a point belongs to the first cluster :</p>
+<h2>The Model<a class="headerlink" href="#the-model" title="Permalink to this headline">#</a></h2>
+<p>We use a simple logistic regression model to infer to which cluster each of the points belongs. We note <span class="math notranslate nohighlight">\(y\)</span> a binary variable that indicates whether a point belongs to the first cluster :</p>
 <p>$$
 y \sim \operatorname{Bernoulli}(p)
 $$</p>
-<p>The probability $p$ to belong to the first cluster commes from a logistic regression:</p>
+<p>The probability <span class="math notranslate nohighlight">\(p\)</span> to belong to the first cluster commes from a logistic regression:</p>
 <p>$$
 p = \operatorname{logistic}(\Phi,\boldsymbol{w})
 $$</p>
-<p>where $w$ is a vector of weights whose priors are a normal prior centered on 0:</p>
+<p>where <span class="math notranslate nohighlight">\(w\)</span> is a vector of weights whose priors are a normal prior centered on 0:</p>
 <p>$$
 \boldsymbol{w} \sim \operatorname{Normal}(0, \sigma)
 $$</p>
-<p>And $\Phi$ is the matrix that contains the data, so each row $\Phi_{i,:}$ is the vector $\left[1, X_0^i, X_1^i\right]$</p>
+<p>And <span class="math notranslate nohighlight">\(\Phi\)</span> is the matrix that contains the data, so each row <span class="math notranslate nohighlight">\(\Phi_{i,:}\)</span> is the vector <span class="math notranslate nohighlight">\(\left[1, X_0^i, X_1^i\right]\)</span></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Phi</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_points</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">X</span><span class="p">]</span>
@@ -491,7 +487,7 @@ $$</p>
 </div>
 </section>
 <section id="posterior-sampling">
-<h2>Posterior sampling<a class="headerlink" href="#posterior-sampling" title="Permalink to this headline">#</a></h2>
+<h2>Posterior Sampling<a class="headerlink" href="#posterior-sampling" title="Permalink to this headline">#</a></h2>
 <p>We use <code class="docutils literal notranslate"><span class="pre">blackjax</span></code>’s Random Walk RMH kernel to sample from the posterior distribution.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -546,7 +542,7 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/08322e54428c1c0b7e0f2dac23f3931286fba0fbadb548fd7053f9a4938e34c9.png" src="../_images/08322e54428c1c0b7e0f2dac23f3931286fba0fbadb548fd7053f9a4938e34c9.png" />
+<img alt="../_images/7b99551a137723f23a1f62c73e478f34cb838b804d191a128a05a75c2b15b582.png" src="../_images/7b99551a137723f23a1f62c73e478f34cb838b804d191a128a05a75c2b15b582.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -558,8 +554,8 @@ $$</p>
 </div>
 </div>
 <section id="predictive-distribution">
-<h3>Predictive distribution<a class="headerlink" href="#predictive-distribution" title="Permalink to this headline">#</a></h3>
-<p>Having infered the posterior distribution of the regression’s coefficients we can compute the probability to belong to the first cluster at each position $(X_0, X_1)$.</p>
+<h3>Predictive Distribution<a class="headerlink" href="#predictive-distribution" title="Permalink to this headline">#</a></h3>
+<p>Having infered the posterior distribution of the regression’s coefficients we can compute the probability to belong to the first cluster at each position <span class="math notranslate nohighlight">\((X_0, X_1)\)</span>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a meshgrid</span>
@@ -588,7 +584,7 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/91c8fb956ab2cd6c02e046a35c5db105dfe9e886ae8a7e0f6d6498e688e11bc1.png" src="../_images/91c8fb956ab2cd6c02e046a35c5db105dfe9e886ae8a7e0f6d6498e688e11bc1.png" />
+<img alt="../_images/011285bcd95f9b05fd87db0b4f5ba98e3633672ccf4f32af762837ba08cf706f.png" src="../_images/011285bcd95f9b05fd87db0b4f5ba98e3633672ccf4f32af762837ba08cf706f.png" />
 </div>
 </div>
 </section>
@@ -607,13 +603,13 @@ $$</p>
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">A quick introduction to Blackjax</p>
+            <p class="prev-next-title">A Quick Introduction to Blackjax</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="LogisticRegressionWithLatentGaussianSampler.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Bayesian Logistic Regression</p>
+        <p class="prev-next-title">Bayesian Logistic Regression With Latent Gaussian Sampler</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

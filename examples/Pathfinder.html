@@ -39,10 +39,11 @@
     <script src="../_static/togglebutton.js"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Use BlackJAX with Numpyro" href="use_with_numpyro.html" />
-    <link rel="prev" title="MNIST digit recognition with a 3-layer Perceptron" href="SGMCMC.html" />
+    <link rel="next" title="Sampling" href="../sampling.html" />
+    <link rel="prev" title="Change of Variable in HMC" href="change_of_variable_hmc.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -112,7 +113,7 @@
   <ul class="current">
    <li class="toctree-l2">
     <a class="reference internal" href="Introduction.html">
-     A quick introduction to Blackjax
+     A Quick Introduction to Blackjax
     </a>
    </li>
    <li class="toctree-l2">
@@ -122,17 +123,17 @@
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="LogisticRegressionWithLatentGaussianSampler.html">
-     Bayesian Logistic Regression
+     Bayesian Logistic Regression With Latent Gaussian Sampler
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="TemperedSMC.html">
-     Use Tempered SMC to improve exploration of MCMC methods.
+     Use Tempered SMC to Improve Exploration of MCMC Methods.
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="HierarchicalBNN.html">
-     Hierarchical Bayesian neural networks
+     Hierarchical Bayesian Neural Networks
     </a>
    </li>
    <li class="toctree-l2">
@@ -142,27 +143,22 @@
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="GP_EllipticalSliceSampler.html">
-     Gaussian regression with the Elliptical Slice sampler
+     Gaussian Regression with the Elliptical Slice Sampler
     </a>
    </li>
    <li class="toctree-l2">
     <a class="reference internal" href="SGMCMC.html">
-     MNIST digit recognition with a 3-layer Perceptron
+     MNIST Digit Recognition With a 3-Layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="change_of_variable_hmc.html">
+     Change of Variable in HMC
     </a>
    </li>
    <li class="toctree-l2 current active">
     <a class="current reference internal" href="#">
      Pathfinder
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="use_with_numpyro.html">
-     Use BlackJAX with Numpyro
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="use_with_tfp.html">
-     Use BlackJAX with TFP
     </a>
    </li>
   </ul>
@@ -290,34 +286,34 @@ title="Source repository"
         <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#the-data">
-   The data
+   The Data
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#the-model">
-   The model
+   The Model
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#pathfinder-parallel-quasi-newton-variational-inference">
-   Pathfinder: parallel quasi-newton variational inference
+   Pathfinder: Parallel Quasi-Newton Variational Inference
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#pathfinder-as-a-variational-inference-method">
-   Pathfinder as a variational inference method
+   Pathfinder as a Variational Inference Method
   </a>
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#pathfinder-as-an-initialization-tool-for-mcmc-kernels">
-     Pathfinder as an initialization tool for MCMC kernels
+     Pathfinder as an Initialization Tool for MCMC Kernels
     </a>
    </li>
   </ul>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#some-caveats">
-   Some caveats
+   Some Caveats
   </a>
  </li>
 </ul>
@@ -341,34 +337,34 @@ title="Source repository"
                             <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#the-data">
-   The data
+   The Data
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#the-model">
-   The model
+   The Model
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#pathfinder-parallel-quasi-newton-variational-inference">
-   Pathfinder: parallel quasi-newton variational inference
+   Pathfinder: Parallel Quasi-Newton Variational Inference
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#pathfinder-as-a-variational-inference-method">
-   Pathfinder as a variational inference method
+   Pathfinder as a Variational Inference Method
   </a>
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#pathfinder-as-an-initialization-tool-for-mcmc-kernels">
-     Pathfinder as an initialization tool for MCMC kernels
+     Pathfinder as an Initialization Tool for MCMC Kernels
     </a>
    </li>
   </ul>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#some-caveats">
-   Some caveats
+   Some Caveats
   </a>
  </li>
 </ul>
@@ -417,26 +413,26 @@ title="Source repository"
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Python implementation: CPython
-Python version       : 3.9.7
-IPython version      : 7.29.0
+Python version       : 3.9.13
+IPython version      : 8.4.0
 
-jax     : 0.3.13
-jaxlib  : 0.3.10
-blackjax: 0.8.1
+jax     : 0.3.17
+jaxlib  : 0.3.15
+blackjax: 0.8.3
 
-Compiler    : Clang 10.0.0 
-OS          : Darwin
-Release     : 21.5.0
+Compiler    : GCC 9.4.0
+OS          : Linux
+Release     : 5.15.0-1017-azure
 Machine     : x86_64
-Processor   : i386
-CPU cores   : 16
+Processor   : x86_64
+CPU cores   : 2
 Architecture: 64bit
 </pre></div>
 </div>
 </div>
 </div>
 <section id="the-data">
-<h2>The data<a class="headerlink" href="#the-data" title="Permalink to this headline">#</a></h2>
+<h2>The Data<a class="headerlink" href="#the-data" title="Permalink to this headline">#</a></h2>
 <p>We create two clusters of points using <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_biclusters.html?highlight=bicluster%20data#sklearn.datasets.make_biclusters">scikit-learn’s <code class="docutils literal notranslate"><span class="pre">make_bicluster</span></code> function</a>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -460,25 +456,25 @@ Architecture: 64bit
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/e03d676a925101ae942540a1c4d4c68d6f9c1d242c982050b0f1a6aa62e52624.png" src="../_images/e03d676a925101ae942540a1c4d4c68d6f9c1d242c982050b0f1a6aa62e52624.png" />
+<img alt="../_images/203fd3b5c3975c52252a33aaf34ee7b8eaf753f9692319a69a386dc0ac152bd0.png" src="../_images/203fd3b5c3975c52252a33aaf34ee7b8eaf753f9692319a69a386dc0ac152bd0.png" />
 </div>
 </div>
 </section>
 <section id="the-model">
-<h2>The model<a class="headerlink" href="#the-model" title="Permalink to this headline">#</a></h2>
-<p>We use a simple logistic regression model to infer to which cluster each of the points belongs. We note $y$ a binary variable that indicates whether a point belongs to the first cluster :</p>
+<h2>The Model<a class="headerlink" href="#the-model" title="Permalink to this headline">#</a></h2>
+<p>We use a simple logistic regression model to infer to which cluster each of the points belongs. We note $ y $ a binary variable that indicates whether a point belongs to the first cluster:</p>
 <p>$$
 y \sim \operatorname{Bernoulli}(p)
 $$</p>
-<p>The probability $p$ to belong to the first cluster commes from a logistic regression:</p>
+<p>The probability <span class="math notranslate nohighlight">\(p\)</span> to belong to the first cluster commes from a logistic regression:</p>
 <p>$$
 p = \operatorname{logistic}(\Phi,\boldsymbol{w})
 $$</p>
-<p>where $w$ is a vector of weights whose priors are a normal prior centered on 0:</p>
+<p>where <span class="math notranslate nohighlight">\(w\)</span> is a vector of weights whose priors are a normal prior centered on 0:</p>
 <p>$$
 \boldsymbol{w} \sim \operatorname{Normal}(0, \sigma)
 $$</p>
-<p>And $\Phi$ is the matrix that contains the data, so each row $\Phi_{i,:}$ is the vector $\left[X_0^i, X_1^i\right]$</p>
+<p>And <span class="math notranslate nohighlight">\(\Phi\)</span> is the matrix that contains the data, so each row <span class="math notranslate nohighlight">\(\Phi_{i,:}\)</span> is the vector <span class="math notranslate nohighlight">\(\left[X_0^i, X_1^i\right]\)</span></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Phi</span> <span class="o">=</span> <span class="n">X</span>
@@ -507,7 +503,7 @@ $$</p>
 </div>
 </section>
 <section id="pathfinder-parallel-quasi-newton-variational-inference">
-<h2>Pathfinder: parallel quasi-newton variational inference<a class="headerlink" href="#pathfinder-parallel-quasi-newton-variational-inference" title="Permalink to this headline">#</a></h2>
+<h2>Pathfinder: Parallel Quasi-Newton Variational Inference<a class="headerlink" href="#pathfinder-parallel-quasi-newton-variational-inference" title="Permalink to this headline">#</a></h2>
 <p>Starting from a random initialization, Pathfinder locates normal approximations to the target
 density along a quasi-Newton optimization path, with local covariance estimated using the inverse Hessian
 estimates produced by the optimizer. Pathfinder returns draws from the approximation with the lowest
@@ -582,16 +578,12 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/var/folders/7p/srk5qjp563l5f9mrjtp44bh800jqsw/T/ipykernel_81696/1169223605.py:48: UserWarning: Matplotlib is currently using module://matplotlib_inline.backend_inline, which is a non-GUI backend, so cannot show the figure.
-  fig.show()
-</pre></div>
-</div>
-<img alt="../_images/ee063015e76224aa12c37eda04ae3c4c67aed7e87eac0eef6b4f1a3f806df73a.png" src="../_images/ee063015e76224aa12c37eda04ae3c4c67aed7e87eac0eef6b4f1a3f806df73a.png" />
+<img alt="../_images/b48c1e501055fe4495c2c26b490d52ed86c997ef20144b4c0ec497f587ef1253.png" src="../_images/b48c1e501055fe4495c2c26b490d52ed86c997ef20144b4c0ec497f587ef1253.png" />
 </div>
 </div>
 </section>
 <section id="pathfinder-as-a-variational-inference-method">
-<h2>Pathfinder as a variational inference method<a class="headerlink" href="#pathfinder-as-a-variational-inference-method" title="Permalink to this headline">#</a></h2>
+<h2>Pathfinder as a Variational Inference Method<a class="headerlink" href="#pathfinder-as-a-variational-inference-method" title="Permalink to this headline">#</a></h2>
 <p>Pathfinder can be used as a variational inference method, using its kernel API:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -637,7 +629,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/663ed94f7e7ac88a4b77acbb66da2be8d57de460a027c34f389b94da80be558d.png" src="../_images/663ed94f7e7ac88a4b77acbb66da2be8d57de460a027c34f389b94da80be558d.png" />
+<img alt="../_images/f6afa17991dc5ed19d3b373befc679036750a9f5898b7b7b9934eaeb65f382cd.png" src="../_images/f6afa17991dc5ed19d3b373befc679036750a9f5898b7b7b9934eaeb65f382cd.png" />
 </div>
 </div>
 <p>Please note that pathfinder is implemented as follows:</p>
@@ -680,15 +672,11 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/var/folders/7p/srk5qjp563l5f9mrjtp44bh800jqsw/T/ipykernel_81696/3917388734.py:10: UserWarning: Matplotlib is currently using module://matplotlib_inline.backend_inline, which is a non-GUI backend, so cannot show the figure.
-  fig.show()
-</pre></div>
-</div>
-<img alt="../_images/b4b1603abd79df1224bdc0b565884e347ca64b477670ac29f102dc354f688200.png" src="../_images/b4b1603abd79df1224bdc0b565884e347ca64b477670ac29f102dc354f688200.png" />
+<img alt="../_images/c045f181323b2e0d9279db5776faa69907b32de99e4e52a258555a3fcf8da6a0.png" src="../_images/c045f181323b2e0d9279db5776faa69907b32de99e4e52a258555a3fcf8da6a0.png" />
 </div>
 </div>
 <section id="pathfinder-as-an-initialization-tool-for-mcmc-kernels">
-<h3>Pathfinder as an initialization tool for MCMC kernels<a class="headerlink" href="#pathfinder-as-an-initialization-tool-for-mcmc-kernels" title="Permalink to this headline">#</a></h3>
+<h3>Pathfinder as an Initialization Tool for MCMC Kernels<a class="headerlink" href="#pathfinder-as-an-initialization-tool-for-mcmc-kernels" title="Permalink to this headline">#</a></h3>
 <p>Pathfinder uses internally the inverse hessian estimation of the L-BFGS optimizer to evaluate the approximations to the target distribution along the quasi-Newton optimization path.</p>
 <p>We can calculate explicitly this inverse hessian matrix for a step of the optimization path using the <code class="docutils literal notranslate"><span class="pre">blackjax.vi.pathfinder.lbfgs_inverse_hessian_formula_1</span></code> function:</p>
 <div class="cell docutils container">
@@ -703,8 +691,8 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([[ 0.19426703, -0.08033269],
-             [-0.08033268,  0.23308638]], dtype=float32)
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([[ 0.22071719, -0.05641349],
+             [-0.05641348,  0.23935075]], dtype=float32)
 </pre></div>
 </div>
 </div>
@@ -722,7 +710,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </section>
 </section>
 <section id="some-caveats">
-<h2>Some caveats<a class="headerlink" href="#some-caveats" title="Permalink to this headline">#</a></h2>
+<h2>Some Caveats<a class="headerlink" href="#some-caveats" title="Permalink to this headline">#</a></h2>
 <ul class="simple">
 <li><p>L-BFGS algorithm struggles with float32s and log-likelihood functions; it’s suggested to use double precision numbers. In order to do that in <code class="docutils literal notranslate"><span class="pre">jax</span></code> a configuration variable needs to be set up at initialization time (see <a class="reference external" href="https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html#double-64bit-precision">here</a>)</p></li>
 <li><p>otherwise you can stick with float32 mode and try to tweak <code class="docutils literal notranslate"><span class="pre">ftol</span></code>, <code class="docutils literal notranslate"><span class="pre">gtol</span></code>, or the initialization point</p></li>
@@ -739,17 +727,17 @@ The optimizer is the limited memory BFGS algorithm.</p>
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="SGMCMC.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="change_of_variable_hmc.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">MNIST digit recognition with a 3-layer Perceptron</p>
+            <p class="prev-next-title">Change of Variable in HMC</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="use_with_numpyro.html" title="next page">
+    <a class='right-next' id="next-link" href="../sampling.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Use BlackJAX with Numpyro</p>
+        <p class="prev-next-title">Sampling</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

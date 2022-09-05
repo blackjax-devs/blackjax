@@ -1,0 +1,510 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Examples &#8212; Blackjax</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="../_static/blackjax.png" class="logo" alt="logo">
+      
+      
+      <h1 class="site-logo" id="site-title">Blackjax</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Blackjax by example
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../examples.html">
+   Examples
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="Introduction.html">
+     A Quick Introduction to Blackjax
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="LogisticRegression.html">
+     Bayesian Logistic Regression
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="LogisticRegressionWithLatentGaussianSampler.html">
+     Bayesian Logistic Regression With Latent Gaussian Sampler
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="TemperedSMC.html">
+     Use Tempered SMC to Improve Exploration of MCMC Methods.
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="HierarchicalBNN.html">
+     Hierarchical Bayesian Neural Networks
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="PeriodicOrbitalMCMC.html">
+     Periodic Orbital MCMC
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="GP_EllipticalSliceSampler.html">
+     Gaussian Regression with the Elliptical Slice Sampler
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="SGMCMC.html">
+     MNIST Digit Recognition With a 3-Layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="change_of_variable_hmc.html">
+     Change of Variable in HMC
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="Pathfinder.html">
+     Pathfinder
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API Documentation
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sampling.html">
+   Sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../adaptation.html">
+   Adaptation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../diagnostics.html">
+   Diagnostics
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+<a href="https://github.com/blackjax-devs/blackjax"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="bottom"
+title="Source repository"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+<label for="__page-toc"
+  class="headerbtn headerbtn-page-toc"
+  
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-list"></i>
+  </span>
+
+</label>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+    <div class="tocsection onthispage pt-5 pb-3">
+        <i class="fas fa-list"></i> Contents
+    </div>
+    <nav id="bd-toc-nav" aria-label="Page">
+        <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#for-users">
+   For users
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#load-examples-in-a-jupyter-notebook">
+     Load examples in a Jupyter notebook
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#for-contributors">
+   For contributors
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#convert-my-jupyter-notebook-to-markdown">
+     Convert my Jupyter notebook to markdown
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#composing-documentation-on-sphinx-doc">
+   Composing Documentation on Sphinx-Doc
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#execution-times">
+     Execution Times
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </nav>
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Examples</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#for-users">
+   For users
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#load-examples-in-a-jupyter-notebook">
+     Load examples in a Jupyter notebook
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#for-contributors">
+   For contributors
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#convert-my-jupyter-notebook-to-markdown">
+     Convert my Jupyter notebook to markdown
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#composing-documentation-on-sphinx-doc">
+   Composing Documentation on Sphinx-Doc
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#execution-times">
+     Execution Times
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">#</a></h1>
+<p>The Blackjax repository provides examples in the form of Markdown documents. <a class="reference external" href="https://github.com/mwouts/jupytext">Jupytext</a> can be used by the users to convert their Jupyter notebooks to this format, or convert these documents to Jupyter notebooks. Examples are rendered in the <a class="reference external" href="https://blackjax-devs.github.io/blackjax/">documentation</a>.</p>
+<section id="for-users">
+<h2>For users<a class="headerlink" href="#for-users" title="Permalink to this headline">#</a></h2>
+<section id="load-examples-in-a-jupyter-notebook">
+<h3>Load examples in a Jupyter notebook<a class="headerlink" href="#load-examples-in-a-jupyter-notebook" title="Permalink to this headline">#</a></h3>
+<p>To convert any example file to a Jupyter notebook you can use:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>jupytext examples/your_example_file.md --to notebook
+</pre></div>
+</div>
+<p>you can then interact with the resulting notebook just like with any notebook.</p>
+</section>
+</section>
+<section id="for-contributors">
+<h2>For contributors<a class="headerlink" href="#for-contributors" title="Permalink to this headline">#</a></h2>
+<section id="convert-my-jupyter-notebook-to-markdown">
+<h3>Convert my Jupyter notebook to markdown<a class="headerlink" href="#convert-my-jupyter-notebook-to-markdown" title="Permalink to this headline">#</a></h3>
+<p>If you implemented your example in a Jupyter notebook you can convert your <code class="docutils literal notranslate"><span class="pre">.ipynb</span></code> file to Markdown using the command below:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>jupytext example/your_example_notebook.ipynb --to myst
+</pre></div>
+</div>
+<p>Once the example file is converted to a Markdown file, you have two options for editing:</p>
+<ol class="arabic simple">
+<li><p>Edit the Markdown version as it is a regular Markdown file.</p></li>
+<li><p>Edit the Notebook version then convert it to a Markdown file once you finish editing with the command above. Jupytext can handle the change if the example has the same file name.</p></li>
+</ol>
+<p><strong>Please make sure to only commit the  Markdown file.</strong></p>
+</section>
+</section>
+<section id="composing-documentation-on-sphinx-doc">
+<h2>Composing Documentation on Sphinx-Doc<a class="headerlink" href="#composing-documentation-on-sphinx-doc" title="Permalink to this headline">#</a></h2>
+<p>We use <code class="docutils literal notranslate"><span class="pre">Sphinx</span></code> to generate document for this repo. We highly encourage you to check how your changes to the examples are rendered in the documentation:</p>
+<ol class="arabic simple">
+<li><p>Add your documentation to <code class="docutils literal notranslate"><span class="pre">docs/examples.rst</span></code></p></li>
+<li><p>Run the command below:</p></li>
+</ol>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span> make build-docs
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Check the generated documentation in <code class="docutils literal notranslate"><span class="pre">docs/builds</span></code></p></li>
+</ol>
+<section id="execution-times">
+<h3>Execution Times<a class="headerlink" href="#execution-times" title="Permalink to this headline">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Sphinx</span></code> handles the conversion from Markdown to the rendered pages. The table below shows the execution times of example notebooks on a laptop to give you an idea of what to expect:</p>
+<table class="colwidths-auto table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Examples</p></th>
+<th class="head"><p>Execution Time (seconds)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>GP_EllipticalSliceSampler</p></td>
+<td><p>235.20</p></td>
+</tr>
+<tr class="row-odd"><td><p>HierarchicalBNN</p></td>
+<td><p>84.45</p></td>
+</tr>
+<tr class="row-even"><td><p>Introduction</p></td>
+<td><p>108.55</p></td>
+</tr>
+<tr class="row-odd"><td><p>LogisticRegression</p></td>
+<td><p>7.06</p></td>
+</tr>
+<tr class="row-even"><td><p>LogisticRegressionWithLatentGaussianSampler</p></td>
+<td><p>7.10</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pathfinder</p></td>
+<td><p>18.11</p></td>
+</tr>
+<tr class="row-even"><td><p>PeriodicOrbitalMCMC</p></td>
+<td><p>15.09</p></td>
+</tr>
+<tr class="row-odd"><td><p>SGMCMC</p></td>
+<td><p>316.38</p></td>
+</tr>
+<tr class="row-even"><td><p>TemperedSMC</p></td>
+<td><p>16.09</p></td>
+</tr>
+<tr class="row-odd"><td><p>change_of_variable_hmc</p></td>
+<td><p>45.23</p></td>
+</tr>
+<tr class="row-even"><td><p>use_with_numpyro</p></td>
+<td><p>14.11</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By The Blackjax developers<br/>
+  
+      &copy; Copyright 2022, The Blackjax developers.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>
