@@ -1,6 +1,5 @@
 ---
 jupytext:
-  formats: ipynb,md:myst
   text_representation:
     extension: .md
     format_name: myst
@@ -14,28 +13,28 @@ kernelspec:
 
 # Sampling Multiple Chains
 
-In this example, we'll briefly demonstrate how you can run multiple MCMC chains using `jax` built-in constructs: `vmap` and `pmap`.  
+In this example, we'll briefly demonstrate how you can run multiple MCMC chains using `jax` built-in constructs: `vmap` and `pmap`.
 We will use the NUTS example from the previous notebook, and compare the performance of the two approaches.
 
 ## Vectorization vs parallelization
 
-`jax` provides two distinct transformations: 
+`jax` provides two distinct transformations:
 - [vmap](https://jax.readthedocs.io/en/latest/jax.html?highlight=vmap#jax.vmap), used to automatically vectorize `jax` code
-- and [pmap](https://jax.readthedocs.io/en/latest/_autosummary/jax.pmap.html#jax.pmap), 
+- and [pmap](https://jax.readthedocs.io/en/latest/_autosummary/jax.pmap.html#jax.pmap),
 which enables paralleiziation across multiple devices, such as multiple GPUs (or, in our case, CPU cores).
 
-Please see the the respective tutorials on [Automatic Vectorization](https://jax.readthedocs.io/en/latest/jax-101/03-vectorization.html) 
+Please see the the respective tutorials on [Automatic Vectorization](https://jax.readthedocs.io/en/latest/jax-101/03-vectorization.html)
 and [Parallel Evaluation](https://jax.readthedocs.io/en/latest/jax-101/06-parallelism.html) for a detailed walkthrough of both features.
 
 ## Using `pmap` on CPU
 
 By default, `jax` will treat your CPU as a single device, regardless of the number of cores available.
 
-Unfortunately, this means that using `pmap` is not possible out of the box -- we'll first need  
-to instruct `jax` to split the CPU into multiple devices. 
+Unfortunately, this means that using `pmap` is not possible out of the box -- we'll first need
+to instruct `jax` to split the CPU into multiple devices.
 Please see [this issue](https://github.com/google/jax/issues/1408) for more discussion on this topic.
 
-Currently, this can only be done via `XLA_FLAGS` environmental variable. 
+Currently, this can only be done via `XLA_FLAGS` environmental variable.
 
 **Note that this variable has to be set before any `jax` code is executed**
 
@@ -72,27 +71,27 @@ def fn(x):
 try:
     data = jnp.arange(1024)
     parallel_fn = jax.pmap(fn)
-    
+
     parallel_fn(data)
 
 except Exception as e:
     print(e)
 ```
 
-This means that you'll only be able to run as many MCMC chains as you have CPU cores.  
-See this [question](https://github.com/google/jax/discussions/4198) for a more discussion on the topic, 
+This means that you'll only be able to run as many MCMC chains as you have CPU cores.
+See this [question](https://github.com/google/jax/discussions/4198) for a more discussion on the topic,
 and a workaround involving nesting `pmap` and `vmap` calls.
 
-Another option is to set the device count to a number larger than the core count, e.g. `200`, but 
+Another option is to set the device count to a number larger than the core count, e.g. `200`, but
 it's [unclear what side effects it might have](https://github.com/google/jax/issues/1408#issuecomment-536158048).
 
 +++
 
 ### Using numpyro helpers
 
-[Numpyro](https://num.pyro.ai/en/stable/index.html) also relies on `pmap` to sample multiple chains, 
+[Numpyro](https://num.pyro.ai/en/stable/index.html) also relies on `pmap` to sample multiple chains,
 and provides small helper functions to simplify the `jax` configuration:
-- [set_platform](https://num.pyro.ai/en/stable/utilities.html#set-platform) 
+- [set_platform](https://num.pyro.ai/en/stable/utilities.html#set-platform)
 - [set_host_device_count](https://num.pyro.ai/en/stable/utilities.html#set-host-device-count)
 
 They might be helpful if you have `numpyro` installed in your system.
@@ -128,7 +127,7 @@ def logprob(x):
 
 
 def inference_loop(rng_key, kernel, initial_state, num_samples):
-    
+
     @jax.jit
     def one_step(state, rng_key):
         state, _ = kernel(rng_key, state)
@@ -156,7 +155,7 @@ num_chains = multiprocessing.cpu_count()
 
 ### Using `vmap`
 
-Here we apply `vmap` inside the `one_step` function, vectorizing the transition function, 
+Here we apply `vmap` inside the `one_step` function, vectorizing the transition function,
 such that it can handle multiple states (and rng keys) at the same time.
 
 ```{code-cell} ipython3
@@ -225,7 +224,7 @@ ax.legend(["Chain 1", "Chain 2"])
 
 ### Using `pmap`
 
-In case of `pmap`, we can simply choose to apply the transformation to the original, 
+In case of `pmap`, we can simply choose to apply the transformation to the original,
 high level `inference_loop` function.states.position["loc"][1, :]
 
 ```{code-cell} ipython3
@@ -269,13 +268,13 @@ ax.legend(["Chain 1", "Chain 2"])
 
 +++
 
-In this particular case we can see quite dramatic differences in performance 
+In this particular case we can see quite dramatic differences in performance
 between the two approaches (several minutes for `vmap`, and several seconds for `pmap`).
 
 This is actually an expected result for NUTS, especially un-tuned one as in our example.
 
 What happens here is that with `vmap` we need always need to wait for the slowest chain when calling `one_step` function.
-With several thousand steps, the differences can easily add-up, leading to low utilization of the CPU 
+With several thousand steps, the differences can easily add-up, leading to low utilization of the CPU
 (most cores are idle, waiting for the chain with longest leapfrog).
 
 `pmap`, on the other hand, runs the chains independently, and hence does not suffer from this effect.
