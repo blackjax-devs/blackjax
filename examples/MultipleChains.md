@@ -85,8 +85,6 @@ and a workaround involving nesting `pmap` and `vmap` calls.
 Another option is to set the device count to a number larger than the core count, e.g. `200`, but
 it's [unclear what side effects it might have](https://github.com/google/jax/issues/1408#issuecomment-536158048).
 
-+++
-
 ### Using numpyro helpers
 
 [Numpyro](https://num.pyro.ai/en/stable/index.html) also relies on `pmap` to sample multiple chains,
@@ -95,8 +93,6 @@ and provides small helper functions to simplify the `jax` configuration:
 - [set_host_device_count](https://num.pyro.ai/en/stable/utilities.html#set-host-device-count)
 
 They might be helpful if you have `numpyro` installed in your system.
-
-+++
 
 ## Perfomance comparison - NUTS
 
@@ -150,8 +146,6 @@ nuts = blackjax.nuts(logprob, step_size, inv_mass_matrix)
 rng_key = jax.random.PRNGKey(0)
 num_chains = multiprocessing.cpu_count()
 ```
-
-+++ {"tags": []}
 
 ### Using `vmap`
 
@@ -220,8 +214,6 @@ ax.set_ylabel("loc")
 ax.legend(["Chain 1", "Chain 2"])
 ```
 
-+++ {"tags": []}
-
 ### Using `pmap`
 
 In case of `pmap`, we can simply choose to apply the transformation to the original,
@@ -266,8 +258,6 @@ ax.legend(["Chain 1", "Chain 2"])
 
 ### Conclusions
 
-+++
-
 In this particular case we can see quite dramatic differences in performance
 between the two approaches (several minutes for `vmap`, and several seconds for `pmap`).
 
@@ -278,8 +268,6 @@ With several thousand steps, the differences can easily add-up, leading to low u
 (most cores are idle, waiting for the chain with longest leapfrog).
 
 `pmap`, on the other hand, runs the chains independently, and hence does not suffer from this effect.
-
-+++
 
 ---
 
