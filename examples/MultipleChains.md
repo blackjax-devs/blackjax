@@ -13,15 +13,15 @@ kernelspec:
 
 # Sampling Multiple Chains
 
-In this example, we'll briefly demonstrate how you can run multiple MCMC chains using `jax` built-in constructs: `vmap` and `pmap`.
-We will use the NUTS example from the previous notebook, and compare the performance of the two approaches.
+In this example, we will briefly demonstrate how you can run multiple MCMC chains using `jax` built-in constructs: `vmap` and `pmap`.
+We will use the NUTS example from the introduction notebook, and compare the performance of the two approaches.
 
 ## Vectorization vs parallelization
 
 `jax` provides two distinct transformations:
 - [vmap](https://jax.readthedocs.io/en/latest/jax.html?highlight=vmap#jax.vmap), used to automatically vectorize `jax` code
 - and [pmap](https://jax.readthedocs.io/en/latest/_autosummary/jax.pmap.html#jax.pmap),
-which enables paralleiziation across multiple devices, such as multiple GPUs (or, in our case, CPU cores).
+which enables parallelization across multiple devices, such as multiple GPUs (or, in our case, CPU cores).
 
 Please see the the respective tutorials on [Automatic Vectorization](https://jax.readthedocs.io/en/latest/jax-101/03-vectorization.html)
 and [Parallel Evaluation](https://jax.readthedocs.io/en/latest/jax-101/06-parallelism.html) for a detailed walkthrough of both features.
@@ -78,8 +78,8 @@ except Exception as e:
     print(e)
 ```
 
-This means that you'll only be able to run as many MCMC chains as you have CPU cores.
-See this [question](https://github.com/google/jax/discussions/4198) for a more discussion on the topic,
+This means that you will only be able to run as many MCMC chains as you have CPU cores.
+See this [question](https://github.com/google/jax/discussions/4198) for a more detailed discussion on the topic,
 and a workaround involving nesting `pmap` and `vmap` calls.
 
 Another option is to set the device count to a number larger than the core count, e.g. `200`, but
