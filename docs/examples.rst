@@ -5,6 +5,7 @@ Examples
    :caption: Examples
 
    examples/Introduction.md
+   examples/MultipleChains.md
    examples/LogisticRegression.md
    examples/LogisticRegressionWithLatentGaussianSampler.md
    examples/TemperedSMC.md
