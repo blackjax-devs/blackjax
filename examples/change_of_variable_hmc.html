@@ -117,6 +117,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="MultipleChains.html">
+     Sampling Multiple Chains
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="LogisticRegression.html">
      Bayesian Logistic Regression
     </a>
@@ -402,7 +407,13 @@ p(a, b) &amp;\propto (a+b)^{-5/2}
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-05 15:31:24.470284: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libcudart.so.11.0&#39;; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-12 12:34:43.993874: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libcudart.so.11.0&#39;; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory
+2022-09-12 12:34:44.030750: E tensorflow/stream_executor/cuda/cuda_blas.cc:2981] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-12 12:34:45.025685: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libnvinfer.so.7&#39;; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory
+2022-09-12 12:34:45.025823: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libnvinfer_plugin.so.7&#39;; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory
+2022-09-12 12:34:45.025835: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
 </pre></div>
 </div>
 </div>
@@ -684,8 +695,8 @@ p(a, b) &amp;\propto (a+b)^{-5/2}
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 23.1 s, sys: 111 ms, total: 23.2 s
-Wall time: 23.1 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 26.6 s, sys: 141 ms, total: 26.8 s
+Wall time: 26.7 s
 </pre></div>
 </div>
 </div>
@@ -721,8 +732,8 @@ Wall time: 23.1 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.6 s, sys: 67.1 ms, total: 9.66 s
-Wall time: 9.65 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11 s, sys: 76.2 ms, total: 11.1 s
+Wall time: 11.1 s
 </pre></div>
 </div>
 </div>
@@ -1801,8 +1812,8 @@ Wall time: 9.65 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 20.7 s, sys: 43.2 ms, total: 20.8 s
-Wall time: 20.7 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 22.8 s, sys: 63.8 ms, total: 22.9 s
+Wall time: 22.8 s
 </pre></div>
 </div>
 </div>
@@ -1818,8 +1829,8 @@ Wall time: 20.7 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10 s, sys: 39.7 ms, total: 10.1 s
-Wall time: 10.1 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11.9 s, sys: 71.9 ms, total: 12 s
+Wall time: 12 s
 </pre></div>
 </div>
 </div>

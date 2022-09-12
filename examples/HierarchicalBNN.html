@@ -117,6 +117,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="MultipleChains.html">
+     Sampling Multiple Chains
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="LogisticRegression.html">
      Bayesian Logistic Regression
     </a>
@@ -439,7 +444,13 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-05 15:15:20.339509: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libcudart.so.11.0&#39;; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-12 12:18:16.679814: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libcudart.so.11.0&#39;; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory
+2022-09-12 12:18:16.719210: E tensorflow/stream_executor/cuda/cuda_blas.cc:2981] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-12 12:18:17.629315: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libnvinfer.so.7&#39;; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory
+2022-09-12 12:18:17.629473: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libnvinfer_plugin.so.7&#39;; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory
+2022-09-12 12:18:17.629486: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
 </pre></div>
 </div>
 </div>
@@ -459,7 +470,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/02f3e5f78aa69b83ffcb9d3989883f66105c488a00b846d8d9ba925c2405491b.png" src="../_images/02f3e5f78aa69b83ffcb9d3989883f66105c488a00b846d8d9ba925c2405491b.png" />
+<img alt="../_images/fe747b9aba95447c354191d0b2d70a61c1167e724ec92a65034727c4fe272c34.png" src="../_images/fe747b9aba95447c354191d0b2d70a61c1167e724ec92a65034727c4fe272c34.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -764,7 +775,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Test accuracy = 83.44%
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Test accuracy = 83.22%
 </pre></div>
 </div>
 </div>
@@ -801,7 +812,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/2851c0aec818c5a82574b8495baa2566d34b28412594efd0f16eed19f0093680.png" src="../_images/2851c0aec818c5a82574b8495baa2566d34b28412594efd0f16eed19f0093680.png" />
+<img alt="../_images/eff27a2a95258b1e90b825ee01c0f4c9083d3c3bec435c35357fb9e6568b4697.png" src="../_images/eff27a2a95258b1e90b825ee01c0f4c9083d3c3bec435c35357fb9e6568b4697.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -811,7 +822,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/ca708ac6061ca94f22da86476c5b6305574575c74639b1d1fc19c582e578cbe8.png" src="../_images/ca708ac6061ca94f22da86476c5b6305574575c74639b1d1fc19c582e578cbe8.png" />
+<img alt="../_images/792183ae8d26d33d9deb2e06eea3f8157df91b288607f894fd339fabeaeef319.png" src="../_images/792183ae8d26d33d9deb2e06eea3f8157df91b288607f894fd339fabeaeef319.png" />
 </div>
 </div>
 </section>
@@ -914,8 +925,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 42s, sys: 1.3 s, total: 1min 44s
-Wall time: 1min 42s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 56s, sys: 1.35 s, total: 1min 57s
+Wall time: 1min 55s
 </pre></div>
 </div>
 </div>
@@ -934,7 +945,7 @@ Wall time: 1min 42s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Train accuracy = 91.11%
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Train accuracy = 91.00%
 </pre></div>
 </div>
 </div>
@@ -986,7 +997,7 @@ Wall time: 1min 42s
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/5df0cdb2b2c0bc956dd864584efc748ad5d9c87f8ac0e8c78e5167fbad8431fb.png" src="../_images/5df0cdb2b2c0bc956dd864584efc748ad5d9c87f8ac0e8c78e5167fbad8431fb.png" />
+<img alt="../_images/408bd4a2da8325e22d46c5f46412f4a8b694618a2afad50a7df9fe6f280308c3.png" src="../_images/408bd4a2da8325e22d46c5f46412f4a8b694618a2afad50a7df9fe6f280308c3.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -996,7 +1007,7 @@ Wall time: 1min 42s
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/1a72b5ee1fffd36f2d4344fa244986879c938b388b7719d02fd5229823516f3d.png" src="../_images/1a72b5ee1fffd36f2d4344fa244986879c938b388b7719d02fd5229823516f3d.png" />
+<img alt="../_images/5cb58c1d7da9730e1d90d53c022a414eb074ad284fe34b8e4208ad8b39489e29.png" src="../_images/5cb58c1d7da9730e1d90d53c022a414eb074ad284fe34b8e4208ad8b39489e29.png" />
 </div>
 </div>
 </section>

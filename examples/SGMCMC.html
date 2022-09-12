@@ -117,6 +117,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="MultipleChains.html">
+     Sampling Multiple Chains
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="LogisticRegression.html">
      Bayesian Logistic Regression
     </a>
@@ -373,14 +378,20 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-05 15:23:08.134108: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libcudart.so.11.0&#39;; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-12 12:25:33.482977: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libcudart.so.11.0&#39;; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory
+2022-09-12 12:25:33.527632: E tensorflow/stream_executor/cuda/cuda_blas.cc:2981] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-12 12:25:34.384808: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libnvinfer.so.7&#39;; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory
+2022-09-12 12:25:34.385001: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libnvinfer_plugin.so.7&#39;; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory
+2022-09-12 12:25:34.385014: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
 </pre></div>
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-05 15:23:10.788097: W tensorflow/core/platform/cloud/google_auth_provider.cc:184] All attempts to get a Google authentication bearer token failed, returning an empty token. Retrieving token from files failed with &quot;NOT_FOUND: Could not locate the credentials file.&quot;. Retrieving token from GCE failed with &quot;FAILED_PRECONDITION: Error executing an HTTP request: libcurl code 6 meaning &#39;Couldn&#39;t resolve host name&#39;, error details: Could not resolve host: metadata&quot;.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-12 12:25:36.302087: W tensorflow/core/platform/cloud/google_auth_provider.cc:184] All attempts to get a Google authentication bearer token failed, returning an empty token. Retrieving token from files failed with &quot;NOT_FOUND: Could not locate the credentials file.&quot;. Retrieving token from GCE failed with &quot;FAILED_PRECONDITION: Error executing an HTTP request: libcurl code 6 meaning &#39;Couldn&#39;t resolve host name&#39;, error details: Could not resolve host: metadata&quot;.
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span><span class=" -Color -Color-Bold">Downloading and preparing dataset 11.06 MiB (download: 11.06 MiB, generated: 21.00 MiB, total: 32.06 MiB) to ~/tensorflow_datasets/mnist/3.0.1...</span>
@@ -389,29 +400,32 @@ title="Source repository"
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:   0%|          | 0/4 [00:00&lt;?, ? file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  25%|██▌       | 1/4 [00:00&lt;00:00,  6.23 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  25%|██▌       | 1/4 [00:00&lt;00:00,  5.84 file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  25%|██▌       | 1/4 [00:00&lt;00:00,  6.23 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  25%|██▌       | 1/4 [00:00&lt;00:00,  5.84 file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  50%|█████     | 2/4 [00:00&lt;00:00,  6.23 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  50%|█████     | 2/4 [00:00&lt;00:00,  5.84 file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  75%|███████▌  | 3/4 [00:00&lt;00:00,  6.23 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  75%|███████▌  | 3/4 [00:00&lt;00:00,  5.84 file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00, 11.58 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00, 13.56 file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00, 11.58 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00, 13.56 file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00, 10.68 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00, 12.12 file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-05 15:23:11.923787: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libcuda.so.1&#39;; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory
-2022-09-05 15:23:11.923830: W tensorflow/stream_executor/cuda/cuda_driver.cc:269] failed call to cuInit: UNKNOWN ERROR (303)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-12 12:25:37.609049: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libcuda.so.1&#39;; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory
+2022-09-12 12:25:37.609111: W tensorflow/stream_executor/cuda/cuda_driver.cc:263] failed call to cuInit: UNKNOWN ERROR (303)
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span><span class=" -Color -Color-Bold">Dataset mnist downloaded and prepared to ~/tensorflow_datasets/mnist/3.0.1. Subsequent calls will reuse this data.</span>
@@ -602,8 +616,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2min 32s, sys: 2.18 s, total: 2min 34s
-Wall time: 2min 24s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3min 30s, sys: 2.63 s, total: 3min 32s
+Wall time: 3min 17s
 </pre></div>
 </div>
 </div>
@@ -630,7 +644,7 @@ Wall time: 2min 24s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[]
 </pre></div>
 </div>
-<img alt="../_images/4b0523cf0cecb816cba03bea4b466c374981c420daec5fa59859bb1c9f6098f8.png" src="../_images/4b0523cf0cecb816cba03bea4b466c374981c420daec5fa59859bb1c9f6098f8.png" />
+<img alt="../_images/f9905ce0e14277f7b395148d24bad183d319a7df7bb2a8b85e334468707c9877.png" src="../_images/f9905ce0e14277f7b395148d24bad183d319a7df7bb2a8b85e334468707c9877.png" />
 </div>
 </div>
 <div class="cell docutils container">

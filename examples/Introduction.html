@@ -41,7 +41,7 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Bayesian Logistic Regression" href="LogisticRegression.html" />
+    <link rel="next" title="Sampling Multiple Chains" href="MultipleChains.html" />
     <link rel="prev" title="Examples" href="../examples.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -113,6 +113,11 @@
    <li class="toctree-l2 current active">
     <a class="current reference internal" href="#">
      A Quick Introduction to Blackjax
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="MultipleChains.html">
+     Sampling Multiple Chains
     </a>
    </li>
    <li class="toctree-l2">
@@ -327,11 +332,6 @@ title="Source repository"
    </li>
   </ul>
  </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#sample-multiple-chains">
-   Sample Multiple Chains
-  </a>
- </li>
 </ul>
 
     </nav>
@@ -395,11 +395,6 @@ title="Source repository"
    </li>
   </ul>
  </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#sample-multiple-chains">
-   Sample Multiple Chains
-  </a>
- </li>
 </ul>
 
                         </nav>
@@ -437,7 +432,7 @@ title="Source repository"
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Python implementation: CPython
 Python version       : 3.9.13
-IPython version      : 8.4.0
+IPython version      : 8.5.0
 
 jax     : 0.3.17
 jaxlib  : 0.3.15
@@ -445,7 +440,7 @@ blackjax: 0.8.3
 
 Compiler    : GCC 9.4.0
 OS          : Linux
-Release     : 5.15.0-1017-azure
+Release     : 5.15.0-1019-azure
 Machine     : x86_64
 Processor   : x86_64
 CPU cores   : 2
@@ -522,7 +517,7 @@ Architecture: 64bit
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(63319.363, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2391.8584, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-61207.28, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(54192.746, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2083.8857, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-52080.66, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -539,8 +534,8 @@ Architecture: 64bit
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 180 µs, sys: 22 µs, total: 202 µs
-Wall time: 209 µs
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 250 µs, sys: 30 µs, total: 280 µs
+Wall time: 289 µs
 </pre></div>
 </div>
 </div>
@@ -577,8 +572,8 @@ Wall time: 209 µs
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.68 s, sys: 18.8 ms, total: 1.7 s
-Wall time: 1.7 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.62 s, sys: 27.3 ms, total: 2.65 s
+Wall time: 2.64 s
 </pre></div>
 </div>
 </div>
@@ -600,7 +595,7 @@ Wall time: 1.7 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/42ccfd35863c1deebca4be23761841de8ec5bec1d476f73e29819475d27baae9.png" src="../_images/42ccfd35863c1deebca4be23761841de8ec5bec1d476f73e29819475d27baae9.png" />
+<img alt="../_images/43ffb8362629cef5d647237ae7aa252eab8cc615f9c81441fce804d025b3d212.png" src="../_images/43ffb8362629cef5d647237ae7aa252eab8cc615f9c81441fce804d025b3d212.png" />
 </div>
 </div>
 </section>
@@ -627,7 +622,7 @@ Wall time: 1.7 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(63319.363, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2391.8584, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-61207.28, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(54192.746, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2083.8857, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-52080.66, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -644,8 +639,8 @@ Wall time: 1.7 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.1 s, sys: 26.8 ms, total: 8.12 s
-Wall time: 8.12 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.2 s, sys: 27.5 ms, total: 14.2 s
+Wall time: 14.2 s
 </pre></div>
 </div>
 </div>
@@ -667,7 +662,7 @@ Wall time: 8.12 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/b2329624e0763935d2eea32554ef811fc56043df5bbbc225585e8f054ce1d6e0.png" src="../_images/b2329624e0763935d2eea32554ef811fc56043df5bbbc225585e8f054ce1d6e0.png" />
+<img alt="../_images/61b1b9ee99616c2f049b6dce9a6dcf1fc2acf48b4aa460f030ec8736908572b9.png" src="../_images/61b1b9ee99616c2f049b6dce9a6dcf1fc2acf48b4aa460f030ec8736908572b9.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -691,8 +686,8 @@ Wall time: 8.12 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.96 s, sys: 19.8 ms, total: 2.98 s
-Wall time: 2.97 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.12 s, sys: 11.8 ms, total: 3.13 s
+Wall time: 3.13 s
 </pre></div>
 </div>
 </div>
@@ -710,8 +705,8 @@ Wall time: 2.97 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.36 s, sys: 15.8 ms, total: 3.37 s
-Wall time: 3.37 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 4.98 s, sys: 12 ms, total: 4.99 s
+Wall time: 4.99 s
 </pre></div>
 </div>
 </div>
@@ -733,104 +728,11 @@ Wall time: 3.37 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/79aa74bce9132e54c21056114f4e40605cc463fb09ade2bf91440ec5cf185410.png" src="../_images/79aa74bce9132e54c21056114f4e40605cc463fb09ade2bf91440ec5cf185410.png" />
+<img alt="../_images/a66f5515759ff0327c8541fb91bc60b93940a8fe8c6829def7d8ffc329bf07ae.png" src="../_images/a66f5515759ff0327c8541fb91bc60b93940a8fe8c6829def7d8ffc329bf07ae.png" />
 </div>
 </div>
+<p>In the next section we’ll show how we can easily extend the code to sample multiple chains in parallel.</p>
 </section>
-</section>
-<section id="sample-multiple-chains">
-<h2>Sample Multiple Chains<a class="headerlink" href="#sample-multiple-chains" title="Permalink to this headline">#</a></h2>
-<p>We can easily sample multiple chains using JAX’s <code class="docutils literal notranslate"><span class="pre">vmap</span></code> construct. See the <a class="reference external" href="https://jax.readthedocs.io/en/latest/jax.html?highlight=vmap#jax.vmap">documentation</a> to understand how the mapping works.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_chains</span> <span class="o">=</span> <span class="mi">4</span>
-<span class="n">initial_positions</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_chains</span><span class="p">),</span> <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_chains</span><span class="p">)}</span>
-<span class="n">initial_states</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">))(</span><span class="n">initial_positions</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop_multiple_chains</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">num_chains</span>
-<span class="p">):</span>
-    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
-        <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
-        <span class="n">states</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">kernel</span><span class="p">)(</span><span class="n">keys</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="n">states</span>
-
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">states</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">states</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="mi">2_000</span><span class="p">,</span> <span class="n">num_chains</span>
-<span class="p">)</span>
-<span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 16 s, sys: 19.8 ms, total: 16 s
-Wall time: 16 s
-</pre></div>
-</div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([[ 1.0056639,  1.0085799,  1.0033581,  1.011466 ],
-             [ 1.0119922,  1.0104148,  1.0052074,  1.0156571],
-             [ 1.0123299,  1.0109442,  1.0060787,  1.0211318],
-             ...,
-             [10.983605 , 10.752511 , 10.878196 , 10.831426 ],
-             [10.612356 , 10.566379 , 10.990187 , 10.97209  ],
-             [10.663629 , 10.752095 , 10.531891 , 11.59523  ]],            dtype=float32)
-</pre></div>
-</div>
-</div>
-</div>
-<p>This scales very well to hundreds of chains on CPU, tens of thousand on GPU:</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">num_chains</span> <span class="o">=</span> <span class="mi">40</span>
-<span class="n">initial_positions</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_chains</span><span class="p">),</span> <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_chains</span><span class="p">)}</span>
-<span class="n">initial_states</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,))(</span><span class="n">initial_positions</span><span class="p">)</span>
-<span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="mi">1_000</span><span class="p">,</span> <span class="n">num_chains</span>
-<span class="p">)</span>
-<span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2min 6s, sys: 18.5 s, total: 2min 25s
-Wall time: 1min 37s
-</pre></div>
-</div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([[ 1.0176288,  1.0020983,  1.0040804, ...,  1.0027038,
-               1.001044 ,  0.9988473],
-             [ 1.0196128,  1.0035638,  1.0060363, ...,  1.0024674,
-               1.0056115,  0.9983475],
-             [ 1.0197372,  1.0043485,  1.0142896, ...,  1.0033418,
-               1.0055532,  0.9999897],
-             ...,
-             [10.4528675, 11.606824 , 10.934701 , ..., 10.6531515,
-              10.71164  , 10.410031 ],
-             [10.387692 , 11.771052 ,  9.981895 , ..., 10.7884655,
-              10.653177 , 10.644416 ],
-             [ 9.817796 , 11.903402 , 10.22413  , ..., 10.69496  ,
-              10.164121 , 10.812891 ]], dtype=float32)
-</pre></div>
-</div>
-</div>
-</div>
-<p>In this example the result is a dictionnary and each entry has shape <code class="docutils literal notranslate"><span class="pre">(num_samples,</span> <span class="pre">num_chains)</span></code>. Here’s how to access the samples of the second chains for <code class="docutils literal notranslate"><span class="pre">loc</span></code>:</p>
 </section>
 </section>
 
@@ -849,10 +751,10 @@ Wall time: 1min 37s
             <p class="prev-next-title">Examples</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="LogisticRegression.html" title="next page">
+    <a class='right-next' id="next-link" href="MultipleChains.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Bayesian Logistic Regression</p>
+        <p class="prev-next-title">Sampling Multiple Chains</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

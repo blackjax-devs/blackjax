@@ -117,6 +117,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="MultipleChains.html">
+     Sampling Multiple Chains
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="LogisticRegression.html">
      Bayesian Logistic Regression
     </a>
@@ -451,7 +456,7 @@ $$</p>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Python implementation: CPython
 Python version       : 3.9.13
-IPython version      : 8.4.0
+IPython version      : 8.5.0
 
 jax     : 0.3.17
 jaxlib  : 0.3.15
@@ -459,7 +464,7 @@ blackjax: 0.8.3
 
 Compiler    : GCC 9.4.0
 OS          : Linux
-Release     : 5.15.0-1017-azure
+Release     : 5.15.0-1019-azure
 Machine     : x86_64
 Processor   : x86_64
 CPU cores   : 2
@@ -587,8 +592,8 @@ Architecture: 64bit
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 290 ms, sys: 341 µs, total: 290 ms
-Wall time: 288 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 293 ms, sys: 0 ns, total: 293 ms
+Wall time: 291 ms
 </pre></div>
 </div>
 </div>
@@ -605,8 +610,8 @@ Wall time: 288 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.2 s, sys: 8.77 ms, total: 1.21 s
-Wall time: 1.2 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.31 s, sys: 11.5 ms, total: 1.32 s
+Wall time: 1.32 s
 </pre></div>
 </div>
 </div>
@@ -637,8 +642,8 @@ Wall time: 1.2 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17 ms, sys: 0 ns, total: 17 ms
-Wall time: 16.7 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 20.5 ms, sys: 24 µs, total: 20.5 ms
+Wall time: 20.3 ms
 </pre></div>
 </div>
 </div>
@@ -655,8 +660,8 @@ Wall time: 16.7 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.13 s, sys: 3.95 ms, total: 1.13 s
-Wall time: 1.13 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.22 s, sys: 3.88 ms, total: 1.23 s
+Wall time: 1.22 s
 </pre></div>
 </div>
 </div>
@@ -687,8 +692,8 @@ Wall time: 1.13 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 16.6 ms, sys: 284 µs, total: 16.9 ms
-Wall time: 16.6 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 20.6 ms, sys: 32 µs, total: 20.7 ms
+Wall time: 20.2 ms
 </pre></div>
 </div>
 </div>
@@ -705,8 +710,8 @@ Wall time: 16.6 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.15 s, sys: 8.36 ms, total: 1.16 s
-Wall time: 1.15 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.19 s, sys: 4.05 ms, total: 1.19 s
+Wall time: 1.19 s
 </pre></div>
 </div>
 </div>
@@ -780,8 +785,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 16.7 ms, sys: 39 µs, total: 16.7 ms
-Wall time: 16.4 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 21.1 ms, sys: 52 µs, total: 21.2 ms
+Wall time: 20.8 ms
 </pre></div>
 </div>
 </div>
@@ -798,8 +803,8 @@ Wall time: 16.4 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 895 ms, sys: 105 µs, total: 895 ms
-Wall time: 890 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.02 s, sys: 3.52 ms, total: 1.02 s
+Wall time: 1.02 s
 </pre></div>
 </div>
 </div>
@@ -844,7 +849,7 @@ $$</p>
 <div class="cell_output docutils container">
 <div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
 <span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
-<span class="nn">Input In [22],</span> in <span class="ni">&lt;cell line: 2&gt;</span><span class="nt">()</span>
+<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">22</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
 <span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">import</span> <span class="nn">optax</span>
 <span class="ne">----&gt; </span><span class="mi">2</span> <span class="kn">from</span> <span class="nn">numpyro.nn</span> <span class="kn">import</span> <span class="n">AutoregressiveNN</span>
 
