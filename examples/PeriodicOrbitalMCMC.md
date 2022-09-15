@@ -328,7 +328,11 @@ pip install numpyro
 
 ```{code-cell} ipython3
 import optax
-from numpyro.nn import AutoregressiveNN
+try:
+    from numpyro.nn import AutoregressiveNN
+except ModuleNotFoundError:
+    %pip install -qq numpyro
+    from numpyro.nn import AutoregressiveNN
 ```
 
 ```{code-cell} ipython3
