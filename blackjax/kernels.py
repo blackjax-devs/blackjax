@@ -67,27 +67,23 @@ class adaptive_tempered_smc:
         cls,
         logprior_fn: Callable,
         loglikelihood_fn: Callable,
-        mcmc_algorithm: MCMCSamplingAlgorithm,
+        mcmc_step_fn: Callable,
+        mcmc_init_fn: Callable,
         mcmc_parameters: Dict,
         resampling_fn: Callable,
         target_ess: float,
         root_solver: Callable = smc.solver.dichotomy,
-        use_log_ess: bool = True,
-        mcmc_iter: int = 10,
+        num_mcmc_steps: int = 10,
     ) -> MCMCSamplingAlgorithm:
-        def kernel_factory(logdensity_fn):
-            return mcmc_algorithm(logdensity_fn, **mcmc_parameters).step
 
         step = cls.kernel(
             logprior_fn,
             loglikelihood_fn,
-            kernel_factory,
-            mcmc_algorithm.init,
+            mcmc_step_fn,
+            mcmc_init_fn,
             resampling_fn,
             target_ess,
             root_solver,
-            use_log_ess,
-            mcmc_iter,
         )
 
         def init_fn(position: PyTree):
@@ -97,6 +93,8 @@ class adaptive_tempered_smc:
             return step(
                 rng_key,
                 state,
+                num_mcmc_steps,
+                mcmc_parameters,
             )
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
@@ -119,21 +117,19 @@ class tempered_smc:
         cls,
         logprior_fn: Callable,
         loglikelihood_fn: Callable,
-        mcmc_algorithm: MCMCSamplingAlgorithm,
+        mcmc_step_fn: Callable,
+        mcmc_init_fn: Callable,
         mcmc_parameters: Dict,
         resampling_fn: Callable,
-        mcmc_iter: int = 10,
+        num_mcmc_steps: int = 10,
     ) -> MCMCSamplingAlgorithm:
-        def kernel_factory(logdensity_fn):
-            return mcmc_algorithm(logdensity_fn, **mcmc_parameters).step
 
         step = cls.kernel(
             logprior_fn,
             loglikelihood_fn,
-            kernel_factory,
-            mcmc_algorithm.init,
+            mcmc_step_fn,
+            mcmc_init_fn,
             resampling_fn,
-            mcmc_iter,
         )
 
         def init_fn(position: PyTree):
@@ -143,7 +139,9 @@ class tempered_smc:
             return step(
                 rng_key,
                 state,
+                num_mcmc_steps,
                 lmbda,
+                mcmc_parameters,
             )
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
