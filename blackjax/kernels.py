@@ -1266,7 +1266,7 @@ def pathfinder_adaptation(
     logprob_fn: Callable,
     num_steps: int = 400,
     initial_step_size: float = 1.0,
-    target_acceptance_rate: float = 0.65,
+    target_acceptance_rate: float = 0.80,
     **parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the parameters of algorithms in the HMC family.

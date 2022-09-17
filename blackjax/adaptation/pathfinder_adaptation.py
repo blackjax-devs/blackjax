@@ -24,7 +24,7 @@ class PathfinderAdaptationState(NamedTuple):
 
 def base(
     logprob_fn: Callable,
-    target_acceptance_rate: float = 0.65,
+    target_acceptance_rate: float = 0.80,
 ):
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
      This function tunes the values of the step size and the mass matrix according
