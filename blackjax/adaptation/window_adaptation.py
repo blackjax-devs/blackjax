@@ -13,7 +13,7 @@ from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
 )
 from blackjax.mcmc.hmc import HMCState
-from blackjax.types import Array, PRNGKey
+from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["base", "schedule"]
 
@@ -83,12 +83,12 @@ def base(
         Function that returns the step size and mass matrix given a warmup state.
 
     """
-    fast_init, fast_update = fast_window(target_acceptance_rate)
-    slow_init, slow_update, slow_final = slow_window(is_mass_matrix_diagonal)
+    mm_init, mm_update, mm_final = mass_matrix_adaptation(is_mass_matrix_diagonal)
+    da_init, da_update, da_final = dual_averaging_adaptation(
+        target=target_acceptance_rate
+    )
 
-    def init(
-        initial_state: HMCState, initial_step_size: float
-    ) -> WindowAdaptationState:
+    def init(position: PyTree, initial_step_size: float) -> WindowAdaptationState:
         """Initialize the warmup.
 
         To initialize the Stan warmup we create an identity mass matrix and use
@@ -96,11 +96,59 @@ def base(
         averaging algorithm.
 
         """
-        mm_state = slow_init(initial_state)
-        da_state = fast_init(initial_step_size)
-        warmup_state = WindowAdaptationState(da_state, mm_state)
 
-        return warmup_state
+        flat_position, _ = jax.flatten_util.ravel_pytree(position)
+        n_dims = flat_position.shape[-1]
+        mm_state = mm_init(n_dims)
+
+        da_state = da_init(initial_step_size)
+
+        return WindowAdaptationState(da_state, mm_state)
+
+    def init_fast(initial_step_size: float) -> DualAveragingAdaptationState:
+        da_state = da_init(initial_step_size)
+        return da_state
+
+    def fast_update(
+        fw_state: Tuple[Array, HMCState, Any, WindowAdaptationState]
+    ) -> WindowAdaptationState:
+        rng_key, state, info, warmup_state = fw_state
+
+        new_da_state = da_update(warmup_state.da_state, info)
+        new_warmup_state = WindowAdaptationState(new_da_state, warmup_state.mm_state)
+
+        return new_warmup_state
+
+    def slow_update(
+        fs_state: Tuple[Array, HMCState, Any, WindowAdaptationState]
+    ) -> WindowAdaptationState:
+        """Move the warmup by one state when in a slow adaptation interval.
+
+        Mass matrix adaptation and dual averaging states are both
+        adapted in slow adaptation intervals, as indicated in Stan's
+        reference manual.
+
+        """
+        rng_key, state, info, warmup_state = fs_state
+
+        new_da_state = da_update(warmup_state.da_state, info)
+        new_mm_state = mm_update(warmup_state.mm_state, state.position)
+        new_warmup_state = WindowAdaptationState(new_da_state, new_mm_state)
+
+        return new_warmup_state
+
+    def slow_final(warmup_state: WindowAdaptationState) -> WindowAdaptationState:
+        """Update the parameters at the end of a slow adaptation window.
+
+        We compute the value of the mass matrix and reset the mass matrix
+        adapation's internal state since middle windows are "memoryless".
+
+        """
+        new_mm_state = mm_final(warmup_state.mm_state)
+        new_da_state = da_init(da_final(warmup_state.da_state))
+        new_warmup_state = WindowAdaptationState(new_da_state, new_mm_state)
+
+        return new_warmup_state
 
     def update(
         rng_key: PRNGKey,
@@ -163,112 +211,6 @@ def base(
         step_size = jnp.exp(warmup_state.da_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.mm_state.inverse_mass_matrix
         return step_size, inverse_mass_matrix
-
-    return init, update, final
-
-
-def fast_window(
-    target_accept: float = 0.65,
-) -> Tuple[Callable, Callable]:
-    """First stage of the Stan warmup. The step size is adapted using
-    Nesterov's dual averaging algorithms while the mass matrix stays the same.
-
-    Parameters
-    ----------
-    target_accept:
-        Target acceptance rate for step size adaptation using dual averaging.
-
-    Returns
-    -------
-    A tuple of functions that respectively initialize the warmup state at the
-    beginning of the window, and update the chain and warmup states within the
-    window.
-
-    """
-    da_init, da_update, _ = dual_averaging_adaptation(target=target_accept)
-
-    def init(initial_step_size: float) -> DualAveragingAdaptationState:
-        da_state = da_init(initial_step_size)
-        return da_state
-
-    def update(
-        fw_state: Tuple[Array, HMCState, Any, WindowAdaptationState]
-    ) -> WindowAdaptationState:
-        rng_key, state, info, warmup_state = fw_state
-
-        new_da_state = da_update(warmup_state.da_state, info)
-        new_warmup_state = WindowAdaptationState(new_da_state, warmup_state.mm_state)
-
-        return new_warmup_state
-
-    return init, update
-
-
-def slow_window(
-    is_mass_matrix_diagonal: bool = True,
-    target_accept: float = 0.65,
-) -> Tuple[Callable, Callable, Callable]:
-    """Slow stage of the Stan warmup.
-
-    In this stage we adapt the values of the mass matrix. The step size and the
-    state of the mass matrix adaptation are re-initialized at the end of each
-    window.
-
-    Parameters
-    ----------
-    is_mass_matrix_diagonal
-        Whether we want a diagonal mass matrix. Passed to the mass matrix adapation
-        algorithm.
-    target_accept:
-        Target acceptance rate for step size adaptation using dual averaging.
-
-    Returns
-    -------
-    A tuple of functions that respectively initialize the warmup state at the
-    beginning of the window, update the chain and warmup states within the
-    window, and update the warmup stage at the end of the window.
-
-    """
-    mm_init, mm_update, mm_final = mass_matrix_adaptation(is_mass_matrix_diagonal)
-    da_init, da_update, da_final = dual_averaging_adaptation(target=target_accept)
-
-    def init(state: HMCState) -> MassMatrixAdaptationState:
-        """Initialize the mass matrix adaptation algorithm."""
-        flat_position, _ = jax.flatten_util.ravel_pytree(state.position)
-        n_dims = flat_position.shape[-1]
-        mm_state = mm_init(n_dims)
-        return mm_state
-
-    def update(
-        fs_state: Tuple[Array, HMCState, Any, WindowAdaptationState]
-    ) -> WindowAdaptationState:
-        """Move the warmup by one state when in a slow adaptation interval.
-
-        Mass matrix adaptation and dual averaging states are both
-        adapted in slow adaptation intervals, as indicated in Stan's
-        reference manual.
-
-        """
-        rng_key, state, info, warmup_state = fs_state
-
-        new_da_state = da_update(warmup_state.da_state, info)
-        new_mm_state = mm_update(warmup_state.mm_state, state.position)
-        new_warmup_state = WindowAdaptationState(new_da_state, new_mm_state)
-
-        return new_warmup_state
-
-    def final(warmup_state: WindowAdaptationState) -> WindowAdaptationState:
-        """Update the parameters at the end of a slow adaptation window.
-
-        We compute the value of the mass matrix and reset the mass matrix
-        adapation's internal state since middle windows are "memoryless".
-
-        """
-        new_mm_state = mm_final(warmup_state.mm_state)
-        new_da_state = da_init(da_final(warmup_state.da_state))
-        new_warmup_state = WindowAdaptationState(new_da_state, new_mm_state)
-
-        return new_warmup_state
 
     return init, update, final
 
