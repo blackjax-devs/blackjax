@@ -1304,31 +1304,30 @@ def pathfinder_adaptation(
 
     """
 
-    kernel = algorithm.kernel()
-
-    def kernel_factory(step_size: float, inverse_mass_matrix: Array):
-        def kernel_fn(rng_key, state):
-            return kernel(
-                rng_key,
-                state,
-                logprob_fn,
-                step_size,
-                inverse_mass_matrix,
-                **parameters,
-            )
-
-        return kernel_fn
+    step_fn = algorithm.kernel()
 
     init, update, final = adaptation.pathfinder_adaptation.base(
-        kernel_factory,
         logprob_fn,
-        target_acceptance_rate=target_acceptance_rate,
+        target_acceptance_rate,
     )
 
     def one_step(carry, rng_key):
         state, adaptation_state = carry
-        state, adaptation_state, info = update(rng_key, adaptation_state, state)
-        return ((state, adaptation_state), (state, info, adaptation_state.ss_state))
+        new_state, info = step_fn(
+            rng_key,
+            state,
+            logprob_fn,
+            adaptation_state.step_size,
+            adaptation_state.inverse_mass_matrix,
+            **parameters,
+        )
+        new_adaptation_state = update(
+            adaptation_state, new_state.position, info.acceptance_probability
+        )
+        return (
+            (new_state, new_adaptation_state),
+            (new_state, info, new_adaptation_state.ss_state),
+        )
 
     def run(rng_key: PRNGKey, position: PyTree):
         init_warmup_state, init_position = init(rng_key, position, initial_step_size)
@@ -1343,7 +1342,11 @@ def pathfinder_adaptation(
         last_chain_state, last_warmup_state = last_state
 
         step_size, inverse_mass_matrix = final(last_warmup_state)
-        kernel = kernel_factory(step_size, inverse_mass_matrix)
+
+        def kernel(rng_key, state):
+            return step_fn(
+                rng_key, state, logprob_fn, step_size, inverse_mass_matrix, **parameters
+            )
 
         return last_chain_state, kernel
 

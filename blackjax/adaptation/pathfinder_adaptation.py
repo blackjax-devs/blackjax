@@ -8,7 +8,6 @@ from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
     dual_averaging_adaptation,
 )
-from blackjax.mcmc.hmc import HMCState
 from blackjax.optimizers.lbfgs import lbfgs_inverse_hessian_formula_1
 from blackjax.types import Array, PRNGKey, PyTree
 from blackjax.vi.pathfinder import init as pathfinder_init_fn
@@ -24,7 +23,6 @@ class PathfinderAdaptationState(NamedTuple):
 
 
 def base(
-    kernel_factory: Callable,
     logprob_fn: Callable,
     target_acceptance_rate: float = 0.65,
 ):
@@ -81,10 +79,10 @@ def base(
         return warmup_state, new_initial_position
 
     def update(
-        rng_key: PRNGKey,
         adaptation_state: PathfinderAdaptationState,
-        chain_state: HMCState,
-    ) -> Tuple[HMCState, PathfinderAdaptationState, NamedTuple]:
+        position: PyTree,
+        acceptance_rate: float,
+    ) -> PathfinderAdaptationState:
         """Move the warmup by one step.
 
         We first create a new kernel with the current values of the step size
@@ -93,32 +91,27 @@ def base(
 
         Parameters
         ----------
-        rng_key
-            The key used in JAX's random number generator.
-        chain_state
-            Current state of the chain.
-        adaprtation_state
-            Current warmup state.
+        adaptation_state
+            Current adptation state.
+        adaptation_stage
+            The current stage of the warmup: whether this is a slow window,
+            a fast window and if we are at the last step of a slow window.
+        position
+            Current value of the model parameters.
+        acceptance_rate
+            Value of the acceptance rate for the last mcmc step.
 
         Returns
         -------
         The updated states of the chain and the warmup.
 
         """
-        inverse_mass_matrix = adaptation_state.inverse_mass_matrix
-        step_size = adaptation_state.step_size
-        kernel = kernel_factory(step_size, inverse_mass_matrix)
+        new_ss_state = da_update(adaptation_state.ss_state, acceptance_rate)
+        new_step_size = jnp.exp(new_ss_state.log_step_size)
 
-        chain_state, chain_info = kernel(rng_key, chain_state)
-        new_da_state = da_update(
-            adaptation_state.ss_state, chain_info.acceptance_probability
+        return PathfinderAdaptationState(
+            new_ss_state, new_step_size, adaptation_state.inverse_mass_matrix
         )
-        new_step_size = jnp.exp(adaptation_state.ss_state.log_step_size)
-        new_warmup_state = PathfinderAdaptationState(
-            new_da_state, new_step_size, adaptation_state.inverse_mass_matrix
-        )
-
-        return chain_state, new_warmup_state, chain_info
 
     def final(warmup_state: PathfinderAdaptationState) -> Tuple[float, Array]:
         """Return the final values for the step size and mass matrix."""
