@@ -1,5 +1,5 @@
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Any, Callable, List, NamedTuple, Tuple
+from typing import Callable, List, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -113,9 +113,11 @@ def base(
         )
 
     def fast_update(
-        fw_state: Tuple[Array, HMCState, Any, WindowAdaptationState]
+        rng_key: PRNGKey,
+        position: PyTree,
+        acceptance_probability: float,
+        warmup_state: WindowAdaptationState,
     ) -> WindowAdaptationState:
-        rng_key, _, acceptance_probability, warmup_state = fw_state
 
         new_ss_state = da_update(warmup_state.ss_state, acceptance_probability)
         new_step_size = jnp.exp(new_ss_state.log_step_size)
@@ -128,7 +130,10 @@ def base(
         )
 
     def slow_update(
-        fs_state: Tuple[Array, HMCState, Any, WindowAdaptationState]
+        rng_key: PRNGKey,
+        position: PyTree,
+        acceptance_probability: float,
+        warmup_state: WindowAdaptationState,
     ) -> WindowAdaptationState:
         """Move the warmup by one state when in a slow adaptation interval.
 
@@ -137,8 +142,6 @@ def base(
         reference manual.
 
         """
-        rng_key, position, acceptance_probability, warmup_state = fs_state
-
         new_imm_state = mm_update(warmup_state.imm_state, position)
         new_ss_state = da_update(warmup_state.ss_state, acceptance_probability)
         new_step_size = jnp.exp(new_ss_state.log_step_size)
@@ -204,7 +207,10 @@ def base(
         warmup_state = jax.lax.switch(
             stage,
             (fast_update, slow_update),
-            (rng_key, position, acceptance_probability, adaptation_state),
+            rng_key,
+            position,
+            acceptance_probability,
+            adaptation_state,
         )
 
         warmup_state = jax.lax.cond(
