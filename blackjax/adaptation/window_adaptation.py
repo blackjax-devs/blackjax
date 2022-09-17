@@ -85,9 +85,7 @@ def base(
 
     """
     mm_init, mm_update, mm_final = mass_matrix_adaptation(is_mass_matrix_diagonal)
-    da_init, da_update, da_final = dual_averaging_adaptation(
-        target=target_acceptance_rate
-    )
+    da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
 
     def init(position: PyTree, initial_step_size: float) -> Tuple:
         """Initialize the warmup.
