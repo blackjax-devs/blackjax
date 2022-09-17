@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Optional, Union
+from typing import Callable, Dict, NamedTuple, Optional, Union
 
 import jax
 import jax.numpy as jnp
@@ -647,6 +647,12 @@ class sghmc:
 # -----------------------------------------------------------------------------
 
 
+class AdaptationResults(NamedTuple):
+    state: PyTree
+    kernel: Callable
+    parameters: dict
+
+
 def window_adaptation(
     algorithm: Union[hmc, nuts],
     logprob_fn: Callable,
@@ -656,9 +662,10 @@ def window_adaptation(
     target_acceptance_rate: float = 0.80,
     progress_bar: bool = False,
     logprob_grad_fn: Optional[Callable] = None,
-    **parameters,
+    **extra_parameters,
 ) -> AdaptationAlgorithm:
-    """Adapt the parameters of algorithms in the HMC family.
+    """Adapt the value of the inverse mass matrix and step size parameters of algorithms
+    in the HMC fmaily.
 
     Algorithms in the HMC family on a euclidean manifold depend on the value of
     at least two parameters: the step size, related to the trajectory
@@ -689,7 +696,7 @@ def window_adaptation(
     logprob_grad_fn
         The gradient of logprob_fn.  If it's not provided, it will be computed
         by jax using reverse mode autodiff (jax.grad).
-    **parameters
+    **extra_parameters
         The extra parameters to pass to the algorithm, e.g. the number of
         integration steps for HMC.
 
@@ -719,7 +726,7 @@ def window_adaptation(
             logprob_fn,
             adaptation_state.step_size,
             adaptation_state.inverse_mass_matrix,
-            **parameters,
+            **extra_parameters,
         )
         new_adaptation_state = update(
             adapt_key,
@@ -753,13 +760,16 @@ def window_adaptation(
         last_chain_state, last_warmup_state, *_ = last_state
 
         step_size, inverse_mass_matrix = final(last_warmup_state)
+        parameters = {
+            "step_size": step_size,
+            "inverse_mass_matrix": inverse_mass_matrix,
+            **extra_parameters,
+        }
 
         def kernel(rng_key, state):
-            return step_fn(
-                rng_key, state, logprob_fn, step_size, inverse_mass_matrix, **parameters
-            )
+            return step_fn(rng_key, state, logprob_fn, **parameters)
 
-        return last_chain_state, kernel, warmup_chain
+        return AdaptationResults(last_chain_state, kernel, parameters)
 
     return AdaptationAlgorithm(run)
 
