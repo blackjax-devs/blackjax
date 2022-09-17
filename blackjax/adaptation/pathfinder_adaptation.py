@@ -18,7 +18,8 @@ __all__ = ["base"]
 
 
 class PathfinderAdaptationState(NamedTuple):
-    da_state: DualAveragingAdaptationState
+    ss_state: DualAveragingAdaptationState
+    step_size: float
     inverse_mass_matrix: Array
 
 
@@ -54,12 +55,10 @@ def base(
          Function that returns the step size and mass matrix given a warmup state.
 
     """
-    da_init, da_update, da_final = dual_averaging_adaptation(
-        target=target_acceptance_rate
-    )
+    da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
 
     def init(
-        rng_key: PRNGKey, initial_position: Array, initial_step_size: float
+        rng_key: PRNGKey, position: PyTree, initial_step_size: float
     ) -> Tuple[PathfinderAdaptationState, PyTree]:
         """Initialize the warmup.
 
@@ -69,22 +68,22 @@ def base(
         da_state = da_init(initial_step_size)
 
         pathfinder_rng_key, sample_rng_key = jax.random.split(rng_key, 2)
-        pathfinder_state = pathfinder_init_fn(
-            pathfinder_rng_key, logprob_fn, initial_position
-        )
+        pathfinder_state = pathfinder_init_fn(pathfinder_rng_key, logprob_fn, position)
         new_initial_position, _ = sample_from_state(sample_rng_key, pathfinder_state)
         inverse_mass_matrix = lbfgs_inverse_hessian_formula_1(
             pathfinder_state.alpha, pathfinder_state.beta, pathfinder_state.gamma
         )
 
-        warmup_state = PathfinderAdaptationState(da_state, inverse_mass_matrix)
+        warmup_state = PathfinderAdaptationState(
+            da_state, initial_step_size, inverse_mass_matrix
+        )
 
         return warmup_state, new_initial_position
 
     def update(
         rng_key: PRNGKey,
-        chain_state: HMCState,
         adaptation_state: PathfinderAdaptationState,
+        chain_state: HMCState,
     ) -> Tuple[HMCState, PathfinderAdaptationState, NamedTuple]:
         """Move the warmup by one step.
 
@@ -106,23 +105,24 @@ def base(
         The updated states of the chain and the warmup.
 
         """
-        step_size = jnp.exp(adaptation_state.da_state.log_step_size)
         inverse_mass_matrix = adaptation_state.inverse_mass_matrix
+        step_size = adaptation_state.step_size
         kernel = kernel_factory(step_size, inverse_mass_matrix)
 
         chain_state, chain_info = kernel(rng_key, chain_state)
         new_da_state = da_update(
-            adaptation_state.da_state, chain_info.acceptance_probability
+            adaptation_state.ss_state, chain_info.acceptance_probability
         )
+        new_step_size = jnp.exp(adaptation_state.ss_state.log_step_size)
         new_warmup_state = PathfinderAdaptationState(
-            new_da_state, adaptation_state.inverse_mass_matrix
+            new_da_state, new_step_size, adaptation_state.inverse_mass_matrix
         )
 
         return chain_state, new_warmup_state, chain_info
 
     def final(warmup_state: PathfinderAdaptationState) -> Tuple[float, Array]:
-        """Return the step size and mass matrix."""
-        step_size = jnp.exp(warmup_state.da_state.log_step_size_avg)
+        """Return the final values for the step size and mass matrix."""
+        step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.inverse_mass_matrix
         return step_size, inverse_mass_matrix
 
