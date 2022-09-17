@@ -111,7 +111,9 @@ def base(
         kernel = kernel_factory(step_size, inverse_mass_matrix)
 
         chain_state, chain_info = kernel(rng_key, chain_state)
-        new_da_state = da_update(adaptation_state.da_state, chain_info)
+        new_da_state = da_update(
+            adaptation_state.da_state, chain_info.acceptance_probability
+        )
         new_warmup_state = PathfinderAdaptationState(
             new_da_state, adaptation_state.inverse_mass_matrix
         )

@@ -114,7 +114,7 @@ def base(
     ) -> WindowAdaptationState:
         rng_key, state, info, warmup_state = fw_state
 
-        new_da_state = da_update(warmup_state.da_state, info)
+        new_da_state = da_update(warmup_state.da_state, info.acceptance_probability)
         new_warmup_state = WindowAdaptationState(new_da_state, warmup_state.mm_state)
 
         return new_warmup_state
@@ -131,7 +131,7 @@ def base(
         """
         rng_key, state, info, warmup_state = fs_state
 
-        new_da_state = da_update(warmup_state.da_state, info)
+        new_da_state = da_update(warmup_state.da_state, info.acceptance_probability)
         new_mm_state = mm_update(warmup_state.mm_state, state.position)
         new_warmup_state = WindowAdaptationState(new_da_state, new_mm_state)
 
