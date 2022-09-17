@@ -1325,11 +1325,10 @@ def pathfinder_adaptation(
         target_acceptance_rate=target_acceptance_rate,
     )
 
-    @jax.jit
     def one_step(carry, rng_key):
         state, adaptation_state = carry
-        state, adaptation_state, info = update(rng_key, state, adaptation_state)
-        return ((state, adaptation_state), (state, info, adaptation_state.da_state))
+        state, adaptation_state, info = update(rng_key, adaptation_state, state)
+        return ((state, adaptation_state), (state, info, adaptation_state.ss_state))
 
     def run(rng_key: PRNGKey, position: PyTree):
         init_warmup_state, init_position = init(rng_key, position, initial_step_size)
@@ -1342,14 +1341,10 @@ def pathfinder_adaptation(
             keys,
         )
         last_chain_state, last_warmup_state = last_state
-        history_state, history_info, history_da = warmup_chain
-        history_adaptation = last_warmup_state._replace(da_state=history_da)
-
-        warmup_chain = (history_state, history_info, history_adaptation)
 
         step_size, inverse_mass_matrix = final(last_warmup_state)
         kernel = kernel_factory(step_size, inverse_mass_matrix)
 
-        return last_chain_state, kernel, warmup_chain
+        return last_chain_state, kernel
 
     return AdaptationAlgorithm(run)

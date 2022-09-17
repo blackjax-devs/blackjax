@@ -164,7 +164,7 @@ class LinearRegressionTest(chex.TestCase):
             num_warmup_steps,
             **parameters,
         )
-        state, kernel, _ = warmup.run(
+        state, kernel = warmup.run(
             warmup_key,
             initial_position,
         )
