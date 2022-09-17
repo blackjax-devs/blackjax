@@ -699,25 +699,10 @@ def window_adaptation(
 
     """
 
-    kernel = algorithm.kernel()
-
-    def kernel_factory(step_size: float, inverse_mass_matrix: Array):
-        def kernel_fn(rng_key, state):
-            return kernel(
-                rng_key,
-                state,
-                logprob_fn,
-                step_size,
-                inverse_mass_matrix,
-                logprob_grad_fn=logprob_grad_fn,
-                **parameters,
-            )
-
-        return kernel_fn
+    step_fn = algorithm.kernel()
 
     schedule = adaptation.window_adaptation.schedule(num_steps)
     init, update, final = adaptation.window_adaptation.base(
-        kernel_factory,
         is_mass_matrix_diagonal,
         target_acceptance_rate=target_acceptance_rate,
     )
@@ -728,7 +713,7 @@ def window_adaptation(
 
         step_key, adapt_key = jax.random.split(rng_key)
 
-        new_state, info = kernel(
+        new_state, info = step_fn(
             step_key,
             state,
             logprob_fn,
@@ -768,7 +753,11 @@ def window_adaptation(
         last_chain_state, last_warmup_state, *_ = last_state
 
         step_size, inverse_mass_matrix = final(last_warmup_state)
-        kernel = kernel_factory(step_size, inverse_mass_matrix)
+
+        def kernel(rng_key, state):
+            return step_fn(
+                rng_key, state, logprob_fn, step_size, inverse_mass_matrix, **parameters
+            )
 
         return last_chain_state, kernel, warmup_chain
 

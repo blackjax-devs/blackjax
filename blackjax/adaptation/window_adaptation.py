@@ -1,5 +1,5 @@
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Callable, List, NamedTuple, Tuple
+from typing import List, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -26,7 +26,6 @@ class WindowAdaptationState(NamedTuple):
 
 
 def base(
-    kernel_factory: Callable,
     is_mass_matrix_diagonal: bool,
     target_acceptance_rate: float = 0.80,
 ):
