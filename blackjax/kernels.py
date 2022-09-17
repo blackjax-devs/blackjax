@@ -732,7 +732,7 @@ def window_adaptation(
 
     def run(rng_key: PRNGKey, position: PyTree):
         init_state = algorithm.init(position, logprob_fn, logprob_grad_fn)
-        init_warmup_state = init(init_state, initial_step_size)
+        init_warmup_state = init(position, initial_step_size)
 
         if progress_bar:
             print("Running window adaptation")
