@@ -19,8 +19,8 @@ __all__ = ["base", "schedule"]
 
 
 class WindowAdaptationState(NamedTuple):
-    da_state: DualAveragingAdaptationState
-    mm_state: MassMatrixAdaptationState
+    ss_state: DualAveragingAdaptationState  # step size
+    imm_state: MassMatrixAdaptationState  # inverse mass matrix
 
 
 def base(
@@ -88,7 +88,7 @@ def base(
         target=target_acceptance_rate
     )
 
-    def init(position: PyTree, initial_step_size: float) -> WindowAdaptationState:
+    def init(position: PyTree, initial_step_size: float) -> Tuple:
         """Initialize the warmup.
 
         To initialize the Stan warmup we create an identity mass matrix and use
@@ -99,23 +99,23 @@ def base(
 
         flat_position, _ = jax.flatten_util.ravel_pytree(position)
         n_dims = flat_position.shape[-1]
-        mm_state = mm_init(n_dims)
+        imm_state = mm_init(n_dims)
 
-        da_state = da_init(initial_step_size)
+        ss_state = da_init(initial_step_size)
 
-        return WindowAdaptationState(da_state, mm_state)
-
-    def init_fast(initial_step_size: float) -> DualAveragingAdaptationState:
-        da_state = da_init(initial_step_size)
-        return da_state
+        return (
+            WindowAdaptationState(ss_state, imm_state),
+            initial_step_size,
+            imm_state.inverse_mass_matrix,
+        )
 
     def fast_update(
         fw_state: Tuple[Array, HMCState, Any, WindowAdaptationState]
     ) -> WindowAdaptationState:
-        rng_key, state, info, warmup_state = fw_state
+        rng_key, _, acceptance_probability, warmup_state = fw_state
 
-        new_da_state = da_update(warmup_state.da_state, info.acceptance_probability)
-        new_warmup_state = WindowAdaptationState(new_da_state, warmup_state.mm_state)
+        new_ss_state = da_update(warmup_state.ss_state, acceptance_probability)
+        new_warmup_state = WindowAdaptationState(new_ss_state, warmup_state.imm_state)
 
         return new_warmup_state
 
@@ -129,11 +129,11 @@ def base(
         reference manual.
 
         """
-        rng_key, state, info, warmup_state = fs_state
+        rng_key, position, acceptance_probability, warmup_state = fs_state
 
-        new_da_state = da_update(warmup_state.da_state, info.acceptance_probability)
-        new_mm_state = mm_update(warmup_state.mm_state, state.position)
-        new_warmup_state = WindowAdaptationState(new_da_state, new_mm_state)
+        new_ss_state = da_update(warmup_state.ss_state, acceptance_probability)
+        new_imm_state = mm_update(warmup_state.imm_state, position)
+        new_warmup_state = WindowAdaptationState(new_ss_state, new_imm_state)
 
         return new_warmup_state
 
@@ -144,17 +144,18 @@ def base(
         adapation's internal state since middle windows are "memoryless".
 
         """
-        new_mm_state = mm_final(warmup_state.mm_state)
-        new_da_state = da_init(da_final(warmup_state.da_state))
-        new_warmup_state = WindowAdaptationState(new_da_state, new_mm_state)
+        new_imm_state = mm_final(warmup_state.imm_state)
+        new_ss_state = da_init(da_final(warmup_state.ss_state))
+        new_warmup_state = WindowAdaptationState(new_ss_state, new_imm_state)
 
         return new_warmup_state
 
     def update(
         rng_key: PRNGKey,
-        chain_state: HMCState,
         adaptation_state: WindowAdaptationState,
         adaptation_stage: Tuple,
+        position: PyTree,
+        acceptance_probability: float,
     ) -> Tuple[HMCState, WindowAdaptationState, NamedTuple]:
         """Move the warmup by one step.
 
@@ -183,18 +184,12 @@ def base(
         The updated states of the chain and the warmup.
 
         """
-        step_size = jnp.exp(adaptation_state.da_state.log_step_size)
-        inverse_mass_matrix = adaptation_state.mm_state.inverse_mass_matrix
-        kernel = kernel_factory(step_size, inverse_mass_matrix)
-
-        chain_state, chain_info = kernel(rng_key, chain_state)
-
         stage, is_middle_window_end = adaptation_stage
 
         warmup_state = jax.lax.switch(
             stage,
             (fast_update, slow_update),
-            (rng_key, chain_state, chain_info, adaptation_state),
+            (rng_key, position, acceptance_probability, adaptation_state),
         )
 
         warmup_state = jax.lax.cond(
@@ -204,12 +199,15 @@ def base(
             warmup_state,
         )
 
-        return chain_state, warmup_state, chain_info
+        step_size = jnp.exp(adaptation_state.ss_state.log_step_size)
+        inverse_mass_matrix = adaptation_state.imm_state.inverse_mass_matrix
+
+        return warmup_state, step_size, inverse_mass_matrix
 
     def final(warmup_state: WindowAdaptationState) -> Tuple[float, Array]:
         """Return the step size and mass matrix."""
-        step_size = jnp.exp(warmup_state.da_state.log_step_size_avg)
-        inverse_mass_matrix = warmup_state.mm_state.inverse_mass_matrix
+        step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
+        inverse_mass_matrix = warmup_state.imm_state.inverse_mass_matrix
         return step_size, inverse_mass_matrix
 
     return init, update, final
