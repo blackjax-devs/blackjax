@@ -27,30 +27,32 @@ def base(
     target_acceptance_rate: float = 0.80,
 ):
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
-     This function tunes the values of the step size and the mass matrix according
-     to this schema:
-         * pathfinder algorithm is run and an estimation of the inverse mass matrix
-           is derived, as well as an initialization point for the markov chain
-         * Nesterov's dual averaging adaptation is then run to tune the step size
 
-     Parameters
-     ----------
-     kernel_factory
-         A function which returns a transition kernel given a step size and a
-         mass matrix.
+    This adaptation runs in two steps:
+
+    1. The Pathfinder algorithm is ran and we subsequently compute an estimate
+    for the value of the inverse mass matrix, as well as a new initialization
+    point for the markov chain that is supposedly closer to the typical set.
+    2. We then start sampling with the MCMC algorithm and use the samples to
+    adapt the value of the step size using an optimization algorithm so that
+    the mcmc algorithm reaches a given target acceptance rate.
+
+    Parameters
+    ----------
     logprob_fn
-         The log density probability density function from which we wish to sample.
-     target_acceptance_rate:
-         The target acceptance rate for the step size adaptation.
+        The log-probability density function from which we wish to
+        sample.
+    target_acceptance_rate:
+        The target acceptance rate for the step size adaptation.
 
-     Returns
-     -------
-     init
-         Function that initializes the warmup.
-     update
-         Function that moves the warmup one step.
-     final
-         Function that returns the step size and mass matrix given a warmup state.
+    Returns
+    -------
+    init
+        Function that initializes the warmup.
+    update
+        Function that moves the warmup one step.
+    final
+        Function that returns the step size and mass matrix given a warmup state.
 
     """
     da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
@@ -58,36 +60,37 @@ def base(
     def init(
         rng_key: PRNGKey, position: PyTree, initial_step_size: float
     ) -> Tuple[PathfinderAdaptationState, PyTree]:
-        """Initialize the warmup.
+        """Initialze the adaptation state and parameter values.
 
-        To initialize the warmup we use pathfinder to estimate the inverse mass matrix and
-        then we set up the dual averaging adaptation algorithm
+        We use the Pathfinder algorithm to compute an estimate of the inverse
+        mass matrix that will stay constant throughout the rest of the
+        adaptation.
+
         """
-        da_state = da_init(initial_step_size)
-
-        pathfinder_rng_key, sample_rng_key = jax.random.split(rng_key, 2)
-        pathfinder_state = pathfinder_init_fn(pathfinder_rng_key, logprob_fn, position)
-        new_initial_position, _ = sample_from_state(sample_rng_key, pathfinder_state)
+        pathfinder_key, sample_key = jax.random.split(rng_key, 2)
+        pathfinder_state = pathfinder_init_fn(pathfinder_key, logprob_fn, position)
+        new_position, _ = sample_from_state(sample_key, pathfinder_state)
         inverse_mass_matrix = lbfgs_inverse_hessian_formula_1(
             pathfinder_state.alpha, pathfinder_state.beta, pathfinder_state.gamma
         )
+
+        da_state = da_init(initial_step_size)
 
         warmup_state = PathfinderAdaptationState(
             da_state, initial_step_size, inverse_mass_matrix
         )
 
-        return warmup_state, new_initial_position
+        return warmup_state, new_position
 
     def update(
         adaptation_state: PathfinderAdaptationState,
         position: PyTree,
         acceptance_rate: float,
     ) -> PathfinderAdaptationState:
-        """Move the warmup by one step.
+        """Update the adaptation state and parameter values.
 
-        We first create a new kernel with the current values of the step size
-        and mass matrix and move the chain one step. Then, we update the dual
-        averaging adaptation algorithm.
+        Since the value of the inverse mass matrix is already known we only
+        update the step size state.
 
         Parameters
         ----------

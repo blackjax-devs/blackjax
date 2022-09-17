@@ -1269,18 +1269,8 @@ def pathfinder_adaptation(
     target_acceptance_rate: float = 0.80,
     **parameters,
 ) -> AdaptationAlgorithm:
-    """Adapt the parameters of algorithms in the HMC family.
-
-    Algorithms in the HMC family on a euclidean manifold depend on the value of
-    at least two parameters: the step size, related to the trajectory
-    integrator, and the mass matrix, linked to the euclidean metric.
-
-    Good tuning is very important, especially for algorithms like NUTS which can
-    be extremely inefficient with the wrong parameter values.
-    This function tunes the values of these parameters according to this schema:
-        * pathfinder algorithm is run and an estimation of the inverse mass matrix
-          is derived, as well as an initialization point for the markov chain
-        * Nesterov's dual averaging adaptation is then run to tune the step size
+    """Adapt the value of the inverse mass matrix and step size parameters of
+    algorithms in the HMC fmaily.
 
     Parameters
     ----------
