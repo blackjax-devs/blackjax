@@ -99,6 +99,35 @@ def static_binomial_sampling(rng_key, proposal, new_proposal):
 
 
 # --------------------------------------------------------------------
+#                   NON-REVERSIVLE SLICE SAMPLING
+# --------------------------------------------------------------------
+
+
+def nonreversible_slice_sampling(slice, proposal, new_proposal):
+    """Slice sampling for non-reversible Metropolis-Hasting update.
+
+    Performs a non-reversible update of a uniform [0, 1] value
+    for Metropolis-Hastings accept/reject decisions [1]_, in addition
+    to the accept/reject step of a current state and new proposal.
+
+    References
+    ----------
+    .. [1]: Neal, R. M. (2020). Non-reversibly updating a uniform
+            [0, 1] value for Metropolis accept/reject decisions.
+            arXiv preprint arXiv:2001.11950.
+    """
+
+    delta_energy = new_proposal.weight
+    do_accept = jnp.log(jnp.abs(slice)) <= delta_energy
+    return jax.lax.cond(
+        do_accept,
+        lambda _: (new_proposal, do_accept, slice * jnp.exp(-delta_energy)),
+        lambda _: (proposal, do_accept, slice),
+        operand=None,
+    )
+
+
+# --------------------------------------------------------------------
 #                        PROGRESSIVE SAMPLING
 #
 # To avoid keeping the entire trajectory in memory, we only memorize the

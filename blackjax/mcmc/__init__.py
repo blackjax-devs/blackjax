@@ -1,5 +1,6 @@
 from . import (
     elliptical_slice,
+    ghmc,
     hmc,
     irmh,
     mala,
@@ -11,6 +12,7 @@ from . import (
 
 __all__ = [
     "elliptical_slice",
+    "ghmc",
     "hmc",
     "mala",
     "nuts",
