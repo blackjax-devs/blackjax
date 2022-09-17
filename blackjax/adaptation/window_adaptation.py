@@ -1,5 +1,5 @@
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import List, NamedTuple, Tuple
+from typing import Callable, List, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -12,7 +12,6 @@ from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
     dual_averaging_adaptation,
 )
-from blackjax.mcmc.hmc import HMCState
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["base", "schedule"]
@@ -28,7 +27,7 @@ class WindowAdaptationState(NamedTuple):
 def base(
     is_mass_matrix_diagonal: bool,
     target_acceptance_rate: float = 0.80,
-):
+) -> Tuple[Callable, Callable, Callable]:
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
     The schedule and algorithms used match Stan's [1]_ as closely as possible.
 
@@ -36,15 +35,17 @@ def base(
     explicitly. This ensure a better modularity; a change in the warmup does
     not affect the sampling. It also allows users to run their own warmup
     should they want to.
+    We also decouple generating a new sample with the mcmc algorithm and
+    updating the values of the parameters.
 
     Stan's warmup consists in the three following phases:
 
     1. A fast adaptation window where only the step size is adapted using
     Nesterov's dual averaging scheme to match a target acceptance rate.
-    2. A succession of slow adapation windows (where the size of a window
-    is double that of the previous window) where both the mass matrix and the step size
-    are adapted. The mass matrix is recomputed at the end of each window; the step
-    size is re-initialized to a "reasonable" value.
+    2. A succession of slow adapation windows (where the size of a window is
+    double that of the previous window) where both the mass matrix and the step
+    size are adapted. The mass matrix is recomputed at the end of each window;
+    the step size is re-initialized to a "reasonable" value.
     3. A last fast adaptation window where only the step size is adapted.
 
     Schematically:
@@ -61,16 +62,16 @@ def base(
     re-initialize the mass matrix adaptation. The step size is still adapated
     in slow adaptation windows, and is not re-initialized between windows.
 
+    References
+    ----------
+    .. [1]: Stan Reference Manual v2.22
+            Section 15.2 "HMC Algorithm"
+
     Parameters
     ----------
-    kernel_factory
-        A function which returns a transition kernel given a step size and a
-        mass matrix.
-    schedule_fn
-        A function which returns the current window and whether it is the last
-        step in the window given a step number.
     is_mass_matrix_diagonal
-        Create and adapt a diagonal mass matrix if True, a dense matrix otherwise.
+        Create and adapt a diagonal mass matrix if True, a dense matrix
+        otherwise.
     target_acceptance_rate:
         The target acceptance rate for the step size adaptation.
 
@@ -81,24 +82,24 @@ def base(
     update
         Function that moves the warmup one step.
     final
-        Function that returns the step size and mass matrix given a warmup state.
+        Function that returns the step size and mass matrix given a warmup
+        state.
 
     """
     mm_init, mm_update, mm_final = mass_matrix_adaptation(is_mass_matrix_diagonal)
     da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
 
     def init(position: PyTree, initial_step_size: float) -> Tuple:
-        """Initialize the warmup.
+        """Initialze the adaptation state and parameter values.
 
-        To initialize the Stan warmup we create an identity mass matrix and use
-        the `find_reasonable_step_size` procedure to initialize the dual
-        averaging algorithm.
+        Unlike the original Stan window adaptation we do not use the
+        `find_reasonable_step_size` algorithm which we found to be unnecessary.
+        We may reconsider this choice in the future.
 
         """
-
         flat_position, _ = jax.flatten_util.ravel_pytree(position)
-        n_dims = flat_position.shape[-1]
-        imm_state = mm_init(n_dims)
+        num_dimensions = flat_position.shape[-1]
+        imm_state = mm_init(num_dimensions)
 
         ss_state = da_init(initial_step_size)
 
@@ -112,11 +113,17 @@ def base(
     def fast_update(
         rng_key: PRNGKey,
         position: PyTree,
-        acceptance_probability: float,
+        acceptance_rate: float,
         warmup_state: WindowAdaptationState,
     ) -> WindowAdaptationState:
+        """Update the adaptation state when in a "fast" window.
 
-        new_ss_state = da_update(warmup_state.ss_state, acceptance_probability)
+        Only the step size is adapted in fast windows. "Fast" refers to the fact
+        that the optimization algorithms are relatively fast to converge
+        compared to the covariance estimation with Welford's algorithm
+
+        """
+        new_ss_state = da_update(warmup_state.ss_state, acceptance_rate)
         new_step_size = jnp.exp(new_ss_state.log_step_size)
 
         return WindowAdaptationState(
@@ -129,18 +136,21 @@ def base(
     def slow_update(
         rng_key: PRNGKey,
         position: PyTree,
-        acceptance_probability: float,
+        acceptance_rate: float,
         warmup_state: WindowAdaptationState,
     ) -> WindowAdaptationState:
-        """Move the warmup by one state when in a slow adaptation interval.
+        """Update the adaptation state when in a "slow" window.
 
-        Mass matrix adaptation and dual averaging states are both
-        adapted in slow adaptation intervals, as indicated in Stan's
-        reference manual.
+        Both the mass matrix adaptation *state* and the step size state are
+        adapted in slow windows. The value of the step size is updated as well,
+        but the new value of the inverse mass matrix is only computed at the end
+        of the slow window. "Slow" refers to the fact that we need many samples
+        to get a reliable estimation of the covariance matrix used to update the
+        value of the mass matrix.
 
         """
         new_imm_state = mm_update(warmup_state.imm_state, position)
-        new_ss_state = da_update(warmup_state.ss_state, acceptance_probability)
+        new_ss_state = da_update(warmup_state.ss_state, acceptance_rate)
         new_step_size = jnp.exp(new_ss_state.log_step_size)
 
         return WindowAdaptationState(
@@ -170,33 +180,27 @@ def base(
         adaptation_state: WindowAdaptationState,
         adaptation_stage: Tuple,
         position: PyTree,
-        acceptance_probability: float,
-    ) -> Tuple[HMCState, WindowAdaptationState, NamedTuple]:
-        """Move the warmup by one step.
-
-        We first create a new kernel with the current values of the step size
-        and mass matrix and move the chain one step. Then, depending on the
-        stage passed as an argument we execute either the fast or slow interval
-        update. Finally we execute the final update of the slow interval depending
-        on whether we are at the end of the window.
+        acceptance_rate: float,
+    ) -> WindowAdaptationState:
+        """Update the adaptation state and parameter values.
 
         Parameters
         ----------
         rng_key
             The key used in JAX's random number generator.
-        stage
-            The current stage of the warmup. 0 for the fast interval, 1 for the
-            slow interval.
-        is_middle_window_end
-            True if this step is the last of a slow adaptation interval.
-        chain_state
-            Current state of the chain.
-        warmup
-            Current warmup state.
+        adaptation_state
+            Current adptation state.
+        adaptation_stage
+            The current stage of the warmup: whether this is a slow window,
+            a fast window and if we are at the last step of a slow window.
+        position
+            Current value of the model parameters.
+        acceptance_rate
+            Value of the acceptance rate for the last mcmc step.
 
         Returns
         -------
-        The updated states of the chain and the warmup.
+        The updated adaptation state.
 
         """
         stage, is_middle_window_end = adaptation_stage
@@ -206,7 +210,7 @@ def base(
             (fast_update, slow_update),
             rng_key,
             position,
-            acceptance_probability,
+            acceptance_rate,
             adaptation_state,
         )
 
@@ -220,7 +224,7 @@ def base(
         return warmup_state
 
     def final(warmup_state: WindowAdaptationState) -> Tuple[float, Array]:
-        """Return the step size and mass matrix."""
+        """Return the final values for the step size and mass matrix."""
         step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.imm_state.inverse_mass_matrix
         return step_size, inverse_mass_matrix
@@ -262,13 +266,6 @@ def schedule(
     for a more detailed explanation.
 
     Fast intervals are given the label 0 and slow intervals the label 1.
-
-    Note
-    ----
-    It feels awkward to return a boolean that indicates whether the current
-    step is the last step of a middle window, but not for other windows. This
-    should probably be changed to "is_window_end" and we should manage the
-    distinction upstream.
 
     Parameters
     ----------
