@@ -1264,7 +1264,6 @@ class pathfinder:
 def pathfinder_adaptation(
     algorithm: Union[hmc, nuts],
     logprob_fn: Callable,
-    num_steps: int = 400,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
     **extra_parameters,
@@ -1278,8 +1277,6 @@ def pathfinder_adaptation(
         The algorithm whose parameters are being tuned.
     logprob_fn
         The log density probability density function from which we wish to sample.
-    num_steps
-        The number of adaptation steps for the dual averaging adaptation scheme.
     initial_step_size
         The initial step size used in the algorithm.
     target_acceptance_rate
@@ -1319,7 +1316,7 @@ def pathfinder_adaptation(
             (new_state, info, new_adaptation_state.ss_state),
         )
 
-    def run(rng_key: PRNGKey, position: PyTree):
+    def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 400):
         init_warmup_state, init_position = init(rng_key, position, initial_step_size)
         init_state = algorithm.init(init_position, logprob_fn)
 
