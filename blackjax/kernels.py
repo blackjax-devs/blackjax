@@ -715,10 +715,8 @@ def window_adaptation(
         _, rng_key, adaptation_stage = xs
         state, adaptation_state = carry
 
-        step_key, adapt_key = jax.random.split(rng_key)
-
         new_state, info = step_fn(
-            step_key,
+            rng_key,
             state,
             logprob_fn,
             adaptation_state.step_size,
@@ -726,7 +724,6 @@ def window_adaptation(
             **extra_parameters,
         )
         new_adaptation_state = update(
-            adapt_key,
             adaptation_state,
             adaptation_stage,
             new_state.position,

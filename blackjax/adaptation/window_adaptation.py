@@ -12,7 +12,7 @@ from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
     dual_averaging_adaptation,
 )
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, PyTree
 
 __all__ = ["base", "schedule"]
 
@@ -111,7 +111,6 @@ def base(
         )
 
     def fast_update(
-        rng_key: PRNGKey,
         position: PyTree,
         acceptance_rate: float,
         warmup_state: WindowAdaptationState,
@@ -134,7 +133,6 @@ def base(
         )
 
     def slow_update(
-        rng_key: PRNGKey,
         position: PyTree,
         acceptance_rate: float,
         warmup_state: WindowAdaptationState,
@@ -176,7 +174,6 @@ def base(
         )
 
     def update(
-        rng_key: PRNGKey,
         adaptation_state: WindowAdaptationState,
         adaptation_stage: Tuple,
         position: PyTree,
@@ -186,8 +183,6 @@ def base(
 
         Parameters
         ----------
-        rng_key
-            The key used in JAX's random number generator.
         adaptation_state
             Current adptation state.
         adaptation_stage
@@ -208,7 +203,6 @@ def base(
         warmup_state = jax.lax.switch(
             stage,
             (fast_update, slow_update),
-            rng_key,
             position,
             acceptance_rate,
             adaptation_state,
