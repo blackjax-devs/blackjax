@@ -161,12 +161,12 @@ class LinearRegressionTest(chex.TestCase):
         warmup = blackjax.pathfinder_adaptation(
             algorithm,
             logposterior_fn,
-            num_warmup_steps,
             **parameters,
         )
         state, kernel, _ = warmup.run(
             warmup_key,
             initial_position,
+            num_warmup_steps,
         )
 
         states = inference_loop(kernel, num_sampling_steps, inference_key, state)
