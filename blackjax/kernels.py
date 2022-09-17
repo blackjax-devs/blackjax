@@ -656,7 +656,6 @@ class AdaptationResults(NamedTuple):
 def window_adaptation(
     algorithm: Union[hmc, nuts],
     logprob_fn: Callable,
-    num_steps: int = 1000,
     is_mass_matrix_diagonal: bool = True,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
@@ -664,8 +663,8 @@ def window_adaptation(
     logprob_grad_fn: Optional[Callable] = None,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
-    """Adapt the value of the inverse mass matrix and step size parameters of algorithms
-    in the HMC fmaily.
+    """Adapt the value of the inverse mass matrix and step size parameters of
+    algorithms in the HMC fmaily.
 
     Algorithms in the HMC family on a euclidean manifold depend on the value of
     at least two parameters: the step size, related to the trajectory
@@ -682,9 +681,8 @@ def window_adaptation(
     algorithm
         The algorithm whose parameters are being tuned.
     logprob_fn
-        The log density probability density function from which we wish to sample.
-    num_steps
-        The number of adaptation steps.
+        The log density probability density function from which we wish to
+        sample.
     is_mass_matrix_diagonal
         Whether we should adapt a diagonal mass matrix.
     initial_step_size
@@ -702,13 +700,12 @@ def window_adaptation(
 
     Returns
     -------
-    A function that returns the last chain state and a sampling kernel with the tuned parameter values from an initial state.
+    A function that runs the adaptation and returns an `AdaptationResult` object.
 
     """
 
     step_fn = algorithm.kernel()
 
-    schedule = adaptation.window_adaptation.schedule(num_steps)
     init, update, final = adaptation.window_adaptation.base(
         is_mass_matrix_diagonal,
         target_acceptance_rate=target_acceptance_rate,
@@ -741,7 +738,8 @@ def window_adaptation(
             (new_state, info, new_adaptation_state),
         )
 
-    def run(rng_key: PRNGKey, position: PyTree):
+    def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 1000):
+
         init_state = algorithm.init(position, logprob_fn, logprob_grad_fn)
         init_warmup_state = init(position, initial_step_size)
 
@@ -752,6 +750,7 @@ def window_adaptation(
             one_step_ = jax.jit(one_step)
 
         keys = jax.random.split(rng_key, num_steps)
+        schedule = adaptation.window_adaptation.schedule(num_steps)
         last_state, warmup_chain = jax.lax.scan(
             one_step_,
             (init_state, init_warmup_state),

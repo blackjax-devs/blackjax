@@ -88,11 +88,10 @@ class CompilationTest(chex.TestCase):
         warmup = blackjax.window_adaptation(
             algorithm=blackjax.hmc,
             logprob_fn=logprob_fn,
-            num_steps=1000,
             target_acceptance_rate=0.8,
             num_integration_steps=10,
         )
-        state, kernel, _ = warmup.run(rng_key, 1.0)
+        state, kernel, _ = warmup.run(rng_key, 1.0, num_steps=100)
         kernel = jax.jit(kernel)
 
         for _ in range(10):
@@ -117,10 +116,9 @@ class CompilationTest(chex.TestCase):
         warmup = blackjax.window_adaptation(
             algorithm=blackjax.nuts,
             logprob_fn=logprob_fn,
-            num_steps=1000,
             target_acceptance_rate=0.8,
         )
-        state, kernel, _ = warmup.run(rng_key, 1.0)
+        state, kernel, _ = warmup.run(rng_key, 1.0, num_steps=100)
         step = jax.jit(kernel)
 
         for _ in range(10):
