@@ -724,7 +724,7 @@ def window_adaptation(
 
     def one_step(carry, xs):
         _, rng_key, adaptation_stage = xs
-        state, adaptation_state, step_size, inverse_mass_matrix = carry
+        state, adaptation_state = carry
 
         step_key, adapt_key = jax.random.split(rng_key)
 
@@ -732,11 +732,11 @@ def window_adaptation(
             step_key,
             state,
             logprob_fn,
-            step_size,
-            inverse_mass_matrix,
+            adaptation_state.step_size,
+            adaptation_state.inverse_mass_matrix,
             **parameters,
         )
-        new_adaptation_state, step_size, inverse_mass_matrix = update(
+        new_adaptation_state = update(
             adapt_key,
             adaptation_state,
             adaptation_stage,
@@ -745,15 +745,13 @@ def window_adaptation(
         )
 
         return (
-            (new_state, new_adaptation_state, step_size, inverse_mass_matrix),
+            (new_state, new_adaptation_state),
             (new_state, info, new_adaptation_state),
         )
 
     def run(rng_key: PRNGKey, position: PyTree):
         init_state = algorithm.init(position, logprob_fn, logprob_grad_fn)
-        init_warmup_state, step_size, inverse_mass_matrix = init(
-            position, initial_step_size
-        )
+        init_warmup_state = init(position, initial_step_size)
 
         if progress_bar:
             print("Running window adaptation")
@@ -764,7 +762,7 @@ def window_adaptation(
         keys = jax.random.split(rng_key, num_steps)
         last_state, warmup_chain = jax.lax.scan(
             one_step_,
-            (init_state, init_warmup_state, step_size, inverse_mass_matrix),
+            (init_state, init_warmup_state),
             (jnp.arange(num_steps), keys, schedule),
         )
         last_chain_state, last_warmup_state, *_ = last_state

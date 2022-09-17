@@ -21,6 +21,8 @@ __all__ = ["base", "schedule"]
 class WindowAdaptationState(NamedTuple):
     ss_state: DualAveragingAdaptationState  # step size
     imm_state: MassMatrixAdaptationState  # inverse mass matrix
+    step_size: float
+    inverse_mass_matrix: Array
 
 
 def base(
@@ -103,8 +105,9 @@ def base(
 
         ss_state = da_init(initial_step_size)
 
-        return (
-            WindowAdaptationState(ss_state, imm_state),
+        return WindowAdaptationState(
+            ss_state,
+            imm_state,
             initial_step_size,
             imm_state.inverse_mass_matrix,
         )
@@ -115,9 +118,14 @@ def base(
         rng_key, _, acceptance_probability, warmup_state = fw_state
 
         new_ss_state = da_update(warmup_state.ss_state, acceptance_probability)
-        new_warmup_state = WindowAdaptationState(new_ss_state, warmup_state.imm_state)
+        new_step_size = jnp.exp(new_ss_state.log_step_size)
 
-        return new_warmup_state
+        return WindowAdaptationState(
+            new_ss_state,
+            warmup_state.imm_state,
+            new_step_size,
+            warmup_state.inverse_mass_matrix,
+        )
 
     def slow_update(
         fs_state: Tuple[Array, HMCState, Any, WindowAdaptationState]
@@ -131,11 +139,13 @@ def base(
         """
         rng_key, position, acceptance_probability, warmup_state = fs_state
 
-        new_ss_state = da_update(warmup_state.ss_state, acceptance_probability)
         new_imm_state = mm_update(warmup_state.imm_state, position)
-        new_warmup_state = WindowAdaptationState(new_ss_state, new_imm_state)
+        new_ss_state = da_update(warmup_state.ss_state, acceptance_probability)
+        new_step_size = jnp.exp(new_ss_state.log_step_size)
 
-        return new_warmup_state
+        return WindowAdaptationState(
+            new_ss_state, new_imm_state, new_step_size, warmup_state.inverse_mass_matrix
+        )
 
     def slow_final(warmup_state: WindowAdaptationState) -> WindowAdaptationState:
         """Update the parameters at the end of a slow adaptation window.
@@ -146,9 +156,14 @@ def base(
         """
         new_imm_state = mm_final(warmup_state.imm_state)
         new_ss_state = da_init(da_final(warmup_state.ss_state))
-        new_warmup_state = WindowAdaptationState(new_ss_state, new_imm_state)
+        new_step_size = jnp.exp(new_ss_state.log_step_size)
 
-        return new_warmup_state
+        return WindowAdaptationState(
+            new_ss_state,
+            new_imm_state,
+            new_step_size,
+            new_imm_state.inverse_mass_matrix,
+        )
 
     def update(
         rng_key: PRNGKey,
@@ -199,10 +214,7 @@ def base(
             warmup_state,
         )
 
-        step_size = jnp.exp(adaptation_state.ss_state.log_step_size)
-        inverse_mass_matrix = adaptation_state.imm_state.inverse_mass_matrix
-
-        return warmup_state, step_size, inverse_mass_matrix
+        return warmup_state
 
     def final(warmup_state: WindowAdaptationState) -> Tuple[float, Array]:
         """Return the step size and mass matrix."""
