@@ -94,7 +94,6 @@ class LinearRegressionTest(chex.TestCase):
         warmup = blackjax.window_adaptation(
             case["algorithm"],
             logposterior_fn,
-            case["num_warmup_steps"],
             is_mass_matrix_diagonal,
             progress_bar=True,
             **case["parameters"],
@@ -102,6 +101,7 @@ class LinearRegressionTest(chex.TestCase):
         state, kernel, _ = warmup.run(
             warmup_key,
             case["initial_position"],
+            case["num_warmup_steps"],
         )
 
         states = inference_loop(
