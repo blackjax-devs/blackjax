@@ -724,15 +724,36 @@ def window_adaptation(
 
     def one_step(carry, xs):
         _, rng_key, adaptation_stage = xs
-        state, adaptation_state = carry
-        state, adaptation_state, info = update(
-            rng_key, state, adaptation_state, adaptation_stage
+        state, adaptation_state, step_size, inverse_mass_matrix = carry
+
+        step_key, adapt_key = jax.random.split(rng_key)
+
+        new_state, info = kernel(
+            step_key,
+            state,
+            logprob_fn,
+            step_size,
+            inverse_mass_matrix,
+            **parameters,
         )
-        return ((state, adaptation_state), (state, info, adaptation_state))
+        new_adaptation_state, step_size, inverse_mass_matrix = update(
+            adapt_key,
+            adaptation_state,
+            adaptation_stage,
+            new_state.position,
+            info.acceptance_probability,
+        )
+
+        return (
+            (new_state, new_adaptation_state, step_size, inverse_mass_matrix),
+            (new_state, info, new_adaptation_state),
+        )
 
     def run(rng_key: PRNGKey, position: PyTree):
         init_state = algorithm.init(position, logprob_fn, logprob_grad_fn)
-        init_warmup_state = init(position, initial_step_size)
+        init_warmup_state, step_size, inverse_mass_matrix = init(
+            position, initial_step_size
+        )
 
         if progress_bar:
             print("Running window adaptation")
@@ -743,10 +764,10 @@ def window_adaptation(
         keys = jax.random.split(rng_key, num_steps)
         last_state, warmup_chain = jax.lax.scan(
             one_step_,
-            (init_state, init_warmup_state),
+            (init_state, init_warmup_state, step_size, inverse_mass_matrix),
             (jnp.arange(num_steps), keys, schedule),
         )
-        last_chain_state, last_warmup_state = last_state
+        last_chain_state, last_warmup_state, *_ = last_state
 
         step_size, inverse_mass_matrix = final(last_warmup_state)
         kernel = kernel_factory(step_size, inverse_mass_matrix)
