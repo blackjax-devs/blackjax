@@ -58,7 +58,9 @@ def base(
     da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
 
     def init(
-        rng_key: PRNGKey, position: PyTree, initial_step_size: float
+        rng_key: PRNGKey,
+        position: PyTree,
+        initial_step_size: float,
     ) -> Tuple[PathfinderAdaptationState, PyTree]:
         """Initialze the adaptation state and parameter values.
 

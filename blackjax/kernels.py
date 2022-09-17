@@ -1267,7 +1267,7 @@ def pathfinder_adaptation(
     num_steps: int = 400,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
-    **parameters,
+    **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the value of the inverse mass matrix and step size parameters of
     algorithms in the HMC fmaily.
@@ -1284,7 +1284,7 @@ def pathfinder_adaptation(
         The initial step size used in the algorithm.
     target_acceptance_rate
         The acceptance rate that we target during step size adaptation.
-    **parameters
+    **extra_parameters
         The extra parameters to pass to the algorithm, e.g. the number of
         integration steps for HMC.
 
@@ -1309,7 +1309,7 @@ def pathfinder_adaptation(
             logprob_fn,
             adaptation_state.step_size,
             adaptation_state.inverse_mass_matrix,
-            **parameters,
+            **extra_parameters,
         )
         new_adaptation_state = update(
             adaptation_state, new_state.position, info.acceptance_probability
@@ -1332,12 +1332,15 @@ def pathfinder_adaptation(
         last_chain_state, last_warmup_state = last_state
 
         step_size, inverse_mass_matrix = final(last_warmup_state)
+        parameters = {
+            "step_size": step_size,
+            "inverse_mass_matrix": inverse_mass_matrix,
+            **extra_parameters,
+        }
 
         def kernel(rng_key, state):
-            return step_fn(
-                rng_key, state, logprob_fn, step_size, inverse_mass_matrix, **parameters
-            )
+            return step_fn(rng_key, state, logprob_fn, **parameters)
 
-        return last_chain_state, kernel
+        return AdaptationResults(last_chain_state, kernel, parameters)
 
     return AdaptationAlgorithm(run)
