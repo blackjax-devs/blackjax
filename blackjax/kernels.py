@@ -738,7 +738,7 @@ def window_adaptation(
     def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 1000):
 
         init_state = algorithm.init(position, logprob_fn, logprob_grad_fn)
-        init_warmup_state = init(position, initial_step_size)
+        init_adaptation_state = init(position, initial_step_size)
 
         if progress_bar:
             print("Running window adaptation")
@@ -748,9 +748,9 @@ def window_adaptation(
 
         keys = jax.random.split(rng_key, num_steps)
         schedule = adaptation.window_adaptation.schedule(num_steps)
-        last_state, warmup_chain = jax.lax.scan(
+        last_state, adaptation_chain = jax.lax.scan(
             one_step_,
-            (init_state, init_warmup_state),
+            (init_state, init_adaptation_state),
             (jnp.arange(num_steps), keys, schedule),
         )
         last_chain_state, last_warmup_state, *_ = last_state
