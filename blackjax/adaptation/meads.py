@@ -1,12 +1,17 @@
-"""Public API for Maximum-Eigenvalue Adaptation of Damping and Step-size kernel"""
-
-from typing import Callable
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 
 import blackjax.adaptation.chain_adaptation as chain_adaptation
 from blackjax.types import PyTree
+
+
+class MEADSAdaptationState(NamedTuple):
+    chain_state: chain_adaptation.ChainState
+    step_sizes: PyTree
+    alpha: float
+    delta: float
 
 
 def base(
@@ -126,16 +131,28 @@ def base(
         step_size = jax.tree_map(lambda sd: epsilon * sd, sd_position)
         return step_size, alpha, delta
 
-    init, update = chain_adaptation.cross_chain(
+    init_fn, update_fn = chain_adaptation.cross_chain(
         lambda *parameters: batch_fn(kernel_factory(*parameters)),
         parameter_gn,
     )
 
-    def final(last_state: chain_adaptation.ChainState) -> PyTree:
+    def init(states):
+        parameters = parameter_gn(states, 0)
+        chain_state = init_fn(states)
+        return MEADSAdaptationState(chain_state, *parameters)
+
+    # TODO: `cross_chain` is early abstraction
+    def update(rng_key, adaptation_state, *params):
+        new_chain_state, params, info = update_fn(
+            rng_key, adaptation_state.chain_state, *params
+        )
+        return MEADSAdaptationState(new_chain_state, *params), info
+
+    def final(last_state: MEADSAdaptationState) -> PyTree:
         """Return the final values for the step size, alpha and delta."""
         parameters = parameter_gn(
-            last_state.states,
-            last_state.current_iter,
+            last_state.chain_state.states,
+            last_state.chain_state.current_iter,
         )
         return parameters
 

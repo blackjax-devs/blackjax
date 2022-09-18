@@ -849,8 +849,8 @@ def meads(
     batch_init = batch_fn(lambda r, p: ghmc.init(r, p, logprob_fn, logprob_grad_fn))
 
     def one_step(state, rng_key):
-        state, parameters, infos = update(rng_key, state)
-        return state, (state, parameters, infos)
+        new_state, infos = update(rng_key, state)
+        return new_state, (new_state, infos)
 
     def run(rng_key: PRNGKey, positions: PyTree):
 
@@ -860,9 +860,7 @@ def meads(
         init_state = init(states)
 
         keys = jax.random.split(key_warm, num_steps)
-        last_state, (warmup_states, parameters, info) = jax.lax.scan(
-            one_step, init_state, keys
-        )
+        last_state, (warmup_states, info) = jax.lax.scan(one_step, init_state, keys)
         step_sizes, alpha, delta = final(last_state)
         kernel = kernel_factory(step_sizes, alpha, delta)
 
