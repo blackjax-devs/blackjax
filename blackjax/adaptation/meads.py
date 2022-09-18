@@ -137,6 +137,6 @@ def base(
             last_state.states,
             last_state.current_iter,
         )
-        return kernel_factory(*parameters)
+        return parameters
 
     return init, update, final

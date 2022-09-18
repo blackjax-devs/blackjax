@@ -863,7 +863,8 @@ def meads(
         last_state, (warmup_states, parameters, info) = jax.lax.scan(
             one_step, init_state, keys
         )
-        kernel = final(last_state)
+        step_sizes, alpha, delta = final(last_state)
+        kernel = kernel_factory(step_sizes, alpha, delta)
 
         return last_state, kernel, warmup_states
 
