@@ -199,14 +199,14 @@ class LinearRegressionTest(chex.TestCase):
         scales = 1.0 + jax.random.normal(scale_key, (128,))
         coefs = 3.0 + jax.random.normal(coefs_key, (128,))
         initial_positions = {"scale": scales, "coefs": coefs}
-        adaptation_state, kernel, _ = warmup.run(
+        last_states, kernel, _ = warmup.run(
             warmup_key,
             initial_positions,
         )
 
         states = jax.vmap(
             lambda state: inference_loop(kernel, 100, inference_key, state)
-        )(adaptation_state.chain_state.states)
+        )(last_states)
 
         coefs_samples = states.position["coefs"]
         scale_samples = states.position["scale"]
