@@ -825,46 +825,68 @@ def meads(
 
     """
 
-    kernel = ghmc.kernel(divergence_threshold=divergence_threshold)
-
-    def kernel_factory(step_size: PyTree, alpha: float, delta: float):
-        def kernel_fn(rng_key, state):
-            return kernel(
-                rng_key,
-                state,
-                logprob_fn,
-                step_size,
-                alpha,
-                delta,
-                logprob_grad_fn=logprob_grad_fn,
-            )
-
-        return kernel_fn
+    step_fn = ghmc.kernel(divergence_threshold=divergence_threshold)
 
     init, update, final = adaptation.meads.base(
-        kernel_factory,
         logprob_grad_fn or jax.grad(logprob_fn),
     )
 
     batch_init = batch_fn(lambda r, p: ghmc.init(r, p, logprob_fn, logprob_grad_fn))
 
-    def one_step(state, rng_key):
-        new_state, infos = update(rng_key, state)
-        return new_state, (new_state, infos)
+    def one_step(carry, rng_key):
+        states, adaptation_state = carry
+
+        def kernel(rng_key, state):
+            return step_fn(
+                rng_key,
+                state,
+                logprob_fn,
+                adaptation_state.step_sizes,
+                adaptation_state.alpha,
+                adaptation_state.delta,
+                logprob_grad_fn,
+            )
+
+        keys = jax.random.split(rng_key, num_chain)
+        new_states, info = batch_fn(kernel)(keys, states)
+        new_adaptation_state = update(adaptation_state, new_states.position)
+
+        return (new_states, new_adaptation_state), (
+            new_states,
+            info,
+            new_adaptation_state,
+        )
 
     def run(rng_key: PRNGKey, positions: PyTree):
 
-        key_init, key_warm = jax.random.split(rng_key)
+        key_init, key_adapt = jax.random.split(rng_key)
+
         rng_keys = jax.random.split(key_init, num_chain)
-        states = batch_init(rng_keys, positions)
-        init_state = init(states)
+        init_states = batch_init(rng_keys, positions)
+        init_adaptation_state = init(positions)
 
-        keys = jax.random.split(key_warm, num_steps)
-        last_state, (warmup_states, info) = jax.lax.scan(one_step, init_state, keys)
-        step_sizes, alpha, delta = final(last_state)
-        kernel = kernel_factory(step_sizes, alpha, delta)
+        keys = jax.random.split(key_adapt, num_steps)
+        (last_states, last_adaptation_state), _ = jax.lax.scan(
+            one_step, (init_states, init_adaptation_state), keys
+        )
 
-        return last_state, kernel, warmup_states
+        step_size, alpha, delta = final(last_adaptation_state, last_states.position)
+        parameters = {
+            "step_size": step_size,
+            "alpha": alpha,
+            "delta": delta,
+        }
+
+        def kernel(rng_key, state):
+            return step_fn(
+                rng_key,
+                state,
+                logprob_fn,
+                **parameters,
+                logprob_grad_fn=logprob_grad_fn,
+            )
+
+        return AdaptationResults(last_states, kernel, parameters)
 
     return AdaptationAlgorithm(run)  # type: ignore[arg-type]
 

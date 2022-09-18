@@ -3,19 +3,17 @@ from typing import Callable, NamedTuple
 import jax
 import jax.numpy as jnp
 
-import blackjax.adaptation.chain_adaptation as chain_adaptation
 from blackjax.types import PyTree
 
 
 class MEADSAdaptationState(NamedTuple):
-    chain_state: chain_adaptation.ChainState
+    current_iteration: int
     step_sizes: PyTree
     alpha: float
     delta: float
 
 
 def base(
-    kernel_factory: Callable,
     logprob_grad_fn: Callable,
     batch_fn: Callable = jax.vmap,
 ):
@@ -35,9 +33,6 @@ def base(
 
     Parameters
     ----------
-    kernel_factory
-        Function that takes as input the step size, alpha and delta parameters
-        and outputs a generalized HMC kernel that generates new samples.
     logprob_grad_fn
         The gradient of logprob_fn, outputs the gradient PyTree for sample.
     batch_fn
@@ -86,7 +81,7 @@ def base(
         lamda_sq = (jnp.sum(S**2) - jnp.sum(diag_S**2)) / (n * (n - 1))
         return lamda_sq / lamda
 
-    def parameter_gn(batch_state, current_iter):
+    def parameter_gn(positions: PyTree, current_iter: int):
         """Update the adaptation state and parameter values.
 
         We find new optimal values for the parameters of the generalized HMC
@@ -106,16 +101,15 @@ def base(
         generalized HMC kernel.
 
         """
-        batch_position = batch_state.position
-        mean_position = jax.tree_map(lambda p: p.mean(axis=0), batch_position)
-        sd_position = jax.tree_map(lambda p: p.std(axis=0), batch_position)
+        mean_position = jax.tree_map(lambda p: p.mean(axis=0), positions)
+        sd_position = jax.tree_map(lambda p: p.std(axis=0), positions)
         batch_norm = jax.tree_map(
             lambda p, mu, sd: (p - mu) / sd,
-            batch_position,
+            positions,
             mean_position,
             sd_position,
         )
-        batch_grad = batch_fn(logprob_grad_fn)(batch_position)
+        batch_grad = batch_fn(logprob_grad_fn)(positions)
         batch_grad_scaled = jax.tree_map(
             lambda grad, sd: grad * sd, batch_grad, sd_position
         )
@@ -131,28 +125,19 @@ def base(
         step_size = jax.tree_map(lambda sd: epsilon * sd, sd_position)
         return step_size, alpha, delta
 
-    init_fn, update_fn = chain_adaptation.cross_chain(
-        lambda *parameters: batch_fn(kernel_factory(*parameters)),
-        parameter_gn,
-    )
+    def init(positions: PyTree):
+        parameters = parameter_gn(positions, 0)
+        return MEADSAdaptationState(0, *parameters)
 
-    def init(states):
-        parameters = parameter_gn(states, 0)
-        chain_state = init_fn(states)
-        return MEADSAdaptationState(chain_state, *parameters)
+    def update(adaptation_state: MEADSAdaptationState, positions: PyTree):
+        parameters = parameter_gn(positions, adaptation_state.current_iteration)
+        return MEADSAdaptationState(adaptation_state.current_iteration + 1, *parameters)
 
-    # TODO: `cross_chain` is early abstraction
-    def update(rng_key, adaptation_state, *params):
-        new_chain_state, params, info = update_fn(
-            rng_key, adaptation_state.chain_state, *params
-        )
-        return MEADSAdaptationState(new_chain_state, *params), info
-
-    def final(last_state: MEADSAdaptationState) -> PyTree:
+    def final(adaptation_state: MEADSAdaptationState, positions: PyTree) -> PyTree:
         """Return the final values for the step size, alpha and delta."""
         parameters = parameter_gn(
-            last_state.chain_state.states,
-            last_state.chain_state.current_iter,
+            positions,
+            adaptation_state.current_iteration,
         )
         return parameters
 
