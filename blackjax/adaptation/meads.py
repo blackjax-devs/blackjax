@@ -82,6 +82,38 @@ def base(
         return lamda_sq / lamda
 
     def parameter_gn(positions: PyTree, current_iter: int):
+        mean_position = jax.tree_map(lambda p: p.mean(axis=0), positions)
+        sd_position = jax.tree_map(lambda p: p.std(axis=0), positions)
+        normalized_positions = jax.tree_map(
+            lambda p, mu, sd: (p - mu) / sd,
+            positions,
+            mean_position,
+            sd_position,
+        )
+
+        batch_grad = batch_fn(logprob_grad_fn)(positions)
+        batch_grad_scaled = jax.tree_map(
+            lambda grad, sd: grad * sd, batch_grad, sd_position
+        )
+
+        epsilon = jnp.minimum(
+            0.5 / jnp.sqrt(maximum_eigenvalue(batch_grad_scaled)), 1.0
+        )
+        gamma = jnp.maximum(
+            1.0 / jnp.sqrt(maximum_eigenvalue(normalized_positions)),
+            1.0 / ((current_iter + 1) * epsilon),
+        )
+        alpha = 1.0 - jnp.exp(-2.0 * epsilon * gamma)
+        delta = alpha / 2
+        step_size = jax.tree_map(lambda sd: epsilon * sd, sd_position)
+
+        return step_size, alpha, delta
+
+    def init(positions: PyTree):
+        parameters = parameter_gn(positions, 0)
+        return MEADSAdaptationState(0, *parameters)
+
+    def update(adaptation_state: MEADSAdaptationState, positions: PyTree):
         """Update the adaptation state and parameter values.
 
         We find new optimal values for the parameters of the generalized HMC
@@ -90,8 +122,8 @@ def base(
 
         Parameters
         ----------
-        batch_state
-            The current state of every chain.
+        positions
+            The current position of every chain.
         current_iter
             The current iteration number.
 
@@ -101,44 +133,11 @@ def base(
         generalized HMC kernel.
 
         """
-        mean_position = jax.tree_map(lambda p: p.mean(axis=0), positions)
-        sd_position = jax.tree_map(lambda p: p.std(axis=0), positions)
-        batch_norm = jax.tree_map(
-            lambda p, mu, sd: (p - mu) / sd,
-            positions,
-            mean_position,
-            sd_position,
-        )
-        batch_grad = batch_fn(logprob_grad_fn)(positions)
-        batch_grad_scaled = jax.tree_map(
-            lambda grad, sd: grad * sd, batch_grad, sd_position
-        )
-        epsilon = jnp.minimum(
-            0.5 / jnp.sqrt(maximum_eigenvalue(batch_grad_scaled)), 1.0
-        )
-        gamma = jnp.maximum(
-            1.0 / jnp.sqrt(maximum_eigenvalue(batch_norm)),
-            1.0 / ((current_iter + 1) * epsilon),
-        )
-        alpha = 1.0 - jnp.exp(-2.0 * epsilon * gamma)
-        delta = alpha / 2
-        step_size = jax.tree_map(lambda sd: epsilon * sd, sd_position)
-        return step_size, alpha, delta
+        current_iter = adaptation_state.current_iteration
+        step_size, alpha, delta = parameter_gn(positions, current_iter)
 
-    def init(positions: PyTree):
-        parameters = parameter_gn(positions, 0)
-        return MEADSAdaptationState(0, *parameters)
-
-    def update(adaptation_state: MEADSAdaptationState, positions: PyTree):
-        parameters = parameter_gn(positions, adaptation_state.current_iteration)
-        return MEADSAdaptationState(adaptation_state.current_iteration + 1, *parameters)
-
-    def final(adaptation_state: MEADSAdaptationState, positions: PyTree) -> PyTree:
-        """Return the final values for the step size, alpha and delta."""
-        parameters = parameter_gn(
-            positions,
-            adaptation_state.current_iteration,
+        return MEADSAdaptationState(
+            adaptation_state.current_iteration + 1, step_size, alpha, delta
         )
-        return parameters
 
-    return init, update, final
+    return init, update
