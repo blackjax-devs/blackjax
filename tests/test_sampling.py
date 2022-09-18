@@ -192,7 +192,7 @@ class LinearRegressionTest(chex.TestCase):
 
         warmup = blackjax.meads(
             logposterior_fn,
-            num_chain=128,
+            num_chains=128,
             num_steps=100,
         )
         scale_key, coefs_key = jax.random.split(init_key, 2)

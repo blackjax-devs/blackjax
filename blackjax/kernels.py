@@ -772,7 +772,7 @@ def window_adaptation(
 
 def meads(
     logprob_fn: Callable,
-    num_chain: int,
+    num_chains: int,
     num_steps: int = 1000,
     *,
     logprob_grad_fn: Optional[Callable] = None,
@@ -804,7 +804,7 @@ def meads(
     ----------
     logprob_fn
         The log density probability density function from which we wish to sample.
-    num_chain
+    num_chains
         Number of chains used for cross-chain warm-up training.
     num_steps
         The number of adaptation steps.
@@ -846,7 +846,7 @@ def meads(
                 logprob_grad_fn,
             )
 
-        keys = jax.random.split(rng_key, num_chain)
+        keys = jax.random.split(rng_key, num_chains)
         new_states, info = batch_fn(kernel)(keys, states)
         new_adaptation_state = update(adaptation_state, new_states.position)
 
@@ -860,7 +860,7 @@ def meads(
 
         key_init, key_adapt = jax.random.split(rng_key)
 
-        rng_keys = jax.random.split(key_init, num_chain)
+        rng_keys = jax.random.split(key_init, num_chains)
         init_states = batch_init(rng_keys, positions)
         init_adaptation_state = init(positions)
 
