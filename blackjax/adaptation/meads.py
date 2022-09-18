@@ -14,22 +14,25 @@ def base(
     logprob_grad_fn: Callable,
     batch_fn: Callable = jax.vmap,
 ):
-    """Maximum-Eigenvalue Adaptation of Damping and Step size for the Generalized
+    """Maximum-Eigenvalue Adaptation of damping and dtep size for the generalized
     Hamiltonian Monte Carlo kernel [1]_.
 
-    Performs a cross-chain adaptation scheme for the Generalized HMC algorithm that
-    automatically selects values for the Generalized HMC's tunable parameters
-    based on statistics collected from a population of many chains. It uses heuristics
-    determined by the maximum eigenvalue of the covariance and gradient matrices given
-    by the grouped samples of all chains with shape (num_chain, parameter dimension).
-    Specifically, it does Algorithm 3 of [1]_ with cross-chain adaptation instead of
-    parallel ensample chain adaptation.
+
+    This algorithm performs a cross-chain adaptation scheme for the generalized
+    HMC algorithm that automatically selects values for the generalized HMC's
+    tunable parameters based on statistics collected from a population of many
+    chains. It uses heuristics determined by the maximum eigenvalue of the
+    covariance and gradient matrices given by the grouped samples of all chains
+    with shape.
+
+    This is an implementation of Algorithm 3 of [1]_ using cross-chain
+    adaptation instead of parallel ensample chain adaptation.
 
     Parameters
     ----------
     kernel_factory
         Function that takes as input the step size, alpha and delta parameters
-        and outputs a Generalized HMC kernel that generates new samples.
+        and outputs a generalized HMC kernel that generates new samples.
     logprob_grad_fn
         The gradient of logprob_fn, outputs the gradient PyTree for sample.
     batch_fn
@@ -53,17 +56,18 @@ def base(
     """
 
     def maximum_eigenvalue(matrix: PyTree):
-        """Estimate largest eigenvalues of a matrix.
+        """Estimate the largest eigenvalues of a matrix.
 
-        Calculates an unbiased estimate of the ratio between the sum of the squared
-        eigenvalues and the sum of the eigenvalues from the input matrix. This ratio
-        approximates the largest eigenvalue well except in cases when there are a
-        large number of small eigenvalues significantly larger than 0 but significantly
-        smaller than the largest eigenvalue. This unbiased estimate is used instead of
-        directly computing an unbiased estimate of the largest eigenvalue because of
-        the latter's large variance.
+        We calculate an unbiased estimate of the ratio between the sum of the
+        squared eigenvalues and the sum of the eigenvalues from the input
+        matrix. This ratio approximates the largest eigenvalue well except in
+        cases when there are a large number of small eigenvalues significantly
+        larger than 0 but significantly smaller than the largest eigenvalue.
+        This unbiased estimate is used instead of directly computing an unbiased
+        estimate of the largest eigenvalue because of the latter's large
+        variance.
+
         """
-
         X = jnp.vstack(
             [
                 leaf.reshape(leaf.shape[0], -1).T
@@ -78,13 +82,25 @@ def base(
         return lamda_sq / lamda
 
     def parameter_gn(batch_state, current_iter):
-        """Generate updated parameteters using information of cross-chain samples.
+        """Update the adaptation state and parameter values.
 
-        Using heuristics from the maximum eigenvalue of the covariance and gradient
-        matrices given by the grouped samples of all chains, find new optimal
-        parameters for the Generalized HMC kernel.
+        We find new optimal values for the parameters of the generalized HMC
+        kernel using heuristics based on the maximum eigenvalue of the
+        covariance and gradient matrices given by an ensemble of chains.
+
+        Parameters
+        ----------
+        batch_state
+            The current state of every chain.
+        current_iter
+            The current iteration number.
+
+        Returns
+        -------
+        New values for the step size, alpha and delta parameters of the
+        generalized HMC kernel.
+
         """
-
         batch_position = batch_state.position
         mean_position = jax.tree_map(lambda p: p.mean(axis=0), batch_position)
         sd_position = jax.tree_map(lambda p: p.std(axis=0), batch_position)
@@ -116,6 +132,7 @@ def base(
     )
 
     def final(last_state: chain_adaptation.ChainState) -> PyTree:
+        """Return the final values for the step size, alpha and delta."""
         parameters = parameter_gn(
             last_state.states,
             last_state.current_iter,
