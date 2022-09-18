@@ -775,7 +775,6 @@ def meads(
     num_chain: int,
     num_steps: int = 1000,
     *,
-    divergence_threshold: int = 1000,
     logprob_grad_fn: Optional[Callable] = None,
     batch_fn: Callable = jax.vmap,
 ) -> AdaptationAlgorithm:
@@ -825,7 +824,7 @@ def meads(
 
     """
 
-    step_fn = ghmc.kernel(divergence_threshold=divergence_threshold)
+    step_fn = ghmc.kernel()
 
     init, update, final = adaptation.meads.base(
         logprob_grad_fn or jax.grad(logprob_fn),
