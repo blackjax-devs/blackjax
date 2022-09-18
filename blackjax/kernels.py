@@ -826,7 +826,7 @@ def meads(
 
     step_fn = ghmc.kernel()
 
-    init, update, final = adaptation.meads.base(
+    init, update = adaptation.meads.base(
         logprob_grad_fn or jax.grad(logprob_fn),
     )
 
@@ -869,11 +869,10 @@ def meads(
             one_step, (init_states, init_adaptation_state), keys
         )
 
-        step_size, alpha, delta = final(last_adaptation_state, last_states.position)
         parameters = {
-            "step_size": step_size,
-            "alpha": alpha,
-            "delta": delta,
+            "step_size": last_adaptation_state.step_sizes,
+            "alpha": last_adaptation_state.alpha,
+            "delta": last_adaptation_state.delta,
         }
 
         def kernel(rng_key, state):
