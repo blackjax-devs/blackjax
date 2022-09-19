@@ -44,4 +44,4 @@ jobs:
       run: sleep 240
     - name: Install from PyPI
       run: |
-        pip install blackjax==${GITHUB_REF:11}
+        pip install blackjax==${GITHUB_REF:10}
