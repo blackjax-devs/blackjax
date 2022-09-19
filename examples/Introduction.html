@@ -100,12 +100,44 @@
  </span>
 </p>
 <ul class="current nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../howtos.html">
+   HowTos
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="aesara.html">
+     Use BlackJAX with Aesara
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="pymc.html">
+     Use BlackJAX with PyMC
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="tfp.html">
+     Use BlackJAX with TFP
+    </a>
+   </li>
+  </ul>
+ </li>
  <li class="toctree-l1 current active has-children">
   <a class="reference internal" href="../examples.html">
    Examples
   </a>
-  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <label for="toctree-checkbox-2">
    <i class="fas fa-chevron-down">
    </i>
   </label>
@@ -163,6 +195,16 @@
    <li class="toctree-l2">
     <a class="reference internal" href="Pathfinder.html">
      Pathfinder
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="RegimeSwitchingModel.html">
+     Regime switching Hidden Markov model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="SparseLogisticRegression.html">
+     Sparse logistic regression
     </a>
    </li>
   </ul>
@@ -517,7 +559,7 @@ Architecture: 64bit
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(54192.746, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2083.8857, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-52080.66, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(61393.938, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2159.7734, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-59281.855, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -534,8 +576,8 @@ Architecture: 64bit
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 250 µs, sys: 30 µs, total: 280 µs
-Wall time: 289 µs
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 0 ns, sys: 244 µs, total: 244 µs
+Wall time: 251 µs
 </pre></div>
 </div>
 </div>
@@ -572,8 +614,8 @@ Wall time: 289 µs
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.62 s, sys: 27.3 ms, total: 2.65 s
-Wall time: 2.64 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.73 s, sys: 11.8 ms, total: 1.74 s
+Wall time: 1.74 s
 </pre></div>
 </div>
 </div>
@@ -595,7 +637,7 @@ Wall time: 2.64 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/43ffb8362629cef5d647237ae7aa252eab8cc615f9c81441fce804d025b3d212.png" src="../_images/43ffb8362629cef5d647237ae7aa252eab8cc615f9c81441fce804d025b3d212.png" />
+<img alt="../_images/dcc3972b0d3b99d6d3660c997c2097ea77294353988c4f572a57b6341119e7a6.png" src="../_images/dcc3972b0d3b99d6d3660c997c2097ea77294353988c4f572a57b6341119e7a6.png" />
 </div>
 </div>
 </section>
@@ -622,7 +664,7 @@ Wall time: 2.64 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(54192.746, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2083.8857, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-52080.66, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(61393.938, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2159.7734, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-59281.855, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -639,8 +681,8 @@ Wall time: 2.64 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.2 s, sys: 27.5 ms, total: 14.2 s
-Wall time: 14.2 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.3 s, sys: 15.3 ms, total: 8.32 s
+Wall time: 8.31 s
 </pre></div>
 </div>
 </div>
@@ -662,7 +704,7 @@ Wall time: 14.2 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/61b1b9ee99616c2f049b6dce9a6dcf1fc2acf48b4aa460f030ec8736908572b9.png" src="../_images/61b1b9ee99616c2f049b6dce9a6dcf1fc2acf48b4aa460f030ec8736908572b9.png" />
+<img alt="../_images/799cdde23960b2d7c6e918471ac63b37d3b32ece60ffd0181e7ece54b1bee6db.png" src="../_images/799cdde23960b2d7c6e918471ac63b37d3b32ece60ffd0181e7ece54b1bee6db.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -686,8 +728,8 @@ Wall time: 14.2 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.12 s, sys: 11.8 ms, total: 3.13 s
-Wall time: 3.13 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.95 s, sys: 23.6 ms, total: 2.98 s
+Wall time: 2.97 s
 </pre></div>
 </div>
 </div>
@@ -705,8 +747,8 @@ Wall time: 3.13 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 4.98 s, sys: 12 ms, total: 4.99 s
-Wall time: 4.99 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.39 s, sys: 3.97 ms, total: 3.39 s
+Wall time: 3.39 s
 </pre></div>
 </div>
 </div>
@@ -728,7 +770,7 @@ Wall time: 4.99 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/a66f5515759ff0327c8541fb91bc60b93940a8fe8c6829def7d8ffc329bf07ae.png" src="../_images/a66f5515759ff0327c8541fb91bc60b93940a8fe8c6829def7d8ffc329bf07ae.png" />
+<img alt="../_images/33e7a3e121ccc0970417dcd26389f2b4bb6924f14f6d816c3c9bb31d0362c833.png" src="../_images/33e7a3e121ccc0970417dcd26389f2b4bb6924f14f6d816c3c9bb31d0362c833.png" />
 </div>
 </div>
 <p>In the next section we’ll show how we can easily extend the code to sample multiple chains in parallel.</p>

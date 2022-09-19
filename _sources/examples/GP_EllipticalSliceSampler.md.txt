@@ -6,7 +6,7 @@ jupytext:
     format_version: 0.13
     jupytext_version: 1.14.0
 kernelspec:
-  display_name: imcmc_blackjax
+  display_name: Python 3 (ipykernel)
   language: python
   name: python3
 ---
@@ -15,24 +15,30 @@ kernelspec:
 
 Given a vector of obervations $ \mathbf{y} $ with known variance $\sigma^2\mathbb{I}$ and Gaussian likelihood, we model the mean parameter of these observations as a Gaussian process given input/feature matrix $\mathbf{X}$
 
-$$\begin{align*}
-\mathbf{y}|\mathbf{f} &\sim N(\mathbf{f}, \sigma^2\mathbb{I})
+$$
+\begin{align*}
+\mathbf{y}|\mathbf{f} &\sim N(\mathbf{f}, \sigma^2\mathbb{I}) \\
 \mathbf{f} &\sim GP(0, \Sigma),
-\end{align*}$$
+\end{align*}
+$$
 
 where $\Sigma$ is a covariance function of the feature vector derived from the squared exponential kenel. Thus, for any pair of observations $i$ and $j$ the covariance of these two observations is given by
 
-$$\Sigma_{i,j} = \sigma^2_f \exp\left(-\frac{||\mathbf{X}_{i, \cdot} - \mathbf{X}_{j, \cdot}||^2}{2 l^2}\right)$$
+$$
+\Sigma_{i,j} = \sigma^2_f \exp\left(-\frac{||\mathbf{X}_{i, \cdot} - \mathbf{X}_{j, \cdot}||^2}{2 l^2}\right)
+$$
 
 for some lengthscale parameter $l$ and signal variance parameter $\sigma_f^2$.
 
 In this example we will limit our analysis to the posterior distribution of the mean parameter $\mathbf{f}$, by conjugacy the posterior is Gaussian with mean and covariance
 
-$$\begin{align*}
+$$
+\begin{align*}
 \mathbf{f}|\mathbf{y} &\sim N(\mu_f, \Sigma_f) \\
 \Sigma_f^{-1} &= \Sigma^{-1} + \sigma^{-2}\mathbf{I} \\
 \mu_f &= \sigma^{-2} \Sigma_f \mathbf{y}.
-\end{align*}$$
+\end{align*}
+$$
 
 Using this analytic result we can check the correct convergence of our sampler towards the posterior distribution. It is important to note, however, that the Elliptical Slice sampler can be used to sample from any vector of parameters so long as these parameters have a prior Multivariate Gaussian distribution.
 

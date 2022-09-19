@@ -4,9 +4,9 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.0
+    jupytext_version: 1.14.1
 kernelspec:
-  display_name: Python [conda env:py3713]
+  display_name: Python 3.9.7 ('blackjax')
   language: python
   name: python3
 ---
@@ -50,19 +50,12 @@ import seaborn as sns
 
 pd.set_option("display.max_rows", 80)
 
-try:
-    import blackjax
-except ModuleNotFoundError:
-    %pip install -qq jaxopt blackjax
-    import blackjax
-
-try:
-    import tensorflow_probability.substrates.jax as tfp
-except ModuleNotFoundError:
-    %pip install -qq tensorflow_probability
-    import tensorflow_probability.substrates.jax as tfp
+import blackjax
+import tensorflow_probability.substrates.jax as tfp
 
 tfd = tfp.distributions
+tfb = tfp.bijectors
+
 plt.rc("xtick", labelsize=12)  # fontsize of the xtick labels
 plt.rc("ytick", labelsize=12)  # fontsize of the tyick labels
 ```
@@ -251,20 +244,21 @@ sns.despine()
 Now we use Blackjax's NUTS algorithm to get posterior samples of $a$, $b$, and $\theta$
 
 ```{code-cell} ipython3
-def joint_logprob(params):
-    a, b, thetas = params["a"], params["b"], params["thetas"]
+from collections import namedtuple
 
+params = namedtuple("model_params", ["a", "b", "thetas"])
+
+
+def joint_logprob(params):
     # improper prior for a,b
-    logprob_ab = jnp.log(jnp.power(a + b, -2.5))
+    logprob_ab = jnp.log(jnp.power(params.a + params.b, -2.5))
 
     # logprob prior of theta
-    logprob_thetas = tfd.Beta(a, b).log_prob(thetas).sum()
+    logprob_thetas = tfd.Beta(params.a, params.b).log_prob(params.thetas).sum()
 
     # loglikelihood of y
     logprob_y = jnp.sum(
-        jax.vmap(lambda y, N, theta: tfd.Binomial(N, probs=theta).log_prob(y))(
-            n_of_positives, group_size, thetas
-        )
+        tfd.Binomial(group_size, probs=params.thetas).log_prob(n_of_positives)
     )
 
     return logprob_ab + logprob_thetas + logprob_y
@@ -281,12 +275,12 @@ def init_param_fn(seed):
     """
     initialize a, b & thetas
     """
-    key1, key2 = jax.random.split(seed)
-    return {
-        "a": tfd.Uniform(0, 3).sample(seed=key1),
-        "b": tfd.Uniform(0, 3).sample(seed=key2),
-        "thetas": tfd.Uniform(0, 1).sample(n_rat_tumors, seed),
-    }
+    key1, key2, key3 = jax.random.split(seed, 3)
+    return params(
+        a=tfd.Uniform(0, 3).sample(seed=key1),
+        b=tfd.Uniform(0, 3).sample(seed=key2),
+        thetas=tfd.Uniform(0, 1).sample(n_rat_tumors, key3),
+    )
 
 
 init_param = init_param_fn(rng_key)
@@ -338,9 +332,6 @@ states, infos = inference_loop_multiple_chains(
 )
 ```
 
-```{code-cell} ipython3
-states.position.keys()
-```
 
 ## Arviz Plots
 
@@ -348,31 +339,27 @@ We have all our posterior samples stored in `states.position` dictionary and `in
 
 ```{code-cell} ipython3
 def arviz_trace_from_states(states, info, burn_in=0):
+    position = states.position
+    if isinstance(position, jnp.DeviceArray):  # if states.position is array of samples
+        position = dict(samples=position)
+    else:
+        try:
+            position = position._asdict()
+        except AttributeError:
+            pass
 
-    if isinstance(
-        states.position, jnp.DeviceArray
-    ):  # if states.position is array of samples
-        ndims = jnp.ndim(states.position)
-        if ndims > 1:
-            samples = {"samples": jnp.swapaxes(states.position, 0, 1)}
-            divergence = jnp.swapaxes(info.is_divergent, 0, 1)
-        else:
-            samples = jnp.swapaxes(states.position, 0, 1)
-            divergence = info.is_divergent, 0, 1
+    samples = {}
+    for param in position.keys():
+        ndims = len(position[param].shape)
+        if ndims >= 2:
+            samples[param] = jnp.swapaxes(position[param], 0, 1)[
+                :, burn_in:
+            ]  # swap n_samples and n_chains
+            divergence = jnp.swapaxes(info.is_divergent[burn_in:], 0, 1)
 
-    else:  # if states.position is dict
-        samples = {}
-        for param in states.position.keys():
-            ndims = len(states.position[param].shape)
-            if ndims >= 2:
-                samples[param] = jnp.swapaxes(states.position[param], 0, 1)[
-                    :, burn_in:
-                ]  # swap n_samples and n_chains
-                divergence = jnp.swapaxes(info.is_divergent[burn_in:], 0, 1)
-
-            if ndims == 1:
-                divergence = info.is_divergent
-                samples[param] = states.position[param]
+        if ndims == 1:
+            divergence = info.is_divergent
+            samples[param] = position[param]
 
     trace_posterior = az.convert_to_inference_data(samples)
     trace_sample_stats = az.convert_to_inference_data(
@@ -405,27 +392,34 @@ We can sample from logits which is in unconstrained space and in `joint_logprob(
 
 ```{code-cell} ipython3
 transform_fn = jax.nn.sigmoid
-jacobian_fn = lambda logit: jnp.abs(jax.jacfwd(transform_fn)(logit))
+log_jacobian_fn = lambda logit: jnp.log(jnp.abs(jnp.diag(jax.jacfwd(transform_fn)(logit))))
+```
 
+Alternatively, using the bijector class in `TFP` directly:
+
+```{code-cell} ipython3
+bij = tfb.Sigmoid()
+transform_fn = bij.forward
+log_jacobian_fn = bij.forward_log_det_jacobian
+```
+
+```{code-cell} ipython3
+params = namedtuple("model_params", ["a", "b", "logits"])
 
 def joint_logprob_change_of_var(params):
-    a, b, logits = params["a"], params["b"], params["logits"]
-
     # change of variable
-    thetas = transform_fn(logits)
-    log_det_jacob = jnp.sum(jax.vmap(lambda logit: jnp.log(jacobian_fn(logit)))(logits))
+    thetas = transform_fn(params.logits)
+    log_det_jacob = jnp.sum(log_jacobian_fn(params.logits))
 
     # improper prior for a,b
-    logprob_ab = jnp.log(jnp.power(a + b, -2.5))
+    logprob_ab = jnp.log(jnp.power(params.a + params.b, -2.5))
 
     # logprob prior of theta
-    logprob_thetas = tfd.Beta(a, b).log_prob(thetas).sum()
+    logprob_thetas = tfd.Beta(params.a, params.b).log_prob(thetas).sum()
 
     # loglikelihood of y
     logprob_y = jnp.sum(
-        jax.vmap(lambda y, N, theta: tfd.Binomial(N, probs=theta).log_prob(y))(
-            n_of_positives, group_size, thetas
-        )
+        tfd.Binomial(group_size, probs=thetas).log_prob(n_of_positives)
     )
 
     return logprob_ab + logprob_thetas + logprob_y + log_det_jacob
@@ -435,19 +429,18 @@ except change of variable in `joint_logprob()` function, everthing will remain s
 
 ```{code-cell} ipython3
 rng_key = jax.random.PRNGKey(0)
-n_params = n_rat_tumors + 2
 
 
 def init_param_fn(seed):
     """
     initialize a, b & logits
     """
-    key1, key2 = jax.random.split(seed)
-    return {
-        "a": tfd.Uniform(0, 3).sample(seed=key1),
-        "b": tfd.Uniform(0, 3).sample(seed=key2),
-        "logits": tfd.Uniform(-2, 2).sample(n_rat_tumors, seed),
-    }
+    key1, key2, key3 = jax.random.split(seed, 3)
+    return params(
+        a=tfd.Uniform(0, 3).sample(seed=key1),
+        b=tfd.Uniform(0, 3).sample(seed=key2),
+        logits=tfd.Uniform(-2, 2).sample(n_rat_tumors, key3),
+    )
 
 
 init_param = init_param_fn(rng_key)
@@ -481,8 +474,10 @@ states, infos = inference_loop_multiple_chains(
 
 ```{code-cell} ipython3
 # convert logits samples to theta samples
-states.position["thetas"] = jax.nn.sigmoid(states.position["logits"])
-del states.position["logits"]  # delete logits
+position = states.position._asdict()
+position["thetas"] = jax.nn.sigmoid(position["logits"])
+del position["logits"]  # delete logits
+states = states._replace(position=position)
 ```
 
 ```{code-cell} ipython3
@@ -502,3 +497,91 @@ print(f"Number of divergence: {infos.is_divergent.sum()}")
 ```
 
 We can see that **r_hat** is less than or equal to 1.01 for each latent variable, trace plots looks converged to stationary distribution, and only few samples are diverged.
+
++++
+
+## Using a PPL
+
+Probabilistic programming language usually provides functionality to apply change of variable easily (often done automatically). In this case for TFP, we can use its modeling API `tfd.JointDistribution*`.
+
+```{code-cell} ipython3
+tfed = tfp.experimental.distributions
+
+@tfd.JointDistributionCoroutineAutoBatched
+def model():
+    # TFP does not have improper prior, use uninformative prior instead
+    a = yield tfd.HalfCauchy(0, 100, name='a')
+    b = yield tfd.HalfCauchy(0, 100, name='b')
+    yield tfed.IncrementLogProb(jnp.log(jnp.power(a + b, -2.5)), name='logprob_ab')
+
+    thetas = yield tfd.Sample(tfd.Beta(a, b), n_rat_tumors, name='thetas')
+    yield tfd.Binomial(group_size, probs=thetas, name='y')
+
+# Sample from the prior and prior predictive distributions. The result is a pytree.
+# model.sample(seed=rng_key)
+```
+
+```{code-cell} ipython3
+# Condition on the observed (and auxiliary variable).
+pinned = model.experimental_pin(logprob_ab=(), y=n_of_positives)
+# Get the default change of variable bijectors from the model
+bijectors = pinned.experimental_default_event_space_bijector()
+
+prior_sample = pinned.sample_unpinned(seed=rng_key)
+# You can check the unbounded sample
+# bijectors.inverse(prior_sample)
+```
+
+```{code-cell} ipython3
+def joint_logprob(unbound_param):
+    param = bijectors.forward(unbound_param)
+    log_det_jacobian = bijectors.forward_log_det_jacobian(unbound_param)
+    return pinned.unnormalized_log_prob(param) + log_det_jacobian
+```
+
+```{code-cell} ipython3
+%%time
+rng_key = jax.random.PRNGKey(0)
+warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob, 1000)
+
+# we use 4 chains for sampling
+n_chains = 4
+init_key, warmup_key = jax.random.split(rng_key, 2)
+init_params = bijectors.inverse(pinned.sample_unpinned(n_chains, seed=init_key))
+
+keys = jax.random.split(warmup_key, n_chains)
+initial_states = jax.vmap(lambda seed, param: warmup.run(seed, param)[0])(
+    keys, init_params
+)
+
+# can not vectorize kernel, since it is not jax.numpy array
+_, kernel, _ = warmup.run(
+    jax.random.PRNGKey(10),
+    bijectors.inverse(pinned.sample_unpinned(seed=init_key)))
+```
+
+```{code-cell} ipython3
+%%time
+n_samples = 1000
+states, infos = inference_loop_multiple_chains(
+    rng_key, kernel, initial_states, n_samples, n_chains
+)
+```
+
+```{code-cell} ipython3
+# convert logits samples to theta samples
+position = states.position
+states = states._replace(position=bijectors.forward(position))
+```
+
+```{code-cell} ipython3
+# make arviz trace from states
+trace = arviz_trace_from_states(states, infos, burn_in=0)
+summ_df = az.summary(trace)
+summ_df
+```
+
+```{code-cell} ipython3
+az.plot_trace(trace)
+plt.tight_layout()
+```

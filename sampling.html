@@ -42,7 +42,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Adaptation" href="adaptation.html" />
-    <link rel="prev" title="Pathfinder" href="examples/Pathfinder.html" />
+    <link rel="prev" title="Sparse logistic regression" href="examples/SparseLogisticRegression.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -101,11 +101,43 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1 has-children">
-  <a class="reference internal" href="examples.html">
-   Examples
+  <a class="reference internal" href="howtos.html">
+   HowTos
   </a>
   <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
   <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/aesara.html">
+     Use BlackJAX with Aesara
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/pymc.html">
+     Use BlackJAX with PyMC
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/tfp.html">
+     Use BlackJAX with TFP
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="examples.html">
+   Examples
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <label for="toctree-checkbox-2">
    <i class="fas fa-chevron-down">
    </i>
   </label>
@@ -163,6 +195,16 @@
    <li class="toctree-l2">
     <a class="reference internal" href="examples/Pathfinder.html">
      Pathfinder
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/RegimeSwitchingModel.html">
+     Regime switching Hidden Markov model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/SparseLogisticRegression.html">
+     Sparse logistic regression
     </a>
    </li>
   </ul>
@@ -299,6 +341,11 @@ title="Source repository"
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#generalized-hmc">
+   Generalized HMC
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#mala">
    MALA
   </a>
@@ -363,6 +410,11 @@ title="Source repository"
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#generalized-hmc">
+   Generalized HMC
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#mala">
    MALA
   </a>
@@ -416,33 +468,36 @@ title="Source repository"
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.elliptical_slice" title="blackjax.elliptical_slice"><code class="xref py py-obj docutils literal notranslate"><span class="pre">elliptical_slice</span></code></a></p></td>
-<td><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel .</p></td>
+<td><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.hmc" title="blackjax.hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hmc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the HMC kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.nuts" title="blackjax.nuts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nuts</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.ghmc" title="blackjax.ghmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ghmc</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the Generalized HMC kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.nuts" title="blackjax.nuts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nuts</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the nuts kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mala" title="blackjax.mala"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mala</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mala" title="blackjax.mala"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mala</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the MALA kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.orbital_hmc" title="blackjax.orbital_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">orbital_hmc</span></code></a></p></td>
-<td><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel Each iteration of the periodic orbital MCMC outputs <code class="docutils literal notranslate"><span class="pre">period</span></code> weighted samples from a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable with precision matrix <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code>, evaluated using the <code class="docutils literal notranslate"><span class="pre">bijection</span></code> as an integrator with discretization parameter <code class="docutils literal notranslate"><span class="pre">step_size</span></code>.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.orbital_hmc" title="blackjax.orbital_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">orbital_hmc</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.rmh" title="blackjax.rmh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.rmh" title="blackjax.rmh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the gaussian random walk kernel</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgld" title="blackjax.sgld"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgld</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.sgld" title="blackjax.sgld"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgld</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the SGLD kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.sghmc" title="blackjax.sghmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sghmc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sghmc" title="blackjax.sghmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sghmc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the SGHMC kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.tempered_smc" title="blackjax.tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.tempered_smc" title="blackjax.tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptive_tempered_smc" title="blackjax.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptive_tempered_smc" title="blackjax.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
 </tbody>
@@ -473,17 +528,15 @@ title="Source repository"
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.elliptical_slice">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">elliptical_slice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#elliptical_slice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.elliptical_slice" title="Permalink to this definition">#</a></dt>
-<dd><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel
-.. rubric:: Examples</p>
-<p>A new Elliptical Slice sampling kernel can be initialized and used with the following code:
-.. code:</p>
+<dd><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel.</p>
+<p class="rubric">Examples</p>
+<p>A new Elliptical Slice sampling kernel can be initialized and used with the following code:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ellip_slice</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">elliptical_slice</span><span class="p">(</span><span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">cov_matrix</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">ellip_slice</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">ellip_slice</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>We can JIT-compile the step function for better performance
-.. code:</p>
+<p>We can JIT-compile the step function for better performance</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">ellip_slice</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
 <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
@@ -551,6 +604,62 @@ which we say that the transition is divergent. The default value is
 commonly found in other libraries, and yet is arbitrary.</p></li>
 <li><p><strong>integrator</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – (algorithm parameter) The symplectic integrator to use to integrate the trajectory.</p></li>
 <li><p><strong>logprob_grad_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><em>Optional</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="generalized-hmc">
+<h2>Generalized HMC<a class="headerlink" href="#generalized-hmc" title="Permalink to this headline">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.ghmc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ghmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprob_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_gn=&lt;function</span> <span class="pre">ghmc.&lt;lambda&gt;&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logprob_grad_fn=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#ghmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.ghmc" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the Generalized HMC kernel.</p>
+<p>The Generalized HMC kernel performs a similar procedure to the standard HMC
+kernel with the difference of a persistent momentum variable and a non-reversible
+Metropolis-Hastings step instead of the standard Metropolis-Hastings acceptance
+step.</p>
+<p>This means that the sampling of the momentum variable depends on the previous
+momentum, the rate of persistence depends on the alpha parameter, and that the
+Metropolis-Hastings accept/reject step is done through slice sampling with a
+non-reversible slice variable also dependent on the previous slice, the determinisitc
+transformation is defined by the delta parameter.</p>
+<p>The Generalized HMC does not have a trajectory length parameter, it always performs
+one iteration of the velocity verlet integrator with a given step size, making
+the algorithm a good candiate for running many chains in parallel.</p>
+<p class="rubric">Examples</p>
+<p>A new Generalized HMC kernel can be initialized and used with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ghmc_kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">ghmc</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">ghmc_kernel</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">ghmc_kernel</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can JIT-compile the step function for better performance</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">ghmc_kernel</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logprob_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – The logprobability density function we wish to draw samples from. This
+is minus the potential function.</p></li>
+<li><p><strong>step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><em>Union</em></a><em>[</em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.23)"><em>numpy.ndarray</em></a><em>, </em><a class="reference external" href="https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.ndarray.html#jax.numpy.ndarray" title="(in JAX)"><em>jax._src.numpy.ndarray.ndarray</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.10)"><em>Iterable</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><em>Union</em></a><em>[</em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.23)"><em>numpy.ndarray</em></a><em>, </em><a class="reference external" href="https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.ndarray.html#jax.numpy.ndarray" title="(in JAX)"><em>jax._src.numpy.ndarray.ndarray</em></a><em>]</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.10)"><em>Mapping</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.10)"><em>Any</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><em>Union</em></a><em>[</em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.23)"><em>numpy.ndarray</em></a><em>, </em><a class="reference external" href="https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.ndarray.html#jax.numpy.ndarray" title="(in JAX)"><em>jax._src.numpy.ndarray.ndarray</em></a><em>]</em><em>]</em><em>]</em>) – A PyTree of the same structure as the target PyTree (position) with the
+values used for as a step size for each dimension of the target space in
+the velocity verlet integrator.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The value defining the persistence of the momentum variable.</p></li>
+<li><p><strong>delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The value defining the deterministic translation of the slice variable.</p></li>
+<li><p><strong>divergence_threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The absolute value of the difference in energy between two states above
+which we say that the transition is divergent. The default value is
+commonly found in other libraries, and yet is arbitrary.</p></li>
+<li><p><strong>noise_gn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – A function that takes as input the slice variable and outputs a random
+variable used as a noise correction of the persistent slice update.
+The parameter defaults to a random variable with a single atom at 0.</p></li>
+<li><p><strong>logprob_grad_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><em>Optional</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a><em>]</em>) – Optional function customizing the gradients of the target log density.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -660,21 +769,19 @@ commonly found in other libraries, and yet is arbitrary.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.orbital_hmc">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">orbital_hmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprob_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bijection=&lt;function</span> <span class="pre">velocity_verlet&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#orbital_hmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.orbital_hmc" title="Permalink to this definition">#</a></dt>
-<dd><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel
-Each iteration of the periodic orbital MCMC outputs <code class="docutils literal notranslate"><span class="pre">period</span></code> weighted samples from
+<dd><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel.</p>
+<p>Each iteration of the periodic orbital MCMC outputs <code class="docutils literal notranslate"><span class="pre">period</span></code> weighted samples from
 a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable
 with precision matrix <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code>, evaluated using the <code class="docutils literal notranslate"><span class="pre">bijection</span></code> as an
-integrator with discretization parameter <code class="docutils literal notranslate"><span class="pre">step_size</span></code>.
-.. rubric:: Examples</p>
-<p>A new Periodic orbital MCMC kernel can be initialized and used with the following code:
-.. code:</p>
+integrator with discretization parameter <code class="docutils literal notranslate"><span class="pre">step_size</span></code>.</p>
+<p class="rubric">Examples</p>
+<p>A new Periodic orbital MCMC kernel can be initialized and used with the following code:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">per_orbit</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">orbital_hmc</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">per_orbit</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">per_orbit</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>We can JIT-compile the step function for better performance
-.. code:</p>
+<p>We can JIT-compile the step function for better performance</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">per_orbit</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
 <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
@@ -734,7 +841,7 @@ the momentum and computing the kinetic energy.</p></li>
 <h2>Stochastic Gradient Langeving Dynamics<a class="headerlink" href="#stochastic-gradient-langeving-dynamics" title="Permalink to this headline">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.sgld">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sgld</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grad_estimator_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule_fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#sgld"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgld" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sgld</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grad_estimator_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#sgld"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgld" title="Permalink to this definition">#</a></dt>
 <dd><p>Implements the (basic) user interface for the SGLD kernel.</p>
 <p>The general sgld kernel (<code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.sgld.kernel()</span></code>, alias <cite>blackjax.sgld.kernel</cite>) can be
 cumbersome to manipulate. Since most users only need to specify the kernel
@@ -768,8 +875,9 @@ function. Here for a constant step size, and <cite>data_size</cite> data samples
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>gradient_estimator_fn</strong> – A function which, given a position and a batch of data, returns an estimation
 of the value of the gradient of the log-posterior distribution at this position.</p></li>
-<li><p><strong>schedule_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – A function which returns a step size given a step number.</p></li>
+<li><p><strong>schedule_fn</strong> – A function which returns a step size given a step number.</p></li>
 <li><p><strong>grad_estimator_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – </p></li>
+<li><p><strong>learning_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><em>Union</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>]</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -783,7 +891,7 @@ of the value of the gradient of the log-posterior distribution at this position.
 <h2>Stochastic Gradient HMC<a class="headerlink" href="#stochastic-gradient-hmc" title="Permalink to this headline">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.sghmc">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sghmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grad_estimator_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#sghmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sghmc" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sghmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grad_estimator_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#sghmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sghmc" title="Permalink to this definition">#</a></dt>
 <dd><p>Implements the (basic) user interface for the SGHMC kernel.</p>
 <p>The general sghmc kernel (<code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.sghmc.kernel()</span></code>, alias <cite>blackjax.sghmc.kernel</cite>) can be
 cumbersome to manipulate. Since most users only need to specify the kernel
@@ -817,8 +925,9 @@ function. Here for a constant step size, and <cite>data_size</cite> data samples
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>gradient_estimator_fn</strong> – A function which, given a position and a batch of data, returns an estimation
 of the value of the gradient of the log-posterior distribution at this position.</p></li>
-<li><p><strong>schedule_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – A function which returns a step size given a step number.</p></li>
+<li><p><strong>schedule_fn</strong> – A function which returns a step size given a step number.</p></li>
 <li><p><strong>grad_estimator_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a>) – </p></li>
+<li><p><strong>learning_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.10)"><em>Union</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.10)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>]</em>) – </p></li>
 <li><p><strong>num_integration_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – </p></li>
 </ul>
 </dd>
@@ -887,11 +996,11 @@ of the value of the gradient of the log-posterior distribution at this position.
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="examples/Pathfinder.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="examples/SparseLogisticRegression.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Pathfinder</p>
+            <p class="prev-next-title">Sparse logistic regression</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="adaptation.html" title="next page">

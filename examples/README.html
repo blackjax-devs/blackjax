@@ -99,11 +99,43 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1 has-children">
-  <a class="reference internal" href="../examples.html">
-   Examples
+  <a class="reference internal" href="../howtos.html">
+   HowTos
   </a>
   <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
   <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="aesara.html">
+     Use BlackJAX with Aesara
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="pymc.html">
+     Use BlackJAX with PyMC
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="tfp.html">
+     Use BlackJAX with TFP
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../examples.html">
+   Examples
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <label for="toctree-checkbox-2">
    <i class="fas fa-chevron-down">
    </i>
   </label>
@@ -161,6 +193,16 @@
    <li class="toctree-l2">
     <a class="reference internal" href="Pathfinder.html">
      Pathfinder
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="RegimeSwitchingModel.html">
+     Regime switching Hidden Markov model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="SparseLogisticRegression.html">
+     Sparse logistic regression
     </a>
    </li>
   </ul>
@@ -406,20 +448,20 @@ title="Source repository"
 <section id="convert-my-jupyter-notebook-to-markdown">
 <h3>Convert my Jupyter notebook to markdown<a class="headerlink" href="#convert-my-jupyter-notebook-to-markdown" title="Permalink to this headline">#</a></h3>
 <p>If you implemented your example in a Jupyter notebook you can convert your <code class="docutils literal notranslate"><span class="pre">.ipynb</span></code> file to Markdown using the command below:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>jupytext example/your_example_notebook.ipynb --to myst
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>jupytext examples/your_example_notebook.ipynb --to myst
 </pre></div>
 </div>
 <p>Once the example file is converted to a Markdown file, you have two options for editing:</p>
 <ol class="arabic simple">
 <li><p>Edit the Markdown version as it is a regular Markdown file.</p></li>
-<li><p>Edit the Notebook version then convert it to a Markdown file once you finish editing with the command above. Jupytext can handle the change if the example has the same file name.</p></li>
+<li><p>Edit the Notebook version, then convert it to a Markdown file once you finish editing with the command above. Jupytext can handle the change if the example has the same file name.</p></li>
 </ol>
-<p><strong>Please make sure to only commit the  Markdown file.</strong></p>
+<p><strong>Please make sure to only commit the Markdown file.</strong></p>
 </section>
 </section>
 <section id="composing-documentation-on-sphinx-doc">
 <h2>Composing Documentation on Sphinx-Doc<a class="headerlink" href="#composing-documentation-on-sphinx-doc" title="Permalink to this headline">#</a></h2>
-<p>We use <code class="docutils literal notranslate"><span class="pre">Sphinx</span></code> to generate document for this repo. We highly encourage you to check how your changes to the examples are rendered in the documentation:</p>
+<p>We use <code class="docutils literal notranslate"><span class="pre">Sphinx</span></code> to generate documents for this repo. We highly encourage you to check how your changes to the examples are rendered in the documentation:</p>
 <ol class="arabic simple">
 <li><p>Add your documentation to <code class="docutils literal notranslate"><span class="pre">docs/examples.rst</span></code></p></li>
 <li><p>Run the command below:</p></li>
@@ -428,7 +470,7 @@ title="Source repository"
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
-<li><p>Check the generated documentation in <code class="docutils literal notranslate"><span class="pre">docs/builds</span></code></p></li>
+<li><p>Check the generated HTML documentation in <code class="docutils literal notranslate"><span class="pre">docs/_build</span></code></p></li>
 </ol>
 <section id="execution-times">
 <h3>Execution Times<a class="headerlink" href="#execution-times" title="Permalink to this headline">#</a></h3>
@@ -441,40 +483,55 @@ title="Source repository"
 </thead>
 <tbody>
 <tr class="row-even"><td><p>GP_EllipticalSliceSampler</p></td>
-<td><p>235.20</p></td>
+<td><p>277.96</p></td>
 </tr>
 <tr class="row-odd"><td><p>HierarchicalBNN</p></td>
-<td><p>84.45</p></td>
+<td><p>187.60</p></td>
 </tr>
 <tr class="row-even"><td><p>Introduction</p></td>
-<td><p>13.81</p></td>
+<td><p>19.10</p></td>
+</tr>
+<tr class="row-odd"><td><p>LogisticRegression</p></td>
+<td><p>9.06</p></td>
+</tr>
+<tr class="row-even"><td><p>LogisticRegressionWithLatentGaussianSampler</p></td>
+<td><p>9.06</p></td>
 </tr>
 <tr class="row-odd"><td><p>MultipleChains</p></td>
-<td><p>233.77</p></td>
-</tr>
-<tr class="row-even"><td><p>LogisticRegression</p></td>
-<td><p>7.06</p></td>
-</tr>
-<tr class="row-odd"><td><p>LogisticRegressionWithLatentGaussianSampler</p></td>
-<td><p>7.10</p></td>
+<td><p>94.21</p></td>
 </tr>
 <tr class="row-even"><td><p>Pathfinder</p></td>
-<td><p>18.11</p></td>
+<td><p>26.13</p></td>
 </tr>
 <tr class="row-odd"><td><p>PeriodicOrbitalMCMC</p></td>
-<td><p>15.09</p></td>
+<td><p>27.13</p></td>
 </tr>
-<tr class="row-even"><td><p>SGMCMC</p></td>
-<td><p>316.38</p></td>
+<tr class="row-even"><td><p>RegimeSwitchingModel</p></td>
+<td><p>113.41</p></td>
+</tr>
+<tr class="row-odd"><td><p>SGMCMC</p></td>
+<td><p>406.82</p></td>
+</tr>
+<tr class="row-even"><td><p>SparseLogisticRegression</p></td>
+<td><p>248.71</p></td>
 </tr>
 <tr class="row-odd"><td><p>TemperedSMC</p></td>
-<td><p>16.09</p></td>
+<td><p>23.10</p></td>
 </tr>
 <tr class="row-even"><td><p>change_of_variable_hmc</p></td>
-<td><p>45.23</p></td>
+<td><p>106.32</p></td>
 </tr>
-<tr class="row-odd"><td><p>use_with_numpyro</p></td>
-<td><p>14.11</p></td>
+<tr class="row-odd"><td><p>aesara</p></td>
+<td><p>19.07</p></td>
+</tr>
+<tr class="row-even"><td><p>numpyro</p></td>
+<td><p>18.07</p></td>
+</tr>
+<tr class="row-odd"><td><p>pymc</p></td>
+<td><p>72.25</p></td>
+</tr>
+<tr class="row-even"><td><p>tfp</p></td>
+<td><p>33.18</p></td>
 </tr>
 </tbody>
 </table>

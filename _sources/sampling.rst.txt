@@ -8,6 +8,7 @@ Sampling
 
   elliptical_slice
   hmc
+  ghmc
   nuts
   mala
   orbital_hmc
@@ -59,6 +60,11 @@ HMC
 ~~~
 
 .. autoclass:: blackjax.hmc
+
+Generalized HMC
+~~~~~~~~~~~~~~~
+
+.. autoclass:: blackjax.ghmc
 
 MALA
 ~~~~

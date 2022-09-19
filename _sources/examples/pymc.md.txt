@@ -83,7 +83,7 @@ We first need to transpile the PyMC model into a logprobability density function
 from pymc.sampling_jax import get_jaxified_logp
 
 rvs = [rv.name for rv in model.value_vars]
-init_position_dict = model.compute_initial_point()
+init_position_dict = model.initial_point()
 init_position = [init_position_dict[rv] for rv in rvs]
 
 logprob_fn = get_jaxified_logp(model)

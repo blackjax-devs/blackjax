@@ -15,11 +15,15 @@ kernelspec:
 
 Illustrating the usage of Algorithm 2 of [Neklyudov & Welling, (2021)](https://arxiv.org/abs/2010.08047) on the Banana density
 
-$$p(x) = p(x_1, x_2) = N(x_1|0, 8)N(x_2|1/4x_1^2, 1).$$
+$$
+p(x) = p(x_1, x_2) = N(x_1|0, 8)N(x_2|1/4x_1^2, 1).
+$$
 
 Bijection functions $f(x, v)$ used for sampling are the velocity Verlet, McLachlan and Yoshida integrators for the Hamiltonian function
 
-$$ H(x, v) = \frac{1}{2}\left(\frac{x_1^2}{8} + \left(x_2 - \frac{1}{4}x_1^2\right)^2\right) + \frac{1}{2}v^Tv. $$
+$$
+H(x, v) = \frac{1}{2}\left(\frac{x_1^2}{8} + \left(x_2 - \frac{1}{4}x_1^2\right)^2\right) + \frac{1}{2}v^Tv.
+$$
 
 Using any of these integrators amounts to doing vanilla HMC (traditionally done with the velocity Verlet integrator) but sampling various points from an orbit that discretizes the Hamiltonian dynamics to then weigh these samples in order to ensure we target the correct distribution (where in vanilla HMC we would choose a sample from the discretized orbit and perform a Metropolis-Hastings acceptance step on that sample to ensure the target distribution is left invariant).
 
@@ -28,15 +32,19 @@ The benefits of sampling the whole orbit instead of a single point in it are: ef
 It is also illustrated the usage of normalizing flows, specifically the Masked Autoregressive flow ([MAF](https://arxiv.org/abs/1705.07057)), as a preconditioning step for the algorithm; using as a bijection function the ellipsis
 
 $$
-x(t) = x(0) \cos(t) + v(t) \sin(t) \\
-v(t) = v(0) \cos(t) - x(t) \sin(t),
+\begin{align*}
+x(t) &= x(0) \cos(t) + v(t) \sin(t) \\
+v(t) &= v(0) \cos(t) - x(t) \sin(t),
+\end{align*}
 $$
 
 i.e. the solution of Hamilton's equations for $p(x,v) = N(x|0,I)N(v|0,I)$,
 
 $$
-\frac{d x}{d t} = v \\
-\frac{d v}{d t} = -x.
+\begin{align*}
+\frac{d x}{d t} &= v \\
+\frac{d v}{d t} &= -x.
+\end{align*}
 $$
 
 As it is later demonstrated, these dynamics alone fail to capture all the volume of our banana density. They are, however, cheap and easy to use, since these dynamics are both gradient-free (don't require the computation of gradients of our target distribution) and tuning-free (have no tuning parameters); in contrast with the integrators mentioned above, which need to compute gradients at each iteration and require tuning of the discretization step size and number of steps (when used for periodic orbital MCMC, these values are represented by the `step_size` and `period`). Paired with a preconditioning step which transforms our target to approximate $N(x|0,I)$, our cheap and easy dynamics can efficienty sample from the whole volume of our banana density while delegating the expensive gradients and cumbersome tuning to an optimization problem performed pre-sampling.
@@ -132,7 +140,9 @@ initial_position = {"x1": 0.0, "x2": 0.0}
 
 The integrator usually found in implementations of HMC. It creates an orbit by discretizing the solution to Hamilton's equations of the Hamiltonian function
 
-$$ H(x, v) = \frac{1}{2}\left(\frac{x_1^2}{8} + \left(x_2 - \frac{1}{4}x_1^2\right)^2\right) + \frac{1}{2}v^Tv .$$
+$$
+H(x, v) = \frac{1}{2}\left(\frac{x_1^2}{8} + \left(x_2 - \frac{1}{4}x_1^2\right)^2\right) + \frac{1}{2}v^Tv.
+$$
 
 The plots include the unweighted samples to get an idea of how the integrator is exploring the sample space before the weight's "correction".
 
@@ -215,8 +225,10 @@ plot_contour(logprob, orbits=samples, weights=weights)
 We now create and use a bijection given by an ellipsis using the `IntegratorState` class. The bijection must have as inputs the potential and kinetic energy functions, which are the negative log densities of our target posterior and the auxiliary distribution used for the momentum variable. In the case of our banana density, we are targeting the "posterior" $N(x_1|0, 8)N(x_2|1/4x_1^2, 1)$ and using a standard normal distribution for our momentum variable, hence our potential and kinetic energies are $1/2\left(x_1^2/8 + \left(x_2 - 1/4x_1^2\right)^2\right)$ and $1/2v^Tv$, respectively. However, the orbit we build now is independent of these two energies and moves around an ellipsis given by
 
 $$
-x(t) = x(0) \cos(t) + v(t) \sin(t) \\
-v(t) = v(0) \cos(t) - x(t) \sin(t),
+\begin{align*}
+x(t) &= x(0) \cos(t) + v(t) \sin(t) \\
+v(t) &= v(0) \cos(t) - x(t) \sin(t),
+\end{align*}
 $$
 
 which returns to its initial position every $t=2\pi$ radians. The `step_size` for this orbit is set to cover the entire ellipsis. This ellipsis actually targets a potential and kinetic energy given by the product measure of two standard normal distributions, hence its inefficiency at exploring the real target measure.
@@ -300,13 +312,16 @@ $$
 where the right hand side of the equation is what we call the pullback density of our target. Thus, letting the bijection $f(x,v) = (x(t), v(t))$ for
 
 $$
-x(t) = x(0) \cos(t) + v(t) \sin(t) \\
-v(t) = v(0) \cos(t) - x(t) \sin(t),
+\begin{align*}
+x(t) &= x(0) \cos(t) + v(t) \sin(t) \\
+v(t) &= v(0) \cos(t) - x(t) \sin(t),
+\end{align*}
 $$
 
 we have that using the periodic orbital MCMC on the pullback with bijection $f(x,v)$ is equivalent to using the periodic orbital MCMC on our target density with bijection $T \circ f \circ T^{-1}$.
 
 First we define our parametrized MAF bijection using autoregressive neural networks.
+
 
 ```{code-cell} ipython3
 import optax
@@ -332,7 +347,7 @@ _, initial_parameters = init_fun(jax.random.PRNGKey(1), (2,))
 log_reference = lambda z: jnp.sum(stats.norm.logpdf(z, loc=0.0, scale=1.0))
 ```
 
-#### Some Utility Functions
+### Some Utility Functions
 
 Define the log pullback density, our loss function (negative ELBO) and the optimization loop used to train our transformation.
 

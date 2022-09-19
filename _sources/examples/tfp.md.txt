@@ -17,10 +17,6 @@ BlackJAX can take any log-probability function as long as it is compatible with 
 
 We reproduce the Eight Schools example from the [TFP documentation](https://www.tensorflow.org/probability/examples/Eight_Schools) (all credit for the model goes to the TFP team). For this notebook to run you will need to install tfp-nightly:
 
-```bash
-pip install tfp-nightly
-```
-
 ```{code-cell} ipython3
 import jax
 import jax.numpy as jnp

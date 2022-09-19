@@ -178,10 +178,9 @@ num_samples = 2000
 rng_key = jax.random.PRNGKey(1)
 batches = batch_data(rng_key, (X_train, y_train), batch_size, data_size)
 
-# Build the SGLD kernel
-schedule_fn = lambda _: step_size  # constant step size
+# Build the SGLD kernel with a constant learning rate
 grad_fn = grad_estimator(logprior_fn, loglikelihood_fn, data_size)
-sgld = blackjax.sgld(grad_fn, schedule_fn)
+sgld = blackjax.sgld(grad_fn, step_size)
 
 # Set the initial state
 init_positions = init_parameters(rng_key, layer_sizes)

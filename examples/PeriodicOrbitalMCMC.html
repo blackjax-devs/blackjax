@@ -101,12 +101,44 @@
  </span>
 </p>
 <ul class="current nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../howtos.html">
+   HowTos
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="aesara.html">
+     Use BlackJAX with Aesara
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="pymc.html">
+     Use BlackJAX with PyMC
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="tfp.html">
+     Use BlackJAX with TFP
+    </a>
+   </li>
+  </ul>
+ </li>
  <li class="toctree-l1 current active has-children">
   <a class="reference internal" href="../examples.html">
    Examples
   </a>
-  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <label for="toctree-checkbox-2">
    <i class="fas fa-chevron-down">
    </i>
   </label>
@@ -164,6 +196,16 @@
    <li class="toctree-l2">
     <a class="reference internal" href="Pathfinder.html">
      Pathfinder
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="RegimeSwitchingModel.html">
+     Regime switching Hidden Markov model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="SparseLogisticRegression.html">
+     Sparse logistic regression
     </a>
    </li>
   </ul>
@@ -415,22 +457,28 @@ title="Source repository"
   <section id="periodic-orbital-mcmc">
 <h1>Periodic Orbital MCMC<a class="headerlink" href="#periodic-orbital-mcmc" title="Permalink to this headline">#</a></h1>
 <p>Illustrating the usage of Algorithm 2 of <a class="reference external" href="https://arxiv.org/abs/2010.08047">Neklyudov &amp; Welling, (2021)</a> on the Banana density</p>
-<p><div class="math notranslate nohighlight">
-\[p(x) = p(x_1, x_2) = N(x_1|0, 8)N(x_2|1/4x_1^2, 1).\]</div>
-</p>
+<p>$$
+p(x) = p(x_1, x_2) = N(x_1|0, 8)N(x_2|1/4x_1^2, 1).
+$$</p>
 <p>Bijection functions <span class="math notranslate nohighlight">\(f(x, v)\)</span> used for sampling are the velocity Verlet, McLachlan and Yoshida integrators for the Hamiltonian function</p>
-<p>$$ H(x, v) = \frac{1}{2}\left(\frac{x_1^2}{8} + \left(x_2 - \frac{1}{4}x_1^2\right)^2\right) + \frac{1}{2}v^Tv. $$</p>
+<p>$$
+H(x, v) = \frac{1}{2}\left(\frac{x_1^2}{8} + \left(x_2 - \frac{1}{4}x_1^2\right)^2\right) + \frac{1}{2}v^Tv.
+$$</p>
 <p>Using any of these integrators amounts to doing vanilla HMC (traditionally done with the velocity Verlet integrator) but sampling various points from an orbit that discretizes the Hamiltonian dynamics to then weigh these samples in order to ensure we target the correct distribution (where in vanilla HMC we would choose a sample from the discretized orbit and perform a Metropolis-Hastings acceptance step on that sample to ensure the target distribution is left invariant).</p>
 <p>The benefits of sampling the whole orbit instead of a single point in it are: efficiency, since we build a trajectory around an orbit and use all if it instead of discarding most of it; and wider reach, since even unlikely points will be sampled and given small weights, making the sampler more likely to explore the tails of our target. This at the cost of higher memory consumption since we have <code class="docutils literal notranslate"><span class="pre">period</span></code> samples per iteration, instead of only one, and the lack of diagnostics, theoretical guarantees and heuristic methods developed for traditional HMC and its adaptive mechanisms (such as NUTS) during the past decades.</p>
 <p>It is also illustrated the usage of normalizing flows, specifically the Masked Autoregressive flow (<a class="reference external" href="https://arxiv.org/abs/1705.07057">MAF</a>), as a preconditioning step for the algorithm; using as a bijection function the ellipsis</p>
 <p>$$
-x(t) = x(0) \cos(t) + v(t) \sin(t) \
-v(t) = v(0) \cos(t) - x(t) \sin(t),
+\begin{align*}
+x(t) &amp;= x(0) \cos(t) + v(t) \sin(t) \
+v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
+\end{align*}
 $$</p>
 <p>i.e. the solution of Hamilton’s equations for <span class="math notranslate nohighlight">\(p(x,v) = N(x|0,I)N(v|0,I)\)</span>,</p>
 <p>$$
-\frac{d x}{d t} = v \
-\frac{d v}{d t} = -x.
+\begin{align*}
+\frac{d x}{d t} &amp;= v \
+\frac{d v}{d t} &amp;= -x.
+\end{align*}
 $$</p>
 <p>As it is later demonstrated, these dynamics alone fail to capture all the volume of our banana density. They are, however, cheap and easy to use, since these dynamics are both gradient-free (don’t require the computation of gradients of our target distribution) and tuning-free (have no tuning parameters); in contrast with the integrators mentioned above, which need to compute gradients at each iteration and require tuning of the discretization step size and number of steps (when used for periodic orbital MCMC, these values are represented by the <code class="docutils literal notranslate"><span class="pre">step_size</span></code> and <code class="docutils literal notranslate"><span class="pre">period</span></code>). Paired with a preconditioning step which transforms our target to approximate <span class="math notranslate nohighlight">\(N(x|0,I)\)</span>, our cheap and easy dynamics can efficienty sample from the whole volume of our banana density while delegating the expensive gradients and cumbersome tuning to an optimization problem performed pre-sampling.</p>
 <div class="cell docutils container">
@@ -550,7 +598,7 @@ Architecture: 64bit
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/c5cb5238a11b34998852b621154390514ff150662f3bf8d9fbbb66a472248dee.png" src="../_images/c5cb5238a11b34998852b621154390514ff150662f3bf8d9fbbb66a472248dee.png" />
+<img alt="../_images/d94ff3d471a324aff5bd4445deb2d0e0f5cafe6f56d7e7f5f88cda7c562d4679.png" src="../_images/d94ff3d471a324aff5bd4445deb2d0e0f5cafe6f56d7e7f5f88cda7c562d4679.png" />
 </div>
 </div>
 </section>
@@ -578,7 +626,9 @@ Architecture: 64bit
 <section id="velocity-verlet">
 <h2>Velocity Verlet<a class="headerlink" href="#velocity-verlet" title="Permalink to this headline">#</a></h2>
 <p>The integrator usually found in implementations of HMC. It creates an orbit by discretizing the solution to Hamilton’s equations of the Hamiltonian function</p>
-<p>$$ H(x, v) = \frac{1}{2}\left(\frac{x_1^2}{8} + \left(x_2 - \frac{1}{4}x_1^2\right)^2\right) + \frac{1}{2}v^Tv .$$</p>
+<p>$$
+H(x, v) = \frac{1}{2}\left(\frac{x_1^2}{8} + \left(x_2 - \frac{1}{4}x_1^2\right)^2\right) + \frac{1}{2}v^Tv.
+$$</p>
 <p>The plots include the unweighted samples to get an idea of how the integrator is exploring the sample space before the weight’s “correction”.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -592,8 +642,8 @@ Architecture: 64bit
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 293 ms, sys: 0 ns, total: 293 ms
-Wall time: 291 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 341 ms, sys: 0 ns, total: 341 ms
+Wall time: 340 ms
 </pre></div>
 </div>
 </div>
@@ -610,8 +660,8 @@ Wall time: 291 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.31 s, sys: 11.5 ms, total: 1.32 s
-Wall time: 1.32 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.27 s, sys: 3.48 ms, total: 1.27 s
+Wall time: 1.26 s
 </pre></div>
 </div>
 </div>
@@ -623,7 +673,7 @@ Wall time: 1.32 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/1c9690355d8837ca9d6a9b54feb430f6edb0f9d5ee5fc5cf4fec933fcbee23e6.png" src="../_images/1c9690355d8837ca9d6a9b54feb430f6edb0f9d5ee5fc5cf4fec933fcbee23e6.png" />
+<img alt="../_images/78572ebbf2d9fd0458394001d95744c10ef4f81e626e69ae806a94edd7cf042d.png" src="../_images/78572ebbf2d9fd0458394001d95744c10ef4f81e626e69ae806a94edd7cf042d.png" />
 </div>
 </div>
 </section>
@@ -642,8 +692,8 @@ Wall time: 1.32 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 20.5 ms, sys: 24 µs, total: 20.5 ms
-Wall time: 20.3 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 18.4 ms, sys: 0 ns, total: 18.4 ms
+Wall time: 17.9 ms
 </pre></div>
 </div>
 </div>
@@ -660,8 +710,8 @@ Wall time: 20.3 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.22 s, sys: 3.88 ms, total: 1.23 s
-Wall time: 1.22 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.05 s, sys: 0 ns, total: 1.05 s
+Wall time: 1.04 s
 </pre></div>
 </div>
 </div>
@@ -673,7 +723,7 @@ Wall time: 1.22 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/5fefc8dcdf0378a02e0518f5ed9a1677f5dd44788407b1786458857e619e78a8.png" src="../_images/5fefc8dcdf0378a02e0518f5ed9a1677f5dd44788407b1786458857e619e78a8.png" />
+<img alt="../_images/0df57665b1b72a6d4bb44f53dbb8b7e4d90ac3e51d5d3bc2a4f302078ae8e14e.png" src="../_images/0df57665b1b72a6d4bb44f53dbb8b7e4d90ac3e51d5d3bc2a4f302078ae8e14e.png" />
 </div>
 </div>
 </section>
@@ -692,8 +742,8 @@ Wall time: 1.22 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 20.6 ms, sys: 32 µs, total: 20.7 ms
-Wall time: 20.2 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.4 ms, sys: 0 ns, total: 17.4 ms
+Wall time: 17.1 ms
 </pre></div>
 </div>
 </div>
@@ -710,8 +760,8 @@ Wall time: 20.2 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.19 s, sys: 4.05 ms, total: 1.19 s
-Wall time: 1.19 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.12 s, sys: 0 ns, total: 1.12 s
+Wall time: 1.12 s
 </pre></div>
 </div>
 </div>
@@ -723,7 +773,7 @@ Wall time: 1.19 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/e539d08e64460998fac48ced98158d8ec7c118245152a4f5f1341a493cd15d76.png" src="../_images/e539d08e64460998fac48ced98158d8ec7c118245152a4f5f1341a493cd15d76.png" />
+<img alt="../_images/6a3fbae5da0828ff825dd621b70c6a139e4bde6ac2b47542ba2830033ed5b0b1.png" src="../_images/6a3fbae5da0828ff825dd621b70c6a139e4bde6ac2b47542ba2830033ed5b0b1.png" />
 </div>
 </div>
 </section>
@@ -731,8 +781,10 @@ Wall time: 1.19 s
 <h2>Ellipsis<a class="headerlink" href="#ellipsis" title="Permalink to this headline">#</a></h2>
 <p>We now create and use a bijection given by an ellipsis using the <code class="docutils literal notranslate"><span class="pre">IntegratorState</span></code> class. The bijection must have as inputs the potential and kinetic energy functions, which are the negative log densities of our target posterior and the auxiliary distribution used for the momentum variable. In the case of our banana density, we are targeting the “posterior” <span class="math notranslate nohighlight">\(N(x_1|0, 8)N(x_2|1/4x_1^2, 1)\)</span> and using a standard normal distribution for our momentum variable, hence our potential and kinetic energies are <span class="math notranslate nohighlight">\(1/2\left(x_1^2/8 + \left(x_2 - 1/4x_1^2\right)^2\right)\)</span> and <span class="math notranslate nohighlight">\(1/2v^Tv\)</span>, respectively. However, the orbit we build now is independent of these two energies and moves around an ellipsis given by</p>
 <p>$$
-x(t) = x(0) \cos(t) + v(t) \sin(t) \
-v(t) = v(0) \cos(t) - x(t) \sin(t),
+\begin{align*}
+x(t) &amp;= x(0) \cos(t) + v(t) \sin(t) \
+v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
+\end{align*}
 $$</p>
 <p>which returns to its initial position every <span class="math notranslate nohighlight">\(t=2\pi\)</span> radians. The <code class="docutils literal notranslate"><span class="pre">step_size</span></code> for this orbit is set to cover the entire ellipsis. This ellipsis actually targets a potential and kinetic energy given by the product measure of two standard normal distributions, hence its inefficiency at exploring the real target measure.</p>
 <p>The bijection must output a function which takes as input an <code class="docutils literal notranslate"><span class="pre">IntegratorState</span></code>, composed of a position, momentum, potential energy (negative log density of our target evaluated at position) and the gradient of the potential energy, and a step size; and outputs a proposed <code class="docutils literal notranslate"><span class="pre">IntegratorState</span></code>. Even if the dynamics of our bijection are independent of the real potential energy, we need to return the potential energy at the proposed position for the computation of the sampler’s weights. But, as our dynamics are gradient-free, we can return the same gradient as the previous state to avoid unnecessary computations.</p>
@@ -785,8 +837,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 21.1 ms, sys: 52 µs, total: 21.2 ms
-Wall time: 20.8 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.6 ms, sys: 0 ns, total: 17.6 ms
+Wall time: 17 ms
 </pre></div>
 </div>
 </div>
@@ -803,8 +855,8 @@ Wall time: 20.8 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.02 s, sys: 3.52 ms, total: 1.02 s
-Wall time: 1.02 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 968 ms, sys: 7.23 ms, total: 975 ms
+Wall time: 970 ms
 </pre></div>
 </div>
 </div>
@@ -816,7 +868,7 @@ Wall time: 1.02 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/6b614b07d5b9962c8d863015a182ca1f3942eefe81c63fa297764f84f073d8a0.png" src="../_images/6b614b07d5b9962c8d863015a182ca1f3942eefe81c63fa297764f84f073d8a0.png" />
+<img alt="../_images/d8e956057ccc0a6fda7f38251d68b1212e56ac4396f4e81593894fe02eb2c97f.png" src="../_images/d8e956057ccc0a6fda7f38251d68b1212e56ac4396f4e81593894fe02eb2c97f.png" />
 </div>
 </div>
 </section>
@@ -834,8 +886,10 @@ $$</p>
 $$</p>
 <p>where the right hand side of the equation is what we call the pullback density of our target. Thus, letting the bijection <span class="math notranslate nohighlight">\(f(x,v) = (x(t), v(t))\)</span> for</p>
 <p>$$
-x(t) = x(0) \cos(t) + v(t) \sin(t) \
-v(t) = v(0) \cos(t) - x(t) \sin(t),
+\begin{align*}
+x(t) &amp;= x(0) \cos(t) + v(t) \sin(t) \
+v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
+\end{align*}
 $$</p>
 <p>we have that using the periodic orbital MCMC on the pullback with bijection <span class="math notranslate nohighlight">\(f(x,v)\)</span> is equivalent to using the periodic orbital MCMC on our target density with bijection <span class="math notranslate nohighlight">\(T \circ f \circ T^{-1}\)</span>.</p>
 <p>First we define our parametrized MAF bijection using autoregressive neural networks.</p>
@@ -847,13 +901,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">22</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">import</span> <span class="nn">optax</span>
-<span class="ne">----&gt; </span><span class="mi">2</span> <span class="kn">from</span> <span class="nn">numpyro.nn</span> <span class="kn">import</span> <span class="n">AutoregressiveNN</span>
-
-<span class="ne">ModuleNotFoundError</span>: No module named &#39;numpyro&#39;
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
 </pre></div>
 </div>
 </div>
@@ -960,6 +1009,13 @@ $$</p>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<img alt="../_images/de38aea7f9a81ff1486e15e5d1516bd10adb6d2ee62ea9bb4ac958a4d7fc3edd.png" src="../_images/de38aea7f9a81ff1486e15e5d1516bd10adb6d2ee62ea9bb4ac958a4d7fc3edd.png" />
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.15 s, sys: 72.1 ms, total: 2.22 s
+Wall time: 2.09 s
+</pre></div>
+</div>
+</div>
 </div>
 <p>We define our log pullback given the learned parameters of the transformation and use the periodic orbital MCMC with an ellipsis to sample from this log pullback density.</p>
 <div class="cell docutils container">
@@ -981,6 +1037,12 @@ $$</p>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 968 ms, sys: 3.98 ms, total: 972 ms
+Wall time: 967 ms
+</pre></div>
+</div>
+</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -990,6 +1052,12 @@ $$</p>
 
 <span class="n">pullback_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">positions</span>
 <span class="n">weights</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">weights</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.13 s, sys: 7.88 ms, total: 1.14 s
+Wall time: 1.13 s
 </pre></div>
 </div>
 </div>
@@ -1022,6 +1090,9 @@ $$</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/be2a8368c7123fdefd085a463690725482abd8d8d4da5f933628559937a9e1c6.png" src="../_images/be2a8368c7123fdefd085a463690725482abd8d8d4da5f933628559937a9e1c6.png" />
 </div>
 </div>
 </section>

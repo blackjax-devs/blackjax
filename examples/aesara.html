@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Using Blackjax with Aesara &#8212; Blackjax</title>
+    <title>Use BlackJAX with Aesara &#8212; Blackjax</title>
     
   <!-- Loaded before other Sphinx assets -->
   <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
@@ -41,6 +41,8 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Use BlackJAX with Numpyro" href="numpyro.html" />
+    <link rel="prev" title="HowTos" href="../howtos.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -97,13 +99,45 @@
   Blackjax by example
  </span>
 </p>
-<ul class="nav bd-sidenav">
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active has-children">
+  <a class="reference internal" href="../howtos.html">
+   HowTos
+  </a>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul class="current">
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
+     Use BlackJAX with Aesara
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="pymc.html">
+     Use BlackJAX with PyMC
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="tfp.html">
+     Use BlackJAX with TFP
+    </a>
+   </li>
+  </ul>
+ </li>
  <li class="toctree-l1 has-children">
   <a class="reference internal" href="../examples.html">
    Examples
   </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
+  <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <label for="toctree-checkbox-2">
    <i class="fas fa-chevron-down">
    </i>
   </label>
@@ -161,6 +195,16 @@
    <li class="toctree-l2">
     <a class="reference internal" href="Pathfinder.html">
      Pathfinder
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="RegimeSwitchingModel.html">
+     Regime switching Hidden Markov model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="SparseLogisticRegression.html">
+     Sparse logistic regression
     </a>
    </li>
   </ul>
@@ -276,7 +320,7 @@ title="Source repository"
         <div class="col pl-md-3 pl-lg-5 content-container">
             <!-- Table of contents that is only displayed when printing the page -->
             <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Using Blackjax with Aesara</h1>
+                <h1>Use BlackJAX with Aesara</h1>
                 <!-- Table of contents -->
                 <div id="print-main-content">
                     <div id="jb-print-toc">
@@ -288,8 +332,8 @@ title="Source repository"
                 
               <div>
                 
-  <section id="using-blackjax-with-aesara">
-<h1>Using Blackjax with Aesara<a class="headerlink" href="#using-blackjax-with-aesara" title="Permalink to this headline">#</a></h1>
+  <section id="use-blackjax-with-aesara">
+<h1>Use BlackJAX with Aesara<a class="headerlink" href="#use-blackjax-with-aesara" title="Permalink to this headline">#</a></h1>
 <p>Blackjax accepts any log-probability function as long as it is compatible with <code class="docutils literal notranslate"><span class="pre">jax.jit</span></code> and <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> (for gradient-based samplers). In this example we will show ho we can use <a class="reference external" href="https://github.com/aesara-devs/aesara">Aesara</a> as a modeling language and Blackjax as an inference library.</p>
 <p>This example relies on <a class="reference external" href="https://github.com/aesara-devs/aesara">Aesara</a> and <a class="reference external" href="https://github.com/aesara-devs/aeppl">AePPL</a>. Please follow the installation instructions on their respective repository.</p>
 <p>We will implement the following binomial response model with a beta prior:</p>
@@ -338,18 +382,6 @@ $$</p>
 
 <span class="n">loglikelihood</span> <span class="o">=</span> <span class="n">joint_logprob</span><span class="p">({</span><span class="n">Y_rv</span><span class="p">:</span> <span class="n">Y_vv</span><span class="p">,</span> <span class="n">theta_rv</span><span class="p">:</span> <span class="n">theta_vv</span><span class="p">})</span>
 <span class="n">logprob</span> <span class="o">=</span> <span class="n">logprior</span> <span class="o">+</span> <span class="n">loglikelihood</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">1</span>
-<span class="ne">----&gt; </span><span class="mi">1</span> <span class="kn">import</span> <span class="nn">aesara</span>
-<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="kn">import</span> <span class="nn">aesara.tensor</span> <span class="k">as</span> <span class="nn">at</span>
-<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="kn">from</span> <span class="nn">aeppl</span> <span class="kn">import</span> <span class="n">joint_logprob</span>
-
-<span class="ne">ModuleNotFoundError</span>: No module named &#39;aesara&#39;
 </pre></div>
 </div>
 </div>
@@ -402,6 +434,13 @@ $$</p>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/graph/rewriting/basic.py:131: UserWarning: A Supervisor feature is missing from FunctionGraph(Elemwise{Composite{((i0 * log(i1)) + i2)}}(TensorConstant{-2.5}, *3 -&gt; Elemwise{add,no_inplace}(a, b), Sum{acc_dtype=float64}(MakeVector{dtype=&#39;float64&#39;}(Sum{acc_dtype=float64}(Elemwise{Composite{(i0 + (-i1) + (-i2))}}(Check{0 &lt;= value &lt;= 1, alpha &gt; 0, beta &gt; 0}(Elemwise{Composite{Switch(AND(GE(i0, i1), i2), ((Switch(i3, i1, (i4 * i5 * i6)) + Switch(i7, i1, (i8 * i9 * i10))) - i11), i12)}}(*6 -&gt; Elemwise{sigmoid,no_inplace}(&lt;TensorType(float64, (None,))&gt;), TensorConstant{(1,) of 0.0}, *7 -&gt; Elemwise{le,no_inplace}(*6, TensorConstant{(1,) of 1.0}), Elemwise{eq,no_inplace}(*1 -&gt; InplaceDimShuffle{x}(a), TensorConstant{(1,) of 1.0}), TensorConstant{(1,) of -1.0}, Elemwise{add,no_inplace}(TensorConstant{(1,) of -1.0}, *1), *2 -&gt; Elemwise{Composite{scalar_softplus((-i0))}}(&lt;TensorType(float64, (None,))&gt;), Elemwise{eq,no_inplace}(*4 -&gt; InplaceDimShuffle{x}(b), TensorConstant{(1,) of 1.0}), TensorConstant{(1,) of -1.0}, Elemwise{add,no_inplace}(TensorConstant{(1,) of -1.0}, *4), *5 -&gt; Elemwise{softplus,no_inplace}(&lt;TensorType(float64, (None,))&gt;), Elemwise{Composite{((gammaln(i0) + gammaln(i1)) - gammaln(i2))}}(*1, *4, InplaceDimShuffle{x}(*3)), TensorConstant{(1,) of -inf}), Elemwise{gt,no_inplace}(a, TensorConstant{0.0}), Elemwise{gt,no_inplace}(b, TensorConstant{0.0})), *2, *5)), Sum{acc_dtype=float64}(Check{0 &lt;= p, p &lt;= 1}(Elemwise{Composite{Switch(AND(LE(i0, i1), LE(i1, i2)), (((i3 - gammaln((i4 + i1))) - gammaln((i5 - i1))) + Switch(EQ(i6, i0), Switch(EQ(i1, i0), i7, i8), (i9 * i1 * i10)) + Switch(EQ((i11 - i6), i0), Switch(EQ((i2 - i1), i0), i7, i8), (i12 * (i2 - i1) * scalar_softplus(i13)))), i8)}}(TensorConstant{(1,) of 0}, &lt;TensorType(int64, (None,))&gt;, TensorConstant{[20 20 20 .. 47 24 14]}, TensorConstant{[ 42.33561...19122118]}, TensorConstant{(1,) of 1}, TensorConstant{[21 21 21 .. 48 25 15]}, *6, TensorConstant{(1,) of 0.0}, TensorConstant{(1,) of -inf}, TensorConstant{(1,) of -1.0}, *2, TensorConstant{(1,) of 1.0}, TensorConstant{(1,) of -1.0}, &lt;TensorType(float64, (None,))&gt;), All(Elemwise{le,no_inplace}(TensorConstant{(1,) of 0.0}, *6)), All(*7))))))).
+  return self.apply(fgraph, *args, **kwargs)
+WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+</pre></div>
+</div>
+</div>
 </div>
 <p>Let us now inialize the parameter values:</p>
 <div class="cell docutils container">
@@ -426,6 +465,11 @@ $$</p>
     <span class="k">return</span> <span class="n">jax_fn</span><span class="p">(</span><span class="o">*</span><span class="n">position</span><span class="p">,</span> <span class="n">n_of_positives</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
 <span class="n">logprob</span><span class="p">(</span><span class="n">init_position</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray(-1111.89844767, dtype=float64)
 </pre></div>
 </div>
 </div>
@@ -470,6 +514,20 @@ $$</p>
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="../howtos.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">HowTos</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="numpyro.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Use BlackJAX with Numpyro</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
 </div>
             </footer>
         </div>

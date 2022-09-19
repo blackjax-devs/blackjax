@@ -17,9 +17,6 @@ BlackJAX can take any log-probability function as long as it is compatible with 
 
 We reproduce the Eight Schools example from the [Numpyro documentation](https://github.com/pyro-ppl/numpyro) (all credit for the model goes to the Numpyro team). For this notebook to run you will need to install Numpyro:
 
-```bash
-pip install numpyro
-```
 
 ```{code-cell} ipython3
 import jax

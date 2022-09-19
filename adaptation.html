@@ -101,11 +101,43 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1 has-children">
-  <a class="reference internal" href="examples.html">
-   Examples
+  <a class="reference internal" href="howtos.html">
+   HowTos
   </a>
   <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
   <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/aesara.html">
+     Use BlackJAX with Aesara
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/pymc.html">
+     Use BlackJAX with PyMC
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/tfp.html">
+     Use BlackJAX with TFP
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="examples.html">
+   Examples
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <label for="toctree-checkbox-2">
    <i class="fas fa-chevron-down">
    </i>
   </label>
@@ -163,6 +195,16 @@
    <li class="toctree-l2">
     <a class="reference internal" href="examples/Pathfinder.html">
      Pathfinder
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/RegimeSwitchingModel.html">
+     Regime switching Hidden Markov model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="examples/SparseLogisticRegression.html">
+     Sparse logistic regression
     </a>
    </li>
   </ul>
@@ -293,6 +335,11 @@ title="Source repository"
    Window adaptation
   </a>
  </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#maximum-eigenvalue-adaptation-of-damping-and-step-size-adaptation">
+   Maximum-Eigenvalue Adaptation of Damping and Step-size adaptation
+  </a>
+ </li>
 </ul>
 
     </nav>
@@ -315,6 +362,11 @@ title="Source repository"
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#window-adaptation">
    Window adaptation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#maximum-eigenvalue-adaptation-of-damping-and-step-size-adaptation">
+   Maximum-Eigenvalue Adaptation of Damping and Step-size adaptation
   </a>
  </li>
 </ul>
@@ -361,6 +413,56 @@ integration steps for HMC.</p></li>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A function that returns the last chain state and a sampling kernel with the tuned parameter values from an initial state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="maximum-eigenvalue-adaptation-of-damping-and-step-size-adaptation">
+<h2>Maximum-Eigenvalue Adaptation of Damping and Step-size adaptation<a class="headerlink" href="#maximum-eigenvalue-adaptation-of-damping-and-step-size-adaptation" title="Permalink to this headline">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.meads">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">meads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprob_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_chain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logprob_grad_fn=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_fn=&lt;function</span> <span class="pre">vmap&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#meads"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.meads" title="Permalink to this definition">#</a></dt>
+<dd><p>Adapt the parameters of the Generalized HMC algorithm.</p>
+<p>The Generalized HMC algorithm depends on three parameters, each controlling
+one element of its behaviour: step size controls the integrator’s dynamics,
+alpha controls the persistency of the momentum variable, and delta controls
+the deterministic transformation of the slice variable used to perform the
+non-reversible Metropolis-Hastings accept/reject step.</p>
+<p>The step size parameter is chosen to ensure the stability of the velocity
+verlet integrator, the alpha parameter to make the influence of the current
+state on future states of the momentum variable to decay exponentially, and
+the delta parameter to maximize the acceptance of proposal but with good
+mixing properties for the slice variable. These characteristics are targeted
+by controlling heuristics based on the maximum eigenvalues of the correlation
+and gradient matrices of the cross-chain samples, under simpifyng assumptions.</p>
+<p>Good tuning is fundamental for the non-reversible Generalized HMC sampling
+algorithm to explore the target space efficienty and output uncorrelated, or
+as uncorrelated as possible, samples from the target space. Furthermore, the
+single integrator step of the algorithm lends itself for fast sampling
+on parallel computer architectures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logprob_fn</strong> (<em>Callable</em>) – The log density probability density function from which we wish to sample.</p></li>
+<li><p><strong>num_chain</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of chains used for cross-chain warm-up training.</p></li>
+<li><p><strong>num_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of adaptation steps.</p></li>
+<li><p><strong>divergence_threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Value of the difference in energy above which we consider that the
+transition is divergent.</p></li>
+<li><p><strong>logprob_grad_fn</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – The gradient of logprob_fn.  If it’s not provided, it will be computed
+by jax using reverse mode autodiff (jax.grad).</p></li>
+<li><p><strong>batch_fn</strong> (<em>Callable</em>) – Either jax.vmap or jax.pmap to perform parallel operations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A function that returns the last cross-chain state, a sampling kernel with the</em></p></li>
+<li><p><em>tuned parameter values, and all the warm-up states for diagnostics.</em></p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>blackjax.base.AdaptationAlgorithm</p>
 </dd>
 </dl>
 </dd></dl>

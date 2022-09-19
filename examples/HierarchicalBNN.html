@@ -101,12 +101,44 @@
  </span>
 </p>
 <ul class="current nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../howtos.html">
+   HowTos
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="aesara.html">
+     Use BlackJAX with Aesara
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="pymc.html">
+     Use BlackJAX with PyMC
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="tfp.html">
+     Use BlackJAX with TFP
+    </a>
+   </li>
+  </ul>
+ </li>
  <li class="toctree-l1 current active has-children">
   <a class="reference internal" href="../examples.html">
    Examples
   </a>
-  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <label for="toctree-checkbox-2">
    <i class="fas fa-chevron-down">
    </i>
   </label>
@@ -164,6 +196,16 @@
    <li class="toctree-l2">
     <a class="reference internal" href="Pathfinder.html">
      Pathfinder
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="RegimeSwitchingModel.html">
+     Regime switching Hidden Markov model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="SparseLogisticRegression.html">
+     Sparse logistic regression
     </a>
    </li>
   </ul>
@@ -444,13 +486,13 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-12 12:18:16.679814: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libcudart.so.11.0&#39;; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory
-2022-09-12 12:18:16.719210: E tensorflow/stream_executor/cuda/cuda_blas.cc:2981] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-19 15:16:28.581767: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libcudart.so.11.0&#39;; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory
+2022-09-19 15:16:28.621364: E tensorflow/stream_executor/cuda/cuda_blas.cc:2981] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-12 12:18:17.629315: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libnvinfer.so.7&#39;; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory
-2022-09-12 12:18:17.629473: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libnvinfer_plugin.so.7&#39;; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory
-2022-09-12 12:18:17.629486: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-19 15:16:29.651773: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libnvinfer.so.7&#39;; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory
+2022-09-19 15:16:29.651905: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library &#39;libnvinfer_plugin.so.7&#39;; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory
+2022-09-19 15:16:29.651916: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
 </pre></div>
 </div>
 </div>
@@ -470,7 +512,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/fe747b9aba95447c354191d0b2d70a61c1167e724ec92a65034727c4fe272c34.png" src="../_images/fe747b9aba95447c354191d0b2d70a61c1167e724ec92a65034727c4fe272c34.png" />
+<img alt="../_images/337ad9407f2fd6a9ba56dc35ec08f9019130f318439e42c2b3600d2515af4b53.png" src="../_images/337ad9407f2fd6a9ba56dc35ec08f9019130f318439e42c2b3600d2515af4b53.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -554,7 +596,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/690ba486fe3ad6686f0538a1837ae5475b259cbb794906444e1edaf30e40750d.png" src="../_images/690ba486fe3ad6686f0538a1837ae5475b259cbb794906444e1edaf30e40750d.png" />
+<img alt="../_images/f0e4a51716e80e48bf3e00fde18747e95cca75c5588305903638a49a61887f24.png" src="../_images/f0e4a51716e80e48bf3e00fde18747e95cca75c5588305903638a49a61887f24.png" />
 </div>
 </div>
 </section>
@@ -775,7 +817,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Test accuracy = 83.22%
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Test accuracy = 83.44%
 </pre></div>
 </div>
 </div>
@@ -812,7 +854,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/eff27a2a95258b1e90b825ee01c0f4c9083d3c3bec435c35357fb9e6568b4697.png" src="../_images/eff27a2a95258b1e90b825ee01c0f4c9083d3c3bec435c35357fb9e6568b4697.png" />
+<img alt="../_images/95dedd5760b474c7a36afdebf73cf8b7cdbbf62cf5fd6266ddedd8a6a8307e04.png" src="../_images/95dedd5760b474c7a36afdebf73cf8b7cdbbf62cf5fd6266ddedd8a6a8307e04.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -822,7 +864,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/792183ae8d26d33d9deb2e06eea3f8157df91b288607f894fd339fabeaeef319.png" src="../_images/792183ae8d26d33d9deb2e06eea3f8157df91b288607f894fd339fabeaeef319.png" />
+<img alt="../_images/93b96164678d9a369d4ac4d5580c3737ebe72b05b2c3d63f5e1e21ccd6afbd83.png" src="../_images/93b96164678d9a369d4ac4d5580c3737ebe72b05b2c3d63f5e1e21ccd6afbd83.png" />
 </div>
 </div>
 </section>
@@ -925,8 +967,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 56s, sys: 1.35 s, total: 1min 57s
-Wall time: 1min 55s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 48s, sys: 1.1 s, total: 1min 49s
+Wall time: 1min 48s
 </pre></div>
 </div>
 </div>
@@ -945,7 +987,7 @@ Wall time: 1min 55s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Train accuracy = 91.00%
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Train accuracy = 91.11%
 </pre></div>
 </div>
 </div>
@@ -997,7 +1039,7 @@ Wall time: 1min 55s
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/408bd4a2da8325e22d46c5f46412f4a8b694618a2afad50a7df9fe6f280308c3.png" src="../_images/408bd4a2da8325e22d46c5f46412f4a8b694618a2afad50a7df9fe6f280308c3.png" />
+<img alt="../_images/4b65dd9094a79047a8638bc853da29a92c1ff12df10bc4afc2e4557876ed3ec4.png" src="../_images/4b65dd9094a79047a8638bc853da29a92c1ff12df10bc4afc2e4557876ed3ec4.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -1007,7 +1049,7 @@ Wall time: 1min 55s
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/5cb58c1d7da9730e1d90d53c022a414eb074ad284fe34b8e4208ad8b39489e29.png" src="../_images/5cb58c1d7da9730e1d90d53c022a414eb074ad284fe34b8e4208ad8b39489e29.png" />
+<img alt="../_images/134cf355b71f9d2407ecbb84769975d7dbe8df2c4ad170f5d89c998571de7de5.png" src="../_images/134cf355b71f9d2407ecbb84769975d7dbe8df2c4ad170f5d89c998571de7de5.png" />
 </div>
 </div>
 </section>

@@ -98,11 +98,43 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1 has-children">
-  <a class="reference internal" href="../../examples.html">
-   Examples
+  <a class="reference internal" href="../../howtos.html">
+   HowTos
   </a>
   <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
   <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/aesara.html">
+     Use BlackJAX with Aesara
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/numpyro.html">
+     Use BlackJAX with Numpyro
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/pymc.html">
+     Use BlackJAX with PyMC
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/tfp.html">
+     Use BlackJAX with TFP
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../examples.html">
+   Examples
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <label for="toctree-checkbox-2">
    <i class="fas fa-chevron-down">
    </i>
   </label>
@@ -160,6 +192,16 @@
    <li class="toctree-l2">
     <a class="reference internal" href="../../examples/Pathfinder.html">
      Pathfinder
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/RegimeSwitchingModel.html">
+     Regime switching Hidden Markov model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/SparseLogisticRegression.html">
+     Sparse logistic regression
     </a>
    </li>
   </ul>
@@ -509,7 +551,7 @@ title="Source repository"
         <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">logprob_grad_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
@@ -814,16 +856,29 @@ title="Source repository"
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">grad_estimator_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">schedule_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 
         <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">grad_estimator_fn</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">):</span>
+            <span class="n">learning_rate_fn</span> <span class="o">=</span> <span class="n">learning_rate</span>
+        <span class="k">elif</span> <span class="nb">float</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">):</span>
+
+            <span class="k">def</span> <span class="nf">learning_rate_fn</span><span class="p">(</span><span class="n">_</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">learning_rate</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;The learning rate must either be a float (which corresponds to a constant learning rate) &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;or a function of the index of the current iteration. Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">)</span><span class="si">}</span><span class="s2"> instead.&quot;</span>
+            <span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">,</span> <span class="n">grad_estimator_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
-            <span class="n">step_size</span> <span class="o">=</span> <span class="n">schedule_fn</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+            <span class="n">step_size</span> <span class="o">=</span> <span class="n">learning_rate_fn</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
@@ -890,17 +945,30 @@ title="Source repository"
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">grad_estimator_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">schedule_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 
         <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">grad_estimator_fn</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">):</span>
+            <span class="n">learning_rate_fn</span> <span class="o">=</span> <span class="n">learning_rate</span>
+        <span class="k">elif</span> <span class="nb">float</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">):</span>
+
+            <span class="k">def</span> <span class="nf">learning_rate_fn</span><span class="p">(</span><span class="n">_</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">learning_rate</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;The learning rate must either be a float (which corresponds to a constant learning rate) &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;or a function of the index of the current iteration. Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">)</span><span class="si">}</span><span class="s2"> instead.&quot;</span>
+            <span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">,</span> <span class="n">grad_estimator_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
-            <span class="n">step_size</span> <span class="o">=</span> <span class="n">schedule_fn</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+            <span class="n">step_size</span> <span class="o">=</span> <span class="n">learning_rate_fn</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">data_batch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
@@ -1020,6 +1088,106 @@ title="Source repository"
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="meads"><a class="viewcode-back" href="../../adaptation.html#blackjax.meads">[docs]</a><span class="k">def</span> <span class="nf">meads</span><span class="p">(</span>
+    <span class="n">logprob_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">num_chain</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">logprob_grad_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">batch_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdaptationAlgorithm</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Adapt the parameters of the Generalized HMC algorithm.</span>
+
+<span class="sd">    The Generalized HMC algorithm depends on three parameters, each controlling</span>
+<span class="sd">    one element of its behaviour: step size controls the integrator&#39;s dynamics,</span>
+<span class="sd">    alpha controls the persistency of the momentum variable, and delta controls</span>
+<span class="sd">    the deterministic transformation of the slice variable used to perform the</span>
+<span class="sd">    non-reversible Metropolis-Hastings accept/reject step.</span>
+
+<span class="sd">    The step size parameter is chosen to ensure the stability of the velocity</span>
+<span class="sd">    verlet integrator, the alpha parameter to make the influence of the current</span>
+<span class="sd">    state on future states of the momentum variable to decay exponentially, and</span>
+<span class="sd">    the delta parameter to maximize the acceptance of proposal but with good</span>
+<span class="sd">    mixing properties for the slice variable. These characteristics are targeted</span>
+<span class="sd">    by controlling heuristics based on the maximum eigenvalues of the correlation</span>
+<span class="sd">    and gradient matrices of the cross-chain samples, under simpifyng assumptions.</span>
+
+<span class="sd">    Good tuning is fundamental for the non-reversible Generalized HMC sampling</span>
+<span class="sd">    algorithm to explore the target space efficienty and output uncorrelated, or</span>
+<span class="sd">    as uncorrelated as possible, samples from the target space. Furthermore, the</span>
+<span class="sd">    single integrator step of the algorithm lends itself for fast sampling</span>
+<span class="sd">    on parallel computer architectures.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logprob_fn</span>
+<span class="sd">        The log density probability density function from which we wish to sample.</span>
+<span class="sd">    num_chain</span>
+<span class="sd">        Number of chains used for cross-chain warm-up training.</span>
+<span class="sd">    num_steps</span>
+<span class="sd">        The number of adaptation steps.</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        Value of the difference in energy above which we consider that the</span>
+<span class="sd">        transition is divergent.</span>
+<span class="sd">    logprob_grad_fn</span>
+<span class="sd">        The gradient of logprob_fn.  If it&#39;s not provided, it will be computed</span>
+<span class="sd">        by jax using reverse mode autodiff (jax.grad).</span>
+<span class="sd">    batch_fn</span>
+<span class="sd">        Either jax.vmap or jax.pmap to perform parallel operations.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A function that returns the last cross-chain state, a sampling kernel with the</span>
+<span class="sd">    tuned parameter values, and all the warm-up states for diagnostics.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">ghmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">divergence_threshold</span><span class="o">=</span><span class="n">divergence_threshold</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">kernel_factory</span><span class="p">(</span><span class="n">step_size</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">kernel_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">logprob_fn</span><span class="p">,</span>
+                <span class="n">step_size</span><span class="p">,</span>
+                <span class="n">alpha</span><span class="p">,</span>
+                <span class="n">delta</span><span class="p">,</span>
+                <span class="n">logprob_grad_fn</span><span class="o">=</span><span class="n">logprob_grad_fn</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">kernel_fn</span>
+
+    <span class="n">init</span><span class="p">,</span> <span class="n">update</span><span class="p">,</span> <span class="n">final</span> <span class="o">=</span> <span class="n">adaptation</span><span class="o">.</span><span class="n">meads</span><span class="o">.</span><span class="n">base</span><span class="p">(</span>
+        <span class="n">kernel_factory</span><span class="p">,</span>
+        <span class="n">logprob_grad_fn</span> <span class="ow">or</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">batch_init</span> <span class="o">=</span> <span class="n">batch_fn</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">ghmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">logprob_grad_fn</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">update</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">infos</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">positions</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+
+        <span class="n">key_init</span><span class="p">,</span> <span class="n">key_warm</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+        <span class="n">rng_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key_init</span><span class="p">,</span> <span class="n">num_chain</span><span class="p">)</span>
+        <span class="n">states</span> <span class="o">=</span> <span class="n">batch_init</span><span class="p">(</span><span class="n">rng_keys</span><span class="p">,</span> <span class="n">positions</span><span class="p">)</span>
+        <span class="n">init_state</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key_warm</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
+        <span class="n">last_state</span><span class="p">,</span> <span class="p">(</span><span class="n">warmup_states</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+            <span class="n">one_step</span><span class="p">,</span> <span class="n">init_state</span><span class="p">,</span> <span class="n">keys</span>
+        <span class="p">)</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">final</span><span class="p">(</span><span class="n">last_state</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">warmup_states</span>
+
+    <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
+
+
 <div class="viewcode-block" id="rmh"><a class="viewcode-back" href="../../sampling.html#blackjax.rmh">[docs]</a><span class="k">class</span> <span class="nc">rmh</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the gaussian random walk kernel</span>
 
@@ -1134,22 +1302,31 @@ title="Source repository"
 
 
 <div class="viewcode-block" id="orbital_hmc"><a class="viewcode-back" href="../../sampling.html#blackjax.orbital_hmc">[docs]</a><span class="k">class</span> <span class="nc">orbital_hmc</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Periodic orbital MCMC kernel</span>
+    <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Periodic orbital MCMC kernel.</span>
+
 <span class="sd">    Each iteration of the periodic orbital MCMC outputs ``period`` weighted samples from</span>
 <span class="sd">    a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable</span>
 <span class="sd">    with precision matrix ``inverse_mass_matrix``, evaluated using the ``bijection`` as an</span>
 <span class="sd">    integrator with discretization parameter ``step_size``.</span>
+
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
+
 <span class="sd">    A new Periodic orbital MCMC kernel can be initialized and used with the following code:</span>
+
 <span class="sd">    .. code::</span>
+
 <span class="sd">        per_orbit = blackjax.orbital_hmc(logprob_fn, step_size, inverse_mass_matrix, period)</span>
 <span class="sd">        state = per_orbit.init(position)</span>
 <span class="sd">        new_state, info = per_orbit.step(rng_key, state)</span>
+
 <span class="sd">    We can JIT-compile the step function for better performance</span>
+
 <span class="sd">    .. code::</span>
+
 <span class="sd">        step = jax.jit(per_orbit.step)</span>
 <span class="sd">        new_state, info = step(rng_key, state)</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    logprob_fn</span>
@@ -1164,6 +1341,7 @@ title="Source repository"
 <span class="sd">        The number of steps used to build the orbit.</span>
 <span class="sd">    bijection</span>
 <span class="sd">        (algorithm parameter) The symplectic integrator to use to build the orbit.</span>
+
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
@@ -1200,24 +1378,33 @@ title="Source repository"
 
 
 <div class="viewcode-block" id="elliptical_slice"><a class="viewcode-back" href="../../sampling.html#blackjax.elliptical_slice">[docs]</a><span class="k">class</span> <span class="nc">elliptical_slice</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Elliptical Slice sampling kernel</span>
+    <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Elliptical Slice sampling kernel.</span>
+
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
+
 <span class="sd">    A new Elliptical Slice sampling kernel can be initialized and used with the following code:</span>
+
 <span class="sd">    .. code::</span>
+
 <span class="sd">        ellip_slice = blackjax.elliptical_slice(loglikelihood_fn, cov_matrix)</span>
 <span class="sd">        state = ellip_slice.init(position)</span>
 <span class="sd">        new_state, info = ellip_slice.step(rng_key, state)</span>
+
 <span class="sd">    We can JIT-compile the step function for better performance</span>
+
 <span class="sd">    .. code::</span>
+
 <span class="sd">        step = jax.jit(ellip_slice.step)</span>
 <span class="sd">        new_state, info = step(rng_key, state)</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    loglikelihood_fn</span>
 <span class="sd">        Only the log likelihood function from the posterior distributon we wish to sample.</span>
 <span class="sd">    cov_matrix</span>
 <span class="sd">        The value of the covariance matrix of the gaussian prior distribution from the posterior we wish to sample.</span>
+
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
@@ -1246,6 +1433,99 @@ title="Source repository"
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ghmc"><a class="viewcode-back" href="../../sampling.html#blackjax.ghmc">[docs]</a><span class="k">class</span> <span class="nc">ghmc</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Generalized HMC kernel.</span>
+
+<span class="sd">    The Generalized HMC kernel performs a similar procedure to the standard HMC</span>
+<span class="sd">    kernel with the difference of a persistent momentum variable and a non-reversible</span>
+<span class="sd">    Metropolis-Hastings step instead of the standard Metropolis-Hastings acceptance</span>
+<span class="sd">    step.</span>
+
+<span class="sd">    This means that the sampling of the momentum variable depends on the previous</span>
+<span class="sd">    momentum, the rate of persistence depends on the alpha parameter, and that the</span>
+<span class="sd">    Metropolis-Hastings accept/reject step is done through slice sampling with a</span>
+<span class="sd">    non-reversible slice variable also dependent on the previous slice, the determinisitc</span>
+<span class="sd">    transformation is defined by the delta parameter.</span>
+
+<span class="sd">    The Generalized HMC does not have a trajectory length parameter, it always performs</span>
+<span class="sd">    one iteration of the velocity verlet integrator with a given step size, making</span>
+<span class="sd">    the algorithm a good candiate for running many chains in parallel.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    A new Generalized HMC kernel can be initialized and used with the following code:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        ghmc_kernel = blackjax.ghmc(logprob_fn, step_size, alpha, delta)</span>
+<span class="sd">        state = ghmc_kernel.init(rng_key, position)</span>
+<span class="sd">        new_state, info = ghmc_kernel.step(rng_key, state)</span>
+
+<span class="sd">    We can JIT-compile the step function for better performance</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        step = jax.jit(ghmc_kernel.step)</span>
+<span class="sd">        new_state, info = step(rng_key, state)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logprob_fn</span>
+<span class="sd">        The logprobability density function we wish to draw samples from. This</span>
+<span class="sd">        is minus the potential function.</span>
+<span class="sd">    step_size</span>
+<span class="sd">        A PyTree of the same structure as the target PyTree (position) with the</span>
+<span class="sd">        values used for as a step size for each dimension of the target space in</span>
+<span class="sd">        the velocity verlet integrator.</span>
+<span class="sd">    alpha</span>
+<span class="sd">        The value defining the persistence of the momentum variable.</span>
+<span class="sd">    delta</span>
+<span class="sd">        The value defining the deterministic translation of the slice variable.</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        The absolute value of the difference in energy between two states above</span>
+<span class="sd">        which we say that the transition is divergent. The default value is</span>
+<span class="sd">        commonly found in other libraries, and yet is arbitrary.</span>
+<span class="sd">    noise_gn</span>
+<span class="sd">        A function that takes as input the slice variable and outputs a random</span>
+<span class="sd">        variable used as a noise correction of the persistent slice update.</span>
+<span class="sd">        The parameter defaults to a random variable with a single atom at 0.</span>
+<span class="sd">    logprob_grad_fn</span>
+<span class="sd">        Optional function customizing the gradients of the target log density.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">ghmc</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">ghmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">logprob_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">noise_gn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">logprob_grad_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+
+        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">noise_gn</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">logprob_grad_fn</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">logprob_grad_fn</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 
 
 <span class="c1"># -----------------------------------------------------------------------------</span>
