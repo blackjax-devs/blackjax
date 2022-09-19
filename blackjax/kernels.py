@@ -614,7 +614,7 @@ class sghmc:
         cls,
         grad_estimator_fn: Callable,
         learning_rate: Union[Callable[[int], float], float],
-        num_integration_steps: int,
+        num_integration_steps: int = 10,
     ) -> SamplingAlgorithm:
 
         step = cls.kernel(grad_estimator_fn)
