@@ -1,15 +1,22 @@
-name: Publish docs
+name: Build the documentation
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  pull_request:
+    on:
+      workflow_run:
+        workflows: ["Tests"]
+        branches: [main]
+        types:
+          - completed
 
 jobs:
-  build-and-deploy:
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout the branch
         uses: actions/checkout@v2.3.1
         with:
           persist-credentials: false
@@ -19,15 +26,7 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: Build docs
+      - name: Build the documentation with Sphinx
         run: |
           pip install -r requirements-doc.txt
           sphinx-build -b html docs docs/build/html
-
-      - name: Publish docs
-        uses: JamesIves/github-pages-deploy-action@3.6.2
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: gh-pages
-          FOLDER: docs/build/html
-          CLEAN: true

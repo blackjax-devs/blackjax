@@ -1,4 +1,4 @@
-name: "Run tests"
+name: Tests
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   style:
-    name: Check code style
+    name: Check the code style
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -45,7 +45,7 @@ jobs:
           fail_ci_if_error: false
 
   benchmark:
-    name: Benchmarks
+    name: Run benchmarks
     needs: [test]
     runs-on: ubuntu-latest
     strategy:
