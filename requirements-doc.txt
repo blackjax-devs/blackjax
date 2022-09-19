@@ -16,7 +16,7 @@ sphinx
 sphinx-autobuild
 sphinx-book-theme
 sphinx-math-dollar
-tensorflow
+tensorflow-cpu
 tensorflow-datasets
 tfp-nightly[jax]
 watermark
