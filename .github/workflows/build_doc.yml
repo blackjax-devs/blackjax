@@ -1,9 +1,10 @@
 name: Publish docs
 
 on:
+  pull_request:
+    branches: [main]
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build-and-deploy:
@@ -25,6 +26,7 @@ jobs:
           sphinx-build -b html docs docs/build/html
 
       - name: Publish docs
+        if: success() && github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@3.6.2
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
