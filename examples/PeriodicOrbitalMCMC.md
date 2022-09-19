@@ -322,17 +322,10 @@ we have that using the periodic orbital MCMC on the pullback with bijection $f(x
 
 First we define our parametrized MAF bijection using autoregressive neural networks.
 
-```bash
-pip install numpyro
-```
 
 ```{code-cell} ipython3
 import optax
-try:
-    from numpyro.nn import AutoregressiveNN
-except ModuleNotFoundError:
-    %pip install -qq numpyro
-    from numpyro.nn import AutoregressiveNN
+from numpyro.nn import AutoregressiveNN
 ```
 
 ```{code-cell} ipython3
@@ -354,7 +347,7 @@ _, initial_parameters = init_fun(jax.random.PRNGKey(1), (2,))
 log_reference = lambda z: jnp.sum(stats.norm.logpdf(z, loc=0.0, scale=1.0))
 ```
 
-#### Some Utility Functions
+### Some Utility Functions
 
 Define the log pullback density, our loss function (negative ELBO) and the optimization loop used to train our transformation.
 

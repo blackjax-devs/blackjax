@@ -24,7 +24,7 @@ copyright = f"{date.today().year}, The Blackjax developers"
 author = "The Blackjax developers"
 
 # The full version, including alpha/beta/rc tags
-release = "0.3.0"
+release = "0.8.3"
 
 
 # -- General configuration ---------------------------------------------------

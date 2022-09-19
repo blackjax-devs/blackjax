@@ -63,6 +63,7 @@ Then install BlackJAX
    :maxdepth: 1
    :caption: Blackjax by example
 
+   howtos
    examples
 
 .. toctree::

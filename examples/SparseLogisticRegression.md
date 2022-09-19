@@ -6,9 +6,9 @@ jupytext:
     format_version: 0.13
     jupytext_version: 1.14.1
 kernelspec:
-  display_name: imcmc_blackjax
+  display_name: Python 3 (ipykernel)
   language: python
-  name: imcmc_blackjax
+  name: python3
 ---
 
 # Sparse logistic regression
@@ -17,9 +17,6 @@ This example models a logistic regression with hierarchies on the scale of the i
 
 The model is run on its non-centered parametrization \citep{papaspiliopoulos2007general} with data from the numerical version of the [German credit dataset](https://archive.ics.uci.edu/ml/datasets/statlog+(german+credit+data)). The target posterior is defined by its likelihood $L(\mathbf{y}|\beta, \lambda, \tau) = \prod_i \text{Beta}(y_i;\sigma((\tau \lambda \odot \beta)^T X_i))$, with $\sigma$ the sigmoid function, and prior $\pi_0(\beta, \lambda, \tau) = \text{Gamma}(\tau;1/2, 1/2)\prod_i \mathcal{N}(\beta_i;0, 1)\text{Gamma}(\lambda_i;1/2, 1/2)$.
 
-```bash
-pip install numpyro
-```
 
 ```{code-cell} ipython3
 import jax
@@ -120,6 +117,3 @@ print("Runtime for MEADS", tic2 - tic1)
 print_summary(samples)
 ```
 
-```{code-cell} ipython3
-
-```

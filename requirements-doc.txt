@@ -1,12 +1,15 @@
 -e ./
 arviz
+aesara
 distrax
 jax
 jaxlib
 jaxopt
 jupytext
 myst_nb
+numpyro
 optax
+pymc
 scikit-learn
 seaborn
 sphinx
@@ -15,4 +18,5 @@ sphinx-book-theme
 sphinx-math-dollar
 tensorflow
 tensorflow-datasets
+tfp-nightly[jax]
 watermark

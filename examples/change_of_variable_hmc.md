@@ -50,17 +50,8 @@ import seaborn as sns
 
 pd.set_option("display.max_rows", 80)
 
-try:
-    import blackjax
-except ModuleNotFoundError:
-    %pip install -qq jaxopt blackjax
-    import blackjax
-
-try:
-    import tensorflow_probability.substrates.jax as tfp
-except ModuleNotFoundError:
-    %pip install -qq tensorflow_probability
-    import tensorflow_probability.substrates.jax as tfp
+import blackjax
+import tensorflow_probability.substrates.jax as tfp
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
