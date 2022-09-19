@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.1
+    jupytext_version: 1.14.0
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -77,35 +77,19 @@ loglikelihood = joint_logprob({Y_rv: Y_vv, theta_rv: theta_vv}, extra_rewrites=t
 logprob = logprior + loglikelihood
 ```
 
-Let us now compile the logprob /graph/ to a /function/ that computes the log-probability:
+Let us now compile the logprob *graph* to an /Aesara function/ that computes the log-probability:
 
 ```{code-cell} ipython3
 logprob_fn = aesara.function((a_vv, b_vv, theta_vv, Y_vv), logprob)
 ```
 
-This compiles the logprob function using Aesara's C backend. To sample with Blackjax we will need to use Aesara's JAX backend; it is still work in progress so the code will look complicated. All you need to know is that `jax_fn` is a function that uses JAX operators, can be passed as an argument to `jax.jit` and `jax.grad`:
+This compiles the logprob function using Aesara's C backend. To sample with Blackjax we will need to use Aesara's JAX backend; `logprob_jax` defined below is a function that uses JAX operators, can be passed as an argument to `jax.jit` and `jax.grad`.
+
+(We can't use `logprob_fn` directly because the Aesara function returned is also in charge of other Aesara functionalities, like updating shared variables)
 
 ```{code-cell} ipython3
-from aesara.link.jax.dispatch import jax_funcify
-from aesara.graph.fg import FunctionGraph
-from aeppl.rewriting import logprob_rewrites_db
-from aesara.compile import mode
-from aesara.raise_op import CheckAndRaise
-
-@jax_funcify.register(CheckAndRaise)
-def jax_funcify_Assert(op, **kwargs):
-    # Jax does not allow assert whose values aren't known during JIT compilation
-    # within it's JIT-ed code. Hence we need to make a simple pass through
-    # version of the Assert Op.
-    # https://github.com/google/jax/issues/2273#issuecomment-589098722
-    def assert_fn(value, *inps):
-        return value
-
-    return assert_fn
-
-fgraph = FunctionGraph(inputs=(a_vv, b_vv, theta_vv, Y_vv), outputs=(logprob,))
-mode.JAX.optimizer.rewrite(fgraph)
-jax_fn = jax_funcify(fgraph)
+logprob_fn = aesara.function((a_vv, b_vv, theta_vv, Y_vv), logprob, mode="JAX")
+logprob_jax = logprob_fn.vm.jit_fn
 ```
 
 Let us now inialize the parameter values:
@@ -125,10 +109,11 @@ def init_param_fn(seed):
     }
 
 rng_key = jax.random.PRNGKey(0)
-init_position = tuple(init_param_fn(rng_key).values())
+init_position = init_param_fn(rng_key)
 
 def logprob(position):
-    return jax_fn(*position, n_of_positives)[0]
+    flat_position = tuple(position.values())
+    return logprob_jax(*flat_position, n_of_positives)[0]
 
 logprob(init_position)
 ```

@@ -6,10 +6,11 @@ jupytext:
     format_version: 0.13
     jupytext_version: 1.14.0
 kernelspec:
-  display_name: blackjax
+  display_name: Python 3 (ipykernel)
   language: python
   name: python3
 ---
+
 # MNIST Digit Recognition With a 3-Layer Perceptron
 
 This example is inspired form [this notebook](https://github.com/jeremiecoullon/SGMCMCJax/blob/master/docs/nbs/BNN.ipynb) in the SGMCMCJax repository. We try to use a 3-layer neural network to recognise the digits in the MNIST dataset.
@@ -71,7 +72,7 @@ def batch_data(rng_key, data, batch_size, data_size):
 
 
 X_train, y_train, N_train = prepare_data(data_train)
-X_test, y_test, N_test = prepare_data(data_train)
+X_test, y_test, N_test = prepare_data(data_test)
 ```
 
 ## Model: 3-layer Perceptron
@@ -84,6 +85,7 @@ We will use a very simple (bayesian) neural network in this example: A MLP with 
 \end{align*}
 
 ```{code-cell} ipython3
+@jax.jit
 def predict_fn(parameters, X):
     """Returns the probability for the image represented by X
     to be in each category given the MLP's weights vakues.
@@ -114,6 +116,7 @@ def loglikelihood_fn(parameters, data):
     return jnp.sum(y * predict_fn(parameters, X))
 
 
+@jax.jit
 def compute_accuracy(parameters, X, y):
     """Compute the accuracy of the model.
 
@@ -164,15 +167,19 @@ We now sample from the model's posteriors. We discard the first 1000 samples unt
 ```{code-cell} ipython3
 %%time
 
+from fastprogress.fastprogress import progress_bar
+
 import blackjax
 from blackjax.sgmcmc.gradients import grad_estimator
 
+
 data_size = len(y_train)
-batch_size = int(0.01 * data_size)
+batch_size = 512
 layer_sizes = [784, 100, 10]
 step_size = 5e-5
-num_warmup = 1000
-num_samples = 2000
+
+num_warmup = (data_size // batch_size) * 20
+num_samples = 1000
 
 # Batch the data
 rng_key = jax.random.PRNGKey(1)
@@ -180,7 +187,7 @@ batches = batch_data(rng_key, (X_train, y_train), batch_size, data_size)
 
 # Build the SGLD kernel with a constant learning rate
 grad_fn = grad_estimator(logprior_fn, loglikelihood_fn, data_size)
-sgld = blackjax.sgld(grad_fn, step_size)
+sgld = blackjax.sgld(grad_fn, lambda _: step_size)
 
 # Set the initial state
 init_positions = init_parameters(rng_key, layer_sizes)
@@ -190,10 +197,10 @@ state = sgld.init(init_positions, next(batches))
 accuracies = []
 samples = []
 steps = []
-for step in range(num_samples + num_warmup):
+for step in progress_bar(range(num_samples + num_warmup)):
     _, rng_key = jax.random.split(rng_key)
     batch = next(batches)
-    state = sgld.step(rng_key, state, batch)
+    state = jax.jit(sgld.step)(rng_key, state, batch)
     if step % 100 == 0:
         accuracy = compute_accuracy(state.position, X_test, y_test)
         accuracies.append(accuracy)
@@ -223,22 +230,23 @@ plt.plot()
 print(f"The average accuracy in the sampling phase is {np.mean(accuracies[10:]):.2f}")
 ```
 
-Which is not a bad accuracy at all for such a simple model and after only 1000 steps! Remember though that we draw samples from the posterior distribution of the digit probabilities; we can thus use this information to filter out examples for which the model is "unsure" of its prediction.
+Which is not a bad accuracy at all for such a simple model! Remember though that we draw samples from the posterior distribution of the digit probabilities; we can thus use this information to filter out examples for which the model is "unsure" of its prediction.
 
 Here we will say that the model is unsure of its prediction for a given image if the digit that is most often predicted for this image is predicted less tham 95% of the time.
 
 ```{code-cell} ipython3
-predicted_class = np.exp(
-    np.stack([jax.vmap(predict_fn, in_axes=(None, 0))(s, X_test) for s in samples])
+predicted_class = jnp.exp(
+    jnp.stack([jax.vmap(predict_fn, in_axes=(None, 0))(s, X_test) for s in samples])
 )
 ```
 
 ```{code-cell} ipython3
-max_predicted = [np.argmax(predicted_class[:, i, :], axis=1) for i in range(60000)]
+num_test_samples = len(y_test)
+max_predicted = [np.argmax(predicted_class[:, i, :], axis=1) for i in range(num_test_samples)]
 freq_max_predicted = np.array(
     [
-        (max_predicted[i] == np.argmax(np.bincount(max_predicted[i]))).sum() / 2000
-        for i in range(60000)
+        (max_predicted[i] == np.argmax(np.bincount(max_predicted[i]))).sum() / num_samples
+        for i in range(num_test_samples)
     ]
 )
 certain_mask = freq_max_predicted > 0.95
