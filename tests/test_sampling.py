@@ -229,7 +229,11 @@ class SGMCMCTest(chex.TestCase):
         w = x - position
         return -0.5 * jnp.dot(w, w)
 
-    def test_linear_regression_sgld(self):
+    def constant_step_size(_):
+        return 1e-3
+
+    @parameterized.parameters((1e-3, False), (constant_step_size, False), (1, True))
+    def test_linear_regression_sgld(self, learning_rate, error_expected):
         """Test the HMC kernel and the Stan warmup."""
         import blackjax.sgmcmc.gradients
 
@@ -238,12 +242,15 @@ class SGMCMCTest(chex.TestCase):
         data_size = 1000
         X_data = jax.random.normal(data_key, shape=(data_size, 5))
 
-        schedule_fn = lambda _: 1e-3
         grad_fn = blackjax.sgmcmc.gradients.grad_estimator(
             self.logprior_fn, self.loglikelihood_fn, data_size
         )
-        sgld = blackjax.sgld(grad_fn, schedule_fn)
 
+        if error_expected:
+            self.assertRaises(TypeError, blackjax.sgld(grad_fn, learning_rate))
+            return
+
+        sgld = blackjax.sgld(grad_fn, learning_rate)
         init_position = 1.0
         data_batch = X_data[:100, :]
         init_state = sgld.init(init_position, data_batch)
@@ -252,7 +259,8 @@ class SGMCMCTest(chex.TestCase):
         data_batch = X_data[100:200, :]
         _ = sgld.step(rng_key, init_state, data_batch)
 
-    def test_linear_regression_sghmc(self):
+    @parameterized.parameters((1e-3, False), (constant_step_size, False), (1, True))
+    def test_linear_regression_sghmc(self, learning_rate, error_expected):
         """Test the HMC kernel and the Stan warmup."""
         import blackjax.sgmcmc.gradients
 
@@ -261,11 +269,15 @@ class SGMCMCTest(chex.TestCase):
         data_size = 1000
         X_data = jax.random.normal(data_key, shape=(data_size, 5))
 
-        schedule_fn = lambda _: 1e-3
         grad_fn = blackjax.sgmcmc.gradients.grad_estimator(
             self.logprior_fn, self.loglikelihood_fn, data_size
         )
-        sghmc = blackjax.sghmc(grad_fn, schedule_fn, 10)
+
+        if error_expected:
+            self.assertRaises(TypeError, blackjax.sgld(grad_fn, learning_rate))
+            return
+
+        sghmc = blackjax.sghmc(grad_fn, learning_rate, 10)
 
         init_position = 1.0
         data_batch = X_data[:100, :]

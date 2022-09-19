@@ -524,16 +524,29 @@ class sgld:
     def __new__(  # type: ignore[misc]
         cls,
         grad_estimator_fn: Callable,
-        schedule_fn: Callable,
+        learning_rate: Union[Callable[[int], float], float],
     ) -> SamplingAlgorithm:
 
         step = cls.kernel(grad_estimator_fn)
+
+        if callable(learning_rate):
+            learning_rate_fn = learning_rate
+        elif float(learning_rate):
+
+            def learning_rate_fn(_):
+                return learning_rate
+
+        else:
+            raise TypeError(
+                "The learning rate must either be a float (which corresponds to a constant learning rate) "
+                f"or a function of the index of the current iteration. Got {type(learning_rate)} instead."
+            )
 
         def init_fn(position: PyTree, data_batch: PyTree):
             return cls.init(position, data_batch, grad_estimator_fn)
 
         def step_fn(rng_key: PRNGKey, state, data_batch: PyTree):
-            step_size = schedule_fn(state.step)
+            step_size = learning_rate_fn(state.step)
             return step(rng_key, state, data_batch, step_size)
 
         return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
@@ -600,17 +613,30 @@ class sghmc:
     def __new__(  # type: ignore[misc]
         cls,
         grad_estimator_fn: Callable,
-        schedule_fn: Callable,
+        learning_rate: Union[Callable[[int], float], float],
         num_integration_steps: int,
     ) -> SamplingAlgorithm:
 
         step = cls.kernel(grad_estimator_fn)
 
+        if callable(learning_rate):
+            learning_rate_fn = learning_rate
+        elif float(learning_rate):
+
+            def learning_rate_fn(_):
+                return learning_rate
+
+        else:
+            raise TypeError(
+                "The learning rate must either be a float (which corresponds to a constant learning rate) "
+                f"or a function of the index of the current iteration. Got {type(learning_rate)} instead."
+            )
+
         def init_fn(position: PyTree, data_batch: PyTree):
             return cls.init(position, data_batch, grad_estimator_fn)
 
         def step_fn(rng_key: PRNGKey, state, data_batch: PyTree):
-            step_size = schedule_fn(state.step)
+            step_size = learning_rate_fn(state.step)
             return step(rng_key, state, data_batch, step_size, num_integration_steps)
 
         return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
