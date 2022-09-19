@@ -531,7 +531,7 @@ def model():
 ```
 
 ```{code-cell} ipython3
-# Condition on the observed (and axilurary variable).
+# Condition on the observed (and auxiliary variable).
 pinned = model.experimental_pin(logprob_ab=(), y=n_of_positives)
 # Get the default change of variable bijectors from the model
 bijectors = pinned.experimental_default_event_space_bijector()
