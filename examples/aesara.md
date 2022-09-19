@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# Using Blackjax with Aesara
+# Use BlackJAX with Aesara
 
 Blackjax accepts any log-probability function as long as it is compatible with `jax.jit` and `jax.grad` (for gradient-based samplers). In this example we will show ho we can use [Aesara](https://github.com/aesara-devs/aesara) as a modeling language and Blackjax as an inference library.
 

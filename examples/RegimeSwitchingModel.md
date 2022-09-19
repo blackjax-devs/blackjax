@@ -6,9 +6,9 @@ jupytext:
     format_version: 0.13
     jupytext_version: 1.14.1
 kernelspec:
-  display_name: imcmc_blackjax
+  display_name: Python 3 (ipykernel)
   language: python
-  name: imcmc_blackjax
+  name: python3
 ---
 
 # Regime switching Hidden Markov model
@@ -17,39 +17,37 @@ This example replicates the [case study](http://modernstatisticalworkflow.blogsp
 
 We'll assume that at any given time $t$ the stock's returns will follow one of two regimes: an independent random walk regime where $r_t \sim \mathcal{N}(\alpha_1, \sigma^2_1)$ and an autoregressive regime where $r_t \sim \mathcal{N}(\alpha_2 + \rho r_{t-1}, \sigma_2^2)$. Being on either of the two regimes, $s_t\in \{0, 1\}$, will depend on the previous time's regime $s_{t-1}$, call these probabilities $p_{s_{t-1}, s_{t}}$ for $s_{t-1}, s_t \in \{0, 1\}$. Set as parameters of the model $p_{1,1}$ and $p_{2,2}$ and define the complementary probabilities by definition: $p_{1,2} = 1-p_{1,1}$ and $p_{2,1} = 1-p_{2,2}$. Since the regime at any time is unobserved, we instead carry over time the probability of belonging to either one regime as $\xi_{1t} + \xi_{2t} = 1$. Finally, we need to model initial values, both for returns $r_0$ and probability of belonging to one of the two regimes $\xi_{10}$.
 
-In whole, our regime switching model is defined by the likelihood
+In the whole, our regime-switching model is defined by the likelihood
 
 $$
-\begin{align*}
+\begin{split}
     L(\mathbf{r}|\alpha, \rho, \sigma^2, \mathbf{p}, r_0, \xi_{10}) &= \prod_t \xi_{1t}\eta_{1t} + (1-\xi_{1t})\eta_{2t} \\
     \xi_{1t} &= \frac{\xi_{1t-1}\eta_{1t}}{\xi_{1t-1}\eta_{1t} + (1-\xi_{1t-1})\eta_{2t}},
-\end{align*}
+\end{split}
 $$
 
-where $\eta_{jt} = p_{j,1} \mathcal{N}(r_t;\alpha_1, \sigma_1^2) + p_{j,2} \mathcal{N}(r_t; \alpha_2 + \rho r_{t-1}, \sigma_2^2)$ for $j\in\{0, 1\}$. And the prior on parameters
+where $\eta_{jt} = p_{j,1}$, $\mathcal{N}(r_t;\alpha_1, \sigma_1^2) + p_{j,2}$, and $\mathcal{N}(r_t; \alpha_2 + \rho r_{t-1}, \sigma_2^2)$ for $j\in\{0, 1\}$. And the priors of the parameters are:
 
 $$
-\begin{align*}
+\begin{split}
     \alpha_1, \alpha_2 &\sim \mathcal{N}(0, 1) \\
     \rho &\sim \mathcal{N}^0(1, 0.1) \\
     \sigma_1, \sigma_2 &\sim \mathcal{C}^+(1) \\
-    p_{1,1}, p_{2,2} &\sim \Beta(10, 2) \\
+    p_{1,1}, p_{2,2} &\sim \mathcal{Beta}(10, 2) \\
     r_0 &\sim \mathcal{N}(0, 1) \\
-    \xi_{10} &\sim \Beta(2, 2),
-\end{align*}
+    \xi_{10} &\sim \mathcal{Beta}(2, 2),
+\end{split}
 $$
 
 where $\mathcal{N}^0$ indicates the truncated at 0 Gaussian distribution and $\mathcal{C}^+$ the half-Cauchy distribution.
 
-```bash
-pip install numpyro
-```
 
 ```{code-cell} ipython3
 import jax
 import jax.numpy as jnp
 import jax.random as jrnd
 import matplotlib.pyplot as plt
+import numpy as np
 import numpyro
 import numpyro.distributions as distrib
 import pandas as pd
@@ -156,22 +154,29 @@ def inference_loop(rng, init_state, kernel, n_iter):
 
     _, (states, info) = jax.lax.scan(step, init_state, keys)
     return states, info
+```
 
-
+```{code-cell} ipython3
 print("Loading Google stock data...")
 url = "https://raw.githubusercontent.com/albcab/TESS/master/google.csv"
 data = pd.read_csv(url)
 y = data.dl_ac.values * 100
 T, _ = data.shape
+```
 
+```{code-cell} ipython3
 print("Setting up Regime switching hidden Markov model...")
 dist = RegimeSwitchHMM(T, y)
+```
 
+```{code-cell} ipython3
 batch_fn = jax.vmap
-[n_chain, n_warm, n_iter] = [128, 10000, 100]
+[n_chain, n_warm, n_iter] = [128, 5000, 200]
 ksam, kinit = jrnd.split(jrnd.PRNGKey(0), 2)
 dist.initialize_model(kinit, n_chain)
+```
 
+```{code-cell} ipython3
 print("Running MEADS...")
 tic1 = pd.Timestamp.now()
 k_warm, k_sample = jrnd.split(ksam)
@@ -179,25 +184,26 @@ warmup = blackjax.meads(dist.logprob_fn, n_chain, n_warm, batch_fn=batch_fn)
 chain_state, kernel, _ = warmup.run(k_warm, dist.init_params)
 init_state = chain_state.states
 
-
 def one_chain(k_sam, init_state):
     state, info = inference_loop(k_sam, init_state, kernel, n_iter)
     return state.position, info
-
 
 k_sample = jrnd.split(k_sample, n_chain)
 samples, infos = batch_fn(one_chain)(k_sample, init_state)
 tic2 = pd.Timestamp.now()
 print("Runtime for MEADS", tic2 - tic1)
-print_summary(samples)
+```
 
+```{code-cell} ipython3
+print_summary(samples)
+```
+
+```{code-cell} ipython3
 samples = jax.tree_map(lambda s: s.reshape((-1,) + s.shape[2:]), samples)
 sam = []
 for name, value in samples.items():
-    sam.append(value.T)
-samples = jnp.vstack(sam).T
-df = pd.DataFrame(samples)
-df.columns = [
+    sam.append(np.asarray(value).T)
+columns = [
     r"$\alpha_1$",
     r"$\alpha_2$",
     r"$p_{1,1}$",
@@ -208,10 +214,7 @@ df.columns = [
     r"$\xi_{10}$",
     r"$r_0$",
 ]
-sns.pairplot(df, kind="kde", diag_kind="kde")
+df = pd.DataFrame(np.vstack(sam).T, columns=columns)
+sns.pairplot(df.sample(2000), kind="kde", diag_kind="kde")
 plt.show()
-```
-
-```{code-cell} ipython3
-
 ```
