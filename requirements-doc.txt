@@ -1,6 +1,6 @@
 -e ./
-arviz
 aesara
+arviz
 distrax
 jax
 jaxlib
