@@ -1,10 +1,15 @@
 name: Build the documentation
 
 on:
-  pull_request:
-    branches: [main]
   push:
     branches: [main]
+  pull_request:
+    on:
+      workflow_run:
+        workflows: ["Tests"]
+        branches: [main]
+        types:
+          - completed
 
 jobs:
   build:

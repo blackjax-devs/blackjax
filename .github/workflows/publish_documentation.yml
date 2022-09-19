@@ -2,12 +2,12 @@ name: Publish the documentation
 
 on:
   push:
-   on:
-  workflow_run:
-    workflows: ["Build the documentation"]
-    branches: [main]
-    types:
-      - completed
+    on:
+      workflow_run:
+        workflows: ["Build the documentation"]
+        branches: [main]
+        types:
+          - completed
 
 jobs:
   publish:
