@@ -1,4 +1,4 @@
-name: Build and publish documentation
+name: Build the documentation
 
 on:
   pull_request:
@@ -7,7 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  build-and-deploy:
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the branch
@@ -24,12 +25,3 @@ jobs:
         run: |
           pip install -r requirements-doc.txt
           sphinx-build -b html docs docs/build/html
-
-      - name: Publish the documentation
-        if: success() && github.ref == 'refs/heads/main'
-        uses: JamesIves/github-pages-deploy-action@3.6.2
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: gh-pages
-          FOLDER: docs/build/html
-          CLEAN: true
