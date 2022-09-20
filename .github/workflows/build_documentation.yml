@@ -4,12 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    on:
-      workflow_run:
-        workflows: ["Tests"]
-        branches: [main]
-        types:
-          - completed
+    branches: [main]
 
 jobs:
   build:
