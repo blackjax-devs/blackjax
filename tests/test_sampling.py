@@ -271,7 +271,7 @@ class SGMCMCTest(chex.TestCase):
         data_size = 1000
         X_data = jax.random.normal(data_key, shape=(data_size, 5))
 
-        centering_position = jnp.ones(5)
+        centering_position = 1.0
         grad_fn = blackjax.sgmcmc.gradients.cv_grad_estimator(
             self.logprior_fn, self.loglikelihood_fn, X_data, centering_position
         )
@@ -305,6 +305,29 @@ class SGMCMCTest(chex.TestCase):
 
         sghmc = blackjax.sghmc(grad_fn, learning_rate, 10)
 
+        init_position = 1.0
+        data_batch = X_data[:100, :]
+        init_state = sghmc.init(init_position, data_batch)
+
+        _, rng_key = jax.random.split(rng_key)
+        data_batch = X_data[100:200, :]
+        _ = sghmc.step(rng_key, init_state, data_batch)
+
+    def test_linear_regression_sghmc_cv(self):
+        """Test the HMC kernel and the Stan warmup."""
+        import blackjax.sgmcmc.gradients
+
+        rng_key, data_key = jax.random.split(self.key, 2)
+
+        data_size = 1000
+        X_data = jax.random.normal(data_key, shape=(data_size, 5))
+
+        centering_position = 1.0
+        grad_fn = blackjax.sgmcmc.gradients.cv_grad_estimator(
+            self.logprior_fn, self.loglikelihood_fn, X_data, centering_position
+        )
+
+        sghmc = blackjax.sghmc(grad_fn, 1e-3, 10)
         init_position = 1.0
         data_batch = X_data[:100, :]
         init_state = sghmc.init(init_position, data_batch)
