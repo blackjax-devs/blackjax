@@ -1,0 +1,206 @@
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/nbclient/client.py", line 1204, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+  File "/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/nbclient/util.py", line 84, in wrapped
+    return just_run(coro(*args, **kwargs))
+  File "/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/nbclient/util.py", line 62, in just_run
+    return loop.run_until_complete(coro)
+  File "/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/asyncio/base_events.py", line 647, in run_until_complete
+    return future.result()
+  File "/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/nbclient/client.py", line 663, in async_execute
+    await self.async_execute_cell(
+  File "/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/nbclient/client.py", line 965, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/nbclient/client.py", line 862, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+logprob_fn = aesara.function((a_vv, b_vv, theta_vv, Y_vv), logprob, mode="JAX")
+logprob_jax = logprob_fn.vm.jit_fn
+------------------
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mNotImplementedError[0m                       Traceback (most recent call last)
+Cell [0;32mIn [5], line 1[0m
+[0;32m----> 1[0m logprob_fn [38;5;241m=[39m [43maesara[49m[38;5;241;43m.[39;49m[43mfunction[49m[43m([49m[43m([49m[43ma_vv[49m[43m,[49m[43m [49m[43mb_vv[49m[43m,[49m[43m [49m[43mtheta_vv[49m[43m,[49m[43m [49m[43mY_vv[49m[43m)[49m[43m,[49m[43m [49m[43mlogprob[49m[43m,[49m[43m [49m[43mmode[49m[38;5;241;43m=[39;49m[38;5;124;43m"[39;49m[38;5;124;43mJAX[39;49m[38;5;124;43m"[39;49m[43m)[49m
+[1;32m      2[0m logprob_jax [38;5;241m=[39m logprob_fn[38;5;241m.[39mvm[38;5;241m.[39mjit_fn
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/compile/function/__init__.py:317[0m, in [0;36mfunction[0;34m(inputs, outputs, mode, updates, givens, no_default_updates, accept_inplace, name, rebuild_strict, allow_input_downcast, profile, on_unused_input)[0m
+[1;32m    311[0m     fn [38;5;241m=[39m orig_function(
+[1;32m    312[0m         inputs, outputs, mode[38;5;241m=[39mmode, accept_inplace[38;5;241m=[39maccept_inplace, name[38;5;241m=[39mname
+[1;32m    313[0m     )
+[1;32m    314[0m [38;5;28;01melse[39;00m:
+[1;32m    315[0m     [38;5;66;03m# note: pfunc will also call orig_function -- orig_function is[39;00m
+[1;32m    316[0m     [38;5;66;03m#      a choke point that all compilation must pass through[39;00m
+[0;32m--> 317[0m     fn [38;5;241m=[39m [43mpfunc[49m[43m([49m
+[1;32m    318[0m [43m        [49m[43mparams[49m[38;5;241;43m=[39;49m[43minputs[49m[43m,[49m
+[1;32m    319[0m [43m        [49m[43moutputs[49m[38;5;241;43m=[39;49m[43moutputs[49m[43m,[49m
+[1;32m    320[0m [43m        [49m[43mmode[49m[38;5;241;43m=[39;49m[43mmode[49m[43m,[49m
+[1;32m    321[0m [43m        [49m[43mupdates[49m[38;5;241;43m=[39;49m[43mupdates[49m[43m,[49m
+[1;32m    322[0m [43m        [49m[43mgivens[49m[38;5;241;43m=[39;49m[43mgivens[49m[43m,[49m
+[1;32m    323[0m [43m        [49m[43mno_default_updates[49m[38;5;241;43m=[39;49m[43mno_default_updates[49m[43m,[49m
+[1;32m    324[0m [43m        [49m[43maccept_inplace[49m[38;5;241;43m=[39;49m[43maccept_inplace[49m[43m,[49m
+[1;32m    325[0m [43m        [49m[43mname[49m[38;5;241;43m=[39;49m[43mname[49m[43m,[49m
+[1;32m    326[0m [43m        [49m[43mrebuild_strict[49m[38;5;241;43m=[39;49m[43mrebuild_strict[49m[43m,[49m
+[1;32m    327[0m [43m        [49m[43mallow_input_downcast[49m[38;5;241;43m=[39;49m[43mallow_input_downcast[49m[43m,[49m
+[1;32m    328[0m [43m        [49m[43mon_unused_input[49m[38;5;241;43m=[39;49m[43mon_unused_input[49m[43m,[49m
+[1;32m    329[0m [43m        [49m[43mprofile[49m[38;5;241;43m=[39;49m[43mprofile[49m[43m,[49m
+[1;32m    330[0m [43m        [49m[43moutput_keys[49m[38;5;241;43m=[39;49m[43moutput_keys[49m[43m,[49m
+[1;32m    331[0m [43m    [49m[43m)[49m
+[1;32m    332[0m [38;5;28;01mreturn[39;00m fn
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/compile/function/pfunc.py:374[0m, in [0;36mpfunc[0;34m(params, outputs, mode, updates, givens, no_default_updates, accept_inplace, name, rebuild_strict, allow_input_downcast, profile, on_unused_input, output_keys, fgraph)[0m
+[1;32m    360[0m     profile [38;5;241m=[39m ProfileStats(message[38;5;241m=[39mprofile)
+[1;32m    362[0m inputs, cloned_outputs [38;5;241m=[39m construct_pfunc_ins_and_outs(
+[1;32m    363[0m     params,
+[1;32m    364[0m     outputs,
+[0;32m   (...)[0m
+[1;32m    371[0m     fgraph[38;5;241m=[39mfgraph,
+[1;32m    372[0m )
+[0;32m--> 374[0m [38;5;28;01mreturn[39;00m [43morig_function[49m[43m([49m
+[1;32m    375[0m [43m    [49m[43minputs[49m[43m,[49m
+[1;32m    376[0m [43m    [49m[43mcloned_outputs[49m[43m,[49m
+[1;32m    377[0m [43m    [49m[43mmode[49m[43m,[49m
+[1;32m    378[0m [43m    [49m[43maccept_inplace[49m[38;5;241;43m=[39;49m[43maccept_inplace[49m[43m,[49m
+[1;32m    379[0m [43m    [49m[43mname[49m[38;5;241;43m=[39;49m[43mname[49m[43m,[49m
+[1;32m    380[0m [43m    [49m[43mprofile[49m[38;5;241;43m=[39;49m[43mprofile[49m[43m,[49m
+[1;32m    381[0m [43m    [49m[43mon_unused_input[49m[38;5;241;43m=[39;49m[43mon_unused_input[49m[43m,[49m
+[1;32m    382[0m [43m    [49m[43moutput_keys[49m[38;5;241;43m=[39;49m[43moutput_keys[49m[43m,[49m
+[1;32m    383[0m [43m    [49m[43mfgraph[49m[38;5;241;43m=[39;49m[43mfgraph[49m[43m,[49m
+[1;32m    384[0m [43m[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/compile/function/types.py:1759[0m, in [0;36morig_function[0;34m(inputs, outputs, mode, accept_inplace, name, profile, on_unused_input, output_keys, fgraph)[0m
+[1;32m   1747[0m     m [38;5;241m=[39m Maker(
+[1;32m   1748[0m         inputs,
+[1;32m   1749[0m         outputs,
+[0;32m   (...)[0m
+[1;32m   1756[0m         fgraph[38;5;241m=[39mfgraph,
+[1;32m   1757[0m     )
+[1;32m   1758[0m     [38;5;28;01mwith[39;00m config[38;5;241m.[39mchange_flags(compute_test_value[38;5;241m=[39m[38;5;124m"[39m[38;5;124moff[39m[38;5;124m"[39m):
+[0;32m-> 1759[0m         fn [38;5;241m=[39m [43mm[49m[38;5;241;43m.[39;49m[43mcreate[49m[43m([49m[43mdefaults[49m[43m)[49m
+[1;32m   1760[0m [38;5;28;01mfinally[39;00m:
+[1;32m   1761[0m     t2 [38;5;241m=[39m time[38;5;241m.[39mtime()
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/compile/function/types.py:1652[0m, in [0;36mFunctionMaker.create[0;34m(self, input_storage, trustme, storage_map)[0m
+[1;32m   1649[0m start_import_time [38;5;241m=[39m aesara[38;5;241m.[39mlink[38;5;241m.[39mc[38;5;241m.[39mcmodule[38;5;241m.[39mimport_time
+[1;32m   1651[0m [38;5;28;01mwith[39;00m config[38;5;241m.[39mchange_flags(traceback__limit[38;5;241m=[39mconfig[38;5;241m.[39mtraceback__compile_limit):
+[0;32m-> 1652[0m     _fn, _i, _o [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mlinker[49m[38;5;241;43m.[39;49m[43mmake_thunk[49m[43m([49m
+[1;32m   1653[0m [43m        [49m[43minput_storage[49m[38;5;241;43m=[39;49m[43minput_storage_lists[49m[43m,[49m[43m [49m[43mstorage_map[49m[38;5;241;43m=[39;49m[43mstorage_map[49m
+[1;32m   1654[0m [43m    [49m[43m)[49m
+[1;32m   1656[0m end_linker [38;5;241m=[39m time[38;5;241m.[39mtime()
+[1;32m   1658[0m linker_time [38;5;241m=[39m end_linker [38;5;241m-[39m start_linker
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/basic.py:254[0m, in [0;36mLocalLinker.make_thunk[0;34m(self, input_storage, output_storage, storage_map, **kwargs)[0m
+[1;32m    247[0m [38;5;28;01mdef[39;00m [38;5;21mmake_thunk[39m(
+[1;32m    248[0m     [38;5;28mself[39m,
+[1;32m    249[0m     input_storage: Optional[[38;5;124m"[39m[38;5;124mInputStorageType[39m[38;5;124m"[39m] [38;5;241m=[39m [38;5;28;01mNone[39;00m,
+[0;32m   (...)[0m
+[1;32m    252[0m     [38;5;241m*[39m[38;5;241m*[39mkwargs,
+[1;32m    253[0m ) [38;5;241m-[39m[38;5;241m>[39m Tuple[[38;5;124m"[39m[38;5;124mBasicThunkType[39m[38;5;124m"[39m, [38;5;124m"[39m[38;5;124mInputStorageType[39m[38;5;124m"[39m, [38;5;124m"[39m[38;5;124mOutputStorageType[39m[38;5;124m"[39m]:
+[0;32m--> 254[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mmake_all[49m[43m([49m
+[1;32m    255[0m [43m        [49m[43minput_storage[49m[38;5;241;43m=[39;49m[43minput_storage[49m[43m,[49m
+[1;32m    256[0m [43m        [49m[43moutput_storage[49m[38;5;241;43m=[39;49m[43moutput_storage[49m[43m,[49m
+[1;32m    257[0m [43m        [49m[43mstorage_map[49m[38;5;241;43m=[39;49m[43mstorage_map[49m[43m,[49m
+[1;32m    258[0m [43m    [49m[43m)[49m[:[38;5;241m3[39m]
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/basic.py:697[0m, in [0;36mJITLinker.make_all[0;34m(self, input_storage, output_storage, storage_map)[0m
+[1;32m    694[0m [38;5;28;01mfor[39;00m k [38;5;129;01min[39;00m storage_map:
+[1;32m    695[0m     compute_map[k] [38;5;241m=[39m [k[38;5;241m.[39mowner [38;5;129;01mis[39;00m [38;5;28;01mNone[39;00m]
+[0;32m--> 697[0m thunks, nodes, jit_fn [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mcreate_jitable_thunk[49m[43m([49m
+[1;32m    698[0m [43m    [49m[43mcompute_map[49m[43m,[49m[43m [49m[43mnodes[49m[43m,[49m[43m [49m[43minput_storage[49m[43m,[49m[43m [49m[43moutput_storage[49m[43m,[49m[43m [49m[43mstorage_map[49m
+[1;32m    699[0m [43m[49m[43m)[49m
+[1;32m    701[0m computed, last_user [38;5;241m=[39m gc_helper(nodes)
+[1;32m    703[0m [38;5;28;01mif[39;00m [38;5;28mself[39m[38;5;241m.[39mallow_gc:
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/basic.py:646[0m, in [0;36mJITLinker.create_jitable_thunk[0;34m(self, compute_map, order, input_storage, output_storage, storage_map)[0m
+[1;32m    619[0m [38;5;124mr[39m[38;5;124;03m"""Create a thunk for each output of the `Linker`\s `FunctionGraph`.[39;00m
+[1;32m    620[0m 
+[1;32m    621[0m [38;5;124;03mThis is differs from the other thunk-making function in that it only[39;00m
+[0;32m   (...)[0m
+[1;32m    642[0m 
+[1;32m    643[0m [38;5;124;03m"""[39;00m
+[1;32m    644[0m output_nodes [38;5;241m=[39m [o[38;5;241m.[39mowner [38;5;28;01mfor[39;00m o [38;5;129;01min[39;00m [38;5;28mself[39m[38;5;241m.[39mfgraph[38;5;241m.[39moutputs]
+[0;32m--> 646[0m converted_fgraph [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mfgraph_convert[49m[43m([49m
+[1;32m    647[0m [43m    [49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mfgraph[49m[43m,[49m
+[1;32m    648[0m [43m    [49m[43morder[49m[38;5;241;43m=[39;49m[43morder[49m[43m,[49m
+[1;32m    649[0m [43m    [49m[43minput_storage[49m[38;5;241;43m=[39;49m[43minput_storage[49m[43m,[49m
+[1;32m    650[0m [43m    [49m[43moutput_storage[49m[38;5;241;43m=[39;49m[43moutput_storage[49m[43m,[49m
+[1;32m    651[0m [43m    [49m[43mstorage_map[49m[38;5;241;43m=[39;49m[43mstorage_map[49m[43m,[49m
+[1;32m    652[0m [43m[49m[43m)[49m
+[1;32m    654[0m thunk_inputs [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39mcreate_thunk_inputs(storage_map)
+[1;32m    656[0m thunks [38;5;241m=[39m []
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/jax/linker.py:13[0m, in [0;36mJAXLinker.fgraph_convert[0;34m(self, fgraph, **kwargs)[0m
+[1;32m     10[0m [38;5;28;01mdef[39;00m [38;5;21mfgraph_convert[39m([38;5;28mself[39m, fgraph, [38;5;241m*[39m[38;5;241m*[39mkwargs):
+[1;32m     11[0m     [38;5;28;01mfrom[39;00m [38;5;21;01maesara[39;00m[38;5;21;01m.[39;00m[38;5;21;01mlink[39;00m[38;5;21;01m.[39;00m[38;5;21;01mjax[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdispatch[39;00m [38;5;28;01mimport[39;00m jax_funcify
+[0;32m---> 13[0m     [38;5;28;01mreturn[39;00m [43mjax_funcify[49m[43m([49m[43mfgraph[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/functools.py:888[0m, in [0;36msingledispatch.<locals>.wrapper[0;34m(*args, **kw)[0m
+[1;32m    884[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m args:
+[1;32m    885[0m     [38;5;28;01mraise[39;00m [38;5;167;01mTypeError[39;00m([38;5;124mf[39m[38;5;124m'[39m[38;5;132;01m{[39;00mfuncname[38;5;132;01m}[39;00m[38;5;124m requires at least [39m[38;5;124m'[39m
+[1;32m    886[0m                     [38;5;124m'[39m[38;5;124m1 positional argument[39m[38;5;124m'[39m)
+[0;32m--> 888[0m [38;5;28;01mreturn[39;00m [43mdispatch[49m[43m([49m[43margs[49m[43m[[49m[38;5;241;43m0[39;49m[43m][49m[38;5;241;43m.[39;49m[38;5;18;43m__class__[39;49m[43m)[49m[43m([49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkw[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/jax/dispatch.py:671[0m, in [0;36mjax_funcify_FunctionGraph[0;34m(fgraph, node, fgraph_name, **kwargs)[0m
+[1;32m    664[0m [38;5;129m@jax_funcify[39m[38;5;241m.[39mregister(FunctionGraph)
+[1;32m    665[0m [38;5;28;01mdef[39;00m [38;5;21mjax_funcify_FunctionGraph[39m(
+[1;32m    666[0m     fgraph,
+[0;32m   (...)[0m
+[1;32m    669[0m     [38;5;241m*[39m[38;5;241m*[39mkwargs,
+[1;32m    670[0m ):
+[0;32m--> 671[0m     [38;5;28;01mreturn[39;00m [43mfgraph_to_python[49m[43m([49m
+[1;32m    672[0m [43m        [49m[43mfgraph[49m[43m,[49m
+[1;32m    673[0m [43m        [49m[43mjax_funcify[49m[43m,[49m
+[1;32m    674[0m [43m        [49m[43mtype_conversion_fn[49m[38;5;241;43m=[39;49m[43mjax_typify[49m[43m,[49m
+[1;32m    675[0m [43m        [49m[43mfgraph_name[49m[38;5;241;43m=[39;49m[43mfgraph_name[49m[43m,[49m
+[1;32m    676[0m [43m        [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m,[49m
+[1;32m    677[0m [43m    [49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/utils.py:741[0m, in [0;36mfgraph_to_python[0;34m(fgraph, op_conversion_fn, type_conversion_fn, order, input_storage, output_storage, storage_map, fgraph_name, global_env, local_env, get_name_for_object, squeeze_output, **kwargs)[0m
+[1;32m    739[0m body_assigns [38;5;241m=[39m []
+[1;32m    740[0m [38;5;28;01mfor[39;00m node [38;5;129;01min[39;00m order:
+[0;32m--> 741[0m     compiled_func [38;5;241m=[39m [43mop_conversion_fn[49m[43m([49m
+[1;32m    742[0m [43m        [49m[43mnode[49m[38;5;241;43m.[39;49m[43mop[49m[43m,[49m[43m [49m[43mnode[49m[38;5;241;43m=[39;49m[43mnode[49m[43m,[49m[43m [49m[43mstorage_map[49m[38;5;241;43m=[39;49m[43mstorage_map[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m
+[1;32m    743[0m [43m    [49m[43m)[49m
+[1;32m    745[0m     [38;5;66;03m# Create a local alias with a unique name[39;00m
+[1;32m    746[0m     local_compiled_func_name [38;5;241m=[39m unique_name(compiled_func)
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/functools.py:888[0m, in [0;36msingledispatch.<locals>.wrapper[0;34m(*args, **kw)[0m
+[1;32m    884[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m args:
+[1;32m    885[0m     [38;5;28;01mraise[39;00m [38;5;167;01mTypeError[39;00m([38;5;124mf[39m[38;5;124m'[39m[38;5;132;01m{[39;00mfuncname[38;5;132;01m}[39;00m[38;5;124m requires at least [39m[38;5;124m'[39m
+[1;32m    886[0m                     [38;5;124m'[39m[38;5;124m1 positional argument[39m[38;5;124m'[39m)
+[0;32m--> 888[0m [38;5;28;01mreturn[39;00m [43mdispatch[49m[43m([49m[43margs[49m[43m[[49m[38;5;241;43m0[39;49m[43m][49m[38;5;241;43m.[39;49m[38;5;18;43m__class__[39;49m[43m)[49m[43m([49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkw[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/jax/dispatch.py:574[0m, in [0;36mjax_funcify_CheckAndRaise[0;34m(op, **kwargs)[0m
+[1;32m    571[0m [38;5;129m@jax_funcify[39m[38;5;241m.[39mregister(CheckAndRaise)
+[1;32m    572[0m [38;5;28;01mdef[39;00m [38;5;21mjax_funcify_CheckAndRaise[39m(op, [38;5;241m*[39m[38;5;241m*[39mkwargs):
+[0;32m--> 574[0m     [38;5;28;01mraise[39;00m [38;5;167;01mNotImplementedError[39;00m(
+[1;32m    575[0m         [38;5;124mf[39m[38;5;124m"""[39m[38;5;124mThis exception is raised because you tried to convert an aesara graph with a `CheckAndRaise` Op (message: [39m[38;5;132;01m{[39;00mop[38;5;241m.[39mmsg[38;5;132;01m}[39;00m[38;5;124m) to JAX.[39m
+[1;32m    576[0m 
+[1;32m    577[0m [38;5;124m        JAX uses tracing to jit-compile functions, and assertions typically[39m
+[1;32m    578[0m [38;5;124m        don[39m[38;5;124m'[39m[38;5;124mt do well with tracing. The appropriate workaround depends on what[39m
+[1;32m    579[0m [38;5;124m        you intended to do with the assertions in the first place.[39m
+[1;32m    580[0m 
+[1;32m    581[0m [38;5;124m        Note that all assertions can be removed from the graph by adding[39m
+[1;32m    582[0m [38;5;124m        `local_remove_all_assert` to the rewrites.[39m[38;5;124m"""[39m
+[1;32m    583[0m     )
+
+[0;31mNotImplementedError[0m: This exception is raised because you tried to convert an aesara graph with a `CheckAndRaise` Op (message: 0 <= value <= 1, alpha > 0, beta > 0) to JAX.
+
+        JAX uses tracing to jit-compile functions, and assertions typically
+        don't do well with tracing. The appropriate workaround depends on what
+        you intended to do with the assertions in the first place.
+
+        Note that all assertions can be removed from the graph by adding
+        `local_remove_all_assert` to the rewrites.
+NotImplementedError: This exception is raised because you tried to convert an aesara graph with a `CheckAndRaise` Op (message: 0 <= value <= 1, alpha > 0, beta > 0) to JAX.
+
+        JAX uses tracing to jit-compile functions, and assertions typically
+        don't do well with tracing. The appropriate workaround depends on what
+        you intended to do with the assertions in the first place.
+
+        Note that all assertions can be removed from the graph by adding
+        `local_remove_all_assert` to the rewrites.
+

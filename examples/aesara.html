@@ -400,7 +400,7 @@ $$</p>
 </div>
 </div>
 </div>
-<p>Let us now compile the logprob /graph/ to a /function/ that computes the log-probability:</p>
+<p>Let us now compile the logprob <em>graph</em> to an /Aesara function/ that computes the log-probability:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logprob_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((</span><span class="n">a_vv</span><span class="p">,</span> <span class="n">b_vv</span><span class="p">,</span> <span class="n">theta_vv</span><span class="p">,</span> <span class="n">Y_vv</span><span class="p">),</span> <span class="n">logprob</span><span class="p">)</span>
@@ -408,36 +408,193 @@ $$</p>
 </div>
 </div>
 </div>
-<p>This compiles the logprob function using Aesara’s C backend. To sample with Blackjax we will need to use Aesara’s JAX backend; it is still work in progress so the code will look complicated. All you need to know is that <code class="docutils literal notranslate"><span class="pre">jax_fn</span></code> is a function that uses JAX operators, can be passed as an argument to <code class="docutils literal notranslate"><span class="pre">jax.jit</span></code> and <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code>:</p>
+<p>This compiles the logprob function using Aesara’s C backend. To sample with Blackjax we will need to use Aesara’s JAX backend; <code class="docutils literal notranslate"><span class="pre">logprob_jax</span></code> defined below is a function that uses JAX operators, can be passed as an argument to <code class="docutils literal notranslate"><span class="pre">jax.jit</span></code> and <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code>.</p>
+<p>(We can’t use <code class="docutils literal notranslate"><span class="pre">logprob_fn</span></code> directly because the Aesara function returned is also in charge of other Aesara functionalities, like updating shared variables)</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">aesara.link.jax.dispatch</span> <span class="kn">import</span> <span class="n">jax_funcify</span>
-<span class="kn">from</span> <span class="nn">aesara.graph.fg</span> <span class="kn">import</span> <span class="n">FunctionGraph</span>
-<span class="kn">from</span> <span class="nn">aeppl.rewriting</span> <span class="kn">import</span> <span class="n">logprob_rewrites_db</span>
-<span class="kn">from</span> <span class="nn">aesara.compile</span> <span class="kn">import</span> <span class="n">mode</span>
-<span class="kn">from</span> <span class="nn">aesara.raise_op</span> <span class="kn">import</span> <span class="n">CheckAndRaise</span>
-
-<span class="nd">@jax_funcify</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">CheckAndRaise</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">jax_funcify_Assert</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="c1"># Jax does not allow assert whose values aren&#39;t known during JIT compilation</span>
-    <span class="c1"># within it&#39;s JIT-ed code. Hence we need to make a simple pass through</span>
-    <span class="c1"># version of the Assert Op.</span>
-    <span class="c1"># https://github.com/google/jax/issues/2273#issuecomment-589098722</span>
-    <span class="k">def</span> <span class="nf">assert_fn</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="n">inps</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">value</span>
-
-    <span class="k">return</span> <span class="n">assert_fn</span>
-
-<span class="n">fgraph</span> <span class="o">=</span> <span class="n">FunctionGraph</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">a_vv</span><span class="p">,</span> <span class="n">b_vv</span><span class="p">,</span> <span class="n">theta_vv</span><span class="p">,</span> <span class="n">Y_vv</span><span class="p">),</span> <span class="n">outputs</span><span class="o">=</span><span class="p">(</span><span class="n">logprob</span><span class="p">,))</span>
-<span class="n">mode</span><span class="o">.</span><span class="n">JAX</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">rewrite</span><span class="p">(</span><span class="n">fgraph</span><span class="p">)</span>
-<span class="n">jax_fn</span> <span class="o">=</span> <span class="n">jax_funcify</span><span class="p">(</span><span class="n">fgraph</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logprob_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((</span><span class="n">a_vv</span><span class="p">,</span> <span class="n">b_vv</span><span class="p">,</span> <span class="n">theta_vv</span><span class="p">,</span> <span class="n">Y_vv</span><span class="p">),</span> <span class="n">logprob</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;JAX&quot;</span><span class="p">)</span>
+<span class="n">logprob_jax</span> <span class="o">=</span> <span class="n">logprob_fn</span><span class="o">.</span><span class="n">vm</span><span class="o">.</span><span class="n">jit_fn</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/graph/rewriting/basic.py:131: UserWarning: A Supervisor feature is missing from FunctionGraph(Elemwise{Composite{((i0 * log(i1)) + i2)}}(TensorConstant{-2.5}, *3 -&gt; Elemwise{add,no_inplace}(a, b), Sum{acc_dtype=float64}(MakeVector{dtype=&#39;float64&#39;}(Sum{acc_dtype=float64}(Elemwise{Composite{(i0 + (-i1) + (-i2))}}(Check{0 &lt;= value &lt;= 1, alpha &gt; 0, beta &gt; 0}(Elemwise{Composite{Switch(AND(GE(i0, i1), i2), ((Switch(i3, i1, (i4 * i5 * i6)) + Switch(i7, i1, (i8 * i9 * i10))) - i11), i12)}}(*6 -&gt; Elemwise{sigmoid,no_inplace}(&lt;TensorType(float64, (None,))&gt;), TensorConstant{(1,) of 0.0}, *7 -&gt; Elemwise{le,no_inplace}(*6, TensorConstant{(1,) of 1.0}), Elemwise{eq,no_inplace}(*1 -&gt; InplaceDimShuffle{x}(a), TensorConstant{(1,) of 1.0}), TensorConstant{(1,) of -1.0}, Elemwise{add,no_inplace}(TensorConstant{(1,) of -1.0}, *1), *2 -&gt; Elemwise{Composite{scalar_softplus((-i0))}}(&lt;TensorType(float64, (None,))&gt;), Elemwise{eq,no_inplace}(*4 -&gt; InplaceDimShuffle{x}(b), TensorConstant{(1,) of 1.0}), TensorConstant{(1,) of -1.0}, Elemwise{add,no_inplace}(TensorConstant{(1,) of -1.0}, *4), *5 -&gt; Elemwise{softplus,no_inplace}(&lt;TensorType(float64, (None,))&gt;), Elemwise{Composite{((gammaln(i0) + gammaln(i1)) - gammaln(i2))}}(*1, *4, InplaceDimShuffle{x}(*3)), TensorConstant{(1,) of -inf}), Elemwise{gt,no_inplace}(a, TensorConstant{0.0}), Elemwise{gt,no_inplace}(b, TensorConstant{0.0})), *2, *5)), Sum{acc_dtype=float64}(Check{0 &lt;= p, p &lt;= 1}(Elemwise{Composite{Switch(AND(LE(i0, i1), LE(i1, i2)), (((i3 - gammaln((i4 + i1))) - gammaln((i5 - i1))) + Switch(EQ(i6, i0), Switch(EQ(i1, i0), i7, i8), (i9 * i1 * i10)) + Switch(EQ((i11 - i6), i0), Switch(EQ((i2 - i1), i0), i7, i8), (i12 * (i2 - i1) * scalar_softplus(i13)))), i8)}}(TensorConstant{(1,) of 0}, &lt;TensorType(int64, (None,))&gt;, TensorConstant{[20 20 20 .. 47 24 14]}, TensorConstant{[ 42.33561...19122118]}, TensorConstant{(1,) of 1}, TensorConstant{[21 21 21 .. 48 25 15]}, *6, TensorConstant{(1,) of 0.0}, TensorConstant{(1,) of -inf}, TensorConstant{(1,) of -1.0}, *2, TensorConstant{(1,) of 1.0}, TensorConstant{(1,) of -1.0}, &lt;TensorType(float64, (None,))&gt;), All(Elemwise{le,no_inplace}(TensorConstant{(1,) of 0.0}, *6)), All(*7))))))).
-  return self.apply(fgraph, *args, **kwargs)
-WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+</pre></div>
+</div>
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span>---------------------------------------------------------------------------
+NotImplementedError                       Traceback (most recent call last)
+Cell In [5], line 1
+----&gt; 1 logprob_fn = aesara.function((a_vv, b_vv, theta_vv, Y_vv), logprob, mode=&quot;JAX&quot;)
+      2 logprob_jax = logprob_fn.vm.jit_fn
+
+File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/compile/function/__init__.py:317, in function(inputs, outputs, mode, updates, givens, no_default_updates, accept_inplace, name, rebuild_strict, allow_input_downcast, profile, on_unused_input)
+    311     fn = orig_function(
+    312         inputs, outputs, mode=mode, accept_inplace=accept_inplace, name=name
+    313     )
+    314 else:
+    315     # note: pfunc will also call orig_function -- orig_function is
+    316     #      a choke point that all compilation must pass through
+--&gt; 317     fn = pfunc(
+    318         params=inputs,
+    319         outputs=outputs,
+    320         mode=mode,
+    321         updates=updates,
+    322         givens=givens,
+    323         no_default_updates=no_default_updates,
+    324         accept_inplace=accept_inplace,
+    325         name=name,
+    326         rebuild_strict=rebuild_strict,
+    327         allow_input_downcast=allow_input_downcast,
+    328         on_unused_input=on_unused_input,
+    329         profile=profile,
+    330         output_keys=output_keys,
+    331     )
+    332 return fn
+
+File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/compile/function/pfunc.py:374, in pfunc(params, outputs, mode, updates, givens, no_default_updates, accept_inplace, name, rebuild_strict, allow_input_downcast, profile, on_unused_input, output_keys, fgraph)
+    360     profile = ProfileStats(message=profile)
+    362 inputs, cloned_outputs = construct_pfunc_ins_and_outs(
+    363     params,
+    364     outputs,
+   (...)
+    371     fgraph=fgraph,
+    372 )
+--&gt; 374 return orig_function(
+    375     inputs,
+    376     cloned_outputs,
+    377     mode,
+    378     accept_inplace=accept_inplace,
+    379     name=name,
+    380     profile=profile,
+    381     on_unused_input=on_unused_input,
+    382     output_keys=output_keys,
+    383     fgraph=fgraph,
+    384 )
+
+File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/compile/function/types.py:1759, in orig_function(inputs, outputs, mode, accept_inplace, name, profile, on_unused_input, output_keys, fgraph)
+   1747     m = Maker(
+   1748         inputs,
+   1749         outputs,
+   (...)
+   1756         fgraph=fgraph,
+   1757     )
+   1758     with config.change_flags(compute_test_value=&quot;off&quot;):
+-&gt; 1759         fn = m.create(defaults)
+   1760 finally:
+   1761     t2 = time.time()
+
+File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/compile/function/types.py:1652, in FunctionMaker.create(self, input_storage, trustme, storage_map)
+   1649 start_import_time = aesara.link.c.cmodule.import_time
+   1651 with config.change_flags(traceback__limit=config.traceback__compile_limit):
+-&gt; 1652     _fn, _i, _o = self.linker.make_thunk(
+   1653         input_storage=input_storage_lists, storage_map=storage_map
+   1654     )
+   1656 end_linker = time.time()
+   1658 linker_time = end_linker - start_linker
+
+File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/basic.py:254, in LocalLinker.make_thunk(self, input_storage, output_storage, storage_map, **kwargs)
+    247 def make_thunk(
+    248     self,
+    249     input_storage: Optional[&quot;InputStorageType&quot;] = None,
+   (...)
+    252     **kwargs,
+    253 ) -&gt; Tuple[&quot;BasicThunkType&quot;, &quot;InputStorageType&quot;, &quot;OutputStorageType&quot;]:
+--&gt; 254     return self.make_all(
+    255         input_storage=input_storage,
+    256         output_storage=output_storage,
+    257         storage_map=storage_map,
+    258     )[:3]
+
+File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/basic.py:697, in JITLinker.make_all(self, input_storage, output_storage, storage_map)
+    694 for k in storage_map:
+    695     compute_map[k] = [k.owner is None]
+--&gt; 697 thunks, nodes, jit_fn = self.create_jitable_thunk(
+    698     compute_map, nodes, input_storage, output_storage, storage_map
+    699 )
+    701 computed, last_user = gc_helper(nodes)
+    703 if self.allow_gc:
+
+File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/basic.py:646, in JITLinker.create_jitable_thunk(self, compute_map, order, input_storage, output_storage, storage_map)
+    619 r&quot;&quot;&quot;Create a thunk for each output of the `Linker`\s `FunctionGraph`.
+    620 
+    621 This is differs from the other thunk-making function in that it only
+   (...)
+    642 
+    643 &quot;&quot;&quot;
+    644 output_nodes = [o.owner for o in self.fgraph.outputs]
+--&gt; 646 converted_fgraph = self.fgraph_convert(
+    647     self.fgraph,
+    648     order=order,
+    649     input_storage=input_storage,
+    650     output_storage=output_storage,
+    651     storage_map=storage_map,
+    652 )
+    654 thunk_inputs = self.create_thunk_inputs(storage_map)
+    656 thunks = []
+
+File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/jax/linker.py:13, in JAXLinker.fgraph_convert(self, fgraph, **kwargs)
+     10 def fgraph_convert(self, fgraph, **kwargs):
+     11     from aesara.link.jax.dispatch import jax_funcify
+---&gt; 13     return jax_funcify(fgraph, **kwargs)
+
+File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/functools.py:888, in singledispatch.&lt;locals&gt;.wrapper(*args, **kw)
+    884 if not args:
+    885     raise TypeError(f&#39;{funcname} requires at least &#39;
+    886                     &#39;1 positional argument&#39;)
+--&gt; 888 return dispatch(args[0].__class__)(*args, **kw)
+
+File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/jax/dispatch.py:671, in jax_funcify_FunctionGraph(fgraph, node, fgraph_name, **kwargs)
+    664 @jax_funcify.register(FunctionGraph)
+    665 def jax_funcify_FunctionGraph(
+    666     fgraph,
+   (...)
+    669     **kwargs,
+    670 ):
+--&gt; 671     return fgraph_to_python(
+    672         fgraph,
+    673         jax_funcify,
+    674         type_conversion_fn=jax_typify,
+    675         fgraph_name=fgraph_name,
+    676         **kwargs,
+    677     )
+
+File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/utils.py:741, in fgraph_to_python(fgraph, op_conversion_fn, type_conversion_fn, order, input_storage, output_storage, storage_map, fgraph_name, global_env, local_env, get_name_for_object, squeeze_output, **kwargs)
+    739 body_assigns = []
+    740 for node in order:
+--&gt; 741     compiled_func = op_conversion_fn(
+    742         node.op, node=node, storage_map=storage_map, **kwargs
+    743     )
+    745     # Create a local alias with a unique name
+    746     local_compiled_func_name = unique_name(compiled_func)
+
+File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/functools.py:888, in singledispatch.&lt;locals&gt;.wrapper(*args, **kw)
+    884 if not args:
+    885     raise TypeError(f&#39;{funcname} requires at least &#39;
+    886                     &#39;1 positional argument&#39;)
+--&gt; 888 return dispatch(args[0].__class__)(*args, **kw)
+
+File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/aesara/link/jax/dispatch.py:574, in jax_funcify_CheckAndRaise(op, **kwargs)
+    571 @jax_funcify.register(CheckAndRaise)
+    572 def jax_funcify_CheckAndRaise(op, **kwargs):
+--&gt; 574     raise NotImplementedError(
+    575         f&quot;&quot;&quot;This exception is raised because you tried to convert an aesara graph with a `CheckAndRaise` Op (message: {op.msg}) to JAX.
+    576 
+    577         JAX uses tracing to jit-compile functions, and assertions typically
+    578         don&#39;t do well with tracing. The appropriate workaround depends on what
+    579         you intended to do with the assertions in the first place.
+    580 
+    581         Note that all assertions can be removed from the graph by adding
+    582         `local_remove_all_assert` to the rewrites.&quot;&quot;&quot;
+    583     )
+
+NotImplementedError: This exception is raised because you tried to convert an aesara graph with a `CheckAndRaise` Op (message: 0 &lt;= value &lt;= 1, alpha &gt; 0, beta &gt; 0) to JAX.
+
+        JAX uses tracing to jit-compile functions, and assertions typically
+        don&#39;t do well with tracing. The appropriate workaround depends on what
+        you intended to do with the assertions in the first place.
+
+        Note that all assertions can be removed from the graph by adding
+        `local_remove_all_assert` to the rewrites.
 </pre></div>
 </div>
 </div>
@@ -459,17 +616,13 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
     <span class="p">}</span>
 
 <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">init_position</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">init_param_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+<span class="n">init_position</span> <span class="o">=</span> <span class="n">init_param_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">logprob</span><span class="p">(</span><span class="n">position</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">jax_fn</span><span class="p">(</span><span class="o">*</span><span class="n">position</span><span class="p">,</span> <span class="n">n_of_positives</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">flat_position</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">logprob_jax</span><span class="p">(</span><span class="o">*</span><span class="n">flat_position</span><span class="p">,</span> <span class="n">n_of_positives</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
 <span class="n">logprob</span><span class="p">(</span><span class="n">init_position</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray(-1111.89844767, dtype=float64)
 </pre></div>
 </div>
 </div>
