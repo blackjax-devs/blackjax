@@ -166,11 +166,6 @@ plt.show()
 
 ## Compare Sampling Time with TFP
 
-```{code-cell} ipython3
-import tensorflow.compat.v2 as tf
-
-tf.enable_v2_behavior()
-```
 
 ```{code-cell} ipython3
 %%time
@@ -178,9 +173,7 @@ tf.enable_v2_behavior()
 num_results = 500_000
 num_burnin_steps = 0
 
-# Improve performance by tracing the sampler using `tf.function`
-# and compiling it using XLA.
-@tf.function(autograph=False, experimental_compile=True, experimental_relax_shapes=True)
+@jax.jit
 def do_sampling():
     return tfp.mcmc.sample_chain(
         num_results=num_results,
