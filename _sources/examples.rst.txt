@@ -2,10 +2,9 @@ Examples
 ========
 
 .. toctree::
-   :caption: Examples
+   :maxdepth: 1
 
    examples/Introduction.md
-   examples/MultipleChains.md
    examples/LogisticRegression.md
    examples/LogisticRegressionWithLatentGaussianSampler.md
    examples/TemperedSMC.md

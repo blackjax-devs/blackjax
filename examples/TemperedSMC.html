@@ -97,13 +97,13 @@
     <div class="bd-toc-item active">
         <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
-  Blackjax by example
+  HOW TO
  </span>
 </p>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
  <li class="toctree-l1 has-children">
-  <a class="reference internal" href="../howtos.html">
-   HowTos
+  <a class="reference internal" href="../howto_use_ppl.html">
+   Use the model I built with X?
   </a>
   <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
   <label for="toctree-checkbox-1">
@@ -112,27 +112,39 @@
   </label>
   <ul>
    <li class="toctree-l2">
-    <a class="reference internal" href="aesara.html">
-     Use BlackJAX with Aesara
+    <a class="reference internal" href="howto_use_aesara.html">
+     Use with Aesara models
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="numpyro.html">
-     Use BlackJAX with Numpyro
+    <a class="reference internal" href="howto_use_numpyro.html">
+     Use with Numpyro models
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="pymc.html">
-     Use BlackJAX with PyMC
+    <a class="reference internal" href="howto_use_pymc.html">
+     Use with PyMC models
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="tfp.html">
-     Use BlackJAX with TFP
+    <a class="reference internal" href="howto_use_tfp.html">
+     Use with TFP models
     </a>
    </li>
   </ul>
  </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_sample_multiple_chains.html">
+   Sample with multiple chains?
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Blackjax by example
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
  <li class="toctree-l1 current active has-children">
   <a class="reference internal" href="../examples.html">
    Examples
@@ -146,11 +158,6 @@
    <li class="toctree-l2">
     <a class="reference internal" href="Introduction.html">
      A Quick Introduction to Blackjax
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="MultipleChains.html">
-     Sampling Multiple Chains
     </a>
    </li>
    <li class="toctree-l2">
@@ -555,7 +562,7 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f1264662e20&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f3c8cde1d60&gt;
 </pre></div>
 </div>
 <img alt="../_images/bd48b7a90aab9b2fe6284f87589e936c4909c486c7315bd62e7f3a85c19fbd3a.png" src="../_images/bd48b7a90aab9b2fe6284f87589e936c4909c486c7315bd62e7f3a85c19fbd3a.png" />
@@ -610,8 +617,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.45 s, sys: 8.95 ms, total: 1.46 s
-Wall time: 1.46 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.54 s, sys: 2.45 ms, total: 1.54 s
+Wall time: 1.53 s
 </pre></div>
 </div>
 <img alt="../_images/67e28471bce1e142526847dd567a712f2ced5e241b40631756490700949cf108.png" src="../_images/67e28471bce1e142526847dd567a712f2ced5e241b40631756490700949cf108.png" />
@@ -638,8 +645,8 @@ Wall time: 1.46 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.07 s, sys: 21.5 ms, total: 7.09 s
-Wall time: 7.08 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.71 s, sys: 7.56 ms, total: 6.72 s
+Wall time: 6.71 s
 </pre></div>
 </div>
 <img alt="../_images/77a15f303b3936754309a9345db62f5cfb64afc16d6b1b62292735af59494931.png" src="../_images/77a15f303b3936754309a9345db62f5cfb64afc16d6b1b62292735af59494931.png" />
@@ -721,8 +728,8 @@ Wall time: 7.08 s
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  9
-CPU times: user 2.93 s, sys: 80.2 ms, total: 3.01 s
-Wall time: 2.88 s
+CPU times: user 3.09 s, sys: 75.4 ms, total: 3.16 s
+Wall time: 3.03 s
 </pre></div>
 </div>
 <img alt="../_images/e17742244779a7fc1510be94db658cc74cde3960b646b032e2c7cb59c83605de.png" src="../_images/e17742244779a7fc1510be94db658cc74cde3960b646b032e2c7cb59c83605de.png" />
@@ -766,7 +773,7 @@ Wall time: 2.88 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f123c8a1ac0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f3c8c045190&gt;
 </pre></div>
 </div>
 <img alt="../_images/b039c37cae038a3a45a2202f571e4ffba631685116f6019522670a92a9fbc971.png" src="../_images/b039c37cae038a3a45a2202f571e4ffba631685116f6019522670a92a9fbc971.png" />
@@ -819,8 +826,8 @@ Wall time: 2.88 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 961 ms, sys: 72 µs, total: 961 ms
-Wall time: 958 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.13 s, sys: 0 ns, total: 1.13 s
+Wall time: 1.13 s
 </pre></div>
 </div>
 <img alt="../_images/46f891fd0bd9b630b2d3b253a7952d470a08b647126e0af6faac45e5e344391c.png" src="../_images/46f891fd0bd9b630b2d3b253a7952d470a08b647126e0af6faac45e5e344391c.png" />
@@ -848,8 +855,8 @@ Wall time: 958 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.62 s, sys: 275 µs, total: 1.62 s
-Wall time: 1.62 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.67 s, sys: 7.72 ms, total: 1.68 s
+Wall time: 1.67 s
 </pre></div>
 </div>
 <img alt="../_images/60033ddb5f711bf01fe60bd5fc8e2a2ec4f9fd92bd6e074b0ea76e0ebbdb01ab.png" src="../_images/60033ddb5f711bf01fe60bd5fc8e2a2ec4f9fd92bd6e074b0ea76e0ebbdb01ab.png" />
@@ -897,8 +904,8 @@ We correct the bias introduced by the (arbitrary) prior.</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  8
-CPU times: user 2.83 s, sys: 8.17 ms, total: 2.84 s
-Wall time: 2.83 s
+CPU times: user 2.96 s, sys: 15.9 ms, total: 2.98 s
+Wall time: 2.96 s
 </pre></div>
 </div>
 <img alt="../_images/3930a44cd9aa5161ddfd09428720fbddbbfe01d7a08dc7797df06d9b4094076f.png" src="../_images/3930a44cd9aa5161ddfd09428720fbddbbfe01d7a08dc7797df06d9b4094076f.png" />
