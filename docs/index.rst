@@ -58,12 +58,17 @@ Then install BlackJAX
 
     pip install blackjax
 
+.. toctree::
+   :maxdepth: 2
+   :caption: HOW TO
+
+   howto_use_ppl
+   Sample with multiple chains?<examples/howto_sample_multiple_chains.md>
 
 .. toctree::
    :maxdepth: 1
    :caption: Blackjax by example
 
-   howtos
    examples
 
 .. toctree::
