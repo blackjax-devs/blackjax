@@ -2,7 +2,7 @@ Examples
 ========
 
 .. toctree::
-   :caption: Examples
+   :maxdepth: 1
 
    examples/Introduction.md
    examples/LogisticRegression.md
