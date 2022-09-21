@@ -11,28 +11,29 @@ kernelspec:
   name: python3
 ---
 
-# Use BlackJAX with TFP
+# Use with TFP models
 
-BlackJAX can take any log-probability function as long as it is compatible with JAX's JIT. In this notebook we show how we can use tensorflow-probability as a modeling language and BlackJAX as an inference library.
+BlackJAX can take any log-probability function as long as it is compatible with JAX's primitives. In this notebook we show how we can use tensorflow-probability as a modeling language and BlackJAX as an inference library.
 
-We reproduce the Eight Schools example from the [TFP documentation](https://www.tensorflow.org/probability/examples/Eight_Schools) (all credit for the model goes to the TFP team). For this notebook to run you will need to install tfp-nightly:
+``` {admonition} Before you start
+You will need [tensorflow-probability](https://www.tensorflow.org/probability) to run this example. Please follow the installation instructions on TFP's repository.
+```
+
+We reproduce the Eight Schools example from the [TFP documentation](https://www.tensorflow.org/probability/examples/Eight_Schools).
 
 ```{code-cell} ipython3
 import jax
-import jax.numpy as jnp
-import numpy as np
-from tensorflow_probability.substrates import jax as tfp
-
-tfd = tfp.distributions
 
 import blackjax
 ```
 
-## Data
-
-Please refer to the [original TFP example](https://www.tensorflow.org/probability/examples/Eight_Schools) for a description of the problem and the model that is used. This notebook focuses exclusively on the possibility to use TFP as a modeling language and BlackJAX as an inference library.
+Please refer to the [original TFP example](https://www.tensorflow.org/probability/examples/Eight_Schools) for a description of the problem and the model that is used.
 
 ```{code-cell} ipython3
+:tags: [hide-cell]
+import numpy as np
+
+
 num_schools = 8  # number of schools
 treatment_effects = np.array(
     [28, 8, -3, 7, -1, 1, 18, 12], dtype=np.float32
@@ -42,9 +43,15 @@ treatment_stddevs = np.array(
 )  # treatment SE
 ```
 
-## Model
+We implement the non-centered version of the hierarchical model:
 
 ```{code-cell} ipython3
+from tensorflow_probability.substrates import jax as tfp
+tfd = tfp.distributions
+
+import jax.numpy as jnp
+
+
 model = tfd.JointDistributionSequential(
     [
         tfd.Normal(loc=0.0, scale=10.0, name="avg_effect"),  # `mu` above
@@ -73,8 +80,11 @@ model = tfd.JointDistributionSequential(
         ),
     ]
 )
+```
 
+We need to translate the model into a log-probability density function that will be used by Blackjax to perform inference.
 
+```{code-cell} ipython3
 def target_logprob_fn(avg_effect, avg_stddev, school_effects_standard):
     """Unnormalized target density as a function of states."""
     return model.log_prob(
@@ -85,20 +95,26 @@ def target_logprob_fn(avg_effect, avg_stddev, school_effects_standard):
 logprob_fn = lambda x: target_logprob_fn(**x)
 ```
 
+We can now initialize the
+
 ```{code-cell} ipython3
-rng_key = jax.random.PRNGKey(0)
+```
+
+Let us first run the window adaptation to find a good value for the step size and for the inverse mass matrix. As in the original example we will run the HMC integrator 3 times at each step.
+
+```{code-cell} ipython3
+import blackjax
+import jax
+
+
 initial_position = {
     "avg_effect": jnp.zeros([]),
     "avg_stddev": jnp.zeros([]),
     "school_effects_standard": jnp.ones([num_schools]),
 }
-```
 
-Let us first run the window adaptation to find a good value for the step size and for the inverse mass matrix. As in the original example we will run the integrator 3 times at each step.
 
-```{code-cell} ipython3
-%%time
-
+rng_key = jax.random.PRNGKey(0)
 adapt = blackjax.window_adaptation(
     blackjax.hmc, logprob_fn, 1000, num_integration_steps=3
 )
@@ -106,11 +122,10 @@ adapt = blackjax.window_adaptation(
 last_state, kernel, _ = adapt.run(rng_key, initial_position)
 ```
 
-BlackJAX does not come with an inference loop (yet) so you have to implement it yourself, which just takes a few lines with JAX:
+We can now perform inference with the tuned kernel:
 
 ```{code-cell} ipython3
-%%time
-
+:tags: [hide-cell]
 
 def inference_loop(rng_key, kernel, initial_state, num_samples):
     def one_step(state, rng_key):
@@ -121,9 +136,9 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     _, (states, infos) = jax.lax.scan(one_step, initial_state, keys)
 
     return states, infos
+```
 
-
-# Sample from the posterior distribution
+```{code-cell} ipython3
 states, infos = inference_loop(rng_key, kernel, last_state, 500_000)
 states.position["avg_effect"].block_until_ready()
 ```
@@ -131,8 +146,10 @@ states.position["avg_effect"].block_until_ready()
 Extra information about the inference is contained in the `infos` namedtuple. Let us compute the average acceptance rate:
 
 ```{code-cell} ipython3
+:tags: [hide-cell]
+
 acceptance_rate = np.mean(infos.acceptance_probability)
-print(f"Acceptance rate: {acceptance_rate:.2f}")
+print(f"Average acceptance rate: {acceptance_rate:.2f}")
 ```
 
 The samples are contained as a dictionnary in `states.position`. Let us compute the posterior of the school treatment effect:
@@ -148,6 +165,8 @@ school_effects_samples = (
 And now let us plot the correponding chains and distributions:
 
 ```{code-cell} ipython3
+:tags: [hide-input,remove-stderr]
+
 import seaborn as sns
 from matplotlib import pyplot as plt
 
@@ -162,33 +181,4 @@ axes[num_schools - 1][0].set_xlabel("Iteration")
 axes[num_schools - 1][1].set_xlabel("School effect")
 fig.tight_layout()
 plt.show()
-```
-
-## Compare Sampling Time with TFP
-
-
-```{code-cell} ipython3
-%%time
-
-num_results = 500_000
-num_burnin_steps = 0
-
-@jax.jit
-def do_sampling():
-    return tfp.mcmc.sample_chain(
-        num_results=num_results,
-        num_burnin_steps=num_burnin_steps,
-        current_state=[
-            jnp.zeros([]),
-            jnp.zeros([]),
-            jnp.ones([num_schools]),
-        ],
-        kernel=tfp.mcmc.HamiltonianMonteCarlo(
-            target_log_prob_fn=target_logprob_fn, step_size=0.4, num_leapfrog_steps=3
-        ),
-        seed=rng_key,
-    )
-
-
-states, kernel_results = do_sampling()
 ```

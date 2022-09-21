@@ -1,5 +1,5 @@
 -e ./
-aesara
+aesara>=2.8.5
 arviz
 distrax
 jax
