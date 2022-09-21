@@ -1,8 +1,8 @@
-HowTos
-========
+Use the model I built with X?
+=============================
 
 .. toctree::
-   :caption: HowTos
+   :maxdepth: 1
 
    examples/howto_use_aesara.md
    examples/howto_use_numpyro.md
