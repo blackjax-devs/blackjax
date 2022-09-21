@@ -82,10 +82,12 @@ X_test, y_test, N_test = prepare_data(data_test)
 
 We will use a very simple (bayesian) neural network in this example: A MLP with gaussian priors on the weights. We first need a function that computes the model's logposterior density given the data and the current values of the parameters. If we note $X$ the array that represents an image and $y$ the array such that $y_i = 0$  if the image is in category $i$, $y_i=1$ otherwise, the model can be written as:
 
+```{math}
 \begin{align*}
   \boldsymbol{p} &= \operatorname{NN}(X)\\
   \boldsymbol{y} &\sim \operatorname{Categorical}(\boldsymbol{p})
 \end{align*}
+```
 
 ```{code-cell} ipython3
 @jax.jit
@@ -215,6 +217,8 @@ for step in progress_bar(range(num_samples + num_warmup)):
 Let us plot the accuracy at different points in the sampling process:
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 import matplotlib.pylab as plt
 
 fig = plt.figure(figsize=(12, 8))
@@ -230,6 +234,8 @@ plt.plot()
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 print(f"The average accuracy in the sampling phase is {np.mean(accuracies[10:]):.2f}")
 ```
 
@@ -270,12 +276,11 @@ for i in range(10):
 And now compute the average accuracy over all the samples without these uncertain predictions:
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 avg_accuracy = np.mean(
     [compute_accuracy(s, X_test[certain_mask], y_test[certain_mask]) for s in samples]
 )
-```
-
-```{code-cell} ipython3
 print(
     f"The average accuracy removing the samples for which the model is uncertain is {avg_accuracy:.3f}"
 )
