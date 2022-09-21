@@ -9,6 +9,8 @@ kernelspec:
   display_name: Python 3.9.7 ('blackjax')
   language: python
   name: python3
+mystnb:
+  execution_timeout: 200
 ---
 
 # Change of Variable in HMC
