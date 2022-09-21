@@ -94,7 +94,7 @@ def kernel(
             Additional information on the SMC step
         """
 
-        num_particles = jax.tree_flatten(particles)[0][0].shape[0]
+        num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
         scan_key, resampling_key = jax.random.split(rng_key, 2)
 
         # First advance the particles using the MCMC kernel
