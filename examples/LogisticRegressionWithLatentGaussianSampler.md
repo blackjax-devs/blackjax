@@ -26,15 +26,12 @@ import blackjax
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-cell]
+
 %config InlineBackend.figure_format = "retina"
 plt.rcParams["axes.spines.right"] = False
 plt.rcParams["axes.spines.top"] = False
 plt.rcParams["figure.figsize"] = (12, 8)
-```
-
-```{code-cell} ipython3
-%load_ext watermark
-%watermark -d -m -v -p jax,jaxlib,blackjax
 ```
 
 ## The data
@@ -50,6 +47,8 @@ y = rows[0] * 1.0  # y[i] = whether point i belongs to cluster 1
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 colors = ["tab:red" if el else "tab:blue" for el in rows[0]]
 plt.scatter(*X.T, edgecolors=colors, c="none")
 plt.xlabel(r"$X_0$")
@@ -80,6 +79,8 @@ $$
 And $\Phi$ is the matrix that contains the data, so each row $\Phi_{i,:}$ is the vector $\left[1, X_0^i, X_1^i\right]$
 
 ```{code-cell} ipython3
+:tags: [hide-stderr]
+
 Phi = jnp.c_[jnp.ones(num_points)[:, None], X]
 N, M = Phi.shape
 alpha = 1.0
@@ -184,6 +185,8 @@ print(f"Percentage of accepted samples (after calibration): {tota_pct_accepted:.
 And display the trace:
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 fig, ax = plt.subplots(1, 3, figsize=(12, 2))
 for i, axi in enumerate(ax):
     axi.plot(states.position[:, i])
@@ -215,6 +218,8 @@ Z_mcmc = Z_mcmc.mean(axis=0)
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 plt.contourf(*Xspace, Z_mcmc)
 plt.scatter(*X.T, c=colors)
 plt.xlabel(r"$X_0$")

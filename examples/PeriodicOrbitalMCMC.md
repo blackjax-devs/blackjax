@@ -31,21 +31,21 @@ The benefits of sampling the whole orbit instead of a single point in it are: ef
 
 It is also illustrated the usage of normalizing flows, specifically the Masked Autoregressive flow ([MAF](https://arxiv.org/abs/1705.07057)), as a preconditioning step for the algorithm; using as a bijection function the ellipsis
 
-$$
+```{math}
 \begin{align*}
-x(t) &= x(0) \cos(t) + v(t) \sin(t) \\
-v(t) &= v(0) \cos(t) - x(t) \sin(t),
+    x(t) &= x(0) \cos(t) + v(t) \sin(t) \\
+    v(t) &= v(0) \cos(t) - x(t) \sin(t),
 \end{align*}
-$$
+```
 
 i.e. the solution of Hamilton's equations for $p(x,v) = N(x|0,I)N(v|0,I)$,
 
-$$
+```{math}
 \begin{align*}
-\frac{d x}{d t} &= v \\
-\frac{d v}{d t} &= -x.
+    \frac{d x}{d t} &= v \\
+    \frac{d v}{d t} &= -x.
 \end{align*}
-$$
+```
 
 As it is later demonstrated, these dynamics alone fail to capture all the volume of our banana density. They are, however, cheap and easy to use, since these dynamics are both gradient-free (don't require the computation of gradients of our target distribution) and tuning-free (have no tuning parameters); in contrast with the integrators mentioned above, which need to compute gradients at each iteration and require tuning of the discretization step size and number of steps (when used for periodic orbital MCMC, these values are represented by the `step_size` and `period`). Paired with a preconditioning step which transforms our target to approximate $N(x|0,I)$, our cheap and easy dynamics can efficienty sample from the whole volume of our banana density while delegating the expensive gradients and cumbersome tuning to an optimization problem performed pre-sampling.
 
@@ -60,17 +60,8 @@ from blackjax import orbital_hmc as orbital
 ```
 
 ```{code-cell} ipython3
-%load_ext watermark
-%watermark -d -m -v -p jax,jaxlib,blackjax
-```
+:tags: [hide-cell]
 
-```{code-cell} ipython3
-jax.devices()
-```
-
-## Useful Functions
-
-```{code-cell} ipython3
 def plot_contour(logprob, orbits=None, weights=None):
     """Contour plots for density w/ or w/o samples."""
     a, b, c, d = -7.5, 7.5, -5, 12.5
@@ -93,6 +84,8 @@ def plot_contour(logprob, orbits=None, weights=None):
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-cell]
+
 def inference_loop(rng_key, kernel, initial_state, num_samples):
     """Sequantially draws samples given the kernel of choice."""
 
@@ -108,7 +101,10 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
 
 ## Banana Density
 
+We will be sampling from the banana density:
+
 ```{code-cell} ipython3
+:tags: [hide-input]
 def logprob_fn(x1, x2):
     """Banana density"""
     return stats.norm.logpdf(x1, 0.0, jnp.sqrt(8.0)) + stats.norm.logpdf(
@@ -191,6 +187,8 @@ weights = states.weights
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 plot_contour(logprob, orbits=samples, weights=weights)
 ```
 
@@ -217,6 +215,8 @@ weights = states.weights
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 plot_contour(logprob, orbits=samples, weights=weights)
 ```
 
@@ -224,12 +224,12 @@ plot_contour(logprob, orbits=samples, weights=weights)
 
 We now create and use a bijection given by an ellipsis using the `IntegratorState` class. The bijection must have as inputs the potential and kinetic energy functions, which are the negative log densities of our target posterior and the auxiliary distribution used for the momentum variable. In the case of our banana density, we are targeting the "posterior" $N(x_1|0, 8)N(x_2|1/4x_1^2, 1)$ and using a standard normal distribution for our momentum variable, hence our potential and kinetic energies are $1/2\left(x_1^2/8 + \left(x_2 - 1/4x_1^2\right)^2\right)$ and $1/2v^Tv$, respectively. However, the orbit we build now is independent of these two energies and moves around an ellipsis given by
 
-$$
+```{math}
 \begin{align*}
 x(t) &= x(0) \cos(t) + v(t) \sin(t) \\
 v(t) &= v(0) \cos(t) - x(t) \sin(t),
 \end{align*}
-$$
+```
 
 which returns to its initial position every $t=2\pi$ radians. The `step_size` for this orbit is set to cover the entire ellipsis. This ellipsis actually targets a potential and kinetic energy given by the product measure of two standard normal distributions, hence its inefficiency at exploring the real target measure.
 
@@ -288,6 +288,8 @@ weights = states.weights
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 plot_contour(logprob, orbits=samples, weights=weights)
 ```
 
@@ -311,12 +313,12 @@ $$
 
 where the right hand side of the equation is what we call the pullback density of our target. Thus, letting the bijection $f(x,v) = (x(t), v(t))$ for
 
-$$
+```{math}
 \begin{align*}
 x(t) &= x(0) \cos(t) + v(t) \sin(t) \\
 v(t) &= v(0) \cos(t) - x(t) \sin(t),
 \end{align*}
-$$
+```
 
 we have that using the periodic orbital MCMC on the pullback with bijection $f(x,v)$ is equivalent to using the periodic orbital MCMC on our target density with bijection $T \circ f \circ T^{-1}$.
 
@@ -407,6 +409,11 @@ parameters, nelbo = param_optim(
     n_atoms=1000,
     n_epochs=4,
 )
+```
+
+```{code-cell}
+:tags: [hide-input]
+
 plt.figure(figsize=(15, 4))
 plt.title("Negative ELBO (KL divergence) over iterations")
 plt.plot(nelbo)
@@ -458,5 +465,7 @@ samples = {"x1": samplesx1, "x2": samplesx2}
 The pushed samples are much better at targeting the banana density than the algorithm without a preconditioning step. The transformation helps the sampler stay close to the same density level when moving around the ellipsis, thus reducing the variance of the step's weights along it. This preconditioning serves, in a way, as an adaptive step that tunes the parameters of the sampler through a transformation. Notice that if we move around the whole ellipsis there are no tuning parameters, only the number of samples we choose to extract at each iteration, in contrast with choosing step sizes and number of steps in the case of the other numerical integrators. Of course, we still need to choose a gradient descent algorithm, learning rates, number of iterations, and epochs for the optimization!
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 plot_contour(logprob, orbits=samples, weights=weights)
 ```

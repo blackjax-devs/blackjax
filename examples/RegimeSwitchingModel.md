@@ -21,16 +21,16 @@ We'll assume that at any given time $t$ the stock's returns will follow one of t
 
 In the whole, our regime-switching model is defined by the likelihood
 
-$$
+```{math}
 \begin{split}
     L(\mathbf{r}|\alpha, \rho, \sigma^2, \mathbf{p}, r_0, \xi_{10}) &= \prod_t \xi_{1t}\eta_{1t} + (1-\xi_{1t})\eta_{2t} \\
     \xi_{1t} &= \frac{\xi_{1t-1}\eta_{1t}}{\xi_{1t-1}\eta_{1t} + (1-\xi_{1t-1})\eta_{2t}},
 \end{split}
-$$
+```
 
 where $\eta_{jt} = p_{j,1}$, $\mathcal{N}(r_t;\alpha_1, \sigma_1^2) + p_{j,2}$, and $\mathcal{N}(r_t; \alpha_2 + \rho r_{t-1}, \sigma_2^2)$ for $j\in\{0, 1\}$. And the priors of the parameters are:
 
-$$
+```{math}
 \begin{split}
     \alpha_1, \alpha_2 &\sim \mathcal{N}(0, 1) \\
     \rho &\sim \mathcal{N}^0(1, 0.1) \\
@@ -39,7 +39,7 @@ $$
     r_0 &\sim \mathcal{N}(0, 1) \\
     \xi_{10} &\sim \mathcal{Beta}(2, 2),
 \end{split}
-$$
+```
 
 where $\mathcal{N}^0$ indicates the truncated at 0 Gaussian distribution and $\mathcal{C}^+$ the half-Cauchy distribution.
 
@@ -202,6 +202,11 @@ print_summary(samples)
 
 ```{code-cell} ipython3
 samples = jax.tree_map(lambda s: s.reshape((-1,) + s.shape[2:]), samples)
+```
+
+```{code-cell} ipython3
+:tags: [hide-input]
+
 sam = []
 for name, value in samples.items():
     sam.append(np.asarray(value).T)

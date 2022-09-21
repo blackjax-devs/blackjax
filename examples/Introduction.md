@@ -27,15 +27,6 @@ import numpy as np
 import blackjax
 ```
 
-```{code-cell} ipython3
-%load_ext watermark
-%watermark -d -m -v -p jax,jaxlib,blackjax
-```
-
-```{code-cell} ipython3
-jax.devices()
-```
-
 ## The Problem
 
 We'll generate observations from a normal distribution of known `loc` and `scale` to see if we can recover the parameters in sampling. Let's take a decent-size dataset with 1,000 points:
