@@ -494,13 +494,13 @@ distributions:</p>
 <p>$$
 p_{\lambda_k}(x) \propto p_0(x) \exp(-\lambda_k V(x))
 $$</p>
-<p>where the tempering parameter $ \lambda_k $ takes increasing values between <span class="math notranslate nohighlight">\(0\)</span> and <span class="math notranslate nohighlight">\(1\)</span>. Tempered SMC will also particularly shine when the MCMC step
+<p>where the tempering parameter <span class="math notranslate nohighlight">\(\lambda_k\)</span> takes increasing values between <span class="math notranslate nohighlight">\(0\)</span> and <span class="math notranslate nohighlight">\(1\)</span>. Tempered SMC will also particularly shine when the MCMC step
 is not well calibrated (too small step size, etc) like in the example below.</p>
 <section id="imports">
 <h2>Imports<a class="headerlink" href="#imports" title="Permalink to this headline">#</a></h2>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -527,12 +527,10 @@ $$</p>
 <p>$$
 V(x) = (x^2 - 1)^2
 $$</p>
-<p>This corresponds to the following distribution. We plot the resulting tempered density for 5 different values of <div class="math notranslate nohighlight">
-\[\lambda_k\]</div>
- : from <span class="math notranslate nohighlight">\(\lambda_k =1\)</span> which correponds to the original density to <span class="math notranslate nohighlight">\(\lambda_k=0\)</span>. The lower the value of <span class="math notranslate nohighlight">\(\lambda_k\)</span> the easier it is to sampler from the posterior density.</p>
+<p>This corresponds to the following distribution. We plot the resulting tempered density for 5 different values of <span class="math notranslate nohighlight">\(\lambda_k\)</span> : from <span class="math notranslate nohighlight">\(\lambda_k =1\)</span> which correponds to the original density to <span class="math notranslate nohighlight">\(\lambda_k=0\)</span>. The lower the value of <span class="math notranslate nohighlight">\(\lambda_k\)</span> the easier it is for the sampler to jump between the modes of the posterior density.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">V</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">V</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
 
@@ -554,23 +552,22 @@ $$</p>
     <span class="n">linspace</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">linspace</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="p">)</span>
 <span class="n">density</span> <span class="o">/=</span> <span class="n">normalizing_factor</span>
-
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">linspace</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">density</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">lambdas</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd36a4ef7c0&gt;
-</pre></div>
-</div>
-<img alt="../_images/bd48b7a90aab9b2fe6284f87589e936c4909c486c7315bd62e7f3a85c19fbd3a.png" src="../_images/bd48b7a90aab9b2fe6284f87589e936c4909c486c7315bd62e7f3a85c19fbd3a.png" />
-</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">mcmc_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">mcmc_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
     <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
     <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mcmc_kernel</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
@@ -598,7 +595,7 @@ $$</p>
 <p>We first try to sample from the posterior density using an HMC kernel.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">%%</span><span class="n">time</span>
 
 <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 
@@ -609,19 +606,17 @@ $$</p>
 <span class="n">hmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">full_logprob</span><span class="p">,</span> <span class="o">**</span><span class="n">hmc_parameters</span><span class="p">)</span>
 <span class="n">hmc_state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,)))</span>
 <span class="n">hmc_samples</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">hmc</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">hmc_state</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">)</span>
-
-<span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hmc_samples</span><span class="o">.</span><span class="n">position</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hmc_samples</span><span class="o">.</span><span class="n">position</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">linspace</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">density</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.09 s, sys: 5.22 ms, total: 2.09 s
-Wall time: 2.09 s
-</pre></div>
-</div>
-<img alt="../_images/67e28471bce1e142526847dd567a712f2ced5e241b40631756490700949cf108.png" src="../_images/67e28471bce1e142526847dd567a712f2ced5e241b40631756490700949cf108.png" />
 </div>
 </div>
 </section>
@@ -630,26 +625,24 @@ Wall time: 2.09 s
 <p>We now use a NUTS kernel.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">%%</span><span class="n">time</span>
 
 <span class="n">nuts_parameters</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">step_size</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">inv_mass_matrix</span><span class="p">)</span>
 
 <span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">full_logprob</span><span class="p">,</span> <span class="o">**</span><span class="n">nuts_parameters</span><span class="p">)</span>
 <span class="n">nuts_state</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,)))</span>
 <span class="n">nuts_samples</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">nuts_state</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">)</span>
-
-<span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nuts_samples</span><span class="o">.</span><span class="n">position</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nuts_samples</span><span class="o">.</span><span class="n">position</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">linspace</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">density</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.45 s, sys: 28.7 ms, total: 9.47 s
-Wall time: 9.47 s
-</pre></div>
-</div>
-<img alt="../_images/77a15f303b3936754309a9345db62f5cfb64afc16d6b1b62292735af59494931.png" src="../_images/77a15f303b3936754309a9345db62f5cfb64afc16d6b1b62292735af59494931.png" />
 </div>
 </div>
 </section>
@@ -659,7 +652,7 @@ Wall time: 9.47 s
 <p>We now use the adaptive tempered SMC algorithm with an HMC kernel. We only take one HMC step before resampling. The algorithm is run until <span class="math notranslate nohighlight">\(\lambda_k\)</span> crosses the <span class="math notranslate nohighlight">\(\lambda_k = 1\)</span> limit.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">smc_inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">smc_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">smc_inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">smc_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Run the temepered SMC algorithm.</span>
 
 <span class="sd">    We run the adaptive algorithm until the tempering parameter lambda reaches the value</span>
@@ -688,7 +681,7 @@ Wall time: 9.47 s
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">%%</span><span class="n">time</span>
 
 <span class="n">loglikelihood</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="n">V</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
@@ -713,26 +706,17 @@ Wall time: 9.47 s
 
 <span class="n">n_iter</span><span class="p">,</span> <span class="n">smc_samples</span> <span class="o">=</span> <span class="n">smc_inference_loop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">tempered</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_smc_state</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of steps in the adaptive algorithm: &quot;</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
-
-<span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">smc_samples</span><span class="o">.</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">smc_samples</span><span class="o">.</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">linspace</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">density</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/blackjax/blackjax/blackjax/smc/ess.py:69: FutureWarning: jax.tree_flatten is deprecated, and will be removed in a future release. Use jax.tree_util.tree_flatten instead.
-  n_particles = jax.tree_flatten(particles)[0][0].shape[0]
-/home/runner/work/blackjax/blackjax/blackjax/smc/base.py:97: FutureWarning: jax.tree_flatten is deprecated, and will be removed in a future release. Use jax.tree_util.tree_flatten instead.
-  num_particles = jax.tree_flatten(particles)[0][0].shape[0]
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  9
-CPU times: user 4.69 s, sys: 109 ms, total: 4.8 s
-Wall time: 4.61 s
-</pre></div>
-</div>
-<img alt="../_images/e17742244779a7fc1510be94db658cc74cde3960b646b032e2c7cb59c83605de.png" src="../_images/e17742244779a7fc1510be94db658cc74cde3960b646b032e2c7cb59c83605de.png" />
 </div>
 </div>
 </section>
@@ -744,7 +728,7 @@ Wall time: 4.61 s
 <p>We plot the resulting tempered density for 5 different values of <span class="math notranslate nohighlight">\(\lambda_k\)</span>: from <span class="math notranslate nohighlight">\(\lambda_k =1\)</span> which correponds to the original density to <span class="math notranslate nohighlight">\(\lambda_k=0\)</span>. The lower the value of <span class="math notranslate nohighlight">\(\lambda_k\)</span> the easier it is to sampler from the posterior log-density.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">prior_log_prob</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">prior_log_prob</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">multivariate_normal</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">d</span><span class="p">,)),</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
 
@@ -765,23 +749,22 @@ Wall time: 4.61 s
     <span class="n">linspace</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">linspace</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="p">)</span>
 <span class="n">density</span> <span class="o">/=</span> <span class="n">normalizing_factor</span>
-
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">linspace</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">density</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">lambdas</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd3606ccc40&gt;
-</pre></div>
-</div>
-<img alt="../_images/b039c37cae038a3a45a2202f571e4ffba631685116f6019522670a92a9fbc971.png" src="../_images/b039c37cae038a3a45a2202f571e4ffba631685116f6019522670a92a9fbc971.png" />
-</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">mcmc_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">mcmc_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mcmc_kernel</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">state</span>
@@ -804,7 +787,7 @@ Wall time: 4.61 s
 <p>We first try to sample from the posterior density using an HMC kernel.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">%%</span><span class="n">time</span>
 
 <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 
@@ -817,20 +800,18 @@ Wall time: 4.61 s
 <span class="n">hmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">full_logprob</span><span class="p">,</span> <span class="o">**</span><span class="n">hmc_parameters</span><span class="p">)</span>
 <span class="n">hmc_state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,)))</span>
 <span class="n">hmc_samples</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">hmc</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">hmc_state</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">)</span>
-
-<span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hmc_samples</span><span class="o">.</span><span class="n">position</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hmc_samples</span><span class="o">.</span><span class="n">position</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">linspace</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">density</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.69 s, sys: 16.3 ms, total: 1.7 s
-Wall time: 1.69 s
-</pre></div>
-</div>
-<img alt="../_images/46f891fd0bd9b630b2d3b253a7952d470a08b647126e0af6faac45e5e344391c.png" src="../_images/46f891fd0bd9b630b2d3b253a7952d470a08b647126e0af6faac45e5e344391c.png" />
 </div>
 </div>
 </section>
@@ -839,27 +820,25 @@ Wall time: 1.69 s
 <p>We do the same using a NUTS kernel.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">%%</span><span class="n">time</span>
 
 <span class="n">nuts_parameters</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">step_size</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">inv_mass_matrix</span><span class="p">)</span>
 
 <span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">full_logprob</span><span class="p">,</span> <span class="o">**</span><span class="n">nuts_parameters</span><span class="p">)</span>
 <span class="n">nuts_state</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,)))</span>
 <span class="n">nuts_samples</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">nuts_state</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">)</span>
-
-<span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nuts_samples</span><span class="o">.</span><span class="n">position</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nuts_samples</span><span class="o">.</span><span class="n">position</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">linspace</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">density</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.8 s, sys: 12.1 ms, total: 2.82 s
-Wall time: 2.81 s
-</pre></div>
-</div>
-<img alt="../_images/60033ddb5f711bf01fe60bd5fc8e2a2ec4f9fd92bd6e074b0ea76e0ebbdb01ab.png" src="../_images/60033ddb5f711bf01fe60bd5fc8e2a2ec4f9fd92bd6e074b0ea76e0ebbdb01ab.png" />
 </div>
 </div>
 </section>
@@ -869,7 +848,7 @@ Wall time: 2.81 s
 We correct the bias introduced by the (arbitrary) prior.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">%%</span><span class="n">time</span>
 
 <span class="n">loglikelihood</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="n">V</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
@@ -894,21 +873,18 @@ We correct the bias introduced by the (arbitrary) prior.</p>
 
 <span class="n">n_iter</span><span class="p">,</span> <span class="n">smc_samples</span> <span class="o">=</span> <span class="n">smc_inference_loop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">tempered</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_smc_state</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of steps in the adaptive algorithm: &quot;</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
-
-<span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">smc_samples</span><span class="o">.</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_hide-input docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">smc_samples</span><span class="o">.</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">linspace</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">density</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  8
-CPU times: user 4.26 s, sys: 24.9 ms, total: 4.28 s
-Wall time: 4.26 s
-</pre></div>
-</div>
-<img alt="../_images/3930a44cd9aa5161ddfd09428720fbddbbfe01d7a08dc7797df06d9b4094076f.png" src="../_images/3930a44cd9aa5161ddfd09428720fbddbbfe01d7a08dc7797df06d9b4094076f.png" />
 </div>
 </div>
 <p>The tempered SMC algorithm with the HMC kernel clearly outperfoms the HMC and NUTS kernels alone.</p>

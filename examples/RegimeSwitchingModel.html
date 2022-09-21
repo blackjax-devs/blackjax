@@ -345,27 +345,25 @@ title="Source repository"
 <p>This example replicates the <a class="reference external" href="http://modernstatisticalworkflow.blogspot.com/2018/02/regime-switching-models-in-stan.html">case study</a> analyzing financial time series, specifically the daily difference in log price data of Google’s stock, referred to as returns <span class="math notranslate nohighlight">\(r_t\)</span>.</p>
 <p>We’ll assume that at any given time <span class="math notranslate nohighlight">\(t\)</span> the stock’s returns will follow one of two regimes: an independent random walk regime where <span class="math notranslate nohighlight">\(r_t \sim \mathcal{N}(\alpha_1, \sigma^2_1)\)</span> and an autoregressive regime where <span class="math notranslate nohighlight">\(r_t \sim \mathcal{N}(\alpha_2 + \rho r_{t-1}, \sigma_2^2)\)</span>. Being on either of the two regimes, <span class="math notranslate nohighlight">\(s_t\in {0, 1}\)</span>, will depend on the previous time’s regime <span class="math notranslate nohighlight">\(s_{t-1}\)</span>, call these probabilities <span class="math notranslate nohighlight">\(p_{s_{t-1}, s_{t}}\)</span> for <span class="math notranslate nohighlight">\(s_{t-1}, s_t \in {0, 1}\)</span>. Set as parameters of the model <span class="math notranslate nohighlight">\(p_{1,1}\)</span> and <span class="math notranslate nohighlight">\(p_{2,2}\)</span> and define the complementary probabilities by definition: <span class="math notranslate nohighlight">\(p_{1,2} = 1-p_{1,1}\)</span> and <span class="math notranslate nohighlight">\(p_{2,1} = 1-p_{2,2}\)</span>. Since the regime at any time is unobserved, we instead carry over time the probability of belonging to either one regime as <span class="math notranslate nohighlight">\(\xi_{1t} + \xi_{2t} = 1\)</span>. Finally, we need to model initial values, both for returns <span class="math notranslate nohighlight">\(r_0\)</span> and probability of belonging to one of the two regimes <span class="math notranslate nohighlight">\(\xi_{10}\)</span>.</p>
 <p>In the whole, our regime-switching model is defined by the likelihood</p>
-<p>$$
-\begin{split}
-L(\mathbf{r}|\alpha, \rho, \sigma^2, \mathbf{p}, r_0, \xi_{10}) &amp;= \prod_t \xi_{1t}\eta_{1t} + (1-\xi_{1t})\eta_{2t} \
-\xi_{1t} &amp;= \frac{\xi_{1t-1}\eta_{1t}}{\xi_{1t-1}\eta_{1t} + (1-\xi_{1t-1})\eta_{2t}},
-\end{split}
-$$</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{split}
+    L(\mathbf{r}|\alpha, \rho, \sigma^2, \mathbf{p}, r_0, \xi_{10}) &amp;= \prod_t \xi_{1t}\eta_{1t} + (1-\xi_{1t})\eta_{2t} \\
+    \xi_{1t} &amp;= \frac{\xi_{1t-1}\eta_{1t}}{\xi_{1t-1}\eta_{1t} + (1-\xi_{1t-1})\eta_{2t}},
+\end{split}\end{split}\]</div>
 <p>where <span class="math notranslate nohighlight">\(\eta_{jt} = p_{j,1}\)</span>, <span class="math notranslate nohighlight">\(\mathcal{N}(r_t;\alpha_1, \sigma_1^2) + p_{j,2}\)</span>, and <span class="math notranslate nohighlight">\(\mathcal{N}(r_t; \alpha_2 + \rho r_{t-1}, \sigma_2^2)\)</span> for <span class="math notranslate nohighlight">\(j\in{0, 1}\)</span>. And the priors of the parameters are:</p>
-<p>$$
-\begin{split}
-\alpha_1, \alpha_2 &amp;\sim \mathcal{N}(0, 1) \
-\rho &amp;\sim \mathcal{N}^0(1, 0.1) \
-\sigma_1, \sigma_2 &amp;\sim \mathcal{C}^+(1) \
-p_{1,1}, p_{2,2} &amp;\sim \mathcal{Beta}(10, 2) \
-r_0 &amp;\sim \mathcal{N}(0, 1) \
-\xi_{10} &amp;\sim \mathcal{Beta}(2, 2),
-\end{split}
-$$</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{split}
+    \alpha_1, \alpha_2 &amp;\sim \mathcal{N}(0, 1) \\
+    \rho &amp;\sim \mathcal{N}^0(1, 0.1) \\
+    \sigma_1, \sigma_2 &amp;\sim \mathcal{C}^+(1) \\
+    p_{1,1}, p_{2,2} &amp;\sim \mathcal{Beta}(10, 2) \\
+    r_0 &amp;\sim \mathcal{N}(0, 1) \\
+    \xi_{10} &amp;\sim \mathcal{Beta}(2, 2),
+\end{split}\end{split}\]</div>
 <p>where <span class="math notranslate nohighlight">\(\mathcal{N}^0\)</span> indicates the truncated at 0 Gaussian distribution and <span class="math notranslate nohighlight">\(\mathcal{C}^+\)</span> the half-Cauchy distribution.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jrnd</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -479,16 +477,10 @@ $$</p>
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-</pre></div>
-</div>
-</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading Google stock data...&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading Google stock data...&quot;</span><span class="p">)</span>
 <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://raw.githubusercontent.com/albcab/TESS/master/google.csv&quot;</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">dl_ac</span><span class="o">.</span><span class="n">values</span> <span class="o">*</span> <span class="mi">100</span>
@@ -496,28 +488,18 @@ $$</p>
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Loading Google stock data...
-</pre></div>
-</div>
-</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Setting up Regime switching hidden Markov model...&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Setting up Regime switching hidden Markov model...&quot;</span><span class="p">)</span>
 <span class="n">dist</span> <span class="o">=</span> <span class="n">RegimeSwitchHMM</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Setting up Regime switching hidden Markov model...
-</pre></div>
-</div>
-</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">batch_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">batch_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span>
 <span class="p">[</span><span class="n">n_chain</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span> <span class="mi">200</span><span class="p">]</span>
 <span class="n">ksam</span><span class="p">,</span> <span class="n">kinit</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jrnd</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">dist</span><span class="o">.</span><span class="n">initialize_model</span><span class="p">(</span><span class="n">kinit</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">)</span>
@@ -527,7 +509,7 @@ $$</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Running MEADS...&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Running MEADS...&quot;</span><span class="p">)</span>
 <span class="n">tic1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
 <span class="n">k_warm</span><span class="p">,</span> <span class="n">k_sample</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">ksam</span><span class="p">)</span>
 <span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">meads</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">,</span> <span class="n">batch_fn</span><span class="o">=</span><span class="n">batch_fn</span><span class="p">)</span>
@@ -545,40 +527,24 @@ $$</p>
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Running MEADS...
-</pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:00:57.078336
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>                mean       std    median      5.0%     95.0%     n_eff     r_hat
-  alpha[0]      0.06      0.09      0.06     -0.08      0.20    422.46      1.19
-  alpha[1]      0.02      0.16      0.01     -0.16      0.18    111.76      1.66
-      p[0]      2.68      0.44      2.68      2.03      3.33    284.04      1.24
-      p[1]      1.85      0.86      1.79      0.47      3.21   1002.13      1.14
-       rho     -0.02      0.10     -0.02     -0.19      0.15       nan      1.12
-  sigma[0]      1.06      0.23      1.04      0.96      1.12     67.09      5.31
-  sigma[1]      2.14      0.22      2.14      1.86      2.44    169.57      1.37
-      xi_0      0.49      1.04      0.44     -1.18      2.13   1302.74      1.10
-       y_0      0.04      1.00      0.04     -1.52      1.75       nan      1.10
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,)</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]),</span> <span class="n">samples</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,)</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]),</span> <span class="n">samples</span><span class="p">)</span>
-<span class="n">sam</span> <span class="o">=</span> <span class="p">[]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sam</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="n">sam</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
@@ -597,9 +563,6 @@ $$</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../_images/8f47cbe65296c7ca455f1c2277940880e25e539cefde704c136cc9b6800f0c93.png" src="../_images/8f47cbe65296c7ca455f1c2277940880e25e539cefde704c136cc9b6800f0c93.png" />
 </div>
 </div>
 </section>

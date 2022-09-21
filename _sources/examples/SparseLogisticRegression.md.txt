@@ -17,7 +17,17 @@ mystnb:
 
 This example models a logistic regression with hierarchies on the scale of the independent variable's parameters that function as a proxy for variable selection. We give the independent variable's regressors $\beta$ a prior mean of 0 and global $\tau$ and local $\lambda$ scale parameters with strong prior information around 0, thus allowing these parameters to a posteriori degenerate at 0, hence excluding its independent variable from the model. These type of hierarchies on the prior scale of a parameter create funnel geometries that are hard to efficiently explore without local or global structure of the target.
 
-The model is run on its non-centered parametrization \citep{papaspiliopoulos2007general} with data from the numerical version of the [German credit dataset](https://archive.ics.uci.edu/ml/datasets/statlog+(german+credit+data)). The target posterior is defined by its likelihood $L(\mathbf{y}|\beta, \lambda, \tau) = \prod_i \text{Beta}(y_i;\sigma((\tau \lambda \odot \beta)^T X_i))$, with $\sigma$ the sigmoid function, and prior $\pi_0(\beta, \lambda, \tau) = \text{Gamma}(\tau;1/2, 1/2)\prod_i \mathcal{N}(\beta_i;0, 1)\text{Gamma}(\lambda_i;1/2, 1/2)$.
+The model is run on its non-centered parametrization \citep{papaspiliopoulos2007general} with data from the numerical version of the [German credit dataset](https://archive.ics.uci.edu/ml/datasets/statlog+(german+credit+data)). The target posterior is defined by its likelihood
+
+$$
+L(\mathbf{y}|\beta, \lambda, \tau) = \prod_i \text{Beta}(y_i;\sigma((\tau \lambda \odot \beta)^T X_i))
+$$
+
+with $\sigma$ the sigmoid function, and prior
+
+$$
+\pi_0(\beta, \lambda, \tau) = \text{Gamma}(\tau;1/2, 1/2)\prod_i \mathcal{N}(\beta_i;0, 1)\text{Gamma}(\lambda_i;1/2, 1/2)
+$$
 
 
 ```{code-cell} ipython3

@@ -402,7 +402,7 @@ title="Source repository"
 <p>This example is inspired form <a class="reference external" href="https://github.com/jeremiecoullon/SGMCMCJax/blob/master/docs/nbs/BNN.ipynb">this notebook</a> in the SGMCMCJax repository. We try to use a 3-layer neural network to recognise the digits in the MNIST dataset.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.nn</span> <span class="k">as</span> <span class="nn">nn</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.scipy.stats</span> <span class="k">as</span> <span class="nn">stats</span>
@@ -416,58 +416,13 @@ title="Source repository"
 <p>We download the MNIST data using <code class="docutils literal notranslate"><span class="pre">tensorflow-datasets</span></code>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow_datasets</span> <span class="k">as</span> <span class="nn">tfds</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow_datasets</span> <span class="k">as</span> <span class="nn">tfds</span>
 
 <span class="n">mnist_data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tfds</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;mnist&quot;</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">with_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">as_supervised</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
 <span class="n">mnist_data</span> <span class="o">=</span> <span class="n">tfds</span><span class="o">.</span><span class="n">as_numpy</span><span class="p">(</span><span class="n">mnist_data</span><span class="p">)</span>
 <span class="n">data_train</span><span class="p">,</span> <span class="n">data_test</span> <span class="o">=</span> <span class="n">mnist_data</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">],</span> <span class="n">mnist_data</span><span class="p">[</span><span class="s2">&quot;test&quot;</span><span class="p">]</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-21 16:21:14.695176: W tensorflow/core/platform/cloud/google_auth_provider.cc:184] All attempts to get a Google authentication bearer token failed, returning an empty token. Retrieving token from files failed with &quot;NOT_FOUND: Could not locate the credentials file.&quot;. Retrieving token from GCE failed with &quot;FAILED_PRECONDITION: Error executing an HTTP request: libcurl code 6 meaning &#39;Couldn&#39;t resolve host name&#39;, error details: Could not resolve host: metadata&quot;.
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span><span class=" -Color -Color-Bold">Downloading and preparing dataset 11.06 MiB (download: 11.06 MiB, generated: 21.00 MiB, total: 32.06 MiB) to ~/tensorflow_datasets/mnist/3.0.1...</span>
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:   0%|          | 0/4 [00:00&lt;?, ? file/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  25%|██▌       | 1/4 [00:00&lt;00:00,  3.76 file/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  25%|██▌       | 1/4 [00:00&lt;00:00,  3.76 file/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  50%|█████     | 2/4 [00:00&lt;00:00,  3.76 file/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  75%|███████▌  | 3/4 [00:00&lt;00:00,  5.13 file/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  75%|███████▌  | 3/4 [00:00&lt;00:00,  5.13 file/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00,  4.61 file/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00,  4.61 file/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00,  4.60 file/s]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span><span class=" -Color -Color-Bold">Dataset mnist downloaded and prepared to ~/tensorflow_datasets/mnist/3.0.1. Subsequent calls will reuse this data.</span>
 </pre></div>
 </div>
 </div>
@@ -480,7 +435,7 @@ title="Source repository"
 </ul>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">one_hot_encode</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">one_hot_encode</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">):</span>
     <span class="s2">&quot;Create a one-hot encoding of x of size k.&quot;</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">dtype</span><span class="p">)</span>
 
@@ -513,23 +468,19 @@ title="Source repository"
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="model-3-layer-perceptron">
 <h2>Model: 3-layer Perceptron<a class="headerlink" href="#model-3-layer-perceptron" title="Permalink to this headline">#</a></h2>
 <p>We will use a very simple (bayesian) neural network in this example: A MLP with gaussian priors on the weights. We first need a function that computes the model’s logposterior density given the data and the current values of the parameters. If we note <span class="math notranslate nohighlight">\(X\)</span> the array that represents an image and <span class="math notranslate nohighlight">\(y\)</span> the array such that <span class="math notranslate nohighlight">\(y_i = 0\)</span>  if the image is in category <span class="math notranslate nohighlight">\(i\)</span>, <span class="math notranslate nohighlight">\(y_i=1\)</span> otherwise, the model can be written as:</p>
-<p>\begin{align*}
-\boldsymbol{p} &amp;= \operatorname{NN}(X)\
-\boldsymbol{y} &amp;\sim \operatorname{Categorical}(\boldsymbol{p})
-\end{align*}</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+  \boldsymbol{p} &amp;= \operatorname{NN}(X)\\
+  \boldsymbol{y} &amp;\sim \operatorname{Categorical}(\boldsymbol{p})
+\end{align*}\end{split}\]</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
 <span class="k">def</span> <span class="nf">predict_fn</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns the probability for the image represented by X</span>
 <span class="sd">    to be in each category given the MLP&#39;s weights vakues.</span>
@@ -581,7 +532,7 @@ title="Source repository"
 <p>Now we need to get initial values for the parameters, and we simply sample from their prior distribution:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">init_parameters</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">sizes</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">init_parameters</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">sizes</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Parameter</span>
@@ -614,7 +565,7 @@ title="Source repository"
 <p>We now sample from the model’s posteriors. We discard the first 1000 samples until the sampler has reached the typical set, and then take 2000 samples. We record the model’s accuracy with the current values every 100 steps.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">%%</span><span class="n">time</span>
 
 <span class="kn">from</span> <span class="nn">fastprogress.fastprogress</span> <span class="kn">import</span> <span class="n">progress_bar</span>
 
@@ -659,38 +610,11 @@ title="Source repository"
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output text_html">
-<style>
-    /* Turns off some styling */
-    progress {
-        /* gets rid of default border in Firefox and Opera. */
-        border: none;
-        /* Needs to be in here for Safari polyfill so background images work as expected. */
-        background-size: auto;
-    }
-    progress:not([value]), progress:not([value])::-webkit-progress-bar {
-        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
-    }
-    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
-        background: #F44336;
-    }
-</style>
-</div><div class="output text_html">
-    <div>
-      <progress value='3340' class='' max='3340' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [3340/3340 00:39&lt;00:00]
-    </div>
-    </div><div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 50.4 s, sys: 1.62 s, total: 52 s
-Wall time: 44.3 s
-</pre></div>
-</div>
-</div>
 </div>
 <p>Let us plot the accuracy at different points in the sampling process:</p>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">plt</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">plt</span>
 
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
@@ -705,21 +629,10 @@ Wall time: 44.3 s
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[]
-</pre></div>
 </div>
-<img alt="../_images/59d13ef1250b2c739f0e20013896f7501a38d8c0e449ed8b5a952d41ae9c20ad.png" src="../_images/59d13ef1250b2c739f0e20013896f7501a38d8c0e449ed8b5a952d41ae9c20ad.png" />
-</div>
-</div>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The average accuracy in the sampling phase is </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">accuracies</span><span class="p">[</span><span class="mi">10</span><span class="p">:])</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The average accuracy in the sampling phase is 0.88
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The average accuracy in the sampling phase is </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">accuracies</span><span class="p">[</span><span class="mi">10</span><span class="p">:])</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -728,7 +641,7 @@ Wall time: 44.3 s
 <p>Here we will say that the model is unsure of its prediction for a given image if the digit that is most often predicted for this image is predicted less tham 95% of the time.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">predicted_class</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">predicted_class</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
     <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">predict_fn</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))(</span><span class="n">s</span><span class="p">,</span> <span class="n">X_test</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">])</span>
 <span class="p">)</span>
 </pre></div>
@@ -737,7 +650,7 @@ Wall time: 44.3 s
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_test_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_test</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">num_test_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_test</span><span class="p">)</span>
 <span class="n">max_predicted</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">predicted_class</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_test_samples</span><span class="p">)]</span>
 <span class="n">freq_max_predicted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
     <span class="p">[</span>
@@ -753,7 +666,7 @@ Wall time: 44.3 s
 <p>Let’s plot a few examples where the model was very uncertain:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">most_uncertain_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">freq_max_predicted</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">most_uncertain_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">freq_max_predicted</span><span class="p">)</span>
 
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">max_predicted</span><span class="p">[</span><span class="n">most_uncertain_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span> <span class="o">/</span> <span class="mi">2000</span><span class="p">)</span>
@@ -763,69 +676,16 @@ Wall time: 44.3 s
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.146  0.1385 0.     0.055  0.     0.     0.     0.029  0.131 ]
-</pre></div>
-</div>
-<img alt="../_images/028c9e9b9cca4ff7af4daf4f1ad9511716f6d217bcd73717ba8218ae614b8844.png" src="../_images/028c9e9b9cca4ff7af4daf4f1ad9511716f6d217bcd73717ba8218ae614b8844.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.     0.     0.163  0.136  0.006  0.     0.     0.0675 0.127 ]
-</pre></div>
-</div>
-<img alt="../_images/e1944ac028129900af7ca10523a58b566586036229d4302cfac4c9ab9d6157fe.png" src="../_images/e1944ac028129900af7ca10523a58b566586036229d4302cfac4c9ab9d6157fe.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.     0.1665 0.004  0.151  0.026  0.     0.     0.004  0.148 ]
-</pre></div>
-</div>
-<img alt="../_images/ad812d54fdade670981152072d7c2c95f2906604cd6334a3677b7986bf64fe3d.png" src="../_images/ad812d54fdade670981152072d7c2c95f2906604cd6334a3677b7986bf64fe3d.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.1655 0.     0.0015 0.     0.095  0.     0.1685 0.0175 0.0015 0.05  ]
-</pre></div>
-</div>
-<img alt="../_images/abf34274c46e4e8f60e4527000b8b1962fc038e91c4d1a644df1808a16ac1ef5.png" src="../_images/abf34274c46e4e8f60e4527000b8b1962fc038e91c4d1a644df1808a16ac1ef5.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.1725 0.     0.154  0.005  0.     0.     0.     0.     0.168 ]
-</pre></div>
-</div>
-<img alt="../_images/a30484637a3a22db55ba857711a9f77378c79066b98be1dfe9a0ee0e0bc1cf29.png" src="../_images/a30484637a3a22db55ba857711a9f77378c79066b98be1dfe9a0ee0e0bc1cf29.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.     0.155  0.     0.     0.     0.     0.1795 0.     0.165 ]
-</pre></div>
-</div>
-<img alt="../_images/5d1457066d42f728291ce251af11ebbcc809055aa996e418c36067f542ae830a.png" src="../_images/5d1457066d42f728291ce251af11ebbcc809055aa996e418c36067f542ae830a.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.1805 0.     0.1485 0.     0.     0.     0.0535 0.1165 0.0005]
-</pre></div>
-</div>
-<img alt="../_images/5d6d731699e9e31463eb9c5a83c6d38ccf49fd23a824a446c36ea6f5ab38f601.png" src="../_images/5d6d731699e9e31463eb9c5a83c6d38ccf49fd23a824a446c36ea6f5ab38f601.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.     0.1685 0.     0.     0.184  0.     0.056  0.0895 0.0015]
-</pre></div>
-</div>
-<img alt="../_images/00f40ec4abe5d06bf479404073a838009ac51525e5c4030b495d47a456c96f18.png" src="../_images/00f40ec4abe5d06bf479404073a838009ac51525e5c4030b495d47a456c96f18.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.008  0.     0.     0.     0.052  0.0975 0.087  0.     0.1855 0.0695]
-</pre></div>
-</div>
-<img alt="../_images/d633c16b48955050f03aac6a7990d50dcbc291aa67dc4008f0a000b4f4f4f576.png" src="../_images/d633c16b48955050f03aac6a7990d50dcbc291aa67dc4008f0a000b4f4f4f576.png" />
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.     0.124  0.     0.162  0.     0.0005 0.     0.0205 0.1925]
-</pre></div>
-</div>
-<img alt="../_images/18301331e57911e71f337099a3c8995cbb9b69d1fbc2301e671b5a59934869aa.png" src="../_images/18301331e57911e71f337099a3c8995cbb9b69d1fbc2301e671b5a59934869aa.png" />
-</div>
 </div>
 <p>And now compute the average accuracy over all the samples without these uncertain predictions:</p>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">avg_accuracy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">avg_accuracy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
     <span class="p">[</span><span class="n">compute_accuracy</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">X_test</span><span class="p">[</span><span class="n">certain_mask</span><span class="p">],</span> <span class="n">y_test</span><span class="p">[</span><span class="n">certain_mask</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">]</span>
 <span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span>
+<span class="nb">print</span><span class="p">(</span>
     <span class="sa">f</span><span class="s2">&quot;The average accuracy removing the samples for which the model is uncertain is </span><span class="si">{</span><span class="n">avg_accuracy</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span>
 <span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The average accuracy removing the samples for which the model is uncertain is 0.972
 </pre></div>
 </div>
 </div>

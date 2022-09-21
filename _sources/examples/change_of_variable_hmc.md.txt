@@ -20,29 +20,18 @@ mystnb:
 
 In particular we use following binomial hierarchical model where $y_{j}$ and $N_{j}$ are observed variables.
 
-
-<table>
-<tr>
-</tr>
-<tr>
-<td>
-
-![image.png](https://github.com/karm-patel/karm-patel.github.io/blob/master/images/binomial_hierarchichal.png?raw=True)
-
-</td>
-<td>
-
+```{math}
 \begin{align}
     y_{j} &\sim \text{Binom}(N_{j}, \theta_{j}) \label{eq:1} \\
     \theta_{j} &\sim \text{Beta}(a, b) \label{eq:2} \\
     p(a, b) &\propto (a+b)^{-5/2}
 \end{align}
+```
 
-</td>
-</tr>
-</table>
 
 ```{code-cell} ipython3
+:tags: [hide-cell]
+
 import arviz as az
 import jax
 import jax.numpy as jnp
@@ -62,9 +51,9 @@ plt.rc("xtick", labelsize=12)  # fontsize of the xtick labels
 plt.rc("ytick", labelsize=12)  # fontsize of the tyick labels
 ```
 
-## Data
-
 ```{code-cell} ipython3
+:tags: [hide-cell]
+
 # index of array is type of tumor and value shows number of total people tested.
 group_size = jnp.array(
     [
@@ -226,6 +215,8 @@ n_rat_tumors = len(group_size)
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 plt.figure(figsize=(12, 3))
 plt.bar(range(n_rat_tumors), n_of_positives)
 plt.title("No. of positives for each tumor type", fontsize=14)
@@ -234,6 +225,8 @@ sns.despine()
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 plt.figure(figsize=(14, 4))
 plt.bar(range(n_rat_tumors), group_size)
 plt.title("Group size for each tumor type", fontsize=14)
@@ -337,9 +330,11 @@ states, infos = inference_loop_multiple_chains(
 
 ## Arviz Plots
 
-We have all our posterior samples stored in `states.position` dictionary and `infos` store additional information like acceptance probability, divergence, etc. Now, we can use certain diagnostics to judge if our MCMC samples are converged on stationary distribution. Some of widely diagnostics are trace plots, potential scale reduction factor (R hat), divergences, etc. `Arviz` library provides quicker ways to anaylze these diagnostics. We can use `arviz.summary()` and `arviz_plot_trace()`, but these functions take specific format (arviz's trace) as a input. So now first we will convert `states` and `infos` into `trace`.
+We have all our posterior samples stored in `states.position` dictionary and `infos` store additional information like acceptance probability, divergence, etc. Now, we can use certain diagnostics to judge if our MCMC samples are converged on stationary distribution. Some of widely diagnostics are trace plots, potential scale reduction factor (R hat), divergences, etc. `Arviz` library provides quicker ways to anaylze these diagnostics. We can use `arviz.summary()` and `arviz_plot_trace()`, but these functions take specific format (arviz's trace) as a input.
 
 ```{code-cell} ipython3
+:tags: [hide-cell]
+
 def arviz_trace_from_states(states, info, burn_in=0):
     position = states.position
     if isinstance(position, jnp.DeviceArray):  # if states.position is array of samples
@@ -381,6 +376,8 @@ summ_df
 **r_hat** is showing measure of each chain is converged to stationary distribution. **r_hat** should be less than or equal to 1.01, here we get r_hat far from 1.01 for each latent sample.
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 az.plot_trace(trace)
 plt.tight_layout()
 ```
@@ -490,6 +487,8 @@ summ_df
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 az.plot_trace(trace)
 plt.tight_layout()
 ```
@@ -584,6 +583,8 @@ summ_df
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 az.plot_trace(trace)
 plt.tight_layout()
 ```

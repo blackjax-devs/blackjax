@@ -343,10 +343,17 @@ title="Source repository"
   <section id="sparse-logistic-regression">
 <h1>Sparse logistic regression<a class="headerlink" href="#sparse-logistic-regression" title="Permalink to this headline">#</a></h1>
 <p>This example models a logistic regression with hierarchies on the scale of the independent variable’s parameters that function as a proxy for variable selection. We give the independent variable’s regressors <span class="math notranslate nohighlight">\(\beta\)</span> a prior mean of 0 and global <span class="math notranslate nohighlight">\(\tau\)</span> and local <span class="math notranslate nohighlight">\(\lambda\)</span> scale parameters with strong prior information around 0, thus allowing these parameters to a posteriori degenerate at 0, hence excluding its independent variable from the model. These type of hierarchies on the prior scale of a parameter create funnel geometries that are hard to efficiently explore without local or global structure of the target.</p>
-<p>The model is run on its non-centered parametrization \citep{papaspiliopoulos2007general} with data from the numerical version of the <a class="reference external" href="https://archive.ics.uci.edu/ml/datasets/statlog+(german+credit+data)">German credit dataset</a>. The target posterior is defined by its likelihood <span class="math notranslate nohighlight">\(L(\mathbf{y}|\beta, \lambda, \tau) = \prod_i \text{Beta}(y_i;\sigma((\tau \lambda \odot \beta)^T X_i))\)</span>, with <span class="math notranslate nohighlight">\(\sigma\)</span> the sigmoid function, and prior <span class="math notranslate nohighlight">\(\pi_0(\beta, \lambda, \tau) = \text{Gamma}(\tau;1/2, 1/2)\prod_i \mathcal{N}(\beta_i;0, 1)\text{Gamma}(\lambda_i;1/2, 1/2)\)</span>.</p>
+<p>The model is run on its non-centered parametrization \citep{papaspiliopoulos2007general} with data from the numerical version of the <a class="reference external" href="https://archive.ics.uci.edu/ml/datasets/statlog+(german+credit+data)">German credit dataset</a>. The target posterior is defined by its likelihood</p>
+<p>$$
+L(\mathbf{y}|\beta, \lambda, \tau) = \prod_i \text{Beta}(y_i;\sigma((\tau \lambda \odot \beta)^T X_i))
+$$</p>
+<p>with <span class="math notranslate nohighlight">\(\sigma\)</span> the sigmoid function, and prior</p>
+<p>$$
+\pi_0(\beta, \lambda, \tau) = \text{Gamma}(\tau;1/2, 1/2)\prod_i \mathcal{N}(\beta_i;0, 1)\text{Gamma}(\lambda_i;1/2, 1/2)
+$$</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jrnd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -442,21 +449,6 @@ title="Source repository"
 <span class="n">tic2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Runtime for MEADS&quot;</span><span class="p">,</span> <span class="n">tic2</span> <span class="o">-</span> <span class="n">tic1</span><span class="p">)</span>
 <span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Loading German credit data...
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Setting up German credit logistic horseshoe model...
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Running MEADS...
 </pre></div>
 </div>
 </div>
