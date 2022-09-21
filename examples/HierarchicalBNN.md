@@ -145,7 +145,7 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
 
 ```{code-cell} ipython3
 def get_predictions(model, samples, X, n_hidden_layers, rng_key, num_samples):
-    samples_flattened, tree_def = jax.tree_flatten(samples)
+    samples_flattened, tree_def = jax.tree_util.tree_flatten(samples)
     keys = random.split(rng_key, num_samples)
     predictions = []
 

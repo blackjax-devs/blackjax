@@ -66,7 +66,7 @@ def ess_solver(
         The increment that solves for the target ESS
     """
 
-    n_particles = jax.tree_flatten(particles)[0][0].shape[0]
+    n_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
 
     logprob = logprob_fn(particles)
     if use_log_ess:
