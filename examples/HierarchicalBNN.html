@@ -605,7 +605,7 @@ title="Source repository"
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_predictions</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">n_hidden_layers</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
-    <span class="n">samples_flattened</span><span class="p">,</span> <span class="n">tree_def</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+    <span class="n">samples_flattened</span><span class="p">,</span> <span class="n">tree_def</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
     <span class="n">keys</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
     <span class="n">predictions</span> <span class="o">=</span> <span class="p">[]</span>
 
