@@ -459,67 +459,61 @@ title="Source repository"
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Running MEADS...
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:03:10.375894
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:03:01.385465
 </pre></div>
 </div>
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">KeyboardInterrupt</span><span class="g g-Whitespace">                         </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">line</span> <span class="mi">96</span>
-<span class="g g-Whitespace">     </span><span class="mi">94</span> <span class="n">tic2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-<span class="g g-Whitespace">     </span><span class="mi">95</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Runtime for MEADS&quot;</span><span class="p">,</span> <span class="n">tic2</span> <span class="o">-</span> <span class="n">tic1</span><span class="p">)</span>
-<span class="ne">---&gt; </span><span class="mi">96</span> <span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/numpyro/diagnostics.py:296,</span> in <span class="ni">print_summary</span><span class="nt">(samples, prob, group_by_chain)</span>
-<span class="g g-Whitespace">    </span><span class="mi">292</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-<span class="g g-Whitespace">    </span><span class="mi">293</span>     <span class="n">samples</span> <span class="o">=</span> <span class="p">{</span>
-<span class="nn">    294         &quot;Param:{}&quot;.format(i): v for i, v</span> in <span class="ni">enumerate(tree_flatten</span><span class="nt">(samples)[0])</span>
-<span class="g g-Whitespace">    </span><span class="mi">295</span>     <span class="p">}</span>
-<span class="ne">--&gt; </span><span class="mi">296</span> <span class="n">summary_dict</span> <span class="o">=</span> <span class="n">summary</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">group_by_chain</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">298</span> <span class="n">row_names</span> <span class="o">=</span> <span class="p">{</span>
-<span class="g g-Whitespace">    </span><span class="mi">299</span>     <span class="n">k</span><span class="p">:</span> <span class="n">k</span> <span class="o">+</span> <span class="s2">&quot;[&quot;</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]))</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span>
-<span class="nn">    300     for k, v</span> in <span class="ni">samples.items</span><span class="nt">()</span>
-<span class="g g-Whitespace">    </span><span class="mi">301</span> <span class="p">}</span>
-<span class="g g-Whitespace">    </span><span class="mi">302</span> <span class="n">max_len</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">row_names</span><span class="o">.</span><span class="n">values</span><span class="p">())),</span> <span class="mi">10</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/numpyro/diagnostics.py:256,</span> in <span class="ni">summary</span><span class="nt">(samples, prob, group_by_chain)</span>
-<span class="g g-Whitespace">    </span><span class="mi">254</span> <span class="n">hpd</span> <span class="o">=</span> <span class="n">hpdi</span><span class="p">(</span><span class="n">value_flat</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="n">prob</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">255</span> <span class="n">n_eff</span> <span class="o">=</span> <span class="n">effective_sample_size</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-<span class="ne">--&gt; </span><span class="mi">256</span> <span class="n">r_hat</span> <span class="o">=</span> <span class="n">split_gelman_rubin</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">257</span> <span class="n">hpd_lower</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:.1f}</span><span class="s2">%&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="mi">50</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prob</span><span class="p">))</span>
-<span class="g g-Whitespace">    </span><span class="mi">258</span> <span class="n">hpd_upper</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:.1f}</span><span class="s2">%&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="mi">50</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">prob</span><span class="p">))</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/numpyro/diagnostics.py:77,</span> in <span class="ni">split_gelman_rubin</span><span class="nt">(x)</span>
-<span class="g g-Whitespace">     </span><span class="mi">75</span> <span class="n">N_half</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span>
-<span class="g g-Whitespace">     </span><span class="mi">76</span> <span class="n">new_input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:</span><span class="n">N_half</span><span class="p">],</span> <span class="n">x</span><span class="p">[:,</span> <span class="o">-</span><span class="n">N_half</span><span class="p">:]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="ne">---&gt; </span><span class="mi">77</span> <span class="n">split_rhat</span> <span class="o">=</span> <span class="n">gelman_rubin</span><span class="p">(</span><span class="n">new_input</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">78</span> <span class="k">return</span> <span class="n">split_rhat</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/numpyro/diagnostics.py:56,</span> in <span class="ni">gelman_rubin</span><span class="nt">(x)</span>
-<span class="g g-Whitespace">     </span><span class="mi">54</span> <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">2</span>
-<span class="g g-Whitespace">     </span><span class="mi">55</span> <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">2</span>
-<span class="ne">---&gt; </span><span class="mi">56</span> <span class="n">var_within</span><span class="p">,</span> <span class="n">var_estimator</span> <span class="o">=</span> <span class="n">_compute_chain_variance_stats</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">57</span> <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">divide</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
-<span class="g g-Whitespace">     </span><span class="mi">58</span>     <span class="n">rhat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var_estimator</span> <span class="o">/</span> <span class="n">var_within</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/numpyro/diagnostics.py:31,</span> in <span class="ni">_compute_chain_variance_stats</span><span class="nt">(x)</span>
-<span class="g g-Whitespace">     </span><span class="mi">27</span> <span class="k">def</span> <span class="nf">_compute_chain_variance_stats</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-<span class="g g-Whitespace">     </span><span class="mi">28</span>     <span class="c1"># compute within-chain variance and variance estimator</span>
-<span class="g g-Whitespace">     </span><span class="mi">29</span>     <span class="c1"># input has shape C x N x sample_shape</span>
-<span class="g g-Whitespace">     </span><span class="mi">30</span>     <span class="n">C</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
-<span class="ne">---&gt; </span><span class="mi">31</span>     <span class="n">chain_var</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">32</span>     <span class="n">var_within</span> <span class="o">=</span> <span class="n">chain_var</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">33</span>     <span class="n">var_estimator</span> <span class="o">=</span> <span class="n">var_within</span> <span class="o">*</span> <span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">N</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/numpy/core/_methods.py:247,</span> in <span class="ni">_var</span><span class="nt">(a, axis, dtype, out, ddof, keepdims, where)</span>
-<span class="g g-Whitespace">    </span><span class="mi">242</span> <span class="c1"># Most general case; includes handling object arrays containing imaginary</span>
-<span class="g g-Whitespace">    </span><span class="mi">243</span> <span class="c1"># numbers and complex types with non-native byteorder</span>
-<span class="g g-Whitespace">    </span><span class="mi">244</span> <span class="k">else</span><span class="p">:</span>
-<span class="g g-Whitespace">    </span><span class="mi">245</span>     <span class="n">x</span> <span class="o">=</span> <span class="n">um</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">um</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">out</span><span class="o">=</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
-<span class="ne">--&gt; </span><span class="mi">247</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">umr_sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="n">keepdims</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">249</span> <span class="c1"># Compute degrees of freedom and make sure it is not negative.</span>
-<span class="g g-Whitespace">    </span><span class="mi">250</span> <span class="n">rcount</span> <span class="o">=</span> <span class="n">um</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">rcount</span> <span class="o">-</span> <span class="n">ddof</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-
-<span class="ne">KeyboardInterrupt</span>: 
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>                mean       std    median      5.0%     95.0%     n_eff     r_hat
+   beta[0]      0.39      0.87      0.41     -1.09      1.83   7421.13      1.02
+   beta[1]      1.13      0.56      1.04      0.26      1.95   5506.70      1.03
+   beta[2]     -1.26      0.58     -1.19     -2.13     -0.32   6619.18      1.02
+   beta[3]      1.10      0.57      1.01      0.22      1.94   6502.18      1.02
+   beta[4]     -0.47      0.84     -0.49     -1.91      0.92   7056.27      1.02
+   beta[5]      0.97      0.57      0.87      0.13      1.80   5035.35      1.03
+   beta[6]      0.66      0.69      0.61     -0.28      1.96   5567.60      1.02
+   beta[7]      0.66      0.72      0.62     -0.36      1.99   6412.10      1.02
+   beta[8]      0.06      0.82      0.05     -1.35      1.40   7513.11      1.02
+   beta[9]     -0.66      0.69     -0.61     -1.93      0.27   5710.39      1.02
+  beta[10]      0.37      0.83      0.38     -1.01      1.78   6624.12      1.02
+  beta[11]      0.84      0.61      0.74      0.04      1.79   4564.52      1.03
+  beta[12]     -0.46      0.81     -0.46     -1.82      0.89   7319.03      1.02
+  beta[13]     -0.07      0.82     -0.06     -1.48      1.30   8382.93      1.01
+  beta[14]      0.34      0.76      0.31     -0.92      1.65   7325.50      1.02
+  beta[15]      0.72      0.72      0.68     -0.33      2.01   5414.99      1.02
+  beta[16]     -0.89      0.57     -0.78     -1.72     -0.08   5653.66      1.02
+  beta[17]      0.87      0.61      0.78      0.06      1.85   5171.13      1.02
+  beta[18]     -0.68      0.75     -0.64     -2.05      0.42   4991.13      1.02
+  beta[19]     -0.75      0.74     -0.73     -2.07      0.35   5559.55      1.02
+  beta[20]     -0.52      0.74     -0.49     -1.85      0.62   5137.29      1.03
+  beta[21]      0.33      0.80      0.33     -1.00      1.68   5354.73      1.03
+  beta[22]      0.02      0.85      0.03     -1.42      1.44   5981.89      1.02
+  beta[23]     -0.02      0.82     -0.02     -1.37      1.38   7294.19      1.02
+  beta[24]     -0.05      0.82     -0.04     -1.42      1.32   7773.39      1.02
+  lamda[0]     -1.35      2.14     -0.83     -4.42      1.60   4979.56      1.03
+  lamda[1]      0.66      0.59      0.66     -0.31      1.63   4004.69      1.03
+  lamda[2]      0.90      0.59      0.91     -0.07      1.83   2799.70      1.05
+  lamda[3]      0.50      0.64      0.50     -0.56      1.54   4938.43      1.03
+  lamda[4]     -1.33      2.19     -0.78     -4.42      1.55   3234.26      1.04
+  lamda[5]      0.10      0.75      0.10     -1.06      1.33   2473.66      1.05
+  lamda[6]     -0.93      1.69     -0.58     -3.30      1.39   2707.36      1.05
+  lamda[7]     -0.93      1.81     -0.51     -3.46      1.53   2671.03      1.05
+  lamda[8]     -2.47      2.25     -2.05     -5.68      0.86   3855.80      1.04
+  lamda[9]     -0.94      1.72     -0.57     -3.29      1.45   4318.34      1.03
+ lamda[10]     -1.69      2.20     -1.18     -4.78      1.28   4331.70      1.03
+ lamda[11]     -0.41      1.21     -0.29     -1.81      1.30   2123.38      1.06
+ lamda[12]     -1.50      2.19     -0.98     -4.50      1.43   4919.72      1.03
+ lamda[13]     -2.48      2.22     -2.09     -5.71      0.79   4177.46      1.03
+ lamda[14]     -2.18      2.15     -1.76     -5.38      0.97   3600.25      1.04
+ lamda[15]     -0.65      1.75     -0.23     -3.02      1.69   3709.48      1.03
+ lamda[16]     -0.18      0.90     -0.16     -1.50      1.20   2520.92      1.05
+ lamda[17]     -0.25      1.26     -0.07     -1.65      1.44   1566.99      1.08
+ lamda[18]     -0.84      1.86     -0.40     -3.28      1.61   3264.90      1.04
+ lamda[19]     -0.56      1.79     -0.11     -2.99      1.73   2766.30      1.04
+ lamda[20]     -1.38      1.97     -0.93     -4.18      1.33   3131.10      1.04
+ lamda[21]     -1.90      2.17     -1.43     -4.97      1.16   3483.17      1.03
+ lamda[22]     -2.03      2.21     -1.59     -5.19      1.17   5504.86      1.02
+ lamda[23]     -2.51      2.24     -2.09     -5.85      0.82   5003.74      1.02
+ lamda[24]     -2.66      2.31     -2.23     -6.09      0.78   5834.59      1.02
+       tau     -0.83      0.41     -0.84     -1.50     -0.16   3121.06      1.04
 </pre></div>
 </div>
 </div>

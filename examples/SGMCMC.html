@@ -431,7 +431,7 @@ title="Source repository"
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-21 15:27:20.070329: W tensorflow/core/platform/cloud/google_auth_provider.cc:184] All attempts to get a Google authentication bearer token failed, returning an empty token. Retrieving token from files failed with &quot;NOT_FOUND: Could not locate the credentials file.&quot;. Retrieving token from GCE failed with &quot;FAILED_PRECONDITION: Error executing an HTTP request: libcurl code 6 meaning &#39;Couldn&#39;t resolve host name&#39;, error details: Could not resolve host: metadata&quot;.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2022-09-21 16:05:47.454880: W tensorflow/core/platform/cloud/google_auth_provider.cc:184] All attempts to get a Google authentication bearer token failed, returning an empty token. Retrieving token from files failed with &quot;NOT_FOUND: Could not locate the credentials file.&quot;. Retrieving token from GCE failed with &quot;FAILED_PRECONDITION: Error executing an HTTP request: libcurl code 6 meaning &#39;Couldn&#39;t resolve host name&#39;, error details: Could not resolve host: metadata&quot;.
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span><span class=" -Color -Color-Bold">Downloading and preparing dataset 11.06 MiB (download: 11.06 MiB, generated: 21.00 MiB, total: 32.06 MiB) to ~/tensorflow_datasets/mnist/3.0.1...</span>
@@ -440,25 +440,31 @@ title="Source repository"
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:   0%|          | 0/4 [00:00&lt;?, ? file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  25%|██▌       | 1/4 [00:00&lt;00:00,  6.48 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  25%|██▌       | 1/4 [00:00&lt;00:00,  7.33 file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  25%|██▌       | 1/4 [00:00&lt;00:00,  6.48 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  25%|██▌       | 1/4 [00:00&lt;00:00,  7.33 file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  50%|█████     | 2/4 [00:00&lt;00:00,  6.48 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  50%|█████     | 2/4 [00:00&lt;00:00,  5.45 file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  75%|███████▌  | 3/4 [00:00&lt;00:00, 10.86 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  50%|█████     | 2/4 [00:00&lt;00:00,  5.45 file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  75%|███████▌  | 3/4 [00:00&lt;00:00, 10.86 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  75%|███████▌  | 3/4 [00:00&lt;00:00,  4.06 file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00, 10.86 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...:  75%|███████▌  | 3/4 [00:00&lt;00:00,  4.06 file/s]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00,  9.13 file/s]
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:01&lt;00:00,  3.57 file/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:01&lt;00:00,  3.57 file/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Dl Completed...: 100%|██████████| 4/4 [00:01&lt;00:00,  3.96 file/s]
 </pre></div>
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
@@ -676,10 +682,10 @@ title="Source repository"
 </div><div class="output text_html">
     <div>
       <progress value='3340' class='' max='3340' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [3340/3340 00:24&lt;00:00]
+      100.00% [3340/3340 00:22&lt;00:00]
     </div>
-    </div><div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 32.3 s, sys: 1.36 s, total: 33.7 s
-Wall time: 27.5 s
+    </div><div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 31.3 s, sys: 992 ms, total: 32.3 s
+Wall time: 26.2 s
 </pre></div>
 </div>
 </div>
