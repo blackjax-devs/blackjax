@@ -527,7 +527,7 @@ title="Source repository"
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(57555.492, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2115.103, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-55443.41, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(57327., dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2071.7002, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-55214.914, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -538,14 +538,7 @@ title="Source repository"
 <p>The HMC kernel is easy to obtain:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">hmc_kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">hmc</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 132 µs, sys: 17 µs, total: 149 µs
-Wall time: 154 µs
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">hmc_kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">hmc</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -582,13 +575,13 @@ Wall time: 154 µs
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.43 s, sys: 0 ns, total: 1.43 s
-Wall time: 1.42 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.47 s, sys: 15.7 ms, total: 1.48 s
+Wall time: 1.48 s
 </pre></div>
 </div>
 </div>
 </div>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">ax1</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">loc_samples</span><span class="p">)</span>
@@ -605,7 +598,7 @@ Wall time: 1.42 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/6c0a2a6c4ce1107d6f6575a4433f2b3ce064b5faaafdfdcff7fa3c4c54687c2d.png" src="../_images/6c0a2a6c4ce1107d6f6575a4433f2b3ce064b5faaafdfdcff7fa3c4c54687c2d.png" />
+<img alt="../_images/8b11e4fb415b6bda1ddac8a8ab28cf69f88ea62735dad6c550949afa87abda77.png" src="../_images/8b11e4fb415b6bda1ddac8a8ab28cf69f88ea62735dad6c550949afa87abda77.png" />
 </div>
 </div>
 </section>
@@ -632,7 +625,7 @@ Wall time: 1.42 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(57555.492, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2115.103, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-55443.41, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(57327., dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2071.7002, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-55214.914, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -649,13 +642,13 @@ Wall time: 1.42 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.55 s, sys: 15.6 ms, total: 6.56 s
-Wall time: 6.56 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.53 s, sys: 12.4 ms, total: 7.54 s
+Wall time: 7.54 s
 </pre></div>
 </div>
 </div>
 </div>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">ax1</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">loc_samples</span><span class="p">)</span>
@@ -672,7 +665,7 @@ Wall time: 6.56 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/58a4b232c3d38e0e38f0938ecbd4637a9f1d1d74bfcfdeaf6ea17067766ec712.png" src="../_images/58a4b232c3d38e0e38f0938ecbd4637a9f1d1d74bfcfdeaf6ea17067766ec712.png" />
+<img alt="../_images/cea0d547c871903de35c589baf350e9446e10f3b0dd2579193391c15e7b2add3.png" src="../_images/cea0d547c871903de35c589baf350e9446e10f3b0dd2579193391c15e7b2add3.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -696,8 +689,8 @@ Wall time: 6.56 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.43 s, sys: 11.9 ms, total: 2.44 s
-Wall time: 2.44 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.37 s, sys: 16 ms, total: 2.38 s
+Wall time: 2.38 s
 </pre></div>
 </div>
 </div>
@@ -715,13 +708,13 @@ Wall time: 2.44 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.77 s, sys: 7.87 ms, total: 2.78 s
-Wall time: 2.77 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.85 s, sys: 28.1 ms, total: 2.88 s
+Wall time: 2.88 s
 </pre></div>
 </div>
 </div>
 </div>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">ax1</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">loc_samples</span><span class="p">)</span>
@@ -738,7 +731,7 @@ Wall time: 2.77 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/cf4cbc94cc224f9a2d3274d7c549613f5fcb9984c45fb0456b4078444bfc65b4.png" src="../_images/cf4cbc94cc224f9a2d3274d7c549613f5fcb9984c45fb0456b4078444bfc65b4.png" />
+<img alt="../_images/ba01c23b871b03237737d14086ab753fe2bb7c92898e6930868146879b728268.png" src="../_images/ba01c23b871b03237737d14086ab753fe2bb7c92898e6930868146879b728268.png" />
 </div>
 </div>
 <p>In the next section we’ll show how we can easily extend the code to sample multiple chains in parallel.</p>

@@ -497,7 +497,7 @@ title="Source repository"
 <section id="data">
 <h2>Data<a class="headerlink" href="#data" title="Permalink to this headline">#</a></h2>
 <p>We create T=18 different versions of the “two moons” dataset, each rotated by a different amount. These correspond to T different binary classification “tasks” that we have to solve.</p>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">make_moons</span><span class="p">(</span><span class="n">noise</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">Y</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="n">Y</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Class 0&quot;</span><span class="p">)</span>
@@ -508,7 +508,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/8a3e2fea6587e5a27f3c9e31aa082a41911553915c8d57c997385da5b283f68b.png" src="../_images/8a3e2fea6587e5a27f3c9e31aa082a41911553915c8d57c997385da5b283f68b.png" />
+<img alt="../_images/72e80ddfb882430a1ecf1f5ece493e673c4cfcbe0c1903eb64252dd687d9800e.png" src="../_images/72e80ddfb882430a1ecf1f5ece493e673c4cfcbe0c1903eb64252dd687d9800e.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -572,7 +572,7 @@ title="Source repository"
 </div>
 </div>
 </div>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span>
     <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span> <span class="n">nrows</span><span class="o">=</span><span class="n">n_grps_sq</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="n">n_grps_sq</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span>
@@ -794,7 +794,7 @@ and compute the posterior for all the weights.</p>
 <section id="results">
 <h3>Results<a class="headerlink" href="#results" title="Permalink to this headline">#</a></h3>
 <p>Accuracy is reasonable, but the decision boundaries have not captured the underlying Z pattern in the data, due to having too little data per task. (Bayes model averaging results in a simple linear decision boundary, and prevents overfitting.)</p>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Train accuracy = </span><span class="si">{</span><span class="mi">100</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Ys_pred_train</span> <span class="o">==</span> <span class="n">Ys_train</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
 </pre></div>
@@ -806,7 +806,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </div>
 </div>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Test accuracy = </span><span class="si">{</span><span class="mi">100</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Ys_pred_test</span> <span class="o">==</span> <span class="n">Ys_test</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
 </pre></div>
@@ -818,7 +818,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </div>
 </div>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_decision_surfaces_non_hierarchical</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span>
@@ -843,7 +843,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </div>
 <p>Below we show that the decision boundaries do not look reasonable, since there is not enough data to fit each model separately.</p>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_decision_surfaces_non_hierarchical</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="n">n_grps_sq</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="n">n_grps_sq</span><span class="p">)</span>
 </pre></div>
@@ -853,7 +853,7 @@ and compute the posterior for all the weights.</p>
 <img alt="../_images/95dedd5760b474c7a36afdebf73cf8b7cdbbf62cf5fd6266ddedd8a6a8307e04.png" src="../_images/95dedd5760b474c7a36afdebf73cf8b7cdbbf62cf5fd6266ddedd8a6a8307e04.png" />
 </div>
 </div>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_decision_surfaces_non_hierarchical</span><span class="p">()</span>
 </pre></div>
@@ -963,8 +963,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 22s, sys: 951 ms, total: 1min 23s
-Wall time: 1min 22s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 25s, sys: 717 ms, total: 1min 26s
+Wall time: 1min 24s
 </pre></div>
 </div>
 </div>
@@ -972,7 +972,7 @@ Wall time: 1min 22s
 <section id="id1">
 <h3>Results<a class="headerlink" href="#id1" title="Permalink to this headline">#</a></h3>
 <p>We see that the train and test accuracy are higher, and the decision boundaries all have the shared “Z” shape, as desired.</p>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span>
     <span class="s2">&quot;Train accuracy = </span><span class="si">{:.2f}</span><span class="s2">%&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -988,7 +988,7 @@ Wall time: 1min 22s
 </div>
 </div>
 </div>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span>
     <span class="s2">&quot;Test accuracy = </span><span class="si">{:.2f}</span><span class="s2">%&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -1028,7 +1028,7 @@ Wall time: 1min 22s
 </div>
 </div>
 </div>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_decision_surfaces_hierarchical</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="n">n_grps_sq</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="n">n_grps_sq</span><span class="p">)</span>
 </pre></div>
@@ -1038,7 +1038,7 @@ Wall time: 1min 22s
 <img alt="../_images/4b65dd9094a79047a8638bc853da29a92c1ff12df10bc4afc2e4557876ed3ec4.png" src="../_images/4b65dd9094a79047a8638bc853da29a92c1ff12df10bc4afc2e4557876ed3ec4.png" />
 </div>
 </div>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_decision_surfaces_hierarchical</span><span class="p">()</span>
 </pre></div>
