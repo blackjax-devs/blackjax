@@ -102,23 +102,16 @@ class IntegratorTest(chex.TestCase):
         itertools.product(
             ["free_fall", "harmonic_oscillator", "planetary_motion"],
             ["velocity_verlet", "mclachlan", "yoshida"],
-            ["default_gradient", "forward_gradients"],
         )
     )
-    def test_integrator(self, example_name, integrator_name, gradient_type):
+    def test_integrator(self, example_name, integrator_name):
         integrator = algorithms[integrator_name]
         example = examples[example_name]
 
         model = example["model"]
         potential, kinetic_energy = model(example["inv_mass_matrix"])
 
-        if gradient_type == "default_gradient":
-            step = self.variant(integrator["algorithm"](potential, kinetic_energy))
-        elif gradient_type == "forward_gradients":
-            potential_grad = jax.jacfwd(potential)
-            step = self.variant(
-                integrator["algorithm"](potential, kinetic_energy, potential_grad)
-            )
+        step = self.variant(integrator["algorithm"](potential, kinetic_energy))
 
         step_size = example["step_size"]
 

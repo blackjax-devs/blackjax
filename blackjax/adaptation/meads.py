@@ -1,4 +1,4 @@
-from typing import Callable, NamedTuple
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -26,10 +26,7 @@ class MEADSAdaptationState(NamedTuple):
     delta: float
 
 
-def base(
-    logprob_grad_fn: Callable,
-    batch_fn: Callable = jax.vmap,
-):
+def base():
     """Maximum-Eigenvalue Adaptation of damping and step size for the generalized
     Hamiltonian Monte Carlo kernel [1]_.
 
@@ -43,13 +40,6 @@ def base(
 
     This is an implementation of Algorithm 3 of [1]_ using cross-chain
     adaptation instead of parallel ensample chain adaptation.
-
-    Parameters
-    ----------
-    logprob_grad_fn
-        The gradient of logprob_fn, outputs the gradient PyTree for sample.
-    batch_fn
-        Either jax.vmap or jax.pmap to perform parallel operations.
 
     Returns
     -------
@@ -94,7 +84,9 @@ def base(
         lamda_sq = (jnp.sum(S**2) - jnp.sum(diag_S**2)) / (n * (n - 1))
         return lamda_sq / lamda
 
-    def compute_parameters(positions: PyTree, current_iteration: int):
+    def compute_parameters(
+        positions: PyTree, potential_energy_grad: PyTree, current_iteration: int
+    ):
         """Compute values for the parameters based on statistics collected from
         multiple chains.
 
@@ -120,7 +112,7 @@ def base(
             sd_position,
         )
 
-        batch_grad = batch_fn(logprob_grad_fn)(positions)
+        batch_grad = jax.tree_map(lambda x: -x, potential_energy_grad)
         batch_grad_scaled = jax.tree_map(
             lambda grad, sd: grad * sd, batch_grad, sd_position
         )
@@ -138,11 +130,15 @@ def base(
 
         return step_size, alpha, delta
 
-    def init(positions: PyTree):
-        parameters = compute_parameters(positions, 0)
+    def init(positions: PyTree, potential_energy_grad: PyTree):
+        parameters = compute_parameters(positions, potential_energy_grad, 0)
         return MEADSAdaptationState(0, *parameters)
 
-    def update(adaptation_state: MEADSAdaptationState, positions: PyTree):
+    def update(
+        adaptation_state: MEADSAdaptationState,
+        positions: PyTree,
+        potential_energy_grad: PyTree,
+    ):
         """Update the adaptation state and parameter values.
 
         We find new optimal values for the parameters of the generalized HMC
@@ -163,7 +159,9 @@ def base(
 
         """
         current_iteration = adaptation_state.current_iteration
-        step_size, alpha, delta = compute_parameters(positions, current_iteration)
+        step_size, alpha, delta = compute_parameters(
+            positions, potential_energy_grad, current_iteration
+        )
 
         return MEADSAdaptationState(current_iteration + 1, step_size, alpha, delta)
 

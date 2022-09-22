@@ -1,5 +1,5 @@
 """Public API for the Generalized (Non-reversible w/ persistent momentum) HMC Kernel"""
-from typing import Callable, NamedTuple, Optional, Tuple
+from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -38,21 +38,11 @@ def init(
     rng_key: PRNGKey,
     position: PyTree,
     logprob_fn: Callable,
-    logprob_grad_fn: Optional[Callable] = None,
 ):
     def potential_fn(x):
         return -logprob_fn(x)
 
-    if logprob_grad_fn:
-        potential_energy_grad = jax.tree_map(
-            lambda g: -1.0 * g, logprob_grad_fn(position)
-        )
-        potential_energy = potential_fn(position)
-
-    else:
-        potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(
-            position
-        )
+    potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
 
     p, unravel_fn = ravel_pytree(position)
     key_mometum, key_slice = jax.random.split(rng_key)
@@ -103,7 +93,6 @@ def kernel(
         step_size: PyTree,  # float,
         alpha: float,
         delta: float,
-        logprob_grad_fn: Optional[Callable] = None,
     ) -> Tuple[GHMCState, hmc.HMCInfo]:
         """Generate new sample with the Generalized HMC kernel.
 
@@ -124,16 +113,12 @@ def kernel(
         delta
             Fixed (non-random) amount of translation added at each new iteration
             to the slice variable for non-reversible slice sampling.
-        logprob_grad_fn
-            Optional function customizing the gradients of the target log density.
         """
 
         def potential_fn(x):
             return -logprob_fn(x)
 
-        symplectic_integrator = velocity_verlet(
-            potential_fn, kinetic_energy_fn, logprob_grad_fn
-        )
+        symplectic_integrator = velocity_verlet(potential_fn, kinetic_energy_fn)
         proposal_generator = hmc.hmc_proposal(
             symplectic_integrator,
             kinetic_energy_fn,
@@ -170,7 +155,6 @@ def kernel(
 def velocity_verlet(
     potential_fn: Callable,
     kinetic_energy_fn: integrators.EuclideanKineticEnergy,
-    logprob_grad_fn: Optional[Callable] = None,
 ) -> integrators.EuclideanIntegrator:
     """The velocity Verlet (or Verlet-Störmer) integrator.
 
@@ -180,13 +164,7 @@ def velocity_verlet(
     of the target.
     """
 
-    if logprob_grad_fn:
-        potential_and_grad_fn = lambda x: (
-            potential_fn(x),
-            jax.tree_map(lambda g: -1.0 * g, logprob_grad_fn(x)),
-        )
-    else:
-        potential_and_grad_fn = jax.value_and_grad(potential_fn)
+    potential_and_grad_fn = jax.value_and_grad(potential_fn)
     kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def one_step(
