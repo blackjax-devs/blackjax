@@ -74,7 +74,6 @@ initial_state
 The HMC kernel is easy to obtain:
 
 ```{code-cell} ipython3
-%%time
 hmc_kernel = jax.jit(hmc.step)
 ```
 
@@ -105,6 +104,8 @@ scale_samples = states.position["scale"]
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 fig, (ax, ax1) = plt.subplots(ncols=2, figsize=(15, 6))
 ax.plot(loc_samples)
 ax.set_xlabel("Samples")
@@ -142,6 +143,8 @@ scale_samples = states.position["scale"]
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 fig, (ax, ax1) = plt.subplots(ncols=2, figsize=(15, 6))
 ax.plot(loc_samples)
 ax.set_xlabel("Samples")
@@ -184,6 +187,8 @@ scale_samples = states.position["scale"]
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 fig, (ax, ax1) = plt.subplots(ncols=2, figsize=(15, 6))
 ax.plot(loc_samples)
 ax.set_xlabel("Samples")

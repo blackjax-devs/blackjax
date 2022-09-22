@@ -61,6 +61,8 @@ cmap_uncertainty = sns.cubehelix_palette(light=1, as_cmap=True)
 We create T=18 different versions of the "two moons" dataset, each rotated by a different amount. These correspond to T different binary classification "tasks" that we have to solve.
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 X, Y = make_moons(noise=0.3, n_samples=1000)
 plt.scatter(X[Y == 0, 0], X[Y == 0, 1], label="Class 0")
 plt.scatter(X[Y == 1, 0], X[Y == 1, 1], color="r", label="Class 1")
@@ -113,6 +115,8 @@ Ys_test = Ys[:, n_samples // 2 :]
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 fig, axs = plt.subplots(
     figsize=(15, 12), nrows=n_grps_sq, ncols=n_grps_sq, sharex=True, sharey=True
 )
@@ -297,14 +301,20 @@ Ys_pred_train, Ys_pred_test, ppc_grid_single = vmap(fit_and_eval_single_mlp)(
 Accuracy is reasonable, but the decision boundaries have not captured the underlying Z pattern in the data, due to having too little data per task. (Bayes model averaging results in a simple linear decision boundary, and prevents overfitting.)
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 print(f"Train accuracy = {100 * jnp.mean(Ys_pred_train == Ys_train):.2f}%")
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 print(f"Test accuracy = {100 * jnp.mean(Ys_pred_test == Ys_test):.2f}%")
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 def plot_decision_surfaces_non_hierarchical(nrows=2, ncols=2):
     fig, axes = plt.subplots(
         figsize=(15, 12), nrows=nrows, ncols=ncols, sharex=True, sharey=True
@@ -328,10 +338,14 @@ def plot_decision_surfaces_non_hierarchical(nrows=2, ncols=2):
 Below we show that the decision boundaries do not look reasonable, since there is not enough data to fit each model separately.
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 plot_decision_surfaces_non_hierarchical(nrows=n_grps_sq, ncols=n_grps_sq)
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 plot_decision_surfaces_non_hierarchical()
 ```
 
@@ -432,6 +446,8 @@ Ys_hierarchical_pred_train, Ys_hierarchical_pred_test, ppc_grid = fit_and_eval(
 We see that the train and test accuracy are higher, and the decision boundaries all have the shared "Z" shape, as desired.
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 print(
     "Train accuracy = {:.2f}%".format(
         100 * jnp.mean(Ys_hierarchical_pred_train == Ys_train)
@@ -440,6 +456,8 @@ print(
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 print(
     "Test accuracy = {:.2f}%".format(
         100 * jnp.mean(Ys_hierarchical_pred_test == Ys_test)
@@ -469,9 +487,13 @@ def plot_decision_surfaces_hierarchical(nrows=2, ncols=2):
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 plot_decision_surfaces_hierarchical(nrows=n_grps_sq, ncols=n_grps_sq)
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 plot_decision_surfaces_hierarchical()
 ```

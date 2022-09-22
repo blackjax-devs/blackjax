@@ -88,7 +88,6 @@ def inference_loop(rng, init_state, kernel, n_iter):
     return states, info
 
 
-print("Loading German credit data...")
 url = "https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data-numeric"
 data = pd.read_table(url, header=None, delim_whitespace=True)
 y = -1 * (data.iloc[:, -1].values - 2)
@@ -101,7 +100,6 @@ X = np.concatenate([np.ones((1000, 1)), X], axis=1)
 N_OBS, N_REG = X.shape
 
 N_PARAM = N_REG * 2 + 1
-print("Setting up German credit logistic horseshoe model...")
 dist = HorseshoeLogisticReg(X, y)
 
 batch_fn = jax.vmap
@@ -109,7 +107,6 @@ batch_fn = jax.vmap
 ksam, kinit = jrnd.split(jrnd.PRNGKey(0), 2)
 dist.initialize_model(kinit, n_chain)
 
-print("Running MEADS...")
 tic1 = pd.Timestamp.now()
 k_warm, k_sample = jrnd.split(ksam)
 warmup = blackjax.meads(dist.logprob_fn, n_chain, n_warm, batch_fn=batch_fn)
@@ -126,5 +123,10 @@ k_sample = jrnd.split(k_sample, n_chain)
 samples, infos = batch_fn(one_chain)(k_sample, init_state)
 tic2 = pd.Timestamp.now()
 print("Runtime for MEADS", tic2 - tic1)
+```
+
+```{code-cell} ipython3
+:tags: [hide-input]
+
 print_summary(samples)
 ```
