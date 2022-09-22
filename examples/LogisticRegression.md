@@ -143,6 +143,8 @@ And display the trace:
 ```{code-cell} ipython3
 :tags: [hide-input]
 
+burnin = 300
+
 fig, ax = plt.subplots(1, 3, figsize=(12, 2))
 for i, axi in enumerate(ax):
     axi.plot(states.position[:, i])
@@ -155,6 +157,7 @@ plt.show()
 burnin = 300
 chains = states.position[burnin:, :]
 nsamp, _ = chains.shape
+
 ```
 
 ### Predictive Distribution

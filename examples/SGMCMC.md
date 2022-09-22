@@ -12,6 +12,7 @@ kernelspec:
 file_format: mystnb
 mystnb:
   execution_timeout: 200
+  merge_streams: true
 ---
 
 # MNIST Digit Recognition With a 3-Layer Perceptron
