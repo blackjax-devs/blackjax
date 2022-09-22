@@ -1,20 +1,20 @@
-# Blackjax
+# BlackJAX
 ![CI](https://github.com/blackjax-devs/blackjax/workflows/Run%20tests/badge.svg?branch=main)
 [![codecov](https://codecov.io/gh/blackjax-devs/blackjax/branch/main/graph/badge.svg)](https://codecov.io/gh/blackjax-devs/blackjax)
 
 
-## What is Blackjax?
+## What is BlackJAX?
 
-Blackjax is a library of samplers for [JAX](https://github.com/google/jax) that
+BlackJAX is a library of samplers for [JAX](https://github.com/google/jax) that
 works on CPU as well as GPU.
 
 It is *not* a probabilistic programming library. However it integrates really
 well with PPLs as long as they can provide a (potentially unnormalized)
 log-probability density function compatible with JAX.
 
-## Who should use Blackjax?
+## Who should use BlackJAX?
 
-Blackjax should appeal to those who:
+BlackJAX should appeal to those who:
 - Have a logpdf and just need a sampler;
 - Need more than a general-purpose sampler;
 - Want to sample on GPU;
@@ -26,15 +26,15 @@ Blackjax should appeal to those who:
 
 ### Installation
 
-You can install Blackjax using `pip`:
+You can install BlackJAX using `pip`:
 
 ```bash
 pip install blackjax
 ```
 
-Blackjax is written in pure Python but depends on XLA via JAX. By default, the
-version of JAX that will be installed along with Blackjax will make your code
-run on CPU only. **If you want to use Blackjax on GPU/TPU** we recommend you follow
+BlackJAX is written in pure Python but depends on XLA via JAX. By default, the
+version of JAX that will be installed along with BlackJAX will make your code
+run on CPU only. **If you want to use BlackJAX on GPU/TPU** we recommend you follow
 [these instructions](https://github.com/google/jax#installation) to install JAX
 with the relevant hardware acceleration support.
 
@@ -76,33 +76,33 @@ notebook](https://github.com/blackjax-devs/blackjax/blob/master/examples/Introdu
 
 ## Philosophy
 
-### What is Blackjax?
+### What is BlackJAX?
 
-Blackjax bridges the gap between "one liner" frameworks and modular, customizable
+BlackJAX bridges the gap between "one liner" frameworks and modular, customizable
 libraries.
 
 Users can import the library and interact with robust, well-tested and performant
 samplers with a few lines of code. These samplers are aimed at PPL developers,
 or people who have a logpdf and just need a sampler that works.
 
-But the true strength of Blackjax lies in its internals and how they can be used
+But the true strength of BlackJAX lies in its internals and how they can be used
 to experiment quickly on existing or new sampling schemes. This lower level
 exposes the building blocks of inference algorithms: integrators, proposal,
 momentum generators, etc and makes it easy to combine them to build new
 algorithms. It provides an opportunity to accelerate research on sampling
 algorithms by providing robust, performant and reusable code.
 
-### Why Blackjax?
+### Why BlackJAX?
 
 Sampling algorithms are too often integrated into PPLs and not decoupled from
 the rest of the framework, making them hard to use for people who do not need
 the modeling language to build their logpdf. Their implementation is most of
 the time monolithic and it is impossible to reuse parts of the algorithm to
-build custom kernels. Blackjax solves both problems.
+build custom kernels. BlackJAX solves both problems.
 
 ### How does it work?
 
-Blackjax allows to build arbitrarily complex algorithms because it is built
+BlackJAX allows to build arbitrarily complex algorithms because it is built
 around a very general pattern. Everything that takes a state and returns a state
 is a transition kernel, and is implemented as:
 
