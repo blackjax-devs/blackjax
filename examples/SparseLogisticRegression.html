@@ -353,7 +353,7 @@ $$</p>
 $$</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jrnd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -449,6 +449,92 @@ $$</p>
 <span class="n">tic2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Runtime for MEADS&quot;</span><span class="p">,</span> <span class="n">tic2</span> <span class="o">-</span> <span class="n">tic1</span><span class="p">)</span>
 <span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Loading German credit data...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Setting up German credit logistic horseshoe model...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Running MEADS...
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:03:05.627982
+</pre></div>
+</div>
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">KeyboardInterrupt</span><span class="g g-Whitespace">                         </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">line</span> <span class="mi">96</span>
+<span class="g g-Whitespace">     </span><span class="mi">94</span> <span class="n">tic2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+<span class="g g-Whitespace">     </span><span class="mi">95</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Runtime for MEADS&quot;</span><span class="p">,</span> <span class="n">tic2</span> <span class="o">-</span> <span class="n">tic1</span><span class="p">)</span>
+<span class="ne">---&gt; </span><span class="mi">96</span> <span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/numpyro/diagnostics.py:296,</span> in <span class="ni">print_summary</span><span class="nt">(samples, prob, group_by_chain)</span>
+<span class="g g-Whitespace">    </span><span class="mi">292</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="g g-Whitespace">    </span><span class="mi">293</span>     <span class="n">samples</span> <span class="o">=</span> <span class="p">{</span>
+<span class="nn">    294         &quot;Param:{}&quot;.format(i): v for i, v</span> in <span class="ni">enumerate(tree_flatten</span><span class="nt">(samples)[0])</span>
+<span class="g g-Whitespace">    </span><span class="mi">295</span>     <span class="p">}</span>
+<span class="ne">--&gt; </span><span class="mi">296</span> <span class="n">summary_dict</span> <span class="o">=</span> <span class="n">summary</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">group_by_chain</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">298</span> <span class="n">row_names</span> <span class="o">=</span> <span class="p">{</span>
+<span class="g g-Whitespace">    </span><span class="mi">299</span>     <span class="n">k</span><span class="p">:</span> <span class="n">k</span> <span class="o">+</span> <span class="s2">&quot;[&quot;</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]))</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span>
+<span class="nn">    300     for k, v</span> in <span class="ni">samples.items</span><span class="nt">()</span>
+<span class="g g-Whitespace">    </span><span class="mi">301</span> <span class="p">}</span>
+<span class="g g-Whitespace">    </span><span class="mi">302</span> <span class="n">max_len</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">row_names</span><span class="o">.</span><span class="n">values</span><span class="p">())),</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/numpyro/diagnostics.py:255,</span> in <span class="ni">summary</span><span class="nt">(samples, prob, group_by_chain)</span>
+<span class="g g-Whitespace">    </span><span class="mi">253</span> <span class="n">median</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">value_flat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">254</span> <span class="n">hpd</span> <span class="o">=</span> <span class="n">hpdi</span><span class="p">(</span><span class="n">value_flat</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="n">prob</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">255</span> <span class="n">n_eff</span> <span class="o">=</span> <span class="n">effective_sample_size</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">256</span> <span class="n">r_hat</span> <span class="o">=</span> <span class="n">split_gelman_rubin</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">257</span> <span class="n">hpd_lower</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:.1f}</span><span class="s2">%&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="mi">50</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prob</span><span class="p">))</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/numpyro/diagnostics.py:169,</span> in <span class="ni">effective_sample_size</span><span class="nt">(x)</span>
+<span class="g g-Whitespace">    </span><span class="mi">166</span> <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+<span class="g g-Whitespace">    </span><span class="mi">168</span> <span class="c1"># find autocovariance for each chain at lag k</span>
+<span class="ne">--&gt; </span><span class="mi">169</span> <span class="n">gamma_k_c</span> <span class="o">=</span> <span class="n">autocovariance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">171</span> <span class="c1"># find autocorrelation at lag k (from Stan reference)</span>
+<span class="g g-Whitespace">    </span><span class="mi">172</span> <span class="n">var_within</span><span class="p">,</span> <span class="n">var_estimator</span> <span class="o">=</span> <span class="n">_compute_chain_variance_stats</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/numpyro/diagnostics.py:145,</span> in <span class="ni">autocovariance</span><span class="nt">(x, axis)</span>
+<span class="g g-Whitespace">    </span><span class="mi">136</span> <span class="k">def</span> <span class="nf">autocovariance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="g g-Whitespace">    </span><span class="mi">137</span>     <span class="sd">&quot;&quot;&quot;</span>
+<span class="g g-Whitespace">    </span><span class="mi">138</span><span class="sd">     Computes the autocovariance of samples at dimension ``axis``.</span>
+<span class="g g-Whitespace">    </span><span class="mi">139</span><span class="sd"> </span>
+<span class="sd">   (...)</span>
+<span class="g g-Whitespace">    </span><span class="mi">143</span><span class="sd">     :rtype: numpy.ndarray</span>
+<span class="g g-Whitespace">    </span><span class="mi">144</span><span class="sd">     &quot;&quot;&quot;</span>
+<span class="ne">--&gt; </span><span class="mi">145</span>     <span class="k">return</span> <span class="n">autocorrelation</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/numpyro/diagnostics.py:126,</span> in <span class="ni">autocorrelation</span><span class="nt">(x, axis)</span>
+<span class="g g-Whitespace">    </span><span class="mi">124</span> <span class="n">freqvec_gram</span> <span class="o">=</span> <span class="n">freqvec</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="n">freqvec</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">125</span> <span class="c1"># inverse Fourier transform</span>
+<span class="ne">--&gt; </span><span class="mi">126</span> <span class="n">autocorr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">freqvec_gram</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">M2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">128</span> <span class="c1"># truncate and normalize the result, then transpose back to original shape</span>
+<span class="g g-Whitespace">    </span><span class="mi">129</span> <span class="n">autocorr</span> <span class="o">=</span> <span class="n">autocorr</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">N</span><span class="p">]</span>
+
+<span class="nn">File &lt;__array_function__ internals&gt;:180,</span> in <span class="ni">irfft</span><span class="nt">(*args, **kwargs)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/numpy/fft/_pocketfft.py:513,</span> in <span class="ni">irfft</span><span class="nt">(a, n, axis, norm)</span>
+<span class="g g-Whitespace">    </span><span class="mi">511</span>     <span class="n">n</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>
+<span class="g g-Whitespace">    </span><span class="mi">512</span> <span class="n">inv_norm</span> <span class="o">=</span> <span class="n">_get_backward_norm</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">norm</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">513</span> <span class="n">output</span> <span class="o">=</span> <span class="n">_raw_fft</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">inv_norm</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">514</span> <span class="k">return</span> <span class="n">output</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/numpy/fft/_pocketfft.py:70,</span> in <span class="ni">_raw_fft</span><span class="nt">(a, n, axis, is_real, is_forward, inv_norm)</span>
+<span class="g g-Whitespace">     </span><span class="mi">67</span>         <span class="n">a</span> <span class="o">=</span> <span class="n">z</span>
+<span class="g g-Whitespace">     </span><span class="mi">69</span> <span class="k">if</span> <span class="n">axis</span> <span class="o">==</span> <span class="n">a</span><span class="o">.</span><span class="n">ndim</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+<span class="ne">---&gt; </span><span class="mi">70</span>     <span class="n">r</span> <span class="o">=</span> <span class="n">pfi</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">is_real</span><span class="p">,</span> <span class="n">is_forward</span><span class="p">,</span> <span class="n">fct</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">71</span> <span class="k">else</span><span class="p">:</span>
+<span class="g g-Whitespace">     </span><span class="mi">72</span>     <span class="n">a</span> <span class="o">=</span> <span class="n">swapaxes</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="ne">KeyboardInterrupt</span>: 
 </pre></div>
 </div>
 </div>
