@@ -214,12 +214,11 @@ class hmc:
         *,
         divergence_threshold: int = 1000,
         integrator: Callable = mcmc.integrators.velocity_verlet,
-        logprob_grad_fn: Optional[Callable] = None,
     ) -> SamplingAlgorithm:
         step = cls.kernel(integrator, divergence_threshold)
 
         def init_fn(position: PyTree):
-            return cls.init(position, logprob_fn, logprob_grad_fn)
+            return cls.init(position, logprob_fn)
 
         def step_fn(rng_key: PRNGKey, state):
             return step(
@@ -229,7 +228,6 @@ class hmc:
                 step_size,
                 inverse_mass_matrix,
                 num_integration_steps,
-                logprob_grad_fn=logprob_grad_fn,
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
@@ -374,7 +372,6 @@ class nuts:
         max_num_doublings: int = 10,
         divergence_threshold: int = 1000,
         integrator: Callable = mcmc.integrators.velocity_verlet,
-        logprob_grad_fn: Optional[Callable] = None,
     ) -> SamplingAlgorithm:
         step = cls.kernel(integrator, divergence_threshold, max_num_doublings)
 
@@ -388,7 +385,6 @@ class nuts:
                 logprob_fn,
                 step_size,
                 inverse_mass_matrix,
-                logprob_grad_fn=logprob_grad_fn,
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
@@ -660,7 +656,6 @@ def window_adaptation(
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
     progress_bar: bool = False,
-    logprob_grad_fn: Optional[Callable] = None,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the value of the inverse mass matrix and step size parameters of
@@ -691,9 +686,6 @@ def window_adaptation(
         The acceptance rate that we target during step size adaptation.
     progress_bar
         Whether we should display a progress bar.
-    logprob_grad_fn
-        The gradient of logprob_fn.  If it's not provided, it will be computed
-        by jax using reverse mode autodiff (jax.grad).
     **extra_parameters
         The extra parameters to pass to the algorithm, e.g. the number of
         integration steps for HMC.
@@ -737,7 +729,7 @@ def window_adaptation(
 
     def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 1000):
 
-        init_state = algorithm.init(position, logprob_fn, logprob_grad_fn)
+        init_state = algorithm.init(position, logprob_fn)
         init_adaptation_state = init(position, initial_step_size)
 
         if progress_bar:
@@ -774,7 +766,7 @@ def meads(
     logprob_fn: Callable,
     num_chains: int,
     *,
-    logprob_grad_fn: Optional[Callable] = None,
+    divergence_threshold: int = 1000,
     batch_fn: Callable = jax.vmap,
 ) -> AdaptationAlgorithm:
     """Adapt the parameters of the Generalized HMC algorithm.
@@ -808,9 +800,6 @@ def meads(
     divergence_threshold
         Value of the difference in energy above which we consider that the
         transition is divergent.
-    logprob_grad_fn
-        The gradient of logprob_fn.  If it's not provided, it will be computed
-        by jax using reverse mode autodiff (jax.grad).
     batch_fn
         Either jax.vmap or jax.pmap to perform parallel operations.
 
@@ -823,11 +812,9 @@ def meads(
 
     step_fn = ghmc.kernel()
 
-    init, update = adaptation.meads.base(
-        logprob_grad_fn or jax.grad(logprob_fn),
-    )
+    init, update = adaptation.meads.base()
 
-    batch_init = batch_fn(lambda r, p: ghmc.init(r, p, logprob_fn, logprob_grad_fn))
+    batch_init = batch_fn(lambda r, p: ghmc.init(r, p, logprob_fn))
 
     def one_step(carry, rng_key):
         states, adaptation_state = carry
@@ -840,12 +827,13 @@ def meads(
                 adaptation_state.step_sizes,
                 adaptation_state.alpha,
                 adaptation_state.delta,
-                logprob_grad_fn,
             )
 
         keys = jax.random.split(rng_key, num_chains)
         new_states, info = batch_fn(kernel)(keys, states)
-        new_adaptation_state = update(adaptation_state, new_states.position)
+        new_adaptation_state = update(
+            adaptation_state, new_states.position, new_states.potential_energy_grad
+        )
 
         return (new_states, new_adaptation_state), (
             new_states,
@@ -859,7 +847,7 @@ def meads(
 
         rng_keys = jax.random.split(key_init, num_chains)
         init_states = batch_init(rng_keys, positions)
-        init_adaptation_state = init(positions)
+        init_adaptation_state = init(positions, init_states.potential_energy_grad)
 
         keys = jax.random.split(key_adapt, num_steps)
         (last_states, last_adaptation_state), _ = jax.lax.scan(
@@ -878,7 +866,6 @@ def meads(
                 state,
                 logprob_fn,
                 **parameters,
-                logprob_grad_fn=logprob_grad_fn,
             )
 
         return AdaptationResults(last_states, kernel, parameters)
@@ -1190,8 +1177,6 @@ class ghmc:
         A function that takes as input the slice variable and outputs a random
         variable used as a noise correction of the persistent slice update.
         The parameter defaults to a random variable with a single atom at 0.
-    logprob_grad_fn
-        Optional function customizing the gradients of the target log density.
 
     Returns
     -------
@@ -1210,18 +1195,15 @@ class ghmc:
         *,
         divergence_threshold: int = 1000,
         noise_gn: Callable = lambda _: 0.0,
-        logprob_grad_fn: Optional[Callable] = None,
     ) -> SamplingAlgorithm:
 
         step = cls.kernel(noise_gn, divergence_threshold)
 
         def init_fn(position: PyTree, rng_key: PRNGKey):
-            return cls.init(rng_key, position, logprob_fn, logprob_grad_fn)
+            return cls.init(rng_key, position, logprob_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(
-                rng_key, state, logprob_fn, step_size, alpha, delta, logprob_grad_fn
-            )
+            return step(rng_key, state, logprob_fn, step_size, alpha, delta)
 
         return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 

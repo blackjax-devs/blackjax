@@ -21,7 +21,7 @@ def generate_gaussian_noise(rng_key: PRNGKey, position):
     return unravel_fn(noise_flat)
 
 
-def overdamped_langevin(logprob_grad_fn):
+def overdamped_langevin(logprob_and_grad_fn):
     """Euler solver for overdamped Langevin diffusion."""
 
     def one_step(rng_key, state: DiffusionState, step_size: float, batch: tuple = ()):
@@ -34,7 +34,7 @@ def overdamped_langevin(logprob_grad_fn):
             noise,
         )
 
-        logprob, logprob_grad = logprob_grad_fn(position, *batch)
+        logprob, logprob_grad = logprob_and_grad_fn(position, *batch)
         return DiffusionState(position, logprob, logprob_grad)
 
     return one_step

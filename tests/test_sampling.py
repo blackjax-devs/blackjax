@@ -442,17 +442,14 @@ mcse_test_cases = [
             "step_size": 1.0,
             "num_integration_steps": 32,
         },
-        "custom_gradients": False,
     },
     {
         "algorithm": blackjax.nuts,
         "parameters": {"step_size": 1.0},
-        "custom_gradients": False,
     },
     {
         "algorithm": blackjax.nuts,
         "parameters": {"step_size": 1.0},
-        "custom_gradients": True,
     },
 ]
 
@@ -497,21 +494,15 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         return scaled_error
 
     @parameterized.parameters(mcse_test_cases)
-    def test_mcse(self, algorithm, parameters, custom_gradients):
+    def test_mcse(self, algorithm, parameters):
         """Test convergence using Monte Carlo CLT across multiple chains."""
         init_fn_key, pos_init_key, sample_key = jax.random.split(self.key, 3)
         logprob_fn, true_loc, true_scale, true_rho = self.generate_multivariate_target(
             None
         )
-        if custom_gradients:
-            logprob_grad_fn = jax.jacfwd(logprob_fn)
-        else:
-            logprob_grad_fn = None
-
         kernel = algorithm(
             logprob_fn,
             inverse_mass_matrix=true_scale,
-            logprob_grad_fn=logprob_grad_fn,
             **parameters,
         )
 
