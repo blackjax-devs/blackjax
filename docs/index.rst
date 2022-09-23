@@ -74,6 +74,7 @@ with the relevant hardware acceleration support.
 
    howto_use_ppl
    Sample with multiple chains?<examples/howto_sample_multiple_chains.md>
+   Use non-JAX log-prob functions?<examples/howto_other_frameworks.md>
 
 .. toctree::
    :maxdepth: 1

@@ -9,6 +9,7 @@ jaxlib
 jaxopt
 jupytext
 myst_nb
+numba
 numpyro
 optax
 oryx
