@@ -22,7 +22,7 @@ $$
 p_{\lambda_k}(x) \propto p_0(x) \exp(-\lambda_k V(x))
 $$
 
-where the tempering parameter $ \lambda_k $ takes increasing values between $0$ and $1$. Tempered SMC will also particularly shine when the MCMC step
+where the tempering parameter $\lambda_k$ takes increasing values between $0$ and $1$. Tempered SMC will also particularly shine when the MCMC step
 is not well calibrated (too small step size, etc) like in the example below.
 
 ## Imports
@@ -56,7 +56,7 @@ $$
 V(x) = (x^2 - 1)^2
 $$
 
-This corresponds to the following distribution. We plot the resulting tempered density for 5 different values of $$\lambda_k$$ : from $\lambda_k =1$ which correponds to the original density to $\lambda_k=0$. The lower the value of $\lambda_k$ the easier it is to sampler from the posterior density.
+This corresponds to the following distribution. We plot the resulting tempered density for 5 different values of $\lambda_k$ : from $\lambda_k =1$ which correponds to the original density to $\lambda_k=0$. The lower the value of $\lambda_k$ the easier it is for the sampler to jump between the modes of the posterior density.
 
 ```{code-cell} ipython3
 def V(x):
@@ -81,6 +81,11 @@ normalizing_factor = jnp.sum(density, axis=1, keepdims=True) * (
     linspace[1] - linspace[0]
 )
 density /= normalizing_factor
+```
+
+
+```{code-cell} ipython3
+:tags: [hide-input]
 
 fig, ax = plt.subplots(figsize=(12, 8))
 ax.plot(linspace.squeeze(), density.T)
@@ -124,6 +129,10 @@ hmc_parameters = dict(
 hmc = blackjax.hmc(full_logprob, **hmc_parameters)
 hmc_state = hmc.init(jnp.ones((1,)))
 hmc_samples = inference_loop(key, hmc.step, hmc_state, n_samples)
+```
+
+```{code-cell} ipython3
+:tags: [hide-input]
 
 samples = np.array(hmc_samples.position[:, 0])
 _ = plt.hist(samples, bins=100, density=True)
@@ -142,6 +151,10 @@ nuts_parameters = dict(step_size=1e-4, inverse_mass_matrix=inv_mass_matrix)
 nuts = blackjax.nuts(full_logprob, **nuts_parameters)
 nuts_state = nuts.init(jnp.ones((1,)))
 nuts_samples = inference_loop(key, nuts.step, nuts_state, n_samples)
+```
+
+```{code-cell} ipython3
+:tags: [hide-input]
 
 samples = np.array(nuts_samples.position[:, 0])
 _ = plt.hist(samples, bins=100, density=True)
@@ -204,6 +217,10 @@ initial_smc_state = tempered.init(initial_smc_state)
 
 n_iter, smc_samples = smc_inference_loop(key, tempered.step, initial_smc_state)
 print("Number of steps in the adaptive algorithm: ", n_iter.item())
+```
+
+```{code-cell} ipython3
+:tags: [hide-input]
 
 samples = np.array(smc_samples.particles[:, 0])
 _ = plt.hist(samples, bins=100, density=True)
@@ -240,6 +257,10 @@ normalizing_factor = jnp.sum(density, axis=1, keepdims=True) * (
     linspace[1] - linspace[0]
 )
 density /= normalizing_factor
+```
+
+```{code-cell} ipython3
+:tags: [hide-input]
 
 fig, ax = plt.subplots(figsize=(12, 8))
 ax.semilogy(linspace.squeeze(), density.T)
@@ -280,6 +301,10 @@ hmc_parameters = dict(
 hmc = blackjax.hmc(full_logprob, **hmc_parameters)
 hmc_state = hmc.init(jnp.ones((1,)))
 hmc_samples = inference_loop(key, hmc.step, hmc_state, n_samples)
+```
+
+```{code-cell} ipython3
+:tags: [hide-input]
 
 samples = np.array(hmc_samples.position[:, 0])
 _ = plt.hist(samples, bins=100, density=True)
@@ -299,6 +324,10 @@ nuts_parameters = dict(step_size=1e-2, inverse_mass_matrix=inv_mass_matrix)
 nuts = blackjax.nuts(full_logprob, **nuts_parameters)
 nuts_state = nuts.init(jnp.ones((1,)))
 nuts_samples = inference_loop(key, nuts.step, nuts_state, n_samples)
+```
+
+```{code-cell} ipython3
+:tags: [hide-input]
 
 samples = np.array(nuts_samples.position[:, 0])
 _ = plt.hist(samples, bins=100, density=True)
@@ -337,6 +366,10 @@ initial_smc_state = tempered.init(initial_smc_state)
 
 n_iter, smc_samples = smc_inference_loop(key, tempered.step, initial_smc_state)
 print("Number of steps in the adaptive algorithm: ", n_iter.item())
+```
+
+```{code-cell} ipython3
+:tags: [hide-input]
 
 samples = np.array(smc_samples.particles[:, 0])
 _ = plt.hist(samples, bins=100, density=True)

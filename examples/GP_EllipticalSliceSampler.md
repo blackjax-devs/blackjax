@@ -18,30 +18,30 @@ mystnb:
 
 Given a vector of obervations $ \mathbf{y} $ with known variance $\sigma^2\mathbb{I}$ and Gaussian likelihood, we model the mean parameter of these observations as a Gaussian process given input/feature matrix $\mathbf{X}$
 
-$$
+```{math}
 \begin{align*}
 \mathbf{y}|\mathbf{f} &\sim N(\mathbf{f}, \sigma^2\mathbb{I}) \\
 \mathbf{f} &\sim GP(0, \Sigma),
 \end{align*}
-$$
+```
 
 where $\Sigma$ is a covariance function of the feature vector derived from the squared exponential kenel. Thus, for any pair of observations $i$ and $j$ the covariance of these two observations is given by
 
-$$
+```{math}
 \Sigma_{i,j} = \sigma^2_f \exp\left(-\frac{||\mathbf{X}_{i, \cdot} - \mathbf{X}_{j, \cdot}||^2}{2 l^2}\right)
-$$
+```
 
 for some lengthscale parameter $l$ and signal variance parameter $\sigma_f^2$.
 
 In this example we will limit our analysis to the posterior distribution of the mean parameter $\mathbf{f}$, by conjugacy the posterior is Gaussian with mean and covariance
 
-$$
+```{math}
 \begin{align*}
 \mathbf{f}|\mathbf{y} &\sim N(\mu_f, \Sigma_f) \\
 \Sigma_f^{-1} &= \Sigma^{-1} + \sigma^{-2}\mathbf{I} \\
 \mu_f &= \sigma^{-2} \Sigma_f \mathbf{y}.
 \end{align*}
-$$
+```
 
 Using this analytic result we can check the correct convergence of our sampler towards the posterior distribution. It is important to note, however, that the Elliptical Slice sampler can be used to sample from any vector of parameters so long as these parameters have a prior Multivariate Gaussian distribution.
 
@@ -94,6 +94,10 @@ y = f + jrnd.normal(ky, shape=(n,)) * y_sd
 # conjugate results
 posterior_cov = jnp.linalg.inv(invSigma + 1 / y_sd**2 * jnp.eye(n))
 posterior_mean = jnp.dot(posterior_cov, y) * 1 / y_sd**2
+```
+
+```{code-cell}
+:tags: [hide-input]
 
 plt.figure(figsize=(8, 5))
 plt.hist(np.array(y), bins=50, density=True)
@@ -148,6 +152,10 @@ keys = jrnd.split(rng, 1000)
 predictive = jax.vmap(lambda k, f: f + jrnd.normal(k, (n,)) * y_sd)(
     keys, samples[-1000:]
 )
+```
+
+```{code-cell}
+:tags: [hide-input]
 plt.figure(figsize=(8, 5))
 plt.hist(np.array(y), bins=50, density=True)
 plt.hist(np.array(predictive.reshape(-1)), bins=50, density=True, alpha=0.8)
@@ -167,6 +175,8 @@ Another parameter of interest for diagnostics is the location on the ellipse the
 Since the likelihood's variance is set at 1., it is quite informative. Increasing the likelihood's variance leads to less sub iterations per iteration of the Elliptical Slice sampler and the parameter theta becoming more uniform on its range.
 
 ```{code-cell} ipython3
+:tags: [hide-cell]
+
 plt.figure(figsize=(10, 5))
 plt.hist(np.array(info.subiter), bins=50)
 plt.xlabel("Sub iterations")
@@ -175,6 +185,8 @@ plt.show()
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-cell]
+
 plt.figure(figsize=(10, 5))
 plt.hist(np.array(info.theta), bins=100)
 plt.xlabel("theta")

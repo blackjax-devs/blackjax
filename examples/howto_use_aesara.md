@@ -40,7 +40,7 @@ n_of_positives = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
 n_rat_tumors = len(group_size)
 ```
 
-Let us know implement the model in Aesara/AePPL. We start with implementing the generative model in two part, the improper prior on `a` and `b` and then the response model:
+Let us now implement the model in Aesara/AePPL. We start with implementing the generative model in two part, the improper prior on `a` and `b` and then the response model:
 
 ```{code-cell} ipython3
 import aesara

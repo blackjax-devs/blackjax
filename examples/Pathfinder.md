@@ -27,15 +27,12 @@ import blackjax
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-cell]
+
 %config InlineBackend.figure_format = "retina"
 plt.rcParams["axes.spines.right"] = False
 plt.rcParams["axes.spines.top"] = False
 plt.rcParams["figure.figsize"] = (10, 6)
-```
-
-```{code-cell} ipython3
-%load_ext watermark
-%watermark -d -m -v -p jax,jaxlib,blackjax
 ```
 
 ## The Data
@@ -51,6 +48,8 @@ y = rows[0] * 1.0  # y[i] = whether point i belongs to cluster 1
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 colors = ["tab:red" if el else "tab:blue" for el in rows[0]]
 plt.scatter(*X.T, edgecolors=colors, c="none")
 plt.xlabel(r"$X_0$")
@@ -120,6 +119,8 @@ path = blackjax.vi.pathfinder.init(rng_key, logprob_fn, w0, return_path=True, ft
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 def ellipse_confidence(mu, cov, ax, c, n_std=2.0):
     import numpy as np
 
@@ -202,6 +203,8 @@ _, (_, samples) = inference_loop(rng_key, pathfinder.step, state, 5_000)
 And display the trace:
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 fig, ax = plt.subplots(1, 2, figsize=(8, 2), sharey=True)
 for i, axi in enumerate(ax):
     axi.plot(samples[:, i])
@@ -230,6 +233,8 @@ _, (samples_rmh, _) = inference_loop(rng_key, rmh.step, state_rmh, 5_000)
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 fig, ax = plt.subplots(2, 2, figsize=(10, 4), sharey=True)
 for i in range(2):
     ax[i, 0].plot(samples_rmh.position[:, i])

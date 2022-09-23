@@ -27,15 +27,6 @@ import numpy as np
 import blackjax
 ```
 
-```{code-cell} ipython3
-%load_ext watermark
-%watermark -d -m -v -p jax,jaxlib,blackjax
-```
-
-```{code-cell} ipython3
-jax.devices()
-```
-
 ## The Problem
 
 We'll generate observations from a normal distribution of known `loc` and `scale` to see if we can recover the parameters in sampling. Let's take a decent-size dataset with 1,000 points:
@@ -83,7 +74,6 @@ initial_state
 The HMC kernel is easy to obtain:
 
 ```{code-cell} ipython3
-%%time
 hmc_kernel = jax.jit(hmc.step)
 ```
 
@@ -114,6 +104,8 @@ scale_samples = states.position["scale"]
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 fig, (ax, ax1) = plt.subplots(ncols=2, figsize=(15, 6))
 ax.plot(loc_samples)
 ax.set_xlabel("Samples")
@@ -151,6 +143,8 @@ scale_samples = states.position["scale"]
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 fig, (ax, ax1) = plt.subplots(ncols=2, figsize=(15, 6))
 ax.plot(loc_samples)
 ax.set_xlabel("Samples")
@@ -193,6 +187,8 @@ scale_samples = states.position["scale"]
 ```
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 fig, (ax, ax1) = plt.subplots(ncols=2, figsize=(15, 6))
 ax.plot(loc_samples)
 ax.set_xlabel("Samples")
