@@ -53,4 +53,5 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     keywords="probabilistic machine learning bayesian statistics sampling algorithms",
     license="Apache License 2.0",
+    license_files=("LICENSE",),
 )
