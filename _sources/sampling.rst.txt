@@ -86,8 +86,8 @@ RMH
 
 .. autoclass:: blackjax.rmh
 
-Stochastic Gradient Langeving Dynamics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Stochastic Gradient Langevin Dynamics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: blackjax.sgld
 
