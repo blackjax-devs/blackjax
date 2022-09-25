@@ -41,18 +41,28 @@ It integrates really well with PPLs as long as they can provide a (potentially u
 Installation
 ============
 
-Blackjax is written in pure Python but depends on XLA via JAX. Since the JAX
-installation depends on your CUDA version BlackJAX does not list JAX as a
-dependency. If you simply want to use JAX on CPU, install it with:
+The latest release of Blackjax can be installed from PyPi using `pip`:
 
 .. code-block:: bash
 
-   pip install jax jaxlib
+   pip install blackjax
 
-Follow `these instructions <https://github.com/google/jax#installation>`_ to
-install JAX with the relevant hardware acceleration support.
+The current development branch can be installed from GitHub using `pip` as well:
 
-Then install BlackJAX
+.. code-block:: bash
+
+   pip install git+https://github.com/blackjax-devs/blackjax
+
+
+GPU-specific instructions
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+BlackJAX is written in pure Python but depends on XLA via JAX. By default, the
+version of JAX that will be installed along with BlackJAX will make your code
+run on CPU only. **If you want to use BlackJAX on GPU/TPU** we recommend you follow
+[these instructions](https://github.com/google/jax#installation) to install JAX
+with the relevant hardware acceleration support.
+
 
 .. code-block:: bash
 
