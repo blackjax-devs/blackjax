@@ -96,7 +96,7 @@ posterior_cov = jnp.linalg.inv(invSigma + 1 / y_sd**2 * jnp.eye(n))
 posterior_mean = jnp.dot(posterior_cov, y) * 1 / y_sd**2
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [hide-input]
 
 plt.figure(figsize=(8, 5))
@@ -130,6 +130,8 @@ samples = states.position[n_warm:]
 
 ```{code-cell} ipython3
 %%time
+n_iter = 2000
+
 logprob_fn = lambda f: loglikelihood_fn(f) - 0.5 * jnp.dot(f @ invSigma, f)
 warmup = window_adaptation(nuts, logprob_fn, n_warm, target_acceptance_rate=0.8)
 key_warm, key_sample = jrnd.split(jrnd.PRNGKey(0))
@@ -154,8 +156,9 @@ predictive = jax.vmap(lambda k, f: f + jrnd.normal(k, (n,)) * y_sd)(
 )
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [hide-input]
+
 plt.figure(figsize=(8, 5))
 plt.hist(np.array(y), bins=50, density=True)
 plt.hist(np.array(predictive.reshape(-1)), bins=50, density=True, alpha=0.8)
