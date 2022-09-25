@@ -10,6 +10,7 @@ jupytext
 myst_nb
 numpyro
 optax
+oryx
 scikit-learn
 seaborn
 sphinx
