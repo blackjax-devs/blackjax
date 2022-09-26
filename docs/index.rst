@@ -1,7 +1,7 @@
-Welcome to Blackjax
+Welcome to BlackJAX
 ===================
 
-Blackjax is a library of samplers for `JAX <https://github.com/google/jax>`_ that works on CPU as well as GPU. It is designed with two categories of users in mind:
+BlackJAX is a library of samplers for `JAX <https://github.com/google/jax>`_ that works on CPU as well as GPU. It is designed with two categories of users in mind:
 
 - People who just need state-of-the-art samplers that are fast, robust and well tested;
 - Researchers who can use the library's building blocks to design new algorithms.
@@ -41,7 +41,7 @@ It integrates really well with PPLs as long as they can provide a (potentially u
 Installation
 ============
 
-The latest release of Blackjax can be installed from PyPi using `pip`:
+The latest release of BlackJAX can be installed from PyPi using `pip`:
 
 .. code-block:: bash
 
@@ -77,7 +77,7 @@ with the relevant hardware acceleration support.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Blackjax by example
+   :caption: BlackJAX by example
 
    examples
 

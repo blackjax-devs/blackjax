@@ -82,7 +82,7 @@ model = tfd.JointDistributionSequential(
 )
 ```
 
-We need to translate the model into a log-probability density function that will be used by Blackjax to perform inference.
+We need to translate the model into a log-probability density function that will be used by BlackJAX to perform inference.
 
 ```{code-cell} ipython3
 def target_logprob_fn(avg_effect, avg_stddev, school_effects_standard):

@@ -15,7 +15,7 @@ mystnb:
 
 # Use with Oryx models
 
-Oryx is a probabilistic programming library written in JAX, it is thus natively compatible with Blackjax. In this notebook we will show how we can use Oryx as a modeling language together with Blackjax as an inference library.
+Oryx is a probabilistic programming library written in JAX, it is thus natively compatible with BlackJAX. In this notebook we will show how we can use Oryx as a modeling language together with BlackJAX as an inference library.
 
 We reproduce the [example in Oryx's documentation](https://www.tensorflow.org/probability/oryx/notebooks/probabilistic_programming#case_study_bayesian_neural_network) and train a Bayesian Neural Network (BNN) on the iris dataset:
 

@@ -31,5 +31,5 @@ Sample code with the desired behavior
 ```
 
 <!--
-Be mindful that your proposal may be challenged. Blackjax has strong design principles that we are committed to stick to. If there is an alternative way to achieve what you would like, we will let you know.
+Be mindful that your proposal may be challenged. BlackJAX has strong design principles that we are committed to stick to. If there is an alternative way to achieve what you would like, we will let you know.
 -->

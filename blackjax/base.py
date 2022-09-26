@@ -76,7 +76,7 @@ class UpdateFn(Protocol):
 class SamplingAlgorithm(NamedTuple):
     """A pair of functions that implement a sampling algorithm.
 
-    Blackjax sampling algorithms are implemented as a pair of pure functions: a
+    BlackJAX sampling algorithms are implemented as a pair of pure functions: a
     kernel, that takes a new samples starting from the current state, and an
     initialization function that creates a kernel state from a chain position.
 

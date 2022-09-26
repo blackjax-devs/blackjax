@@ -19,7 +19,7 @@ Sampling
   adaptive_tempered_smc
 
 
-At the highest level of Blackjax's API we find the sampling and adaptation algorithms. Sampling algorithms are made of an ``init_fn`` function, which turns a position into a sampling state, and a ``step_fn`` function, which transforms a state into a new state.
+At the highest level of BlackJAX's API we find the sampling and adaptation algorithms. Sampling algorithms are made of an ``init_fn`` function, which turns a position into a sampling state, and a ``step_fn`` function, which transforms a state into a new state.
 
 We initialize an algorithm using the log-probability function we wish to sample from, and values for the algorithms' parameters. Most common algorithms are available in the ``blackjax`` namespace directly:
 

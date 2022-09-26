@@ -20,8 +20,8 @@ sys.path.append(str(PROJECT_DIR))
 # -- Project information -----------------------------------------------------
 
 project = "blackjax"
-copyright = f"{date.today().year}, The Blackjax developers"
-author = "The Blackjax developers"
+copyright = f"{date.today().year}, The BlackJAX developers"
+author = "The BlackJAX developers"
 
 # The full version, including alpha/beta/rc tags
 release = "0.8.3"
@@ -74,7 +74,7 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-html_title = "Blackjax"
+html_title = "BlackJAX"
 html_logo = "_static/blackjax.png"
 html_css_files = ["custom.css"]
 

@@ -13,7 +13,7 @@ kernelspec:
 
 # Use with Aesara models
 
-Blackjax accepts any log-probability function as long as it is compatible with `jax.jit`, `jax.grad` (for gradient-based samplers) and `jax.vmap`. In this example we will show ho we can use [Aesara](https://github.com/aesara-devs/aesara) as a modeling language and Blackjax as an inference library.
+BlackJAX accepts any log-probability function as long as it is compatible with `jax.jit`, `jax.grad` (for gradient-based samplers) and `jax.vmap`. In this example we will show ho we can use [Aesara](https://github.com/aesara-devs/aesara) as a modeling language and BlackJAX as an inference library.
 
 ``` {admonition} Before you start
 You will need [Aesara](https://github.com/aesara-devs/aesara) and [AePPL](https://github.com/aesara-devs/aeppl) to run this example. Please follow the installation instructions on their respective repository.
@@ -100,7 +100,7 @@ You can alway debug the `logprob` graph by printing it:
 aesara.dprint(logprob)
 ```
 
-To sample with Blackjax we will need to use Aesara's JAX backend; `logprob_jax` defined below is a function that uses JAX operators, can be passed as an argument to `jax.jit` and `jax.grad`:
+To sample with BlackJAX we will need to use Aesara's JAX backend; `logprob_jax` defined below is a function that uses JAX operators, can be passed as an argument to `jax.jit` and `jax.grad`:
 
 ```{code-cell} ipython3
 :tags: [remove-stderr]
@@ -108,7 +108,7 @@ logprob_fn = aesara.function((a_vv, b_vv, theta_vv, Y_vv), logprob, mode="JAX")
 logprob_jax = logprob_fn.vm.jit_fn
 ```
 
-JAX-compiled functions currently returns a tuple with a single element, but JAX can only differentiate scalar values and will complain. In addition, we would like to work with dictionaries for the values of the variables in Blackjax, and finally the value of `Y_vv` is fixed. So let's wrap the compiled function in a function that has the desired behavior:
+JAX-compiled functions currently returns a tuple with a single element, but JAX can only differentiate scalar values and will complain. In addition, we would like to work with dictionaries for the values of the variables in BlackJAX, and finally the value of `Y_vv` is fixed. So let's wrap the compiled function in a function that has the desired behavior:
 
 ```{code-cell}
 def logprob_fn(position):
@@ -136,7 +136,7 @@ rng_key = jax.random.PRNGKey(0)
 init_position = init_param_fn(rng_key)
 ```
 
-And finally sample using Blackjax:
+And finally sample using BlackJAX:
 
 ```{code-cell} ipython3
 :tags: [hide-cell]

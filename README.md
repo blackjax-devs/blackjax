@@ -134,7 +134,7 @@ We value the following contributions:
 2. Run `pre-commit run --all-files` and `make test` before pushing on the repo; CI should pass if
    these pass locally.
 
-## Citing Blackjax
+## Citing BlackJAX
 
 To cite this repository:
 
