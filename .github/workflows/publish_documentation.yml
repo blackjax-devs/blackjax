@@ -25,7 +25,6 @@ jobs:
           sphinx-build -b html docs docs/build/html
 
       - name: Publish the documentation
-        if: success() && github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@3.6.2
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
