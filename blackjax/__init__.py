@@ -20,8 +20,6 @@ from .kernels import (
 )
 from .optimizers import dual_averaging, lbfgs
 
-__version__ = "0.9.2"
-
 __all__ = [
     "dual_averaging",  # optimizers
     "lbfgs",
@@ -44,3 +42,7 @@ __all__ = [
     "ess",  # diagnostics
     "rhat",
 ]
+
+from . import _version
+
+__version__ = _version.get_versions()["version"]
