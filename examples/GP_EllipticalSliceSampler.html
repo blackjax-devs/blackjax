@@ -122,6 +122,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_oryx.html">
+     Use with Oryx models
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_pymc.html">
      Use with PyMC models
     </a>
@@ -516,8 +521,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.66 s, sys: 233 ms, total: 7.89 s
-Wall time: 7.35 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.94 s, sys: 321 ms, total: 10.3 s
+Wall time: 9.48 s
 </pre></div>
 </div>
 </div>
@@ -525,6 +530,8 @@ Wall time: 7.35 s
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">n_iter</span> <span class="o">=</span> <span class="mi">2000</span>
+
 <span class="n">logprob_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">loglikelihood_fn</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">f</span> <span class="o">@</span> <span class="n">invSigma</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
 <span class="n">warmup</span> <span class="o">=</span> <span class="n">window_adaptation</span><span class="p">(</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">,</span> <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
 <span class="n">key_warm</span><span class="p">,</span> <span class="n">key_sample</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jrnd</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
@@ -534,8 +541,8 @@ Wall time: 7.35 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 5min 32s, sys: 305 ms, total: 5min 32s
-Wall time: 5min 31s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2min 26s, sys: 278 ms, total: 2min 26s
+Wall time: 2min 26s
 </pre></div>
 </div>
 </div>

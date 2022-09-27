@@ -121,6 +121,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_oryx.html">
+     Use with Oryx models
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_pymc.html">
      Use with PyMC models
     </a>
@@ -455,6 +460,12 @@ title="Source repository"
 <span class="p">)</span>
 
 <span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/blackjax/blackjax/blackjax/mcmc/trajectory.py:109: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  directed_step_size = jax.tree_map(
 </pre></div>
 </div>
 </div>

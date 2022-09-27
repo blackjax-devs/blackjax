@@ -122,6 +122,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_oryx.html">
+     Use with Oryx models
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_pymc.html">
      Use with PyMC models
     </a>
@@ -565,7 +570,7 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd7f4b2e820&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f3370e6a0d0&gt;
 </pre></div>
 </div>
 <img alt="../_images/bd48b7a90aab9b2fe6284f87589e936c4909c486c7315bd62e7f3a85c19fbd3a.png" src="../_images/bd48b7a90aab9b2fe6284f87589e936c4909c486c7315bd62e7f3a85c19fbd3a.png" />
@@ -616,8 +621,12 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.29 s, sys: 13 ms, total: 1.3 s
-Wall time: 1.3 s
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/blackjax/blackjax/blackjax/mcmc/trajectory.py:109: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  directed_step_size = jax.tree_map(
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.5 s, sys: 19.3 ms, total: 1.52 s
+Wall time: 1.52 s
 </pre></div>
 </div>
 </div>
@@ -651,8 +660,8 @@ Wall time: 1.3 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.97 s, sys: 14.4 ms, total: 6.98 s
-Wall time: 6.98 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.59 s, sys: 15 ms, total: 7.6 s
+Wall time: 7.59 s
 </pre></div>
 </div>
 </div>
@@ -734,9 +743,13 @@ Wall time: 6.98 s
 </div>
 </div>
 <div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/blackjax/blackjax/blackjax/smc/base.py:121: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  particles = jax.tree_map(lambda x: x[resampling_index], proposed_particles)
+</pre></div>
+</div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  9
-CPU times: user 2.81 s, sys: 8.78 ms, total: 2.82 s
-Wall time: 2.79 s
+CPU times: user 3.31 s, sys: 60.3 ms, total: 3.37 s
+Wall time: 3.31 s
 </pre></div>
 </div>
 </div>
@@ -796,7 +809,7 @@ Wall time: 2.79 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd7dcf29a30&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f33702e3a00&gt;
 </pre></div>
 </div>
 <img alt="../_images/b039c37cae038a3a45a2202f571e4ffba631685116f6019522670a92a9fbc971.png" src="../_images/b039c37cae038a3a45a2202f571e4ffba631685116f6019522670a92a9fbc971.png" />
@@ -844,8 +857,8 @@ Wall time: 2.79 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 857 ms, sys: 3.9 ms, total: 861 ms
-Wall time: 858 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.06 s, sys: 3.98 ms, total: 1.06 s
+Wall time: 1.05 s
 </pre></div>
 </div>
 </div>
@@ -880,8 +893,8 @@ Wall time: 858 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.52 s, sys: 16 ms, total: 1.53 s
-Wall time: 1.53 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.82 s, sys: 11.4 ms, total: 1.83 s
+Wall time: 1.83 s
 </pre></div>
 </div>
 </div>
@@ -936,8 +949,8 @@ We correct the bias introduced by the (arbitrary) prior.</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  8
-CPU times: user 2.74 s, sys: 20.4 ms, total: 2.76 s
-Wall time: 2.75 s
+CPU times: user 3.32 s, sys: 28.2 ms, total: 3.35 s
+Wall time: 3.34 s
 </pre></div>
 </div>
 </div>

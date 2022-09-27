@@ -41,7 +41,7 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Use with PyMC models" href="howto_use_pymc.html" />
+    <link rel="next" title="Use with Oryx models" href="howto_use_oryx.html" />
     <link rel="prev" title="Use with Aesara models" href="howto_use_aesara.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -118,6 +118,11 @@
    <li class="toctree-l2 current active">
     <a class="current reference internal" href="#">
      Use with Numpyro models
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_oryx.html">
+     Use with Oryx models
     </a>
    </li>
    <li class="toctree-l2">
@@ -383,7 +388,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.14/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div>
 </div>
@@ -523,49 +528,51 @@ There were 0.00% divergent transitions
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/tmp/ipykernel_4084/2569034133.py:6: FutureWarning: 
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/tmp/ipykernel_4353/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4084/2569034133.py:6: FutureWarning: 
+/tmp/ipykernel_4353/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4084/2569034133.py:6: FutureWarning: 
+/tmp/ipykernel_4353/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4084/2569034133.py:6: FutureWarning: 
+/tmp/ipykernel_4353/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4084/2569034133.py:6: FutureWarning: 
+/tmp/ipykernel_4353/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4084/2569034133.py:6: FutureWarning: 
+/tmp/ipykernel_4353/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4084/2569034133.py:6: FutureWarning: 
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/tmp/ipykernel_4353/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4084/2569034133.py:6: FutureWarning: 
+/tmp/ipykernel_4353/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
@@ -615,10 +622,10 @@ Relative treatment effect for school 7: 0.01
             <p class="prev-next-title">Use with Aesara models</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="howto_use_pymc.html" title="next page">
+    <a class='right-next' id="next-link" href="howto_use_oryx.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Use with PyMC models</p>
+        <p class="prev-next-title">Use with Oryx models</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

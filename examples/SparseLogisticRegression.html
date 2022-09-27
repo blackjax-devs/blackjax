@@ -122,6 +122,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_oryx.html">
+     Use with Oryx models
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_pymc.html">
      Use with PyMC models
     </a>
@@ -449,11 +454,31 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.14/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:02:59.427902
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:89: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  mean_position = jax.tree_map(lambda p: p.mean(axis=0), batch_position)
+/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:90: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  sd_position = jax.tree_map(lambda p: p.std(axis=0), batch_position)
+/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:91: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  batch_norm = jax.tree_map(
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:98: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  batch_grad_scaled = jax.tree_map(
+/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:110: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  step_size = jax.tree_map(lambda sd: epsilon * sd, sd_position)
+/home/runner/work/blackjax/blackjax/blackjax/adaptation/chain_adaptation.py:62: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  jax.tree_map(lambda s: s.shape[0], state.states)
+/home/runner/work/blackjax/blackjax/blackjax/mcmc/ghmc.py:249: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  momentum = jax.tree_map(
+/home/runner/work/blackjax/blackjax/blackjax/mcmc/trajectory.py:109: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  directed_step_size = jax.tree_map(
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:03:44.681950
 </pre></div>
 </div>
 </div>

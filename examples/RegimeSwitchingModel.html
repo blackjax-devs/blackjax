@@ -122,6 +122,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_oryx.html">
+     Use with Oryx models
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_pymc.html">
      Use with PyMC models
     </a>
@@ -478,7 +483,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.13/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.14/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div>
 </div>
@@ -487,7 +492,7 @@ title="Source repository"
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading Google stock data...&quot;</span><span class="p">)</span>
-<span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://raw.githubusercontent.com/albcab/TESS/master/google.csv&quot;</span>
+<span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://raw.githubusercontent.com/blackjax-devs/blackjax/main/examples/data/google.csv&quot;</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">dl_ac</span><span class="o">.</span><span class="n">values</span> <span class="o">*</span> <span class="mi">100</span>
 <span class="n">T</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
@@ -547,7 +552,27 @@ title="Source repository"
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Running MEADS...
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:00:37.489717
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:89: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  mean_position = jax.tree_map(lambda p: p.mean(axis=0), batch_position)
+/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:90: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  sd_position = jax.tree_map(lambda p: p.std(axis=0), batch_position)
+/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:91: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  batch_norm = jax.tree_map(
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:98: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  batch_grad_scaled = jax.tree_map(
+/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:110: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  step_size = jax.tree_map(lambda sd: epsilon * sd, sd_position)
+/home/runner/work/blackjax/blackjax/blackjax/adaptation/chain_adaptation.py:62: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  jax.tree_map(lambda s: s.shape[0], state.states)
+/home/runner/work/blackjax/blackjax/blackjax/mcmc/ghmc.py:249: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  momentum = jax.tree_map(
+/home/runner/work/blackjax/blackjax/blackjax/mcmc/trajectory.py:109: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  directed_step_size = jax.tree_map(
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:00:46.823466
 </pre></div>
 </div>
 </div>
@@ -560,15 +585,15 @@ title="Source repository"
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>                mean       std    median      5.0%     95.0%     n_eff     r_hat
-  alpha[0]      0.06      0.08      0.06     -0.08      0.20   4506.35      1.02
-  alpha[1]      0.01      0.10      0.01     -0.15      0.17   4306.82      1.02
-      p[0]      2.70      0.39      2.68      2.06      3.34   3199.80      1.04
-      p[1]      1.84      0.88      1.76      0.36      3.19   4616.45      1.02
-       rho     -0.02      0.10     -0.01     -0.19      0.15   3719.61      1.03
-  sigma[0]      1.04      0.04      1.04      0.97      1.12   4180.15      1.03
-  sigma[1]      2.16      0.18      2.14      1.86      2.44   3384.52      1.03
-      xi_0      0.51      1.02      0.47     -1.17      2.13   4046.47      1.03
-       y_0      0.01      1.00      0.01     -1.61      1.68   4497.77      1.02
+  alpha[0]      0.06      0.08      0.06     -0.08      0.20   4176.70      1.02
+  alpha[1]      0.01      0.10      0.01     -0.16      0.17   4200.65      1.02
+      p[0]      2.70      0.39      2.67      2.06      3.34   3214.32      1.04
+      p[1]      1.84      0.87      1.76      0.38      3.18   4479.52      1.02
+       rho     -0.02      0.10     -0.01     -0.18      0.15   2995.16      1.04
+  sigma[0]      1.04      0.05      1.04      0.97      1.12   4287.97      1.03
+  sigma[1]      2.16      0.18      2.14      1.85      2.43   3052.52      1.04
+      xi_0      0.51      1.01      0.46     -1.16      2.09   3712.13      1.03
+       y_0      0.01      1.00      0.01     -1.58      1.69   4443.54      1.02
 </pre></div>
 </div>
 </div>
@@ -576,6 +601,12 @@ title="Source repository"
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,)</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]),</span> <span class="n">samples</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/tmp/ipykernel_2908/1908265913.py:1: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
+  samples = jax.tree_map(lambda s: s.reshape((-1,) + s.shape[2:]), samples)
 </pre></div>
 </div>
 </div>
@@ -603,7 +634,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/c1d4b436b4613e96e012f3c813cba14b47a07aeec7693a994378ce82ca7a3b53.png" src="../_images/c1d4b436b4613e96e012f3c813cba14b47a07aeec7693a994378ce82ca7a3b53.png" />
+<img alt="../_images/014bd7fbad25b9113f1dd826bcbac64b37d13c73b6899866c43dae172c89ced1.png" src="../_images/014bd7fbad25b9113f1dd826bcbac64b37d13c73b6899866c43dae172c89ced1.png" />
 </div>
 </div>
 </section>

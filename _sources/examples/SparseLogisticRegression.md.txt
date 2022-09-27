@@ -10,7 +10,7 @@ kernelspec:
   language: python
   name: python3
 mystnb:
-  execution_timeout: 200
+  execution_timeout: 300
 ---
 
 # Sparse logistic regression
