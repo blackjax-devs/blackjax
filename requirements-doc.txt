@@ -20,4 +20,5 @@ sphinx-math-dollar
 tensorflow-cpu
 tensorflow-datasets
 tfp-nightly[jax]
+versioneer
 watermark

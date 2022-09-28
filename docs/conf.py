@@ -10,9 +10,12 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import os
 import pathlib
 import sys
 from datetime import date
+
+import versioneer
 
 PROJECT_DIR = pathlib.Path(__file__).absolute().parent.parent
 sys.path.append(str(PROJECT_DIR))
@@ -23,11 +26,17 @@ project = "blackjax"
 copyright = f"{date.today().year}, The Blackjax developers"
 author = "The Blackjax developers"
 
-# The full version, including alpha/beta/rc tags
-release = "0.8.3"
+
+# -- Get the current version with versioneer ---------------------------------
+# For versioneer to work we need to be in the root of the project
+_curpath = os.getcwd()
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
+version = versioneer.get_version()  # full version possibly with tags
+os.chdir(_curpath)
+del _curpath
 
 
-# -- General configuration ---------------------------------------------------
+# General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
