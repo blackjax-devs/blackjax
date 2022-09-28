@@ -19,3 +19,8 @@ comment:
   require_base: no
   require_head: yes
   branches: null
+
+ignore:
+  - */_version.py
+  - setup.py
+  - versioneer.py

@@ -1,10 +1,13 @@
+exclude: |
+    (?x)^(
+        versioneer\.py|
+        blackjax/_version\.py|
+    )$
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.1.0
   hooks:
     -   id: check-merge-conflict
-    -   id: check-toml
-    -   id: check-yaml
     -   id: debug-statements
     -   id: end-of-file-fixer
     -   id: requirements-txt-fixer
