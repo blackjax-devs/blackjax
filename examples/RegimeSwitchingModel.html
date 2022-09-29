@@ -552,27 +552,7 @@ title="Source repository"
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Running MEADS...
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:89: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
-  mean_position = jax.tree_map(lambda p: p.mean(axis=0), batch_position)
-/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:90: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
-  sd_position = jax.tree_map(lambda p: p.std(axis=0), batch_position)
-/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:91: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
-  batch_norm = jax.tree_map(
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:98: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
-  batch_grad_scaled = jax.tree_map(
-/home/runner/work/blackjax/blackjax/blackjax/adaptation/meads.py:110: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
-  step_size = jax.tree_map(lambda sd: epsilon * sd, sd_position)
-/home/runner/work/blackjax/blackjax/blackjax/adaptation/chain_adaptation.py:62: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
-  jax.tree_map(lambda s: s.shape[0], state.states)
-/home/runner/work/blackjax/blackjax/blackjax/mcmc/ghmc.py:249: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
-  momentum = jax.tree_map(
-/home/runner/work/blackjax/blackjax/blackjax/mcmc/trajectory.py:109: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
-  directed_step_size = jax.tree_map(
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:00:46.823466
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:00:37.522049
 </pre></div>
 </div>
 </div>
@@ -585,15 +565,15 @@ title="Source repository"
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>                mean       std    median      5.0%     95.0%     n_eff     r_hat
-  alpha[0]      0.06      0.08      0.06     -0.08      0.20   4176.70      1.02
-  alpha[1]      0.01      0.10      0.01     -0.16      0.17   4200.65      1.02
-      p[0]      2.70      0.39      2.67      2.06      3.34   3214.32      1.04
-      p[1]      1.84      0.87      1.76      0.38      3.18   4479.52      1.02
-       rho     -0.02      0.10     -0.01     -0.18      0.15   2995.16      1.04
-  sigma[0]      1.04      0.05      1.04      0.97      1.12   4287.97      1.03
-  sigma[1]      2.16      0.18      2.14      1.85      2.43   3052.52      1.04
-      xi_0      0.51      1.01      0.46     -1.16      2.09   3712.13      1.03
-       y_0      0.01      1.00      0.01     -1.58      1.69   4443.54      1.02
+  alpha[0]      0.06      0.08      0.06     -0.08      0.19   4379.38      1.02
+  alpha[1]      0.01      0.10      0.01     -0.15      0.18   4292.09      1.02
+      p[0]      2.70      0.40      2.68      2.03      3.32   3281.97      1.04
+      p[1]      1.84      0.87      1.76      0.38      3.16   4150.64      1.03
+       rho     -0.02      0.10     -0.01     -0.18      0.15   3018.95      1.04
+  sigma[0]      1.04      0.05      1.04      0.97      1.12   4111.23      1.03
+  sigma[1]      2.16      0.18      2.14      1.85      2.44   3378.03      1.03
+      xi_0      0.52      1.02      0.48     -1.12      2.18   3987.42      1.02
+       y_0      0.00      0.99     -0.01     -1.60      1.65   4264.53      1.02
 </pre></div>
 </div>
 </div>
@@ -601,12 +581,6 @@ title="Source repository"
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,)</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]),</span> <span class="n">samples</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/tmp/ipykernel_2908/1908265913.py:1: FutureWarning: jax.tree_map is deprecated, and will be removed in a future release. Use jax.tree_util.tree_map instead.
-  samples = jax.tree_map(lambda s: s.reshape((-1,) + s.shape[2:]), samples)
 </pre></div>
 </div>
 </div>
@@ -634,7 +608,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/014bd7fbad25b9113f1dd826bcbac64b37d13c73b6899866c43dae172c89ced1.png" src="../_images/014bd7fbad25b9113f1dd826bcbac64b37d13c73b6899866c43dae172c89ced1.png" />
+<img alt="../_images/5c0317d12cd72d26b6020baf27010fc0beab0ee93a597909f7531b011164313d.png" src="../_images/5c0317d12cd72d26b6020baf27010fc0beab0ee93a597909f7531b011164313d.png" />
 </div>
 </div>
 </section>
