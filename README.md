@@ -149,7 +149,7 @@ To cite this repository:
   author = {Lao, Junpeng and Louf, R\'emi},
   title = {{B}lackjax: A sampling library for {JAX}},
   url = {http://github.com/blackjax-devs/blackjax},
-  version = {0.9.2},
+  version = {<insert current release tag>},
   year = {2020},
 }
 ```
