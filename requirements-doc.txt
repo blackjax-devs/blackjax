@@ -3,6 +3,7 @@ aeppl
 aesara>=2.8.5
 arviz
 distrax
+flax
 jax
 jaxlib
 jaxopt
