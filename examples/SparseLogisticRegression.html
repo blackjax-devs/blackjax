@@ -22,8 +22,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
     
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -33,12 +32,7 @@
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script>let toggleHintShow = 'Click to show';</script>
-    <script>let toggleHintHide = 'Click to hide';</script>
-    <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../_static/togglebutton.js"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
-    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -458,73 +452,20 @@ $$</p>
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:02:59.965037
-</pre></div>
-</div>
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
+</summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>                mean       std    median      5.0%     95.0%     n_eff     r_hat
-   beta[0]      0.40      0.87      0.42     -1.09      1.80   7270.67      1.02
-   beta[1]      1.14      0.56      1.05      0.26      1.97   4729.77      1.03
-   beta[2]     -1.27      0.59     -1.18     -2.14     -0.32   6677.02      1.02
-   beta[3]      1.09      0.58      0.99      0.22      1.95   6385.06      1.02
-   beta[4]     -0.46      0.85     -0.48     -1.91      0.92   7080.98      1.02
-   beta[5]      0.95      0.56      0.85      0.13      1.76   4682.07      1.03
-   beta[6]      0.67      0.69      0.62     -0.22      1.98   5441.60      1.02
-   beta[7]      0.65      0.71      0.62     -0.37      1.96   5879.57      1.02
-   beta[8]      0.03      0.82      0.03     -1.36      1.42   8666.88      1.02
-   beta[9]     -0.67      0.67     -0.61     -1.92      0.23   8031.88      1.02
-  beta[10]      0.38      0.81      0.37     -0.98      1.75   7067.89      1.02
-  beta[11]      0.82      0.60      0.72      0.04      1.74   5556.66      1.02
-  beta[12]     -0.45      0.82     -0.45     -1.89      0.88   7413.85      1.02
-  beta[13]     -0.07      0.80     -0.07     -1.42      1.29   7674.03      1.02
-  beta[14]      0.34      0.76      0.30     -0.92      1.66   8948.05      1.01
-  beta[15]      0.72      0.72      0.69     -0.33      2.02   5421.17      1.02
-  beta[16]     -0.88      0.56     -0.78     -1.69     -0.08   5986.39      1.02
-  beta[17]      0.88      0.61      0.79      0.06      1.86   5812.59      1.02
-  beta[18]     -0.69      0.72     -0.66     -1.98      0.37   6072.64      1.02
-  beta[19]     -0.77      0.73     -0.74     -2.08      0.27   4617.39      1.03
-  beta[20]     -0.52      0.75     -0.49     -1.87      0.65   6697.88      1.02
-  beta[21]      0.32      0.79      0.32     -1.03      1.63   6831.59      1.02
-  beta[22]      0.03      0.86      0.04     -1.39      1.48   8664.09      1.02
-  beta[23]     -0.02      0.81     -0.02     -1.40      1.32   7381.90      1.02
-  beta[24]     -0.03      0.80     -0.03     -1.42      1.29   7973.66      1.01
-  lamda[0]     -1.33      2.15     -0.81     -4.42      1.56   3776.45      1.03
-  lamda[1]      0.64      0.59      0.65     -0.32      1.61   4407.16      1.03
-  lamda[2]      0.88      0.58      0.90     -0.05      1.84   5554.60      1.03
-  lamda[3]      0.50      0.65      0.51     -0.55      1.58   5446.85      1.02
-  lamda[4]     -1.33      2.16     -0.80     -4.39      1.56   5295.63      1.03
-  lamda[5]      0.12      0.73      0.11     -1.05      1.32   4617.43      1.03
-  lamda[6]     -0.92      1.71     -0.56     -3.25      1.43   3087.45      1.04
-  lamda[7]     -0.93      1.78     -0.53     -3.43      1.50   2800.16      1.04
-  lamda[8]     -2.51      2.29     -2.10     -5.73      0.85   3691.82      1.04
-  lamda[9]     -0.95      1.78     -0.57     -3.29      1.43   3229.00      1.04
- lamda[10]     -1.65      2.06     -1.21     -4.61      1.31   4392.60      1.03
- lamda[11]     -0.38      1.14     -0.27     -1.80      1.33   3618.89      1.04
- lamda[12]     -1.51      2.12     -1.01     -4.56      1.40   4734.69      1.03
- lamda[13]     -2.46      2.23     -2.06     -5.78      0.85   5214.07      1.03
- lamda[14]     -2.18      2.21     -1.74     -5.26      1.04   6004.82      1.02
- lamda[15]     -0.66      1.75     -0.25     -3.02      1.67   3180.23      1.04
- lamda[16]     -0.18      0.85     -0.17     -1.48      1.19   4289.75      1.03
- lamda[17]     -0.24      1.22     -0.09     -1.65      1.45   3007.39      1.04
- lamda[18]     -0.81      1.82     -0.37     -3.23      1.62   3270.89      1.04
- lamda[19]     -0.52      1.75     -0.09     -2.81      1.77   2839.20      1.04
- lamda[20]     -1.42      2.03     -0.96     -4.24      1.35   3057.06      1.04
- lamda[21]     -1.96      2.27     -1.43     -5.16      1.18   3827.85      1.03
- lamda[22]     -2.03      2.17     -1.59     -5.18      1.12   5890.73      1.02
- lamda[23]     -2.52      2.27     -2.10     -5.80      0.84   6085.60      1.02
- lamda[24]     -2.62      2.26     -2.22     -5.89      0.81   7169.42      1.02
-       tau     -0.82      0.41     -0.83     -1.49     -0.12   3678.08      1.03
-</pre></div>
-</div>
-</div>
+</details>
 </div>
 </section>
 

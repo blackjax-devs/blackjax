@@ -22,8 +22,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
     
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -33,12 +32,7 @@
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script>let toggleHintShow = 'Click to show';</script>
-    <script>let toggleHintHide = 'Click to hide';</script>
-    <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../_static/togglebutton.js"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
-    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -357,6 +351,13 @@ title="Source repository"
   <a class="reference internal nav-link" href="#sample-from-the-posterior-distribution-of-the-perceptron-s-weights">
    Sample From the Posterior Distribution of the Perceptron’s Weights
   </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#sampling-with-sghmc">
+     Sampling with SGHMC
+    </a>
+   </li>
+  </ul>
  </li>
 </ul>
 
@@ -391,6 +392,13 @@ title="Source repository"
   <a class="reference internal nav-link" href="#sample-from-the-posterior-distribution-of-the-perceptron-s-weights">
    Sample From the Posterior Distribution of the Perceptron’s Weights
   </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#sampling-with-sghmc">
+     Sampling with SGHMC
+    </a>
+   </li>
+  </ul>
  </li>
 </ul>
 
@@ -408,10 +416,12 @@ title="Source repository"
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jax.nn</span> <span class="k">as</span> <span class="nn">nn</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.scipy.stats</span> <span class="k">as</span> <span class="nn">stats</span>
+<span class="kn">import</span> <span class="nn">flax.linen</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">distrax</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 </pre></div>
 </div>
 </div>
@@ -438,8 +448,8 @@ title="Source repository"
 </div>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.14/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
-2022-09-29 11:51:33.007028: W tensorflow/core/platform/cloud/google_auth_provider.cc:184] All attempts to get a Google authentication bearer token failed, returning an empty token. Retrieving token from files failed with &quot;NOT_FOUND: Could not locate the credentials file.&quot;. Retrieving token from GCE failed with &quot;FAILED_PRECONDITION: Error executing an HTTP request: libcurl code 6 meaning &#39;Couldn&#39;t resolve host name&#39;, error details: Could not resolve host: metadata&quot;.
-Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00, 15.51 file/s]
+2022-09-30 09:33:40.314481: W tensorflow/core/platform/cloud/google_auth_provider.cc:184] All attempts to get a Google authentication bearer token failed, returning an empty token. Retrieving token from files failed with &quot;NOT_FOUND: Could not locate the credentials file.&quot;. Retrieving token from GCE failed with &quot;FAILED_PRECONDITION: Error executing an HTTP request: libcurl code 6 meaning &#39;Couldn&#39;t resolve host name&#39;, error details: Could not resolve host: metadata&quot;.
+Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00,  5.76 file/s]
 </pre></div>
 </div>
 </div>
@@ -502,47 +512,38 @@ Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00, 15.51
 \end{align*}\end{split}\]</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
-<span class="k">def</span> <span class="nf">predict_fn</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns the probability for the image represented by X</span>
-<span class="sd">    to be in each category given the MLP&#39;s weights vakues.</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="nd">@nn</span><span class="o">.</span><span class="n">compact</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="mi">100</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="mi">10</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">activations</span> <span class="o">=</span> <span class="n">X</span>
-    <span class="k">for</span> <span class="n">W</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-        <span class="n">outputs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">activations</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span>
-        <span class="n">activations</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span>
-
-    <span class="n">final_W</span><span class="p">,</span> <span class="n">final_b</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">logits</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">final_W</span><span class="p">,</span> <span class="n">activations</span><span class="p">)</span> <span class="o">+</span> <span class="n">final_b</span>
-    <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">NN</span><span class="p">()</span>
 
 
-<span class="k">def</span> <span class="nf">logprior_fn</span><span class="p">(</span><span class="n">parameters</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">logprior_fn</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Compute the value of the log-prior density function.&quot;&quot;&quot;</span>
-    <span class="n">logprob</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="k">for</span> <span class="n">W</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">:</span>
-        <span class="n">logprob</span> <span class="o">+=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">W</span><span class="p">))</span>
-        <span class="n">logprob</span> <span class="o">+=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">logprob</span>
+    <span class="n">leaves</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">flat_params</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">leaves</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">distrax</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">flat_params</span><span class="p">))</span>
 
 
-<span class="k">def</span> <span class="nf">loglikelihood_fn</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">loglikelihood_fn</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Categorical log-likelihood&quot;&quot;&quot;</span>
     <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">data</span>
-    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y</span> <span class="o">*</span> <span class="n">predict_fn</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">X</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y</span> <span class="o">*</span> <span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">X</span><span class="p">))</span>
 
 
 <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
-<span class="k">def</span> <span class="nf">compute_accuracy</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">compute_accuracy</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Compute the accuracy of the model.</span>
 
 <span class="sd">    To make predictions we take the number that corresponds to the highest probability value.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">target_class</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">predicted_class</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span>
-        <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">predict_fn</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
-    <span class="p">)</span>
+    <span class="n">predicted_class</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">predicted_class</span> <span class="o">==</span> <span class="n">target_class</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -552,39 +553,7 @@ Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00, 15.51
 <section id="sample-from-the-posterior-distribution-of-the-perceptron-s-weights">
 <h2>Sample From the Posterior Distribution of the Perceptron’s Weights<a class="headerlink" href="#sample-from-the-posterior-distribution-of-the-perceptron-s-weights" title="Permalink to this headline">#</a></h2>
 <p>Now we need to get initial values for the parameters, and we simply sample from their prior distribution:</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">init_parameters</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">sizes</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">    Parameter</span>
-<span class="sd">    ----------</span>
-<span class="sd">    rng_key</span>
-<span class="sd">        PRNGKey used by JAX to generate pseudo-random numbers</span>
-<span class="sd">    sizes</span>
-<span class="sd">        List of size for the subsequent layers. The first size must correspond</span>
-<span class="sd">        to the size of the input data and the last one to the number of</span>
-<span class="sd">        categories.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">num_layers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sizes</span><span class="p">)</span>
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">[</span>
-        <span class="n">init_layer</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">sizes</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">sizes</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
-    <span class="p">]</span>
-
-
-<span class="k">def</span> <span class="nf">init_layer</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Initialize the weights for a single layer.&quot;&quot;&quot;</span>
-    <span class="n">key_W</span><span class="p">,</span> <span class="n">key_b</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">scale</span> <span class="o">*</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key_W</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">))),</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span>
-        <span class="n">key_b</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,)</span>
-    <span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<p>We now sample from the model’s posteriors. We discard the first 1000 samples until the sampler has reached the typical set, and then take 2000 samples. We record the model’s accuracy with the current values every 100 steps.</p>
+<p>We now sample from the model’s posteriors using SGLD. We discard the first 1000 samples until the sampler has reached the typical set, and then take 2000 samples. We record the model’s accuracy with the current values every 100 steps.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
@@ -597,7 +566,6 @@ Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00, 15.51
 
 <span class="n">data_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_train</span><span class="p">)</span>
 <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">512</span>
-<span class="n">layer_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="mi">784</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
 <span class="n">step_size</span> <span class="o">=</span> <span class="mf">5e-5</span>
 
 <span class="n">num_warmup</span> <span class="o">=</span> <span class="p">(</span><span class="n">data_size</span> <span class="o">//</span> <span class="n">batch_size</span><span class="p">)</span> <span class="o">*</span> <span class="mi">20</span>
@@ -607,12 +575,13 @@ Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00, 15.51
 <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">batches</span> <span class="o">=</span> <span class="n">batch_data</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">data_size</span><span class="p">)</span>
 
+<span class="c1"># Set the initial state</span>
+<span class="n">init_positions</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">init</span><span class="p">)(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+
 <span class="c1"># Build the SGLD kernel with a constant learning rate</span>
 <span class="n">grad_fn</span> <span class="o">=</span> <span class="n">grad_estimator</span><span class="p">(</span><span class="n">logprior_fn</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">data_size</span><span class="p">)</span>
 <span class="n">sgld</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sgld</span><span class="p">(</span><span class="n">grad_fn</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">step_size</span><span class="p">)</span>
 
-<span class="c1"># Set the initial state</span>
-<span class="n">init_positions</span> <span class="o">=</span> <span class="n">init_parameters</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">layer_sizes</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">sgld</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">init_positions</span><span class="p">,</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">))</span>
 
 <span class="c1"># Sample from the posterior</span>
@@ -652,16 +621,21 @@ Dl Completed...: 100%|██████████| 4/4 [00:00&lt;00:00, 15.51
 </div><div class="output text_html">
     <div>
       <progress value='3340' class='' max='3340' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [3340/3340 00:21&lt;00:00]
+      100.00% [3340/3340 00:41&lt;00:00]
     </div>
-    </div><div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 30 s, sys: 923 ms, total: 31 s
-Wall time: 25 s
+    </div><div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 53.8 s, sys: 1.93 s, total: 55.8 s
+Wall time: 45.8 s
 </pre></div>
 </div>
 </div>
 </div>
 <p>Let us plot the accuracy at different points in the sampling process:</p>
 <div class="cell tag_hide-input docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
+</summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">plt</span>
 
@@ -674,25 +648,106 @@ Wall time: 25 s
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Sample from 3-layer MLP posterior (MNIST dataset) with SgLD&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">();</span>
+</pre></div>
+</div>
+</div>
+</details>
+<div class="cell_output docutils container">
+<img alt="../_images/fed48763d9849761e6cd548b995296e1381e95bcf134aa594b30ab0ee416eec5.png" src="../_images/fed48763d9849761e6cd548b995296e1381e95bcf134aa594b30ab0ee416eec5.png" />
+</div>
+</div>
+<section id="sampling-with-sghmc">
+<h3>Sampling with SGHMC<a class="headerlink" href="#sampling-with-sghmc" title="Permalink to this headline">#</a></h3>
+<p>We can also use SGHMC to samples from this model</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the SGHMC kernel with a constant learning rate</span>
+<span class="n">step_size</span> <span class="o">=</span> <span class="mf">9e-6</span>
+<span class="n">grad_fn</span> <span class="o">=</span> <span class="n">grad_estimator</span><span class="p">(</span><span class="n">logprior_fn</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">data_size</span><span class="p">)</span>
+<span class="n">sghmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sghmc</span><span class="p">(</span><span class="n">grad_fn</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">step_size</span><span class="p">)</span>
+
+<span class="c1"># Batch the data</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">sghmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">init_positions</span><span class="p">,</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">))</span>
+
+<span class="c1"># Sample from the posterior</span>
+<span class="n">sghmc_accuracies</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">samples</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">steps</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">progress_bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_samples</span> <span class="o">+</span> <span class="n">num_warmup</span><span class="p">)):</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">sghmc</span><span class="o">.</span><span class="n">step</span><span class="p">)(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">sghmc_accuracy</span> <span class="o">=</span> <span class="n">compute_accuracy</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+        <span class="n">sghmc_accuracies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sghmc_accuracy</span><span class="p">)</span>
+        <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">step</span> <span class="o">&gt;</span> <span class="n">num_warmup</span><span class="p">:</span>
+        <span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[]
+<div class="output text_html">
+<style>
+    /* Turns off some styling */
+    progress {
+        /* gets rid of default border in Firefox and Opera. */
+        border: none;
+        /* Needs to be in here for Safari polyfill so background images work as expected. */
+        background-size: auto;
+    }
+    progress:not([value]), progress:not([value])::-webkit-progress-bar {
+        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px);
+    }
+    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+        background: #F44336;
+    }
+</style>
+</div><div class="output text_html">
+    <div>
+      <progress value='3340' class='' max='3340' style='width:300px; height:20px; vertical-align: middle;'></progress>
+      100.00% [3340/3340 03:19&lt;00:00]
+    </div>
+    </div></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+<span class="n">ld_plot</span><span class="p">,</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">accuracies</span><span class="p">)</span>
+<span class="n">hmc_plot</span><span class="p">,</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">sghmc_accuracies</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Number of sampling steps&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Prediction accuracy&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_warmup</span> <span class="o">+</span> <span class="n">num_samples</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Sample from 3-layer MLP posterior (MNIST dataset)&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">((</span><span class="n">ld_plot</span><span class="p">,</span> <span class="n">hmc_plot</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;SGLD&#39;</span><span class="p">,</span> <span class="s1">&#39;SGHMC&#39;</span><span class="p">),</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;lower right&#39;</span><span class="p">,</span> <span class="n">shadow</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">();</span>
 </pre></div>
 </div>
-<img alt="../_images/5bffb91bfd6c9675a69009dad5ebd2e62e0cd2bea067c22e3fb87a8c39e7b9a0.png" src="../_images/5bffb91bfd6c9675a69009dad5ebd2e62e0cd2bea067c22e3fb87a8c39e7b9a0.png" />
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/9806bad494b745209ba7cb289be26d173f2f46978314153b5133f4d22f0074c5.png" src="../_images/9806bad494b745209ba7cb289be26d173f2f46978314153b5133f4d22f0074c5.png" />
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
+</summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The average accuracy in the sampling phase is </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">accuracies</span><span class="p">[</span><span class="mi">10</span><span class="p">:])</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The average accuracy for SGLD in the sampling phase is </span><span class="si">{</span><span class="mi">100</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">accuracies</span><span class="p">[</span><span class="mi">10</span><span class="p">:])</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The average accuracy for SGHMC in the sampling phase is </span><span class="si">{</span><span class="mi">100</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sghmc_accuracies</span><span class="p">[</span><span class="mi">10</span><span class="p">:])</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
+</details>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The average accuracy in the sampling phase is 0.92
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The average accuracy for SGLD in the sampling phase is 91.08%
+The average accuracy for SGHMC in the sampling phase is 93.50%
 </pre></div>
 </div>
 </div>
@@ -702,7 +757,7 @@ Wall time: 25 s
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">predicted_class</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
-    <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">predict_fn</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))(</span><span class="n">s</span><span class="p">,</span> <span class="n">X_test</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">])</span>
+    <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))(</span><span class="n">s</span><span class="p">,</span> <span class="n">X_test</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">])</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -737,48 +792,55 @@ Wall time: 25 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.     0.1265 0.1065 0.     0.0005 0.038  0.0035 0.082  0.1425]
-[0.     0.146  0.     0.011  0.1155 0.     0.092  0.07   0.0525 0.0125]
-[0.     0.     0.114  0.     0.007  0.     0.     0.083  0.1525 0.143 ]
-[0.     0.     0.     0.169  0.     0.149  0.     0.     0.1375 0.044 ]
-[0.     0.087  0.022  0.     0.134  0.003  0.     0.062  0.0215 0.17  ]
-[0.     0.     0.162  0.     0.     0.     0.1655 0.     0.172 ]
-[0.1775 0.     0.167  0.     0.     0.     0.     0.     0.155 ]
-[0.     0.     0.123  0.18   0.     0.011  0.0415 0.001  0.143 ]
-[0.     0.     0.182  0.0095 0.     0.125  0.     0.     0.183 ]
-[0.     0.0465 0.     0.1165 0.     0.     0.     0.1905 0.0895 0.0565]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.1435 0.     0.1025 0.0135 0.1145 0.073  0.     0.     0.0495 0.003 ]
+[0.005  0.1235 0.056  0.139  0.     0.144  0.     0.     0.003  0.029 ]
+[0.001  0.     0.068  0.111  0.03   0.128  0.     0.     0.0095 0.152 ]
+[0.0115 0.     0.1035 0.     0.04   0.1555 0.     0.     0.149  0.04  ]
+[0.     0.086  0.     0.0025 0.     0.145  0.156  0.     0.11  ]
+[0.     0.0035 0.     0.08   0.0195 0.1685 0.     0.     0.0985 0.1295]
+[0.     0.17   0.0005 0.013  0.     0.1355 0.1505 0.002  0.028 ]
+[0.     0.     0.     0.1715 0.     0.164  0.     0.     0.151  0.013 ]
+[0.     0.     0.058  0.173  0.     0.0535 0.0895 0.007  0.     0.1185]
+[0.1235 0.     0.175  0.0065 0.     0.     0.     0.0165 0.0575 0.1205]
 </pre></div>
 </div>
-<img alt="../_images/261545ef0ef6e9022c5802d4302d7735fcc847a8fe311e10311d07c0c1334d08.png" src="../_images/261545ef0ef6e9022c5802d4302d7735fcc847a8fe311e10311d07c0c1334d08.png" />
-<img alt="../_images/caf1d8410705202c2957e123d94ee33cb3a6402f15686fe82824e2dd777a725d.png" src="../_images/caf1d8410705202c2957e123d94ee33cb3a6402f15686fe82824e2dd777a725d.png" />
-<img alt="../_images/74f8c292ac8b82c111a8a1f6710406cd239412b58832fa4a05c209594c559f3d.png" src="../_images/74f8c292ac8b82c111a8a1f6710406cd239412b58832fa4a05c209594c559f3d.png" />
-<img alt="../_images/36fade29026ed8eba49fe37affffc222bd5fe84442cecc551e480ee7ea24925e.png" src="../_images/36fade29026ed8eba49fe37affffc222bd5fe84442cecc551e480ee7ea24925e.png" />
-<img alt="../_images/028c9e9b9cca4ff7af4daf4f1ad9511716f6d217bcd73717ba8218ae614b8844.png" src="../_images/028c9e9b9cca4ff7af4daf4f1ad9511716f6d217bcd73717ba8218ae614b8844.png" />
-<img alt="../_images/5060f58426ca448fc7e13536d44323c63d52cfae251f72667dcc4f1e9a3a9b30.png" src="../_images/5060f58426ca448fc7e13536d44323c63d52cfae251f72667dcc4f1e9a3a9b30.png" />
-<img alt="../_images/b886badd011f4d804943046e18d439274e21b6c31e4bf9aed6c8a6ca73ad27bb.png" src="../_images/b886badd011f4d804943046e18d439274e21b6c31e4bf9aed6c8a6ca73ad27bb.png" />
-<img alt="../_images/99f2f099acb0e2d64169089467124fd1c04acf294be19a5b7c7f5caf77b744ca.png" src="../_images/99f2f099acb0e2d64169089467124fd1c04acf294be19a5b7c7f5caf77b744ca.png" />
-<img alt="../_images/cb743f1ceb6f1d74258bd85d3bfe34a74f7f3169766a6a6536d5a58b5e23245c.png" src="../_images/cb743f1ceb6f1d74258bd85d3bfe34a74f7f3169766a6a6536d5a58b5e23245c.png" />
-<img alt="../_images/2fe099783faa177b754cc1fab6a8a936e82558d0ef43561ccfcd53f11d160d6e.png" src="../_images/2fe099783faa177b754cc1fab6a8a936e82558d0ef43561ccfcd53f11d160d6e.png" />
+<img alt="../_images/a2fbabe477be53c7239b8666d5c45d318b6c79557696cb56686cac58acfb7ac7.png" src="../_images/a2fbabe477be53c7239b8666d5c45d318b6c79557696cb56686cac58acfb7ac7.png" />
+<img alt="../_images/143fa402a6ea8c8b1213eafce27ee16429e6da730aa729ec1c33d0c113babf8b.png" src="../_images/143fa402a6ea8c8b1213eafce27ee16429e6da730aa729ec1c33d0c113babf8b.png" />
+<img alt="../_images/1e863371c91b6384572e4a62db7215dbd132c5cd8295461577e2523bf56e46f4.png" src="../_images/1e863371c91b6384572e4a62db7215dbd132c5cd8295461577e2523bf56e46f4.png" />
+<img alt="../_images/f88f33c770c92ab86169ca8c2f05c835a7a921174650a7d9b8261d8dca2a90cd.png" src="../_images/f88f33c770c92ab86169ca8c2f05c835a7a921174650a7d9b8261d8dca2a90cd.png" />
+<img alt="../_images/dbcc4a4074717165d988cd97a251b9c2885a1dddfa2e5b45a4111a955da6cf02.png" src="../_images/dbcc4a4074717165d988cd97a251b9c2885a1dddfa2e5b45a4111a955da6cf02.png" />
+<img alt="../_images/a67d72eaa6999186526c2152aa542816bd9fa9fe08a838f6afb48a61930bff95.png" src="../_images/a67d72eaa6999186526c2152aa542816bd9fa9fe08a838f6afb48a61930bff95.png" />
+<img alt="../_images/31ae1d98ffa6fa93cdb13161ecc3e3b7aeb889f73be6fe6e80359915f487da4c.png" src="../_images/31ae1d98ffa6fa93cdb13161ecc3e3b7aeb889f73be6fe6e80359915f487da4c.png" />
+<img alt="../_images/84d97f47f510dfa2c7b920a37edb2eaa3377318cd8dbf3873b26976288b31540.png" src="../_images/84d97f47f510dfa2c7b920a37edb2eaa3377318cd8dbf3873b26976288b31540.png" />
+<img alt="../_images/438b27791dd52afb2384acb775fae0b8ce6fedadae90a188d2fc0bac0f1b7019.png" src="../_images/438b27791dd52afb2384acb775fae0b8ce6fedadae90a188d2fc0bac0f1b7019.png" />
+<img alt="../_images/9eff11c6a732843b2291149e3c209011d4c9484d538b329a39a2d64748a52951.png" src="../_images/9eff11c6a732843b2291149e3c209011d4c9484d538b329a39a2d64748a52951.png" />
 </div>
 </div>
 <p>And now compute the average accuracy over all the samples without these uncertain predictions:</p>
 <div class="cell tag_hide-input docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
+</summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">avg_accuracy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
     <span class="p">[</span><span class="n">compute_accuracy</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">X_test</span><span class="p">[</span><span class="n">certain_mask</span><span class="p">],</span> <span class="n">y_test</span><span class="p">[</span><span class="n">certain_mask</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">]</span>
 <span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">&quot;The average accuracy removing the samples for which the model is uncertain is </span><span class="si">{</span><span class="n">avg_accuracy</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="sa">f</span><span class="s2">&quot;The average accuracy removing the samples for which the model is uncertain is </span><span class="si">{</span><span class="mi">100</span><span class="o">*</span><span class="n">avg_accuracy</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">%&quot;</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
+</details>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The average accuracy removing the samples for which the model is uncertain is 0.976
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The average accuracy removing the samples for which the model is uncertain is 98.733%
 </pre></div>
 </div>
 </div>
 </div>
+</section>
 </section>
 </section>
 
