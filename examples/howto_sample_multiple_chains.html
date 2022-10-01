@@ -36,7 +36,7 @@
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Examples" href="../examples.html" />
+    <link rel="next" title="Use a logprob function that is not compatible with JAX’s primitives" href="howto_other_frameworks.html" />
     <link rel="prev" title="Use with TFP models" href="howto_use_tfp.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -135,6 +135,11 @@
  <li class="toctree-l1 current active">
   <a class="current reference internal" href="#">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_other_frameworks.html">
+   Use non-JAX log-prob functions?
   </a>
  </li>
 </ul>
@@ -622,8 +627,8 @@ and <a class="reference external" href="https://jax.readthedocs.io/en/latest/jax
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 18 s, sys: 50.3 ms, total: 18.1 s
-Wall time: 18.1 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 16.6 s, sys: 52.3 ms, total: 16.6 s
+Wall time: 16.6 s
 </pre></div>
 </div>
 </div>
@@ -735,8 +740,8 @@ and a workaround involving nesting <code class="docutils literal notranslate"><s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.6 s, sys: 28 ms, total: 14.6 s
-Wall time: 8.98 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.5 s, sys: 40 ms, total: 13.6 s
+Wall time: 8.28 s
 </pre></div>
 </div>
 </div>
@@ -766,10 +771,10 @@ Wall time: 8.98 s
             <p class="prev-next-title">Use with TFP models</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="../examples.html" title="next page">
+    <a class='right-next' id="next-link" href="howto_other_frameworks.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Examples</p>
+        <p class="prev-next-title">Use a logprob function that is not compatible with JAX’s primitives</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

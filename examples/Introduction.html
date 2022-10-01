@@ -136,6 +136,11 @@
    Sample with multiple chains?
   </a>
  </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_other_frameworks.html">
+   Use non-JAX log-prob functions?
+  </a>
+ </li>
 </ul>
 <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
@@ -526,7 +531,7 @@ title="Source repository"
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(57438.152, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2248.1768, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-55326.062, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(61159.32, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2369.0886, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-59047.23, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -574,8 +579,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.91 s, sys: 6.19 ms, total: 2.91 s
-Wall time: 2.91 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.62 s, sys: 15.1 ms, total: 2.64 s
+Wall time: 2.64 s
 </pre></div>
 </div>
 </div>
@@ -603,7 +608,7 @@ Wall time: 2.91 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/84a3d73ca916937457adfbcde03af1b0986a366299866ad84d86ff071595f7f6.png" src="../_images/84a3d73ca916937457adfbcde03af1b0986a366299866ad84d86ff071595f7f6.png" />
+<img alt="../_images/1006830556ea618920a355028ac3f94f6e8e8daa5f99b31863677503ac4a0853.png" src="../_images/1006830556ea618920a355028ac3f94f6e8e8daa5f99b31863677503ac4a0853.png" />
 </div>
 </div>
 </section>
@@ -630,7 +635,7 @@ Wall time: 2.91 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(57438.152, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2248.1768, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-55326.062, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(61159.32, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2369.0886, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-59047.23, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -647,8 +652,8 @@ Wall time: 2.91 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.9 s, sys: 24.5 ms, total: 14.9 s
-Wall time: 14.9 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.8 s, sys: 34.9 ms, total: 13.9 s
+Wall time: 13.9 s
 </pre></div>
 </div>
 </div>
@@ -676,7 +681,7 @@ Wall time: 14.9 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/7b21e1a892819c95674e6ad29c1621731a3c3ab9ab642ae8246685820c2db850.png" src="../_images/7b21e1a892819c95674e6ad29c1621731a3c3ab9ab642ae8246685820c2db850.png" />
+<img alt="../_images/6fd2f083be716991fbcfb54e43331a250add0a735d21a9819e323836338ca508.png" src="../_images/6fd2f083be716991fbcfb54e43331a250add0a735d21a9819e323836338ca508.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -700,8 +705,8 @@ Wall time: 14.9 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.59 s, sys: 11.2 ms, total: 3.6 s
-Wall time: 3.6 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.14 s, sys: 23.7 ms, total: 3.16 s
+Wall time: 3.16 s
 </pre></div>
 </div>
 </div>
@@ -711,7 +716,7 @@ Wall time: 3.6 s
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 
-<span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="mi">1_000</span><span class="p">)</span>
+<span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">1_000</span><span class="p">)</span>
 
 <span class="n">loc_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
 <span class="n">scale_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;scale&quot;</span><span class="p">]</span>
@@ -719,8 +724,8 @@ Wall time: 3.6 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 5.18 s, sys: 11.6 ms, total: 5.19 s
-Wall time: 5.18 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.35 s, sys: 7.7 ms, total: 2.35 s
+Wall time: 2.35 s
 </pre></div>
 </div>
 </div>
@@ -748,10 +753,9 @@ Wall time: 5.18 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/4a65d45c8cf111606a7ecc98f2339da6646c8f7519d61e27a16a6b125558e681.png" src="../_images/4a65d45c8cf111606a7ecc98f2339da6646c8f7519d61e27a16a6b125558e681.png" />
+<img alt="../_images/96975db8917655be874eafbaeabb138fc16dd400a124399c1ce087487d8466c5.png" src="../_images/96975db8917655be874eafbaeabb138fc16dd400a124399c1ce087487d8466c5.png" />
 </div>
 </div>
-<p>In the next section we’ll show how we can easily extend the code to sample multiple chains in parallel.</p>
 </section>
 </section>
 </section>
