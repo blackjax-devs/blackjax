@@ -180,7 +180,7 @@ We can use the obtained parameters to define a new kernel. Note that we do not h
 ```{code-cell} ipython3
 %%time
 
-states = inference_loop(rng_key, nuts.step, initial_state, 1_000)
+states = inference_loop(rng_key, kernel, state, 1_000)
 
 loc_samples = states.position["loc"].block_until_ready()
 scale_samples = states.position["scale"]
@@ -198,5 +198,3 @@ ax1.plot(scale_samples)
 ax1.set_xlabel("Samples")
 ax1.set_ylabel("scale")
 ```
-
-In the next section we'll show how we can easily extend the code to sample multiple chains in parallel.
