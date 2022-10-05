@@ -68,6 +68,13 @@ def base(
         mass matrix that will stay constant throughout the rest of the
         adaptation.
 
+        Parameters
+        ----------
+        position
+            The initial position of the chain.
+        initial_step_size
+            The initial value for the step size.
+
         """
         pathfinder_key, sample_key = jax.random.split(rng_key, 2)
         pathfinder_state = pathfinder_init_fn(pathfinder_key, logprob_fn, position)
@@ -92,15 +99,12 @@ def base(
         """Update the adaptation state and parameter values.
 
         Since the value of the inverse mass matrix is already known we only
-        update the step size state.
+        update the state of the step size adaptation algorithm.
 
         Parameters
         ----------
         adaptation_state
             Current adptation state.
-        adaptation_stage
-            The current stage of the warmup: whether this is a slow window,
-            a fast window and if we are at the last step of a slow window.
         position
             Current value of the model parameters.
         acceptance_rate
