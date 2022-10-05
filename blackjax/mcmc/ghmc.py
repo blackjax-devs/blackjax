@@ -63,7 +63,7 @@ def init(
 
 
 def kernel(
-    noise_gn: Callable = lambda _: 0.0,
+    noise_fn: Callable = lambda _: 0.0,
     divergence_threshold: float = 1000,
 ):
     """Build a Generalized HMC kernel.
@@ -78,7 +78,7 @@ def kernel(
 
     Parameters
     ----------
-    noise_gn
+    noise_fn
         A function that takes as input the slice variable and outputs a random
         variable used as a noise correction of the persistent slice update.
         The parameter defaults to a random variable with a single atom at 0.
@@ -147,7 +147,7 @@ def kernel(
         # New momentum is persistent
         momentum = update_momentum(key_momentum, state, alpha)
         # Slice is non-reversible
-        slice = ((slice + 1.0 + delta + noise_gn(key_noise)) % 2) - 1.0
+        slice = ((slice + 1.0 + delta + noise_fn(key_noise)) % 2) - 1.0
 
         integrator_state = integrators.IntegratorState(
             position, momentum, potential_energy, potential_energy_grad
