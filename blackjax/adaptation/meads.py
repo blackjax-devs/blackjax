@@ -7,6 +7,19 @@ from blackjax.types import PyTree
 
 
 class MEADSAdaptationState(NamedTuple):
+    """State of the MEADS adaptation scheme.
+
+    step_sizes
+        The version of the generalized HMC algorithm that is implemented uses a
+        scalar mass matrix, and preconditioning happens at the step size level.
+        There is thus one value of the step size per dimension of the problem.
+    alpha
+        Value of the alpha parameter of the generalized HMC algorithm.
+    delta
+        Value of the alpha parameter of the generalized HMC algorithm.
+
+    """
+
     current_iteration: int
     step_sizes: PyTree
     alpha: float
@@ -17,7 +30,7 @@ def base(
     logprob_grad_fn: Callable,
     batch_fn: Callable = jax.vmap,
 ):
-    """Maximum-Eigenvalue Adaptation of damping and dtep size for the generalized
+    """Maximum-Eigenvalue Adaptation of damping and step size for the generalized
     Hamiltonian Monte Carlo kernel [1]_.
 
 
@@ -81,7 +94,23 @@ def base(
         lamda_sq = (jnp.sum(S**2) - jnp.sum(diag_S**2)) / (n * (n - 1))
         return lamda_sq / lamda
 
-    def parameter_gn(positions: PyTree, current_iter: int):
+    def compute_parameters(positions: PyTree, current_iteration: int):
+        """Compute values for the parameters based on statistics collected from
+        multiple chains.
+
+        Parameters
+        ----------
+        positions:
+            A PyTree that contains the current positions of the chains.
+        current_iteration:
+            The current iteration index in the adaptation process.
+
+        Returns
+        -------
+        New values of the step size, and the alpha and delta parameters
+        of the generalized HMC algorithm.
+
+        """
         mean_position = jax.tree_map(lambda p: p.mean(axis=0), positions)
         sd_position = jax.tree_map(lambda p: p.std(axis=0), positions)
         normalized_positions = jax.tree_map(
@@ -101,7 +130,7 @@ def base(
         )
         gamma = jnp.maximum(
             1.0 / jnp.sqrt(maximum_eigenvalue(normalized_positions)),
-            1.0 / ((current_iter + 1) * epsilon),
+            1.0 / ((current_iteration + 1) * epsilon),
         )
         alpha = 1.0 - jnp.exp(-2.0 * epsilon * gamma)
         delta = alpha / 2
@@ -110,7 +139,7 @@ def base(
         return step_size, alpha, delta
 
     def init(positions: PyTree):
-        parameters = parameter_gn(positions, 0)
+        parameters = compute_parameters(positions, 0)
         return MEADSAdaptationState(0, *parameters)
 
     def update(adaptation_state: MEADSAdaptationState, positions: PyTree):
@@ -122,22 +151,20 @@ def base(
 
         Parameters
         ----------
+        adaptation_state
+            The current state of the adaptation algorithm
         positions
             The current position of every chain.
-        current_iter
-            The current iteration number.
 
         Returns
         -------
-        New values for the step size, alpha and delta parameters of the
-        generalized HMC kernel.
+        New adaptation state that contains the step size, alpha and delta
+        parameters of the generalized HMC kernel.
 
         """
-        current_iter = adaptation_state.current_iteration
-        step_size, alpha, delta = parameter_gn(positions, current_iter)
+        current_iteration = adaptation_state.current_iteration
+        step_size, alpha, delta = compute_parameters(positions, current_iteration)
 
-        return MEADSAdaptationState(
-            adaptation_state.current_iteration + 1, step_size, alpha, delta
-        )
+        return MEADSAdaptationState(current_iteration + 1, step_size, alpha, delta)
 
     return init, update
