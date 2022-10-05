@@ -164,15 +164,8 @@ The adaptation algorithm takes a function that returns a transition kernel given
 ```{code-cell} ipython3
 %%time
 
-warmup = blackjax.window_adaptation(
-    blackjax.nuts,
-    logprob,
-    1000,
-)
-state, kernel, _ = warmup.run(
-    rng_key,
-    initial_position,
-)
+warmup = blackjax.window_adaptation(blackjax.nuts, logprob)
+state, kernel, _ = warmup.run(rng_key, initial_position, num_steps=1000)
 ```
 
 We can use the obtained parameters to define a new kernel. Note that we do not have to use the same kernel that was used for the adaptation:

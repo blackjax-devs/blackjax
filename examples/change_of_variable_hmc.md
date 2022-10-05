@@ -286,19 +286,19 @@ Now we use blackjax's window adaption algorithm to get NUTS kernel and initial s
 
 ```{code-cell} ipython3
 %%time
-warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob, 1000)
+warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob)
 
 # we use 4 chains for sampling
 n_chains = 4
 keys = jax.random.split(rng_key, n_chains)
 init_params = jax.vmap(init_param_fn)(keys)
 
-initial_states = jax.vmap(lambda seed, param: warmup.run(seed, param)[0])(
+initial_states = jax.vmap(lambda seed, param: warmup.run(seed, param, 1000)[0])(
     keys, init_params
 )
 
 # can not vectorize kernel, since it is not jax.numpy array
-_, kernel, _ = warmup.run(jax.random.PRNGKey(10), init_param_fn(rng_key))
+_, kernel, _ = warmup.run(jax.random.PRNGKey(10), init_param_fn(rng_key), 1000)
 ```
 
 Now we write inference loop for multiple chains
@@ -448,19 +448,19 @@ joint_logprob_change_of_var(init_param)  # sanity check
 
 ```{code-cell} ipython3
 %%time
-warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob_change_of_var, 1000)
+warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob_change_of_var)
 
 # we use 4 chains for sampling
 n_chains = 4
 keys = jax.random.split(rng_key, n_chains)
 init_params = jax.vmap(init_param_fn)(keys)
 
-initial_states = jax.vmap(lambda seed, param: warmup.run(seed, param)[0])(
+initial_states = jax.vmap(lambda seed, param: warmup.run(seed, param, 1000)[0])(
     keys, init_params
 )
 
 # can not vectorize kernel, since it is not jax.numpy array
-_, kernel, _ = warmup.run(jax.random.PRNGKey(10), init_param_fn(rng_key))
+_, kernel, _ = warmup.run(jax.random.PRNGKey(10), init_param_fn(rng_key), 1000)
 ```
 
 ```{code-cell} ipython3
@@ -543,7 +543,7 @@ def joint_logprob(unbound_param):
 ```{code-cell} ipython3
 %%time
 rng_key = jax.random.PRNGKey(0)
-warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob, 1000)
+warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob)
 
 # we use 4 chains for sampling
 n_chains = 4
@@ -551,14 +551,16 @@ init_key, warmup_key = jax.random.split(rng_key, 2)
 init_params = bijectors.inverse(pinned.sample_unpinned(n_chains, seed=init_key))
 
 keys = jax.random.split(warmup_key, n_chains)
-initial_states = jax.vmap(lambda seed, param: warmup.run(seed, param)[0])(
+initial_states = jax.vmap(lambda seed, param: warmup.run(seed, param, 1000)[0])(
     keys, init_params
 )
 
 # can not vectorize kernel, since it is not jax.numpy array
 _, kernel, _ = warmup.run(
     jax.random.PRNGKey(10),
-    bijectors.inverse(pinned.sample_unpinned(seed=init_key)))
+    bijectors.inverse(pinned.sample_unpinned(seed=init_key)),
+    1000
+)
 ```
 
 ```{code-cell} ipython3

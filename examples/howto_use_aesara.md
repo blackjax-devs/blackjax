@@ -161,8 +161,8 @@ import blackjax
 n_adapt = 3000
 n_samples = 1000
 
-adapt = blackjax.window_adaptation(blackjax.nuts, logprob_fn, n_adapt)
-state, kernel, _ = adapt.run(rng_key, init_position)
+adapt = blackjax.window_adaptation(blackjax.nuts, logprob_fn)
+state, kernel, _ = adapt.run(rng_key, init_position, n_adapt)
 
 states, infos = inference_loop(
     rng_key, kernel, state, n_samples
