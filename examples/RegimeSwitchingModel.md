@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.1
+    jupytext_version: 1.14.0
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -42,7 +42,6 @@ where $\eta_{jt} = p_{j,1}$, $\mathcal{N}(r_t;\alpha_1, \sigma_1^2) + p_{j,2}$, 
 ```
 
 where $\mathcal{N}^0$ indicates the truncated at 0 Gaussian distribution and $\mathcal{C}^+$ the half-Cauchy distribution.
-
 
 ```{code-cell} ipython3
 import jax
@@ -182,9 +181,8 @@ dist.initialize_model(kinit, n_chain)
 print("Running MEADS...")
 tic1 = pd.Timestamp.now()
 k_warm, k_sample = jrnd.split(ksam)
-warmup = blackjax.meads(dist.logprob_fn, n_chain, n_warm, batch_fn=batch_fn)
-chain_state, kernel, _ = warmup.run(k_warm, dist.init_params)
-init_state = chain_state.states
+warmup = blackjax.meads(dist.logprob_fn, n_chain, batch_fn=batch_fn)
+init_state, kernel, _ = warmup.run(k_warm, dist.init_params, n_warm)
 
 def one_chain(k_sam, init_state):
     state, info = inference_loop(k_sam, init_state, kernel, n_iter)

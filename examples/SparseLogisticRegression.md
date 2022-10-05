@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.1
+    jupytext_version: 1.14.0
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -28,7 +28,6 @@ with $\sigma$ the sigmoid function, and prior
 $$
 \pi_0(\beta, \lambda, \tau) = \text{Gamma}(\tau;1/2, 1/2)\prod_i \mathcal{N}(\beta_i;0, 1)\text{Gamma}(\lambda_i;1/2, 1/2)
 $$
-
 
 ```{code-cell} ipython3
 import jax
@@ -109,9 +108,10 @@ dist.initialize_model(kinit, n_chain)
 
 tic1 = pd.Timestamp.now()
 k_warm, k_sample = jrnd.split(ksam)
-warmup = blackjax.meads(dist.logprob_fn, n_chain, n_warm, batch_fn=batch_fn)
-chain_state, kernel, _ = warmup.run(k_warm, dist.init_params)
-init_state = chain_state.states
+warmup = blackjax.meads(dist.logprob_fn, n_chain, batch_fn=batch_fn)
+adaptation_results = warmup.run(k_warm, dist.init_params, n_warm)
+init_state = adaptation_results.state
+kernel = adaptation_results.kernel
 
 
 def one_chain(k_sam, init_state):

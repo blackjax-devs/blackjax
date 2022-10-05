@@ -180,8 +180,8 @@ def fit_and_eval(
     logprob = partial(logprob_fn, X=X_train, Y=Y_train, model=model)
 
     # warm up
-    adapt = blackjax.window_adaptation(blackjax.nuts, logprob, num_warmup)
-    final_state, kernel, _ = adapt.run(warmup_key, initial_position)
+    adapt = blackjax.window_adaptation(blackjax.nuts, logprob)
+    final_state, kernel, _ = adapt.run(warmup_key, initial_position, num_warmup)
 
     # inference
     states = inference_loop(inference_key, kernel, final_state, num_samples)

@@ -138,8 +138,8 @@ We can now run the window adaptation to get good values for the parameters of th
 import blackjax
 
 rng_key = jax.random.PRNGKey(0)
-adapt = blackjax.window_adaptation(blackjax.nuts, logprob_fn, 100)
-last_state, kernel, _ = adapt.run(rng_key, initial_weights)
+adapt = blackjax.window_adaptation(blackjax.nuts, logprob_fn)
+last_state, kernel, _ = adapt.run(rng_key, initial_weights, 100)
 ```
 
 and sample from the model's posterior distribution:

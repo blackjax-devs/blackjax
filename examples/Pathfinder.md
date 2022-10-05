@@ -268,7 +268,7 @@ This scheme is implemented in `blackjax.kernel.pathfinder_adaptation` function:
 
 ```{code-cell} ipython3
 adapt = blackjax.kernels.pathfinder_adaptation(blackjax.nuts, logprob_fn)
-state, kernel, info = adapt.run(rng_key, w0)
+state, kernel, info = adapt.run(rng_key, w0, 400)
 ```
 
 ## Some Caveats

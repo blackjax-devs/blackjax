@@ -116,10 +116,10 @@ initial_position = {
 
 rng_key = jax.random.PRNGKey(0)
 adapt = blackjax.window_adaptation(
-    blackjax.hmc, logprob_fn, 1000, num_integration_steps=3
+    blackjax.hmc, logprob_fn, num_integration_steps=3
 )
 
-last_state, kernel, _ = adapt.run(rng_key, initial_position)
+last_state, kernel, _ = adapt.run(rng_key, initial_position, 1000)
 ```
 
 We can now perform inference with the tuned kernel:
