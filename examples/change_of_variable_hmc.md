@@ -293,24 +293,29 @@ n_chains = 4
 keys = jax.random.split(rng_key, n_chains)
 init_params = jax.vmap(init_param_fn)(keys)
 
-initial_states = jax.vmap(lambda seed, param: warmup.run(seed, param, 1000)[0])(
-    keys, init_params
-)
+@jax.vmap
+def call_warmup(seed, param):
+    initial_states, _, tuned_params = warmup.run(seed, param, 1000)
+    return initial_states, tuned_params
 
-# can not vectorize kernel, since it is not jax.numpy array
-_, kernel, _ = warmup.run(jax.random.PRNGKey(10), init_param_fn(rng_key), 1000)
+initial_states, tuned_params = call_warmup(keys, init_params)
 ```
 
 Now we write inference loop for multiple chains
 
 ```{code-cell} ipython3
 def inference_loop_multiple_chains(
-    rng_key, kernel, initial_states, num_samples, num_chains
+    rng_key, initial_states, tuned_params, log_prob_fn, num_samples, num_chains
 ):
+    step_fn = blackjax.nuts.kernel()
+
+    def kernel(key, state, **params):
+        return step_fn(key, state, log_prob_fn, **params)
+
     @jax.jit
     def one_step(states, rng_key):
         keys = jax.random.split(rng_key, num_chains)
-        states, infos = jax.vmap(kernel)(keys, states)
+        states, infos = jax.vmap(kernel)(keys, states, **tuned_params)
         return states, (states, infos)
 
     keys = jax.random.split(rng_key, num_samples)
@@ -323,10 +328,9 @@ def inference_loop_multiple_chains(
 %%time
 n_samples = 1000
 states, infos = inference_loop_multiple_chains(
-    rng_key, kernel, initial_states, n_samples, n_chains
+    rng_key, initial_states, tuned_params, joint_logprob, n_samples, n_chains
 )
 ```
-
 
 ## Arviz Plots
 
@@ -455,19 +459,19 @@ n_chains = 4
 keys = jax.random.split(rng_key, n_chains)
 init_params = jax.vmap(init_param_fn)(keys)
 
-initial_states = jax.vmap(lambda seed, param: warmup.run(seed, param, 1000)[0])(
-    keys, init_params
-)
+@jax.vmap
+def call_warmup(seed, param):
+    initial_states, _, tuned_params = warmup.run(seed, param, 1000)
+    return initial_states, tuned_params
 
-# can not vectorize kernel, since it is not jax.numpy array
-_, kernel, _ = warmup.run(jax.random.PRNGKey(10), init_param_fn(rng_key), 1000)
+initial_states, tuned_params = call_warmup(keys, init_params)
 ```
 
 ```{code-cell} ipython3
 %%time
 n_samples = 1000
 states, infos = inference_loop_multiple_chains(
-    rng_key, kernel, initial_states, n_samples, n_chains
+    rng_key, initial_states, tuned_params, joint_logprob_change_of_var, n_samples, n_chains
 )
 ```
 
@@ -551,23 +555,19 @@ init_key, warmup_key = jax.random.split(rng_key, 2)
 init_params = bijectors.inverse(pinned.sample_unpinned(n_chains, seed=init_key))
 
 keys = jax.random.split(warmup_key, n_chains)
-initial_states = jax.vmap(lambda seed, param: warmup.run(seed, param, 1000)[0])(
-    keys, init_params
-)
+@jax.vmap
+def call_warmup(seed, param):
+    initial_states, _, tuned_params = warmup.run(seed, param, 1000)
+    return initial_states, tuned_params
 
-# can not vectorize kernel, since it is not jax.numpy array
-_, kernel, _ = warmup.run(
-    jax.random.PRNGKey(10),
-    bijectors.inverse(pinned.sample_unpinned(seed=init_key)),
-    1000
-)
+initial_states, tuned_params = call_warmup(keys, init_params)
 ```
 
 ```{code-cell} ipython3
 %%time
 n_samples = 1000
 states, infos = inference_loop_multiple_chains(
-    rng_key, kernel, initial_states, n_samples, n_chains
+    rng_key, initial_states, tuned_params, joint_logprob, n_samples, n_chains
 )
 ```
 
