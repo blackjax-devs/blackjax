@@ -773,7 +773,6 @@ def window_adaptation(
 def meads(
     logprob_fn: Callable,
     num_chains: int,
-    num_steps: int = 1000,
     *,
     logprob_grad_fn: Optional[Callable] = None,
     batch_fn: Callable = jax.vmap,
@@ -806,8 +805,6 @@ def meads(
         The log density probability density function from which we wish to sample.
     num_chains
         Number of chains used for cross-chain warm-up training.
-    num_steps
-        The number of adaptation steps.
     divergence_threshold
         Value of the difference in energy above which we consider that the
         transition is divergent.
@@ -856,7 +853,7 @@ def meads(
             new_adaptation_state,
         )
 
-    def run(rng_key: PRNGKey, positions: PyTree):
+    def run(rng_key: PRNGKey, positions: PyTree, num_steps: int = 1000):
 
         key_init, key_adapt = jax.random.split(rng_key)
 
@@ -1306,7 +1303,8 @@ def pathfinder_adaptation(
 
     Returns
     -------
-    A function that returns the last chain state and a sampling kernel with the tuned parameter values from an initial state.
+    A function that returns the last chain state and a sampling kernel with the
+    tuned parameter values from an initial state.
 
     """
 
