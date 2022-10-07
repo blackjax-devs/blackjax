@@ -1293,7 +1293,6 @@ def pathfinder_adaptation(
     step_fn = algorithm.kernel()
 
     init, update, final = adaptation.pathfinder_adaptation.base(
-        logprob_fn,
         target_acceptance_rate,
     )
 
@@ -1316,7 +1315,18 @@ def pathfinder_adaptation(
         )
 
     def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 400):
-        init_warmup_state, init_position = init(rng_key, position, initial_step_size)
+
+        init_key, sample_key, rng_key = jax.random.split(rng_key, 3)
+
+        pathfinder_state = vi.pathfinder.init(init_key, logprob_fn, position)
+        init_warmup_state = init(
+            pathfinder_state.alpha,
+            pathfinder_state.beta,
+            pathfinder_state.gamma,
+            initial_step_size,
+        )
+
+        init_position, _ = vi.pathfinder.sample_from_state(sample_key, pathfinder_state)
         init_state = algorithm.init(init_position, logprob_fn)
 
         keys = jax.random.split(rng_key, num_steps)
