@@ -161,7 +161,7 @@ init_positions = jax.jit(model.init)(rng_key, jnp.ones(X_train.shape[-1]))
 
 # Build the SGLD kernel with a constant learning rate
 grad_fn = grad_estimator(logprior_fn, loglikelihood_fn, data_size)
-sgld = blackjax.sgld(grad_fn, lambda _: step_size)
+sgld = blackjax.sgld(grad_fn)
 
 state = sgld.init(init_positions, next(batches))
 
@@ -172,7 +172,7 @@ steps = []
 for step in progress_bar(range(num_samples + num_warmup)):
     _, rng_key = jax.random.split(rng_key)
     batch = next(batches)
-    state = jax.jit(sgld.step)(rng_key, state, batch)
+    state = jax.jit(sgld.step)(rng_key, state, batch, step_size)
     if step % 100 == 0:
         accuracy = compute_accuracy(state.position, X_test, y_test)
         accuracies.append(accuracy)
@@ -208,7 +208,7 @@ We can also use SGHMC to samples from this model
 # Build the SGHMC kernel with a constant learning rate
 step_size = 9e-6
 grad_fn = grad_estimator(logprior_fn, loglikelihood_fn, data_size)
-sghmc = blackjax.sghmc(grad_fn, lambda _: step_size)
+sghmc = blackjax.sghmc(grad_fn)
 
 # Batch the data
 state = sghmc.init(init_positions, next(batches))
@@ -220,7 +220,7 @@ steps = []
 for step in progress_bar(range(num_samples + num_warmup)):
     _, rng_key = jax.random.split(rng_key)
     batch = next(batches)
-    state = jax.jit(sghmc.step)(rng_key, state, batch)
+    state = jax.jit(sghmc.step)(rng_key, state, batch, step_size)
     if step % 100 == 0:
         sghmc_accuracy = compute_accuracy(state.position, X_test, y_test)
         sghmc_accuracies.append(sghmc_accuracy)
