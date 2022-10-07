@@ -22,6 +22,8 @@ def grad_estimator(
     data; if there are several variables (as, for instance, in a supervised
     learning contexts), they are passed in a tuple.
 
+    This algorithm was ported from [2]_.
+
     Parameters
     ----------
     logprior_fn
@@ -36,6 +38,10 @@ def grad_estimator(
     ----------
     .. [1]: Robbins H. and Monro S. A stochastic approximation method. Annals
             of Mathematical Statistics, 22(30):400-407, 1951.
+    .. [2]: Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
+            library for stochastic gradient Markov chain Monte Carlo algorithms.
+            Journal of Open Source Software, 7(72), 4113.
+
 
     """
 
@@ -89,6 +95,8 @@ def cv_grad_estimator(
 ) -> GradientEstimator:
     """Builds a control variate gradient estimator [1]_.
 
+    This algorithm was ported from [2]_.
+
     Parameters
     ----------
     logprior_fn
@@ -106,6 +114,9 @@ def cv_grad_estimator(
     .. [1]: Baker, J., Fearnhead, P., Fox, E. B., & Nemeth, C. (2019).
             Control variates for stochastic gradient MCMC. Statistics
             and Computing, 29(3), 599-615.
+    .. [2]: Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
+            library for stochastic gradient Markov chain Monte Carlo algorithms.
+            Journal of Open Source Software, 7(72), 4113.
 
     """
     data_size = jax.tree_leaves(data)[0].shape[0]
