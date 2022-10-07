@@ -1,7 +1,6 @@
 """Implementation of the Pathinder warmup for the HMC family of sampling algorithms."""
-from typing import Callable, NamedTuple, Tuple
+from typing import NamedTuple, Tuple
 
-import jax
 import jax.numpy as jnp
 
 from blackjax.adaptation.step_size import (
@@ -9,9 +8,7 @@ from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
 )
 from blackjax.optimizers.lbfgs import lbfgs_inverse_hessian_formula_1
-from blackjax.types import Array, PRNGKey, PyTree
-from blackjax.vi.pathfinder import init as pathfinder_init_fn
-from blackjax.vi.pathfinder import sample_from_state
+from blackjax.types import Array, PyTree
 
 __all__ = ["base"]
 
@@ -23,7 +20,6 @@ class PathfinderAdaptationState(NamedTuple):
 
 
 def base(
-    logprob_fn: Callable,
     target_acceptance_rate: float = 0.80,
 ):
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
@@ -39,9 +35,6 @@ def base(
 
     Parameters
     ----------
-    logprob_fn
-        The log-probability density function from which we wish to
-        sample.
     target_acceptance_rate:
         The target acceptance rate for the step size adaptation.
 
@@ -58,10 +51,11 @@ def base(
     da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
 
     def init(
-        rng_key: PRNGKey,
-        position: PyTree,
+        alpha,
+        beta,
+        gamma,
         initial_step_size: float,
-    ) -> Tuple[PathfinderAdaptationState, PyTree]:
+    ) -> PathfinderAdaptationState:
         """Initialze the adaptation state and parameter values.
 
         We use the Pathfinder algorithm to compute an estimate of the inverse
@@ -70,26 +64,20 @@ def base(
 
         Parameters
         ----------
-        position
-            The initial position of the chain.
+        alpha, beta, gamma
+            Factored representation of the inverse Hessian computed by the
+            Pathfinder algorithm.
         initial_step_size
             The initial value for the step size.
 
         """
-        pathfinder_key, sample_key = jax.random.split(rng_key, 2)
-        pathfinder_state = pathfinder_init_fn(pathfinder_key, logprob_fn, position)
-        new_position, _ = sample_from_state(sample_key, pathfinder_state)
-        inverse_mass_matrix = lbfgs_inverse_hessian_formula_1(
-            pathfinder_state.alpha, pathfinder_state.beta, pathfinder_state.gamma
-        )
-
+        inverse_mass_matrix = lbfgs_inverse_hessian_formula_1(alpha, beta, gamma)
         da_state = da_init(initial_step_size)
-
         warmup_state = PathfinderAdaptationState(
             da_state, initial_step_size, inverse_mass_matrix
         )
 
-        return warmup_state, new_position
+        return warmup_state
 
     def update(
         adaptation_state: PathfinderAdaptationState,
@@ -108,7 +96,7 @@ def base(
         position
             Current value of the model parameters.
         acceptance_rate
-            Value of the acceptance rate for the last mcmc step.
+            Value of the acceptance rate for the last MCMC step.
 
         Returns
         -------
@@ -123,7 +111,7 @@ def base(
         )
 
     def final(warmup_state: PathfinderAdaptationState) -> Tuple[float, Array]:
-        """Return the final values for the step size and mass matrix."""
+        """Return the final values for the step size and inverse mass matrix."""
         step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.inverse_mass_matrix
         return step_size, inverse_mass_matrix
