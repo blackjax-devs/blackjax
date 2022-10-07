@@ -11,7 +11,6 @@ __all__ = ["SGLDState", "init", "kernel"]
 class SGLDState(NamedTuple):
     step: int
     position: PyTree
-    logprob_grad: PyTree
     grad_estimator_state: GradientState
 
 
@@ -22,24 +21,23 @@ class SGLDState(NamedTuple):
 
 def init(position: PyTree, minibatch, gradient_estimator: GradientEstimator):
     grad_estimator_state = gradient_estimator.init(minibatch)
-    logprob_grad, grad_estimator_state = gradient_estimator.estimate(
-        grad_estimator_state, position, minibatch
-    )
-    return SGLDState(0, position, logprob_grad, grad_estimator_state)
+    return SGLDState(0, position, grad_estimator_state)
 
 
 def kernel(gradient_estimator: GradientEstimator) -> Callable:
 
-    grad_estimator_fn = gradient_estimator.estimate
-    integrator = overdamped_langevin(grad_estimator_fn)
+    integrator = overdamped_langevin()
 
     def one_step(
         rng_key: PRNGKey, state: SGLDState, minibatch: PyTree, step_size: float
     ):
 
-        step, *diffusion_state = state
-        new_state = integrator(rng_key, diffusion_state, step_size, minibatch)
+        step, position, grad_estimator_state = state
+        logprob_grad, grad_estimator_state = gradient_estimator.estimate(
+            grad_estimator_state, position, minibatch
+        )
+        new_position = integrator(rng_key, position, logprob_grad, step_size, minibatch)
 
-        return SGLDState(step + 1, *new_state)
+        return SGLDState(step + 1, new_position, grad_estimator_state)
 
     return one_step
