@@ -235,9 +235,7 @@ class SGMCMCTest(chex.TestCase):
     def constant_step_size(_):
         return 1e-3
 
-    @parameterized.parameters((1e-3, False), (constant_step_size, False), (1, True))
-    def test_linear_regression_sgld(self, learning_rate, error_expected):
-        """Test the HMC kernel and the Stan warmup."""
+    def test_linear_regression_sgld(self):
         import blackjax.sgmcmc.gradients
 
         rng_key, data_key = jax.random.split(self.key, 2)
@@ -248,22 +246,17 @@ class SGMCMCTest(chex.TestCase):
         grad_fn = blackjax.sgmcmc.gradients.grad_estimator(
             self.logprior_fn, self.loglikelihood_fn, data_size
         )
+        sgld = blackjax.sgld(grad_fn)
 
-        if error_expected:
-            self.assertRaises(TypeError, blackjax.sgld(grad_fn, learning_rate))
-            return
-
-        sgld = blackjax.sgld(grad_fn, learning_rate)
         init_position = 1.0
         data_batch = X_data[:100, :]
         init_state = sgld.init(init_position, data_batch)
 
         _, rng_key = jax.random.split(rng_key)
         data_batch = X_data[100:200, :]
-        _ = sgld.step(rng_key, init_state, data_batch)
+        _ = sgld.step(rng_key, init_state, data_batch, 1e-3)
 
     def test_linear_regression_sgld_cv(self):
-        """Test the HMC kernel and the Stan warmup."""
         import blackjax.sgmcmc.gradients
 
         rng_key, data_key = jax.random.split(self.key, 2)
@@ -276,18 +269,16 @@ class SGMCMCTest(chex.TestCase):
             self.logprior_fn, self.loglikelihood_fn, X_data, centering_position
         )
 
-        sgld = blackjax.sgld(grad_fn, 1e-3)
+        sgld = blackjax.sgld(grad_fn)
         init_position = 1.0
         data_batch = X_data[:100, :]
         init_state = sgld.init(init_position, data_batch)
 
         _, rng_key = jax.random.split(rng_key)
         data_batch = X_data[100:200, :]
-        _ = sgld.step(rng_key, init_state, data_batch)
+        _ = sgld.step(rng_key, init_state, data_batch, 1e-3)
 
-    @parameterized.parameters((1e-3, False), (constant_step_size, False), (1, True))
-    def test_linear_regression_sghmc(self, learning_rate, error_expected):
-        """Test the HMC kernel and the Stan warmup."""
+    def test_linear_regression_sghmc(self):
         import blackjax.sgmcmc.gradients
 
         rng_key, data_key = jax.random.split(self.key, 2)
@@ -298,12 +289,7 @@ class SGMCMCTest(chex.TestCase):
         grad_fn = blackjax.sgmcmc.gradients.grad_estimator(
             self.logprior_fn, self.loglikelihood_fn, data_size
         )
-
-        if error_expected:
-            self.assertRaises(TypeError, blackjax.sgld(grad_fn, learning_rate))
-            return
-
-        sghmc = blackjax.sghmc(grad_fn, learning_rate, 10)
+        sghmc = blackjax.sghmc(grad_fn, 10)
 
         init_position = 1.0
         data_batch = X_data[:100, :]
@@ -311,10 +297,9 @@ class SGMCMCTest(chex.TestCase):
 
         _, rng_key = jax.random.split(rng_key)
         data_batch = X_data[100:200, :]
-        _ = sghmc.step(rng_key, init_state, data_batch)
+        _ = sghmc.step(rng_key, init_state, data_batch, 1e-3)
 
     def test_linear_regression_sghmc_cv(self):
-        """Test the HMC kernel and the Stan warmup."""
         import blackjax.sgmcmc.gradients
 
         rng_key, data_key = jax.random.split(self.key, 2)
@@ -327,14 +312,14 @@ class SGMCMCTest(chex.TestCase):
             self.logprior_fn, self.loglikelihood_fn, X_data, centering_position
         )
 
-        sghmc = blackjax.sghmc(grad_fn, 1e-3, 10)
+        sghmc = blackjax.sghmc(grad_fn, 10)
         init_position = 1.0
         data_batch = X_data[:100, :]
         init_state = sghmc.init(init_position, data_batch)
 
         _, rng_key = jax.random.split(rng_key)
         data_batch = X_data[100:200, :]
-        _ = sghmc.step(rng_key, init_state, data_batch)
+        _ = sghmc.step(rng_key, init_state, data_batch, 1e-3)
 
 
 class LatentGaussianTest(chex.TestCase):

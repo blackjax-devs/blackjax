@@ -19,7 +19,11 @@ def kernel(
     integrator = sghmc(alpha, beta)
 
     def one_step(
-        rng_key: PRNGKey, state: SGLDState, minibatch: PyTree, step_size: float, L: int
+        rng_key: PRNGKey,
+        state: SGLDState,
+        minibatch: PyTree,
+        step_size: float,
+        num_integration_steps: int,
     ) -> SGLDState:
         def body_fn(state, rng_key):
             position, momentum, grad_estimator_state = state
@@ -34,14 +38,14 @@ def kernel(
                 (position, grad_estimator_state),
             )
 
-        step, position, grad_estimator_state = state
+        position, grad_estimator_state = state
         momentum = generate_gaussian_noise(rng_key, position, step_size)
         init_diffusion_state = (position, momentum, grad_estimator_state)
 
-        keys = jax.random.split(rng_key, L)
+        keys = jax.random.split(rng_key, num_integration_steps)
         last_state, _ = jax.lax.scan(body_fn, init_diffusion_state, keys)
         position, _, grad_estimator_state = last_state
 
-        return SGLDState(step + 1, position, grad_estimator_state)
+        return SGLDState(position, grad_estimator_state)
 
     return one_step

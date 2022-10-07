@@ -462,10 +462,10 @@ class mgrad_gaussian:
 class sgld:
     """Implements the (basic) user interface for the SGLD kernel.
 
-    The general sgld kernel (:meth:`blackjax.mcmc.sgld.kernel`, alias `blackjax.sgld.kernel`) can be
-    cumbersome to manipulate. Since most users only need to specify the kernel
-    parameters at initialization time, we provide a helper function that
-    specializes the general kernel.
+    The general sgld kernel (:meth:`blackjax.mcmc.sgld.kernel`, alias
+    `blackjax.sgld.kernel`) can be cumbersome to manipulate. Since most users
+    only need to specify the kernel parameters at initialization time, we
+    provide a helper function that specializes the general kernel.
 
     Example
     -------
@@ -476,35 +476,36 @@ class sgld:
 
     .. code::
 
-        schedule_fn = lambda _: 1e-3
         grad_fn = blackjax.sgmcmc.gradients.grad_estimator(logprior_fn, loglikelihood_fn, data_size)
 
     We can now initialize the sgld kernel and the state:
 
     .. code::
 
-        sgld = blackjax.sgld(grad_fn, schedule_fn)
+        sgld = blackjax.sgld(grad_fn)
         state = sgld.init(position)
 
-    Assuming we have an iterator `batches` that yields batches of data we can perform one step:
+    Assuming we have an iterator `batches` that yields batches of data we can
+    perform one step:
 
     .. code::
 
-        data_batch = next(batches)
-        new_state = sgld.step(rng_key, state, data_batch)
+        step_size = 1e-3
+        minibatch = next(batches)
+        new_state = sgld.step(rng_key, state, minibatch, step_size)
 
     Kernels are not jit-compiled by default so you will need to do it manually:
 
     .. code::
 
        step = jax.jit(sgld.step)
-       new_state, info = step(rng_key, state)
+       new_state, info = step(rng_key, state, minibatch, step_size)
 
     Parameters
     ----------
-    gradient_estimator_fn
-       A function which, given a position and a batch of data, returns an estimation
-       of the value of the gradient of the log-posterior distribution at this position.
+    gradient_estimator
+       A tuple of functions that initialize and update the gradient estimation
+       state.
     schedule_fn
        A function which returns a step size given a step number.
 
@@ -519,31 +520,16 @@ class sgld:
 
     def __new__(  # type: ignore[misc]
         cls,
-        grad_estimator_fn: Callable,
-        learning_rate: Union[Callable[[int], float], float],
+        grad_estimator: sgmcmc.gradients.GradientEstimator,
     ) -> MCMCSamplingAlgorithm:
 
-        step = cls.kernel(grad_estimator_fn)
+        step = cls.kernel(grad_estimator)
 
-        if callable(learning_rate):
-            learning_rate_fn = learning_rate
-        elif float(learning_rate):
+        def init_fn(position: PyTree, minibatch: PyTree):
+            return cls.init(position, minibatch, grad_estimator)
 
-            def learning_rate_fn(_):
-                return learning_rate
-
-        else:
-            raise TypeError(
-                "The learning rate must either be a float (which corresponds to a constant learning rate) "
-                f"or a function of the index of the current iteration. Got {type(learning_rate)} instead."
-            )
-
-        def init_fn(position: PyTree, data_batch: PyTree):
-            return cls.init(position, data_batch, grad_estimator_fn)
-
-        def step_fn(rng_key: PRNGKey, state, data_batch: PyTree):
-            step_size = learning_rate_fn(state.step)
-            return step(rng_key, state, data_batch, step_size)
+        def step_fn(rng_key: PRNGKey, state, minibatch: PyTree, step_size: float):
+            return step(rng_key, state, minibatch, step_size)
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
@@ -551,10 +537,10 @@ class sgld:
 class sghmc:
     """Implements the (basic) user interface for the SGHMC kernel.
 
-    The general sghmc kernel (:meth:`blackjax.mcmc.sghmc.kernel`, alias `blackjax.sghmc.kernel`) can be
-    cumbersome to manipulate. Since most users only need to specify the kernel
-    parameters at initialization time, we provide a helper function that
-    specializes the general kernel.
+    The general sghmc kernel (:meth:`blackjax.mcmc.sghmc.kernel`, alias
+    `blackjax.sghmc.kernel`) can be cumbersome to manipulate. Since most users
+    only need to specify the kernel parameters at initialization time, we
+    provide a helper function that specializes the general kernel.
 
     Example
     -------
@@ -565,35 +551,36 @@ class sghmc:
 
     .. code::
 
-        schedule_fn = lambda _: 1e-3
-        grad_fn = blackjax.sgmcmc.gradients.grad_estimator(logprior_fn, loglikelihood_fn, data_size)
+        grad_estimator = blackjax.sgmcmc.gradients.grad_estimator(logprior_fn, loglikelihood_fn, data_size)
 
     We can now initialize the sghmc kernel and the state. Like HMC, SGHMC needs the user to specify a number of integration steps.
 
     .. code::
 
-        sghmc = blackjax.sghmc(grad_fn, schedule_fn, num_integration_steps)
+        sghmc = blackjax.sghmc(grad_estimator, num_integration_steps)
         state = sghmc.init(position)
 
-    Assuming we have an iterator `batches` that yields batches of data we can perform one step:
+    Assuming we have an iterator `batches` that yields batches of data we can
+    perform one step:
 
     .. code::
 
-        data_batch = next(batches)
-        new_state = sghmc.step(rng_key, state, data_batch)
+        step_size = 1e-3
+        minibatch = next(batches)
+        new_state = sghmc.step(rng_key, state, minibatch, step_size)
 
     Kernels are not jit-compiled by default so you will need to do it manually:
 
     .. code::
 
        step = jax.jit(sghmc.step)
-       new_state, info = step(rng_key, state)
+       new_state, info = step(rng_key, state, minibatch, step_size)
 
     Parameters
     ----------
-    gradient_estimator_fn
-       A function which, given a position and a batch of data, returns an estimation
-       of the value of the gradient of the log-posterior distribution at this position.
+    gradient_estimator
+       A tuple of functions that initialize and update the gradient estimation
+       state.
     schedule_fn
        A function which returns a step size given a step number.
 
@@ -608,32 +595,17 @@ class sghmc:
 
     def __new__(  # type: ignore[misc]
         cls,
-        grad_estimator_fn: Callable,
-        learning_rate: Union[Callable[[int], float], float],
+        grad_estimator: sgmcmc.gradients.GradientEstimator,
         num_integration_steps: int = 10,
     ) -> MCMCSamplingAlgorithm:
 
-        step = cls.kernel(grad_estimator_fn)
+        step = cls.kernel(grad_estimator)
 
-        if callable(learning_rate):
-            learning_rate_fn = learning_rate
-        elif float(learning_rate):
+        def init_fn(position: PyTree, minibatch: PyTree):
+            return cls.init(position, minibatch, grad_estimator)
 
-            def learning_rate_fn(_):
-                return learning_rate
-
-        else:
-            raise TypeError(
-                "The learning rate must either be a float (which corresponds to a constant learning rate) "
-                f"or a function of the index of the current iteration. Got {type(learning_rate)} instead."
-            )
-
-        def init_fn(position: PyTree, data_batch: PyTree):
-            return cls.init(position, data_batch, grad_estimator_fn)
-
-        def step_fn(rng_key: PRNGKey, state, data_batch: PyTree):
-            step_size = learning_rate_fn(state.step)
-            return step(rng_key, state, data_batch, step_size, num_integration_steps)
+        def step_fn(rng_key: PRNGKey, state, minibatch: PyTree, step_size: float):
+            return step(rng_key, state, minibatch, step_size, num_integration_steps)
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
