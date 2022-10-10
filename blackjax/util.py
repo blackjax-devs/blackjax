@@ -1,18 +1,15 @@
 """Utility functions for BlackJax."""
 from functools import partial
-
 from typing import Union
 
-from jax import jit
-from jax import lax
-from jax.flatten_util import ravel_pytree
-from jax.tree_util import tree_leaves
-from jax.random import normal
-from jax._src.numpy.util import _promote_dtypes
 import jax.numpy as jnp
+from jax import jit, lax
+from jax._src.numpy.util import _promote_dtypes
+from jax.flatten_util import ravel_pytree
+from jax.random import normal
+from jax.tree_util import tree_leaves
 
 from blackjax.types import Array, PRNGKey, PyTree
-
 
 __all__ = ["linear_map", "effective_sample_size"]
 
@@ -56,10 +53,13 @@ def linear_map(diag_or_dense_a, b, *, precision="highest"):
         return lax.dot(diag_or_dense_a, b, precision=precision)
 
 
-# TODO(https://github.com/blackjax-devs/blackjax/issues/376) 
-# Refactor this function to not use ravel_pytree might be more performant.  
+# TODO(https://github.com/blackjax-devs/blackjax/issues/376)
+# Refactor this function to not use ravel_pytree might be more performant.
 def generate_gaussian_noise(
-    rng_key: PRNGKey, position: PyTree, mu: Union[float, Array] = 0.0, sigma: Union[float, Array] = 1.0
+    rng_key: PRNGKey,
+    position: PyTree,
+    mu: Union[float, Array] = 0.0,
+    sigma: Union[float, Array] = 1.0,
 ) -> PyTree:
     """Generate N(mu, sigma) noise with output structure that match a given PyTree.
 
