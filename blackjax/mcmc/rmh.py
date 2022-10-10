@@ -191,6 +191,8 @@ def normal(sigma: Array) -> Callable:
         normal distribution from which we draw the move proposals.
 
     """
+    if jnp.ndim(sigma) > 2:
+        raise ValueError("sigma must be a vector or a matrix.")
 
     def propose(rng_key: PRNGKey, position: PyTree) -> PyTree:
         return generate_gaussian_noise(rng_key, position, sigma=sigma)
