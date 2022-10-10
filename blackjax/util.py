@@ -11,8 +11,6 @@ from jax.tree_util import tree_leaves
 
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["linear_map", "effective_sample_size"]
-
 
 @partial(jit, static_argnames=("precision",), inline=True)
 def linear_map(diag_or_dense_a, b, *, precision="highest"):
