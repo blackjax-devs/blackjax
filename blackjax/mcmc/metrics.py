@@ -22,12 +22,12 @@ References
 """
 from typing import Callable, Tuple
 
-import jax
 import jax.numpy as jnp
 import jax.scipy as jscipy
 from jax.flatten_util import ravel_pytree
 
 from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.util import generate_gaussian_noise
 
 __all__ = ["gaussian_euclidean"]
 
@@ -79,7 +79,7 @@ def gaussian_euclidean(
 
     if ndim == 1:  # diagonal mass matrix
         mass_matrix_sqrt = jnp.sqrt(jnp.reciprocal(inverse_mass_matrix))
-        dot, matmul = jnp.multiply, jnp.multiply
+        matmul = jnp.multiply
 
     elif ndim == 2:
         tril_inv = jscipy.linalg.cholesky(inverse_mass_matrix)
@@ -87,7 +87,7 @@ def gaussian_euclidean(
         mass_matrix_sqrt = jscipy.linalg.solve_triangular(
             tril_inv, identity, lower=True
         )
-        dot, matmul = jnp.dot, jnp.matmul
+        matmul = jnp.matmul
 
     else:
         raise ValueError(
@@ -96,11 +96,7 @@ def gaussian_euclidean(
         )
 
     def momentum_generator(rng_key: PRNGKey, position: PyTree) -> PyTree:
-        _, unravel_fn = ravel_pytree(position)
-        standard_normal_sample = jax.random.normal(rng_key, shape)
-        momentum = dot(mass_matrix_sqrt, standard_normal_sample)
-        momentum_unravel = unravel_fn(momentum)
-        return momentum_unravel
+        return generate_gaussian_noise(rng_key, position, sigma=mass_matrix_sqrt)
 
     def kinetic_energy(momentum: PyTree) -> float:
         momentum, _ = ravel_pytree(momentum)

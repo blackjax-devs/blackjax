@@ -1,9 +1,9 @@
 """Public API for Metropolis Adjusted Langevin kernels."""
+import operator
 from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
-from jax.flatten_util import ravel_pytree
 
 from blackjax.mcmc.diffusion import overdamped_langevin
 from blackjax.types import PRNGKey, PyTree
@@ -69,8 +69,10 @@ def kernel():
             state.position,
             state.logprob_grad,
         )
-        theta_ravel, _ = ravel_pytree(theta)
-        return -0.25 * (1.0 / step_size) * jnp.dot(theta_ravel, theta_ravel)
+        theta_dot = jax.tree_util.tree_reduce(
+            operator.add, jax.tree_util.tree_map(lambda x: jnp.sum(x * x), theta)
+        )
+        return -0.25 * (1.0 / step_size) * theta_dot
 
     def one_step(
         rng_key: PRNGKey, state: MALAState, logprob_fn: Callable, step_size: float

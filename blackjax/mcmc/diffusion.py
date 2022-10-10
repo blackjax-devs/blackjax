@@ -4,7 +4,8 @@ from typing import NamedTuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import PyTree
+from blackjax.util import generate_gaussian_noise
 
 __all__ = ["overdamped_langevin"]
 
@@ -13,12 +14,6 @@ class DiffusionState(NamedTuple):
     position: PyTree
     logprob: float
     logprob_grad: PyTree
-
-
-def generate_gaussian_noise(rng_key: PRNGKey, position):
-    position_flat, unravel_fn = jax.flatten_util.ravel_pytree(position)
-    noise_flat = jax.random.normal(rng_key, shape=jnp.shape(position_flat))
-    return unravel_fn(noise_flat)
 
 
 def overdamped_langevin(logprob_and_grad_fn):

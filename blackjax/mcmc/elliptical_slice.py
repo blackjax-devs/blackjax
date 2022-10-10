@@ -5,6 +5,7 @@ import jax
 import jax.numpy as jnp
 
 from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.util import generate_gaussian_noise
 
 __all__ = ["EllipSliceState", "EllipSliceInfo", "init", "kernel"]
 
@@ -76,11 +77,9 @@ def kernel(cov_matrix: Array, mean: Array):
 
     if ndim == 1:  # diagonal covariance matrix
         cov_matrix_sqrt = jnp.sqrt(cov_matrix)
-        dot = jnp.multiply
 
     elif ndim == 2:
         cov_matrix_sqrt = jax.lax.linalg.cholesky(cov_matrix)
-        dot = jnp.dot
 
     else:
         raise ValueError(
@@ -89,11 +88,7 @@ def kernel(cov_matrix: Array, mean: Array):
         )
 
     def momentum_generator(rng_key, position):
-        p, unravel_fn = jax.flatten_util.ravel_pytree(position)
-        momentum = mean + dot(
-            cov_matrix_sqrt, jax.random.normal(rng_key, shape=p.shape)
-        )
-        return unravel_fn(momentum)
+        return generate_gaussian_noise(rng_key, position, mean, cov_matrix_sqrt)
 
     def one_step(
         rng_key: PRNGKey,
@@ -141,7 +136,7 @@ def elliptical_proposal(
         key_momentum, key_uniform, key_theta = jax.random.split(rng_key, 3)
         # step 1: sample momentum
         momentum = momentum_generator(key_momentum, position)
-        # #step 2: get slice (y)
+        # step 2: get slice (y)
         logy = loglikelihood + jnp.log(jax.random.uniform(key_uniform))
         # step 3: get theta (ellipsis move), set inital interval
         theta = 2 * jnp.pi * jax.random.uniform(key_theta)
