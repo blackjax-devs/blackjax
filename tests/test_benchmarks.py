@@ -25,7 +25,6 @@ def regression_logprob(scale, coefs, preds, x):
 
 
 def inference_loop(kernel, num_samples, rng_key, initial_state):
-    
     @jax.jit
     def one_step(state, rng_key):
         state, _ = kernel(rng_key, state)
