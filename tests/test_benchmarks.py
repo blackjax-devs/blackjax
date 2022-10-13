@@ -25,6 +25,7 @@ def regression_logprob(scale, coefs, preds, x):
 
 
 def inference_loop(kernel, num_samples, rng_key, initial_state):
+    @jax.jit
     def one_step(state, rng_key):
         state, _ = kernel(rng_key, state)
         return state, state
@@ -49,11 +50,10 @@ def run_regression(algorithm, **parameters):
     warmup = blackjax.window_adaptation(
         algorithm,
         logposterior_fn,
-        1000,
-        False,
+        is_mass_matrix_diagonal=False,
         **parameters,
     )
-    state, kernel, _ = warmup.run(warmup_key, {"scale": 1.0, "coefs": 2.0})
+    state, kernel, _ = warmup.run(warmup_key, {"scale": 1.0, "coefs": 2.0}, 1000)
 
     states = inference_loop(kernel, 10_000, inference_key, state)
 
