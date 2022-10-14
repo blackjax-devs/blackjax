@@ -1,5 +1,6 @@
 from blackjax._version import __version__
 
+from .adaptation.chees_adaptation import chees_adaptation
 from .adaptation.meads_adaptation import meads_adaptation
 from .adaptation.pathfinder_adaptation import pathfinder_adaptation
 from .adaptation.window_adaptation import window_adaptation
@@ -7,7 +8,7 @@ from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
 from .mcmc.elliptical_slice import elliptical_slice
 from .mcmc.ghmc import ghmc
-from .mcmc.hmc import hmc
+from .mcmc.hmc import dynamic_hmc, hmc
 from .mcmc.mala import mala
 from .mcmc.marginal_latent_gaussian import mgrad_gaussian
 from .mcmc.nuts import nuts
@@ -29,6 +30,7 @@ __all__ = [
     "dual_averaging",  # optimizers
     "lbfgs",
     "hmc",  # mcmc
+    "dynamic_hmc",
     "mala",
     "mgrad_gaussian",
     "nuts",
@@ -44,6 +46,7 @@ __all__ = [
     "csgld",
     "window_adaptation",  # mcmc adaptation
     "meads_adaptation",
+    "chees_adaptation",
     "pathfinder_adaptation",
     "adaptive_tempered_smc",  # smc
     "tempered_smc",

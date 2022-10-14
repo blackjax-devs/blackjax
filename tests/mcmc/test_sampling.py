@@ -7,6 +7,7 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
+import optax
 from absl.testing import absltest, parameterized
 
 import blackjax
@@ -211,6 +212,48 @@ class LinearRegressionTest(chex.TestCase):
             num_steps=1000,
         )
         kernel = blackjax.ghmc(logposterior_fn, **parameters).step
+
+        chain_keys = jax.random.split(inference_key, num_chains)
+        states = jax.vmap(lambda key, state: inference_loop(kernel, 100, key, state))(
+            chain_keys, last_states
+        )
+
+        coefs_samples = states.position["coefs"]
+        scale_samples = np.exp(states.position["log_scale"])
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+
+    @parameterized.parameters([None, jax.random.uniform])
+    def test_chees(self, jitter_generator):
+        """Test the ChEES adaptation w/ HMC kernel."""
+        rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logposterior_fn = lambda x: logposterior_fn_(**x)
+
+        init_key, warmup_key, inference_key = jax.random.split(rng_key, 3)
+
+        num_chains = 128
+        warmup = blackjax.chees_adaptation(
+            logposterior_fn, num_chains=num_chains, jitter_generator=jitter_generator
+        )
+        scale_key, coefs_key = jax.random.split(init_key, 2)
+        log_scales = 1.0 + jax.random.normal(scale_key, (num_chains,))
+        coefs = 4.0 + jax.random.normal(coefs_key, (num_chains,))
+        initial_positions = {"log_scale": log_scales, "coefs": coefs}
+        (last_states, parameters), _ = warmup.run(
+            warmup_key,
+            initial_positions,
+            step_size=0.001,
+            optim=optax.adam(learning_rate=0.1),
+            num_steps=1000,
+        )
+        kernel = blackjax.dynamic_hmc(logposterior_fn, **parameters).step
 
         chain_keys = jax.random.split(inference_key, num_chains)
         states = jax.vmap(lambda key, state: inference_loop(kernel, 100, key, state))(
