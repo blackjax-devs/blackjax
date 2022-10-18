@@ -7,16 +7,9 @@ import jax.numpy as jnp
 from blackjax.sgmcmc.diffusion import SGHMCState, sghmc
 from blackjax.sgmcmc.sgld import SGLDState
 from blackjax.types import PRNGKey, PyTree
+from blackjax.util import generate_gaussian_noise
 
 __all__ = ["kernel"]
-
-
-def sample_momentum(rng_key: PRNGKey, position: PyTree, step_size: float):
-    position_flat, unravel_fn = jax.flatten_util.ravel_pytree(position)
-    noise_flat = jnp.sqrt(step_size) * jax.random.normal(
-        rng_key, shape=jnp.shape(position_flat)
-    )
-    return unravel_fn(noise_flat)
 
 
 def kernel(
@@ -29,7 +22,7 @@ def kernel(
     ) -> SGLDState:
 
         step, position, logprob_grad = state
-        momentum = sample_momentum(rng_key, position, step_size)
+        momentum = generate_gaussian_noise(rng_key, position, jnp.sqrt(step_size))
         diffusion_state = SGHMCState(position, momentum, logprob_grad)
 
         def body_fn(state, rng_key):

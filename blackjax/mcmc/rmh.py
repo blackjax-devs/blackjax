@@ -5,6 +5,7 @@ import jax
 from jax import numpy as jnp
 
 from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.util import generate_gaussian_noise
 
 __all__ = ["RMHState", "RMHInfo", "init", "kernel"]
 
@@ -190,21 +191,10 @@ def normal(sigma: Array) -> Callable:
         normal distribution from which we draw the move proposals.
 
     """
-    ndim = jnp.ndim(sigma)  # type: ignore[arg-type]
-    shape = jnp.shape(jnp.atleast_1d(sigma))[:1]
-
-    if ndim == 1:
-        dot = jnp.multiply
-    elif ndim == 2:
-        dot = jnp.dot
-    else:
-        raise ValueError
+    if jnp.ndim(sigma) > 2:
+        raise ValueError("sigma must be a vector or a matrix.")
 
     def propose(rng_key: PRNGKey, position: PyTree) -> PyTree:
-        _, unravel_fn = jax.flatten_util.ravel_pytree(position)
-        sample = jax.random.normal(rng_key, shape)
-        move_sample = dot(sigma, sample)
-        move_unravel = unravel_fn(move_sample)
-        return move_unravel
+        return generate_gaussian_noise(rng_key, position, sigma=sigma)
 
     return propose

@@ -22,7 +22,8 @@ class TestNormalProposalDistribution(chex.TestCase):
             proposal(key, jnp.array([10.0])) for key in jax.random.split(self.key, 100)
         ]
         samples_from_another_position = [
-            proposal(key, jnp.array([15000])) for key in jax.random.split(self.key, 100)
+            proposal(key, jnp.array([15000.0]))
+            for key in jax.random.split(self.key, 100)
         ]
 
         for samples in [samples_from_initial_position, samples_from_another_position]:

@@ -13,6 +13,7 @@ from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
 )
 from blackjax.types import Array, PyTree
+from blackjax.util import pytree_size
 
 __all__ = ["base", "schedule"]
 
@@ -97,8 +98,7 @@ def base(
         We may reconsider this choice in the future.
 
         """
-        flat_position, _ = jax.flatten_util.ravel_pytree(position)
-        num_dimensions = flat_position.shape[-1]
+        num_dimensions = pytree_size(position)
         imm_state = mm_init(num_dimensions)
 
         ss_state = da_init(initial_step_size)

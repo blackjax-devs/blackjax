@@ -3,13 +3,13 @@ from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
-from jax.flatten_util import ravel_pytree
 
 import blackjax.mcmc.hmc as hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
 from blackjax.types import PRNGKey, PyTree
+from blackjax.util import generate_gaussian_noise, pytree_size
 
 __all__ = ["GHMCState", "init", "kernel"]
 
@@ -44,9 +44,8 @@ def init(
 
     potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
 
-    p, unravel_fn = ravel_pytree(position)
     key_mometum, key_slice = jax.random.split(rng_key)
-    momentum = unravel_fn(jax.random.normal(key_mometum, p.shape))
+    momentum = generate_gaussian_noise(key_mometum, position)
     slice = jax.random.uniform(key_slice, minval=-1.0, maxval=1.0)
 
     return GHMCState(position, momentum, potential_energy, potential_energy_grad, slice)
@@ -220,10 +219,8 @@ def update_momentum(rng_key, state, alpha):
 
     position, momentum, *_ = state
 
-    m, _ = ravel_pytree(momentum)
-    momentum_generator, *_ = metrics.gaussian_euclidean(
-        1 / alpha * jnp.ones(jnp.shape(m))
-    )
+    m_size = pytree_size(momentum)
+    momentum_generator, *_ = metrics.gaussian_euclidean(1 / alpha * jnp.ones((m_size,)))
     momentum = jax.tree_map(
         lambda prev_momentum, shifted_momentum: prev_momentum * jnp.sqrt(1.0 - alpha)
         + shifted_momentum,
