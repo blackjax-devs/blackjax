@@ -82,14 +82,14 @@ def kernel(
     returns a new state of the chain along with information about the transition.
     """
 
-    _, kinetic_energy_fn, _ = metrics.gaussian_euclidean(jnp.ones(1))
     sample_proposal = proposal.nonreversible_slice_sampling
 
     def one_step(
         rng_key: PRNGKey,
         state: GHMCState,
         logprob_fn: Callable,
-        step_size: PyTree,  # float,
+        step_size: float,
+        momentum_inverse_scale: PyTree,
         alpha: float,
         delta: float,
     ) -> Tuple[GHMCState, hmc.HMCInfo]:
@@ -104,8 +104,11 @@ def kernel(
         logprob_fn
             (Unnormalized) Log density function being targeted.
         step_size
+            Variable specifying the size of the integration step.
+        momentum_inverse_scale
             Pytree with the same structure as the targeted position variable
-            specifying the step size used for each dimension of the target.
+            specifying the per dimension inverse scaling transformation applied
+            to the persistent momentum variable prior to the integration step.
         alpha
             Variable specifying the degree of persistent momentum, complementary
             to independent new momentum.
@@ -117,7 +120,12 @@ def kernel(
         def potential_fn(x):
             return -logprob_fn(x)
 
-        symplectic_integrator = velocity_verlet(potential_fn, kinetic_energy_fn)
+        flat_inverse_scale = jax.flatten_util.ravel_pytree(momentum_inverse_scale)[0]
+        _, kinetic_energy_fn, _ = metrics.gaussian_euclidean(flat_inverse_scale**2)
+
+        symplectic_integrator = integrators.velocity_verlet(
+            potential_fn, kinetic_energy_fn
+        )
         proposal_generator = hmc.hmc_proposal(
             symplectic_integrator,
             kinetic_energy_fn,
@@ -130,6 +138,7 @@ def kernel(
         position, momentum, potential_energy, potential_energy_grad, slice = state
         # New momentum is persistent
         momentum = update_momentum(key_momentum, state, alpha)
+        momentum = jax.tree_map(lambda m, s: m / s, momentum, momentum_inverse_scale)
         # Slice is non-reversible
         slice = ((slice + 1.0 + delta + noise_fn(key_noise)) % 2) - 1.0
 
@@ -140,69 +149,13 @@ def kernel(
         proposal = hmc.flip_momentum(proposal)
         state = GHMCState(
             proposal.position,
-            proposal.momentum,
+            jax.tree_map(lambda m, s: m * s, proposal.momentum, momentum_inverse_scale),
             proposal.potential_energy,
             proposal.potential_energy_grad,
             info.acceptance_probability,
         )
 
         return state, info
-
-    return one_step
-
-
-def velocity_verlet(
-    potential_fn: Callable,
-    kinetic_energy_fn: integrators.EuclideanKineticEnergy,
-) -> integrators.EuclideanIntegrator:
-    """The velocity Verlet (or Verlet-Störmer) integrator.
-
-    Generates an implementation similar to the one in `integrators` except
-    with a step_size parameter of the same PyTree structure as the position
-    (target) variable that specifies an independent step_size for each dimension
-    of the target.
-    """
-
-    potential_and_grad_fn = jax.value_and_grad(potential_fn)
-    kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
-
-    def one_step(
-        state: integrators.IntegratorState, step_size: PyTree
-    ) -> integrators.IntegratorState:
-        position, momentum, _, potential_energy_grad = state
-
-        momentum = jax.tree_util.tree_map(
-            lambda momentum, potential_grad, step_size: momentum
-            - 0.5 * step_size * potential_grad,
-            momentum,
-            potential_energy_grad,
-            step_size,
-        )
-
-        kinetic_grad = kinetic_energy_grad_fn(momentum)
-        position = jax.tree_util.tree_map(
-            lambda position, kinetic_grad, step_size: position
-            + step_size * kinetic_grad,
-            position,
-            kinetic_grad,
-            step_size,
-        )
-
-        potential_energy, potential_energy_grad = potential_and_grad_fn(position)
-        momentum = jax.tree_util.tree_map(
-            lambda momentum, potential_grad, step_size: momentum
-            - 0.5 * step_size * potential_grad,
-            momentum,
-            potential_energy_grad,
-            step_size,
-        )
-
-        return integrators.IntegratorState(
-            position,
-            momentum,
-            potential_energy,
-            potential_energy_grad,
-        )
 
     return one_step
 

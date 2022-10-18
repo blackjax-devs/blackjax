@@ -382,7 +382,8 @@ normal_test_cases = [
         "algorithm": blackjax.ghmc,
         "initial_position": jnp.array(1.0),
         "parameters": {
-            "step_size": jnp.array(1.0),
+            "step_size": 1.0,
+            "momentum_inverse_scale": jnp.array(1.0),
             "alpha": 0.8,
             "delta": 2.0,
         },

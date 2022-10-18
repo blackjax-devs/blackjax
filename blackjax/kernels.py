@@ -765,9 +765,6 @@ def window_adaptation(
 def meads(
     logprob_fn: Callable,
     num_chains: int,
-    *,
-    divergence_threshold: int = 1000,
-    batch_fn: Callable = jax.vmap,
 ) -> AdaptationAlgorithm:
     """Adapt the parameters of the Generalized HMC algorithm.
 
@@ -797,11 +794,6 @@ def meads(
         The log density probability density function from which we wish to sample.
     num_chains
         Number of chains used for cross-chain warm-up training.
-    divergence_threshold
-        Value of the difference in energy above which we consider that the
-        transition is divergent.
-    batch_fn
-        Either jax.vmap or jax.pmap to perform parallel operations.
 
     Returns
     -------
@@ -814,7 +806,7 @@ def meads(
 
     init, update = adaptation.meads.base()
 
-    batch_init = batch_fn(lambda r, p: ghmc.init(r, p, logprob_fn))
+    batch_init = jax.vmap(lambda r, p: ghmc.init(r, p, logprob_fn))
 
     def one_step(carry, rng_key):
         states, adaptation_state = carry
@@ -824,13 +816,14 @@ def meads(
                 rng_key,
                 state,
                 logprob_fn,
-                adaptation_state.step_sizes,
+                adaptation_state.step_size,
+                adaptation_state.position_sigma,
                 adaptation_state.alpha,
                 adaptation_state.delta,
             )
 
         keys = jax.random.split(rng_key, num_chains)
-        new_states, info = batch_fn(kernel)(keys, states)
+        new_states, info = jax.vmap(kernel)(keys, states)
         new_adaptation_state = update(
             adaptation_state, new_states.position, new_states.potential_energy_grad
         )
@@ -855,7 +848,8 @@ def meads(
         )
 
         parameters = {
-            "step_size": last_adaptation_state.step_sizes,
+            "step_size": last_adaptation_state.step_size,
+            "momentum_inverse_scale": last_adaptation_state.position_sigma,
             "alpha": last_adaptation_state.alpha,
             "delta": last_adaptation_state.delta,
         }
@@ -1189,7 +1183,8 @@ class ghmc:
     def __new__(  # type: ignore[misc]
         cls,
         logprob_fn: Callable,
-        step_size: PyTree,
+        step_size: float,
+        momentum_inverse_scale: PyTree,
         alpha: float,
         delta: float,
         *,
@@ -1203,7 +1198,15 @@ class ghmc:
             return cls.init(rng_key, position, logprob_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(rng_key, state, logprob_fn, step_size, alpha, delta)
+            return step(
+                rng_key,
+                state,
+                logprob_fn,
+                step_size,
+                momentum_inverse_scale,
+                alpha,
+                delta,
+            )
 
         return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
