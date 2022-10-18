@@ -9,10 +9,12 @@ from blackjax.types import PyTree
 class MEADSAdaptationState(NamedTuple):
     """State of the MEADS adaptation scheme.
 
-    step_sizes
-        The version of the generalized HMC algorithm that is implemented uses a
-        scalar mass matrix, and preconditioning happens at the step size level.
-        There is thus one value of the step size per dimension of the problem.
+    step_size
+        Value of the step_size parameter of the generalized HMC algorithm.
+    position_sigma
+        PyTree containing the per dimension sample standard deviation of the
+        position variable. Used to scale the momentum variable on the generalized
+        HMC algorithm.
     alpha
         Value of the alpha parameter of the generalized HMC algorithm.
     delta
@@ -21,7 +23,8 @@ class MEADSAdaptationState(NamedTuple):
     """
 
     current_iteration: int
-    step_sizes: PyTree
+    step_size: float
+    position_sigma: PyTree
     alpha: float
     delta: float
 
@@ -47,9 +50,6 @@ def base():
         Function that initializes the warmup.
     update
         Function that moves the warmup one step.
-    final
-        Function that returns step size, alpha and delta given a cross-chain
-        warmup state.
 
     References
     ----------
@@ -57,32 +57,6 @@ def base():
             Hamiltonian Monte Carlo. In International Conference on Artificial
             Intelligence and Statistics (pp. 7799-7813). PML
     """
-
-    def maximum_eigenvalue(matrix: PyTree):
-        """Estimate the largest eigenvalues of a matrix.
-
-        We calculate an unbiased estimate of the ratio between the sum of the
-        squared eigenvalues and the sum of the eigenvalues from the input
-        matrix. This ratio approximates the largest eigenvalue well except in
-        cases when there are a large number of small eigenvalues significantly
-        larger than 0 but significantly smaller than the largest eigenvalue.
-        This unbiased estimate is used instead of directly computing an unbiased
-        estimate of the largest eigenvalue because of the latter's large
-        variance.
-
-        """
-        X = jnp.vstack(
-            [
-                leaf.reshape(leaf.shape[0], -1).T
-                for leaf in jax.tree_util.tree_leaves(matrix)
-            ]
-        ).T
-        n, _ = X.shape
-        S = X @ X.T
-        diag_S = jnp.diag(S)
-        lamda = jnp.sum(diag_S) / n
-        lamda_sq = (jnp.sum(S**2) - jnp.sum(diag_S**2)) / (n * (n - 1))
-        return lamda_sq / lamda
 
     def compute_parameters(
         positions: PyTree, potential_energy_grad: PyTree, current_iteration: int
@@ -93,7 +67,10 @@ def base():
         Parameters
         ----------
         positions:
-            A PyTree that contains the current positions of the chains.
+            A PyTree that contains the current position of every chains.
+        potential_energy_grad:
+            A PyTree that contains the gradients of the potential energy
+            function evaluated at the current position of every chains.
         current_iteration:
             The current iteration index in the adaptation process.
 
@@ -126,9 +103,7 @@ def base():
         )
         alpha = 1.0 - jnp.exp(-2.0 * epsilon * gamma)
         delta = alpha / 2
-        step_size = jax.tree_map(lambda sd: epsilon * sd, sd_position)
-
-        return step_size, alpha, delta
+        return epsilon, sd_position, alpha, delta
 
     def init(positions: PyTree, potential_energy_grad: PyTree):
         parameters = compute_parameters(positions, potential_energy_grad, 0)
@@ -151,6 +126,9 @@ def base():
             The current state of the adaptation algorithm
         positions
             The current position of every chain.
+        potential_energy_grad
+            The gradients of the potential energy function
+            evaluated at the current position of every chain.
 
         Returns
         -------
@@ -159,10 +137,42 @@ def base():
 
         """
         current_iteration = adaptation_state.current_iteration
-        step_size, alpha, delta = compute_parameters(
+        step_size, position_sigma, alpha, delta = compute_parameters(
             positions, potential_energy_grad, current_iteration
         )
 
-        return MEADSAdaptationState(current_iteration + 1, step_size, alpha, delta)
+        return MEADSAdaptationState(
+            current_iteration + 1, step_size, position_sigma, alpha, delta
+        )
 
     return init, update
+
+
+def maximum_eigenvalue(matrix: PyTree):
+    """Estimate the largest eigenvalues of a matrix.
+
+    We calculate an unbiased estimate of the ratio between the sum of the
+    squared eigenvalues and the sum of the eigenvalues from the input
+    matrix. This ratio approximates the largest eigenvalue well except in
+    cases when there are a large number of small eigenvalues significantly
+    larger than 0 but significantly smaller than the largest eigenvalue.
+    This unbiased estimate is used instead of directly computing an unbiased
+    estimate of the largest eigenvalue because of the latter's large
+    variance.
+
+    Parameters
+    ----------
+    matrix
+        A PyTree with equal batch shape as the first dimension of every leaf.
+        The PyTree for each batch is flattened into a one dimensional array and
+        these arrays are stacked vertically, giving a matrix with one row
+        for every batch.
+
+    """
+    X = jax.vmap(lambda m: jax.flatten_util.ravel_pytree(m)[0])(matrix)
+    n, _ = X.shape
+    S = X @ X.T
+    diag_S = jnp.diag(S)
+    lamda = jnp.sum(diag_S) / n
+    lamda_sq = (jnp.sum(S**2) - jnp.sum(diag_S**2)) / (n * (n - 1))
+    return lamda_sq / lamda
