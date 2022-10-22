@@ -5,7 +5,7 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.mcmc.diffusion import overdamped_langevin
+import blackjax.mcmc.diffusions as diffusions
 from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["MALAState", "MALAInfo", "init", "kernel"]
@@ -83,7 +83,7 @@ def kernel():
 
         """
         grad_fn = jax.value_and_grad(logprob_fn)
-        integrator = overdamped_langevin(grad_fn)
+        integrator = diffusions.overdamped_langevin(grad_fn)
 
         key_integrator, key_rmh = jax.random.split(rng_key)
 

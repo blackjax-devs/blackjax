@@ -1,7 +1,7 @@
 """Public API for the Stochastic gradient Langevin Dynamics kernel."""
 from typing import Callable
 
-from blackjax.sgmcmc.diffusion import overdamped_langevin
+import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["kernel"]
@@ -10,7 +10,7 @@ __all__ = ["kernel"]
 def kernel() -> Callable:
     """Stochastic gradient Langevin Dynamics (SgLD) algorithm."""
 
-    integrator = overdamped_langevin()
+    integrator = diffusions.overdamped_langevin()
 
     def one_step(
         rng_key: PRNGKey,
