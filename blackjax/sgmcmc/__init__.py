@@ -1,3 +1,3 @@
-from . import sghmc, sgld
+from . import gradients, sghmc, sgld
 
-__all__ = ["sgld", "sghmc"]
+__all__ = ["gradients", "sgld", "sghmc"]
