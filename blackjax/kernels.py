@@ -515,23 +515,19 @@ class sgld:
 
     """
 
-    init = staticmethod(sgmcmc.sgld.init)
     kernel = staticmethod(sgmcmc.sgld.kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
         grad_estimator: sgmcmc.gradients.GradientEstimator,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> Callable:
 
-        step = cls.kernel(grad_estimator)
-
-        def init_fn(position: PyTree, minibatch: PyTree):
-            return cls.init(position, minibatch, grad_estimator)
+        step = cls.kernel()
 
         def step_fn(rng_key: PRNGKey, state, minibatch: PyTree, step_size: float):
-            return step(rng_key, state, minibatch, step_size)
+            return step(rng_key, state, grad_estimator, minibatch, step_size)
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return step_fn
 
 
 class sghmc:
@@ -590,24 +586,27 @@ class sghmc:
 
     """
 
-    init = staticmethod(sgmcmc.sgld.init)
     kernel = staticmethod(sgmcmc.sghmc.kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
-        grad_estimator: sgmcmc.gradients.GradientEstimator,
+        grad_estimator: Callable,
         num_integration_steps: int = 10,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> Callable:
 
-        step = cls.kernel(grad_estimator)
-
-        def init_fn(position: PyTree, minibatch: PyTree):
-            return cls.init(position, minibatch, grad_estimator)
+        step = cls.kernel()
 
         def step_fn(rng_key: PRNGKey, state, minibatch: PyTree, step_size: float):
-            return step(rng_key, state, minibatch, step_size, num_integration_steps)
+            return step(
+                rng_key,
+                state,
+                grad_estimator,
+                minibatch,
+                step_size,
+                num_integration_steps,
+            )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return step_fn
 
 
 # -----------------------------------------------------------------------------

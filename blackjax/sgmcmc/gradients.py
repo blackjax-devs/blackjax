@@ -1,4 +1,4 @@
-from typing import Callable, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -11,7 +11,7 @@ class GradientEstimator(NamedTuple):
     estimate: Callable
 
 
-def grad_estimator(
+def estimator(
     logprior_fn: Callable, loglikelihood_fn: Callable, data_size: int
 ) -> GradientEstimator:
     """Builds a simple gradient estimator.
@@ -45,12 +45,7 @@ def grad_estimator(
 
     """
 
-    def init_fn(_) -> None:
-        return None
-
-    def logposterior_estimator_fn(
-        position: PyTree, minibatch: PyTree
-    ) -> Tuple[PyTree, None]:
+    def logposterior_estimator_fn(position: PyTree, minibatch: PyTree) -> PyTree:
         """Returns an approximation of the log-posterior density.
 
         Parameters
@@ -72,38 +67,22 @@ def grad_estimator(
             batch_loglikelihood(position, minibatch), axis=0
         )
 
-    def grad_estimator_fn(_, position, data_batch):
-        return jax.grad(logposterior_estimator_fn)(position, data_batch), None
-
-    return GradientEstimator(init_fn, grad_estimator_fn)
+    return jax.grad(logposterior_estimator_fn)
 
 
-class CVGradientState(NamedTuple):
-    """The state of the CV gradient estimator contains the gradient of the
-    Control Variate computed on the whole dataset at initialization.
-
-    """
-
-    control_variate_grad: PyTree
-
-
-def cv_grad_estimator(
-    logprior_fn: Callable,
-    loglikelihood_fn: Callable,
-    data: PyTree,
+def control_variates(
+    grad_estimator: Callable,
     centering_position: PyTree,
-) -> GradientEstimator:
+    data: PyTree,
+) -> Callable:
     """Builds a control variate gradient estimator [1]_.
 
     This algorithm was ported from [2]_.
 
     Parameters
     ----------
-    logprior_fn
-        The log-probability density function corresponding to the prior
-        distribution.
-    loglikelihood_fn
-        The log-probability density function corresponding to the likelihood.
+    grad_estimator
+        A function that approximates the target's gradient function.
     data
         The full dataset.
     centering_position
@@ -119,20 +98,10 @@ def cv_grad_estimator(
             Journal of Open Source Software, 7(72), 4113.
 
     """
-    data_size = jax.tree_leaves(data)[0].shape[0]
-    logposterior_grad_estimator_fn = grad_estimator(
-        logprior_fn, loglikelihood_fn, data_size
-    ).estimate
 
-    def init_fn(full_dataset: PyTree) -> CVGradientState:
-        """Compute the control variate on the whole dataset."""
-        return CVGradientState(
-            logposterior_grad_estimator_fn(None, centering_position, full_dataset)[0]
-        )
+    cv_grad_value = grad_estimator(centering_position, data)
 
-    def grad_estimator_fn(
-        grad_estimator_state: CVGradientState, position: PyTree, minibatch: PyTree
-    ) -> Tuple[PyTree, CVGradientState]:
+    def cv_grad_estimator_fn(position: PyTree, minibatch: PyTree) -> PyTree:
         """Return an approximation of the log-posterior density.
 
         Parameters
@@ -149,26 +118,14 @@ def cv_grad_estimator(
         the current value of the random variables.
 
         """
-        logposterior_grad_estimate = logposterior_grad_estimator_fn(
-            None, position, minibatch
-        )[0]
-        logposterior_grad_center_estimate = logposterior_grad_estimator_fn(
-            None, centering_position, minibatch
-        )[0]
+        grad_estimate = grad_estimator(position, minibatch)
+        center_grad_estimate = grad_estimator(centering_position, minibatch)
 
-        def control_variate(grad_estimate, center_grad_estimate, center_grad):
-            return grad_estimate + center_grad - center_grad_estimate
-
-        return (
-            control_variate(
-                logposterior_grad_estimate,
-                grad_estimator_state.control_variate_grad,
-                logposterior_grad_center_estimate,
-            ),
-            grad_estimator_state,
+        return jax.tree_map(
+            lambda grad_est, cv_grad_est, cv_grad: cv_grad + grad_est - cv_grad_est,
+            grad_estimate,
+            center_grad_estimate,
+            cv_grad_value,
         )
 
-    return GradientEstimator(init_fn, grad_estimator_fn)
-
-
-GradientState = Union[None, CVGradientState]
+    return cv_grad_estimator_fn
