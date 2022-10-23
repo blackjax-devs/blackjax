@@ -106,6 +106,7 @@ def minimize_lbfgs(
             s_history=unravel_fn_mapped(last_step_raveled.state.s_history),
             y_history=unravel_fn_mapped(last_step_raveled.state.y_history),
             rho_history=last_step_raveled.state.rho_history,
+            gamma=last_step_raveled.state.gamma,
             aux=last_step_raveled.state.aux,
         ),
     )
