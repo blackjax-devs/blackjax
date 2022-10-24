@@ -42,8 +42,9 @@ class TemperedSMCTest(chex.TestCase):
         super().setUp()
         self.key = jax.random.PRNGKey(42)
 
-    def logprob_fn(self, scale, coefs, preds, x):
+    def logprob_fn(self, log_scale, coefs, preds, x):
         """Linear regression"""
+        scale = jnp.exp(log_scale)
         y = jnp.dot(x, coefs)
         logpdf = stats.norm.logpdf(preds, y, scale)
         return jnp.sum(logpdf)
@@ -55,12 +56,16 @@ class TemperedSMCTest(chex.TestCase):
         y_data = 3 * x_data + np.random.normal(size=x_data.shape)
         observations = {"x": x_data, "preds": y_data}
 
-        prior = lambda x: stats.expon.logpdf(x[0], 1, 1) + stats.norm.logpdf(x[1])
+        def prior(x):
+            return (
+                stats.expon.logpdf(jnp.exp(x[0]), 0, 1) + x[0] + stats.norm.logpdf(x[1])
+            )
+
         conditioned_logprob = lambda x: self.logprob_fn(*x, **observations)
 
-        scale_init = 1 + np.random.exponential(1, N)
+        log_scale_init = np.log(np.random.exponential(1, N))
         coeffs_init = 3 + 2 * np.random.randn(N)
-        smc_state_init = [scale_init, coeffs_init]
+        smc_state_init = [log_scale_init, coeffs_init]
 
         iterates = []
         results = []  # type: List[TemperedSMCState]
@@ -91,7 +96,9 @@ class TemperedSMCTest(chex.TestCase):
             iterates.append(n_iter)
             results.append(result)
 
-            np.testing.assert_allclose(np.mean(result.particles[0]), 1.0, rtol=1e-1)
+            np.testing.assert_allclose(
+                np.mean(np.exp(result.particles[0])), 1.0, rtol=1e-1
+            )
             np.testing.assert_allclose(np.mean(result.particles[1]), 3.0, rtol=1e-1)
 
         assert iterates[1] >= iterates[0]
@@ -103,12 +110,12 @@ class TemperedSMCTest(chex.TestCase):
         y_data = 3 * x_data + np.random.normal(size=x_data.shape)
         observations = {"x": x_data, "preds": y_data}
 
-        prior = lambda x: stats.norm.logpdf(jnp.log(x[0])) + stats.norm.logpdf(x[1])
+        prior = lambda x: stats.norm.logpdf(x[0]) + stats.norm.logpdf(x[1])
         conditionned_logprob = lambda x: self.logprob_fn(*x, **observations)
 
-        scale_init = np.exp(np.random.randn(N))
+        log_scale_init = np.random.randn(N)
         coeffs_init = np.random.randn(N)
-        smc_state_init = [scale_init, coeffs_init]
+        smc_state_init = [log_scale_init, coeffs_init]
 
         lambda_schedule = np.logspace(-5, 0, n_schedule)
         hmc_parameters = {
@@ -136,7 +143,7 @@ class TemperedSMCTest(chex.TestCase):
             return (rng_key, new_state), (new_state, info)
 
         (_, result), _ = jax.lax.scan(body_fn, (self.key, init_state), lambda_schedule)
-        np.testing.assert_allclose(np.mean(result.particles[0]), 1.0, rtol=1e-1)
+        np.testing.assert_allclose(np.mean(np.exp(result.particles[0])), 1.0, rtol=1e-1)
         np.testing.assert_allclose(np.mean(result.particles[1]), 3.0, rtol=1e-1)
 
 

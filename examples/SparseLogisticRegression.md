@@ -101,14 +101,13 @@ N_OBS, N_REG = X.shape
 N_PARAM = N_REG * 2 + 1
 dist = HorseshoeLogisticReg(X, y)
 
-batch_fn = jax.vmap
 [n_chain, n_warm, n_iter] = [128, 20000, 10000]
 ksam, kinit = jrnd.split(jrnd.PRNGKey(0), 2)
 dist.initialize_model(kinit, n_chain)
 
 tic1 = pd.Timestamp.now()
 k_warm, k_sample = jrnd.split(ksam)
-warmup = blackjax.meads(dist.logprob_fn, n_chain, batch_fn=batch_fn)
+warmup = blackjax.meads(dist.logprob_fn, n_chain)
 adaptation_results = warmup.run(k_warm, dist.init_params, n_warm)
 init_state = adaptation_results.state
 kernel = adaptation_results.kernel

@@ -46,14 +46,14 @@ def irmh_proposal_distribution(rng_key):
 regression_test_cases = [
     {
         "algorithm": blackjax.hmc,
-        "initial_position": {"scale": 1.0, "coefs": 2.0},
+        "initial_position": {"log_scale": 0.0, "coefs": 4.0},
         "parameters": {"num_integration_steps": 90},
         "num_warmup_steps": 1_000,
         "num_sampling_steps": 3_000,
     },
     {
         "algorithm": blackjax.nuts,
-        "initial_position": {"scale": 1.0, "coefs": 2.0},
+        "initial_position": {"log_scale": 0.0, "coefs": 4.0},
         "parameters": {},
         "num_warmup_steps": 1_000,
         "num_sampling_steps": 1_000,
@@ -68,9 +68,10 @@ class LinearRegressionTest(chex.TestCase):
         super().setUp()
         self.key = jax.random.PRNGKey(19)
 
-    def regression_logprob(self, scale, coefs, preds, x):
+    def regression_logprob(self, log_scale, coefs, preds, x):
         """Linear regression"""
-        scale_prior = stats.expon.logpdf(scale, 1, 1)
+        scale = jnp.exp(log_scale)
+        scale_prior = stats.expon.logpdf(scale, 0, 1) + log_scale
         coefs_prior = stats.norm.logpdf(coefs, 0, 5)
         y = jnp.dot(x, coefs)
         logpdf = stats.norm.logpdf(preds, y, scale)
@@ -109,7 +110,7 @@ class LinearRegressionTest(chex.TestCase):
         )
 
         coefs_samples = states.position["coefs"]
-        scale_samples = states.position["scale"]
+        scale_samples = np.exp(states.position["log_scale"])
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
@@ -128,11 +129,11 @@ class LinearRegressionTest(chex.TestCase):
         warmup_key, inference_key = jax.random.split(rng_key, 2)
 
         mala = blackjax.mala(logposterior_fn, 1e-5)
-        state = mala.init({"coefs": 1.0, "scale": 2.0})
+        state = mala.init({"coefs": 1.0, "log_scale": 1.0})
         states = inference_loop(mala.step, 10_000, inference_key, state)
 
         coefs_samples = states.position["coefs"][3000:]
-        scale_samples = states.position["scale"][3000:]
+        scale_samples = np.exp(states.position["log_scale"][3000:])
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
@@ -172,7 +173,7 @@ class LinearRegressionTest(chex.TestCase):
         states = inference_loop(kernel, num_sampling_steps, inference_key, state)
 
         coefs_samples = states.position["coefs"]
-        scale_samples = states.position["scale"]
+        scale_samples = np.exp(states.position["log_scale"])
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
@@ -190,26 +191,28 @@ class LinearRegressionTest(chex.TestCase):
 
         init_key, warmup_key, inference_key = jax.random.split(rng_key, 3)
 
+        num_chains = 128
         warmup = blackjax.meads(
             logposterior_fn,
-            num_chains=128,
+            num_chains=num_chains,
         )
         scale_key, coefs_key = jax.random.split(init_key, 2)
-        scales = 1.0 + jax.random.normal(scale_key, (128,))
-        coefs = 3.0 + jax.random.normal(coefs_key, (128,))
-        initial_positions = {"scale": scales, "coefs": coefs}
+        log_scales = 1.0 + jax.random.normal(scale_key, (num_chains,))
+        coefs = 4.0 + jax.random.normal(coefs_key, (num_chains,))
+        initial_positions = {"log_scale": log_scales, "coefs": coefs}
         last_states, kernel, _ = warmup.run(
             warmup_key,
             initial_positions,
-            num_steps=100,
+            num_steps=1000,
         )
 
-        states = jax.vmap(
-            lambda state: inference_loop(kernel, 100, inference_key, state)
-        )(last_states)
+        chain_keys = jax.random.split(inference_key, num_chains)
+        states = jax.vmap(lambda key, state: inference_loop(kernel, 100, key, state))(
+            chain_keys, last_states
+        )
 
         coefs_samples = states.position["coefs"]
-        scale_samples = states.position["scale"]
+        scale_samples = np.exp(states.position["log_scale"])
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)

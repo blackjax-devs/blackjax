@@ -25,7 +25,7 @@ setuptools.setup(
         "fastprogress>=0.2.0",
         "jax>=0.3.13",
         "jaxlib>=0.3.10",
-        "jaxopt>=0.4.2",
+        "jaxopt>=0.5.5",
     ],
     long_description_content_type="text/markdown",
     keywords="probabilistic machine learning bayesian statistics sampling algorithms",
