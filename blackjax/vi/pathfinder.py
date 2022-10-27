@@ -12,7 +12,7 @@ from blackjax.optimizers.lbfgs import (
 )
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["PathfinderState", "init", "kernel", "sample_from_state"]
+__all__ = ["PathfinderState", "approximate", "sample"]
 
 
 class PathfinderState(NamedTuple):
@@ -43,13 +43,13 @@ class PathfinderState(NamedTuple):
     gamma: Array
 
 
-def init(
+def approximate(
     rng_key: PRNGKey,
     logprob_fn: Callable,
     initial_position: PyTree,
     num_samples: int = 200,
     return_path: bool = False,
-    **lbfgs_kwargs
+    **lbfgs_parameters
 ) -> PathfinderState:
     """
     Pathfinder variational inference algorithm:
@@ -75,13 +75,14 @@ def init(
     return_path
         if False output only iteration that maximize ELBO, otherwise output
         all iterations
-    lbfgs_kwargs:
-        kwargs passed to the internal call to lbfgs_minimize, available params:
-            maxiter: maximum number of iterations
-            maxcor: maximum number of metric corrections ("history size")
-            ftol: terminates the minimization when `(f_k - f_{k+1}) < ftol`
-            gtol: terminates the minimization when `|g_k|_norm < gtol`
-            maxls: maximum number of line search steps (per iteration)
+    lbfgs_parameters:
+        Parameters passed to the internal call to `lbfgs_minimize`. The
+        following parameters are available:
+        - maxiter: maximum number of iterations
+        - maxcor: maximum number of metric corrections ("history size")
+        - ftol: terminates the minimization when `(f_k - f_{k+1}) < ftol`
+        - gtol: terminates the minimization when `|g_k|_norm < gtol`
+        - maxls: maximum number of line search steps (per iteration)
 
     Returns
     -------
@@ -100,29 +101,29 @@ def init(
     initial_position_flatten, unravel_fn = ravel_pytree(initial_position)
     objective_fn = lambda x: -logprob_fn(unravel_fn(x))
 
-    if "maxiter" not in lbfgs_kwargs:
-        lbfgs_kwargs["maxiter"] = 30
-    if "maxcor" not in lbfgs_kwargs:
-        lbfgs_kwargs["maxcor"] = 10
-    if "maxls" not in lbfgs_kwargs:
+    if "maxiter" not in lbfgs_parameters:
+        lbfgs_parameters["maxiter"] = 30
+    if "maxcor" not in lbfgs_parameters:
+        lbfgs_parameters["maxcor"] = 10
+    if "maxls" not in lbfgs_parameters:
         # high max line search steps helps optimizing negative log likelihoods
         # that are sums over (large number of) observations' likelihood
-        lbfgs_kwargs["maxls"] = 1000
-    if "gtol" not in lbfgs_kwargs:
-        lbfgs_kwargs["gtol"] = 1e-08
-    if "ftol" not in lbfgs_kwargs:
-        lbfgs_kwargs["ftol"] = 1e-05
+        lbfgs_parameters["maxls"] = 1000
+    if "gtol" not in lbfgs_parameters:
+        lbfgs_parameters["gtol"] = 1e-08
+    if "ftol" not in lbfgs_parameters:
+        lbfgs_parameters["ftol"] = 1e-05
 
-    maxiter = lbfgs_kwargs["maxiter"]
-    maxcor = lbfgs_kwargs["maxcor"]
+    maxiter = lbfgs_parameters["maxiter"]
+    maxcor = lbfgs_parameters["maxcor"]
     (_, status), history = _minimize_lbfgs(
         objective_fn,
         initial_position_flatten,
-        lbfgs_kwargs["maxiter"],
-        lbfgs_kwargs["maxcor"],
-        lbfgs_kwargs["gtol"],
-        lbfgs_kwargs["ftol"],
-        lbfgs_kwargs["maxls"],
+        lbfgs_parameters["maxiter"],
+        lbfgs_parameters["maxcor"],
+        lbfgs_parameters["gtol"],
+        lbfgs_parameters["ftol"],
+        lbfgs_parameters["maxls"],
     )
 
     # Get postions and gradients of the optimization path (including the starting point).
@@ -190,24 +191,7 @@ def init(
         return jax.tree_map(lambda x: x[best_i], pathfinder_result)
 
 
-def kernel():
-    """
-    Builds a pathfinder kernel.
-
-    Returns:
-    a kernel that takes rng_key and the pathfinder state and returns
-    the pathfinder state and a draw from the approximate distribution
-    """
-
-    def one_step(rng_key: PRNGKey, state: PathfinderState):
-
-        sample, _ = sample_from_state(rng_key, state, num_samples=())
-        return state, sample
-
-    return one_step
-
-
-def sample_from_state(
+def sample(
     rng_key: PRNGKey,
     state: PathfinderState,
     num_samples: Union[int, Tuple[()], Tuple[int]] = (),

@@ -338,9 +338,9 @@ def bfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gamm
     u = jax.random.normal(rng_key, num_samples + (param_dims, 1))
     phi = mu[..., None] + jnp.diag(jnp.sqrt(alpha)) @ (Q @ (L - Id) @ (Q.T @ u) + u)
 
-    logq = -0.5 * (
+    logprob = -0.5 * (
         logdet
         + jnp.einsum("...ji,...ji->...", u, u)
         + param_dims * jnp.log(2.0 * jnp.pi)
     )
-    return phi[..., 0], logq
+    return phi[..., 0], logprob

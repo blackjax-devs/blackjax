@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import jax.scipy.stats as stats
 from absl.testing import absltest, parameterized
 
-from blackjax.kernels import pathfinder
+import blackjax
 from blackjax.optimizers.lbfgs import bfgs_sample
 
 
@@ -69,8 +69,8 @@ class PathfinderTest(chex.TestCase):
         )
 
         x0 = jnp.ones(ndim)
-        kernel = pathfinder(rng_key_pathfinder, logp_model)
-        out = self.variant(kernel.init)(x0)
+        pathfinder = blackjax.pathfinder(logp_model)
+        out = self.variant(pathfinder.approximate)(rng_key_pathfinder, x0)
 
         sim_p, log_p = bfgs_sample(
             rng_key_pathfinder,
