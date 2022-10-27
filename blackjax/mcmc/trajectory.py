@@ -1,6 +1,7 @@
 """Procedures to build trajectories for algorithms in the HMC family.
 
 To propose a new state, algorithms in the HMC family generally proceed by [1]_:
+
 1. Sampling a trajectory starting from the initial point;
 2. Sampling a new state from this sampled trajectory.
 
@@ -24,7 +25,9 @@ memory by keeping states that will subsequently be discarded.
 
 References
 ----------
-.. [1]: Betancourt, Michael. "A conceptual introduction to Hamiltonian Monte Carlo." arXiv preprint arXiv:1701.02434 (2017).
+.. [1]: Betancourt, Michael.
+        "A conceptual introduction to Hamiltonian Monte Carlo."
+        arXiv preprint arXiv:1701.02434 (2017).
 
 """
 from typing import Callable, NamedTuple, Tuple
@@ -151,7 +154,8 @@ def dynamic_progressive_integration(
     is_criterion_met
         Determines whether the termination criterion has been met.
     divergence_threshold
-        Value of the difference of energy between two consecutive states above which we say a transition is divergent.
+        Value of the difference of energy between two consecutive states above
+        which we say a transition is divergent.
 
     """
     _, generate_proposal = proposal_generator(kinetic_energy, divergence_threshold)
@@ -166,8 +170,9 @@ def dynamic_progressive_integration(
         step_size,
         initial_energy,
     ):
-        """Integrate the trajectory starting from `initial_state` and update
-        the proposal sequentially until the termination criterion is met.
+        """Integrate the trajectory starting from `initial_state` and update the
+        proposal sequentially (hence progressive) until the termination
+        criterion is met (hence dynamic).
 
         Parameters
         ----------
@@ -178,7 +183,8 @@ def dynamic_progressive_integration(
         direction int in {-1, 1}
             The direction in which to expand the trajectory.
         termination_state
-            The state that keeps track of the information needed for the termination criterion.
+            The state that keeps track of the information needed for the
+            termination criterion.
         max_num_steps
             The maximum number of integration steps. The expansion will stop
             when this number is reached if the termination criterion has not
@@ -186,7 +192,8 @@ def dynamic_progressive_integration(
         step_size
             The step size of the symplectic integrator.
         initial_energy
-            Initial energy H0 of the HMC step (not to confused with the initial energy of the subtree)
+            Initial energy H0 of the HMC step (not to confused with the initial
+            energy of the subtree)
 
         """
 
@@ -512,9 +519,9 @@ def dynamic_multiplicative_expansion(
         def expand_once(loop_state):
             """Expand the current trajectory.
 
-            At each step we draw a direction at random, build a subtrajectory starting
-            from the leftmost or rightmost point of the current trajectory that is
-            twice as long as the current trajectory.
+            At each step we draw a direction at random, build a subtrajectory
+            starting from the leftmost or rightmost point of the current
+            trajectory that is twice as long as the current trajectory.
 
             Once that is done, possibly update the current proposal with that of
             the subtrajectory.
@@ -554,9 +561,10 @@ def dynamic_multiplicative_expansion(
 
             # Update the proposal
             #
-            # We do not accept proposals that come from diverging or turning subtrajectories.
-            # However the definition of the acceptance probability is such that the
-            # acceptance probability needs to be computed across the entire trajectory.
+            # We do not accept proposals that come from diverging or turning
+            # subtrajectories.  However the definition of the acceptance
+            # probability is such that the acceptance probability needs to be
+            # computed across the entire trajectory.
             def update_sum_log_p_accept(inputs):
                 _, proposal, new_proposal = inputs
                 return Proposal(
@@ -577,8 +585,8 @@ def dynamic_multiplicative_expansion(
 
             # Is the full trajectory making a U-Turn?
             #
-            # We first merge the subtrajectory that was just generated with the trajectory
-            # and check the U-Turn criterior on the whole trajectory.
+            # We first merge the subtrajectory that was just generated with the
+            # trajectory and check the U-Turn criterior on the whole trajectory.
             left_trajectory, right_trajectory = reorder_trajectories(
                 direction, trajectory, new_trajectory
             )

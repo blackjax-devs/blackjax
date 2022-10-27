@@ -67,15 +67,18 @@ def kernel(
     """Build an iterative NUTS kernel.
 
     This algorithm is an iteration on the original NUTS algorithm [Hoffman2014]_
-    with two major differences: - We do not use slice samplig but multinomial
-    sampling for the proposal [Betancourt2017]_; - The trajectory expansion is
-    not recursive but iterative [Phan2019]_, [Lao2020]_.
+    with two major differences:
+
+    - We do not use slice samplig but multinomial sampling for the proposal
+      [Betancourt2017]_;
+    - The trajectory expansion is not recursive but iterative [Phan2019]_,
+      [Lao2020]_.
 
     The implementation can seem unusual for those familiar with similar
     algorithms. Indeed, we do not conceptualize the trajectory construction as
     building a tree. We feel that the tree lingo, inherited from the recursive
     version, is unnecessarily complicated and hides the more general concepts
-    on which the NUTS algorithm is built.
+    upon which the NUTS algorithm is built.
 
     NUTS, in essence, consists in sampling a trajectory by iteratively choosing
     a direction at random and integrating in this direction a number of times
@@ -85,17 +88,30 @@ def kernel(
 
     Parameters
     ----------
-    logprob_fb
-        Log probability function we wish to sample from.
-    parameters
-        A NamedTuple that contains the parameters of the kernel to be built.
+    integrator
+        The simplectic integrator used to build trajectories.
+    divergence_threshold
+        The absolute difference in energy above which we consider
+        a transition "divergent".
+    max_num_doublings
+        The maximum number of times we expand the trajectory by
+        doubling the number of steps if the trajectory does not
+        turn onto itself.
 
     References
     ----------
-    .. [Hoffman2014] Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo." J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
-    .. [Betancourt2017] Betancourt, Michael. "A conceptual introduction to Hamiltonian Monte Carlo." arXiv preprint arXiv:1701.02434 (2017).
-    .. [Phan2019] Phan, Du, Neeraj Pradhan, and Martin Jankowiak. "Composable effects for flexible and accelerated probabilistic programming in NumPyro." arXiv preprint arXiv:1912.11554 (2019).
-    .. [Lao2020] Lao, Junpeng, et al. "tfp. mcmc: Modern markov chain monte carlo tools built for modern hardware." arXiv preprint arXiv:2002.01184 (2020).
+    .. [Hoffman2014]: Hoffman, Matthew D., and Andrew Gelman.
+                      "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo."
+                      J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
+    .. [Betancourt2017]: Betancourt, Michael.
+                         "A conceptual introduction to Hamiltonian Monte Carlo."
+                         arXiv preprint arXiv:1701.02434 (2017).
+    .. [Phan2019]: Phan Du, Neeraj Pradhan, and Martin Jankowiak.
+                   "Composable effects for flexible and accelerated probabilistic programming in NumPyro."
+                   arXiv preprint arXiv:1912.11554 (2019).
+    .. [Lao2020]: Lao, Junpeng, et al.
+                  "tfp. mcmc: Modern markov chain monte carlo tools built for modern hardware."
+                  arXiv preprint arXiv:2002.01184 (2020).
 
     """
 
@@ -161,7 +177,8 @@ def iterative_nuts_proposal(
     kinetic_energy
         Function that computes the kinetic energy.
     uturn_check_fn:
-        Function that determines whether the trajectory is turning on itself (metric-dependant).
+        Function that determines whether the trajectory is turning on itself
+        (metric-dependant).
     step_size
         Size of the integration step.
     max_num_expansions
@@ -171,7 +188,8 @@ def iterative_nuts_proposal(
 
     Returns
     -------
-    A kernel that generates a new chain state and information about the transition.
+    A kernel that generates a new chain state and information about the
+    transition.
 
     """
     (
