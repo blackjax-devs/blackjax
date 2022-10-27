@@ -1246,7 +1246,7 @@ class pathfinder:
             **lbfgs_parameters,
         ):
             return cls.approximate(
-                rng_key, logprob_fn, position, num_samples, False, **lbfgs_parameters
+                rng_key, logprob_fn, position, num_samples, **lbfgs_parameters
             )
 
         def sample_fn(
@@ -1316,7 +1316,7 @@ def pathfinder_adaptation(
 
         init_key, sample_key, rng_key = jax.random.split(rng_key, 3)
 
-        pathfinder_state = vi.pathfinder.approximate(init_key, logprob_fn, position)
+        pathfinder_state, _ = vi.pathfinder.approximate(init_key, logprob_fn, position)
         init_warmup_state = init(
             pathfinder_state.alpha,
             pathfinder_state.beta,

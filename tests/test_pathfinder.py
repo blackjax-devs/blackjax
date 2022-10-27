@@ -70,7 +70,7 @@ class PathfinderTest(chex.TestCase):
 
         x0 = jnp.ones(ndim)
         pathfinder = blackjax.pathfinder(logp_model)
-        out = self.variant(pathfinder.approximate)(rng_key_pathfinder, x0)
+        out, _ = self.variant(pathfinder.approximate)(rng_key_pathfinder, x0)
 
         sim_p, log_p = bfgs_sample(
             rng_key_pathfinder,

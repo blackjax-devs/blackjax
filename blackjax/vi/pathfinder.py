@@ -25,14 +25,14 @@ class PathfinderState(NamedTuple):
     resulting ELBO and all factors needed to sample from the approximated
     target density.
 
-    elbo:
-        ELBO of approximation wrt target distribution
     position:
         position
     grad_position:
         gradient of target distribution wrt position
     alpha, beta, gamma:
         factored rappresentation of the inverse hessian
+    elbo:
+        ELBO of approximation wrt target distribution
     """
 
     elbo: Array
@@ -43,14 +43,19 @@ class PathfinderState(NamedTuple):
     gamma: Array
 
 
+class PathfinderInfo(NamedTuple):
+    """Extra information returned by the Pathfinder algorithm."""
+
+    path: PathfinderState
+
+
 def approximate(
     rng_key: PRNGKey,
     logprob_fn: Callable,
     initial_position: PyTree,
     num_samples: int = 200,
-    return_path: bool = False,
     **lbfgs_parameters
-) -> PathfinderState:
+) -> Tuple[PathfinderState, PathfinderInfo]:
     """
     Pathfinder variational inference algorithm:
     pathfinder locates normal approximations to the target density along a
@@ -72,9 +77,6 @@ def approximate(
         starting point of the L-BFGS optimization routine
     num_samples
         number of samples to draw to estimate ELBO
-    return_path
-        if False output only iteration that maximize ELBO, otherwise output
-        all iterations
     lbfgs_parameters:
         Parameters passed to the internal call to `lbfgs_minimize`. The
         following parameters are available:
@@ -86,10 +88,9 @@ def approximate(
 
     Returns
     -------
-    if return_path=True a PathfinderState with full information
-    on the optimization path
-    if return_path=False a PathfinderState with information on the iteration
-    in the optimization path whose approximate samples yields the highest ELBO
+    A PathfinderState with information on the iteration in the optimization path
+    whose approximate samples yields the highest ELBO, and PathfinderInfo that
+    contains all the states traversed.
 
     References
     ----------
@@ -176,19 +177,18 @@ def approximate(
 
     unravel_fn_mapped = jax.vmap(unravel_fn)
     pathfinder_result = PathfinderState(
-        elbo=elbo,
-        position=unravel_fn_mapped(position),
-        grad_position=unravel_fn_mapped(grad_position),
-        alpha=alpha,
-        beta=beta,
-        gamma=gamma,
+        elbo,
+        unravel_fn_mapped(position),
+        unravel_fn_mapped(grad_position),
+        alpha,
+        beta,
+        gamma,
     )
 
-    if return_path:
-        return pathfinder_result
-    else:
-        best_i = jnp.argmax(elbo)
-        return jax.tree_map(lambda x: x[best_i], pathfinder_result)
+    max_elbo_idx = jnp.argmax(elbo)
+    return jax.tree_map(lambda x: x[max_elbo_idx], pathfinder_result), PathfinderInfo(
+        pathfinder_result
+    )
 
 
 def sample(
