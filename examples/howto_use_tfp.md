@@ -148,7 +148,7 @@ Extra information about the inference is contained in the `infos` namedtuple. Le
 ```{code-cell} ipython3
 :tags: [hide-cell]
 
-acceptance_rate = np.mean(infos.acceptance_probability)
+acceptance_rate = np.mean(infos.acceptance_rate)
 print(f"Average acceptance rate: {acceptance_rate:.2f}")
 ```
 

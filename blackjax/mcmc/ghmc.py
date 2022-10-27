@@ -152,7 +152,7 @@ def kernel(
             jax.tree_map(lambda m, s: m * s, proposal.momentum, momentum_inverse_scale),
             proposal.potential_energy,
             proposal.potential_energy_grad,
-            info.acceptance_probability,
+            info.acceptance_rate,
         )
 
         return state, info

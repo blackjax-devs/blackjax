@@ -719,7 +719,7 @@ def window_adaptation(
             adaptation_state,
             adaptation_stage,
             new_state.position,
-            info.acceptance_probability,
+            info.acceptance_rate,
         )
 
         return (
@@ -1310,7 +1310,7 @@ def pathfinder_adaptation(
             **extra_parameters,
         )
         new_adaptation_state = update(
-            adaptation_state, new_state.position, info.acceptance_probability
+            adaptation_state, new_state.position, info.acceptance_rate
         )
         return (
             (new_state, new_adaptation_state),

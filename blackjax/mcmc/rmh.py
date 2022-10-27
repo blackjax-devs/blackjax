@@ -29,7 +29,7 @@ class RMHInfo(NamedTuple):
     This additional information can be used for debugging or computing
     diagnostics.
 
-    acceptance_probability
+    acceptance_rate
         The acceptance probability of the transition, linked to the energy
         difference between the original and the proposed states.
     is_accepted
@@ -39,7 +39,7 @@ class RMHInfo(NamedTuple):
         The state proposed by the proposal.
     """
 
-    acceptance_probability: float
+    acceptance_rate: float
     is_accepted: bool
     proposal: RMHState
 
@@ -125,12 +125,12 @@ def rmh(
 
     if proposal_logprob_fn is None:
 
-        def acceptance_probability(state: RMHState, proposal: RMHState):
+        def acceptance_rate(state: RMHState, proposal: RMHState):
             return proposal.log_probability - state.log_probability
 
     else:
 
-        def acceptance_probability(state: RMHState, proposal: RMHState):
+        def acceptance_rate(state: RMHState, proposal: RMHState):
             return (
                 proposal.log_probability
                 + proposal_logprob_fn(proposal.position, state.position)  # type: ignore
@@ -163,7 +163,7 @@ def rmh(
         new_log_probability = logprob_fn(new_position)
         new_state = RMHState(new_position, new_log_probability)
 
-        delta = acceptance_probability(state, new_state)
+        delta = acceptance_rate(state, new_state)
         delta = jnp.where(jnp.isnan(delta), -jnp.inf, delta)
         p_accept = jnp.clip(jnp.exp(delta), a_max=1.0)
 

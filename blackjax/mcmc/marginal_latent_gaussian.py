@@ -41,7 +41,7 @@ class MarginalInfo(NamedTuple):
     This additional information can be used for debugging or computing
     diagnostics.
 
-    acceptance_probability
+    acceptance_rate
         The acceptance probability of the transition, linked to the energy
         difference between the original and the proposed states.
     is_accepted
@@ -51,7 +51,7 @@ class MarginalInfo(NamedTuple):
         The state proposed by the proposal.
     """
 
-    acceptance_probability: float
+    acceptance_rate: float
     is_accepted: bool
     proposal: MarginalState
 

@@ -119,7 +119,7 @@ def dual_averaging_adaptation(
         return DualAveragingAdaptationState(*da_init(inital_step_size))
 
     def update(
-        da_state: DualAveragingAdaptationState, acceptance_probability: float
+        da_state: DualAveragingAdaptationState, acceptance_rate: float
     ) -> DualAveragingAdaptationState:
         """Update the state of the Dual Averaging adaptive algorithm.
 
@@ -134,7 +134,7 @@ def dual_averaging_adaptation(
         -------
         The updated state of the dual averaging algorithm.
         """
-        gradient = target - acceptance_probability
+        gradient = target - acceptance_rate
         return DualAveragingAdaptationState(*da_update(da_state, gradient))
 
     def final(da_state: DualAveragingAdaptationState) -> float:
@@ -252,7 +252,7 @@ def find_reasonable_step_size(
         kernel = kernel_generator(step_size)
         _, info = kernel(rng_key, reference_state)
 
-        new_direction = jnp.where(target_accept < info.acceptance_probability, 1, -1)
+        new_direction = jnp.where(target_accept < info.acceptance_rate, 1, -1)
         return ReasonableStepSizeState(rng_key, new_direction, direction, step_size)
 
     rss_state = ReasonableStepSizeState(rng_key, 0, 0, initial_step_size)

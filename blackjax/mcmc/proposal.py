@@ -10,9 +10,9 @@ from blackjax.mcmc.integrators import IntegratorState
 class Proposal(NamedTuple):
     """Proposal for the next chain step.
     state:
-        The trajectory state corresponding to this proposal.
+        The trajectory state that corresponds to this proposal.
     energy:
-        The potential energy corresponding to the state.
+        The total energy that corresponds to this proposal.
     weight:
         Weight of the proposal. It is equal to the logarithm of the sum of the canonical
         densities of each state :math:`e^{-H(z)}` along the trajectory.
@@ -39,7 +39,7 @@ def proposal_generator(
         The trajectory state records information about the position in the state
         space and corresponding potential energy. A proposal also carries a
         weight that is equal to the difference between the current energy and
-        the previous one. It thus carries information about the previous state
+        the previous one. It thus carries information about the previous states
         as well as the current state.
 
         Parameters
@@ -58,6 +58,7 @@ def proposal_generator(
 
         # The weight of the new proposal is equal to H0 - H(z_new)
         weight = delta_energy
+
         # Acceptance statistic min(e^{H0 - H(z_new)}, 1)
         sum_log_p_accept = jnp.minimum(delta_energy, 0.0)
 
@@ -80,11 +81,12 @@ def proposal_generator(
 
 
 def static_binomial_sampling(rng_key, proposal, new_proposal):
-    """Accept or reject a proposal based on its weight.
+    """Accept or reject a proposal.
 
-    In the static setting, the `log_weight` of the proposal will be equal to the
-    difference of energy between the beginning and the end of the trajectory (truncated at 0.). It
-    is implemented this way to keep a consistent API with progressive sampling.
+    In the static setting, the probability with which the new proposal is
+    accepted is a function of the difference in energy between the previous and
+    the current states. If the current energy is lower than the previous one
+    then the new proposal is accepted with probability 1.
 
     """
     p_accept = jnp.clip(jnp.exp(new_proposal.weight), a_max=1)
@@ -94,35 +96,6 @@ def static_binomial_sampling(rng_key, proposal, new_proposal):
         do_accept,
         lambda _: (new_proposal, do_accept, p_accept),
         lambda _: (proposal, do_accept, p_accept),
-        operand=None,
-    )
-
-
-# --------------------------------------------------------------------
-#                   NON-REVERSIVLE SLICE SAMPLING
-# --------------------------------------------------------------------
-
-
-def nonreversible_slice_sampling(slice, proposal, new_proposal):
-    """Slice sampling for non-reversible Metropolis-Hasting update.
-
-    Performs a non-reversible update of a uniform [0, 1] value
-    for Metropolis-Hastings accept/reject decisions [1]_, in addition
-    to the accept/reject step of a current state and new proposal.
-
-    References
-    ----------
-    .. [1]: Neal, R. M. (2020). Non-reversibly updating a uniform
-            [0, 1] value for Metropolis accept/reject decisions.
-            arXiv preprint arXiv:2001.11950.
-    """
-
-    delta_energy = new_proposal.weight
-    do_accept = jnp.log(jnp.abs(slice)) <= delta_energy
-    return jax.lax.cond(
-        do_accept,
-        lambda _: (new_proposal, do_accept, slice * jnp.exp(-delta_energy)),
-        lambda _: (proposal, do_accept, slice),
         operand=None,
     )
 
@@ -170,6 +143,12 @@ def progressive_biased_sampling(rng_key, proposal, new_proposal):
     Unlike uniform sampling, biased sampling favors new proposals. It thus
     biases the transition away from the trajectory's initial state.
 
+    References
+    ----------
+    .. [1]: Betancourt, Michael.
+            "A conceptual introduction to Hamiltonian Monte Carlo."
+            arXiv preprint arXiv:1701.02434 (2017).
+
     """
     p_accept = jnp.clip(jnp.exp(new_proposal.weight - proposal.weight), a_max=1)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
@@ -192,5 +171,34 @@ def progressive_biased_sampling(rng_key, proposal, new_proposal):
             new_weight,
             new_sum_log_p_accept,
         ),
+        operand=None,
+    )
+
+
+# --------------------------------------------------------------------
+#                   NON-REVERSIVLE SLICE SAMPLING
+# --------------------------------------------------------------------
+
+
+def nonreversible_slice_sampling(slice, proposal, new_proposal):
+    """Slice sampling for non-reversible Metropolis-Hasting update.
+
+    Performs a non-reversible update of a uniform [0, 1] value
+    for Metropolis-Hastings accept/reject decisions [1]_, in addition
+    to the accept/reject step of a current state and new proposal.
+
+    References
+    ----------
+    .. [1]: Neal, R. M. (2020).
+            "Non-reversibly updating a uniform [0, 1] value for Metropolis accept/reject decisions."
+            arXiv preprint arXiv:2001.11950.
+    """
+
+    delta_energy = new_proposal.weight
+    do_accept = jnp.log(jnp.abs(slice)) <= delta_energy
+    return jax.lax.cond(
+        do_accept,
+        lambda _: (new_proposal, do_accept, slice * jnp.exp(-delta_energy)),
+        lambda _: (proposal, do_accept, slice),
         operand=None,
     )
