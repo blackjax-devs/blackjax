@@ -34,7 +34,7 @@ class HMCInfo(NamedTuple):
 
     momentum:
         The momentum that was sampled and used to integrate the trajectory.
-    acceptance_probability
+    acceptance_rate
         The acceptance probability of the transition, linked to the energy
         difference between the original and the proposed states.
     is_accepted
@@ -55,7 +55,7 @@ class HMCInfo(NamedTuple):
     """
 
     momentum: PyTree
-    acceptance_probability: float
+    acceptance_rate: float
     is_accepted: bool
     is_divergent: bool
     energy: float

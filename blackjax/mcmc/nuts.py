@@ -44,7 +44,7 @@ class NUTSInfo(NamedTuple):
     num_integration_steps
         Number of integration steps that were taken. This is also the number of
         states in the full trajectory.
-    acceptance_probability
+    acceptance_rate
         average acceptance probabilty across entire trajectory
     """
 
@@ -56,7 +56,7 @@ class NUTSInfo(NamedTuple):
     trajectory_rightmost_state: integrators.IntegratorState
     num_trajectory_expansions: int
     num_integration_steps: int
-    acceptance_probability: float
+    acceptance_rate: float
 
 
 def kernel(
@@ -223,7 +223,7 @@ def iterative_nuts_proposal(
         num_doublings, sampled_proposal, new_trajectory, _ = expansion_state
         # Compute average acceptance probabilty across entire trajectory,
         # even over subtrees that may have been rejected
-        acceptance_probability = (
+        acceptance_rate = (
             jnp.exp(sampled_proposal.sum_log_p_accept) / new_trajectory.num_states
         )
 
@@ -236,7 +236,7 @@ def iterative_nuts_proposal(
             new_trajectory.rightmost_state,
             num_doublings,
             new_trajectory.num_states,
-            acceptance_probability,
+            acceptance_rate,
         )
 
         return sampled_proposal.state, info

@@ -32,15 +32,15 @@ class MALAInfo(NamedTuple):
     This additional information can be used for debugging or computing
     diagnostics.
 
-    acceptance_probability
-        The acceptance probability of the transition.
+    acceptance_rate
+        The acceptance rate of the transition.
     is_accepted
         Whether the proposed position was accepted or the original position
         was returned.
 
     """
 
-    acceptance_probability: float
+    acceptance_rate: float
     is_accepted: bool
 
 

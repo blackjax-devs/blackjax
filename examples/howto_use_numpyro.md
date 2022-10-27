@@ -110,7 +110,7 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     _, (states, infos) = jax.lax.scan(one_step, initial_state, keys)
 
     return states, (
-        infos.acceptance_probability,
+        infos.acceptance_rate,
         infos.is_divergent,
         infos.num_integration_steps,
     )
