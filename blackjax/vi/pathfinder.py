@@ -54,7 +54,12 @@ def approximate(
     logprob_fn: Callable,
     initial_position: PyTree,
     num_samples: int = 200,
-    **lbfgs_parameters
+    *,  # lgbfs parameters
+    maxiter=30,
+    maxcor=10,
+    maxls=1000,
+    gtol=1e-08,
+    ftol=1e-05,
 ) -> Tuple[PathfinderState, PathfinderInfo]:
     """
     Pathfinder variational inference algorithm:
@@ -62,9 +67,7 @@ def approximate(
     quasi-Newton optimization path, with local covariance estimated using
     the inverse Hessian estimates produced by the L-BFGS optimizer.
 
-    Function implements Algorithm 3 in [1]:
-
-    Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
+    Function implements the algorithm 3 in [1]:
 
     Parameters
     ----------
@@ -77,14 +80,19 @@ def approximate(
         starting point of the L-BFGS optimization routine
     num_samples
         number of samples to draw to estimate ELBO
-    lbfgs_parameters:
-        Parameters passed to the internal call to `lbfgs_minimize`. The
-        following parameters are available:
-        - maxiter: maximum number of iterations
-        - maxcor: maximum number of metric corrections ("history size")
-        - ftol: terminates the minimization when `(f_k - f_{k+1}) < ftol`
-        - gtol: terminates the minimization when `|g_k|_norm < gtol`
-        - maxls: maximum number of line search steps (per iteration)
+    maxiter
+        Maximum number of iterations of the LGBFS algorithm.
+    maxcor
+        Maximum number of metric corrections of the LGBFS algorithm ("history
+        size")
+    ftol
+        The LGBFS algorithm terminates the minimization when `(f_k - f_{k+1}) <
+        ftol`
+    gtol
+        The LGBFS algorithm terminates the minimization when `|g_k|_norm < gtol`
+    maxls
+        The maximum number of line search steps (per iteration) for the LGBFS
+        algorithm
 
     Returns
     -------
@@ -102,29 +110,14 @@ def approximate(
     initial_position_flatten, unravel_fn = ravel_pytree(initial_position)
     objective_fn = lambda x: -logprob_fn(unravel_fn(x))
 
-    if "maxiter" not in lbfgs_parameters:
-        lbfgs_parameters["maxiter"] = 30
-    if "maxcor" not in lbfgs_parameters:
-        lbfgs_parameters["maxcor"] = 10
-    if "maxls" not in lbfgs_parameters:
-        # high max line search steps helps optimizing negative log likelihoods
-        # that are sums over (large number of) observations' likelihood
-        lbfgs_parameters["maxls"] = 1000
-    if "gtol" not in lbfgs_parameters:
-        lbfgs_parameters["gtol"] = 1e-08
-    if "ftol" not in lbfgs_parameters:
-        lbfgs_parameters["ftol"] = 1e-05
-
-    maxiter = lbfgs_parameters["maxiter"]
-    maxcor = lbfgs_parameters["maxcor"]
     (_, status), history = _minimize_lbfgs(
         objective_fn,
         initial_position_flatten,
-        lbfgs_parameters["maxiter"],
-        lbfgs_parameters["maxcor"],
-        lbfgs_parameters["gtol"],
-        lbfgs_parameters["ftol"],
-        lbfgs_parameters["maxls"],
+        maxiter,
+        maxcor,
+        gtol,
+        ftol,
+        maxls,
     )
 
     # Get postions and gradients of the optimization path (including the starting point).
@@ -158,8 +151,8 @@ def approximate(
         elbo = (logp - logq).mean()  # Algorithm 7 of the paper
         return elbo, beta, gamma
 
-    # Index and reshape S and Z to be sliding window view shape=(maxiter, maxcor, param_dim),
-    # so we can vmap over all the iterations.
+    # Index and reshape S and Z to be sliding window view shape=(maxiter,
+    # maxcor, param_dim), so we can vmap over all the iterations.
     # This is in effect numpy.lib.stride_tricks.sliding_window_view
     path_size = maxiter + 1
     index = jnp.arange(path_size)[:, None] + jnp.arange(maxcor)[None, :]
