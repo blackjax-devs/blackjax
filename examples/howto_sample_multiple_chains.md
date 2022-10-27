@@ -54,8 +54,9 @@ loc, scale = 10, 20
 observed = np.random.normal(loc, scale, size=1_000)
 
 
-def logprob_fn(loc, scale, observed=observed):
+def logprob_fn(loc, log_scale, observed=observed):
     """Univariate Normal"""
+    scale = jnp.exp(log_scale)
     logpdf = stats.norm.logpdf(observed, loc, scale)
     return jnp.sum(logpdf)
 
@@ -83,7 +84,7 @@ To make our demonstration more dramatic we will used a NUTS sampler with poorly 
 import blackjax
 
 
-inv_mass_matrix = np.array([0.5, 0.5])
+inv_mass_matrix = np.array([0.5, 0.01])
 step_size = 1e-3
 
 nuts = blackjax.nuts(logprob, step_size, inv_mass_matrix)
@@ -125,7 +126,7 @@ def inference_loop_multiple_chains(
 We now prepare the initial states using `jax.vmap` again, to vectorize the `init` function:
 
 ```{code-cell} ipython3
-initial_positions = {"loc": np.ones(num_chains), "scale": 2.0 * np.ones(num_chains)}
+initial_positions = {"loc": np.ones(num_chains), "log_scale": np.ones(num_chains)}
 initial_states = jax.vmap(nuts.init, in_axes=(0))(initial_positions)
 ```
 

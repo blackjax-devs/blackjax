@@ -15,9 +15,10 @@ import pytest
 import blackjax
 
 
-def regression_logprob(scale, coefs, preds, x):
+def regression_logprob(log_scale, coefs, preds, x):
     """Linear regression"""
-    scale_prior = stats.expon.logpdf(scale, 1, 1)
+    scale = jnp.exp(log_scale)
+    scale_prior = stats.expon.logpdf(scale, 0, 1) + log_scale
     coefs_prior = stats.norm.logpdf(coefs, 0, 5)
     y = jnp.dot(x, coefs)
     logpdf = stats.norm.logpdf(preds, y, scale)
@@ -53,7 +54,7 @@ def run_regression(algorithm, **parameters):
         is_mass_matrix_diagonal=False,
         **parameters,
     )
-    state, kernel, _ = warmup.run(warmup_key, {"scale": 1.0, "coefs": 2.0}, 1000)
+    state, kernel, _ = warmup.run(warmup_key, {"log_scale": 0.0, "coefs": 2.0}, 1000)
 
     states = inference_loop(kernel, 10_000, inference_key, state)
 

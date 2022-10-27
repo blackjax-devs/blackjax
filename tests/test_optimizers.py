@@ -58,9 +58,10 @@ class OptimizerTest(chex.TestCase):
         the same between two loop recursion algorthm of LBFGS and formulas of the
         pathfinder paper"""
 
-        def regression_logprob(scale, coefs, preds, x):
+        def regression_logprob(log_scale, coefs, preds, x):
             """Linear regression"""
-            scale_prior = stats.expon.logpdf(scale, 1, 1)
+            scale = jnp.exp(log_scale)
+            scale_prior = stats.expon.logpdf(scale, 0, 1) + log_scale
             coefs_prior = stats.norm.logpdf(coefs, 0, 5)
             y = jnp.dot(x, coefs)
             logpdf = stats.norm.logpdf(preds, y, scale)
@@ -79,7 +80,7 @@ class OptimizerTest(chex.TestCase):
             return logposterior_fn
 
         fn = regression_model(self.key)
-        b0 = {"scale": 1.0, "coefs": 2.0}
+        b0 = {"log_scale": 0.0, "coefs": 2.0}
         b0_flatten, unravel_fn = ravel_pytree(b0)
         objective_fn = lambda x: -fn(unravel_fn(x))
         (_, status), history = self.variant(

@@ -171,7 +171,6 @@ dist = RegimeSwitchHMM(T, y)
 ```
 
 ```{code-cell} ipython3
-batch_fn = jax.vmap
 [n_chain, n_warm, n_iter] = [128, 5000, 200]
 ksam, kinit = jrnd.split(jrnd.PRNGKey(0), 2)
 dist.initialize_model(kinit, n_chain)
@@ -181,7 +180,7 @@ dist.initialize_model(kinit, n_chain)
 print("Running MEADS...")
 tic1 = pd.Timestamp.now()
 k_warm, k_sample = jrnd.split(ksam)
-warmup = blackjax.meads(dist.logprob_fn, n_chain, batch_fn=batch_fn)
+warmup = blackjax.meads(dist.logprob_fn, n_chain)
 init_state, kernel, _ = warmup.run(k_warm, dist.init_params, n_warm)
 
 def one_chain(k_sam, init_state):
