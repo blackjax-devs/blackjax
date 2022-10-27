@@ -11,6 +11,7 @@ from .kernels import (
     mgrad_gaussian,
     nuts,
     orbital_hmc,
+    pathfinder,
     pathfinder_adaptation,
     rmh,
     sghmc,
@@ -39,6 +40,7 @@ __all__ = [
     "pathfinder_adaptation",
     "adaptive_tempered_smc",  # smc
     "tempered_smc",
+    "pathfinder",  # variational inference
     "ess",  # diagnostics
     "rhat",
 ]
