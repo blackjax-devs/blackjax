@@ -1,4 +1,4 @@
-from typing import NamedTuple, Tuple
+from typing import Callable, NamedTuple, Tuple
 
 from typing_extensions import Protocol
 
@@ -73,8 +73,8 @@ class UpdateFn(Protocol):
         """
 
 
-class SamplingAlgorithm(NamedTuple):
-    """A pair of functions that implement a sampling algorithm.
+class MCMCSamplingAlgorithm(NamedTuple):
+    """A pair of functions that represents a MCMC sampling algorithm.
 
     Blackjax sampling algorithms are implemented as a pair of pure functions: a
     kernel, that takes a new samples starting from the current state, and an
@@ -101,6 +101,30 @@ class SamplingAlgorithm(NamedTuple):
 
     init: InitFn
     step: UpdateFn
+
+
+class VIAlgorithm(NamedTuple):
+    """A pair of functions that represents a Variational Inference algorithm.
+
+    Blackjax variational inference algorithms are implemented as a pair of pure
+    functions: an approximator, which takes a target probability density (and
+    potentially a guide), and a sampling function that uses the approximation to
+    draw samples.
+
+    Attributes
+    ----------
+    approximate
+        A pure function, which when called with an initial position (and
+        potentially a guide function) returns a state that allows to build
+        an approximation to the target probability density function.
+    sample
+        A pure function which returns samples from the approximation computed
+        by `approximate`.
+
+    """
+
+    approximate: Callable
+    sample: Callable
 
 
 class RunFn(Protocol):

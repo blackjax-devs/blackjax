@@ -8,7 +8,7 @@ import blackjax.mcmc as mcmc
 import blackjax.sgmcmc as sgmcmc
 import blackjax.smc as smc
 import blackjax.vi as vi
-from blackjax.base import AdaptationAlgorithm, SamplingAlgorithm
+from blackjax.base import AdaptationAlgorithm, MCMCSamplingAlgorithm, VIAlgorithm
 from blackjax.progress_bar import progress_bar_scan
 from blackjax.types import Array, PRNGKey, PyTree
 
@@ -40,7 +40,7 @@ class adaptive_tempered_smc:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``MCMCSamplingAlgorithm``.
 
     """
 
@@ -51,14 +51,14 @@ class adaptive_tempered_smc:
         cls,
         logprior_fn: Callable,
         loglikelihood_fn: Callable,
-        mcmc_algorithm: SamplingAlgorithm,
+        mcmc_algorithm: MCMCSamplingAlgorithm,
         mcmc_parameters: Dict,
         resampling_fn: Callable,
         target_ess: float,
         root_solver: Callable = smc.solver.dichotomy,
         use_log_ess: bool = True,
         mcmc_iter: int = 10,
-    ) -> SamplingAlgorithm:
+    ) -> MCMCSamplingAlgorithm:
         def kernel_factory(logprob_fn):
             return mcmc_algorithm(logprob_fn, **mcmc_parameters).step
 
@@ -83,7 +83,7 @@ class adaptive_tempered_smc:
                 state,
             )
 
-        return SamplingAlgorithm(init_fn, step_fn)
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
 
 
 class tempered_smc:
@@ -92,7 +92,7 @@ class tempered_smc:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``MCMCSamplingAlgorithm``.
 
     """
 
@@ -103,11 +103,11 @@ class tempered_smc:
         cls,
         logprior_fn: Callable,
         loglikelihood_fn: Callable,
-        mcmc_algorithm: SamplingAlgorithm,
+        mcmc_algorithm: MCMCSamplingAlgorithm,
         mcmc_parameters: Dict,
         resampling_fn: Callable,
         mcmc_iter: int = 10,
-    ) -> SamplingAlgorithm:
+    ) -> MCMCSamplingAlgorithm:
         def kernel_factory(logprob_fn):
             return mcmc_algorithm(logprob_fn, **mcmc_parameters).step
 
@@ -130,7 +130,7 @@ class tempered_smc:
                 lmbda,
             )
 
-        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
 
 # -----------------------------------------------------------------------------
@@ -199,7 +199,7 @@ class hmc:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``MCMCSamplingAlgorithm``.
     """
 
     init = staticmethod(mcmc.hmc.init)
@@ -214,7 +214,7 @@ class hmc:
         *,
         divergence_threshold: int = 1000,
         integrator: Callable = mcmc.integrators.velocity_verlet,
-    ) -> SamplingAlgorithm:
+    ) -> MCMCSamplingAlgorithm:
         step = cls.kernel(integrator, divergence_threshold)
 
         def init_fn(position: PyTree):
@@ -230,7 +230,7 @@ class hmc:
                 num_integration_steps,
             )
 
-        return SamplingAlgorithm(init_fn, step_fn)
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
 
 
 class mala:
@@ -280,7 +280,7 @@ class mala:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``MCMCSamplingAlgorithm``.
 
     """
 
@@ -291,7 +291,7 @@ class mala:
         cls,
         logprob_fn: Callable,
         step_size: float,
-    ) -> SamplingAlgorithm:
+    ) -> MCMCSamplingAlgorithm:
         step = cls.kernel()
 
         def init_fn(position: PyTree):
@@ -300,7 +300,7 @@ class mala:
         def step_fn(rng_key: PRNGKey, state):
             return step(rng_key, state, logprob_fn, step_size)
 
-        return SamplingAlgorithm(init_fn, step_fn)
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
 
 
 class nuts:
@@ -356,7 +356,7 @@ class nuts:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``MCMCSamplingAlgorithm``.
 
     """
 
@@ -372,7 +372,7 @@ class nuts:
         max_num_doublings: int = 10,
         divergence_threshold: int = 1000,
         integrator: Callable = mcmc.integrators.velocity_verlet,
-    ) -> SamplingAlgorithm:
+    ) -> MCMCSamplingAlgorithm:
         step = cls.kernel(integrator, divergence_threshold, max_num_doublings)
 
         def init_fn(position: PyTree):
@@ -387,7 +387,7 @@ class nuts:
                 inverse_mass_matrix,
             )
 
-        return SamplingAlgorithm(init_fn, step_fn)
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
 
 
 class mgrad_gaussian:
@@ -424,7 +424,7 @@ class mgrad_gaussian:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``MCMCSamplingAlgorithm``.
 
     References
     ----------
@@ -436,7 +436,7 @@ class mgrad_gaussian:
         logprob_fn: Callable,
         covariance: Array,
         mean: Optional[Array] = None,
-    ) -> SamplingAlgorithm:
+    ) -> MCMCSamplingAlgorithm:
         init, step = mcmc.marginal_latent_gaussian.init_and_kernel(
             logprob_fn, covariance, mean
         )
@@ -451,7 +451,7 @@ class mgrad_gaussian:
                 delta,
             )
 
-        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
 
 # -----------------------------------------------------------------------------
@@ -510,7 +510,7 @@ class sgld:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``MCMCSamplingAlgorithm``.
 
     """
 
@@ -521,7 +521,7 @@ class sgld:
         cls,
         grad_estimator_fn: Callable,
         learning_rate: Union[Callable[[int], float], float],
-    ) -> SamplingAlgorithm:
+    ) -> MCMCSamplingAlgorithm:
 
         step = cls.kernel(grad_estimator_fn)
 
@@ -545,7 +545,7 @@ class sgld:
             step_size = learning_rate_fn(state.step)
             return step(rng_key, state, data_batch, step_size)
 
-        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
 
 class sghmc:
@@ -599,7 +599,7 @@ class sghmc:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``MCMCSamplingAlgorithm``.
 
     """
 
@@ -611,7 +611,7 @@ class sghmc:
         grad_estimator_fn: Callable,
         learning_rate: Union[Callable[[int], float], float],
         num_integration_steps: int = 10,
-    ) -> SamplingAlgorithm:
+    ) -> MCMCSamplingAlgorithm:
 
         step = cls.kernel(grad_estimator_fn)
 
@@ -635,7 +635,7 @@ class sghmc:
             step_size = learning_rate_fn(state.step)
             return step(rng_key, state, data_batch, step_size, num_integration_steps)
 
-        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
 
 # -----------------------------------------------------------------------------
@@ -897,7 +897,7 @@ class rmh:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``MCMCSamplingAlgorithm``.
 
     """
 
@@ -908,7 +908,7 @@ class rmh:
         cls,
         logprob_fn: Callable,
         sigma: Array,
-    ) -> SamplingAlgorithm:
+    ) -> MCMCSamplingAlgorithm:
         step = cls.kernel()
 
         def init_fn(position: PyTree):
@@ -922,7 +922,7 @@ class rmh:
                 sigma,
             )
 
-        return SamplingAlgorithm(init_fn, step_fn)
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
 
 
 class irmh:
@@ -956,7 +956,7 @@ class irmh:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``MCMCSamplingAlgorithm``.
 
     """
 
@@ -967,7 +967,7 @@ class irmh:
         cls,
         logprob_fn: Callable,
         proposal_distribution: Callable,
-    ) -> SamplingAlgorithm:
+    ) -> MCMCSamplingAlgorithm:
 
         step = cls.kernel(proposal_distribution)
 
@@ -977,7 +977,7 @@ class irmh:
         def step_fn(rng_key: PRNGKey, state):
             return step(rng_key, state, logprob_fn)
 
-        return SamplingAlgorithm(init_fn, step_fn)
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
 
 
 class orbital_hmc:
@@ -1023,7 +1023,7 @@ class orbital_hmc:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``MCMCSamplingAlgorithm``.
     """
 
     init = staticmethod(mcmc.periodic_orbital.init)
@@ -1037,7 +1037,7 @@ class orbital_hmc:
         period: int,
         *,
         bijection: Callable = mcmc.integrators.velocity_verlet,
-    ) -> SamplingAlgorithm:
+    ) -> MCMCSamplingAlgorithm:
         step = cls.kernel(bijection)
 
         def init_fn(position: PyTree):
@@ -1053,7 +1053,7 @@ class orbital_hmc:
                 period,
             )
 
-        return SamplingAlgorithm(init_fn, step_fn)
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
 
 
 class elliptical_slice:
@@ -1086,7 +1086,7 @@ class elliptical_slice:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``MCMCSamplingAlgorithm``.
     """
 
     init = staticmethod(mcmc.elliptical_slice.init)
@@ -1098,7 +1098,7 @@ class elliptical_slice:
         *,
         mean: Array,
         cov: Array,
-    ) -> SamplingAlgorithm:
+    ) -> MCMCSamplingAlgorithm:
         step = cls.kernel(cov, mean)
 
         def init_fn(position: PyTree):
@@ -1111,7 +1111,7 @@ class elliptical_slice:
                 loglikelihood_fn,
             )
 
-        return SamplingAlgorithm(init_fn, step_fn)
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
 
 
 class ghmc:
@@ -1174,7 +1174,7 @@ class ghmc:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``MCMCSamplingAlgorithm``.
     """
 
     init = staticmethod(mcmc.ghmc.init)
@@ -1190,7 +1190,7 @@ class ghmc:
         *,
         divergence_threshold: int = 1000,
         noise_gn: Callable = lambda _: 0.0,
-    ) -> SamplingAlgorithm:
+    ) -> MCMCSamplingAlgorithm:
 
         step = cls.kernel(noise_gn, divergence_threshold)
 
@@ -1208,7 +1208,7 @@ class ghmc:
                 delta,
             )
 
-        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
 
 # -----------------------------------------------------------------------------
@@ -1231,35 +1231,30 @@ class pathfinder:
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    A ``VISamplingAlgorithm``.
 
     """
 
-    init = staticmethod(vi.pathfinder.init)
-    kernel = staticmethod(vi.pathfinder.kernel)
+    approximate = staticmethod(vi.pathfinder.approximate)
+    sample = staticmethod(vi.pathfinder.sample)
 
-    def __new__(  # type: ignore[misc]
-        cls,
-        rng_key: PRNGKey,
-        logprob_fn: Callable,
-        num_samples: int = 200,
-        **lbfgs_kwargs,
-    ) -> SamplingAlgorithm:
-
-        step = cls.kernel()
-
-        def init_fn(position: PyTree):
-            return cls.init(
-                rng_key, logprob_fn, position, num_samples, False, **lbfgs_kwargs
+    def __new__(cls, logprob_fn: Callable) -> VIAlgorithm:  # type: ignore[misc]
+        def approximate_fn(
+            rng_key: PRNGKey,
+            position: PyTree,
+            num_samples: int = 200,
+            **lbfgs_parameters,
+        ):
+            return cls.approximate(
+                rng_key, logprob_fn, position, num_samples, False, **lbfgs_parameters
             )
 
-        def step_fn(rng_key: PRNGKey, state):
-            return step(
-                rng_key,
-                state,
-            )
+        def sample_fn(
+            rng_key: PRNGKey, state: vi.pathfinder.PathfinderState, num_samples: int
+        ):
+            return cls.sample(rng_key, state, num_samples)
 
-        return SamplingAlgorithm(init_fn, step_fn)
+        return VIAlgorithm(approximate_fn, sample_fn)
 
 
 def pathfinder_adaptation(
@@ -1321,7 +1316,7 @@ def pathfinder_adaptation(
 
         init_key, sample_key, rng_key = jax.random.split(rng_key, 3)
 
-        pathfinder_state = vi.pathfinder.init(init_key, logprob_fn, position)
+        pathfinder_state = vi.pathfinder.approximate(init_key, logprob_fn, position)
         init_warmup_state = init(
             pathfinder_state.alpha,
             pathfinder_state.beta,
@@ -1329,7 +1324,7 @@ def pathfinder_adaptation(
             initial_step_size,
         )
 
-        init_position, _ = vi.pathfinder.sample_from_state(sample_key, pathfinder_state)
+        init_position, _ = vi.pathfinder.sample(sample_key, pathfinder_state)
         init_state = algorithm.init(init_position, logprob_fn)
 
         keys = jax.random.split(rng_key, num_steps)
