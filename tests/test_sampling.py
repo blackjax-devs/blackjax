@@ -232,18 +232,32 @@ class SGMCMCTest(chex.TestCase):
         w = x - position
         return -0.5 * jnp.dot(w, w)
 
-    def constant_step_size(_):
-        return 1e-3
-
-    def test_linear_regression_sgld(self):
-        import blackjax.sgmcmc.gradients
+    def test_linear_regression_contour_sgld(self):
 
         rng_key, data_key = jax.random.split(self.key, 2)
 
         data_size = 1000
         X_data = jax.random.normal(data_key, shape=(data_size, 5))
 
-        grad_fn = blackjax.sgmcmc.gradients.estimator(
+        logdensity_fn = blackjax.sgmcmc.logdensity_estimator(
+            self.logprior_fn, self.loglikelihood_fn, data_size
+        )
+        csgld = blackjax.csgld(logdensity_fn)
+
+        _, rng_key = jax.random.split(rng_key)
+        data_batch = X_data[:100, :]
+        init_position = 1.0
+        init_state = csgld.init(init_position)
+        _ = csgld.step(rng_key, init_state, data_batch, 1e-3, 1e-2)
+
+    def test_linear_regression_sgld(self):
+
+        rng_key, data_key = jax.random.split(self.key, 2)
+
+        data_size = 1000
+        X_data = jax.random.normal(data_key, shape=(data_size, 5))
+
+        grad_fn = blackjax.sgmcmc.grad_estimator(
             self.logprior_fn, self.loglikelihood_fn, data_size
         )
         sgld = blackjax.sgld(grad_fn)
@@ -254,7 +268,6 @@ class SGMCMCTest(chex.TestCase):
         _ = sgld(rng_key, init_position, data_batch, 1e-3)
 
     def test_linear_regression_sgld_cv(self):
-        import blackjax.sgmcmc.gradients
 
         rng_key, data_key = jax.random.split(self.key, 2)
 
@@ -263,7 +276,7 @@ class SGMCMCTest(chex.TestCase):
 
         centering_position = 1.0
 
-        grad_fn = blackjax.sgmcmc.gradients.estimator(
+        grad_fn = blackjax.sgmcmc.grad_estimator(
             self.logprior_fn, self.loglikelihood_fn, data_size
         )
         cv_grad_fn = blackjax.sgmcmc.gradients.control_variates(
@@ -278,14 +291,13 @@ class SGMCMCTest(chex.TestCase):
         _ = sgld(rng_key, init_position, data_batch, 1e-3)
 
     def test_linear_regression_sghmc(self):
-        import blackjax.sgmcmc.gradients
 
         rng_key, data_key = jax.random.split(self.key, 2)
 
         data_size = 1000
         X_data = jax.random.normal(data_key, shape=(data_size, 5))
 
-        grad_fn = blackjax.sgmcmc.gradients.estimator(
+        grad_fn = blackjax.sgmcmc.grad_estimator(
             self.logprior_fn, self.loglikelihood_fn, data_size
         )
         sghmc = blackjax.sghmc(grad_fn, 10)
@@ -297,7 +309,6 @@ class SGMCMCTest(chex.TestCase):
         _ = sghmc(rng_key, init_position, data_batch, 1e-3)
 
     def test_linear_regression_sghmc_cv(self):
-        import blackjax.sgmcmc.gradients
 
         rng_key, data_key = jax.random.split(self.key, 2)
 
@@ -305,7 +316,7 @@ class SGMCMCTest(chex.TestCase):
         X_data = jax.random.normal(data_key, shape=(data_size, 5))
 
         centering_position = 1.0
-        grad_fn = blackjax.sgmcmc.gradients.estimator(
+        grad_fn = blackjax.sgmcmc.grad_estimator(
             self.logprior_fn, self.loglikelihood_fn, data_size
         )
         cv_grad_fn = blackjax.sgmcmc.gradients.control_variates(

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
@@ -19,15 +19,10 @@ import jax.numpy as jnp
 from blackjax.types import PyTree
 
 
-class GradientEstimator(NamedTuple):
-    init: Callable
-    estimate: Callable
-
-
-def estimator(
+def logdensity_estimator(
     logprior_fn: Callable, loglikelihood_fn: Callable, data_size: int
-) -> GradientEstimator:
-    """Builds a simple gradient estimator.
+) -> Callable:
+    """Builds a simple estimator for the log-density.
 
     This estimator first appeared in [1]_. The `logprior_fn` function has a
     single argument:  the current position (value of parameters). The
@@ -57,8 +52,8 @@ def estimator(
 
     """
 
-    def logposterior_estimator_fn(position: PyTree, minibatch: PyTree) -> PyTree:
-        """Returns an approximation of the log-posterior density.
+    def logdensity_estimator_fn(position: PyTree, minibatch: PyTree) -> PyTree:
+        """Return an approximation of the log-posterior density.
 
         Parameters
         ----------
@@ -79,11 +74,22 @@ def estimator(
             batch_loglikelihood(position, minibatch), axis=0
         )
 
-    return jax.grad(logposterior_estimator_fn)
+    return logdensity_estimator_fn
+
+
+def grad_estimator(
+    logprior_fn: Callable, loglikelihood_fn: Callable, data_size: int
+) -> Callable:
+    """Build a simple estimator for the gradient of the log-density."""
+
+    logdensity_estimator_fn = logdensity_estimator(
+        logprior_fn, loglikelihood_fn, data_size
+    )
+    return jax.grad(logdensity_estimator_fn)
 
 
 def control_variates(
-    grad_estimator: Callable,
+    logdensity_grad_estimator: Callable,
     centering_position: PyTree,
     data: PyTree,
 ) -> Callable:
@@ -93,7 +99,7 @@ def control_variates(
 
     Parameters
     ----------
-    grad_estimator
+    logdensity_grad_estimator
         A function that approximates the target's gradient function.
     data
         The full dataset.
@@ -110,7 +116,7 @@ def control_variates(
             Journal of Open Source Software, 7(72), 4113.
 
     """
-    cv_grad_value = grad_estimator(centering_position, data)
+    cv_grad_value = logdensity_grad_estimator(centering_position, data)
 
     def cv_grad_estimator_fn(position: PyTree, minibatch: PyTree) -> PyTree:
         """Return an approximation of the log-posterior density.
@@ -129,8 +135,8 @@ def control_variates(
         the current value of the random variables.
 
         """
-        grad_estimate = grad_estimator(position, minibatch)
-        center_grad_estimate = grad_estimator(centering_position, minibatch)
+        grad_estimate = logdensity_grad_estimator(position, minibatch)
+        center_grad_estimate = logdensity_grad_estimator(centering_position, minibatch)
 
         return jax.tree_map(
             lambda grad_est, cv_grad_est, cv_grad: cv_grad + grad_est - cv_grad_est,

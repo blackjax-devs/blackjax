@@ -18,7 +18,7 @@ import jax.numpy as jnp
 from blackjax.types import PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["overdamped_langevin"]
+__all__ = ["overdamped_langevin", "sghmc"]
 
 
 def overdamped_langevin():

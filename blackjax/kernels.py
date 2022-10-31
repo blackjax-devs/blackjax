@@ -35,6 +35,7 @@ __all__ = [
     "rmh",
     "sgld",
     "sghmc",
+    "csgld",
     "tempered_smc",
     "window_adaptation",
     "irmh",
@@ -533,7 +534,7 @@ class sgld:
 
     def __new__(  # type: ignore[misc]
         cls,
-        grad_estimator: sgmcmc.gradients.GradientEstimator,
+        grad_estimator: Callable,
     ) -> Callable:
 
         step = cls.kernel()
@@ -629,6 +630,47 @@ class sghmc:
             )
 
         return step_fn
+
+
+class csgld:
+
+    init = staticmethod(sgmcmc.csgld.init)
+    kernel = staticmethod(sgmcmc.csgld.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_estimator_fn: Callable,
+        zeta: float = 1,
+        temperature: float = 0.01,
+        num_partitions: int = 512,
+        energy_gap: float = 100,
+        min_energy: float = 0,
+    ) -> MCMCSamplingAlgorithm:
+
+        step = cls.kernel(num_partitions, energy_gap, min_energy)
+
+        def init_fn(position: PyTree):
+            return cls.init(position, num_partitions)
+
+        def step_fn(
+            rng_key: PRNGKey,
+            state,
+            minibatch: PyTree,
+            step_size_diff: float,
+            step_size_stoch: float,
+        ):
+            return step(
+                rng_key,
+                state,
+                logdensity_estimator_fn,
+                minibatch,
+                step_size_diff,
+                step_size_stoch,
+                zeta,
+                temperature,
+            )
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
 
 # -----------------------------------------------------------------------------

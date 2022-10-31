@@ -4,6 +4,7 @@ from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
 from .kernels import (
     adaptive_tempered_smc,
+    csgld,
     elliptical_slice,
     ghmc,
     hmc,
@@ -39,6 +40,7 @@ __all__ = [
     "meads",
     "sgld",  # stochastic gradient mcmc
     "sghmc",
+    "csgld",
     "window_adaptation",  # mcmc adaptation
     "pathfinder_adaptation",
     "adaptive_tempered_smc",  # smc
