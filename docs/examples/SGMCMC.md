@@ -144,7 +144,7 @@ We now sample from the model's posteriors using SGLD. We discard the first 1000 
 from fastprogress.fastprogress import progress_bar
 
 import blackjax
-import blackjax.sgmcmc.gradients as gradients
+from blackjax.sgmcmc import grad_estimator
 
 
 data_size = len(y_train)
@@ -162,7 +162,7 @@ batches = batch_data(rng_key, (X_train, y_train), batch_size, data_size)
 state = jax.jit(model.init)(rng_key, jnp.ones(X_train.shape[-1]))
 
 # Build the SGLD kernel with a constant learning rate
-grad_fn = gradients.estimator(logprior_fn, loglikelihood_fn, data_size)
+grad_fn = grad_estimator(logprior_fn, loglikelihood_fn, data_size)
 sgld = blackjax.sgld(grad_fn)
 
 # Sample from the posterior
@@ -207,7 +207,7 @@ We can also use SGHMC to samples from this model
 ```{code-cell} python
 # Build the SGHMC kernel with a constant learning rate
 step_size = 9e-6
-grad_fn = gradients.estimator(logprior_fn, loglikelihood_fn, data_size)
+grad_fn = grad_estimator(logprior_fn, loglikelihood_fn, data_size)
 sghmc = blackjax.sghmc(grad_fn)
 
 # Batch the data

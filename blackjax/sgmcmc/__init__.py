@@ -1,3 +1,4 @@
-from . import gradients, sghmc, sgld
+from . import csgld, sghmc, sgld
+from .gradients import grad_estimator, logdensity_estimator
 
-__all__ = ["gradients", "sgld", "sghmc"]
+__all__ = ["grad_estimator", "logdensity_estimator", "csgld", "sgld", "sghmc"]
