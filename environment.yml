@@ -1,0 +1,22 @@
+# To use:
+#
+#   $ conda env create -f environment.yml  # `mamba` works too for this command
+#   $ conda activate blackjax-dev
+#
+name: blackjax-dev
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - fastprogress>=0.2.0
+  - jax>=0.3.13
+  - jaxlib>=0.3.10
+  - jaxopt>=0.5.5
+  # For testing
+  - chex
+  - pytest
+  - pytest-benchmark
+  - pytest-cov
+  - pytest-xdist
+  # developer tools
+  - pre-commit
