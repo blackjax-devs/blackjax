@@ -1,6 +1,7 @@
 """Test the resampling functions for SMC."""
 import chex
 import jax
+import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
 
@@ -32,8 +33,8 @@ class ResamplingTest(chex.TestCase):
 
         np.random.seed(42)
         batch_size = 100
-        w = np.random.rand(N)
-        x = np.random.randn(N)
+        w = jnp.array(np.random.rand(N), dtype="float32")
+        x = jnp.array(np.random.randn(N), dtype="float32")
         w = w / w.sum()
 
         resampling_keys = jax.random.split(jax.random.PRNGKey(42), batch_size)
