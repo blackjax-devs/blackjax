@@ -71,7 +71,7 @@ def init_and_kernel(logprob_fn, covariance, mean=None):
     U, Gamma, U_t = jnp.linalg.svd(covariance, hermitian=True)
 
     if mean is not None:
-        shift = linalg.solve(covariance, mean, sym_pos=True)
+        shift = linalg.solve(covariance, mean, assume_a="pos")
         val_and_grad = jax.value_and_grad(lambda x: logprob_fn(x) + jnp.dot(x, shift))
     else:
         val_and_grad = jax.value_and_grad(logprob_fn)
