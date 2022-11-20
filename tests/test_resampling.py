@@ -1,6 +1,4 @@
 """Test the resampling functions for SMC."""
-import itertools
-
 import chex
 import jax
 import numpy as np
@@ -28,10 +26,10 @@ def integrand(x):
 
 class ResamplingTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
-    @parameterized.parameters(
-        itertools.product([100, 500, 1_000, 100_000], resampling_methods.keys())
-    )
-    def test_resampling_methods(self, N, method_name):
+    @parameterized.parameters(resampling_methods.keys())
+    def test_resampling_methods(self, method_name):
+        N = 10_000
+
         np.random.seed(42)
         batch_size = 100
         w = np.random.rand(N)
