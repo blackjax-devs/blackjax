@@ -121,11 +121,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -135,6 +130,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -229,8 +229,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../sampling.html">
-   Sampling
+  <a class="reference internal" href="../mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -377,7 +392,7 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 </div>
 </details>
 </div>
-<p>Let us now implement the model in Aesara/AePPL. We start with implementing the generative model in two part, the improper prior on <code class="docutils literal notranslate"><span class="pre">a</span></code> and <code class="docutils literal notranslate"><span class="pre">b</span></code> and then the response model:</p>
+<p>We implement the generative model in two parts, the improper prior on <code class="docutils literal notranslate"><span class="pre">a</span></code> and <code class="docutils literal notranslate"><span class="pre">b</span></code> and then the response model:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">aesara</span>
@@ -418,27 +433,24 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 </div>
 </div>
 </div>
-<p>We can naively compile the log-probability density function of the model using AePPL’s <code class="docutils literal notranslate"><span class="pre">joint_logprob</span></code>. This function takes the generative model’s graph, and returns a graph that compute the model’s logprob where the random variables <code class="docutils literal notranslate"><span class="pre">Y_rv</span></code> and <code class="docutils literal notranslate"><span class="pre">theta_rv</span></code> are replaced with the value variables <code class="docutils literal notranslate"><span class="pre">theta_vv</span></code> and <code class="docutils literal notranslate"><span class="pre">Y_vv</span></code> that we provide.</p>
+<p>To sample from the posterior distribution of <code class="docutils literal notranslate"><span class="pre">theta_rv</span></code>, <code class="docutils literal notranslate"><span class="pre">a_rv</span></code> and <code class="docutils literal notranslate"><span class="pre">b_rv</span></code> we need to be able to compute the model’s joint log-density. In AePPL, we use <code class="docutils literal notranslate"><span class="pre">joint_logprob</span></code> to build the graph of the joint log-density from the model graph:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">theta_vv</span> <span class="o">=</span> <span class="n">theta_rv</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-<span class="n">Y_vv</span> <span class="o">=</span> <span class="n">Y_rv</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-
-<span class="n">loglikelihood</span> <span class="o">=</span> <span class="n">joint_logprob</span><span class="p">({</span><span class="n">Y_rv</span><span class="p">:</span> <span class="n">Y_vv</span><span class="p">,</span> <span class="n">theta_rv</span><span class="p">:</span> <span class="n">theta_vv</span><span class="p">})</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">loglikelihood</span><span class="p">,</span> <span class="p">(</span><span class="n">y_vv</span><span class="p">,</span> <span class="n">theta_vv</span><span class="p">)</span> <span class="o">=</span> <span class="n">joint_logprob</span><span class="p">(</span><span class="n">Y_rv</span><span class="p">,</span> <span class="n">theta_rv</span><span class="p">)</span>
 <span class="n">logprob</span> <span class="o">=</span> <span class="n">logprior</span> <span class="o">+</span> <span class="n">loglikelihood</span>
 </pre></div>
 </div>
 </div>
 </div>
-<p>I said “naively”, because the Beta distribution generates samples between 0 and 1 and gradient-based algorithms like NUTS work better on unbounded intervals. We can tell AePPL to apply a log-odds transformation to the Beta-distributed variable, and subsequently sample in the transformed space:</p>
+<p>However, the Beta distribution generates samples between 0 and 1 and gradient-based algorithms like NUTS work better on unbounded intervals. We can tell AePPL to apply a log-odds transformation to the Beta-distributed variable, and subsequently sample in the transformed space:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">aeppl.transforms</span> <span class="kn">import</span> <span class="n">TransformValuesRewrite</span><span class="p">,</span> <span class="n">LogOddsTransform</span>
 
 <span class="n">transforms_op</span> <span class="o">=</span> <span class="n">TransformValuesRewrite</span><span class="p">(</span>
-     <span class="p">{</span><span class="n">theta_vv</span><span class="p">:</span> <span class="n">LogOddsTransform</span><span class="p">()}</span>
+     <span class="p">{</span><span class="n">theta_rv</span><span class="p">:</span> <span class="n">LogOddsTransform</span><span class="p">()}</span>
 <span class="p">)</span>
-<span class="n">loglikelihood</span> <span class="o">=</span> <span class="n">joint_logprob</span><span class="p">({</span><span class="n">Y_rv</span><span class="p">:</span> <span class="n">Y_vv</span><span class="p">,</span> <span class="n">theta_rv</span><span class="p">:</span> <span class="n">theta_vv</span><span class="p">},</span> <span class="n">extra_rewrites</span><span class="o">=</span><span class="n">transforms_op</span><span class="p">)</span>
+<span class="n">loglikelihood</span><span class="p">,</span> <span class="p">(</span><span class="n">y_vv</span><span class="p">,</span> <span class="n">theta_vv</span><span class="p">)</span> <span class="o">=</span> <span class="n">joint_logprob</span><span class="p">(</span><span class="n">Y_rv</span><span class="p">,</span> <span class="n">theta_rv</span><span class="p">,</span> <span class="n">extra_rewrites</span><span class="o">=</span><span class="n">transforms_op</span><span class="p">)</span>
 <span class="n">logprob</span> <span class="o">=</span> <span class="n">logprior</span> <span class="o">+</span> <span class="n">loglikelihood</span>
 </pre></div>
 </div>
@@ -446,10 +458,10 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>NUTS is not the best sampler for this example, since the Beta distribution is the conjugate distribution of the Binomial. Marginalizing would lead to a faster sampler with less variance. <a class="reference external" href="https://github.com/aesara-devs/aemcmc">AeMCMC</a> (in alpha state) makes this kind of transformation automatically on Aesara models.</p>
+<p>NUTS is not the best sampler for this model: the Beta distribution is the conjugate distribution of the Binomial. Marginalizing would lead to a faster sampler with less variance. <a class="reference external" href="https://github.com/aesara-devs/aemcmc">AeMCMC</a> (in alpha state) makes this kind of transformation automatically on Aesara models.</p>
 </div>
 <p>You can alway debug the <code class="docutils literal notranslate"><span class="pre">logprob</span></code> graph by printing it:</p>
-<div class="cell docutils container">
+<div class="cell tag_output_scroll docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">aesara</span><span class="o">.</span><span class="n">dprint</span><span class="p">(</span><span class="n">logprob</span><span class="p">)</span>
 </pre></div>
@@ -473,8 +485,8 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
      |   | | | |Elemwise{ge,no_inplace} [id O]
      |   | | | | |TransformedVariable [id P]
      |   | | | | | |Elemwise{sigmoid,no_inplace} [id Q]
-     |   | | | | | | |&lt;TensorType(float64, (None,))&gt; [id R]
-     |   | | | | | |&lt;TensorType(float64, (None,))&gt; [id R]
+     |   | | | | | | |&lt;TensorType(float64, (71,))&gt; [id R]
+     |   | | | | | |&lt;TensorType(float64, (71,))&gt; [id R]
      |   | | | | |InplaceDimShuffle{x} [id S]
      |   | | | |   |TensorConstant{0.0} [id T]
      |   | | | |Elemwise{le,no_inplace} [id U]
@@ -536,7 +548,7 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
      |   |Elemwise{add,no_inplace} [id CL]
      |     |Elemwise{log,no_inplace} [id CM]
      |     | |Elemwise{sigmoid,no_inplace} [id CN]
-     |     |   |&lt;TensorType(float64, (None,))&gt; [id R]
+     |     |   |&lt;TensorType(float64, (71,))&gt; [id R]
      |     |Elemwise{log1p,no_inplace} [id CO]
      |       |Elemwise{neg,no_inplace} [id CP]
      |         |Elemwise{sigmoid,no_inplace} [id CN]
@@ -547,9 +559,9 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
          | | |Elemwise{le,no_inplace} [id CU]
          | | | |InplaceDimShuffle{x} [id CV]
          | | | | |TensorConstant{0} [id CW]
-         | | | |&lt;TensorType(int64, (None,))&gt; [id CX]
+         | | | |&lt;TensorType(int64, (71,))&gt; [id CX]
          | | |Elemwise{le,no_inplace} [id CY]
-         | |   |&lt;TensorType(int64, (None,))&gt; [id CX]
+         | |   |&lt;TensorType(int64, (71,))&gt; [id CX]
          | |   |TensorConstant{[20 20 20 .. 47 24 14]} [id CZ]
          | |Elemwise{add,no_inplace} [id DA]
          | | |Elemwise{add,no_inplace} [id DB]
@@ -562,14 +574,14 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
          | | | | | |     |TensorConstant{1} [id DH]
          | | | | | |Elemwise{gammaln,no_inplace} [id DI]
          | | | | |   |Elemwise{add,no_inplace} [id DJ]
-         | | | | |     |&lt;TensorType(int64, (None,))&gt; [id CX]
+         | | | | |     |&lt;TensorType(int64, (71,))&gt; [id CX]
          | | | | |     |InplaceDimShuffle{x} [id DK]
          | | | | |       |TensorConstant{1} [id DL]
          | | | | |Elemwise{gammaln,no_inplace} [id DM]
          | | | |   |Elemwise{add,no_inplace} [id DN]
          | | | |     |Elemwise{sub,no_inplace} [id DO]
          | | | |     | |TensorConstant{[20 20 20 .. 47 24 14]} [id CZ]
-         | | | |     | |&lt;TensorType(int64, (None,))&gt; [id CX]
+         | | | |     | |&lt;TensorType(int64, (71,))&gt; [id CX]
          | | | |     |InplaceDimShuffle{x} [id DP]
          | | | |       |TensorConstant{1} [id DQ]
          | | | |Elemwise{switch,no_inplace} [id DR]
@@ -579,7 +591,7 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
          | | |   |   |TensorConstant{0} [id DU]
          | | |   |Elemwise{switch,no_inplace} [id DV]
          | | |   | |Elemwise{eq,no_inplace} [id DW]
-         | | |   | | |&lt;TensorType(int64, (None,))&gt; [id CX]
+         | | |   | | |&lt;TensorType(int64, (71,))&gt; [id CX]
          | | |   | | |InplaceDimShuffle{x} [id DX]
          | | |   | |   |TensorConstant{0} [id DY]
          | | |   | |InplaceDimShuffle{x} [id DZ]
@@ -587,7 +599,7 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
          | | |   | |InplaceDimShuffle{x} [id EB]
          | | |   |   |TensorConstant{-inf} [id EC]
          | | |   |Elemwise{mul,no_inplace} [id ED]
-         | | |     |&lt;TensorType(int64, (None,))&gt; [id CX]
+         | | |     |&lt;TensorType(int64, (71,))&gt; [id CX]
          | | |     |Elemwise{log,no_inplace} [id EE]
          | | |       |TransformedVariable [id P]
          | | |Elemwise{switch,no_inplace} [id EF]
@@ -602,7 +614,7 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
          | |   | |Elemwise{eq,no_inplace} [id EN]
          | |   | | |Elemwise{sub,no_inplace} [id EO]
          | |   | | | |TensorConstant{[20 20 20 .. 47 24 14]} [id CZ]
-         | |   | | | |&lt;TensorType(int64, (None,))&gt; [id CX]
+         | |   | | | |&lt;TensorType(int64, (71,))&gt; [id CX]
          | |   | | |InplaceDimShuffle{x} [id EP]
          | |   | |   |TensorConstant{0} [id EQ]
          | |   | |InplaceDimShuffle{x} [id ER]
@@ -627,7 +639,7 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
                |TensorConstant{1.0} [id FG]
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;ipykernel.iostream.OutStream at 0x7f04a7bfa610&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;ipykernel.iostream.OutStream at 0x7f066997af40&gt;
 </pre></div>
 </div>
 </div>
@@ -635,7 +647,7 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 <p>To sample with Blackjax we will need to use Aesara’s JAX backend; <code class="docutils literal notranslate"><span class="pre">logprob_jax</span></code> defined below is a function that uses JAX operators, can be passed as an argument to <code class="docutils literal notranslate"><span class="pre">jax.jit</span></code> and <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code>:</p>
 <div class="cell tag_remove-stderr docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logprob_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((</span><span class="n">a_vv</span><span class="p">,</span> <span class="n">b_vv</span><span class="p">,</span> <span class="n">theta_vv</span><span class="p">,</span> <span class="n">Y_vv</span><span class="p">),</span> <span class="n">logprob</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;JAX&quot;</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logprob_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((</span><span class="n">a_vv</span><span class="p">,</span> <span class="n">b_vv</span><span class="p">,</span> <span class="n">theta_vv</span><span class="p">,</span> <span class="n">y_vv</span><span class="p">),</span> <span class="n">logprob</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;JAX&quot;</span><span class="p">)</span>
 <span class="n">logprob_jax</span> <span class="o">=</span> <span class="n">logprob_fn</span><span class="o">.</span><span class="n">vm</span><span class="o">.</span><span class="n">jit_fn</span>
 </pre></div>
 </div>
@@ -643,7 +655,12 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 <div class="cell_output docutils container">
 </div>
 </div>
-<p>JAX-compiled functions currently returns a tuple with a single element, but JAX can only differentiate scalar values and will complain. In addition, we would like to work with dictionaries for the values of the variables in Blackjax, and finally the value of <code class="docutils literal notranslate"><span class="pre">Y_vv</span></code> is fixed. So let’s wrap the compiled function in a function that has the desired behavior:</p>
+<p>Let’s wrap this function to make our life simpler:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">logprob_jax</span></code> returns a tuple with a single element, but JAX can only differentiate scalar values and will complain.</p></li>
+<li><p>We would like to work with dictionaries for the values of the variables;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Y_vv</span></code> is observed, so let’s fix its value.</p></li>
+</ol>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">position</span><span class="p">):</span>
@@ -653,7 +670,7 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 </div>
 </div>
 </div>
-<p>We first need to define an initial position from which we are going to start sampling:</p>
+<p>Let’s define the initial position from which we are going to start sampling:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
@@ -707,8 +724,8 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 <span class="n">n_adapt</span> <span class="o">=</span> <span class="mi">3000</span>
 <span class="n">n_samples</span> <span class="o">=</span> <span class="mi">1000</span>
 
-<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">n_adapt</span><span class="p">)</span>
-<span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">init_position</span><span class="p">)</span>
+<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
+<span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">init_position</span><span class="p">,</span> <span class="n">n_adapt</span><span class="p">)</span>
 
 <span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">n_samples</span>

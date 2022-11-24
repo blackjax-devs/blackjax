@@ -35,6 +35,8 @@ sigma = np.array([15.0, 10.0, 16.0, 11.0, 9.0, 11.0, 10.0, 18.0])
 We implement the non-centered version of the hierarchical model:
 
 ```{code-cell} ipython3
+:tags: [hide-output]
+
 import numpyro
 import numpyro.distributions as dist
 from numpyro.infer.reparam import TransformReparam
@@ -90,9 +92,9 @@ import blackjax
 num_warmup = 2000
 
 adapt = blackjax.window_adaptation(
-    blackjax.nuts, logprob_fn, num_warmup, target_acceptance_rate=0.8
+    blackjax.nuts, logprob_fn, target_acceptance_rate=0.8
 )
-last_state, kernel, _ = adapt.run(rng_key, initial_position)
+last_state, kernel, _ = adapt.run(rng_key, initial_position, num_warmup)
 ```
 
 Let us now perform inference with the tuned kernel:
@@ -110,7 +112,7 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     _, (states, infos) = jax.lax.scan(one_step, initial_state, keys)
 
     return states, (
-        infos.acceptance_probability,
+        infos.acceptance_rate,
         infos.is_divergent,
         infos.num_integration_steps,
     )
@@ -137,7 +139,8 @@ print(f"There were {100*num_divergent:.2f}% divergent transitions")
 Finally let us now plot the distribution of the parameters. Note that since we use a transformed variable, Numpyro does not output the school treatment effect directly:
 
 ```{code-cell} ipython3
-:tags: [hide-cell]
+:tags: [hide-input]
+
 import seaborn as sns
 from matplotlib import pyplot as plt
 
@@ -153,7 +156,8 @@ fig.tight_layout()
 ```
 
 ```{code-cell} ipython3
-:tags: [hide-cell]
+:tags: [hide-input]
+
 fig, axes = plt.subplots(8, 2, sharex="col", sharey="col")
 fig.set_size_inches(12, 10)
 for i in range(J):
@@ -168,7 +172,8 @@ plt.show()
 ```
 
 ```{code-cell} ipython3
-:tags: [hide-cell]
+:tags: [hide-input]
+
 for i in range(J):
     print(
         f"Relative treatment effect for school {i}: {np.mean(samples['theta_base'][:, i]):.2f}"

@@ -121,11 +121,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -135,6 +130,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -229,8 +229,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../sampling.html">
-   Sampling
+  <a class="reference internal" href="../mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -473,7 +488,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -495,7 +510,7 @@ title="Source repository"
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/ef0ffcafdd2fd1e4d897ccc9859124c5c7e721a17f37ae1a96ac1c5a6155e031.png" src="../_images/ef0ffcafdd2fd1e4d897ccc9859124c5c7e721a17f37ae1a96ac1c5a6155e031.png" />
+<img alt="../_images/d8fa42047fa01fcf0d6dc5063141f2745f4eb59ebb123d06336ceaa5e9f52455.png" src="../_images/d8fa42047fa01fcf0d6dc5063141f2745f4eb59ebb123d06336ceaa5e9f52455.png" />
 </div>
 </div>
 <section id="sampling">
@@ -526,8 +541,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.22 s, sys: 364 ms, total: 8.59 s
-Wall time: 7.8 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 4.48 s, sys: 180 ms, total: 4.66 s
+Wall time: 4.33 s
 </pre></div>
 </div>
 </div>
@@ -546,8 +561,8 @@ Wall time: 7.8 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 51s, sys: 229 ms, total: 1min 51s
-Wall time: 1min 51s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 57.4 s, sys: 142 ms, total: 57.5 s
+Wall time: 57.5 s
 </pre></div>
 </div>
 </div>
@@ -564,7 +579,7 @@ Wall time: 1min 51s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Mean squared error for the mean vector 0.00015064924082253128 and covariance matrix 2.0344801043847838e-07
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Mean squared error for the mean vector 0.00015894697571638972 and covariance matrix 1.6154511683907913e-07
 </pre></div>
 </div>
 </div>
@@ -597,7 +612,7 @@ Wall time: 1min 51s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/a2151e6b1b001727bf4b1bc61ff06a395c2e9057897681c55cc8679d6adaab96.png" src="../_images/a2151e6b1b001727bf4b1bc61ff06a395c2e9057897681c55cc8679d6adaab96.png" />
+<img alt="../_images/5ec718f3c5a79cd2ca4f5fd71e8f12ba9bbbd2ab4c78ae26d48af54b5b2f53d2.png" src="../_images/5ec718f3c5a79cd2ca4f5fd71e8f12ba9bbbd2ab4c78ae26d48af54b5b2f53d2.png" />
 </div>
 </div>
 </section>
@@ -607,11 +622,11 @@ Wall time: 1min 51s
 <p>Assuming the degenerate case when the likelihood is always equal to 1 (infinite variance, not informative), we have that the slice sampler will always accept the first point it samples from the ellipsis, hence the number of sub iterations per iteration of the sampler will always be 1. To see this, notice that all the points on the ellipsis keep the joint distribution given by the <em>prior</em> measure for the target variable <span class="math notranslate nohighlight">\(\mathbf{f}\)</span> and the same measure but for the latent variable, invariant. We can get an idea of how efficient the sampler is by looking at the number of sub iterations per iteration of the sampler, below we plot a histogram for our current example.</p>
 <p>Another parameter of interest for diagnostics is the location on the ellipse the returned sample is from. This parameter, dubbed theta, is expressed in radians hence putting it on the interval <span class="math notranslate nohighlight">\([-2\pi, 2\pi]\)</span> (i.e. moving around the ellipse clockwise for positive numbers and counter clockwise for negative numbers). If theta <span class="math notranslate nohighlight">\(\in {0, -2\pi, 2\pi}\)</span> we are at the initial position of the iteration, i.e. the closer theta is to any of these three values the closer the new sample is to the previous one. A histogram for this parameter is plotted below.</p>
 <p>Since the likelihood’s variance is set at 1., it is quite informative. Increasing the likelihood’s variance leads to less sub iterations per iteration of the Elliptical Slice sampler and the parameter theta becoming more uniform on its range.</p>
-<div class="cell tag_hide-cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
@@ -622,16 +637,16 @@ Wall time: 1min 51s
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<img alt="../_images/3669b2668a679812e08aa2610d0e27783dab05c9a2bc367c0c925e6c6b3ea790.png" src="../_images/3669b2668a679812e08aa2610d0e27783dab05c9a2bc367c0c925e6c6b3ea790.png" />
-</div>
 </details>
+<div class="cell_output docutils container">
+<img alt="../_images/627cf31079468a083ea9810b0561bf633fc6d9193d31794e1375c1119c772d60.png" src="../_images/627cf31079468a083ea9810b0561bf633fc6d9193d31794e1375c1119c772d60.png" />
 </div>
-<div class="cell tag_hide-cell docutils container">
+</div>
+<div class="cell tag_hide-input docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
@@ -644,10 +659,10 @@ Wall time: 1min 51s
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<img alt="../_images/e9c801e994570835faf3bc57b0f82b0f950ff1fe3c55d5aef91cecc24a66f591.png" src="../_images/e9c801e994570835faf3bc57b0f82b0f950ff1fe3c55d5aef91cecc24a66f591.png" />
-</div>
 </details>
+<div class="cell_output docutils container">
+<img alt="../_images/77b1411cb94500d9c812cb18add54e484af8a7d738936051e6a88d15cb460d5d.png" src="../_images/77b1411cb94500d9c812cb18add54e484af8a7d738936051e6a88d15cb460d5d.png" />
+</div>
 </div>
 </section>
 </section>

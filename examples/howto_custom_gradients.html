@@ -1,0 +1,727 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Use custom gradients &#8212; Blackjax</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Use a logprob function that is not compatible with JAX’s primitives" href="howto_other_frameworks.html" />
+    <link rel="prev" title="Sample with multiple chains in parallel" href="howto_sample_multiple_chains.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="../_static/blackjax.png" class="logo" alt="logo">
+      
+      
+      <h1 class="site-logo" id="site-title">Blackjax</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  HOW TO
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../howto_use_ppl.html">
+   Use the model I built with X?
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_aesara.html">
+     Use with Aesara models
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_numpyro.html">
+     Use with Numpyro models
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_oryx.html">
+     Use with Oryx models
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_tfp.html">
+     Use with TFP models
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_sample_multiple_chains.html">
+   Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Use custom gradients?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_other_frameworks.html">
+   Use non-JAX log-prob functions?
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Blackjax by example
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../examples.html">
+   Examples
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <label for="toctree-checkbox-2">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="Introduction.html">
+     A Quick Introduction to Blackjax
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="LogisticRegression.html">
+     Bayesian Logistic Regression
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="LogisticRegressionWithLatentGaussianSampler.html">
+     Bayesian Logistic Regression With Latent Gaussian Sampler
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="TemperedSMC.html">
+     Use Tempered SMC to Improve Exploration of MCMC Methods.
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="HierarchicalBNN.html">
+     Hierarchical Bayesian Neural Networks
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="PeriodicOrbitalMCMC.html">
+     Periodic Orbital MCMC
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="GP_EllipticalSliceSampler.html">
+     Gaussian Regression with the Elliptical Slice Sampler
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="SGMCMC.html">
+     MNIST Digit Recognition With a 3-Layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="change_of_variable_hmc.html">
+     Change of Variable in HMC
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="Pathfinder.html">
+     Pathfinder
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="RegimeSwitchingModel.html">
+     Regime switching Hidden Markov model
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="SparseLogisticRegression.html">
+     Sparse logistic regression
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API Documentation
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../vi.html">
+   Variational Inference
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../adaptation.html">
+   Adaptation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../diagnostics.html">
+   Diagnostics
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+<a href="https://github.com/blackjax-devs/blackjax"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="bottom"
+title="Source repository"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+<label for="__page-toc"
+  class="headerbtn headerbtn-page-toc"
+  
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-list"></i>
+  </span>
+
+</label>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+    <div class="tocsection onthispage pt-5 pb-3">
+        <i class="fas fa-list"></i> Contents
+    </div>
+    <nav id="bd-toc-nav" aria-label="Page">
+        <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#functions-defined-as-the-minimum-of-another-function">
+   Functions defined as the minimum of another function
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#trying-to-differentate-the-function-with-jax-grad">
+     Trying to differentate the function with
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       jax.grad
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#deriving-the-gradient-mathematically">
+     Deriving the gradient mathematically
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#telling-jax-to-use-a-custom-gradient">
+     Telling JAX to use a custom gradient
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#making-sure-the-result-is-correct">
+     Making sure the result is correct
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#using-the-function-with-blackjax">
+     Using the function with Blackjax
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </nav>
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Use custom gradients</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#functions-defined-as-the-minimum-of-another-function">
+   Functions defined as the minimum of another function
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#trying-to-differentate-the-function-with-jax-grad">
+     Trying to differentate the function with
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       jax.grad
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#deriving-the-gradient-mathematically">
+     Deriving the gradient mathematically
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#telling-jax-to-use-a-custom-gradient">
+     Telling JAX to use a custom gradient
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#making-sure-the-result-is-correct">
+     Making sure the result is correct
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#using-the-function-with-blackjax">
+     Using the function with Blackjax
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <section id="use-custom-gradients">
+<h1>Use custom gradients<a class="headerlink" href="#use-custom-gradients" title="Permalink to this headline">#</a></h1>
+<p>JAX provides a convenient <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> function to evaluate the gradient of any function build with JAX primitives. Which is why Blackjax uses <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> internally whenever it needs to evaluate the gradient. This should be enough for most applications, but sometimes you may need to provide your own gradients to blackjax for several reasons:</p>
+<ul class="simple">
+<li><p>You have a convenient closed-form expression for the gradient that is evaluated faster than the gradient that JAX produces;</p></li>
+<li><p>The forward-mode differentiation is faster than the backward-mode;</p></li>
+<li><p>The log-density function you are using is non differentiable by JAX, which is the case of <a class="reference external" href="https://github.com/google/jaxopt">many optimizers</a>.</p></li>
+</ul>
+<p>Do not despair! Blackjax covers these use cases using JAX’s <a class="reference external" href="https://jax.readthedocs.io/en/latest/notebooks/Custom_derivative_rules_for_Python_code.html">custom derivative dispatch</a>. In the following we will consider a very academic example, but which should be enough to understand the mechanics of how to set custom gradients with JAX.</p>
+<section id="functions-defined-as-the-minimum-of-another-function">
+<h2>Functions defined as the minimum of another function<a class="headerlink" href="#functions-defined-as-the-minimum-of-another-function" title="Permalink to this headline">#</a></h2>
+<p>Functions can be defined as the minimum of another one, <span class="math notranslate nohighlight">\(f(x) = min_{y} g(x,y)\)</span>. Computing their gradients may be tedious, especially if the minimisation happens numerically rather than in closed form. We show how automatic derivatives can be modified on such examples, resulting in better overall efficiency and stability.</p>
+<p>Our example is taken from the theory of <a class="reference external" href="https://en.wikipedia.org/wiki/Convex_conjugate">convex conjugates</a>, used for example in optimal transport. Let’s consider the following function:</p>
+<p>$$
+\begin{align*}
+g(x, y) &amp;= h(y) - \langle x, y\rangle\
+h(x) &amp;= \frac{1}{p}|x|^p,\qquad p &gt; 1.\
+\end{align*}
+$$</p>
+<p>And define the function <span class="math notranslate nohighlight">\(f\)</span> as <span class="math notranslate nohighlight">\(f(x) = -min_y g(x, y)\)</span> which we can be implemented as:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">from</span> <span class="nn">jax.scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
+
+<span class="k">def</span> <span class="nf">h</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">**</span> <span class="n">p</span>
+    <span class="k">return</span> <span class="n">out</span> <span class="o">/</span> <span class="n">p</span>
+
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the minimum value of g and where it is achieved.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">h</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="o">-</span> <span class="n">x</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span>
+
+    <span class="n">res</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,)),</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;BFGS&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">res</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Note the we also return the value of <span class="math notranslate nohighlight">\(y\)</span> where the minimum of <span class="math notranslate nohighlight">\(g\)</span> is achieved (this will be useful later).</p>
+<section id="trying-to-differentate-the-function-with-jax-grad">
+<h3>Trying to differentate the function with <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code><a class="headerlink" href="#trying-to-differentate-the-function-with-jax-grad" title="Permalink to this headline">#</a></h3>
+<p>The gradient of the function <span class="math notranslate nohighlight">\(f\)</span> is undefined for JAX, which cannot differentiate through <code class="docutils literal notranslate"><span class="pre">while</span></code> loops, and trying to compute it directly raises an error:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># We only want the gradient with respect to `x`</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">has_aux</span><span class="o">=</span><span class="kc">True</span><span class="p">)(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Reverse-mode differentiation does not work for lax.while_loop or lax.fori_loop. Try using lax.scan instead.
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="deriving-the-gradient-mathematically">
+<h3>Deriving the gradient mathematically<a class="headerlink" href="#deriving-the-gradient-mathematically" title="Permalink to this headline">#</a></h3>
+<p>In order to avoid this, we can leverage the mathematical structure of <span class="math notranslate nohighlight">\(f(x) = -\min_y h(y) - \langle x, y\rangle\)</span>. Indeed, asumming that the minimum is unique and achieved at <span class="math notranslate nohighlight">\(y(x)\)</span> we have</p>
+<div class="math notranslate nohighlight">
+\[\begin{equation*}
+    \frac{df}{dx} = -\bigg[\frac{dh}{dy} \frac{dy}{dx} - \frac{dy}{dx} x - y\bigg]
+\end{equation*}\]</div>
+<p>The first order optimality criterion</p>
+<div class="math notranslate nohighlight">
+\[\begin{equation*}
+    \frac{dh}{dy} - x = 0,
+\end{equation*}\]</div>
+<p>Ensures that:</p>
+<div class="math notranslate nohighlight">
+\[\begin{equation*}
+    \frac{df}{dx} = y(x).
+\end{equation*}\]</div>
+<p>i.e. the value of the derivative at <span class="math notranslate nohighlight">\(x\)</span> is the value <span class="math notranslate nohighlight">\(y(x)\)</span> at which the minimum of the function <span class="math notranslate nohighlight">\(g\)</span> is achieved.</p>
+</section>
+<section id="telling-jax-to-use-a-custom-gradient">
+<h3>Telling JAX to use a custom gradient<a class="headerlink" href="#telling-jax-to-use-a-custom-gradient" title="Permalink to this headline">#</a></h3>
+<p>We can thus now tell JAX to compute the derivative of the function using the argmin using <code class="docutils literal notranslate"><span class="pre">jax.custom_vjp</span></code></p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+
+<span class="nd">@partial</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">custom_jvp</span><span class="p">,</span> <span class="n">nondiff_argnums</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+<span class="k">def</span> <span class="nf">f_with_gradient</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="c1"># We only return the value of f</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="nd">@f_with_gradient</span><span class="o">.</span><span class="n">defjvp</span>
+<span class="k">def</span> <span class="nf">f_jac_vec_prod</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">primals</span><span class="p">,</span> <span class="n">tangents</span><span class="p">):</span>
+    <span class="n">x</span><span class="p">,</span> <span class="o">=</span> <span class="n">primals</span>
+    <span class="n">x_dot</span><span class="p">,</span> <span class="o">=</span> <span class="n">tangents</span>
+
+    <span class="c1"># We use the fact that the gradient of f is</span>
+    <span class="c1"># the argmin.</span>
+    <span class="n">f_out</span><span class="p">,</span> <span class="n">argmin</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">f_out</span><span class="p">,</span> <span class="n">argmin</span> <span class="o">*</span> <span class="n">x_dot</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Which now outputs a value:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">f_with_gradient</span><span class="p">)(</span><span class="mf">0.31415</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray(0.560483, dtype=float32, weak_type=True)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="making-sure-the-result-is-correct">
+<h3>Making sure the result is correct<a class="headerlink" href="#making-sure-the-result-is-correct" title="Permalink to this headline">#</a></h3>
+<p>The form of the function <span class="math notranslate nohighlight">\(g\)</span> was specifically chosen because we have a closed-form expression for <span class="math notranslate nohighlight">\(f\)</span> which is differentiable and will allow us to check the value of the previously defined gradient:</p>
+<p>$$
+\begin{align*}
+f(x) &amp;=\frac{1}{q}|x|^q\
+\frac{1}{q} + \frac{1}{p} &amp;= 1\
+\end{align*}
+$$</p>
+<p>Which is obviously differentiable. We implement it:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">true_f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">p</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">**</span> <span class="n">q</span>
+    <span class="k">return</span> <span class="n">out</span> <span class="o">/</span> <span class="n">q</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">true_f</span><span class="p">)(</span><span class="mf">0.31415</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>0.56049085
+</pre></div>
+</div>
+</div>
+</div>
+<p>And compare the gradient of this function with the custom gradient defined above:</p>
+<div class="cell tag_hide-input docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
+</summary>
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Gradient of closed-form f: </span><span class="si">{</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">true_f</span><span class="p">)(</span><span class="mf">0.31415</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Custom gradient based on argmin: </span><span class="si">{</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">f_with_gradient</span><span class="p">)(</span><span class="mf">0.31415</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</details>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Gradient of closed-form f: 0.5604908466339111
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Custom gradient based on argmin: 0.5604829788208008
+</pre></div>
+</div>
+</div>
+</div>
+<p>They give close enough values! In other words, it suffices to know that the value of the gradient is the argmin to define a custom gradient function that gives good results.</p>
+</section>
+<section id="using-the-function-with-blackjax">
+<h3>Using the function with Blackjax<a class="headerlink" href="#using-the-function-with-blackjax" title="Permalink to this headline">#</a></h3>
+<p>Let us now demonstrate that we can use <code class="docutils literal notranslate"><span class="pre">f_with_gradients</span></code> with Blackjax. We define a toy log-density function and use a gradient-based sampler:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax</span>
+
+
+<span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+    <span class="n">logprob</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">f_with_gradient</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">logprob</span> <span class="o">+=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">logprob</span>
+
+<span class="n">hmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">,</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="mf">1.</span><span class="p">)</span>
+
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">new_state</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=DeviceArray(1.0013554, dtype=float32, weak_type=True), potential_energy=DeviceArray(2.5623603, dtype=float32), potential_energy_grad=DeviceArray(1.6698307, dtype=float32, weak_type=True))
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="howto_sample_multiple_chains.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Sample with multiple chains in parallel</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="howto_other_frameworks.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Use a logprob function that is not compatible with JAX’s primitives</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By The Blackjax developers<br/>
+  
+      &copy; Copyright 2022, The Blackjax developers.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>

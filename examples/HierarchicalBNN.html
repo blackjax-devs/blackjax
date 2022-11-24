@@ -121,11 +121,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -135,6 +130,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -229,8 +229,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../sampling.html">
-   Sampling
+  <a class="reference internal" href="../mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -519,7 +534,7 @@ title="Source repository"
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/8a3f11d4dfe722b07f776e1442e80e74916a162bef9d0e8a6146258887ce3ef1.png" src="../_images/8a3f11d4dfe722b07f776e1442e80e74916a162bef9d0e8a6146258887ce3ef1.png" />
+<img alt="../_images/2a84a55258a269e7c38b071db859b5a3f24c6784ae1db78d61bef714f333857c.png" src="../_images/2a84a55258a269e7c38b071db859b5a3f24c6784ae1db78d61bef714f333857c.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -578,7 +593,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -609,7 +624,7 @@ title="Source repository"
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/f0e4a51716e80e48bf3e00fde18747e95cca75c5588305903638a49a61887f24.png" src="../_images/f0e4a51716e80e48bf3e00fde18747e95cca75c5588305903638a49a61887f24.png" />
+<img alt="../_images/5145a0d0a47798edfbe890adfeda4c897067bb4bb8f01ac38a289828030c0e34.png" src="../_images/5145a0d0a47798edfbe890adfeda4c897067bb4bb8f01ac38a289828030c0e34.png" />
 </div>
 </div>
 </section>
@@ -670,8 +685,8 @@ title="Source repository"
     <span class="n">logprob</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X_train</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y_train</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
 
     <span class="c1"># warm up</span>
-    <span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob</span><span class="p">,</span> <span class="n">num_warmup</span><span class="p">)</span>
-    <span class="n">final_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">warmup_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">)</span>
+    <span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob</span><span class="p">)</span>
+    <span class="n">final_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">warmup_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">,</span> <span class="n">num_warmup</span><span class="p">)</span>
 
     <span class="c1"># inference</span>
     <span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">inference_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">final_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
@@ -791,7 +806,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Train accuracy = 87.22%
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Train accuracy = 87.00%
 </pre></div>
 </div>
 </div>
@@ -809,7 +824,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Test accuracy = 82.22%
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Test accuracy = 81.89%
 </pre></div>
 </div>
 </div>
@@ -858,7 +873,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/c345e4adc3567b45d145767593416df3f2a2b2f5a2c4b5164a287dac812be75e.png" src="../_images/c345e4adc3567b45d145767593416df3f2a2b2f5a2c4b5164a287dac812be75e.png" />
+<img alt="../_images/643612c064cd9b98ba7af1c4bb3c6ddfc6dd7794224b78d7f6774deb659a05bc.png" src="../_images/643612c064cd9b98ba7af1c4bb3c6ddfc6dd7794224b78d7f6774deb659a05bc.png" />
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
@@ -874,7 +889,7 @@ and compute the posterior for all the weights.</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/7c76ba5e63a69a618eb2d7ac0ef454ff93e1f5b9f58c59eb6498d8671d00a026.png" src="../_images/7c76ba5e63a69a618eb2d7ac0ef454ff93e1f5b9f58c59eb6498d8671d00a026.png" />
+<img alt="../_images/47ae2043f327af3789babe50e1cb1e56e0e529d6268b643545adcb206c0febea.png" src="../_images/47ae2043f327af3789babe50e1cb1e56e0e529d6268b643545adcb206c0febea.png" />
 </div>
 </div>
 </section>
@@ -970,8 +985,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 50s, sys: 4.01 s, total: 1min 54s
-Wall time: 1min 52s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 9s, sys: 1.04 s, total: 1min 10s
+Wall time: 1min 8s
 </pre></div>
 </div>
 </div>
@@ -996,7 +1011,7 @@ Wall time: 1min 52s
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Train accuracy = 90.89%
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Train accuracy = 91.00%
 </pre></div>
 </div>
 </div>
@@ -1018,7 +1033,7 @@ Wall time: 1min 52s
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Test accuracy = 87.44%
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Test accuracy = 87.56%
 </pre></div>
 </div>
 </div>
@@ -1060,7 +1075,7 @@ Wall time: 1min 52s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/03fcb9337b31d8ebef742f729d7ffae98d84e7bde77493e82bc6ede58c294644.png" src="../_images/03fcb9337b31d8ebef742f729d7ffae98d84e7bde77493e82bc6ede58c294644.png" />
+<img alt="../_images/33189413ecaf1c682ac8cc03e6295e4f8020150823704ead4b7a298060177ed9.png" src="../_images/33189413ecaf1c682ac8cc03e6295e4f8020150823704ead4b7a298060177ed9.png" />
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
@@ -1076,7 +1091,7 @@ Wall time: 1min 52s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/c9d526e1e6660f0267c726ed126d2bbca51b41e3528cca6e3a1c93947387d159.png" src="../_images/c9d526e1e6660f0267c726ed126d2bbca51b41e3528cca6e3a1c93947387d159.png" />
+<img alt="../_images/e630ca2996ae19820d3ad7260014a86e389716bf19ab14023605ace48802a8e1.png" src="../_images/e630ca2996ae19820d3ad7260014a86e389716bf19ab14023605ace48802a8e1.png" />
 </div>
 </div>
 </section>

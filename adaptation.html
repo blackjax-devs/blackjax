@@ -36,7 +36,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Diagnostics" href="diagnostics.html" />
-    <link rel="prev" title="Sampling" href="sampling.html" />
+    <link rel="prev" title="Variational Inference" href="vi.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -120,11 +120,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="examples/howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="examples/howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -134,6 +129,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="examples/howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="examples/howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -228,8 +228,23 @@
 </p>
 <ul class="current nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="sampling.html">
-   Sampling
+  <a class="reference internal" href="mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1 current active">
@@ -347,8 +362,13 @@ title="Source repository"
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#maximum-eigenvalue-adaptation-of-damping-and-step-size-adaptation">
-   Maximum-Eigenvalue Adaptation of Damping and Step-size adaptation
+  <a class="reference internal nav-link" href="#pathfinder-adaptation">
+   Pathfinder adaptation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#meads">
+   MEADS
   </a>
  </li>
 </ul>
@@ -376,8 +396,13 @@ title="Source repository"
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#maximum-eigenvalue-adaptation-of-damping-and-step-size-adaptation">
-   Maximum-Eigenvalue Adaptation of Damping and Step-size adaptation
+  <a class="reference internal nav-link" href="#pathfinder-adaptation">
+   Pathfinder adaptation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#meads">
+   MEADS
   </a>
  </li>
 </ul>
@@ -396,8 +421,9 @@ title="Source repository"
 <h2>Window adaptation<a class="headerlink" href="#window-adaptation" title="Permalink to this headline">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.window_adaptation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">window_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logprob_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_mass_matrix_diagonal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_step_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_acceptance_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logprob_grad_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#window_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.window_adaptation" title="Permalink to this definition">#</a></dt>
-<dd><p>Adapt the parameters of algorithms in the HMC family.</p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">window_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logprob_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_mass_matrix_diagonal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_step_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_acceptance_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#window_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.window_adaptation" title="Permalink to this definition">#</a></dt>
+<dd><p>Adapt the value of the inverse mass matrix and step size parameters of
+algorithms in the HMC fmaily.</p>
 <p>Algorithms in the HMC family on a euclidean manifold depend on the value of
 at least two parameters: the step size, related to the trajectory
 integrator, and the mass matrix, linked to the euclidean metric.</p>
@@ -409,31 +435,61 @@ improve performance and quality.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>algorithm</strong> (<em>Union</em><em>[</em><a class="reference internal" href="sampling.html#blackjax.hmc" title="blackjax.kernels.hmc"><em>blackjax.kernels.hmc</em></a><em>, </em><a class="reference internal" href="sampling.html#blackjax.nuts" title="blackjax.kernels.nuts"><em>blackjax.kernels.nuts</em></a><em>]</em>) – The algorithm whose parameters are being tuned.</p></li>
-<li><p><strong>logprob_fn</strong> (<em>Callable</em>) – The log density probability density function from which we wish to sample.</p></li>
-<li><p><strong>num_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of adaptation steps.</p></li>
-<li><p><strong>is_mass_matrix_diagonal</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) – Whether we should adapt a diagonal mass matrix.</p></li>
-<li><p><strong>initial_step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The initial step size used in the algorithm.</p></li>
-<li><p><strong>target_acceptance_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The acceptance rate that we target during step size adaptation.</p></li>
-<li><p><strong>progress_bar</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) – Whether we should display a progress bar.</p></li>
-<li><p><strong>logprob_grad_fn</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – The gradient of logprob_fn.  If it’s not provided, it will be computed
-by jax using reverse mode autodiff (jax.grad).</p></li>
-<li><p><strong>**parameters</strong> – The extra parameters to pass to the algorithm, e.g. the number of
+<li><p><strong>algorithm</strong> (<em>Union</em><em>[</em><a class="reference internal" href="mcmc.html#blackjax.hmc" title="blackjax.kernels.hmc"><em>blackjax.kernels.hmc</em></a><em>, </em><a class="reference internal" href="mcmc.html#blackjax.nuts" title="blackjax.kernels.nuts"><em>blackjax.kernels.nuts</em></a><em>]</em>) – The algorithm whose parameters are being tuned.</p></li>
+<li><p><strong>logprob_fn</strong> (<em>Callable</em>) – The log density probability density function from which we wish to
+sample.</p></li>
+<li><p><strong>is_mass_matrix_diagonal</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) – Whether we should adapt a diagonal mass matrix.</p></li>
+<li><p><strong>initial_step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – The initial step size used in the algorithm.</p></li>
+<li><p><strong>target_acceptance_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – The acceptance rate that we target during step size adaptation.</p></li>
+<li><p><strong>progress_bar</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) – Whether we should display a progress bar.</p></li>
+<li><p><strong>**extra_parameters</strong> – The extra parameters to pass to the algorithm, e.g. the number of
 integration steps for HMC.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p>A function that returns the last chain state and a sampling kernel with the tuned parameter values from an initial state.</p>
+<dd class="field-even"><p>A function that runs the adaptation and returns an <cite>AdaptationResult</cite> object.</p>
 </dd>
 </dl>
 </dd></dl>
 
 </section>
-<section id="maximum-eigenvalue-adaptation-of-damping-and-step-size-adaptation">
-<h2>Maximum-Eigenvalue Adaptation of Damping and Step-size adaptation<a class="headerlink" href="#maximum-eigenvalue-adaptation-of-damping-and-step-size-adaptation" title="Permalink to this headline">#</a></h2>
+<section id="pathfinder-adaptation">
+<h2>Pathfinder adaptation<a class="headerlink" href="#pathfinder-adaptation" title="Permalink to this headline">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.pathfinder_adaptation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pathfinder_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logprob_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_step_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_acceptance_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#pathfinder_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.pathfinder_adaptation" title="Permalink to this definition">#</a></dt>
+<dd><p>Adapt the value of the inverse mass matrix and step size parameters of
+algorithms in the HMC fmaily.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>algorithm</strong> (<em>Union</em><em>[</em><a class="reference internal" href="mcmc.html#blackjax.hmc" title="blackjax.kernels.hmc"><em>blackjax.kernels.hmc</em></a><em>, </em><a class="reference internal" href="mcmc.html#blackjax.nuts" title="blackjax.kernels.nuts"><em>blackjax.kernels.nuts</em></a><em>]</em>) – The algorithm whose parameters are being tuned.</p></li>
+<li><p><strong>logprob_fn</strong> (<em>Callable</em>) – The log density probability density function from which we wish to sample.</p></li>
+<li><p><strong>initial_step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – The initial step size used in the algorithm.</p></li>
+<li><p><strong>target_acceptance_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – The acceptance rate that we target during step size adaptation.</p></li>
+<li><p><strong>**extra_parameters</strong> – The extra parameters to pass to the algorithm, e.g. the number of
+integration steps for HMC.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A function that returns the last chain state and a sampling kernel with the</em></p></li>
+<li><p><em>tuned parameter values from an initial state.</em></p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>blackjax.base.AdaptationAlgorithm</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="meads">
+<h2>MEADS<a class="headerlink" href="#meads" title="Permalink to this headline">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.meads">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">meads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprob_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_chain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold=1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logprob_grad_fn=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_fn=&lt;function</span> <span class="pre">vmap&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#meads"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.meads" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">meads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprob_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_chains</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#meads"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.meads" title="Permalink to this definition">#</a></dt>
 <dd><p>Adapt the parameters of the Generalized HMC algorithm.</p>
 <p>The Generalized HMC algorithm depends on three parameters, each controlling
 one element of its behaviour: step size controls the integrator’s dynamics,
@@ -456,13 +512,7 @@ on parallel computer architectures.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>logprob_fn</strong> (<em>Callable</em>) – The log density probability density function from which we wish to sample.</p></li>
-<li><p><strong>num_chain</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of chains used for cross-chain warm-up training.</p></li>
-<li><p><strong>num_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of adaptation steps.</p></li>
-<li><p><strong>divergence_threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Value of the difference in energy above which we consider that the
-transition is divergent.</p></li>
-<li><p><strong>logprob_grad_fn</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – The gradient of logprob_fn.  If it’s not provided, it will be computed
-by jax using reverse mode autodiff (jax.grad).</p></li>
-<li><p><strong>batch_fn</strong> (<em>Callable</em>) – Either jax.vmap or jax.pmap to perform parallel operations.</p></li>
+<li><p><strong>num_chains</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – Number of chains used for cross-chain warm-up training.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -489,11 +539,11 @@ by jax using reverse mode autodiff (jax.grad).</p></li>
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="sampling.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="vi.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Sampling</p>
+            <p class="prev-next-title">Variational Inference</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="diagnostics.html" title="next page">

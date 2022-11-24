@@ -36,7 +36,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Sample with multiple chains in parallel" href="howto_sample_multiple_chains.html" />
-    <link rel="prev" title="Use with PyMC models" href="howto_use_pymc.html" />
+    <link rel="prev" title="Use with Oryx models" href="howto_use_oryx.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -119,11 +119,6 @@
      Use with Oryx models
     </a>
    </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
    <li class="toctree-l2 current active">
     <a class="current reference internal" href="#">
      Use with TFP models
@@ -134,6 +129,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -228,8 +228,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../sampling.html">
-   Sampling
+  <a class="reference internal" href="../mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -351,14 +366,19 @@ title="Source repository"
 <p>You will need <a class="reference external" href="https://www.tensorflow.org/probability">tensorflow-probability</a> to run this example. Please follow the installation instructions on TFP’s repository.</p>
 </div>
 <p>We reproduce the Eight Schools example from the <a class="reference external" href="https://www.tensorflow.org/probability/examples/Eight_Schools">TFP documentation</a>.</p>
-<div class="cell docutils container">
+<div class="cell tag_hide-input docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
+</summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
-
 <span class="kn">import</span> <span class="nn">blackjax</span>
 </pre></div>
 </div>
 </div>
+</details>
 </div>
 <p>Please refer to the <a class="reference external" href="https://www.tensorflow.org/probability/examples/Eight_Schools">original TFP example</a> for a description of the problem and the model that is used.</p>
 <div class="cell tag_hide-cell docutils container">
@@ -424,7 +444,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -461,10 +481,10 @@ title="Source repository"
 
 <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span>
-    <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="o">=</span><span class="mi">3</span>
+    <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="o">=</span><span class="mi">3</span>
 <span class="p">)</span>
 
-<span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">)</span>
+<span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -499,31 +519,31 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([ 9.342813  , 13.22592   ,  8.874957  , ...,  0.23988539,
-              3.7152734 ,  5.4557076 ], dtype=float32)
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([ 8.597747 , 13.942627 ,  6.4901786, ..., -4.8346705,
+              2.4805205,  3.9454405], dtype=float32)
 </pre></div>
 </div>
 </div>
 </div>
 <p>Extra information about the inference is contained in the <code class="docutils literal notranslate"><span class="pre">infos</span></code> namedtuple. Let us compute the average acceptance rate:</p>
-<div class="cell tag_hide-cell docutils container">
+<div class="cell tag_hide-input docutils container">
 <details class="hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">acceptance_rate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">infos</span><span class="o">.</span><span class="n">acceptance_probability</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">acceptance_rate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">infos</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Average acceptance rate: </span><span class="si">{</span><span class="n">acceptance_rate</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
+</details>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Average acceptance rate: 0.96
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Average acceptance rate: 0.94
 </pre></div>
 </div>
 </div>
-</details>
 </div>
 <p>The samples are contained as a dictionnary in <code class="docutils literal notranslate"><span class="pre">states.position</span></code>. Let us compute the posterior of the school treatment effect:</p>
 <div class="cell docutils container">
@@ -564,7 +584,7 @@ title="Source repository"
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/02b94bb7556ca3ac71214337f500fd4b702e73173b7fc91e3bfb8f76e52821c3.png" src="../_images/02b94bb7556ca3ac71214337f500fd4b702e73173b7fc91e3bfb8f76e52821c3.png" />
+<img alt="../_images/2ab4390d12885ebdadf512cb2569fd4aa040bf7ce9379b4491aba87ed3ab5d29.png" src="../_images/2ab4390d12885ebdadf512cb2569fd4aa040bf7ce9379b4491aba87ed3ab5d29.png" />
 </div>
 </div>
 </section>
@@ -577,11 +597,11 @@ title="Source repository"
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="howto_use_pymc.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="howto_use_oryx.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Use with PyMC models</p>
+            <p class="prev-next-title">Use with Oryx models</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="howto_sample_multiple_chains.html" title="next page">

@@ -121,11 +121,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -135,6 +130,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -229,8 +229,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../sampling.html">
-   Sampling
+  <a class="reference internal" href="../mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -575,10 +590,10 @@ $$</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fa905229850&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fcb1808c760&gt;
 </pre></div>
 </div>
-<img alt="../_images/bd48b7a90aab9b2fe6284f87589e936c4909c486c7315bd62e7f3a85c19fbd3a.png" src="../_images/bd48b7a90aab9b2fe6284f87589e936c4909c486c7315bd62e7f3a85c19fbd3a.png" />
+<img alt="../_images/640d596490ecc3e66cd07e99ddb457e7257c486aa06a0846c30164d3aa2c71f8.png" src="../_images/640d596490ecc3e66cd07e99ddb457e7257c486aa06a0846c30164d3aa2c71f8.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -626,8 +641,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.58 s, sys: 35.6 ms, total: 1.62 s
-Wall time: 1.62 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 939 ms, sys: 4.17 ms, total: 943 ms
+Wall time: 940 ms
 </pre></div>
 </div>
 </div>
@@ -647,7 +662,7 @@ Wall time: 1.62 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/67e28471bce1e142526847dd567a712f2ced5e241b40631756490700949cf108.png" src="../_images/67e28471bce1e142526847dd567a712f2ced5e241b40631756490700949cf108.png" />
+<img alt="../_images/c8fe16bcdf57dc59d18105690dd01ad3898efa0ed29ab3e843bfa60feb2b71a1.png" src="../_images/c8fe16bcdf57dc59d18105690dd01ad3898efa0ed29ab3e843bfa60feb2b71a1.png" />
 </div>
 </div>
 </section>
@@ -667,8 +682,8 @@ Wall time: 1.62 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.94 s, sys: 4.3 ms, total: 8.94 s
-Wall time: 8.94 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 5.52 s, sys: 12.7 ms, total: 5.53 s
+Wall time: 5.53 s
 </pre></div>
 </div>
 </div>
@@ -688,7 +703,7 @@ Wall time: 8.94 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/77a15f303b3936754309a9345db62f5cfb64afc16d6b1b62292735af59494931.png" src="../_images/77a15f303b3936754309a9345db62f5cfb64afc16d6b1b62292735af59494931.png" />
+<img alt="../_images/acc19b214fc7ab042065be4426807ba50984b3194ee3e8c5434cdc434f7700a3.png" src="../_images/acc19b214fc7ab042065be4426807ba50984b3194ee3e8c5434cdc434f7700a3.png" />
 </div>
 </div>
 </section>
@@ -757,8 +772,8 @@ Wall time: 8.94 s
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  9
-CPU times: user 3.91 s, sys: 87.9 ms, total: 3.99 s
-Wall time: 3.92 s
+CPU times: user 2.04 s, sys: 44.6 ms, total: 2.08 s
+Wall time: 2.05 s
 </pre></div>
 </div>
 </div>
@@ -778,7 +793,7 @@ Wall time: 3.92 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/e17742244779a7fc1510be94db658cc74cde3960b646b032e2c7cb59c83605de.png" src="../_images/e17742244779a7fc1510be94db658cc74cde3960b646b032e2c7cb59c83605de.png" />
+<img alt="../_images/349c92270f9d57e2c94f231c48dc6846bc465d8dd7644e3084b7462bf399af73.png" src="../_images/349c92270f9d57e2c94f231c48dc6846bc465d8dd7644e3084b7462bf399af73.png" />
 </div>
 </div>
 </section>
@@ -830,10 +845,10 @@ Wall time: 3.92 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fa8ec528dc0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fcb00622910&gt;
 </pre></div>
 </div>
-<img alt="../_images/b039c37cae038a3a45a2202f571e4ffba631685116f6019522670a92a9fbc971.png" src="../_images/b039c37cae038a3a45a2202f571e4ffba631685116f6019522670a92a9fbc971.png" />
+<img alt="../_images/07fc13262f5bd947ec4683f6a29cd1acde81672d7a13207fc0ca239e6ad642d5.png" src="../_images/07fc13262f5bd947ec4683f6a29cd1acde81672d7a13207fc0ca239e6ad642d5.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -878,8 +893,8 @@ Wall time: 3.92 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.09 s, sys: 4.01 ms, total: 1.09 s
-Wall time: 1.09 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 746 ms, sys: 0 ns, total: 746 ms
+Wall time: 743 ms
 </pre></div>
 </div>
 </div>
@@ -900,7 +915,7 @@ Wall time: 1.09 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/46f891fd0bd9b630b2d3b253a7952d470a08b647126e0af6faac45e5e344391c.png" src="../_images/46f891fd0bd9b630b2d3b253a7952d470a08b647126e0af6faac45e5e344391c.png" />
+<img alt="../_images/1d316fc8edf43a64daca63f99596f3a77d8217e7592bc75c1b4b53b6824d11c5.png" src="../_images/1d316fc8edf43a64daca63f99596f3a77d8217e7592bc75c1b4b53b6824d11c5.png" />
 </div>
 </div>
 </section>
@@ -920,8 +935,8 @@ Wall time: 1.09 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.2 s, sys: 3.9 ms, total: 2.21 s
-Wall time: 2.2 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.26 s, sys: 8.2 ms, total: 1.27 s
+Wall time: 1.26 s
 </pre></div>
 </div>
 </div>
@@ -942,7 +957,7 @@ Wall time: 2.2 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/60033ddb5f711bf01fe60bd5fc8e2a2ec4f9fd92bd6e074b0ea76e0ebbdb01ab.png" src="../_images/60033ddb5f711bf01fe60bd5fc8e2a2ec4f9fd92bd6e074b0ea76e0ebbdb01ab.png" />
+<img alt="../_images/0ff7cc58b2e9ae769007feb9abcd62837f8ef9d37daefe1e87bdfa9a083bde4b.png" src="../_images/0ff7cc58b2e9ae769007feb9abcd62837f8ef9d37daefe1e87bdfa9a083bde4b.png" />
 </div>
 </div>
 </section>
@@ -982,8 +997,8 @@ We correct the bias introduced by the (arbitrary) prior.</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  8
-CPU times: user 3.73 s, sys: 15.7 ms, total: 3.74 s
-Wall time: 3.72 s
+CPU times: user 1.86 s, sys: 0 ns, total: 1.86 s
+Wall time: 1.85 s
 </pre></div>
 </div>
 </div>
@@ -1004,7 +1019,7 @@ Wall time: 3.72 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/3930a44cd9aa5161ddfd09428720fbddbbfe01d7a08dc7797df06d9b4094076f.png" src="../_images/3930a44cd9aa5161ddfd09428720fbddbbfe01d7a08dc7797df06d9b4094076f.png" />
+<img alt="../_images/549431f6067b20673da2020fdac595d610d8a1d660687e623f8cbfae718dbcc3.png" src="../_images/549431f6067b20673da2020fdac595d610d8a1d660687e623f8cbfae718dbcc3.png" />
 </div>
 </div>
 <p>The tempered SMC algorithm with the HMC kernel clearly outperfoms the HMC and NUTS kernels alone.</p>

@@ -1,6 +1,8 @@
 Welcome to Blackjax
 ===================
 
+*The documentation corresponds to the current state of the `main` branch. There may be differences with the latest released version.*
+
 Blackjax is a library of samplers for `JAX <https://github.com/google/jax>`_ that works on CPU as well as GPU. It is designed with two categories of users in mind:
 
 - People who just need state-of-the-art samplers that are fast, robust and well tested;
@@ -74,6 +76,7 @@ with the relevant hardware acceleration support.
 
    howto_use_ppl
    Sample with multiple chains?<examples/howto_sample_multiple_chains.md>
+   Use custom gradients?<examples/howto_custom_gradients.md>
    Use non-JAX log-prob functions?<examples/howto_other_frameworks.md>
 
 .. toctree::
@@ -86,7 +89,10 @@ with the relevant hardware acceleration support.
    :maxdepth: 2
    :caption: API Documentation
 
-   sampling
+   mcmc
+   sgmcmc
+   smc
+   vi
    adaptation
    diagnostics
 

@@ -121,11 +121,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -135,6 +130,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -229,8 +229,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../sampling.html">
-   Sampling
+  <a class="reference internal" href="../mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -438,8 +453,7 @@ title="Source repository"
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">config</span> InlineBackend.figure_format = &quot;retina&quot;
-<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.spines.right&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.spines.right&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.spines.top&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.figsize&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
 </pre></div>
@@ -478,7 +492,7 @@ title="Source repository"
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/93c6b21d301b364f594e88622c8fc2cca748a2a91f9a9a012f1f32281d2fdfd6.png" src="../_images/93c6b21d301b364f594e88622c8fc2cca748a2a91f9a9a012f1f32281d2fdfd6.png" />
+<img alt="../_images/2e0d34e130b286bc1e73fc129d7b64494c687a53b3a65dfa980f1e9aeefc2599.png" src="../_images/2e0d34e130b286bc1e73fc129d7b64494c687a53b3a65dfa980f1e9aeefc2599.png" />
 </div>
 </div>
 </section>
@@ -523,7 +537,7 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -591,7 +605,7 @@ $$</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/88a9e5a40f1ecd1370c42cc0ee8ce902a02eec028106d691eba5995c98fd1c62.png" src="../_images/88a9e5a40f1ecd1370c42cc0ee8ce902a02eec028106d691eba5995c98fd1c62.png" />
+<img alt="../_images/08a1841c1c9157e9b2512dc47bc6a0debc8fdfe096d9b4363228c06e07c39cee.png" src="../_images/08a1841c1c9157e9b2512dc47bc6a0debc8fdfe096d9b4363228c06e07c39cee.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -640,7 +654,7 @@ $$</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/b931e3f15d2aeab2e2bdc902f88e56ba4d4ebe98142bd54c28fc27156d08176e.png" src="../_images/b931e3f15d2aeab2e2bdc902f88e56ba4d4ebe98142bd54c28fc27156d08176e.png" />
+<img alt="../_images/f438ec87041a04354c5b2f24612d92908c541f281324736268e273aad4b3abd8.png" src="../_images/f438ec87041a04354c5b2f24612d92908c541f281324736268e273aad4b3abd8.png" />
 </div>
 </div>
 </section>

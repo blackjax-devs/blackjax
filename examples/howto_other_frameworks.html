@@ -36,7 +36,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Examples" href="../examples.html" />
-    <link rel="prev" title="Sample with multiple chains in parallel" href="howto_sample_multiple_chains.html" />
+    <link rel="prev" title="Use custom gradients" href="howto_custom_gradients.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -120,11 +120,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -134,6 +129,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1 current active">
@@ -228,8 +228,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../sampling.html">
-   Sampling
+  <a class="reference internal" href="../mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -467,7 +482,8 @@ title="Source repository"
 <span class="n">logprob</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
     <span class="n">i_vv</span> <span class="o">=</span> <span class="n">at</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
-    <span class="n">logprob</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">joint_logprob</span><span class="p">({</span><span class="n">Y_rv</span><span class="p">:</span> <span class="n">y_vv</span><span class="p">,</span> <span class="n">I_rv</span><span class="p">:</span> <span class="n">i_vv</span><span class="p">}))</span>
+    <span class="n">component_logprob</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">joint_logprob</span><span class="p">(</span><span class="n">realized</span><span class="o">=</span><span class="p">{</span><span class="n">Y_rv</span><span class="p">:</span> <span class="n">y_vv</span><span class="p">,</span> <span class="n">I_rv</span><span class="p">:</span> <span class="n">i_vv</span><span class="p">})</span>
+    <span class="n">logprob</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">component_logprob</span><span class="p">)</span>
 <span class="n">logprob</span> <span class="o">=</span> <span class="n">at</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="n">total_logprob</span> <span class="o">=</span> <span class="n">at</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">at</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="o">+</span> <span class="n">logprob</span><span class="p">)</span>
@@ -484,9 +500,9 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.14/x64/lib/python3.9/site-packages/llvmlite/llvmpy/__init__.py:3: UserWarning: The module `llvmlite.llvmpy` is deprecated and will be removed in the future.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/llvmlite/llvmpy/__init__.py:3: UserWarning: The module `llvmlite.llvmpy` is deprecated and will be removed in the future.
   warnings.warn(
-/opt/hostedtoolcache/Python/3.9.14/x64/lib/python3.9/site-packages/llvmlite/llvmpy/core.py:8: UserWarning: The module `llvmlite.llvmpy.core` is deprecated and will be removed in the future. Equivalent functionality is provided by `llvmlite.ir`.
+/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/llvmlite/llvmpy/core.py:8: UserWarning: The module `llvmlite.llvmpy.core` is deprecated and will be removed in the future. Equivalent functionality is provided by `llvmlite.ir`.
   warnings.warn(
 </pre></div>
 </div>
@@ -560,16 +576,13 @@ JAX raised an exception while differentiating!
 </div>
 </div>
 <p>And we can now call the function from a jitted function and apply <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> without JAX complaining:</p>
-<div class="cell docutils container">
+<div class="cell tag_remove-stderr docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">numba_logpdf</span><span class="p">)(</span><span class="mf">1.</span><span class="p">),</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">numba_logpdf</span><span class="p">)(</span><span class="mf">1.</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(DeviceArray(-3.1503935, dtype=float32),
  DeviceArray(-0.44711512, dtype=float32))
 </pre></div>
@@ -607,15 +620,14 @@ JAX raised an exception while differentiating!
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-
 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100_000</span><span class="p">):</span>
     <span class="n">logprob_fn</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 5.71 s, sys: 40 µs, total: 5.71 s
-Wall time: 5.71 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.73 s, sys: 0 ns, total: 2.73 s
+Wall time: 2.73 s
 </pre></div>
 </div>
 </div>
@@ -624,15 +636,14 @@ Wall time: 5.71 s
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-
 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1_000</span><span class="p">):</span>
     <span class="n">numba_logpdf</span><span class="p">(</span><span class="mf">100.</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 15.7 s, sys: 117 ms, total: 15.8 s
-Wall time: 15.7 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.65 s, sys: 68 ms, total: 9.71 s
+Wall time: 9.7 s
 </pre></div>
 </div>
 </div>
@@ -654,11 +665,11 @@ Wall time: 15.7 s
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="howto_sample_multiple_chains.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="howto_custom_gradients.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Sample with multiple chains in parallel</p>
+            <p class="prev-next-title">Use custom gradients</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="../examples.html" title="next page">

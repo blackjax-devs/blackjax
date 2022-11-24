@@ -36,7 +36,7 @@
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Sampling" href="../sampling.html" />
+    <link rel="next" title="MCMC sampling" href="../mcmc.html" />
     <link rel="prev" title="Regime switching Hidden Markov model" href="RegimeSwitchingModel.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -121,11 +121,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -135,6 +130,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -229,8 +229,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../sampling.html">
-   Sampling
+  <a class="reference internal" href="../mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -355,7 +370,7 @@ $$</p>
 <p>$$
 \pi_0(\beta, \lambda, \tau) = \text{Gamma}(\tau;1/2, 1/2)\prod_i \mathcal{N}(\beta_i;0, 1)\text{Gamma}(\lambda_i;1/2, 1/2)
 $$</p>
-<div class="cell docutils container">
+<div class="cell tag_remove-stderr docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -428,16 +443,16 @@ $$</p>
 <span class="n">N_PARAM</span> <span class="o">=</span> <span class="n">N_REG</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span>
 <span class="n">dist</span> <span class="o">=</span> <span class="n">HorseshoeLogisticReg</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
-<span class="n">batch_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span>
 <span class="p">[</span><span class="n">n_chain</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">20000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">]</span>
 <span class="n">ksam</span><span class="p">,</span> <span class="n">kinit</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jrnd</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">dist</span><span class="o">.</span><span class="n">initialize_model</span><span class="p">(</span><span class="n">kinit</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">)</span>
 
 <span class="n">tic1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
 <span class="n">k_warm</span><span class="p">,</span> <span class="n">k_sample</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">ksam</span><span class="p">)</span>
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">meads</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">,</span> <span class="n">batch_fn</span><span class="o">=</span><span class="n">batch_fn</span><span class="p">)</span>
-<span class="n">chain_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">k_warm</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">init_params</span><span class="p">)</span>
-<span class="n">init_state</span> <span class="o">=</span> <span class="n">chain_state</span><span class="o">.</span><span class="n">states</span>
+<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">meads</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">)</span>
+<span class="n">adaptation_results</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">k_warm</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">init_params</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">)</span>
+<span class="n">init_state</span> <span class="o">=</span> <span class="n">adaptation_results</span><span class="o">.</span><span class="n">state</span>
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">adaptation_results</span><span class="o">.</span><span class="n">kernel</span>
 
 
 <span class="k">def</span> <span class="nf">one_chain</span><span class="p">(</span><span class="n">k_sam</span><span class="p">,</span> <span class="n">init_state</span><span class="p">):</span>
@@ -446,18 +461,14 @@ $$</p>
 
 
 <span class="n">k_sample</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">k_sample</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">)</span>
-<span class="n">samples</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">batch_fn</span><span class="p">(</span><span class="n">one_chain</span><span class="p">)(</span><span class="n">k_sample</span><span class="p">,</span> <span class="n">init_state</span><span class="p">)</span>
+<span class="n">samples</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">one_chain</span><span class="p">)(</span><span class="n">k_sample</span><span class="p">,</span> <span class="n">init_state</span><span class="p">)</span>
 <span class="n">tic2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Runtime for MEADS&quot;</span><span class="p">,</span> <span class="n">tic2</span> <span class="o">-</span> <span class="n">tic1</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.14/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:04:37.065321
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:02:07.832719
 </pre></div>
 </div>
 </div>
@@ -476,57 +487,57 @@ $$</p>
 </details>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>                mean       std    median      5.0%     95.0%     n_eff     r_hat
-   beta[0]      0.39      0.88      0.42     -1.11      1.84   7039.31      1.02
-   beta[1]      1.14      0.57      1.05      0.27      1.99   5738.98      1.02
-   beta[2]     -1.27      0.58     -1.19     -2.14     -0.35   6632.35      1.02
-   beta[3]      1.10      0.57      1.01      0.22      1.93   6553.22      1.02
-   beta[4]     -0.46      0.83     -0.48     -1.84      0.94   7853.56      1.02
-   beta[5]      0.96      0.56      0.85      0.14      1.78   6155.21      1.03
-   beta[6]      0.67      0.68      0.62     -0.26      1.93   6573.92      1.02
-   beta[7]      0.67      0.71      0.63     -0.35      1.95   6580.71      1.02
-   beta[8]      0.04      0.82      0.03     -1.35      1.42   8498.30      1.02
-   beta[9]     -0.66      0.70     -0.61     -1.96      0.29   5494.28      1.02
-  beta[10]      0.36      0.81      0.37     -1.01      1.74   8121.24      1.02
-  beta[11]      0.83      0.59      0.73      0.05      1.76   5932.96      1.02
-  beta[12]     -0.46      0.81     -0.46     -1.83      0.88   5895.02      1.02
-  beta[13]     -0.07      0.81     -0.06     -1.42      1.33   9533.80      1.01
-  beta[14]      0.34      0.77      0.32     -0.94      1.65   5186.67      1.02
-  beta[15]      0.72      0.73      0.69     -0.35      2.01   6175.94      1.02
-  beta[16]     -0.89      0.57     -0.78     -1.71     -0.08   4133.85      1.03
-  beta[17]      0.87      0.60      0.78      0.07      1.85   5894.55      1.02
-  beta[18]     -0.70      0.71     -0.66     -2.02      0.28   5392.66      1.02
-  beta[19]     -0.76      0.74     -0.74     -2.10      0.31   5165.26      1.02
-  beta[20]     -0.52      0.76     -0.49     -1.88      0.68   4099.10      1.03
-  beta[21]      0.33      0.80      0.33     -1.01      1.69   6113.11      1.02
-  beta[22]      0.03      0.85      0.04     -1.38      1.46   8584.15      1.02
-  beta[23]     -0.02      0.82     -0.02     -1.40      1.36   5932.87      1.02
-  beta[24]     -0.05      0.80     -0.04     -1.42      1.30   6646.82      1.02
-  lamda[0]     -1.38      2.24     -0.84     -4.48      1.56   3806.07      1.03
-  lamda[1]      0.65      0.58      0.64     -0.32      1.61   5041.41      1.02
-  lamda[2]      0.89      0.57      0.90     -0.03      1.83   4881.82      1.02
-  lamda[3]      0.50      0.63      0.50     -0.54      1.54   5483.23      1.02
-  lamda[4]     -1.28      2.08     -0.77     -4.27      1.58   7127.82      1.02
-  lamda[5]      0.11      0.73      0.12     -1.06      1.33   5198.82      1.03
-  lamda[6]     -0.91      1.72     -0.56     -3.19      1.44   4278.40      1.03
-  lamda[7]     -0.90      1.75     -0.52     -3.31      1.50   3097.25      1.04
-  lamda[8]     -2.53      2.33     -2.09     -5.79      0.92   4959.29      1.03
-  lamda[9]     -1.00      1.82     -0.61     -3.42      1.45   3595.94      1.04
- lamda[10]     -1.69      2.22     -1.18     -4.79      1.33   4792.91      1.03
- lamda[11]     -0.41      1.26     -0.28     -1.82      1.34   1133.50      1.12
- lamda[12]     -1.47      2.11     -0.96     -4.37      1.46   3625.82      1.03
- lamda[13]     -2.52      2.27     -2.09     -5.81      0.82   4680.42      1.03
- lamda[14]     -2.18      2.13     -1.77     -5.27      0.93   4232.28      1.04
- lamda[15]     -0.64      1.76     -0.24     -2.97      1.67   2818.77      1.05
- lamda[16]     -0.20      0.92     -0.17     -1.49      1.21   1860.58      1.06
- lamda[17]     -0.24      1.22     -0.07     -1.64      1.50   2456.12      1.05
- lamda[18]     -0.81      1.85     -0.37     -3.24      1.60   3422.54      1.04
- lamda[19]     -0.55      1.83     -0.09     -2.89      1.77   2612.04      1.04
- lamda[20]     -1.40      1.98     -0.95     -4.28      1.34   3609.38      1.04
- lamda[21]     -1.92      2.19     -1.43     -5.06      1.17   4394.57      1.03
- lamda[22]     -2.04      2.22     -1.59     -5.20      1.18   5829.99      1.02
- lamda[23]     -2.49      2.25     -2.07     -5.72      0.87   5431.35      1.02
- lamda[24]     -2.66      2.33     -2.24     -5.99      0.79   4059.12      1.03
-       tau     -0.83      0.40     -0.83     -1.48     -0.16   3671.88      1.03
+   beta[0]      0.37      0.88      0.40     -1.07      1.87   6769.43      1.02
+   beta[1]      1.15      0.57      1.06      0.28      2.01   5358.61      1.02
+   beta[2]     -1.27      0.57     -1.19     -2.13     -0.35   5979.91      1.02
+   beta[3]      1.10      0.57      1.01      0.21      1.94   4879.87      1.03
+   beta[4]     -0.47      0.85     -0.49     -1.91      0.91   5950.98      1.02
+   beta[5]      0.95      0.56      0.85      0.13      1.76   4829.51      1.03
+   beta[6]      0.65      0.69      0.60     -0.35      1.90   6851.43      1.02
+   beta[7]      0.66      0.72      0.62     -0.40      1.97   6934.81      1.02
+   beta[8]      0.03      0.83      0.03     -1.36      1.43   7192.68      1.02
+   beta[9]     -0.66      0.70     -0.61     -1.95      0.25   5101.86      1.03
+  beta[10]      0.39      0.82      0.38     -0.97      1.79   5779.57      1.02
+  beta[11]      0.82      0.60      0.73      0.05      1.78   6373.22      1.02
+  beta[12]     -0.44      0.81     -0.45     -1.83      0.89   6607.54      1.02
+  beta[13]     -0.07      0.81     -0.07     -1.43      1.31   7640.86      1.02
+  beta[14]      0.34      0.77      0.31     -0.95      1.67   9718.29      1.01
+  beta[15]      0.71      0.73      0.68     -0.39      2.01   6532.70      1.02
+  beta[16]     -0.88      0.57     -0.78     -1.73     -0.08   5486.35      1.03
+  beta[17]      0.87      0.61      0.78      0.06      1.85   4951.35      1.03
+  beta[18]     -0.70      0.71     -0.66     -1.99      0.34   5273.33      1.02
+  beta[19]     -0.77      0.73     -0.74     -2.07      0.30   6061.02      1.02
+  beta[20]     -0.52      0.74     -0.49     -1.81      0.64   5520.58      1.02
+  beta[21]      0.34      0.78      0.34     -0.98      1.67   6172.72      1.02
+  beta[22]      0.02      0.86      0.03     -1.41      1.46   8059.88      1.01
+  beta[23]     -0.03      0.82     -0.02     -1.42      1.34   6831.87      1.02
+  beta[24]     -0.04      0.81     -0.04     -1.44      1.31   8907.04      1.01
+  lamda[0]     -1.33      2.08     -0.85     -4.37      1.56   5162.23      1.02
+  lamda[1]      0.63      0.60      0.63     -0.34      1.63   4422.22      1.03
+  lamda[2]      0.89      0.57      0.90     -0.02      1.85   4863.85      1.02
+  lamda[3]      0.50      0.65      0.50     -0.55      1.57   4184.80      1.03
+  lamda[4]     -1.28      2.10     -0.76     -4.25      1.57   5299.55      1.02
+  lamda[5]      0.11      0.77      0.12     -1.04      1.35   3330.01      1.04
+  lamda[6]     -1.00      1.83     -0.60     -3.38      1.51   3165.66      1.04
+  lamda[7]     -0.92      1.79     -0.51     -3.34      1.56   3657.44      1.04
+  lamda[8]     -2.51      2.29     -2.08     -5.82      0.89   4814.37      1.03
+  lamda[9]     -1.02      1.88     -0.61     -3.47      1.49   2511.46      1.06
+ lamda[10]     -1.74      2.24     -1.22     -4.91      1.33   3833.11      1.03
+ lamda[11]     -0.44      1.28     -0.30     -1.90      1.32   1213.56      1.11
+ lamda[12]     -1.50      2.12     -1.00     -4.54      1.35   4085.54      1.03
+ lamda[13]     -2.48      2.23     -2.08     -5.73      0.86   4012.74      1.03
+ lamda[14]     -2.24      2.29     -1.79     -5.42      0.95   3084.76      1.04
+ lamda[15]     -0.68      1.77     -0.25     -3.04      1.70   3131.96      1.04
+ lamda[16]     -0.21      0.95     -0.16     -1.49      1.24   2775.15      1.05
+ lamda[17]     -0.22      1.17     -0.08     -1.62      1.49   2221.92      1.06
+ lamda[18]     -0.77      1.78     -0.37     -3.08      1.58   3096.94      1.04
+ lamda[19]     -0.50      1.73     -0.08     -2.79      1.72   3520.28      1.04
+ lamda[20]     -1.40      2.00     -0.94     -4.18      1.32   4003.02      1.03
+ lamda[21]     -1.90      2.17     -1.41     -5.02      1.13   3699.63      1.03
+ lamda[22]     -2.07      2.24     -1.61     -5.36      1.07   6502.90      1.02
+ lamda[23]     -2.54      2.27     -2.10     -5.88      0.88   5187.58      1.03
+ lamda[24]     -2.63      2.27     -2.22     -5.95      0.81   4253.51      1.03
+       tau     -0.82      0.41     -0.84     -1.51     -0.16   3697.08      1.03
 </pre></div>
 </div>
 </div>
@@ -548,10 +559,10 @@ $$</p>
             <p class="prev-next-title">Regime switching Hidden Markov model</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="../sampling.html" title="next page">
+    <a class='right-next' id="next-link" href="../mcmc.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Sampling</p>
+        <p class="prev-next-title">MCMC sampling</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

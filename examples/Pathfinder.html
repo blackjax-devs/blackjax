@@ -121,11 +121,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -135,6 +130,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -229,8 +229,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../sampling.html">
-   Sampling
+  <a class="reference internal" href="../mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -459,8 +474,7 @@ title="Source repository"
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">config</span> InlineBackend.figure_format = &quot;retina&quot;
-<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.spines.right&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.spines.right&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.spines.top&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.figsize&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
 </pre></div>
@@ -499,7 +513,7 @@ title="Source repository"
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/01d5b306a2acce2f77a1cd6280ac6d285580b5e14f23ccd955988a32a512675c.png" src="../_images/01d5b306a2acce2f77a1cd6280ac6d285580b5e14f23ccd955988a32a512675c.png" />
+<img alt="../_images/b1b7e9ad57ff2356b0f7ebcfcb367ec0c65f66de508fa469b3a00f26402a68ec.png" src="../_images/b1b7e9ad57ff2356b0f7ebcfcb367ec0c65f66de508fa469b3a00f26402a68ec.png" />
 </div>
 </div>
 </section>
@@ -557,12 +571,13 @@ The optimizer is the limited memory BFGS algorithm.</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rng_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">314</span><span class="p">)</span>
 <span class="n">w0</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mf">2.0</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">M</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">M</span><span class="p">))</span>
-<span class="n">path</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">return_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ftol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+<span class="n">_</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">approximate</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">ftol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">path</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -609,7 +624,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 
     <span class="n">ax</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">x_</span><span class="p">,</span> <span class="n">y_</span><span class="p">,</span> <span class="n">logp_</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="n">levels_</span><span class="p">)</span>
     <span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">path</span><span class="p">)</span>
-    <span class="n">sample_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">sample_from_state</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
+    <span class="n">sample_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
     <span class="n">position_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">position</span><span class="p">[:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
         <span class="n">position_path</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
@@ -627,7 +642,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/d3f890953e6f31df05fad13b9af1c1cbeddd53090fd403750237201984a40f9e.png" src="../_images/d3f890953e6f31df05fad13b9af1c1cbeddd53090fd403750237201984a40f9e.png" />
+<img alt="../_images/8f90277a3c4e2c9e0e1ca7d27930ab6e20e532edccfb88d8917e2a6e1b508334.png" src="../_images/8f90277a3c4e2c9e0e1ca7d27930ab6e20e532edccfb88d8917e2a6e1b508334.png" />
 </div>
 </div>
 </section>
@@ -636,32 +651,17 @@ The optimizer is the limited memory BFGS algorithm.</p>
 <p>Pathfinder can be used as a variational inference method, using its kernel API:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pathfinder</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">kernels</span><span class="o">.</span><span class="n">pathfinder</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">ftol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
-<span class="n">state</span> <span class="o">=</span> <span class="n">pathfinder</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pathfinder</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">kernels</span><span class="o">.</span><span class="n">pathfinder</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">)</span>
+<span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">pathfinder</span><span class="o">.</span><span class="n">approximate</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">ftol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
-<p>Since <code class="docutils literal notranslate"><span class="pre">blackjax</span></code> does not provide an inference loop we need to implement one ourselves:</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
-    <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
-    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
-        <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
-
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<p>We can now run the inference:</p>
+<p>We can now get samples from the approximation:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-<span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">samples</span><span class="p">)</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">pathfinder</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">5_000</span><span class="p">)</span>
+<span class="n">samples</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">pathfinder</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">5_000</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -684,7 +684,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/b4130c4cd6bcff62275f983deaab7b29c7f9cb13f3b42f257ad83370fc1ad0cf.png" src="../_images/b4130c4cd6bcff62275f983deaab7b29c7f9cb13f3b42f257ad83370fc1ad0cf.png" />
+<img alt="../_images/db58d894cdc0aeee2aee1aa28701dfff4a97a1d1d41f84cdc5ec8a27635ba19a.png" src="../_images/db58d894cdc0aeee2aee1aa28701dfff4a97a1d1d41f84cdc5ec8a27635ba19a.png" />
 </div>
 </div>
 <p>Please note that pathfinder is implemented as follows:</p>
@@ -695,8 +695,16 @@ The optimizer is the limited memory BFGS algorithm.</p>
 <p>hence it makes sense to <code class="docutils literal notranslate"><span class="pre">jit</span></code> the <code class="docutils literal notranslate"><span class="pre">init</span></code> function and then use the <code class="docutils literal notranslate"><span class="pre">blackjax.vi.pathfinder.sample_from_state</span></code> helper function instead of implementing the inference loop:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">init</span><span class="p">)(</span><span class="n">w0</span><span class="p">)</span>
-<span class="n">samples</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">sample_from_state</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">5_000</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+
+<span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">approximate</span><span class="p">)(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">w0</span><span class="p">)</span>
+<span class="n">samples</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">pathfinder</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">5_000</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.49 s, sys: 4.12 ms, total: 3.5 s
+Wall time: 3.49 s
 </pre></div>
 </div>
 </div>
@@ -704,7 +712,16 @@ The optimizer is the limited memory BFGS algorithm.</p>
 <p>Quick comparison against <code class="docutils literal notranslate"><span class="pre">rmh</span></code> kernel:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rmh</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">kernels</span><span class="o">.</span><span class="n">rmh</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">M</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.7</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+    <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
+    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+
+<span class="n">rmh</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">kernels</span><span class="o">.</span><span class="n">rmh</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">M</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.7</span><span class="p">)</span>
 <span class="n">state_rmh</span> <span class="o">=</span> <span class="n">rmh</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span>
 <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">samples_rmh</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">rmh</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">state_rmh</span><span class="p">,</span> <span class="mi">5_000</span><span class="p">)</span>
 </pre></div>
@@ -733,7 +750,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/52fcee724f789f797cdb815a29672c71aedc8820af6c8263a665e91b56486799.png" src="../_images/52fcee724f789f797cdb815a29672c71aedc8820af6c8263a665e91b56486799.png" />
+<img alt="../_images/7ecb5bbe3bb157150eb54e1677a512fefb01188ff0378baaf3f274a309f81035.png" src="../_images/7ecb5bbe3bb157150eb54e1677a512fefb01188ff0378baaf3f274a309f81035.png" />
 </div>
 </div>
 <section id="pathfinder-as-an-initialization-tool-for-mcmc-kernels">
@@ -763,7 +780,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">kernels</span><span class="o">.</span><span class="n">pathfinder_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
-<span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">w0</span><span class="p">)</span>
+<span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

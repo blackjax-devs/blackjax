@@ -4,9 +4,9 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.1
+    jupytext_version: 1.13.1
 kernelspec:
-  display_name: Python 3.9.7 ('blackjax')
+  display_name: Python 3 (ipykernel)
   language: python
   name: python3
 mystnb:
@@ -28,7 +28,6 @@ In particular we use following binomial hierarchical model where $y_{j}$ and $N_
 \end{align}
 ```
 
-
 ```{code-cell} ipython3
 :tags: [hide-cell]
 
@@ -37,7 +36,6 @@ import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
 
 pd.set_option("display.max_rows", 80)
 
@@ -217,21 +215,29 @@ n_rat_tumors = len(group_size)
 ```{code-cell} ipython3
 :tags: [hide-input]
 
-plt.figure(figsize=(12, 3))
-plt.bar(range(n_rat_tumors), n_of_positives)
+fig = plt.figure(figsize=(12, 3))
+ax = fig.add_subplot(111)
+ax.bar(range(n_rat_tumors), n_of_positives)
+
+ax.set_xlabel("tumor type", fontsize=12)
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+
 plt.title("No. of positives for each tumor type", fontsize=14)
-plt.xlabel("tumor type", fontsize=12)
-sns.despine()
 ```
 
 ```{code-cell} ipython3
 :tags: [hide-input]
 
-plt.figure(figsize=(14, 4))
-plt.bar(range(n_rat_tumors), group_size)
+fig = plt.figure(figsize=(14, 4))
+ax = fig.add_subplot(111)
+
+ax.bar(range(n_rat_tumors), group_size)
 plt.title("Group size for each tumor type", fontsize=14)
-plt.xlabel("tumor type", fontsize=12)
-sns.despine()
+
+ax.set_xlabel("tumor type", fontsize=12)
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
 ```
 
 ## Posterior Sampling
@@ -286,31 +292,35 @@ Now we use blackjax's window adaption algorithm to get NUTS kernel and initial s
 
 ```{code-cell} ipython3
 %%time
-warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob, 1000)
+warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob)
 
 # we use 4 chains for sampling
 n_chains = 4
 keys = jax.random.split(rng_key, n_chains)
 init_params = jax.vmap(init_param_fn)(keys)
 
-initial_states = jax.vmap(lambda seed, param: warmup.run(seed, param)[0])(
-    keys, init_params
-)
+@jax.vmap
+def call_warmup(seed, param):
+    initial_states, _, tuned_params = warmup.run(seed, param, 1000)
+    return initial_states, tuned_params
 
-# can not vectorize kernel, since it is not jax.numpy array
-_, kernel, _ = warmup.run(jax.random.PRNGKey(10), init_param_fn(rng_key))
+initial_states, tuned_params = jax.jit(call_warmup)(keys, init_params)
 ```
 
 Now we write inference loop for multiple chains
 
 ```{code-cell} ipython3
 def inference_loop_multiple_chains(
-    rng_key, kernel, initial_states, num_samples, num_chains
+    rng_key, initial_states, tuned_params, log_prob_fn, num_samples, num_chains
 ):
-    @jax.jit
+    step_fn = blackjax.nuts.kernel()
+
+    def kernel(key, state, **params):
+        return step_fn(key, state, log_prob_fn, **params)
+
     def one_step(states, rng_key):
         keys = jax.random.split(rng_key, num_chains)
-        states, infos = jax.vmap(kernel)(keys, states)
+        states, infos = jax.vmap(kernel)(keys, states, **tuned_params)
         return states, (states, infos)
 
     keys = jax.random.split(rng_key, num_samples)
@@ -323,10 +333,9 @@ def inference_loop_multiple_chains(
 %%time
 n_samples = 1000
 states, infos = inference_loop_multiple_chains(
-    rng_key, kernel, initial_states, n_samples, n_chains
+    rng_key, initial_states, tuned_params, joint_logprob, n_samples, n_chains
 )
 ```
-
 
 ## Arviz Plots
 
@@ -367,6 +376,8 @@ def arviz_trace_from_states(states, info, burn_in=0):
 ```
 
 ```{code-cell} ipython3
+:tags: [output-scroll]
+
 # make arviz trace from states
 trace = arviz_trace_from_states(states, infos)
 summ_df = az.summary(trace)
@@ -424,7 +435,7 @@ def joint_logprob_change_of_var(params):
     return logprob_ab + logprob_thetas + logprob_y + log_det_jacob
 ```
 
-except change of variable in `joint_logprob()` function, everthing will remain same
+except for the change of variable in `joint_logprob()` function, everthing will remain same
 
 ```{code-cell} ipython3
 rng_key = jax.random.PRNGKey(0)
@@ -448,26 +459,26 @@ joint_logprob_change_of_var(init_param)  # sanity check
 
 ```{code-cell} ipython3
 %%time
-warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob_change_of_var, 1000)
+warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob_change_of_var)
 
 # we use 4 chains for sampling
 n_chains = 4
 keys = jax.random.split(rng_key, n_chains)
 init_params = jax.vmap(init_param_fn)(keys)
 
-initial_states = jax.vmap(lambda seed, param: warmup.run(seed, param)[0])(
-    keys, init_params
-)
+@jax.vmap
+def call_warmup(seed, param):
+    initial_states, _, tuned_params = warmup.run(seed, param, 1000)
+    return initial_states, tuned_params
 
-# can not vectorize kernel, since it is not jax.numpy array
-_, kernel, _ = warmup.run(jax.random.PRNGKey(10), init_param_fn(rng_key))
+initial_states, tuned_params = call_warmup(keys, init_params)
 ```
 
 ```{code-cell} ipython3
 %%time
 n_samples = 1000
 states, infos = inference_loop_multiple_chains(
-    rng_key, kernel, initial_states, n_samples, n_chains
+    rng_key, initial_states, tuned_params, joint_logprob_change_of_var, n_samples, n_chains
 )
 ```
 
@@ -543,7 +554,7 @@ def joint_logprob(unbound_param):
 ```{code-cell} ipython3
 %%time
 rng_key = jax.random.PRNGKey(0)
-warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob, 1000)
+warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob)
 
 # we use 4 chains for sampling
 n_chains = 4
@@ -551,21 +562,20 @@ init_key, warmup_key = jax.random.split(rng_key, 2)
 init_params = bijectors.inverse(pinned.sample_unpinned(n_chains, seed=init_key))
 
 keys = jax.random.split(warmup_key, n_chains)
-initial_states = jax.vmap(lambda seed, param: warmup.run(seed, param)[0])(
-    keys, init_params
-)
 
-# can not vectorize kernel, since it is not jax.numpy array
-_, kernel, _ = warmup.run(
-    jax.random.PRNGKey(10),
-    bijectors.inverse(pinned.sample_unpinned(seed=init_key)))
+@jax.vmap
+def call_warmup(seed, param):
+    initial_states, _, tuned_params = warmup.run(seed, param, 1000)
+    return initial_states, tuned_params
+
+initial_states, tuned_params = call_warmup(keys, init_params)
 ```
 
 ```{code-cell} ipython3
 %%time
 n_samples = 1000
 states, infos = inference_loop_multiple_chains(
-    rng_key, kernel, initial_states, n_samples, n_chains
+    rng_key, initial_states, tuned_params, joint_logprob, n_samples, n_chains
 )
 ```
 
@@ -576,6 +586,8 @@ states = states._replace(position=bijectors.forward(position))
 ```
 
 ```{code-cell} ipython3
+:tags: [output-scroll]
+
 # make arviz trace from states
 trace = arviz_trace_from_states(states, infos, burn_in=0)
 summ_df = az.summary(trace)

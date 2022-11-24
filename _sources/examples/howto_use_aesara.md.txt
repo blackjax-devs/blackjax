@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.0
+    jupytext_version: 1.13.1
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -31,6 +31,7 @@ Y &\sim \operatorname{Binomial}(N, \theta)\\
 
 ```{code-cell} ipython3
 :tags: [hide-cell]
+
 # index of array is type of tumor and value shows number of total people tested.
 group_size = [20, 20, 20, 20, 20, 20, 20, 19, 19, 19, 19, 18, 18, 17, 20, 20, 20, 20, 19, 19, 18, 18, 25, 24, 23, 20, 20, 20, 20, 20, 20, 10, 49, 19, 46, 27, 17, 49, 47, 20, 20, 13, 48, 50, 20, 20, 20, 20, 20, 20, 20, 48, 19, 19, 19, 22, 46, 49, 20, 20, 23, 19, 22, 20, 20, 20, 52, 46, 47, 24, 14]
 
@@ -40,7 +41,7 @@ n_of_positives = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
 n_rat_tumors = len(group_size)
 ```
 
-Let us now implement the model in Aesara/AePPL. We start with implementing the generative model in two part, the improper prior on `a` and `b` and then the response model:
+We implement the generative model in two parts, the improper prior on `a` and `b` and then the response model:
 
 ```{code-cell} ipython3
 import aesara
@@ -67,36 +68,34 @@ print(prior_predictive_fn(.5, .5))
 print(prior_predictive_fn(.1, .3))
 ```
 
-We can naively compile the log-probability density function of the model using AePPL's `joint_logprob`. This function takes the generative model's graph, and returns a graph that compute the model's logprob where the random variables `Y_rv` and `theta_rv` are replaced with the value variables `theta_vv` and `Y_vv` that we provide.
+To sample from the posterior distribution of `theta_rv`, `a_rv` and `b_rv` we need to be able to compute the model's joint log-density. In AePPL, we use `joint_logprob` to build the graph of the joint log-density from the model graph:
 
 ```{code-cell} ipython3
-theta_vv = theta_rv.clone()
-Y_vv = Y_rv.clone()
-
-loglikelihood = joint_logprob({Y_rv: Y_vv, theta_rv: theta_vv})
+loglikelihood, (y_vv, theta_vv) = joint_logprob(Y_rv, theta_rv)
 logprob = logprior + loglikelihood
 ```
 
-I said "naively", because the Beta distribution generates samples between 0 and 1 and gradient-based algorithms like NUTS work better on unbounded intervals. We can tell AePPL to apply a log-odds transformation to the Beta-distributed variable, and subsequently sample in the transformed space:
+However, the Beta distribution generates samples between 0 and 1 and gradient-based algorithms like NUTS work better on unbounded intervals. We can tell AePPL to apply a log-odds transformation to the Beta-distributed variable, and subsequently sample in the transformed space:
 
 ```{code-cell} ipython3
 from aeppl.transforms import TransformValuesRewrite, LogOddsTransform
 
 transforms_op = TransformValuesRewrite(
-     {theta_vv: LogOddsTransform()}
+     {theta_rv: LogOddsTransform()}
 )
-loglikelihood = joint_logprob({Y_rv: Y_vv, theta_rv: theta_vv}, extra_rewrites=transforms_op)
+loglikelihood, (y_vv, theta_vv) = joint_logprob(Y_rv, theta_rv, extra_rewrites=transforms_op)
 logprob = logprior + loglikelihood
 ```
 
-
 ```{note}
-NUTS is not the best sampler for this example, since the Beta distribution is the conjugate distribution of the Binomial. Marginalizing would lead to a faster sampler with less variance. [AeMCMC](https://github.com/aesara-devs/aemcmc) (in alpha state) makes this kind of transformation automatically on Aesara models.
+NUTS is not the best sampler for this model: the Beta distribution is the conjugate distribution of the Binomial. Marginalizing would lead to a faster sampler with less variance. [AeMCMC](https://github.com/aesara-devs/aemcmc) (in alpha state) makes this kind of transformation automatically on Aesara models.
 ```
 
 You can alway debug the `logprob` graph by printing it:
 
 ```{code-cell} ipython3
+:tags: [output_scroll]
+
 aesara.dprint(logprob)
 ```
 
@@ -104,19 +103,24 @@ To sample with Blackjax we will need to use Aesara's JAX backend; `logprob_jax` 
 
 ```{code-cell} ipython3
 :tags: [remove-stderr]
-logprob_fn = aesara.function((a_vv, b_vv, theta_vv, Y_vv), logprob, mode="JAX")
+
+logprob_fn = aesara.function((a_vv, b_vv, theta_vv, y_vv), logprob, mode="JAX")
 logprob_jax = logprob_fn.vm.jit_fn
 ```
 
-JAX-compiled functions currently returns a tuple with a single element, but JAX can only differentiate scalar values and will complain. In addition, we would like to work with dictionaries for the values of the variables in Blackjax, and finally the value of `Y_vv` is fixed. So let's wrap the compiled function in a function that has the desired behavior:
+Let's wrap this function to make our life simpler:
 
-```{code-cell}
+1. `logprob_jax` returns a tuple with a single element, but JAX can only differentiate scalar values and will complain.
+2. We would like to work with dictionaries for the values of the variables;
+3. `Y_vv` is observed, so let's fix its value.
+
+```{code-cell} ipython3
 def logprob_fn(position):
     flat_position = tuple(position.values())
     return logprob_jax(*flat_position, n_of_positives)[0]
 ```
 
-We first need to define an initial position from which we are going to start sampling:
+Let's define the initial position from which we are going to start sampling:
 
 ```{code-cell} ipython3
 import jax
@@ -161,8 +165,8 @@ import blackjax
 n_adapt = 3000
 n_samples = 1000
 
-adapt = blackjax.window_adaptation(blackjax.nuts, logprob_fn, n_adapt)
-state, kernel, _ = adapt.run(rng_key, init_position)
+adapt = blackjax.window_adaptation(blackjax.nuts, logprob_fn)
+state, kernel, _ = adapt.run(rng_key, init_position, n_adapt)
 
 states, infos = inference_loop(
     rng_key, kernel, state, n_samples

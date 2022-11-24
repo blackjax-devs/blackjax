@@ -35,8 +35,6 @@
     <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Use with TFP models" href="howto_use_tfp.html" />
-    <link rel="prev" title="Use with Oryx models" href="howto_use_oryx.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -93,17 +91,17 @@
   HOW TO
  </span>
 </p>
-<ul class="current nav bd-sidenav">
- <li class="toctree-l1 current active has-children">
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1 has-children">
   <a class="reference internal" href="../howto_use_ppl.html">
    Use the model I built with X?
   </a>
-  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
   <label for="toctree-checkbox-1">
    <i class="fas fa-chevron-down">
    </i>
   </label>
-  <ul class="current">
+  <ul>
    <li class="toctree-l2">
     <a class="reference internal" href="howto_use_aesara.html">
      Use with Aesara models
@@ -119,11 +117,6 @@
      Use with Oryx models
     </a>
    </li>
-   <li class="toctree-l2 current active">
-    <a class="current reference internal" href="#">
-     Use with PyMC models
-    </a>
-   </li>
    <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
@@ -134,6 +127,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -228,8 +226,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../sampling.html">
-   Sampling
+  <a class="reference internal" href="../mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -413,42 +426,35 @@ title="Source repository"
 <p>We can now run the window adaptation for the NUTS sampler:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax</span>
-<span class="kn">import</span> <span class="nn">jax</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import blackjax
+import jax
 
-<span class="c1"># Get the initial position from PyMC</span>
-<span class="n">init_position_dict</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">initial_point</span><span class="p">()</span>
-<span class="n">init_position</span> <span class="o">=</span> <span class="p">[</span><span class="n">init_position_dict</span><span class="p">[</span><span class="n">rv</span><span class="p">]</span> <span class="k">for</span> <span class="n">rv</span> <span class="ow">in</span> <span class="n">rvs</span><span class="p">]</span>
+# Get the initial position from PyMC
+init_position_dict = model.initial_point()
+init_position = [init_position_dict[rv] for rv in rvs]
 
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1234</span><span class="p">)</span>
+rng_key = jax.random.PRNGKey(1234)
 
-<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
-<span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">init_position</span><span class="p">)</span>
+adapt = blackjax.window_adaptation(blackjax.nuts, logprob_fn)
+last_state, kernel, _ = adapt.run(rng_key, init_position, 1000)
+
+Let us now perform inference with the tuned kernel:
+
+```{code-cell} ipython3
+:tags: [hide-cell]
+
+def inference_loop(rng_key, kernel, initial_state, num_samples):
+    def one_step(state, rng_key):
+        state, info = kernel(rng_key, state)
+        return state, (state, info)
+
+    keys = jax.random.split(rng_key, num_samples)
+    _, (states, infos) = jax.lax.scan(one_step, initial_state, keys)
+
+    return states, infos
 </pre></div>
 </div>
 </div>
-</div>
-<p>Let us now perform inference with the tuned kernel:</p>
-<div class="cell tag_hide-cell docutils container">
-<details class="hide above-input">
-<summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
-</summary>
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
-        <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
-
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
-    <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="n">infos</span>
-</pre></div>
-</div>
-</div>
-</details>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -467,20 +473,6 @@ title="Source repository"
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="howto_use_oryx.html" title="previous page">
-        <i class="fas fa-angle-left"></i>
-        <div class="prev-next-info">
-            <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Use with Oryx models</p>
-        </div>
-    </a>
-    <a class='right-next' id="next-link" href="howto_use_tfp.html" title="next page">
-    <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Use with TFP models</p>
-    </div>
-    <i class="fas fa-angle-right"></i>
-    </a>
 </div>
             </footer>
         </div>

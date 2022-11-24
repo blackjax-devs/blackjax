@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.1
+    jupytext_version: 1.13.1
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -34,6 +34,8 @@ from functools import partial
 We download the MNIST data using `tensorflow-datasets`:
 
 ```{code-cell} ipython3
+:tags: [remove-stdout, remove-stderr]
+
 import tensorflow_datasets as tfds
 
 mnist_data, _ = tfds.load(
@@ -49,6 +51,8 @@ Now we need to apply several transformations to the dataset before splitting it 
 - We hot-encode category numbers.
 
 ```{code-cell} ipython3
+:tags: [remove-stdout, remove-stderr]
+
 def one_hot_encode(x, k, dtype=np.float32):
     "Create a one-hot encoding of x of size k."
     return np.array(x[:, None] == np.arange(k), dtype)
@@ -137,12 +141,10 @@ Now we need to get initial values for the parameters, and we simply sample from 
 We now sample from the model's posteriors using SGLD. We discard the first 1000 samples until the sampler has reached the typical set, and then take 2000 samples. We record the model's accuracy with the current values every 100 steps.
 
 ```{code-cell} ipython3
-%%time
-
 from fastprogress.fastprogress import progress_bar
 
 import blackjax
-from blackjax.sgmcmc.gradients import grad_estimator
+import blackjax.sgmcmc.gradients as gradients
 
 
 data_size = len(y_train)
@@ -157,13 +159,11 @@ rng_key = jax.random.PRNGKey(1)
 batches = batch_data(rng_key, (X_train, y_train), batch_size, data_size)
 
 # Set the initial state
-init_positions = jax.jit(model.init)(rng_key, jnp.ones(X_train.shape[-1]))
+state = jax.jit(model.init)(rng_key, jnp.ones(X_train.shape[-1]))
 
 # Build the SGLD kernel with a constant learning rate
-grad_fn = grad_estimator(logprior_fn, loglikelihood_fn, data_size)
-sgld = blackjax.sgld(grad_fn, lambda _: step_size)
-
-state = sgld.init(init_positions, next(batches))
+grad_fn = gradients.estimator(logprior_fn, loglikelihood_fn, data_size)
+sgld = blackjax.sgld(grad_fn)
 
 # Sample from the posterior
 accuracies = []
@@ -172,13 +172,13 @@ steps = []
 for step in progress_bar(range(num_samples + num_warmup)):
     _, rng_key = jax.random.split(rng_key)
     batch = next(batches)
-    state = jax.jit(sgld.step)(rng_key, state, batch)
+    state = jax.jit(sgld)(rng_key, state, batch, step_size)
     if step % 100 == 0:
-        accuracy = compute_accuracy(state.position, X_test, y_test)
+        accuracy = compute_accuracy(state, X_test, y_test)
         accuracies.append(accuracy)
         steps.append(step)
     if step > num_warmup:
-        samples.append(state.position)
+        samples.append(state)
 ```
 
 Let us plot the accuracy at different points in the sampling process:
@@ -207,11 +207,11 @@ We can also use SGHMC to samples from this model
 ```{code-cell} ipython3
 # Build the SGHMC kernel with a constant learning rate
 step_size = 9e-6
-grad_fn = grad_estimator(logprior_fn, loglikelihood_fn, data_size)
-sghmc = blackjax.sghmc(grad_fn, lambda _: step_size)
+grad_fn = gradients.estimator(logprior_fn, loglikelihood_fn, data_size)
+sghmc = blackjax.sghmc(grad_fn)
 
 # Batch the data
-state = sghmc.init(init_positions, next(batches))
+state = jax.jit(model.init)(rng_key, jnp.ones(X_train.shape[-1]))
 
 # Sample from the posterior
 sghmc_accuracies = []
@@ -219,14 +219,14 @@ samples = []
 steps = []
 for step in progress_bar(range(num_samples + num_warmup)):
     _, rng_key = jax.random.split(rng_key)
-    batch = next(batches)
-    state = jax.jit(sghmc.step)(rng_key, state, batch)
+    minibatch = next(batches)
+    state = jax.jit(sghmc)(rng_key, state, minibatch, step_size)
     if step % 100 == 0:
-        sghmc_accuracy = compute_accuracy(state.position, X_test, y_test)
+        sghmc_accuracy = compute_accuracy(state, X_test, y_test)
         sghmc_accuracies.append(sghmc_accuracy)
         steps.append(step)
     if step > num_warmup:
-        samples.append(state.position)
+        samples.append(state)
 ```
 
 ```{code-cell} ipython3

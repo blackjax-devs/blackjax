@@ -120,11 +120,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -134,6 +129,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -228,8 +228,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../sampling.html">
-   Sampling
+  <a class="reference internal" href="../mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -477,7 +492,7 @@ title="Source repository"
 </div>
 <section id="the-problem">
 <h2>The Problem<a class="headerlink" href="#the-problem" title="Permalink to this headline">#</a></h2>
-<p>We’ll generate observations from a normal distribution of known <code class="docutils literal notranslate"><span class="pre">loc</span></code> and <code class="docutils literal notranslate"><span class="pre">scale</span></code> to see if we can recover the parameters in sampling. Let’s take a decent-size dataset with 1,000 points:</p>
+<p>We’ll generate observations from a normal distribution of known <code class="docutils literal notranslate"><span class="pre">loc</span></code> and <code class="docutils literal notranslate"><span class="pre">scale</span></code> to see if we can recover the parameters in sampling. <strong>MCMC algorithms usually assume samples are being drawn from an unconstrained Euclidean space.</strong> Hence why we’ll log transform the scale parameter, so that sampling is done on the real line. Samples can be transformed back to their original space in post-processing. Let’s take a decent-size dataset with 1,000 points:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span>
@@ -488,8 +503,9 @@ title="Source repository"
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="n">observed</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">log_scale</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="n">observed</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Univariate Normal&quot;&quot;&quot;</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_scale</span><span class="p">)</span>
     <span class="n">logpdf</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">observed</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">logpdf</span><span class="p">)</span>
 
@@ -506,7 +522,7 @@ title="Source repository"
 <h3>Sampler Parameters<a class="headerlink" href="#sampler-parameters" title="Permalink to this headline">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inv_mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inv_mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">])</span>
 <span class="n">num_integration_steps</span> <span class="o">=</span> <span class="mi">60</span>
 <span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-3</span>
 
@@ -521,17 +537,17 @@ title="Source repository"
 <p>The initial state of the HMC algorithm requires not only an initial position, but also the potential energy and gradient of the potential energy at this position. BlackJAX provides a <code class="docutils literal notranslate"><span class="pre">new_state</span></code> function to initialize the state from an initial position.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">initial_position</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">}</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">initial_position</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;log_scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
 <span class="n">initial_state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
 <span class="n">initial_state</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(61159.32, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2369.0886, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-59047.23, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(33302.188, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1176.5149, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-61766.504, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -574,13 +590,13 @@ title="Source repository"
 <span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">hmc_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
 
 <span class="n">loc_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
-<span class="n">scale_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;scale&quot;</span><span class="p">]</span>
+<span class="n">scale_samples</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;log_scale&quot;</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.62 s, sys: 15.1 ms, total: 2.64 s
-Wall time: 2.64 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.29 s, sys: 0 ns, total: 1.29 s
+Wall time: 1.29 s
 </pre></div>
 </div>
 </div>
@@ -608,7 +624,7 @@ Wall time: 2.64 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/1006830556ea618920a355028ac3f94f6e8e8daa5f99b31863677503ac4a0853.png" src="../_images/1006830556ea618920a355028ac3f94f6e8e8daa5f99b31863677503ac4a0853.png" />
+<img alt="../_images/824e22ad03e6b256ae4243e07267dd7bcf29df7846d85769d34fc94ab5d88f78.png" src="../_images/824e22ad03e6b256ae4243e07267dd7bcf29df7846d85769d34fc94ab5d88f78.png" />
 </div>
 </div>
 </section>
@@ -618,7 +634,7 @@ Wall time: 2.64 s
 <p>NUTS is a <em>dynamic</em> algorithm: the number of integration steps is determined at runtime. We still need to specify a step size and a mass matrix:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inv_mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inv_mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">])</span>
 <span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-3</span>
 
 <span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">)</span>
@@ -628,14 +644,14 @@ Wall time: 2.64 s
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">initial_position</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">}</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">initial_position</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;log_scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
 <span class="n">initial_state</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
 <span class="n">initial_state</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;scale&#39;: 2.0}, potential_energy=DeviceArray(61159.32, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-2369.0886, dtype=float32, weak_type=True), &#39;scale&#39;: DeviceArray(-59047.23, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(33302.188, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1176.5149, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-61766.504, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -647,13 +663,13 @@ Wall time: 2.64 s
 <span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="mi">4_000</span><span class="p">)</span>
 
 <span class="n">loc_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
-<span class="n">scale_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;scale&quot;</span><span class="p">]</span>
+<span class="n">scale_samples</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;log_scale&quot;</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.8 s, sys: 34.9 ms, total: 13.9 s
-Wall time: 13.9 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.03 s, sys: 15.2 ms, total: 6.04 s
+Wall time: 6.04 s
 </pre></div>
 </div>
 </div>
@@ -681,7 +697,7 @@ Wall time: 13.9 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/6fd2f083be716991fbcfb54e43331a250add0a735d21a9819e323836338ca508.png" src="../_images/6fd2f083be716991fbcfb54e43331a250add0a735d21a9819e323836338ca508.png" />
+<img alt="../_images/9b975f46fbe9e00f0a1e4e804d5aa2fbe8f377f1a9d1116f7b1f39719f6e2001.png" src="../_images/9b975f46fbe9e00f0a1e4e804d5aa2fbe8f377f1a9d1116f7b1f39719f6e2001.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -692,21 +708,14 @@ Wall time: 13.9 s
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span>
-    <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span>
-    <span class="n">logprob</span><span class="p">,</span>
-    <span class="mi">1000</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span>
-    <span class="n">initial_position</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob</span><span class="p">)</span>
+<span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.14 s, sys: 23.7 ms, total: 3.16 s
-Wall time: 3.16 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.99 s, sys: 12.1 ms, total: 2 s
+Wall time: 2 s
 </pre></div>
 </div>
 </div>
@@ -719,13 +728,13 @@ Wall time: 3.16 s
 <span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">1_000</span><span class="p">)</span>
 
 <span class="n">loc_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
-<span class="n">scale_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;scale&quot;</span><span class="p">]</span>
+<span class="n">scale_samples</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;log_scale&quot;</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.35 s, sys: 7.7 ms, total: 2.35 s
-Wall time: 2.35 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.48 s, sys: 7.83 ms, total: 1.48 s
+Wall time: 1.48 s
 </pre></div>
 </div>
 </div>
@@ -753,7 +762,7 @@ Wall time: 2.35 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/96975db8917655be874eafbaeabb138fc16dd400a124399c1ce087487d8466c5.png" src="../_images/96975db8917655be874eafbaeabb138fc16dd400a124399c1ce087487d8466c5.png" />
+<img alt="../_images/ca3c47103809d7bba73fd557d1b2bd62c93bad4a23eae95ad753bf6aef65e1fc.png" src="../_images/ca3c47103809d7bba73fd557d1b2bd62c93bad4a23eae95ad753bf6aef65e1fc.png" />
 </div>
 </div>
 </section>

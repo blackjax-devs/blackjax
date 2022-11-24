@@ -117,11 +117,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="examples/howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="examples/howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -131,6 +126,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="examples/howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="examples/howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -225,8 +225,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="sampling.html">
-   Sampling
+  <a class="reference internal" href="mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -361,7 +376,7 @@ title="Source repository"
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sampling.html#blackjax.adaptive_tempered_smc">adaptive_tempered_smc (class in blackjax)</a>
+      <li><a href="smc.html#blackjax.adaptive_tempered_smc">adaptive_tempered_smc (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -373,7 +388,7 @@ title="Source repository"
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sampling.html#blackjax.elliptical_slice">elliptical_slice (class in blackjax)</a>
+      <li><a href="mcmc.html#blackjax.elliptical_slice">elliptical_slice (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -381,7 +396,7 @@ title="Source repository"
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sampling.html#blackjax.ghmc">ghmc (class in blackjax)</a>
+      <li><a href="mcmc.html#blackjax.ghmc">ghmc (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -389,7 +404,7 @@ title="Source repository"
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sampling.html#blackjax.hmc">hmc (class in blackjax)</a>
+      <li><a href="mcmc.html#blackjax.hmc">hmc (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -397,11 +412,13 @@ title="Source repository"
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sampling.html#blackjax.mala">mala (class in blackjax)</a>
+      <li><a href="mcmc.html#blackjax.mala">mala (class in blackjax)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="adaptation.html#blackjax.meads">meads (class in blackjax)</a>
+</li>
+      <li><a href="mcmc.html#blackjax.mgrad_gaussian">mgrad_gaussian (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -409,7 +426,7 @@ title="Source repository"
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sampling.html#blackjax.nuts">nuts (class in blackjax)</a>
+      <li><a href="mcmc.html#blackjax.nuts">nuts (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -417,7 +434,7 @@ title="Source repository"
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sampling.html#blackjax.orbital_hmc">orbital_hmc (class in blackjax)</a>
+      <li><a href="mcmc.html#blackjax.orbital_hmc">orbital_hmc (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -425,6 +442,12 @@ title="Source repository"
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="vi.html#blackjax.pathfinder">pathfinder (class in blackjax)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="adaptation.html#blackjax.pathfinder_adaptation">pathfinder_adaptation (class in blackjax)</a>
+</li>
       <li><a href="diagnostics.html#blackjax.diagnostics.potential_scale_reduction">potential_scale_reduction() (in module blackjax.diagnostics)</a>
 </li>
   </ul></td>
@@ -433,7 +456,7 @@ title="Source repository"
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sampling.html#blackjax.rmh">rmh (class in blackjax)</a>
+      <li><a href="mcmc.html#blackjax.rmh">rmh (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -441,11 +464,11 @@ title="Source repository"
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sampling.html#blackjax.sghmc">sghmc (class in blackjax)</a>
+      <li><a href="sgmcmc.html#blackjax.sghmc">sghmc (class in blackjax)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sampling.html#blackjax.sgld">sgld (class in blackjax)</a>
+      <li><a href="sgmcmc.html#blackjax.sgld">sgld (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -453,7 +476,7 @@ title="Source repository"
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sampling.html#blackjax.tempered_smc">tempered_smc (class in blackjax)</a>
+      <li><a href="smc.html#blackjax.tempered_smc">tempered_smc (class in blackjax)</a>
 </li>
   </ul></td>
 </tr></table>

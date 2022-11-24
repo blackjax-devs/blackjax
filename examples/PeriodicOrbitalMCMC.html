@@ -121,11 +121,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -135,6 +130,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -229,8 +229,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../sampling.html">
-   Sampling
+  <a class="reference internal" href="../mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -571,10 +586,10 @@ $$</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<img alt="../_images/d94ff3d471a324aff5bd4445deb2d0e0f5cafe6f56d7e7f5f88cda7c562d4679.png" src="../_images/d94ff3d471a324aff5bd4445deb2d0e0f5cafe6f56d7e7f5f88cda7c562d4679.png" />
+<img alt="../_images/3ca82a836b0cb647546c753f035985557621f80308c36c187574ddcd35abf897.png" src="../_images/3ca82a836b0cb647546c753f035985557621f80308c36c187574ddcd35abf897.png" />
 </div>
 </div>
 </section>
@@ -618,8 +633,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 276 ms, sys: 11.8 ms, total: 288 ms
-Wall time: 287 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 186 ms, sys: 482 µs, total: 187 ms
+Wall time: 187 ms
 </pre></div>
 </div>
 </div>
@@ -636,8 +651,8 @@ Wall time: 287 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.36 s, sys: 0 ns, total: 1.36 s
-Wall time: 1.35 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 808 ms, sys: 8.16 ms, total: 816 ms
+Wall time: 812 ms
 </pre></div>
 </div>
 </div>
@@ -649,7 +664,7 @@ Wall time: 1.35 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/78572ebbf2d9fd0458394001d95744c10ef4f81e626e69ae806a94edd7cf042d.png" src="../_images/78572ebbf2d9fd0458394001d95744c10ef4f81e626e69ae806a94edd7cf042d.png" />
+<img alt="../_images/73dfd17a24d0572d245d5cf75f45979a34dae0615a3f123b02d91376af065e6e.png" src="../_images/73dfd17a24d0572d245d5cf75f45979a34dae0615a3f123b02d91376af065e6e.png" />
 </div>
 </div>
 </section>
@@ -668,8 +683,8 @@ Wall time: 1.35 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 19.9 ms, sys: 0 ns, total: 19.9 ms
-Wall time: 19.9 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.1 ms, sys: 277 µs, total: 14.4 ms
+Wall time: 14.2 ms
 </pre></div>
 </div>
 </div>
@@ -686,8 +701,8 @@ Wall time: 19.9 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.18 s, sys: 3.67 ms, total: 1.18 s
-Wall time: 1.18 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 779 ms, sys: 7.51 ms, total: 787 ms
+Wall time: 785 ms
 </pre></div>
 </div>
 </div>
@@ -705,7 +720,7 @@ Wall time: 1.18 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/0df57665b1b72a6d4bb44f53dbb8b7e4d90ac3e51d5d3bc2a4f302078ae8e14e.png" src="../_images/0df57665b1b72a6d4bb44f53dbb8b7e4d90ac3e51d5d3bc2a4f302078ae8e14e.png" />
+<img alt="../_images/97857dd45f38a95e665bebc1cd525a01e7709c06740038c6c9d1a59bfcca769f.png" src="../_images/97857dd45f38a95e665bebc1cd525a01e7709c06740038c6c9d1a59bfcca769f.png" />
 </div>
 </div>
 </section>
@@ -724,8 +739,8 @@ Wall time: 1.18 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 20.5 ms, sys: 24 µs, total: 20.6 ms
-Wall time: 20.3 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.9 ms, sys: 199 µs, total: 14.1 ms
+Wall time: 14 ms
 </pre></div>
 </div>
 </div>
@@ -742,8 +757,8 @@ Wall time: 20.3 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.24 s, sys: 7.96 ms, total: 1.25 s
-Wall time: 1.24 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 745 ms, sys: 4.18 ms, total: 749 ms
+Wall time: 751 ms
 </pre></div>
 </div>
 </div>
@@ -761,7 +776,7 @@ Wall time: 1.24 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/6a3fbae5da0828ff825dd621b70c6a139e4bde6ac2b47542ba2830033ed5b0b1.png" src="../_images/6a3fbae5da0828ff825dd621b70c6a139e4bde6ac2b47542ba2830033ed5b0b1.png" />
+<img alt="../_images/81d61d221bd3645c70184eb46dff12e9d32b677e9d0c84e35bbbb3f617bb86a9.png" src="../_images/81d61d221bd3645c70184eb46dff12e9d32b677e9d0c84e35bbbb3f617bb86a9.png" />
 </div>
 </div>
 </section>
@@ -824,8 +839,8 @@ v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.3 ms, sys: 7.95 ms, total: 22.3 ms
-Wall time: 21.6 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.1 ms, sys: 0 ns, total: 14.1 ms
+Wall time: 14.8 ms
 </pre></div>
 </div>
 </div>
@@ -842,8 +857,8 @@ Wall time: 21.6 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.02 s, sys: 0 ns, total: 1.02 s
-Wall time: 1.01 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 621 ms, sys: 0 ns, total: 621 ms
+Wall time: 622 ms
 </pre></div>
 </div>
 </div>
@@ -861,7 +876,7 @@ Wall time: 1.01 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/d8e956057ccc0a6fda7f38251d68b1212e56ac4396f4e81593894fe02eb2c97f.png" src="../_images/d8e956057ccc0a6fda7f38251d68b1212e56ac4396f4e81593894fe02eb2c97f.png" />
+<img alt="../_images/938e41a26b7afdf5102af10919e764e7fc9bd0a3213bef8bb4193bfbeb41a335.png" src="../_images/938e41a26b7afdf5102af10919e764e7fc9bd0a3213bef8bb4193bfbeb41a335.png" />
 </div>
 </div>
 </section>
@@ -893,7 +908,7 @@ v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.14/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div>
 </div>
@@ -998,8 +1013,8 @@ v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.02 s, sys: 11.9 ms, total: 2.03 s
-Wall time: 2.02 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.19 s, sys: 142 µs, total: 1.19 s
+Wall time: 1.19 s
 </pre></div>
 </div>
 </div>
@@ -1020,7 +1035,7 @@ Wall time: 2.02 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/d75001bf886c6752e3843f455c7b667f6897fcb7bb930562676c137d4b711523.png" src="../_images/d75001bf886c6752e3843f455c7b667f6897fcb7bb930562676c137d4b711523.png" />
+<img alt="../_images/882a2243bd60ce05c0ba7011232fae1446e2343048de500e0e3df864db275a9a.png" src="../_images/882a2243bd60ce05c0ba7011232fae1446e2343048de500e0e3df864db275a9a.png" />
 </div>
 </div>
 <p>We define our log pullback given the learned parameters of the transformation and use the periodic orbital MCMC with an ellipsis to sample from this log pullback density.</p>
@@ -1044,8 +1059,8 @@ Wall time: 2.02 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 772 ms, sys: 7.89 ms, total: 780 ms
-Wall time: 779 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 455 ms, sys: 4.3 ms, total: 459 ms
+Wall time: 458 ms
 </pre></div>
 </div>
 </div>
@@ -1062,8 +1077,8 @@ Wall time: 779 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.19 s, sys: 4.02 ms, total: 1.2 s
-Wall time: 1.19 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 743 ms, sys: 0 ns, total: 743 ms
+Wall time: 739 ms
 </pre></div>
 </div>
 </div>
@@ -1104,7 +1119,7 @@ Wall time: 1.19 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/369f650c1024bc839619a01b5701e82d075d52000e37884dba3091a88a060741.png" src="../_images/369f650c1024bc839619a01b5701e82d075d52000e37884dba3091a88a060741.png" />
+<img alt="../_images/3f0e3c1118690493b8f8dc239d0a8518d380633162b096d2049c33b98de79874.png" src="../_images/3f0e3c1118690493b8f8dc239d0a8518d380633162b096d2049c33b98de79874.png" />
 </div>
 </div>
 </section>

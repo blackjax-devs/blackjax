@@ -119,11 +119,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="examples/howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="examples/howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -133,6 +128,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="examples/howto_sample_multiple_chains.html">
    Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="examples/howto_custom_gradients.html">
+   Use custom gradients?
   </a>
  </li>
  <li class="toctree-l1">
@@ -227,8 +227,23 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="sampling.html">
-   Sampling
+  <a class="reference internal" href="mcmc.html">
+   MCMC sampling
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sgmcmc.html">
+   Stochastic gradient MCMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="smc.html">
+   Sequential Monte Carlo
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="vi.html">
+   Variational Inference
   </a>
  </li>
  <li class="toctree-l1">
@@ -419,6 +434,7 @@ title="Source repository"
                 
   <section id="welcome-to-blackjax">
 <h1>Welcome to Blackjax<a class="headerlink" href="#welcome-to-blackjax" title="Permalink to this headline">#</a></h1>
+<p><em>The documentation corresponds to the current state of the `main` branch. There may be differences with the latest released version.</em></p>
 <p>Blackjax is a library of samplers for <a class="reference external" href="https://github.com/google/jax">JAX</a> that works on CPU as well as GPU. It is designed with two categories of users in mind:</p>
 <ul class="simple">
 <li><p>People who just need state-of-the-art samplers that are fast, robust and well tested;</p></li>
@@ -482,13 +498,16 @@ with the relevant hardware acceleration support.</p>
 <li class="toctree-l2"><a class="reference internal" href="examples/howto_use_aesara.html">Use with Aesara models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/howto_use_numpyro.html">Use with Numpyro models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/howto_use_oryx.html">Use with Oryx models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/howto_use_pymc.html">Use with PyMC models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/howto_use_tfp.html">Use with TFP models</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="examples/howto_sample_multiple_chains.html#vectorization-vs-parallelization">Vectorization vs parallelization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/howto_sample_multiple_chains.html#nuts-in-parallel">NUTS in parallel</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples/howto_custom_gradients.html">Use custom gradients?</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/howto_custom_gradients.html#functions-defined-as-the-minimum-of-another-function">Functions defined as the minimum of another function</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a><ul>
@@ -508,22 +527,34 @@ with the relevant hardware acceleration support.</p>
 <div class="toctree-wrapper compound">
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="sampling.html">Sampling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="sampling.html#elliptical-slice-sampler">Elliptical Slice Sampler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sampling.html#hmc">HMC</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sampling.html#generalized-hmc">Generalized HMC</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sampling.html#mala">MALA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sampling.html#nuts">NUTS</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sampling.html#periodic-orbital">Periodic Orbital</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sampling.html#rmh">RMH</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sampling.html#stochastic-gradient-langevin-dynamics">Stochastic Gradient Langevin Dynamics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sampling.html#stochastic-gradient-hmc">Stochastic Gradient HMC</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sampling.html#tempered-smc">Tempered SMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcmc.html">MCMC sampling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mcmc.html#nuts">NUTS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcmc.html#hmc">HMC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcmc.html#generalized-hmc">Generalized HMC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcmc.html#mala">MALA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcmc.html#marginal-gradient-sampler-for-latent-gaussian-model">Marginal gradient sampler for latent gaussian model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcmc.html#periodic-orbital">Periodic Orbital</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcmc.html#elliptical-slice-sampler">Elliptical Slice Sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcmc.html#rmh">RMH</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sgmcmc.html">Stochastic gradient MCMC</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sgmcmc.html#stochastic-gradient-langevin-dynamics">Stochastic Gradient Langevin Dynamics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sgmcmc.html#stochastic-gradient-hmc">Stochastic Gradient HMC</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="smc.html">Sequential Monte Carlo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="smc.html#tempered-smc">Tempered SMC</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vi.html">Variational Inference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vi.html#pathfinder">Pathfinder</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="adaptation.html">Adaptation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="adaptation.html#window-adaptation">Window adaptation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="adaptation.html#maximum-eigenvalue-adaptation-of-damping-and-step-size-adaptation">Maximum-Eigenvalue Adaptation of Damping and Step-size adaptation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adaptation.html#pathfinder-adaptation">Pathfinder adaptation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adaptation.html#meads">MEADS</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="diagnostics.html">Diagnostics</a><ul>
