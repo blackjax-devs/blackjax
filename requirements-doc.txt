@@ -1,6 +1,6 @@
 -e ./
-aeppl
-aesara>=2.8.5
+aeppl>=0.0.40
+aesara>=2.8.8
 arviz
 distrax
 flax
