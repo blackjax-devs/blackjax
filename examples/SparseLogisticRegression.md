@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.0
+    jupytext_version: 1.13.1
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -30,6 +30,8 @@ $$
 $$
 
 ```{code-cell} ipython3
+:tags: [remove-stderr]
+
 import jax
 import jax.numpy as jnp
 import jax.random as jrnd
@@ -119,7 +121,7 @@ def one_chain(k_sam, init_state):
 
 
 k_sample = jrnd.split(k_sample, n_chain)
-samples, infos = batch_fn(one_chain)(k_sample, init_state)
+samples, infos = jax.vmap(one_chain)(k_sample, init_state)
 tic2 = pd.Timestamp.now()
 print("Runtime for MEADS", tic2 - tic1)
 ```

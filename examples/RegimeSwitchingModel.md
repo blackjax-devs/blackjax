@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.0
+    jupytext_version: 1.13.1
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -158,7 +158,6 @@ def inference_loop(rng, init_state, kernel, n_iter):
 ```
 
 ```{code-cell} ipython3
-print("Loading Google stock data...")
 url = "https://raw.githubusercontent.com/blackjax-devs/blackjax/main/examples/data/google.csv"
 data = pd.read_csv(url)
 y = data.dl_ac.values * 100
@@ -166,7 +165,6 @@ T, _ = data.shape
 ```
 
 ```{code-cell} ipython3
-print("Setting up Regime switching hidden Markov model...")
 dist = RegimeSwitchHMM(T, y)
 ```
 
@@ -177,7 +175,6 @@ dist.initialize_model(kinit, n_chain)
 ```
 
 ```{code-cell} ipython3
-print("Running MEADS...")
 tic1 = pd.Timestamp.now()
 k_warm, k_sample = jrnd.split(ksam)
 warmup = blackjax.meads(dist.logprob_fn, n_chain)
@@ -188,7 +185,7 @@ def one_chain(k_sam, init_state):
     return state.position, info
 
 k_sample = jrnd.split(k_sample, n_chain)
-samples, infos = batch_fn(one_chain)(k_sample, init_state)
+samples, infos = jax.vmap(one_chain)(k_sample, init_state)
 tic2 = pd.Timestamp.now()
 print("Runtime for MEADS", tic2 - tic1)
 ```

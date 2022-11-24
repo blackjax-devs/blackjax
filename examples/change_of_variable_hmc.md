@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.1
+    jupytext_version: 1.13.1
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -376,6 +376,8 @@ def arviz_trace_from_states(states, info, burn_in=0):
 ```
 
 ```{code-cell} ipython3
+:tags: [output-scroll]
+
 # make arviz trace from states
 trace = arviz_trace_from_states(states, infos)
 summ_df = az.summary(trace)
@@ -584,6 +586,8 @@ states = states._replace(position=bijectors.forward(position))
 ```
 
 ```{code-cell} ipython3
+:tags: [output-scroll]
+
 # make arviz trace from states
 trace = arviz_trace_from_states(states, infos, burn_in=0)
 summ_df = az.summary(trace)

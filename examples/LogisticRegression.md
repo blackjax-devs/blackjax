@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.0
+    jupytext_version: 1.13.1
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -28,7 +28,6 @@ import blackjax
 ```{code-cell} ipython3
 :tags: [hide-cell]
 
-%config InlineBackend.figure_format = "retina"
 plt.rcParams["axes.spines.right"] = False
 plt.rcParams["axes.spines.top"] = False
 plt.rcParams["figure.figsize"] = (12, 8)
@@ -157,7 +156,6 @@ plt.show()
 burnin = 300
 chains = states.position[burnin:, :]
 nsamp, _ = chains.shape
-
 ```
 
 ### Predictive Distribution
