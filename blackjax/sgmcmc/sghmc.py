@@ -40,7 +40,7 @@ def kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
             position, momentum = state
             logprob_grad = grad_estimator(position, minibatch)
             position, momentum = integrator(
-                rng_key, position, momentum, logprob_grad, step_size, minibatch
+                rng_key, position, momentum, logprob_grad, step_size
             )
             return ((position, momentum), position)
 
