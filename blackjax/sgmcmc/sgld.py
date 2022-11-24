@@ -34,7 +34,7 @@ def kernel() -> Callable:
     ):
 
         logprob_grad = grad_estimator(position, minibatch)
-        new_position = integrator(rng_key, position, logprob_grad, step_size, minibatch)
+        new_position = integrator(rng_key, position, logprob_grad, step_size)
 
         return new_position
 

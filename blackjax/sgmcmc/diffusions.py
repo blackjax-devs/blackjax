@@ -38,7 +38,6 @@ def overdamped_langevin():
         position: PyTree,
         logprob_grad: PyTree,
         step_size: float,
-        minibatch: tuple = (),
     ) -> PyTree:
 
         noise = generate_gaussian_noise(rng_key, position)
@@ -76,7 +75,6 @@ def sghmc(alpha: float = 0.01, beta: float = 0):
         momentum: PyTree,
         logprob_grad: PyTree,
         step_size: float,
-        minibatch: tuple = (),
     ):
         noise = generate_gaussian_noise(rng_key, position)
         position = jax.tree_util.tree_map(lambda x, p: x + p, position, momentum)
