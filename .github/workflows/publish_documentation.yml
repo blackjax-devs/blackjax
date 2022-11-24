@@ -1,8 +1,8 @@
 name: Publish the documentation
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [main]
 
 jobs:
   publish:
