@@ -89,7 +89,10 @@ with the relevant hardware acceleration support.
    :maxdepth: 2
    :caption: API Documentation
 
-   sampling
+   mcmc
+   sgmcmc
+   smc
+   vi
    adaptation
    diagnostics
 
