@@ -15,6 +15,7 @@
 from typing import Callable
 
 import jax
+import jax.numpy as jnp
 
 import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.types import PRNGKey, PyTree
@@ -44,9 +45,9 @@ def kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
             )
             return ((position, momentum), position)
 
-        momentum = generate_gaussian_noise(rng_key, position, step_size)
+        momentum = generate_gaussian_noise(rng_key, position, 0, jnp.sqrt(step_size))
         keys = jax.random.split(rng_key, num_integration_steps)
-        position, _ = jax.lax.scan(body_fn, (position, momentum), keys)
+        (position, momentum), _ = jax.lax.scan(body_fn, (position, momentum), keys)
 
         return position
 
