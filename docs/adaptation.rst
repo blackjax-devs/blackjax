@@ -8,9 +8,15 @@ Window adaptation
 
 .. autoclass:: blackjax.window_adaptation
 
+Pathfinder adaptation
+~~~~~~~~~~~~~~~~~~~~~
 
-Maximum-Eigenvalue Adaptation of Damping and Step-size adaptation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. currentmodule:: blackjax
+
+.. autoclass:: blackjax.pathfinder_adaptation
+
+MEADS
+~~~~~
 
 .. currentmodule:: blackjax
 
