@@ -35,6 +35,8 @@ sigma = np.array([15.0, 10.0, 16.0, 11.0, 9.0, 11.0, 10.0, 18.0])
 We implement the non-centered version of the hierarchical model:
 
 ```{code-cell} ipython3
+:tags: [hide-output]
+
 import numpyro
 import numpyro.distributions as dist
 from numpyro.infer.reparam import TransformReparam
@@ -137,7 +139,8 @@ print(f"There were {100*num_divergent:.2f}% divergent transitions")
 Finally let us now plot the distribution of the parameters. Note that since we use a transformed variable, Numpyro does not output the school treatment effect directly:
 
 ```{code-cell} ipython3
-:tags: [hide-cell]
+:tags: [hide-input]
+
 import seaborn as sns
 from matplotlib import pyplot as plt
 
@@ -153,7 +156,8 @@ fig.tight_layout()
 ```
 
 ```{code-cell} ipython3
-:tags: [hide-cell]
+:tags: [hide-input]
+
 fig, axes = plt.subplots(8, 2, sharex="col", sharey="col")
 fig.set_size_inches(12, 10)
 for i in range(J):
@@ -168,7 +172,8 @@ plt.show()
 ```
 
 ```{code-cell} ipython3
-:tags: [hide-cell]
+:tags: [hide-input]
+
 for i in range(J):
     print(
         f"Relative treatment effect for school {i}: {np.mean(samples['theta_base'][:, i]):.2f}"

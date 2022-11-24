@@ -178,7 +178,7 @@ Another parameter of interest for diagnostics is the location on the ellipse the
 Since the likelihood's variance is set at 1., it is quite informative. Increasing the likelihood's variance leads to less sub iterations per iteration of the Elliptical Slice sampler and the parameter theta becoming more uniform on its range.
 
 ```{code-cell} ipython3
-:tags: [hide-cell]
+:tags: [hide-input]
 
 plt.figure(figsize=(10, 5))
 plt.hist(np.array(info.subiter), bins=50)
@@ -188,7 +188,7 @@ plt.show()
 ```
 
 ```{code-cell} ipython3
-:tags: [hide-cell]
+:tags: [hide-input]
 
 plt.figure(figsize=(10, 5))
 plt.hist(np.array(info.theta), bins=100)

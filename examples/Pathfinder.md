@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.1
+    jupytext_version: 1.13.1
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -29,7 +29,6 @@ import blackjax
 ```{code-cell} ipython3
 :tags: [hide-cell]
 
-%config InlineBackend.figure_format = "retina"
 plt.rcParams["axes.spines.right"] = False
 plt.rcParams["axes.spines.top"] = False
 plt.rcParams["figure.figsize"] = (10, 6)
@@ -266,7 +265,7 @@ This estimation of the inverse mass matrix, coupled with Nesterov's dual averagi
 This scheme is implemented in `blackjax.kernel.pathfinder_adaptation` function:
 
 ```{code-cell} ipython3
-adapt = blackjax.kernels.pathfinder_adaptation(jax.jit(blackjax.nuts), logprob_fn)
+adapt = blackjax.kernels.pathfinder_adaptation(blackjax.nuts, logprob_fn)
 state, kernel, info = adapt.run(rng_key, w0, 400)
 ```
 

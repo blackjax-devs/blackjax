@@ -133,8 +133,6 @@ initial_states = jax.vmap(nuts.init, in_axes=(0))(initial_positions)
 And finally run the sampler
 
 ```{code-cell} ipython3
-%%time
-
 states = inference_loop_multiple_chains(
     rng_key, nuts.step, initial_states, 2_000, num_chains
 )
@@ -221,8 +219,6 @@ We could have done that in the `jax.vmap` example (and it wouldn't have helped),
 We are now ready to sample:
 
 ```{code-cell} ipython3
-%%time
-
 keys = jax.random.split(rng_key, num_chains)
 
 pmap_states = inference_loop_multiple_chains(

@@ -22,8 +22,9 @@ You will need [tensorflow-probability](https://www.tensorflow.org/probability) t
 We reproduce the Eight Schools example from the [TFP documentation](https://www.tensorflow.org/probability/examples/Eight_Schools).
 
 ```{code-cell} ipython3
-import jax
+:tags: [hide-input]
 
+import jax
 import blackjax
 ```
 
@@ -146,7 +147,7 @@ states.position["avg_effect"].block_until_ready()
 Extra information about the inference is contained in the `infos` namedtuple. Let us compute the average acceptance rate:
 
 ```{code-cell} ipython3
-:tags: [hide-cell]
+:tags: [hide-input]
 
 acceptance_rate = np.mean(infos.acceptance_rate)
 print(f"Average acceptance rate: {acceptance_rate:.2f}")
