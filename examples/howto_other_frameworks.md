@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.0
+    jupytext_version: 1.13.1
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -60,7 +60,8 @@ i_vv = I_rv.clone()
 logprob = []
 for i in range(4):
     i_vv = at.as_tensor(i, dtype="int64")
-    logprob.append(joint_logprob({Y_rv: y_vv, I_rv: i_vv}))
+    component_logprob, _ = joint_logprob(realized={Y_rv: y_vv, I_rv: i_vv})
+    logprob.append(component_logprob)
 logprob = at.stack(logprob, axis=0)
 
 total_logprob = at.logsumexp(at.log(weights) + logprob)
@@ -122,6 +123,8 @@ numba_logpdf.defvjp(vjp_fwd, vjp_bwd)
 And we can now call the function from a jitted function and apply `jax.grad` without JAX complaining:
 
 ```{code-cell} ipython3
+:tags: [remove-stderr]
+
 jax.jit(numba_logpdf)(1.), jax.grad(numba_logpdf)(1.)
 ```
 
@@ -149,7 +152,6 @@ If you run this on your machine you will notice that this runs quite slowly comp
 
 ```{code-cell} ipython3
 %%time
-
 for _ in range(100_000):
     logprob_fn(100)
 ```
@@ -158,7 +160,6 @@ And *JAX on the other hand, with 100 times less iterations*:
 
 ```{code-cell} ipython3
 %%time
-
 for _ in range(1_000):
     numba_logpdf(100.)
 ```
