@@ -153,8 +153,7 @@ To cite this repository:
   year = {2020},
 }
 ```
-In the above bibtex entry, names are in alphabetical order, the version number
-is intended to be that from [blackjax/__init__.py](https://github.com/blackjax-devs/blackjax/blob/main/blackjax/__init__.py), and the year corresponds to the project's open-source release.
+In the above bibtex entry, names are in alphabetical order, the version number should be the last tag on the `main` branch.
 
 ## Acknowledgements
 
