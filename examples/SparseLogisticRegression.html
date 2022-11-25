@@ -372,7 +372,7 @@ $$</p>
 $$</p>
 <div class="cell tag_remove-stderr docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jrnd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -467,11 +467,6 @@ $$</p>
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:02:07.832719
-</pre></div>
-</div>
-</div>
 </div>
 <div class="cell tag_hide-input docutils container">
 <details class="hide above-input">
@@ -480,67 +475,11 @@ $$</p>
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </details>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>                mean       std    median      5.0%     95.0%     n_eff     r_hat
-   beta[0]      0.37      0.88      0.40     -1.07      1.87   6769.43      1.02
-   beta[1]      1.15      0.57      1.06      0.28      2.01   5358.61      1.02
-   beta[2]     -1.27      0.57     -1.19     -2.13     -0.35   5979.91      1.02
-   beta[3]      1.10      0.57      1.01      0.21      1.94   4879.87      1.03
-   beta[4]     -0.47      0.85     -0.49     -1.91      0.91   5950.98      1.02
-   beta[5]      0.95      0.56      0.85      0.13      1.76   4829.51      1.03
-   beta[6]      0.65      0.69      0.60     -0.35      1.90   6851.43      1.02
-   beta[7]      0.66      0.72      0.62     -0.40      1.97   6934.81      1.02
-   beta[8]      0.03      0.83      0.03     -1.36      1.43   7192.68      1.02
-   beta[9]     -0.66      0.70     -0.61     -1.95      0.25   5101.86      1.03
-  beta[10]      0.39      0.82      0.38     -0.97      1.79   5779.57      1.02
-  beta[11]      0.82      0.60      0.73      0.05      1.78   6373.22      1.02
-  beta[12]     -0.44      0.81     -0.45     -1.83      0.89   6607.54      1.02
-  beta[13]     -0.07      0.81     -0.07     -1.43      1.31   7640.86      1.02
-  beta[14]      0.34      0.77      0.31     -0.95      1.67   9718.29      1.01
-  beta[15]      0.71      0.73      0.68     -0.39      2.01   6532.70      1.02
-  beta[16]     -0.88      0.57     -0.78     -1.73     -0.08   5486.35      1.03
-  beta[17]      0.87      0.61      0.78      0.06      1.85   4951.35      1.03
-  beta[18]     -0.70      0.71     -0.66     -1.99      0.34   5273.33      1.02
-  beta[19]     -0.77      0.73     -0.74     -2.07      0.30   6061.02      1.02
-  beta[20]     -0.52      0.74     -0.49     -1.81      0.64   5520.58      1.02
-  beta[21]      0.34      0.78      0.34     -0.98      1.67   6172.72      1.02
-  beta[22]      0.02      0.86      0.03     -1.41      1.46   8059.88      1.01
-  beta[23]     -0.03      0.82     -0.02     -1.42      1.34   6831.87      1.02
-  beta[24]     -0.04      0.81     -0.04     -1.44      1.31   8907.04      1.01
-  lamda[0]     -1.33      2.08     -0.85     -4.37      1.56   5162.23      1.02
-  lamda[1]      0.63      0.60      0.63     -0.34      1.63   4422.22      1.03
-  lamda[2]      0.89      0.57      0.90     -0.02      1.85   4863.85      1.02
-  lamda[3]      0.50      0.65      0.50     -0.55      1.57   4184.80      1.03
-  lamda[4]     -1.28      2.10     -0.76     -4.25      1.57   5299.55      1.02
-  lamda[5]      0.11      0.77      0.12     -1.04      1.35   3330.01      1.04
-  lamda[6]     -1.00      1.83     -0.60     -3.38      1.51   3165.66      1.04
-  lamda[7]     -0.92      1.79     -0.51     -3.34      1.56   3657.44      1.04
-  lamda[8]     -2.51      2.29     -2.08     -5.82      0.89   4814.37      1.03
-  lamda[9]     -1.02      1.88     -0.61     -3.47      1.49   2511.46      1.06
- lamda[10]     -1.74      2.24     -1.22     -4.91      1.33   3833.11      1.03
- lamda[11]     -0.44      1.28     -0.30     -1.90      1.32   1213.56      1.11
- lamda[12]     -1.50      2.12     -1.00     -4.54      1.35   4085.54      1.03
- lamda[13]     -2.48      2.23     -2.08     -5.73      0.86   4012.74      1.03
- lamda[14]     -2.24      2.29     -1.79     -5.42      0.95   3084.76      1.04
- lamda[15]     -0.68      1.77     -0.25     -3.04      1.70   3131.96      1.04
- lamda[16]     -0.21      0.95     -0.16     -1.49      1.24   2775.15      1.05
- lamda[17]     -0.22      1.17     -0.08     -1.62      1.49   2221.92      1.06
- lamda[18]     -0.77      1.78     -0.37     -3.08      1.58   3096.94      1.04
- lamda[19]     -0.50      1.73     -0.08     -2.79      1.72   3520.28      1.04
- lamda[20]     -1.40      2.00     -0.94     -4.18      1.32   4003.02      1.03
- lamda[21]     -1.90      2.17     -1.41     -5.02      1.13   3699.63      1.03
- lamda[22]     -2.07      2.24     -1.61     -5.36      1.07   6502.90      1.02
- lamda[23]     -2.54      2.27     -2.10     -5.88      0.88   5187.58      1.03
- lamda[24]     -2.63      2.27     -2.22     -5.95      0.81   4253.51      1.03
-       tau     -0.82      0.41     -0.84     -1.51     -0.16   3697.08      1.03
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 

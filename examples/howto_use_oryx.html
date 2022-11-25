@@ -364,7 +364,7 @@ title="Source repository"
 <p>We reproduce the <a class="reference external" href="https://www.tensorflow.org/probability/oryx/notebooks/probabilistic_programming#case_study_bayesian_neural_network">example in Oryx’s documentation</a> and train a Bayesian Neural Network (BNN) on the iris dataset:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
 
 <span class="n">iris</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_iris</span><span class="p">()</span>
 <span class="n">features</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">iris</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">iris</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]</span>
@@ -381,25 +381,18 @@ title="Source repository"
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of features: </span><span class="si">{</span><span class="n">num_features</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of features: </span><span class="si">{</span><span class="n">num_features</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of classes: </span><span class="si">{</span><span class="n">num_classes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of data points: </span><span class="si">{</span><span class="n">features</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </details>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of features: 4
-Number of classes: 3
-Number of data points: 150
-</pre></div>
-</div>
-</div>
 </div>
 <p>Oryx’s approach, like Aesara’s, is to implement probabilistic models as generative models and then apply transformations to get the log-probability density function. We begin with implementing a dense layer with normal prior probability on the weights and use the function <code class="docutils literal notranslate"><span class="pre">random_variable</span></code> to define random variables:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">random_variable</span>
 
 
@@ -427,88 +420,11 @@ Number of data points: 150
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">ImportError</span><span class="g g-Whitespace">                               </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">import</span> <span class="nn">jax</span>
-<span class="ne">----&gt; </span><span class="mi">2</span> <span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">random_variable</span>
-<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">from</span> <span class="nn">tensorflow_probability.substrates</span> <span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">tfp</span>
-<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="n">tfd</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">distributions</span>
-
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.15</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">16</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Copyright 2020 The TensorFlow Probability Authors.</span>
-<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="c1">#</span>
-<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">13</span> <span class="c1"># limitations under the License.</span>
-<span class="g g-Whitespace">     </span><span class="mi">14</span> <span class="c1"># ============================================================================</span>
-<span class="g g-Whitespace">     </span><span class="mi">15</span> <span class="sd">&quot;&quot;&quot;Oryx is a neural network mini-library built on top of Jax.&quot;&quot;&quot;</span>
-<span class="ne">---&gt; </span><span class="mi">16</span> <span class="kn">from</span> <span class="nn">oryx</span> <span class="kn">import</span> <span class="n">bijectors</span>
-<span class="g g-Whitespace">     </span><span class="mi">17</span> <span class="kn">from</span> <span class="nn">oryx</span> <span class="kn">import</span> <span class="n">core</span>
-<span class="g g-Whitespace">     </span><span class="mi">18</span> <span class="kn">from</span> <span class="nn">oryx</span> <span class="kn">import</span> <span class="n">distributions</span>
-
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.15</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="n">bijectors</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">19</span>
-<span class="g g-Whitespace">     </span><span class="mi">16</span> <span class="kn">import</span> <span class="nn">inspect</span>
-<span class="g g-Whitespace">     </span><span class="mi">18</span> <span class="kn">from</span> <span class="nn">tensorflow_probability.python.experimental.substrates</span> <span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">tfp</span>
-<span class="ne">---&gt; </span><span class="mi">19</span> <span class="kn">from</span> <span class="nn">oryx.bijectors</span> <span class="kn">import</span> <span class="n">bijector_extensions</span>
-<span class="g g-Whitespace">     </span><span class="mi">21</span> <span class="n">tfb</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">bijectors</span>
-<span class="g g-Whitespace">     </span><span class="mi">23</span> <span class="n">_bijectors</span> <span class="o">=</span> <span class="p">{}</span>
-
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.15</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="n">bijectors</span><span class="o">/</span><span class="n">bijector_extensions</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">28</span>
-<span class="g g-Whitespace">     </span><span class="mi">26</span> <span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">zip</span>
-<span class="g g-Whitespace">     </span><span class="mi">27</span> <span class="kn">from</span> <span class="nn">tensorflow_probability.python.experimental.substrates</span> <span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">tfp</span>
-<span class="ne">---&gt; </span><span class="mi">28</span> <span class="kn">from</span> <span class="nn">oryx</span> <span class="kn">import</span> <span class="n">core</span>
-<span class="g g-Whitespace">     </span><span class="mi">29</span> <span class="kn">from</span> <span class="nn">oryx.core.interpreters</span> <span class="kn">import</span> <span class="n">inverse</span>
-<span class="g g-Whitespace">     </span><span class="mi">31</span> <span class="n">safe_map</span> <span class="o">=</span> <span class="n">jax_util</span><span class="o">.</span><span class="n">safe_map</span>
-
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.15</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="n">core</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">16</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Copyright 2020 The TensorFlow Probability Authors.</span>
-<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="c1">#</span>
-<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">13</span> <span class="c1"># limitations under the License.</span>
-<span class="g g-Whitespace">     </span><span class="mi">14</span> <span class="c1"># ============================================================================</span>
-<span class="g g-Whitespace">     </span><span class="mi">15</span> <span class="sd">&quot;&quot;&quot;Contains core logic for Oryx classes.&quot;&quot;&quot;</span>
-<span class="ne">---&gt; </span><span class="mi">16</span> <span class="kn">from</span> <span class="nn">oryx.core</span> <span class="kn">import</span> <span class="n">ppl</span>
-<span class="g g-Whitespace">     </span><span class="mi">17</span> <span class="kn">from</span> <span class="nn">oryx.core.interpreters.inverse</span> <span class="kn">import</span> <span class="n">ildj</span>
-<span class="g g-Whitespace">     </span><span class="mi">18</span> <span class="kn">from</span> <span class="nn">oryx.core.interpreters.inverse</span> <span class="kn">import</span> <span class="n">ildj_registry</span>
-
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.15</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="n">core</span><span class="o">/</span><span class="n">ppl</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">17</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Copyright 2020 The TensorFlow Probability Authors.</span>
-<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="c1">#</span>
-<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">14</span> <span class="c1"># ============================================================================</span>
-<span class="g g-Whitespace">     </span><span class="mi">15</span> <span class="c1"># Lint as: python3</span>
-<span class="g g-Whitespace">     </span><span class="mi">16</span> <span class="sd">&quot;&quot;&quot;Module for probabilistic programming features.&quot;&quot;&quot;</span>
-<span class="ne">---&gt; </span><span class="mi">17</span> <span class="kn">from</span> <span class="nn">oryx.core.ppl.transformations</span> <span class="kn">import</span> <span class="n">conditional</span>
-<span class="g g-Whitespace">     </span><span class="mi">18</span> <span class="kn">from</span> <span class="nn">oryx.core.ppl.transformations</span> <span class="kn">import</span> <span class="n">graph_replace</span>
-<span class="g g-Whitespace">     </span><span class="mi">19</span> <span class="kn">from</span> <span class="nn">oryx.core.ppl.transformations</span> <span class="kn">import</span> <span class="n">intervene</span>
-
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.15</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="n">core</span><span class="o">/</span><span class="n">ppl</span><span class="o">/</span><span class="n">transformations</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">204</span>
-<span class="g g-Whitespace">    </span><span class="mi">201</span> <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">util</span> <span class="k">as</span> <span class="n">jax_util</span>
-<span class="g g-Whitespace">    </span><span class="mi">203</span> <span class="kn">from</span> <span class="nn">oryx.core</span> <span class="kn">import</span> <span class="n">primitive</span>
-<span class="ne">--&gt; </span><span class="mi">204</span> <span class="kn">from</span> <span class="nn">oryx.core.interpreters</span> <span class="kn">import</span> <span class="n">harvest</span>
-<span class="g g-Whitespace">    </span><span class="mi">205</span> <span class="kn">from</span> <span class="nn">oryx.core.interpreters</span> <span class="kn">import</span> <span class="n">log_prob</span> <span class="k">as</span> <span class="n">lp</span>
-<span class="g g-Whitespace">    </span><span class="mi">207</span> <span class="n">Program</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
-
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.15</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="n">core</span><span class="o">/</span><span class="n">interpreters</span><span class="o">/</span><span class="n">harvest</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">136</span>
-<span class="g g-Whitespace">    </span><span class="mi">134</span> <span class="kn">from</span> <span class="nn">jax.interpreters</span> <span class="kn">import</span> <span class="n">ad</span>
-<span class="g g-Whitespace">    </span><span class="mi">135</span> <span class="kn">from</span> <span class="nn">jax.interpreters</span> <span class="kn">import</span> <span class="n">batching</span>
-<span class="ne">--&gt; </span><span class="mi">136</span> <span class="kn">from</span> <span class="nn">jax.interpreters</span> <span class="kn">import</span> <span class="n">masking</span>
-<span class="g g-Whitespace">    </span><span class="mi">137</span> <span class="kn">from</span> <span class="nn">jax.interpreters</span> <span class="kn">import</span> <span class="n">xla</span>
-<span class="g g-Whitespace">    </span><span class="mi">138</span> <span class="kn">from</span> <span class="nn">jax.lib.xla_bridge</span> <span class="kn">import</span> <span class="n">xla_client</span> <span class="k">as</span> <span class="n">xc</span>
-
-<span class="ne">ImportError</span>: cannot import name &#39;masking&#39; from &#39;jax.interpreters&#39; (/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/jax/interpreters/__init__.py)
-</pre></div>
-</div>
-</div>
 </div>
 <p>We now use this layer to build a multi-layer perceptron. The <code class="docutils literal notranslate"><span class="pre">nest</span></code> function is used to create “scope tags” that allows in this context to re-use our <code class="docutils literal notranslate"><span class="pre">dense</span></code> layer multiple times without name collision in the dictionary that will contain the parameters:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">nest</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">nest</span>
 
 
 <span class="k">def</span> <span class="nf">mlp</span><span class="p">(</span><span class="n">hidden_sizes</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">):</span>
@@ -530,7 +446,7 @@ Number of data points: 150
 <p>Finally, we model the labels as categorical random variables:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">functools</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">functools</span>
 
 <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">mlp</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">xs</span><span class="p">):</span>
@@ -547,7 +463,7 @@ Number of data points: 150
 <p>We can now build the BNN and sample an initial position for the inference algorithm using <code class="docutils literal notranslate"><span class="pre">joint_sample</span></code>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">joint_sample</span>
 
 
@@ -566,7 +482,7 @@ Number of data points: 150
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_parameters</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">initial_weights</span><span class="p">)[</span><span class="mi">0</span><span class="p">]])</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">num_parameters</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">initial_weights</span><span class="p">)[</span><span class="mi">0</span><span class="p">]])</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of parameters in the model: </span><span class="si">{</span><span class="n">num_parameters</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -576,7 +492,7 @@ Number of data points: 150
 <p>To sample from this model we will need to obtain its joint distribution log-probability using <code class="docutils literal notranslate"><span class="pre">joint_log_prob</span></code>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">joint_log_prob</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">joint_log_prob</span>
 
 <span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">weights</span><span class="p">):</span>
   <span class="k">return</span> <span class="n">joint_log_prob</span><span class="p">(</span><span class="n">predict</span><span class="p">(</span><span class="n">bnn</span><span class="p">))(</span><span class="nb">dict</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">labels</span><span class="p">),</span> <span class="n">features</span><span class="p">)</span>
@@ -587,7 +503,7 @@ Number of data points: 150
 <p>We can now run the window adaptation to get good values for the parameters of the NUTS algorithm:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">%%</span><span class="n">time</span>
 <span class="kn">import</span> <span class="nn">blackjax</span>
 
 <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -605,7 +521,7 @@ Number of data points: 150
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
@@ -621,7 +537,7 @@ Number of data points: 150
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">%%</span><span class="n">time</span>
 
 <span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
 </pre></div>
@@ -631,7 +547,7 @@ Number of data points: 150
 <p>We can now use our samples to take an estimate of the accuracy that is averaged over the posterior distribution. We use <code class="docutils literal notranslate"><span class="pre">intervene</span></code> to “inject” the posterior values of the weights instead of sampling from the prior distribution:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">intervene</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">intervene</span>
 
 <span class="n">posterior_weights</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span>
 
@@ -653,7 +569,7 @@ Number of data points: 150
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Average sample accuracy:&#39;</span><span class="p">,</span> <span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Average sample accuracy:&#39;</span><span class="p">,</span> <span class="p">(</span>
     <span class="n">output_probs</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">labels</span><span class="p">[</span><span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;BMA accuracy:&#39;</span><span class="p">,</span> <span class="p">(</span>
