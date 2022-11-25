@@ -87,17 +87,16 @@ html_title = "Blackjax"
 html_logo = "_static/blackjax.png"
 html_css_files = ["custom.css"]
 
-
+# We only display the typehints in the description, even though they would
+# be better in the signature, because we cannot apply our CSS trick to add
+# line breaks in the signature when the typehints are present.
 autosummary_generate = True
 autodoc_typehints = "description"
 add_module_names = False
-# autodoc_unqualified_typehints = True
-# autodoc_type_aliases = {"PyTree": "PyTree", "Array": "Array"}
-
 
 source_suffix = {".rst": "restructuredtext", ".ipynb": "myst-nb", ".md": "myst-nb"}
 
-nb_execution_mode = "auto"
+nb_execution_mode = "off"
 nb_execution_timeout = 300
 suppress_warnings = ["mystnb.unknown_mime_type"]
 
