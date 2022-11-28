@@ -62,6 +62,7 @@ class MarginalInfo(NamedTuple):
         was returned.
     proposal
         The state proposed by the proposal.
+
     """
 
     acceptance_rate: float
@@ -80,7 +81,6 @@ def init_and_kernel(logprob_fn, covariance, mean=None):
     An init function.
 
     """
-
     U, Gamma, U_t = jnp.linalg.svd(covariance, hermitian=True)
 
     if mean is not None:

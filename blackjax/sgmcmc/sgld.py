@@ -22,7 +22,6 @@ __all__ = ["kernel"]
 
 def kernel() -> Callable:
     """Stochastic gradient Langevin Dynamics (SgLD) algorithm."""
-
     integrator = diffusions.overdamped_langevin()
 
     def one_step(

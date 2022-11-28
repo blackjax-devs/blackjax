@@ -59,6 +59,7 @@ class NUTSInfo(NamedTuple):
         states in the full trajectory.
     acceptance_rate
         average acceptance probabilty across entire trajectory
+
     """
 
     momentum: PyTree
@@ -135,10 +136,7 @@ def kernel(
         step_size: float,
         inverse_mass_matrix: Array,
     ) -> Tuple[hmc.HMCState, NUTSInfo]:
-        """Generate a new sample with the NUTS kernel.
-
-        TODO expand the docstring.
-        """
+        """Generate a new sample with the NUTS kernel."""
 
         def potential_fn(x):
             return -logprob_fn(x)

@@ -57,8 +57,8 @@ def gaussian_euclidean(
     to follow a standard gaussian distribution. A Newtonian hamiltonian
     dynamics is assumed.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     inverse_mass_matrix
         One or two-dimensional array corresponding respectively to a diagonal
         or dense mass matrix. The inverse mass matrix is multiplied to a
@@ -134,6 +134,7 @@ def gaussian_euclidean(
         .. [1]: Betancourt, Michael J. "Generalizing the no-U-turn sampler to Riemannian manifolds." arXiv preprint arXiv:1304.1920 (2013).
         .. [2]: "NUTS misses U-turn, runs in cicles until max depth", Stan Discourse Forum
                 https://discourse.mc-stan.org/t/nuts-misses-u-turns-runs-in-circles-until-max-treedepth/9727/46
+
         """
         m_left, _ = ravel_pytree(momentum_left)
         m_right, _ = ravel_pytree(momentum_right)

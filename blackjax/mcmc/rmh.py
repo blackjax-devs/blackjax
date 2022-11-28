@@ -30,6 +30,7 @@ class RMHState(NamedTuple):
         Current position of the chain.
     log_probability
         Current value of the log-probability
+
     """
 
     position: PyTree
@@ -50,6 +51,7 @@ class RMHInfo(NamedTuple):
         was returned.
     proposal
         The state proposed by the proposal.
+
     """
 
     acceptance_rate: float
@@ -134,8 +136,8 @@ def rmh(
     A kernel that takes a rng_key and a Pytree that contains the current state
     of the chain and that returns a new state of the chain along with
     information about the transition.
-    """
 
+    """
     if proposal_logprob_fn is None:
 
         def acceptance_rate(state: RMHState, proposal: RMHState):
@@ -169,6 +171,7 @@ def rmh(
         -------
         The next state of the chain and additional information about the current
         step.
+
         """
         key_proposal, key_accept = jax.random.split(rng_key, 2)
 

@@ -55,7 +55,6 @@ def estimator(
             library for stochastic gradient Markov chain Monte Carlo algorithms.
             Journal of Open Source Software, 7(72), 4113.
 
-
     """
 
     def logposterior_estimator_fn(position: PyTree, minibatch: PyTree) -> PyTree:
@@ -111,7 +110,6 @@ def control_variates(
             Journal of Open Source Software, 7(72), 4113.
 
     """
-
     cv_grad_value = grad_estimator(centering_position, data)
 
     def cv_grad_estimator_fn(position: PyTree, minibatch: PyTree) -> PyTree:

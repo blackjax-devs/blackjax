@@ -69,6 +69,7 @@ def base():
     .. [1]: Hoffman, M. D., & Sountsov, P. (2022). Tuning-Free Generalized
             Hamiltonian Monte Carlo. In International Conference on Artificial
             Intelligence and Statistics (pp. 7799-7813). PML
+
     """
 
     def compute_parameters(

@@ -120,6 +120,7 @@ def dual_averaging_adaptation(
     .. [Hoffman2014a] Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler:
            adaptively setting path lengths in Hamiltonian Monte Carlo." Journal
            of Machine Learning Research 15.1 (2014): 1593-1623.
+
     """
     da_init, da_update, da_final = dual_averaging.dual_averaging(t0, gamma, kappa)
 
@@ -146,6 +147,7 @@ def dual_averaging_adaptation(
         Returns
         -------
         The updated state of the dual averaging algorithm.
+
         """
         gradient = target - acceptance_rate
         return DualAveragingAdaptationState(*da_update(da_state, gradient))
@@ -174,6 +176,7 @@ class ReasonableStepSizeState(NamedTuple):
         size is made at the end of the search update.
     step_size
         The current step size in the search.
+
     """
 
     rng_key: PRNGKey

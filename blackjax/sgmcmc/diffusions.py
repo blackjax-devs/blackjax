@@ -31,6 +31,7 @@ def overdamped_langevin():
     .. [0]: Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
             library for stochastic gradient Markov chain Monte Carlo algorithms.
             Journal of Open Source Software, 7(72), 4113.
+
     """
 
     def one_step(

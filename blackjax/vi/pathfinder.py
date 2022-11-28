@@ -29,7 +29,7 @@ __all__ = ["PathfinderState", "approximate", "sample"]
 
 
 class PathfinderState(NamedTuple):
-    """State of the Pathfinder algorithm
+    """State of the Pathfinder algorithm.
 
     Pathfinder locates normal approximations to the target density along a
     quasi-Newton optimization path, with local covariance estimated using
@@ -46,6 +46,7 @@ class PathfinderState(NamedTuple):
         factored rappresentation of the inverse hessian
     elbo:
         ELBO of approximation wrt target distribution
+
     """
 
     elbo: Array
@@ -74,9 +75,9 @@ def approximate(
     gtol=1e-08,
     ftol=1e-05,
 ) -> Tuple[PathfinderState, PathfinderInfo]:
-    """
-    Pathfinder variational inference algorithm:
-    pathfinder locates normal approximations to the target density along a
+    """Pathfinder variational inference algorithm.
+
+    Pathfinder locates normal approximations to the target density along a
     quasi-Newton optimization path, with local covariance estimated using
     the inverse Hessian estimates produced by the L-BFGS optimizer.
 
@@ -118,8 +119,8 @@ def approximate(
 
     .. [1]: Pathfinder: Parallel quasi-newton variational inference,
             Lu Zhang et al., arXiv:2108.03782
-    """
 
+    """
     initial_position_flatten, unravel_fn = ravel_pytree(initial_position)
     objective_fn = lambda x: -logprob_fn(unravel_fn(x))
 
@@ -202,9 +203,7 @@ def sample(
     state: PathfinderState,
     num_samples: Union[int, Tuple[()], Tuple[int]] = (),
 ) -> PyTree:
-    """
-    Draws samples of the target distribution using approixmation from
-    pathfinder algorithm.
+    """Draw from the Pathfinder approximation of the target distribution.
 
     Parameters
     ----------
@@ -217,9 +216,9 @@ def sample(
 
     Returns
     -------
-    samples drawn from the approximate Pathfinder distribution
-    """
+    Samples drawn from the approximate Pathfinder distribution
 
+    """
     position_flatten, unravel_fn = ravel_pytree(state.position)
     grad_position_flatten, _ = ravel_pytree(state.grad_position)
 

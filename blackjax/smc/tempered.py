@@ -26,6 +26,7 @@ class TemperedSMCState(NamedTuple):
         The particles' positions.
     lmbda: float
         Current value of the tempering parameter.
+
     """
 
     particles: PyTree
@@ -103,6 +104,7 @@ def kernel(
             The new state of the tempered SMC algorithm
         info
             Additional information on the SMC step
+
         """
         delta = lmbda - state.lmbda
 

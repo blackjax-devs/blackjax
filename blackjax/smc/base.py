@@ -31,6 +31,7 @@ class SMCInfo(NamedTuple):
         by the resampling step.
     log_likelihood_increment: float
         The log-likelihood increment due to the current step of the SMC algorithm.
+
     """
 
     weights: jnp.ndarray
@@ -86,7 +87,7 @@ def kernel(
         logprob_fn: Callable,
         log_weight_fn: Callable,
     ) -> Tuple[PyTree, SMCInfo]:
-        """
+        """Take one step with the SMC kernel.
 
         Parameters
         ----------
@@ -105,8 +106,8 @@ def kernel(
             The updated set of particles.
         info: SMCInfo,
             Additional information on the SMC step
-        """
 
+        """
         num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
         scan_key, resampling_key = jax.random.split(rng_key, 2)
 
@@ -142,7 +143,7 @@ def kernel(
 
 
 def _normalize(log_weights):
-    """Normalize log-weights into weights and return resulting weights and log-likelihood increment."""
+    """Normalize the weight and compute the log-likelihood increment."""
     n = log_weights.shape[0]
     max_logw = jnp.max(log_weights)
     w = jnp.exp(log_weights - max_logw)

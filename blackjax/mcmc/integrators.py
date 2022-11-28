@@ -134,8 +134,8 @@ def mclachlan(
     .. [2]: McLachlan, Robert I. "On the numerical integration of ordinary
             differential equations by symmetric composition methods." SIAM Journal on
             Scientific Computing 16.1 (1995): 151-168.
-    """
 
+    """
     b1 = 0.1932
     a1 = 0.5
     b2 = 1 - 2 * b1
@@ -204,8 +204,8 @@ def yoshida(
     .. [1]: Blanes, Sergio, Fernando Casas, and J. M. Sanz-Serna. "Numerical
             integrators for the Hybrid Monte Carlo method." SIAM Journal on Scientific
             Computing 36.4 (2014): A1556-A1580.
-    """
 
+    """
     b1 = 0.11888010966548
     a1 = 0.29619504261126
     b2 = 0.5 - b1

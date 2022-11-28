@@ -78,11 +78,10 @@ def iterative_uturn_numpyro(is_turning):
 
     def _is_iterative_turning(checkpoints, momentum_sum, momentum):
         """Checks whether there is a U-turn in the iteratively built expanded trajectory.
+
         These checks only need to be performed as specific points.
 
-        Does that include the robust U-turn check?
         """
-
         r, _ = jax.flatten_util.ravel_pytree(momentum)
         r_sum, _ = jax.flatten_util.ravel_pytree(momentum_sum)
         r_ckpts, r_sum_ckpts, idx_min, idx_max = checkpoints

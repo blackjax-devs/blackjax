@@ -22,6 +22,7 @@ from blackjax.mcmc.integrators import IntegratorState
 
 class Proposal(NamedTuple):
     """Proposal for the next chain step.
+
     state:
         The trajectory state that corresponds to this proposal.
     energy:
@@ -31,6 +32,7 @@ class Proposal(NamedTuple):
         densities of each state :math:`e^{-H(z)}` along the trajectory.
     sum_log_p_accept:
         cumulated Metropolis-Hastings acceptance probabilty across entire trajectory.
+
     """
 
     state: IntegratorState
@@ -205,8 +207,8 @@ def nonreversible_slice_sampling(slice, proposal, new_proposal):
     .. [1]: Neal, R. M. (2020).
             "Non-reversibly updating a uniform [0, 1] value for Metropolis accept/reject decisions."
             arXiv preprint arXiv:2001.11950.
-    """
 
+    """
     delta_energy = new_proposal.weight
     do_accept = jnp.log(jnp.abs(slice)) <= delta_energy
     return jax.lax.cond(

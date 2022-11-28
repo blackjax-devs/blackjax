@@ -68,6 +68,7 @@ def kernel(
     A callable that takes a rng_key and a TemperedSMCState that contains the current state
     of the chain and that returns a new state of the chain along with
     information about the transition.
+
     """
 
     def compute_delta(state: tempered.TemperedSMCState) -> float:
