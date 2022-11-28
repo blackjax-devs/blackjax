@@ -372,7 +372,7 @@ $$</p>
 $$</p>
 <div class="cell tag_remove-stderr docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jrnd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -467,6 +467,11 @@ $$</p>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:02:26.622731
+</pre></div>
+</div>
+</div>
 </div>
 <div class="cell tag_hide-input docutils container">
 <details class="hide above-input">
@@ -475,11 +480,67 @@ $$</p>
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </details>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>                mean       std    median      5.0%     95.0%     n_eff     r_hat
+   beta[0]      0.38      0.88      0.41     -1.09      1.84   7716.08      1.02
+   beta[1]      1.14      0.56      1.05      0.26      1.98   5880.59      1.02
+   beta[2]     -1.25      0.56     -1.17     -2.11     -0.36   5890.86      1.03
+   beta[3]      1.10      0.57      1.01      0.22      1.93   6515.71      1.02
+   beta[4]     -0.47      0.84     -0.49     -1.85      0.96   7621.90      1.02
+   beta[5]      0.96      0.57      0.85      0.13      1.78   4929.50      1.03
+   beta[6]      0.67      0.71      0.62     -0.33      1.99   5352.15      1.02
+   beta[7]      0.67      0.73      0.63     -0.39      2.00   4912.49      1.03
+   beta[8]      0.04      0.82      0.04     -1.33      1.43   8656.63      1.01
+   beta[9]     -0.66      0.71     -0.60     -1.92      0.37   4052.33      1.03
+  beta[10]      0.38      0.83      0.38     -1.02      1.78   6551.66      1.02
+  beta[11]      0.82      0.60      0.73      0.04      1.77   5197.57      1.02
+  beta[12]     -0.45      0.81     -0.45     -1.82      0.92   7804.97      1.02
+  beta[13]     -0.06      0.81     -0.06     -1.40      1.32   8882.04      1.01
+  beta[14]      0.33      0.77      0.30     -0.97      1.64   8135.99      1.01
+  beta[15]      0.71      0.72      0.68     -0.38      1.99   6618.58      1.02
+  beta[16]     -0.89      0.57     -0.78     -1.74     -0.09   5139.47      1.03
+  beta[17]      0.86      0.61      0.78      0.05      1.85   4080.08      1.03
+  beta[18]     -0.69      0.72     -0.66     -2.01      0.33   4630.52      1.03
+  beta[19]     -0.76      0.74     -0.74     -2.12      0.29   4891.15      1.03
+  beta[20]     -0.53      0.74     -0.49     -1.85      0.64   6030.52      1.02
+  beta[21]      0.34      0.79      0.33     -1.00      1.67   5974.65      1.02
+  beta[22]      0.02      0.86      0.03     -1.41      1.45   7755.12      1.02
+  beta[23]     -0.03      0.81     -0.02     -1.37      1.36   6357.33      1.02
+  beta[24]     -0.02      0.80     -0.03     -1.36      1.35   8250.41      1.02
+  lamda[0]     -1.40      2.19     -0.88     -4.51      1.62   4705.77      1.03
+  lamda[1]      0.65      0.59      0.65     -0.31      1.63   5142.23      1.03
+  lamda[2]      0.90      0.56      0.92     -0.01      1.82   5360.51      1.03
+  lamda[3]      0.50      0.63      0.51     -0.52      1.55   5847.49      1.02
+  lamda[4]     -1.28      2.10     -0.75     -4.27      1.57   5478.88      1.02
+  lamda[5]      0.12      0.75      0.13     -1.07      1.33   3217.32      1.03
+  lamda[6]     -1.01      1.86     -0.60     -3.38      1.52   2174.82      1.06
+  lamda[7]     -0.96      1.81     -0.54     -3.49      1.49   1871.48      1.07
+  lamda[8]     -2.54      2.30     -2.11     -5.89      0.84   4127.22      1.03
+  lamda[9]     -0.97      1.76     -0.59     -3.40      1.46   2504.10      1.06
+ lamda[10]     -1.69      2.15     -1.19     -4.81      1.35   5868.58      1.02
+ lamda[11]     -0.41      1.20     -0.28     -1.85      1.31   1804.88      1.08
+ lamda[12]     -1.45      2.05     -0.97     -4.44      1.38   5925.56      1.02
+ lamda[13]     -2.48      2.25     -2.07     -5.70      0.86   6056.10      1.02
+ lamda[14]     -2.17      2.08     -1.77     -5.27      0.94   5941.03      1.02
+ lamda[15]     -0.69      1.81     -0.26     -3.08      1.66   4694.20      1.03
+ lamda[16]     -0.23      0.99     -0.18     -1.50      1.24   1536.64      1.08
+ lamda[17]     -0.26      1.28     -0.08     -1.69      1.51   1822.01      1.07
+ lamda[18]     -0.77      1.76     -0.37     -3.19      1.59   3632.66      1.04
+ lamda[19]     -0.50      1.72     -0.08     -2.83      1.77   2495.18      1.05
+ lamda[20]     -1.33      1.87     -0.92     -4.07      1.37   3348.63      1.04
+ lamda[21]     -1.87      2.10     -1.41     -5.00      1.12   3755.39      1.03
+ lamda[22]     -2.10      2.30     -1.61     -5.36      1.15   4244.77      1.03
+ lamda[23]     -2.53      2.32     -2.09     -5.88      0.85   3931.03      1.04
+ lamda[24]     -2.62      2.27     -2.20     -5.89      0.74   5172.62      1.02
+       tau     -0.83      0.41     -0.84     -1.51     -0.18   3818.17      1.03
+</pre></div>
+</div>
+</div>
 </div>
 </section>
 
