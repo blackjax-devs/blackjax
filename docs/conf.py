@@ -96,7 +96,7 @@ add_module_names = False
 
 source_suffix = {".rst": "restructuredtext", ".ipynb": "myst-nb", ".md": "myst-nb"}
 
-nb_execution_mode = "off"
+nb_execution_mode = "auto"
 nb_execution_timeout = 300
 suppress_warnings = ["mystnb.unknown_mime_type"]
 
