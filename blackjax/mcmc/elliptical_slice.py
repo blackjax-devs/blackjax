@@ -30,6 +30,7 @@ class EllipSliceState(NamedTuple):
         Current position of the chain.
     loglikelihood
         Current value of the log likelihood only.
+
     """
 
     position: PyTree
@@ -52,6 +53,7 @@ class EllipSliceInfo(NamedTuple):
         Number of sub iterations needed to accept a proposal. The more subiterations
         needed the less efficient the algorithm will be, and the more dependent the
         new value is likely to be to the previous value.
+
     """
 
     momentum: PyTree
@@ -205,7 +207,6 @@ def ellipsis(position, momentum, theta, mean):
     depending on the slice variable.
 
     """
-
     position, unravel_fn = jax.flatten_util.ravel_pytree(position)
     momentum, _ = jax.flatten_util.ravel_pytree(momentum)
     position_centered = position - mean

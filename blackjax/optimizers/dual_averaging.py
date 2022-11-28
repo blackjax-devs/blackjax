@@ -82,6 +82,7 @@ def dual_averaging(
 
     .. [1]: Nesterov, Yurii. "Primal-dual subgradient methods for convex
             problems." Mathematical programming 120.1 (2009): 221-259.
+
     """
 
     def init(x_init: float) -> DualAveragingState:
@@ -89,6 +90,7 @@ def dual_averaging(
 
         The parameter :math:`\\mu` is set to :math:`\\log(10 \\x_init)`
         where :math:`\\x_init` is the initial value of the state.
+
         """
         mu: float = jnp.log(10 * x_init)
         step = 1
@@ -111,6 +113,7 @@ def dual_averaging(
         Returns
         -------
         The updated state of the dual averaging algorithm.
+
         """
         log_step, avg_log_step, step, avg_error, mu = da_state
         reg_step = step + t0

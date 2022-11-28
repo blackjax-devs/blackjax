@@ -32,6 +32,7 @@ class HMCState(NamedTuple):
     position. In order to make computations more efficient, we also store
     the current potential energy as well as the current gradient of the
     potential energy.
+
     """
 
     position: PyTree
@@ -65,6 +66,7 @@ class HMCInfo(NamedTuple):
         Size of the integration step.
     num_integration_steps
         Number of times we run the symplectic integrator to build the trajectory
+
     """
 
     momentum: PyTree
@@ -113,10 +115,7 @@ def kernel(
         inverse_mass_matrix: Array,
         num_integration_steps: int,
     ) -> Tuple[HMCState, HMCInfo]:
-        """Generate a new sample with the HMC kernel.
-
-        TODO expand the docstring.
-        """
+        """Generate a new sample with the HMC kernel."""
 
         def potential_fn(x):
             return -logprob_fn(x)
@@ -220,7 +219,9 @@ def hmc_proposal(
 def flip_momentum(
     state: integrators.IntegratorState,
 ) -> integrators.IntegratorState:
-    """To guarantee time-reversibility (hence detailed balance) we
+    """Flip the momentum at the end of the trajectory.
+
+    To guarantee time-reversibility (hence detailed balance) we
     need to flip the last state's momentum. If we run the hamiltonian
     dynamics starting from the last state with flipped momentum we
     should indeed retrieve the initial state (with flipped momentum).

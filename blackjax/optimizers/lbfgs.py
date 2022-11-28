@@ -42,13 +42,19 @@ class LBFGSHistory(NamedTuple):
 
     Attributes
     ---------
-    x: History of positions
-    f: History of objective values
-    g: History of gradient values
-    alpha: History of the diagonal elements of the inverse Hessian approximation.
-    update_mask: The indicator of whether the updates of position and gradient are
-                 included in the inverse-Hessian approximation or not.
-                 This is Xi in the paper.
+    x
+        History of positions
+    f
+        History of objective values
+    g
+        History of gradient values
+    alpha
+        History of the diagonal elements of the inverse Hessian approximation.
+    update_mask:
+        The indicator of whether the updates of position and gradient are
+        included in the inverse-Hessian approximation or not.
+        (Xi in the paper)
+
     """
 
     x: Array
@@ -91,8 +97,8 @@ def minimize_lbfgs(
     Returns
     -------
     Optimization results and optimization path
-    """
 
+    """
     # Ravel pytree into flat array.
     x0_raveled, unravel_fn = ravel_pytree(x0)
     unravel_fn_mapped = jax.vmap(unravel_fn)
@@ -252,6 +258,7 @@ def lbfgs_recover_alpha(alpha_lm1, s_l, z_l, epsilon=1e-12):
 
     .. [1]: Pathfinder: Parallel quasi-newton variational inference,
             Lu Zhang et al., arXiv:2108.03782
+
     """
 
     def compute_next_alpha(s_l, z_l, alpha_lm1):
@@ -283,6 +290,7 @@ def lbfgs_inverse_hessian_factors(S, Z, alpha):
     It implements formula II.2 of:
 
     Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
+
     """
     param_dims = S.shape[-1]
     StZ = S.T @ Z
@@ -306,6 +314,7 @@ def lbfgs_inverse_hessian_formula_1(alpha, beta, gamma):
     Calculates inverse hessian from factors as in formula II.1 of:
 
     Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
+
     """
     return jnp.diag(alpha) + beta @ gamma @ beta.T
 
@@ -315,6 +324,7 @@ def lbfgs_inverse_hessian_formula_2(alpha, beta, gamma):
     Calculates inverse hessian from factors as in formula II.3 of:
 
     Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
+
     """
     param_dims = alpha.shape[0]
     dsqrt_alpha = jnp.diag(jnp.sqrt(alpha))
@@ -332,6 +342,7 @@ def bfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gamm
     It implements Algorithm 4 in:
 
     Pathfinder: Parallel quasi-newton variational inference, Lu Zhang et al., arXiv:2108.03782
+
     """
     if not isinstance(num_samples, tuple):
         num_samples = (num_samples,)

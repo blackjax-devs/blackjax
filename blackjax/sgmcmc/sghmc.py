@@ -26,7 +26,6 @@ __all__ = ["kernel"]
 
 def kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
     """Stochastic gradient Hamiltonian Monte Carlo (SgHMC) algorithm."""
-
     integrator = diffusions.sghmc(alpha, beta)
 
     def one_step(

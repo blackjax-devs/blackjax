@@ -21,7 +21,7 @@ from blackjax.types import PyTree
 
 
 def ess(log_weights: jnp.ndarray, log: bool = True) -> float:
-    """Compute the effective sample size from the log-weights in a numerically stable way.
+    """Compute the effective sample size.
 
     Parameters
     ----------
@@ -34,8 +34,8 @@ def ess(log_weights: jnp.ndarray, log: bool = True) -> float:
     -------
     ess: float
         The effective sample size
-    """
 
+    """
     log_weights = log_weights - jnp.max(log_weights)
     w = jnp.exp(log_weights)
     if log:
@@ -77,8 +77,8 @@ def ess_solver(
     -------
     delta: float
         The increment that solves for the target ESS
-    """
 
+    """
     n_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
 
     logprob = logprob_fn(particles)

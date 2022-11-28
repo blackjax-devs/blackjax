@@ -38,6 +38,7 @@ class GHMCState(NamedTuple):
     each iteration. To make computations more efficient, we also store
     the current potential energy as well as the current gradient of the
     potential energy.
+
     """
 
     position: PyTree
@@ -93,8 +94,8 @@ def kernel(
     A kernel that takes a rng_key, a Pytree that contains the current state
     of the chain, and free parameters of the sampling mechanism; and that
     returns a new state of the chain along with information about the transition.
-    """
 
+    """
     sample_proposal = proposal.nonreversible_slice_sampling
 
     def one_step(
@@ -128,6 +129,7 @@ def kernel(
         delta
             Fixed (non-random) amount of translation added at each new iteration
             to the slice variable for non-reversible slice sampling.
+
         """
 
         def potential_fn(x):
@@ -181,8 +183,8 @@ def update_momentum(rng_key, state, alpha):
     an updated momentum that is a mixture of the previous momentum a new sample
     from a Gaussian density (dependent on alpha). The weights of the mixture of
     these two components are a function of alpha.
-    """
 
+    """
     position, momentum, *_ = state
 
     m_size = pytree_size(momentum)

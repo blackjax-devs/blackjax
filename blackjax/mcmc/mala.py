@@ -90,11 +90,7 @@ def kernel():
     def one_step(
         rng_key: PRNGKey, state: MALAState, logprob_fn: Callable, step_size: float
     ) -> Tuple[MALAState, MALAInfo]:
-        """Generate a new sample with the MALA kernel.
-
-        TODO expand the docstring.
-
-        """
+        """Generate a new sample with the MALA kernel."""
         grad_fn = jax.value_and_grad(logprob_fn)
         integrator = diffusions.overdamped_langevin(grad_fn)
 

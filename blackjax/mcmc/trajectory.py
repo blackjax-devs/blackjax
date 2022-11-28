@@ -331,8 +331,8 @@ def dynamic_recursive_integration(
     References
     ----------
     .. [1]: Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo." J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
-    """
 
+    """
     _, generate_proposal = proposal_generator(kinetic_energy, divergence_threshold)
     sample_proposal = progressive_uniform_sampling
 

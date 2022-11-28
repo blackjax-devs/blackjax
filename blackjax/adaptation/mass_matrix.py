@@ -19,6 +19,7 @@ parameters used in Hamiltonian Monte Carlo.
 
 .. [1]: "HMC Algorithm Parameters", Stan Manual
         https://mc-stan.org/docs/2_20/reference-manual/hmc-algorithm-parameters.html
+
 """
 from typing import Callable, NamedTuple, Tuple
 
@@ -41,6 +42,7 @@ class WelfordAlgorithmState(NamedTuple):
     sample_size
         The number of successive states the previous values have been computed on;
         also the current number of iterations of the algorithm.
+
     """
 
     mean: Array
@@ -55,6 +57,7 @@ class MassMatrixAdaptationState(NamedTuple):
         The curent value of the inverse mass matrix.
     wc_state
         The current state of the Welford Algorithm.
+
     """
 
     inverse_mass_matrix: Array
@@ -82,6 +85,7 @@ def mass_matrix_adaptation(
     final
         A function that computes the inverse mass matrix based on the current
         state.
+
     """
     wc_init, wc_update, wc_final = welford_algorithm(is_diagonal_matrix)
 
@@ -93,6 +97,7 @@ def mass_matrix_adaptation(
         ndims
             The number of dimensions of the mass matrix, which corresponds to
             the number of dimensions of the chain position.
+
         """
         if is_diagonal_matrix:
             inverse_mass_matrix = jnp.ones(n_dims)
@@ -114,6 +119,7 @@ def mass_matrix_adaptation(
             The current state of the mass matrix adapation.
         position:
             The current position of the chain.
+
         """
         inverse_mass_matrix, wc_state = mm_state
         position, _ = jax.flatten_util.ravel_pytree(position)
@@ -125,6 +131,7 @@ def mass_matrix_adaptation(
 
         In this step we compute the mass matrix from the covariance matrix computed
         by the Welford algorithm, and re-initialize the later.
+
         """
         _, wc_state = mm_state
         covariance, count, mean = wc_final(wc_state)
@@ -174,6 +181,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
     .. math:
         M_{2,n} = M_{2, n-1} + (x_n-\\overline{x}_{n-1})(x_n-\\overline{x}_n)
         \\sigma_n^2 = \\frac{M_{2,n}}{n}
+
     """
 
     def init(n_dims: int) -> WelfordAlgorithmState:
@@ -187,6 +195,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
         n_dims: int
             The number of dimensions of the problem, which corresponds to the size
             of the corresponding square mass matrix.
+
         """
         sample_size = 0
         mean = jnp.zeros((n_dims,))
@@ -205,6 +214,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
             The current state of the Welford Algorithm
         position: Array, shape (1,)
             The new sample (typically position of the chain) used to update m2
+
         """
         mean, m2, sample_size = wa_state
         sample_size = sample_size + 1
