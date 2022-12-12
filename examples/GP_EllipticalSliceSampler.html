@@ -414,7 +414,7 @@ title="Source repository"
 \mathbf{y}|\mathbf{f} &amp;\sim N(\mathbf{f}, \sigma^2\mathbb{I}) \\
 \mathbf{f} &amp;\sim GP(0, \Sigma),
 \end{align*}\end{split}\]</div>
-<p>where <span class="math notranslate nohighlight">\(\Sigma\)</span> is a covariance function of the feature vector derived from the squared exponential kenel. Thus, for any pair of observations <span class="math notranslate nohighlight">\(i\)</span> and <span class="math notranslate nohighlight">\(j\)</span> the covariance of these two observations is given by</p>
+<p>where <span class="math notranslate nohighlight">\(\Sigma\)</span> is a covariance function of the feature vector derived from the squared exponential kernel. Thus, for any pair of observations <span class="math notranslate nohighlight">\(i\)</span> and <span class="math notranslate nohighlight">\(j\)</span> the covariance of these two observations is given by</p>
 <div class="math notranslate nohighlight">
 \[\Sigma_{i,j} = \sigma^2_f \exp\left(-\frac{||\mathbf{X}_{i, \cdot} - \mathbf{X}_{j, \cdot}||^2}{2 l^2}\right)\]</div>
 <p>for some lengthscale parameter <span class="math notranslate nohighlight">\(l\)</span> and signal variance parameter <span class="math notranslate nohighlight">\(\sigma_f^2\)</span>.</p>
@@ -428,37 +428,37 @@ title="Source repository"
 <p>Using this analytic result we can check the correct convergence of our sampler towards the posterior distribution. It is important to note, however, that the Elliptical Slice sampler can be used to sample from any vector of parameters so long as these parameters have a prior Multivariate Gaussian distribution.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jrnd</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import jax
+import jax.numpy as jnp
+import jax.random as jrnd
+import matplotlib.pyplot as plt
+import numpy as np
 
-<span class="kn">from</span> <span class="nn">blackjax</span> <span class="kn">import</span> <span class="n">elliptical_slice</span><span class="p">,</span> <span class="n">nuts</span><span class="p">,</span> <span class="n">window_adaptation</span>
+from blackjax import elliptical_slice, nuts, window_adaptation
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">squared_exponential</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
-    <span class="n">dot_diff</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">scale</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">dot_diff</span> <span class="o">/</span> <span class="n">length</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def squared_exponential(x, y, length, scale):
+    dot_diff = jnp.dot(x, x) + jnp.dot(y, y) - 2 * jnp.dot(x, y)
+    return scale**2 * jnp.exp(-0.5 * dot_diff / length**2)
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">init_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">):</span>
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def inference_loop(rng, init_state, kernel, n_iter):
+    keys = jrnd.split(rng, n_iter)
 
-    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+    def step(state, key):
+        state, info = kernel(key, state)
+        return state, (state, info)
 
-    <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">init_state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="n">info</span>
+    _, (states, info) = jax.lax.scan(step, init_state, keys)
+    return states, info
 </pre></div>
 </div>
 </div>
@@ -466,24 +466,24 @@ title="Source repository"
 <p>We fix the lengthscale <span class="math notranslate nohighlight">\(l\)</span>, signal variance <span class="math notranslate nohighlight">\(\sigma_f^2\)</span> and likelihood variance <span class="math notranslate nohighlight">\(\sigma^2\)</span> parameters to 1. and generate data from the model described above. Deliberately, we set a large value (2000) for the dimension of the target variable <span class="math notranslate nohighlight">\(\mathbf{f}\)</span> to showcase the gradient-free Elliptical Slice sampler on a situation where its efficiency is apparent in comparison to gradient-based black box samplers such as NUTS. The dynamics of the sampler are equivalent to those of the <a class="reference external" href="https://en.wikipedia.org/wiki/Preconditioned_Crank%E2%80%93Nicolson_algorithm">preconditioned Crank–Nicolson algorithm</a> (with its Metropolis-Hastings step replaced by a slice sampling step), thus making it robust to increasing dimensionality.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">2</span>
-<span class="n">length</span><span class="p">,</span> <span class="n">scale</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span>
-<span class="n">y_sd</span> <span class="o">=</span> <span class="mf">1.0</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>n, d = 2000, 2
+length, scale = 1.0, 1.0
+y_sd = 1.0
 
-<span class="c1"># fake data</span>
-<span class="n">rng</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-<span class="n">kX</span><span class="p">,</span> <span class="n">kf</span><span class="p">,</span> <span class="n">ky</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="n">X</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">kX</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
-<span class="n">Sigma</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
-    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">y</span><span class="p">:</span> <span class="n">squared_exponential</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">scale</span><span class="p">))(</span><span class="n">X</span><span class="p">)</span>
-<span class="p">)(</span><span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-3</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
-<span class="n">invSigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
-<span class="n">f</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">kf</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">Sigma</span><span class="p">)</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">f</span> <span class="o">+</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">ky</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n</span><span class="p">,))</span> <span class="o">*</span> <span class="n">y_sd</span>
+# fake data
+rng = jrnd.PRNGKey(10)
+kX, kf, ky = jrnd.split(rng, 3)
+X = jrnd.uniform(kX, shape=(n, d))
+Sigma = jax.vmap(
+    lambda x: jax.vmap(lambda y: squared_exponential(x, y, length, scale))(X)
+)(X) + 1e-3 * jnp.eye(n)
+invSigma = jnp.linalg.inv(Sigma)
+f = jrnd.multivariate_normal(kf, jnp.zeros(n), Sigma)
+y = f + jrnd.normal(ky, shape=(n,)) * y_sd
 
-<span class="c1"># conjugate results</span>
-<span class="n">posterior_cov</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">invSigma</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">y_sd</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
-<span class="n">posterior_mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">posterior_cov</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">y_sd</span><span class="o">**</span><span class="mi">2</span>
+# conjugate results
+posterior_cov = jnp.linalg.inv(invSigma + 1 / y_sd**2 * jnp.eye(n))
+posterior_mean = jnp.dot(posterior_cov, y) * 1 / y_sd**2
 </pre></div>
 </div>
 </div>
@@ -500,11 +500,11 @@ title="Source repository"
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Histogram of data.&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(8, 5))
+plt.hist(np.array(y), bins=50, density=True)
+plt.xlabel(&quot;y&quot;)
+plt.title(&quot;Histogram of data.&quot;)
+plt.show()
 </pre></div>
 </div>
 </div>
@@ -523,46 +523,46 @@ title="Source repository"
 </ul>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># sampling parameters</span>
-<span class="n">n_warm</span> <span class="o">=</span> <span class="mi">2000</span>
-<span class="n">n_iter</span> <span class="o">=</span> <span class="mi">8000</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># sampling parameters
+n_warm = 2000
+n_iter = 8000
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">loglikelihood_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">f</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="n">f</span><span class="p">)</span> <span class="o">/</span> <span class="n">y_sd</span><span class="o">**</span><span class="mi">2</span>
-<span class="n">init</span><span class="p">,</span> <span class="n">kernel</span> <span class="o">=</span> <span class="n">elliptical_slice</span><span class="p">(</span><span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">cov</span><span class="o">=</span><span class="n">Sigma</span><span class="p">)</span>
-<span class="n">states</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">jrnd</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">init</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">n_warm</span> <span class="o">+</span> <span class="n">n_iter</span><span class="p">)</span>
-<span class="n">samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="n">n_warm</span><span class="p">:]</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
+loglikelihood_fn = lambda f: -0.5 * jnp.dot(y - f, y - f) / y_sd**2
+init, kernel = elliptical_slice(loglikelihood_fn, mean=jnp.zeros(n), cov=Sigma)
+states, info = inference_loop(jrnd.PRNGKey(0), init(f), kernel, n_warm + n_iter)
+samples = states.position[n_warm:]
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.55 s, sys: 217 ms, total: 7.76 s
-Wall time: 7.39 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.55 s, sys: 206 ms, total: 7.76 s
+Wall time: 7.42 s
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">n_iter</span> <span class="o">=</span> <span class="mi">2000</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
+n_iter = 2000
 
-<span class="n">logprob_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">loglikelihood_fn</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">f</span> <span class="o">@</span> <span class="n">invSigma</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">window_adaptation</span><span class="p">(</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">,</span> <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
-<span class="n">key_warm</span><span class="p">,</span> <span class="n">key_sample</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jrnd</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
-<span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">key_warm</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
-<span class="n">states</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">key_sample</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
+logprob_fn = lambda f: loglikelihood_fn(f) - 0.5 * jnp.dot(f @ invSigma, f)
+warmup = window_adaptation(nuts, logprob_fn, n_warm, target_acceptance_rate=0.8)
+key_warm, key_sample = jrnd.split(jrnd.PRNGKey(0))
+state, kernel, _ = warmup.run(key_warm, f)
+states, _ = inference_loop(key_sample, state, kernel, n_iter)
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 45s, sys: 194 ms, total: 1min 45s
-Wall time: 1min 45s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 46s, sys: 143 ms, total: 1min 46s
+Wall time: 1min 46s
 </pre></div>
 </div>
 </div>
@@ -570,11 +570,11 @@ Wall time: 1min 45s
 <p>We check that the sampler is targeting the correct distribution by comparing the sample’s mean and covariance to the conjugate results, and plotting the predictive distribution of our samples over the real observations.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">error_mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">posterior_mean</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">error_cov</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">jnp</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">rowvar</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-</span> <span class="n">posterior_cov</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s2">&quot;Mean squared error for the mean vector </span><span class="si">{</span><span class="n">error_mean</span><span class="si">}</span><span class="s2"> and covariance matrix </span><span class="si">{</span><span class="n">error_cov</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>error_mean = jnp.mean((samples.mean(axis=0) - posterior_mean) ** 2)
+error_cov = jnp.mean((jnp.cov(samples, rowvar=False) - posterior_cov) ** 2)
+print(
+    f&quot;Mean squared error for the mean vector {error_mean} and covariance matrix {error_cov}&quot;
+)
 </pre></div>
 </div>
 </div>
@@ -586,10 +586,10 @@ Wall time: 1min 45s
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">keys</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
-<span class="n">predictive</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">k</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span> <span class="o">+</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,))</span> <span class="o">*</span> <span class="n">y_sd</span><span class="p">)(</span>
-    <span class="n">keys</span><span class="p">,</span> <span class="n">samples</span><span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">:]</span>
-<span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>keys = jrnd.split(rng, 1000)
+predictive = jax.vmap(lambda k, f: f + jrnd.normal(k, (n,)) * y_sd)(
+    keys, samples[-1000:]
+)
 </pre></div>
 </div>
 </div>
@@ -601,12 +601,12 @@ Wall time: 1min 45s
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">predictive</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Predictive distribution&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(8, 5))
+plt.hist(np.array(y), bins=50, density=True)
+plt.hist(np.array(predictive.reshape(-1)), bins=50, density=True, alpha=0.8)
+plt.xlabel(&quot;y&quot;)
+plt.title(&quot;Predictive distribution&quot;)
+plt.show()
 </pre></div>
 </div>
 </div>
@@ -629,11 +629,11 @@ Wall time: 1min 45s
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">subiter</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Sub iterations&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Counts of number of sub iterations needed per sample.&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(10, 5))
+plt.hist(np.array(info.subiter), bins=50)
+plt.xlabel(&quot;Sub iterations&quot;)
+plt.title(&quot;Counts of number of sub iterations needed per sample.&quot;)
+plt.show()
 </pre></div>
 </div>
 </div>
@@ -649,13 +649,13 @@ Wall time: 1min 45s
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">theta</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;theta&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span>
-    <span class="s2">&quot;Histogram of theta parameter, i.e. location on the circumference of the ellipsis.&quot;</span>
-<span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(10, 5))
+plt.hist(np.array(info.theta), bins=100)
+plt.xlabel(&quot;theta&quot;)
+plt.title(
+    &quot;Histogram of theta parameter, i.e. location on the circumference of the ellipsis.&quot;
+)
+plt.show()
 </pre></div>
 </div>
 </div>

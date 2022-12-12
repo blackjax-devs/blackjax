@@ -373,12 +373,12 @@ title="Source repository"
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy as np
 
 
-<span class="n">J</span> <span class="o">=</span> <span class="mi">8</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">28.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">7.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">18.0</span><span class="p">,</span> <span class="mf">12.0</span><span class="p">])</span>
-<span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">15.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">16.0</span><span class="p">,</span> <span class="mf">11.0</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">,</span> <span class="mf">11.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">18.0</span><span class="p">])</span>
+J = 8
+y = np.array([28.0, 8.0, -3.0, 7.0, -1.0, 1.0, 18.0, 12.0])
+sigma = np.array([15.0, 10.0, 16.0, 11.0, 9.0, 11.0, 10.0, 18.0])
 </pre></div>
 </div>
 </div>
@@ -387,23 +387,23 @@ title="Source repository"
 <p>We implement the non-centered version of the hierarchical model:</p>
 <div class="cell tag_hide-output docutils container">
 <div class="cell_input above-output-prompt docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpyro</span>
-<span class="kn">import</span> <span class="nn">numpyro.distributions</span> <span class="k">as</span> <span class="nn">dist</span>
-<span class="kn">from</span> <span class="nn">numpyro.infer.reparam</span> <span class="kn">import</span> <span class="n">TransformReparam</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpyro
+import numpyro.distributions as dist
+from numpyro.infer.reparam import TransformReparam
 
 
-<span class="k">def</span> <span class="nf">eight_schools_noncentered</span><span class="p">(</span><span class="n">J</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;mu&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-    <span class="n">tau</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;tau&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">HalfCauchy</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
-    <span class="k">with</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">plate</span><span class="p">(</span><span class="s2">&quot;J&quot;</span><span class="p">,</span> <span class="n">J</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">handlers</span><span class="o">.</span><span class="n">reparam</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;theta&quot;</span><span class="p">:</span> <span class="n">TransformReparam</span><span class="p">()}):</span>
-            <span class="n">theta</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
-                <span class="s2">&quot;theta&quot;</span><span class="p">,</span>
-                <span class="n">dist</span><span class="o">.</span><span class="n">TransformedDistribution</span><span class="p">(</span>
-                    <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">dist</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">AffineTransform</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
-                <span class="p">),</span>
-            <span class="p">)</span>
-        <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;obs&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">sigma</span><span class="p">),</span> <span class="n">obs</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+def eight_schools_noncentered(J, sigma, y=None):
+    mu = numpyro.sample(&quot;mu&quot;, dist.Normal(0, 5))
+    tau = numpyro.sample(&quot;tau&quot;, dist.HalfCauchy(5))
+    with numpyro.plate(&quot;J&quot;, J):
+        with numpyro.handlers.reparam(config={&quot;theta&quot;: TransformReparam()}):
+            theta = numpyro.sample(
+                &quot;theta&quot;,
+                dist.TransformedDistribution(
+                    dist.Normal(0.0, 1.0), dist.transforms.AffineTransform(mu, tau)
+                ),
+            )
+        numpyro.sample(&quot;obs&quot;, dist.Normal(theta, sigma), obs=y)
 </pre></div>
 </div>
 </div>
@@ -427,17 +427,17 @@ title="Source repository"
 <p>We need to translate the model into a log-probability function that will be used by Blackjax to perform inference. For that we use the <code class="docutils literal notranslate"><span class="pre">initialize_model</span></code> function in Numpyro’s internals. We will also use the initial position it returns to initialize the inference:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import jax
 
-<span class="kn">from</span> <span class="nn">numpyro.infer.util</span> <span class="kn">import</span> <span class="n">initialize_model</span>
+from numpyro.infer.util import initialize_model
 
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">init_params</span><span class="p">,</span> <span class="n">potential_fn_gen</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span>
-    <span class="n">eight_schools_noncentered</span><span class="p">,</span>
-    <span class="n">model_args</span><span class="o">=</span><span class="p">(</span><span class="n">J</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
-    <span class="n">dynamic_args</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="p">)</span>
+rng_key = jax.random.PRNGKey(0)
+init_params, potential_fn_gen, *_ = initialize_model(
+    rng_key,
+    eight_schools_noncentered,
+    model_args=(J, sigma, y),
+    dynamic_args=True,
+)
 </pre></div>
 </div>
 </div>
@@ -450,8 +450,8 @@ title="Source repository"
 <p>Numpyro return a potential function, which is easily transformed back into a logprob function that is required by Blackjax:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logprob_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">position</span><span class="p">:</span> <span class="o">-</span><span class="n">potential_fn_gen</span><span class="p">(</span><span class="n">J</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">y</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
-<span class="n">initial_position</span> <span class="o">=</span> <span class="n">init_params</span><span class="o">.</span><span class="n">z</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>logprob_fn = lambda position: -potential_fn_gen(J, sigma, y)(position)
+initial_position = init_params.z
 </pre></div>
 </div>
 </div>
@@ -459,14 +459,14 @@ title="Source repository"
 <p>We can now run the window adaptation for the NUTS sampler:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import blackjax
 
-<span class="n">num_warmup</span> <span class="o">=</span> <span class="mi">2000</span>
+num_warmup = 2000
 
-<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span>
-    <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="mf">0.8</span>
-<span class="p">)</span>
-<span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">,</span> <span class="n">num_warmup</span><span class="p">)</span>
+adapt = blackjax.window_adaptation(
+    blackjax.nuts, logprob_fn, target_acceptance_rate=0.8
+)
+last_state, kernel, _ = adapt.run(rng_key, initial_position, num_warmup)
 </pre></div>
 </div>
 </div>
@@ -479,20 +479,20 @@ title="Source repository"
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
-    <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
-    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
-        <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def inference_loop(rng_key, kernel, initial_state, num_samples):
+    @jax.jit
+    def one_step(state, rng_key):
+        state, info = kernel(rng_key, state)
+        return state, (state, info)
 
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
-    <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+    keys = jax.random.split(rng_key, num_samples)
+    _, (states, infos) = jax.lax.scan(one_step, initial_state, keys)
 
-    <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="p">(</span>
-        <span class="n">infos</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
-        <span class="n">infos</span><span class="o">.</span><span class="n">is_divergent</span><span class="p">,</span>
-        <span class="n">infos</span><span class="o">.</span><span class="n">num_integration_steps</span><span class="p">,</span>
-    <span class="p">)</span>
+    return states, (
+        infos.acceptance_rate,
+        infos.is_divergent,
+        infos.num_integration_steps,
+    )
 </pre></div>
 </div>
 </div>
@@ -500,10 +500,10 @@ title="Source repository"
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_sample</span> <span class="o">=</span> <span class="mi">1000</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>num_sample = 1000
 
-<span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="n">num_sample</span><span class="p">)</span>
-<span class="n">_</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;mu&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
+states, infos = inference_loop(rng_key, kernel, last_state, num_sample)
+_ = states.position[&quot;mu&quot;].block_until_ready()
 </pre></div>
 </div>
 </div>
@@ -516,11 +516,11 @@ title="Source repository"
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">acceptance_rate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">infos</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">num_divergent</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">infos</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>acceptance_rate = np.mean(infos[0])
+num_divergent = np.mean(infos[1])
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;\Average acceptance rate: </span><span class="si">{</span><span class="n">acceptance_rate</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;There were </span><span class="si">{</span><span class="mi">100</span><span class="o">*</span><span class="n">num_divergent</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">% divergent transitions&quot;</span><span class="p">)</span>
+print(f&quot;\Average acceptance rate: {acceptance_rate:.2f}&quot;)
+print(f&quot;There were {100*num_divergent:.2f}% divergent transitions&quot;)
 </pre></div>
 </div>
 </div>
@@ -540,18 +540,18 @@ There were 0.00% divergent transitions
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import seaborn as sns
+from matplotlib import pyplot as plt
 
-<span class="n">samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span>
+samples = states.position
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">kdeplot</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s2">&quot;mu&quot;</span><span class="p">],</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">kdeplot</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s2">&quot;tau&quot;</span><span class="p">],</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;mu&quot;</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;tau&quot;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+fig, axes = plt.subplots(ncols=2)
+fig.set_size_inches(12, 5)
+sns.kdeplot(samples[&quot;mu&quot;], ax=axes[0])
+sns.kdeplot(samples[&quot;tau&quot;], ax=axes[1])
+axes[0].set_xlabel(&quot;mu&quot;)
+axes[1].set_xlabel(&quot;tau&quot;)
+fig.tight_layout()
 </pre></div>
 </div>
 </div>
@@ -567,65 +567,65 @@ There were 0.00% divergent transitions
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="s2">&quot;col&quot;</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="s2">&quot;col&quot;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">J</span><span class="p">):</span>
-    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s2">&quot;theta_base&quot;</span><span class="p">][:,</span> <span class="n">i</span><span class="p">])</span>
-    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;School </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> relative treatment effect chain&quot;</span><span class="p">)</span>
-    <span class="n">sns</span><span class="o">.</span><span class="n">kdeplot</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s2">&quot;theta_base&quot;</span><span class="p">][:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">shade</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;School </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> relative treatment effect distribution&quot;</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="n">J</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Iteration&quot;</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="n">J</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;School effect&quot;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, axes = plt.subplots(8, 2, sharex=&quot;col&quot;, sharey=&quot;col&quot;)
+fig.set_size_inches(12, 10)
+for i in range(J):
+    axes[i][0].plot(samples[&quot;theta_base&quot;][:, i])
+    axes[i][0].title.set_text(f&quot;School {i} relative treatment effect chain&quot;)
+    sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
+    axes[i][1].title.set_text(f&quot;School {i} relative treatment effect distribution&quot;)
+axes[J - 1][0].set_xlabel(&quot;Iteration&quot;)
+axes[J - 1][1].set_xlabel(&quot;School effect&quot;)
+fig.tight_layout()
+plt.show()
 </pre></div>
 </div>
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/tmp/ipykernel_4970/2569034133.py:6: FutureWarning: 
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/tmp/ipykernel_5106/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4970/2569034133.py:6: FutureWarning: 
+/tmp/ipykernel_5106/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4970/2569034133.py:6: FutureWarning: 
+/tmp/ipykernel_5106/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4970/2569034133.py:6: FutureWarning: 
+/tmp/ipykernel_5106/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4970/2569034133.py:6: FutureWarning: 
+/tmp/ipykernel_5106/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4970/2569034133.py:6: FutureWarning: 
+/tmp/ipykernel_5106/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4970/2569034133.py:6: FutureWarning: 
+/tmp/ipykernel_5106/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
 
   sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_4970/2569034133.py:6: FutureWarning: 
+/tmp/ipykernel_5106/2569034133.py:6: FutureWarning: 
 
 `shade` is now deprecated in favor of `fill`; setting `fill=True`.
 This will become an error in seaborn v0.14.0; please update your code.
@@ -643,10 +643,10 @@ This will become an error in seaborn v0.14.0; please update your code.
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">J</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;Relative treatment effect for school </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;theta_base&#39;</span><span class="p">][:,</span> <span class="n">i</span><span class="p">])</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>for i in range(J):
+    print(
+        f&quot;Relative treatment effect for school {i}: {np.mean(samples[&#39;theta_base&#39;][:, i]):.2f}&quot;
+    )
 </pre></div>
 </div>
 </div>

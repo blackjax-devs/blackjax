@@ -443,22 +443,22 @@ title="Source repository"
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">arviz</span> <span class="k">as</span> <span class="nn">az</span>
-<span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import arviz as az
+import jax
+import jax.numpy as jnp
+import matplotlib.pyplot as plt
+import pandas as pd
 
-<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s2">&quot;display.max_rows&quot;</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+pd.set_option(&quot;display.max_rows&quot;, 80)
 
-<span class="kn">import</span> <span class="nn">blackjax</span>
-<span class="kn">import</span> <span class="nn">tensorflow_probability.substrates.jax</span> <span class="k">as</span> <span class="nn">tfp</span>
+import blackjax
+import tensorflow_probability.substrates.jax as tfp
 
-<span class="n">tfd</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">distributions</span>
-<span class="n">tfb</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">bijectors</span>
+tfd = tfp.distributions
+tfb = tfp.bijectors
 
-<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s2">&quot;xtick&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>  <span class="c1"># fontsize of the xtick labels</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s2">&quot;ytick&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>  <span class="c1"># fontsize of the tyick labels</span>
+plt.rc(&quot;xtick&quot;, labelsize=12)  # fontsize of the xtick labels
+plt.rc(&quot;ytick&quot;, labelsize=12)  # fontsize of the tyick labels
 </pre></div>
 </div>
 </div>
@@ -471,164 +471,164 @@ title="Source repository"
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># index of array is type of tumor and value shows number of total people tested.</span>
-<span class="n">group_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-    <span class="p">[</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">19</span><span class="p">,</span>
-        <span class="mi">19</span><span class="p">,</span>
-        <span class="mi">19</span><span class="p">,</span>
-        <span class="mi">19</span><span class="p">,</span>
-        <span class="mi">18</span><span class="p">,</span>
-        <span class="mi">18</span><span class="p">,</span>
-        <span class="mi">17</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">19</span><span class="p">,</span>
-        <span class="mi">19</span><span class="p">,</span>
-        <span class="mi">18</span><span class="p">,</span>
-        <span class="mi">18</span><span class="p">,</span>
-        <span class="mi">25</span><span class="p">,</span>
-        <span class="mi">24</span><span class="p">,</span>
-        <span class="mi">23</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">10</span><span class="p">,</span>
-        <span class="mi">49</span><span class="p">,</span>
-        <span class="mi">19</span><span class="p">,</span>
-        <span class="mi">46</span><span class="p">,</span>
-        <span class="mi">27</span><span class="p">,</span>
-        <span class="mi">17</span><span class="p">,</span>
-        <span class="mi">49</span><span class="p">,</span>
-        <span class="mi">47</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">13</span><span class="p">,</span>
-        <span class="mi">48</span><span class="p">,</span>
-        <span class="mi">50</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">48</span><span class="p">,</span>
-        <span class="mi">19</span><span class="p">,</span>
-        <span class="mi">19</span><span class="p">,</span>
-        <span class="mi">19</span><span class="p">,</span>
-        <span class="mi">22</span><span class="p">,</span>
-        <span class="mi">46</span><span class="p">,</span>
-        <span class="mi">49</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">23</span><span class="p">,</span>
-        <span class="mi">19</span><span class="p">,</span>
-        <span class="mi">22</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">20</span><span class="p">,</span>
-        <span class="mi">52</span><span class="p">,</span>
-        <span class="mi">46</span><span class="p">,</span>
-        <span class="mi">47</span><span class="p">,</span>
-        <span class="mi">24</span><span class="p">,</span>
-        <span class="mi">14</span><span class="p">,</span>
-    <span class="p">],</span>
-    <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># index of array is type of tumor and value shows number of total people tested.
+group_size = jnp.array(
+    [
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        19,
+        19,
+        19,
+        19,
+        18,
+        18,
+        17,
+        20,
+        20,
+        20,
+        20,
+        19,
+        19,
+        18,
+        18,
+        25,
+        24,
+        23,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        10,
+        49,
+        19,
+        46,
+        27,
+        17,
+        49,
+        47,
+        20,
+        20,
+        13,
+        48,
+        50,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        48,
+        19,
+        19,
+        19,
+        22,
+        46,
+        49,
+        20,
+        20,
+        23,
+        19,
+        22,
+        20,
+        20,
+        20,
+        52,
+        46,
+        47,
+        24,
+        14,
+    ],
+    dtype=jnp.float32,
+)
 
-<span class="c1"># index of array is type of tumor and value shows number of positve people.</span>
-<span class="n">n_of_positives</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-    <span class="p">[</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">0</span><span class="p">,</span>
-        <span class="mi">1</span><span class="p">,</span>
-        <span class="mi">1</span><span class="p">,</span>
-        <span class="mi">1</span><span class="p">,</span>
-        <span class="mi">1</span><span class="p">,</span>
-        <span class="mi">1</span><span class="p">,</span>
-        <span class="mi">1</span><span class="p">,</span>
-        <span class="mi">1</span><span class="p">,</span>
-        <span class="mi">1</span><span class="p">,</span>
-        <span class="mi">2</span><span class="p">,</span>
-        <span class="mi">2</span><span class="p">,</span>
-        <span class="mi">2</span><span class="p">,</span>
-        <span class="mi">2</span><span class="p">,</span>
-        <span class="mi">2</span><span class="p">,</span>
-        <span class="mi">2</span><span class="p">,</span>
-        <span class="mi">2</span><span class="p">,</span>
-        <span class="mi">2</span><span class="p">,</span>
-        <span class="mi">2</span><span class="p">,</span>
-        <span class="mi">1</span><span class="p">,</span>
-        <span class="mi">5</span><span class="p">,</span>
-        <span class="mi">2</span><span class="p">,</span>
-        <span class="mi">5</span><span class="p">,</span>
-        <span class="mi">3</span><span class="p">,</span>
-        <span class="mi">2</span><span class="p">,</span>
-        <span class="mi">7</span><span class="p">,</span>
-        <span class="mi">7</span><span class="p">,</span>
-        <span class="mi">3</span><span class="p">,</span>
-        <span class="mi">3</span><span class="p">,</span>
-        <span class="mi">2</span><span class="p">,</span>
-        <span class="mi">9</span><span class="p">,</span>
-        <span class="mi">10</span><span class="p">,</span>
-        <span class="mi">4</span><span class="p">,</span>
-        <span class="mi">4</span><span class="p">,</span>
-        <span class="mi">4</span><span class="p">,</span>
-        <span class="mi">4</span><span class="p">,</span>
-        <span class="mi">4</span><span class="p">,</span>
-        <span class="mi">4</span><span class="p">,</span>
-        <span class="mi">4</span><span class="p">,</span>
-        <span class="mi">10</span><span class="p">,</span>
-        <span class="mi">4</span><span class="p">,</span>
-        <span class="mi">4</span><span class="p">,</span>
-        <span class="mi">4</span><span class="p">,</span>
-        <span class="mi">5</span><span class="p">,</span>
-        <span class="mi">11</span><span class="p">,</span>
-        <span class="mi">12</span><span class="p">,</span>
-        <span class="mi">5</span><span class="p">,</span>
-        <span class="mi">5</span><span class="p">,</span>
-        <span class="mi">6</span><span class="p">,</span>
-        <span class="mi">5</span><span class="p">,</span>
-        <span class="mi">6</span><span class="p">,</span>
-        <span class="mi">6</span><span class="p">,</span>
-        <span class="mi">6</span><span class="p">,</span>
-        <span class="mi">6</span><span class="p">,</span>
-        <span class="mi">16</span><span class="p">,</span>
-        <span class="mi">15</span><span class="p">,</span>
-        <span class="mi">15</span><span class="p">,</span>
-        <span class="mi">9</span><span class="p">,</span>
-        <span class="mi">4</span><span class="p">,</span>
-    <span class="p">],</span>
-    <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
-<span class="p">)</span>
+# index of array is type of tumor and value shows number of positve people.
+n_of_positives = jnp.array(
+    [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        1,
+        5,
+        2,
+        5,
+        3,
+        2,
+        7,
+        7,
+        3,
+        3,
+        2,
+        9,
+        10,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        10,
+        4,
+        4,
+        4,
+        5,
+        11,
+        12,
+        5,
+        5,
+        6,
+        5,
+        6,
+        6,
+        6,
+        6,
+        16,
+        15,
+        15,
+        9,
+        4,
+    ],
+    dtype=jnp.float32,
+)
 
-<span class="c1"># number of different kind of rat tumors</span>
-<span class="n">n_rat_tumors</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">group_size</span><span class="p">)</span>
+# number of different kind of rat tumors
+n_rat_tumors = len(group_size)
 </pre></div>
 </div>
 </div>
@@ -646,15 +646,15 @@ title="Source repository"
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_rat_tumors</span><span class="p">),</span> <span class="n">n_of_positives</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig = plt.figure(figsize=(12, 3))
+ax = fig.add_subplot(111)
+ax.bar(range(n_rat_tumors), n_of_positives)
 
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;tumor type&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s2">&quot;top&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s2">&quot;right&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+ax.set_xlabel(&quot;tumor type&quot;, fontsize=12)
+ax.spines[&quot;top&quot;].set_visible(False)
+ax.spines[&quot;right&quot;].set_visible(False)
 
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;No. of positives for each tumor type&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+plt.title(&quot;No. of positives for each tumor type&quot;, fontsize=14)
 </pre></div>
 </div>
 </div>
@@ -673,15 +673,15 @@ title="Source repository"
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig = plt.figure(figsize=(14, 4))
+ax = fig.add_subplot(111)
 
-<span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_rat_tumors</span><span class="p">),</span> <span class="n">group_size</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Group size for each tumor type&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+ax.bar(range(n_rat_tumors), group_size)
+plt.title(&quot;Group size for each tumor type&quot;, fontsize=14)
 
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;tumor type&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s2">&quot;top&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s2">&quot;right&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+ax.set_xlabel(&quot;tumor type&quot;, fontsize=12)
+ax.spines[&quot;top&quot;].set_visible(False)
+ax.spines[&quot;right&quot;].set_visible(False)
 </pre></div>
 </div>
 </div>
@@ -695,24 +695,24 @@ title="Source repository"
 <p>Now we use Blackjax’s NUTS algorithm to get posterior samples of <span class="math notranslate nohighlight">\(a\)</span>, <span class="math notranslate nohighlight">\(b\)</span>, and <span class="math notranslate nohighlight">\(\theta\)</span></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from collections import namedtuple
 
-<span class="n">params</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;model_params&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;thetas&quot;</span><span class="p">])</span>
+params = namedtuple(&quot;model_params&quot;, [&quot;a&quot;, &quot;b&quot;, &quot;thetas&quot;])
 
 
-<span class="k">def</span> <span class="nf">joint_logprob</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
-    <span class="c1"># improper prior for a,b</span>
-    <span class="n">logprob_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">a</span> <span class="o">+</span> <span class="n">params</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.5</span><span class="p">))</span>
+def joint_logprob(params):
+    # improper prior for a,b
+    logprob_ab = jnp.log(jnp.power(params.a + params.b, -2.5))
 
-    <span class="c1"># logprob prior of theta</span>
-    <span class="n">logprob_thetas</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">thetas</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    # logprob prior of theta
+    logprob_thetas = tfd.Beta(params.a, params.b).log_prob(params.thetas).sum()
 
-    <span class="c1"># loglikelihood of y</span>
-    <span class="n">logprob_y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
-        <span class="n">tfd</span><span class="o">.</span><span class="n">Binomial</span><span class="p">(</span><span class="n">group_size</span><span class="p">,</span> <span class="n">probs</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">thetas</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">n_of_positives</span><span class="p">)</span>
-    <span class="p">)</span>
+    # loglikelihood of y
+    logprob_y = jnp.sum(
+        tfd.Binomial(group_size, probs=params.thetas).log_prob(n_of_positives)
+    )
 
-    <span class="k">return</span> <span class="n">logprob_ab</span> <span class="o">+</span> <span class="n">logprob_thetas</span> <span class="o">+</span> <span class="n">logprob_y</span>
+    return logprob_ab + logprob_thetas + logprob_y
 </pre></div>
 </div>
 </div>
@@ -720,24 +720,24 @@ title="Source repository"
 <p>We take initial parameters from uniform distribution</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">n_params</span> <span class="o">=</span> <span class="n">n_rat_tumors</span> <span class="o">+</span> <span class="mi">2</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>rng_key = jax.random.PRNGKey(0)
+n_params = n_rat_tumors + 2
 
 
-<span class="k">def</span> <span class="nf">init_param_fn</span><span class="p">(</span><span class="n">seed</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    initialize a, b &amp; thetas</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">params</span><span class="p">(</span>
-        <span class="n">a</span><span class="o">=</span><span class="n">tfd</span><span class="o">.</span><span class="n">Uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key1</span><span class="p">),</span>
-        <span class="n">b</span><span class="o">=</span><span class="n">tfd</span><span class="o">.</span><span class="n">Uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key2</span><span class="p">),</span>
-        <span class="n">thetas</span><span class="o">=</span><span class="n">tfd</span><span class="o">.</span><span class="n">Uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n_rat_tumors</span><span class="p">,</span> <span class="n">key3</span><span class="p">),</span>
-    <span class="p">)</span>
+def init_param_fn(seed):
+    &quot;&quot;&quot;
+    initialize a, b &amp; thetas
+    &quot;&quot;&quot;
+    key1, key2, key3 = jax.random.split(seed, 3)
+    return params(
+        a=tfd.Uniform(0, 3).sample(seed=key1),
+        b=tfd.Uniform(0, 3).sample(seed=key2),
+        thetas=tfd.Uniform(0, 1).sample(n_rat_tumors, key3),
+    )
 
 
-<span class="n">init_param</span> <span class="o">=</span> <span class="n">init_param_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-<span class="n">joint_logprob</span><span class="p">(</span><span class="n">init_param</span><span class="p">)</span>  <span class="c1"># sanity check</span>
+init_param = init_param_fn(rng_key)
+joint_logprob(init_param)  # sanity check
 </pre></div>
 </div>
 </div>
@@ -750,26 +750,26 @@ title="Source repository"
 <p>Now we use blackjax’s window adaption algorithm to get NUTS kernel and initial states. Window adaption algorithm will automatically configure <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code> and <code class="docutils literal notranslate"><span class="pre">step</span> <span class="pre">size</span></code></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">joint_logprob</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
+warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob)
 
-<span class="c1"># we use 4 chains for sampling</span>
-<span class="n">n_chains</span> <span class="o">=</span> <span class="mi">4</span>
-<span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">n_chains</span><span class="p">)</span>
-<span class="n">init_params</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">init_param_fn</span><span class="p">)(</span><span class="n">keys</span><span class="p">)</span>
+# we use 4 chains for sampling
+n_chains = 4
+keys = jax.random.split(rng_key, n_chains)
+init_params = jax.vmap(init_param_fn)(keys)
 
-<span class="nd">@jax</span><span class="o">.</span><span class="n">vmap</span>
-<span class="k">def</span> <span class="nf">call_warmup</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
-    <span class="n">initial_states</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">tuned_params</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span>
+@jax.vmap
+def call_warmup(seed, param):
+    initial_states, _, tuned_params = warmup.run(seed, param, 1000)
+    return initial_states, tuned_params
 
-<span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">call_warmup</span><span class="p">)(</span><span class="n">keys</span><span class="p">,</span> <span class="n">init_params</span><span class="p">)</span>
+initial_states, tuned_params = jax.jit(call_warmup)(keys, init_params)
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.46 s, sys: 72.9 ms, total: 9.53 s
-Wall time: 9.51 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.51 s, sys: 45.6 ms, total: 9.56 s
+Wall time: 9.53 s
 </pre></div>
 </div>
 </div>
@@ -777,40 +777,40 @@ Wall time: 9.51 s
 <p>Now we write inference loop for multiple chains</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop_multiple_chains</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span><span class="p">,</span> <span class="n">log_prob_fn</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">num_chains</span>
-<span class="p">):</span>
-    <span class="n">step_fn</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def inference_loop_multiple_chains(
+    rng_key, initial_states, tuned_params, log_prob_fn, num_samples, num_chains
+):
+    step_fn = blackjax.nuts.kernel()
 
-    <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">step_fn</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">log_prob_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+    def kernel(key, state, **params):
+        return step_fn(key, state, log_prob_fn, **params)
 
-    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
-        <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
-        <span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">kernel</span><span class="p">)(</span><span class="n">keys</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span> <span class="o">**</span><span class="n">tuned_params</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span><span class="p">)</span>
+    def one_step(states, rng_key):
+        keys = jax.random.split(rng_key, num_chains)
+        states, infos = jax.vmap(kernel)(keys, states, **tuned_params)
+        return states, (states, infos)
 
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
-    <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+    keys = jax.random.split(rng_key, num_samples)
+    _, (states, infos) = jax.lax.scan(one_step, initial_states, keys)
 
-    <span class="k">return</span> <span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span><span class="p">)</span>
+    return (states, infos)
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">n_samples</span> <span class="o">=</span> <span class="mi">1000</span>
-<span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span><span class="p">,</span> <span class="n">joint_logprob</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_chains</span>
-<span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
+n_samples = 1000
+states, infos = inference_loop_multiple_chains(
+    rng_key, initial_states, tuned_params, joint_logprob, n_samples, n_chains
+)
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.1 s, sys: 24.1 ms, total: 8.13 s
-Wall time: 8.12 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.22 s, sys: 12.1 ms, total: 8.24 s
+Wall time: 8.23 s
 </pre></div>
 </div>
 </div>
@@ -826,35 +826,35 @@ Wall time: 8.12 s
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">arviz_trace_from_states</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">burn_in</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="n">position</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">DeviceArray</span><span class="p">):</span>  <span class="c1"># if states.position is array of samples</span>
-        <span class="n">position</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">position</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">position</span> <span class="o">=</span> <span class="n">position</span><span class="o">.</span><span class="n">_asdict</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-            <span class="k">pass</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def arviz_trace_from_states(states, info, burn_in=0):
+    position = states.position
+    if isinstance(position, jnp.DeviceArray):  # if states.position is array of samples
+        position = dict(samples=position)
+    else:
+        try:
+            position = position._asdict()
+        except AttributeError:
+            pass
 
-    <span class="n">samples</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">position</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-        <span class="n">ndims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">position</span><span class="p">[</span><span class="n">param</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">ndims</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="n">samples</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">position</span><span class="p">[</span><span class="n">param</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span>
-                <span class="p">:,</span> <span class="n">burn_in</span><span class="p">:</span>
-            <span class="p">]</span>  <span class="c1"># swap n_samples and n_chains</span>
-            <span class="n">divergence</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">is_divergent</span><span class="p">[</span><span class="n">burn_in</span><span class="p">:],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    samples = {}
+    for param in position.keys():
+        ndims = len(position[param].shape)
+        if ndims &gt;= 2:
+            samples[param] = jnp.swapaxes(position[param], 0, 1)[
+                :, burn_in:
+            ]  # swap n_samples and n_chains
+            divergence = jnp.swapaxes(info.is_divergent[burn_in:], 0, 1)
 
-        <span class="k">if</span> <span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">divergence</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">is_divergent</span>
-            <span class="n">samples</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">=</span> <span class="n">position</span><span class="p">[</span><span class="n">param</span><span class="p">]</span>
+        if ndims == 1:
+            divergence = info.is_divergent
+            samples[param] = position[param]
 
-    <span class="n">trace_posterior</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">convert_to_inference_data</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-    <span class="n">trace_sample_stats</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">convert_to_inference_data</span><span class="p">(</span>
-        <span class="p">{</span><span class="s2">&quot;diverging&quot;</span><span class="p">:</span> <span class="n">divergence</span><span class="p">},</span> <span class="n">group</span><span class="o">=</span><span class="s2">&quot;sample_stats&quot;</span>
-    <span class="p">)</span>
-    <span class="n">trace</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">trace_posterior</span><span class="p">,</span> <span class="n">trace_sample_stats</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">trace</span>
+    trace_posterior = az.convert_to_inference_data(samples)
+    trace_sample_stats = az.convert_to_inference_data(
+        {&quot;diverging&quot;: divergence}, group=&quot;sample_stats&quot;
+    )
+    trace = az.concat(trace_posterior, trace_sample_stats)
+    return trace
 </pre></div>
 </div>
 </div>
@@ -862,10 +862,10 @@ Wall time: 8.12 s
 </div>
 <div class="cell tag_output-scroll docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># make arviz trace from states</span>
-<span class="n">trace</span> <span class="o">=</span> <span class="n">arviz_trace_from_states</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span><span class="p">)</span>
-<span class="n">summ_df</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">trace</span><span class="p">)</span>
-<span class="n">summ_df</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># make arviz trace from states
+trace = arviz_trace_from_states(states, infos)
+summ_df = az.summary(trace)
+summ_df
 </pre></div>
 </div>
 </div>
@@ -1788,8 +1788,8 @@ Wall time: 8.12 s
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">az</span><span class="o">.</span><span class="n">plot_trace</span><span class="p">(</span><span class="n">trace</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>az.plot_trace(trace)
+plt.tight_layout()
 </pre></div>
 </div>
 </div>
@@ -1806,8 +1806,8 @@ Wall time: 8.12 s
 <p>We can sample from logits which is in unconstrained space and in <code class="docutils literal notranslate"><span class="pre">joint_logprob()</span></code> we can convert logits to theta by suitable bijector (sigmoid). We calculate jacobian (first order derivaive) of bijector to tranform one probability distribution to another</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">transform_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span>
-<span class="n">log_jacobian_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">logit</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">jacfwd</span><span class="p">(</span><span class="n">transform_fn</span><span class="p">)(</span><span class="n">logit</span><span class="p">))))</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>transform_fn = jax.nn.sigmoid
+log_jacobian_fn = lambda logit: jnp.log(jnp.abs(jnp.diag(jax.jacfwd(transform_fn)(logit))))
 </pre></div>
 </div>
 </div>
@@ -1815,34 +1815,34 @@ Wall time: 8.12 s
 <p>Alternatively, using the bijector class in <code class="docutils literal notranslate"><span class="pre">TFP</span></code> directly:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">bij</span> <span class="o">=</span> <span class="n">tfb</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">()</span>
-<span class="n">transform_fn</span> <span class="o">=</span> <span class="n">bij</span><span class="o">.</span><span class="n">forward</span>
-<span class="n">log_jacobian_fn</span> <span class="o">=</span> <span class="n">bij</span><span class="o">.</span><span class="n">forward_log_det_jacobian</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>bij = tfb.Sigmoid()
+transform_fn = bij.forward
+log_jacobian_fn = bij.forward_log_det_jacobian
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">params</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;model_params&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;logits&quot;</span><span class="p">])</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>params = namedtuple(&quot;model_params&quot;, [&quot;a&quot;, &quot;b&quot;, &quot;logits&quot;])
 
-<span class="k">def</span> <span class="nf">joint_logprob_change_of_var</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
-    <span class="c1"># change of variable</span>
-    <span class="n">thetas</span> <span class="o">=</span> <span class="n">transform_fn</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">logits</span><span class="p">)</span>
-    <span class="n">log_det_jacob</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">log_jacobian_fn</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">logits</span><span class="p">))</span>
+def joint_logprob_change_of_var(params):
+    # change of variable
+    thetas = transform_fn(params.logits)
+    log_det_jacob = jnp.sum(log_jacobian_fn(params.logits))
 
-    <span class="c1"># improper prior for a,b</span>
-    <span class="n">logprob_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">a</span> <span class="o">+</span> <span class="n">params</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.5</span><span class="p">))</span>
+    # improper prior for a,b
+    logprob_ab = jnp.log(jnp.power(params.a + params.b, -2.5))
 
-    <span class="c1"># logprob prior of theta</span>
-    <span class="n">logprob_thetas</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">thetas</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    # logprob prior of theta
+    logprob_thetas = tfd.Beta(params.a, params.b).log_prob(thetas).sum()
 
-    <span class="c1"># loglikelihood of y</span>
-    <span class="n">logprob_y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
-        <span class="n">tfd</span><span class="o">.</span><span class="n">Binomial</span><span class="p">(</span><span class="n">group_size</span><span class="p">,</span> <span class="n">probs</span><span class="o">=</span><span class="n">thetas</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">n_of_positives</span><span class="p">)</span>
-    <span class="p">)</span>
+    # loglikelihood of y
+    logprob_y = jnp.sum(
+        tfd.Binomial(group_size, probs=thetas).log_prob(n_of_positives)
+    )
 
-    <span class="k">return</span> <span class="n">logprob_ab</span> <span class="o">+</span> <span class="n">logprob_thetas</span> <span class="o">+</span> <span class="n">logprob_y</span> <span class="o">+</span> <span class="n">log_det_jacob</span>
+    return logprob_ab + logprob_thetas + logprob_y + log_det_jacob
 </pre></div>
 </div>
 </div>
@@ -1850,23 +1850,23 @@ Wall time: 8.12 s
 <p>except for the change of variable in <code class="docutils literal notranslate"><span class="pre">joint_logprob()</span></code> function, everthing will remain same</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>rng_key = jax.random.PRNGKey(0)
 
 
-<span class="k">def</span> <span class="nf">init_param_fn</span><span class="p">(</span><span class="n">seed</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    initialize a, b &amp; logits</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">key3</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">params</span><span class="p">(</span>
-        <span class="n">a</span><span class="o">=</span><span class="n">tfd</span><span class="o">.</span><span class="n">Uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key1</span><span class="p">),</span>
-        <span class="n">b</span><span class="o">=</span><span class="n">tfd</span><span class="o">.</span><span class="n">Uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">key2</span><span class="p">),</span>
-        <span class="n">logits</span><span class="o">=</span><span class="n">tfd</span><span class="o">.</span><span class="n">Uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n_rat_tumors</span><span class="p">,</span> <span class="n">key3</span><span class="p">),</span>
-    <span class="p">)</span>
+def init_param_fn(seed):
+    &quot;&quot;&quot;
+    initialize a, b &amp; logits
+    &quot;&quot;&quot;
+    key1, key2, key3 = jax.random.split(seed, 3)
+    return params(
+        a=tfd.Uniform(0, 3).sample(seed=key1),
+        b=tfd.Uniform(0, 3).sample(seed=key2),
+        logits=tfd.Uniform(-2, 2).sample(n_rat_tumors, key3),
+    )
 
 
-<span class="n">init_param</span> <span class="o">=</span> <span class="n">init_param_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-<span class="n">joint_logprob_change_of_var</span><span class="p">(</span><span class="n">init_param</span><span class="p">)</span>  <span class="c1"># sanity check</span>
+init_param = init_param_fn(rng_key)
+joint_logprob_change_of_var(init_param)  # sanity check
 </pre></div>
 </div>
 </div>
@@ -1878,64 +1878,64 @@ Wall time: 8.12 s
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">joint_logprob_change_of_var</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
+warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob_change_of_var)
 
-<span class="c1"># we use 4 chains for sampling</span>
-<span class="n">n_chains</span> <span class="o">=</span> <span class="mi">4</span>
-<span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">n_chains</span><span class="p">)</span>
-<span class="n">init_params</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">init_param_fn</span><span class="p">)(</span><span class="n">keys</span><span class="p">)</span>
+# we use 4 chains for sampling
+n_chains = 4
+keys = jax.random.split(rng_key, n_chains)
+init_params = jax.vmap(init_param_fn)(keys)
 
-<span class="nd">@jax</span><span class="o">.</span><span class="n">vmap</span>
-<span class="k">def</span> <span class="nf">call_warmup</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
-    <span class="n">initial_states</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">tuned_params</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span>
+@jax.vmap
+def call_warmup(seed, param):
+    initial_states, _, tuned_params = warmup.run(seed, param, 1000)
+    return initial_states, tuned_params
 
-<span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span> <span class="o">=</span> <span class="n">call_warmup</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">init_params</span><span class="p">)</span>
+initial_states, tuned_params = call_warmup(keys, init_params)
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11 s, sys: 20.2 ms, total: 11 s
-Wall time: 11 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10.9 s, sys: 16 ms, total: 10.9 s
+Wall time: 10.9 s
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">n_samples</span> <span class="o">=</span> <span class="mi">1000</span>
-<span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span><span class="p">,</span> <span class="n">joint_logprob_change_of_var</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_chains</span>
-<span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
+n_samples = 1000
+states, infos = inference_loop_multiple_chains(
+    rng_key, initial_states, tuned_params, joint_logprob_change_of_var, n_samples, n_chains
+)
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.05 s, sys: 20.1 ms, total: 8.07 s
-Wall time: 8.06 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.86 s, sys: 32 ms, total: 7.89 s
+Wall time: 7.88 s
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># convert logits samples to theta samples</span>
-<span class="n">position</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">_asdict</span><span class="p">()</span>
-<span class="n">position</span><span class="p">[</span><span class="s2">&quot;thetas&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;logits&quot;</span><span class="p">])</span>
-<span class="k">del</span> <span class="n">position</span><span class="p">[</span><span class="s2">&quot;logits&quot;</span><span class="p">]</span>  <span class="c1"># delete logits</span>
-<span class="n">states</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="n">position</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># convert logits samples to theta samples
+position = states.position._asdict()
+position[&quot;thetas&quot;] = jax.nn.sigmoid(position[&quot;logits&quot;])
+del position[&quot;logits&quot;]  # delete logits
+states = states._replace(position=position)
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># make arviz trace from states</span>
-<span class="n">trace</span> <span class="o">=</span> <span class="n">arviz_trace_from_states</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span><span class="p">,</span> <span class="n">burn_in</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">summ_df</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">trace</span><span class="p">)</span>
-<span class="n">summ_df</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># make arviz trace from states
+trace = arviz_trace_from_states(states, infos, burn_in=0)
+summ_df = az.summary(trace)
+summ_df
 </pre></div>
 </div>
 </div>
@@ -2857,8 +2857,8 @@ Wall time: 8.06 s
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">az</span><span class="o">.</span><span class="n">plot_trace</span><span class="p">(</span><span class="n">trace</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>az.plot_trace(trace)
+plt.tight_layout()
 </pre></div>
 </div>
 </div>
@@ -2869,7 +2869,7 @@ Wall time: 8.06 s
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of divergence: </span><span class="si">{</span><span class="n">infos</span><span class="o">.</span><span class="n">is_divergent</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(f&quot;Number of divergence: {infos.is_divergent.sum()}&quot;)
 </pre></div>
 </div>
 </div>
@@ -2886,109 +2886,109 @@ Wall time: 8.06 s
 <p>Probabilistic programming language usually provides functionality to apply change of variable easily (often done automatically). In this case for TFP, we can use its modeling API <code class="docutils literal notranslate"><span class="pre">tfd.JointDistribution*</span></code>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tfed</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">experimental</span><span class="o">.</span><span class="n">distributions</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>tfed = tfp.experimental.distributions
 
-<span class="nd">@tfd</span><span class="o">.</span><span class="n">JointDistributionCoroutineAutoBatched</span>
-<span class="k">def</span> <span class="nf">model</span><span class="p">():</span>
-    <span class="c1"># TFP does not have improper prior, use uninformative prior instead</span>
-    <span class="n">a</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">tfd</span><span class="o">.</span><span class="n">HalfCauchy</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
-    <span class="n">b</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">tfd</span><span class="o">.</span><span class="n">HalfCauchy</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
-    <span class="k">yield</span> <span class="n">tfed</span><span class="o">.</span><span class="n">IncrementLogProb</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.5</span><span class="p">)),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;logprob_ab&#39;</span><span class="p">)</span>
+@tfd.JointDistributionCoroutineAutoBatched
+def model():
+    # TFP does not have improper prior, use uninformative prior instead
+    a = yield tfd.HalfCauchy(0, 100, name=&#39;a&#39;)
+    b = yield tfd.HalfCauchy(0, 100, name=&#39;b&#39;)
+    yield tfed.IncrementLogProb(jnp.log(jnp.power(a + b, -2.5)), name=&#39;logprob_ab&#39;)
 
-    <span class="n">thetas</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">tfd</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">n_rat_tumors</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;thetas&#39;</span><span class="p">)</span>
-    <span class="k">yield</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Binomial</span><span class="p">(</span><span class="n">group_size</span><span class="p">,</span> <span class="n">probs</span><span class="o">=</span><span class="n">thetas</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+    thetas = yield tfd.Sample(tfd.Beta(a, b), n_rat_tumors, name=&#39;thetas&#39;)
+    yield tfd.Binomial(group_size, probs=thetas, name=&#39;y&#39;)
 
-<span class="c1"># Sample from the prior and prior predictive distributions. The result is a pytree.</span>
-<span class="c1"># model.sample(seed=rng_key)</span>
+# Sample from the prior and prior predictive distributions. The result is a pytree.
+# model.sample(seed=rng_key)
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Condition on the observed (and auxiliary variable).</span>
-<span class="n">pinned</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">experimental_pin</span><span class="p">(</span><span class="n">logprob_ab</span><span class="o">=</span><span class="p">(),</span> <span class="n">y</span><span class="o">=</span><span class="n">n_of_positives</span><span class="p">)</span>
-<span class="c1"># Get the default change of variable bijectors from the model</span>
-<span class="n">bijectors</span> <span class="o">=</span> <span class="n">pinned</span><span class="o">.</span><span class="n">experimental_default_event_space_bijector</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Condition on the observed (and auxiliary variable).
+pinned = model.experimental_pin(logprob_ab=(), y=n_of_positives)
+# Get the default change of variable bijectors from the model
+bijectors = pinned.experimental_default_event_space_bijector()
 
-<span class="n">prior_sample</span> <span class="o">=</span> <span class="n">pinned</span><span class="o">.</span><span class="n">sample_unpinned</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">rng_key</span><span class="p">)</span>
-<span class="c1"># You can check the unbounded sample</span>
-<span class="c1"># bijectors.inverse(prior_sample)</span>
+prior_sample = pinned.sample_unpinned(seed=rng_key)
+# You can check the unbounded sample
+# bijectors.inverse(prior_sample)
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">joint_logprob</span><span class="p">(</span><span class="n">unbound_param</span><span class="p">):</span>
-    <span class="n">param</span> <span class="o">=</span> <span class="n">bijectors</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">unbound_param</span><span class="p">)</span>
-    <span class="n">log_det_jacobian</span> <span class="o">=</span> <span class="n">bijectors</span><span class="o">.</span><span class="n">forward_log_det_jacobian</span><span class="p">(</span><span class="n">unbound_param</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">pinned</span><span class="o">.</span><span class="n">unnormalized_log_prob</span><span class="p">(</span><span class="n">param</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_det_jacobian</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def joint_logprob(unbound_param):
+    param = bijectors.forward(unbound_param)
+    log_det_jacobian = bijectors.forward_log_det_jacobian(unbound_param)
+    return pinned.unnormalized_log_prob(param) + log_det_jacobian
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">joint_logprob</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
+rng_key = jax.random.PRNGKey(0)
+warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob)
 
-<span class="c1"># we use 4 chains for sampling</span>
-<span class="n">n_chains</span> <span class="o">=</span> <span class="mi">4</span>
-<span class="n">init_key</span><span class="p">,</span> <span class="n">warmup_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">init_params</span> <span class="o">=</span> <span class="n">bijectors</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">pinned</span><span class="o">.</span><span class="n">sample_unpinned</span><span class="p">(</span><span class="n">n_chains</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">init_key</span><span class="p">))</span>
+# we use 4 chains for sampling
+n_chains = 4
+init_key, warmup_key = jax.random.split(rng_key, 2)
+init_params = bijectors.inverse(pinned.sample_unpinned(n_chains, seed=init_key))
 
-<span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">warmup_key</span><span class="p">,</span> <span class="n">n_chains</span><span class="p">)</span>
+keys = jax.random.split(warmup_key, n_chains)
 
-<span class="nd">@jax</span><span class="o">.</span><span class="n">vmap</span>
-<span class="k">def</span> <span class="nf">call_warmup</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
-    <span class="n">initial_states</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">tuned_params</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span>
+@jax.vmap
+def call_warmup(seed, param):
+    initial_states, _, tuned_params = warmup.run(seed, param, 1000)
+    return initial_states, tuned_params
 
-<span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span> <span class="o">=</span> <span class="n">call_warmup</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">init_params</span><span class="p">)</span>
+initial_states, tuned_params = call_warmup(keys, init_params)
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.2 s, sys: 60.1 ms, total: 14.2 s
-Wall time: 14.2 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.4 s, sys: 28.1 ms, total: 13.4 s
+Wall time: 13.4 s
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">n_samples</span> <span class="o">=</span> <span class="mi">1000</span>
-<span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span><span class="p">,</span> <span class="n">joint_logprob</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_chains</span>
-<span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
+n_samples = 1000
+states, infos = inference_loop_multiple_chains(
+    rng_key, initial_states, tuned_params, joint_logprob, n_samples, n_chains
+)
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.36 s, sys: 28 ms, total: 8.39 s
-Wall time: 8.38 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.11 s, sys: 36.1 ms, total: 8.15 s
+Wall time: 8.14 s
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># convert logits samples to theta samples</span>
-<span class="n">position</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span>
-<span class="n">states</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="n">bijectors</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">position</span><span class="p">))</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># convert logits samples to theta samples
+position = states.position
+states = states._replace(position=bijectors.forward(position))
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell tag_output-scroll docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># make arviz trace from states</span>
-<span class="n">trace</span> <span class="o">=</span> <span class="n">arviz_trace_from_states</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span><span class="p">,</span> <span class="n">burn_in</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">summ_df</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">trace</span><span class="p">)</span>
-<span class="n">summ_df</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># make arviz trace from states
+trace = arviz_trace_from_states(states, infos, burn_in=0)
+summ_df = az.summary(trace)
+summ_df
 </pre></div>
 </div>
 </div>
@@ -3910,8 +3910,8 @@ Wall time: 8.38 s
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">az</span><span class="o">.</span><span class="n">plot_trace</span><span class="p">(</span><span class="n">trace</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>az.plot_trace(trace)
+plt.tight_layout()
 </pre></div>
 </div>
 </div>

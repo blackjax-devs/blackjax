@@ -479,13 +479,13 @@ title="Source repository"
 <p>In this notebook we provide a simple example based on basic Hamiltonian Monte Carlo and the NUTS algorithm to showcase the architecture and interfaces in the library</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">jax.scipy.stats</span> <span class="k">as</span> <span class="nn">stats</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import jax
+import jax.numpy as jnp
+import jax.scipy.stats as stats
+import matplotlib.pyplot as plt
+import numpy as np
 
-<span class="kn">import</span> <span class="nn">blackjax</span>
+import blackjax
 </pre></div>
 </div>
 </div>
@@ -495,22 +495,22 @@ title="Source repository"
 <p>We’ll generate observations from a normal distribution of known <code class="docutils literal notranslate"><span class="pre">loc</span></code> and <code class="docutils literal notranslate"><span class="pre">scale</span></code> to see if we can recover the parameters in sampling. <strong>MCMC algorithms usually assume samples are being drawn from an unconstrained Euclidean space.</strong> Hence why we’ll log transform the scale parameter, so that sampling is done on the real line. Samples can be transformed back to their original space in post-processing. Let’s take a decent-size dataset with 1,000 points:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span>
-<span class="n">observed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1_000</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>loc, scale = 10, 20
+observed = np.random.normal(loc, scale, size=1_000)
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">log_scale</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="n">observed</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Univariate Normal&quot;&quot;&quot;</span>
-    <span class="n">scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_scale</span><span class="p">)</span>
-    <span class="n">logpdf</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">observed</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">logpdf</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def logprob_fn(loc, log_scale, observed=observed):
+    &quot;&quot;&quot;Univariate Normal&quot;&quot;&quot;
+    scale = jnp.exp(log_scale)
+    logpdf = stats.norm.logpdf(observed, loc, scale)
+    return jnp.sum(logpdf)
 
 
-<span class="n">logprob</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">logprob_fn</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">)</span>
+logprob = lambda x: logprob_fn(**x)
 </pre></div>
 </div>
 </div>
@@ -522,11 +522,11 @@ title="Source repository"
 <h3>Sampler Parameters<a class="headerlink" href="#sampler-parameters" title="Permalink to this headline">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inv_mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">])</span>
-<span class="n">num_integration_steps</span> <span class="o">=</span> <span class="mi">60</span>
-<span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-3</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>inv_mass_matrix = np.array([0.5, 0.01])
+num_integration_steps = 60
+step_size = 1e-3
 
-<span class="n">hmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
+hmc = blackjax.hmc(logprob, step_size, inv_mass_matrix, num_integration_steps)
 </pre></div>
 </div>
 </div>
@@ -537,9 +537,9 @@ title="Source repository"
 <p>The initial state of the HMC algorithm requires not only an initial position, but also the potential energy and gradient of the potential energy at this position. BlackJAX provides a <code class="docutils literal notranslate"><span class="pre">new_state</span></code> function to initialize the state from an initial position.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">initial_position</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;log_scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
-<span class="n">initial_state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
-<span class="n">initial_state</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>initial_position = {&quot;loc&quot;: 1.0, &quot;log_scale&quot;: 1.0}
+initial_state = hmc.init(initial_position)
+initial_state
 </pre></div>
 </div>
 </div>
@@ -547,7 +547,7 @@ title="Source repository"
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(34106.547, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1247.7947, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-63375.227, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(35860.133, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1305.7283, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-66882.4, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -558,7 +558,7 @@ title="Source repository"
 <p>The HMC kernel is easy to obtain:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">hmc_kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">hmc</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>hmc_kernel = jax.jit(hmc.step)
 </pre></div>
 </div>
 </div>
@@ -566,16 +566,16 @@ title="Source repository"
 <p>BlackJAX does not provide a default inference loop, but it easy to implement with JAX’s <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
-    <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
-    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
-        <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">state</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def inference_loop(rng_key, kernel, initial_state, num_samples):
+    @jax.jit
+    def one_step(state, rng_key):
+        state, _ = kernel(rng_key, state)
+        return state, state
 
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">states</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+    keys = jax.random.split(rng_key, num_samples)
+    _, states = jax.lax.scan(one_step, initial_state, keys)
 
-    <span class="k">return</span> <span class="n">states</span>
+    return states
 </pre></div>
 </div>
 </div>
@@ -585,18 +585,18 @@ title="Source repository"
 <h3>Inference<a class="headerlink" href="#inference" title="Permalink to this headline">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">hmc_kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
+rng_key = jax.random.PRNGKey(0)
+states = inference_loop(rng_key, hmc_kernel, initial_state, 10_000)
 
-<span class="n">loc_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
-<span class="n">scale_samples</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;log_scale&quot;</span><span class="p">])</span>
+loc_samples = states.position[&quot;loc&quot;].block_until_ready()
+scale_samples = jnp.exp(states.position[&quot;log_scale&quot;])
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.51 s, sys: 6.5 ms, total: 1.51 s
-Wall time: 1.51 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.54 s, sys: 6.34 ms, total: 1.54 s
+Wall time: 1.55 s
 </pre></div>
 </div>
 </div>
@@ -608,14 +608,14 @@ Wall time: 1.51 s
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">ax1</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">loc_samples</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Samples&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;loc&quot;</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, (ax, ax1) = plt.subplots(ncols=2, figsize=(15, 6))
+ax.plot(loc_samples)
+ax.set_xlabel(&quot;Samples&quot;)
+ax.set_ylabel(&quot;loc&quot;)
 
-<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">scale_samples</span><span class="p">)</span>
-<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Samples&quot;</span><span class="p">)</span>
-<span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;scale&quot;</span><span class="p">)</span>
+ax1.plot(scale_samples)
+ax1.set_xlabel(&quot;Samples&quot;)
+ax1.set_ylabel(&quot;scale&quot;)
 </pre></div>
 </div>
 </div>
@@ -624,7 +624,7 @@ Wall time: 1.51 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/33141d083c67e3f73f84c4ce804e2c45886701824636d93810afafc114692f24.png" src="../_images/33141d083c67e3f73f84c4ce804e2c45886701824636d93810afafc114692f24.png" />
+<img alt="../_images/b426041d4da2cd45e73a42a94e949880bd98822ccb5bb616e7aa489cd8a92e80.png" src="../_images/b426041d4da2cd45e73a42a94e949880bd98822ccb5bb616e7aa489cd8a92e80.png" />
 </div>
 </div>
 </section>
@@ -634,42 +634,42 @@ Wall time: 1.51 s
 <p>NUTS is a <em>dynamic</em> algorithm: the number of integration steps is determined at runtime. We still need to specify a step size and a mass matrix:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inv_mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">])</span>
-<span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-3</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>inv_mass_matrix = np.array([0.5, 0.01])
+step_size = 1e-3
 
-<span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">)</span>
+nuts = blackjax.nuts(logprob, step_size, inv_mass_matrix)
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">initial_position</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;log_scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
-<span class="n">initial_state</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
-<span class="n">initial_state</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>initial_position = {&quot;loc&quot;: 1.0, &quot;log_scale&quot;: 1.0}
+initial_state = nuts.init(initial_position)
+initial_state
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(34106.547, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1247.7947, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-63375.227, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(35860.133, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1305.7283, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-66882.4, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="mi">4_000</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
+rng_key = jax.random.PRNGKey(0)
+states = inference_loop(rng_key, nuts.step, initial_state, 4_000)
 
-<span class="n">loc_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
-<span class="n">scale_samples</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;log_scale&quot;</span><span class="p">])</span>
+loc_samples = states.position[&quot;loc&quot;].block_until_ready()
+scale_samples = jnp.exp(states.position[&quot;log_scale&quot;])
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.91 s, sys: 11.2 ms, total: 6.92 s
-Wall time: 6.92 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.87 s, sys: 18.8 ms, total: 6.89 s
+Wall time: 6.89 s
 </pre></div>
 </div>
 </div>
@@ -681,14 +681,14 @@ Wall time: 6.92 s
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">ax1</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">loc_samples</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Samples&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;loc&quot;</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, (ax, ax1) = plt.subplots(ncols=2, figsize=(15, 6))
+ax.plot(loc_samples)
+ax.set_xlabel(&quot;Samples&quot;)
+ax.set_ylabel(&quot;loc&quot;)
 
-<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">scale_samples</span><span class="p">)</span>
-<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Samples&quot;</span><span class="p">)</span>
-<span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;scale&quot;</span><span class="p">)</span>
+ax1.plot(scale_samples)
+ax1.set_xlabel(&quot;Samples&quot;)
+ax1.set_ylabel(&quot;scale&quot;)
 </pre></div>
 </div>
 </div>
@@ -697,7 +697,7 @@ Wall time: 6.92 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/736a2b23cba86a2ac481ebbc2ac2cd4f10c738c23fd7400804930fb5434410c4.png" src="../_images/736a2b23cba86a2ac481ebbc2ac2cd4f10c738c23fd7400804930fb5434410c4.png" />
+<img alt="../_images/4bfd20e36a0cb1ea15b4d4551c9ca2b92806124236e1bc2d450870bf96413997.png" src="../_images/4bfd20e36a0cb1ea15b4d4551c9ca2b92806124236e1bc2d450870bf96413997.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -706,16 +706,16 @@ Wall time: 6.92 s
 <p>The adaptation algorithm takes a function that returns a transition kernel given a step size and an inverse mass matrix:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
 
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob</span><span class="p">)</span>
-<span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+warmup = blackjax.window_adaptation(blackjax.nuts, logprob)
+state, kernel, _ = warmup.run(rng_key, initial_position, num_steps=1000)
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.43 s, sys: 19.8 ms, total: 2.45 s
-Wall time: 2.44 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.38 s, sys: 16.1 ms, total: 2.4 s
+Wall time: 2.39 s
 </pre></div>
 </div>
 </div>
@@ -723,18 +723,18 @@ Wall time: 2.44 s
 <p>We can use the obtained parameters to define a new kernel. Note that we do not have to use the same kernel that was used for the adaptation:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
 
-<span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">1_000</span><span class="p">)</span>
+states = inference_loop(rng_key, kernel, state, 1_000)
 
-<span class="n">loc_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
-<span class="n">scale_samples</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;log_scale&quot;</span><span class="p">])</span>
+loc_samples = states.position[&quot;loc&quot;].block_until_ready()
+scale_samples = jnp.exp(states.position[&quot;log_scale&quot;])
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.84 s, sys: 3.9 ms, total: 1.84 s
-Wall time: 1.84 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.82 s, sys: 15.9 ms, total: 1.84 s
+Wall time: 1.83 s
 </pre></div>
 </div>
 </div>
@@ -746,14 +746,14 @@ Wall time: 1.84 s
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">ax1</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">loc_samples</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Samples&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;loc&quot;</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, (ax, ax1) = plt.subplots(ncols=2, figsize=(15, 6))
+ax.plot(loc_samples)
+ax.set_xlabel(&quot;Samples&quot;)
+ax.set_ylabel(&quot;loc&quot;)
 
-<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">scale_samples</span><span class="p">)</span>
-<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Samples&quot;</span><span class="p">)</span>
-<span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;scale&quot;</span><span class="p">)</span>
+ax1.plot(scale_samples)
+ax1.set_xlabel(&quot;Samples&quot;)
+ax1.set_ylabel(&quot;scale&quot;)
 </pre></div>
 </div>
 </div>
@@ -762,7 +762,7 @@ Wall time: 1.84 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/b45849a6b0e2c6d4a4925ca36ac2ccf59d6773861213e4183bd1b66b516bc573.png" src="../_images/b45849a6b0e2c6d4a4925ca36ac2ccf59d6773861213e4183bd1b66b516bc573.png" />
+<img alt="../_images/c0de0390529f10b456c33a76f4623ae7b3d20038fe0cb6bcd12ce1d0f3490cc6.png" src="../_images/c0de0390529f10b456c33a76f4623ae7b3d20038fe0cb6bcd12ce1d0f3490cc6.png" />
 </div>
 </div>
 </section>

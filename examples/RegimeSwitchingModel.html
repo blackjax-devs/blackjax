@@ -382,117 +382,117 @@ title="Source repository"
 <p>where <span class="math notranslate nohighlight">\(\mathcal{N}^0\)</span> indicates the truncated at 0 Gaussian distribution and <span class="math notranslate nohighlight">\(\mathcal{C}^+\)</span> the half-Cauchy distribution.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jrnd</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">numpyro</span>
-<span class="kn">import</span> <span class="nn">numpyro.distributions</span> <span class="k">as</span> <span class="nn">distrib</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
-<span class="kn">from</span> <span class="nn">jax.scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span>
-<span class="kn">from</span> <span class="nn">numpyro.diagnostics</span> <span class="kn">import</span> <span class="n">print_summary</span>
-<span class="kn">from</span> <span class="nn">numpyro.infer.util</span> <span class="kn">import</span> <span class="n">initialize_model</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import jax
+import jax.numpy as jnp
+import jax.random as jrnd
+import matplotlib.pyplot as plt
+import numpy as np
+import numpyro
+import numpyro.distributions as distrib
+import pandas as pd
+import seaborn as sns
+from jax.scipy.stats import norm
+from numpyro.diagnostics import print_summary
+from numpyro.infer.util import initialize_model
 
-<span class="kn">import</span> <span class="nn">blackjax</span>
-
-
-<span class="k">class</span> <span class="nc">RegimeMixtureDistribution</span><span class="p">(</span><span class="n">distrib</span><span class="o">.</span><span class="n">Distribution</span><span class="p">):</span>
-    <span class="n">arg_constraints</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="n">distrib</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">real</span><span class="p">,</span>
-        <span class="s2">&quot;rho&quot;</span><span class="p">:</span> <span class="n">distrib</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">positive</span><span class="p">,</span>
-        <span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="n">distrib</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">positive</span><span class="p">,</span>
-        <span class="s2">&quot;p&quot;</span><span class="p">:</span> <span class="n">distrib</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">interval</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
-        <span class="s2">&quot;xi_0&quot;</span><span class="p">:</span> <span class="n">distrib</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">interval</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
-        <span class="s2">&quot;y_0&quot;</span><span class="p">:</span> <span class="n">distrib</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">real</span><span class="p">,</span>
-        <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">distrib</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">positive_integer</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="n">support</span> <span class="o">=</span> <span class="n">distrib</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">real</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">xi_0</span><span class="p">,</span> <span class="n">y_0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">validate_args</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xi_0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">alpha</span><span class="p">,</span>
-            <span class="n">rho</span><span class="p">,</span>
-            <span class="n">sigma</span><span class="p">,</span>
-            <span class="n">p</span><span class="p">,</span>
-            <span class="n">xi_0</span><span class="p">,</span>
-            <span class="n">y_0</span><span class="p">,</span>
-            <span class="n">T</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">event_shape</span><span class="o">=</span><span class="p">(</span><span class="n">T</span><span class="p">,),</span> <span class="n">validate_args</span><span class="o">=</span><span class="n">validate_args</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">def</span> <span class="nf">obs_t</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-            <span class="n">y_prev</span><span class="p">,</span> <span class="n">xi_1</span> <span class="o">=</span> <span class="n">carry</span>
-            <span class="n">eta_1</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">eta_2</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span>
-                <span class="n">y</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">y_prev</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="p">)</span>
-            <span class="n">lik_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">eta_1</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">eta_2</span>
-            <span class="n">lik_2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">eta_1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">eta_2</span>
-            <span class="n">lik</span> <span class="o">=</span> <span class="n">xi_1</span> <span class="o">*</span> <span class="n">lik_1</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">xi_1</span><span class="p">)</span> <span class="o">*</span> <span class="n">lik_2</span>
-            <span class="n">lik</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">lik</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
-            <span class="k">return</span> <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">xi_1</span> <span class="o">*</span> <span class="n">lik_1</span> <span class="o">/</span> <span class="n">lik</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">lik</span><span class="p">)</span>
-
-        <span class="n">_</span><span class="p">,</span> <span class="n">log_liks</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">obs_t</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xi_0</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">log_liks</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="p">()):</span>
-        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_shape</span><span class="p">)</span>
+import blackjax
 
 
-<span class="k">class</span> <span class="nc">RegimeSwitchHMM</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="n">T</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">y</span>
+class RegimeMixtureDistribution(distrib.Distribution):
+    arg_constraints = {
+        &quot;alpha&quot;: distrib.constraints.real,
+        &quot;rho&quot;: distrib.constraints.positive,
+        &quot;sigma&quot;: distrib.constraints.positive,
+        &quot;p&quot;: distrib.constraints.interval(0, 1),
+        &quot;xi_0&quot;: distrib.constraints.interval(0, 1),
+        &quot;y_0&quot;: distrib.constraints.real,
+        &quot;T&quot;: distrib.constraints.positive_integer,
+    }
+    support = distrib.constraints.real
 
-    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="n">rho</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;rho&quot;</span><span class="p">,</span> <span class="n">distrib</span><span class="o">.</span><span class="n">TruncatedNormal</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mf">0.0</span><span class="p">))</span>
-        <span class="n">alpha</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="n">distrib</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="mi">2</span><span class="p">]))</span>
-        <span class="n">sigma</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;sigma&quot;</span><span class="p">,</span> <span class="n">distrib</span><span class="o">.</span><span class="n">HalfCauchy</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="mi">2</span><span class="p">]))</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="n">distrib</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">([</span><span class="mi">2</span><span class="p">]))</span>
-        <span class="n">xi_0</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;xi_0&quot;</span><span class="p">,</span> <span class="n">distrib</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">))</span>
-        <span class="n">y_0</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">&quot;y_0&quot;</span><span class="p">,</span> <span class="n">distrib</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+    def __init__(self, alpha, rho, sigma, p, xi_0, y_0, T, validate_args=True):
+        self.alpha, self.rho, self.sigma, self.p, self.xi_0, self.y_0, self.T = (
+            alpha,
+            rho,
+            sigma,
+            p,
+            xi_0,
+            y_0,
+            T,
+        )
+        super().__init__(event_shape=(T,), validate_args=validate_args)
 
-        <span class="n">numpyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
-            <span class="s2">&quot;obs&quot;</span><span class="p">,</span>
-            <span class="n">RegimeMixtureDistribution</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">xi_0</span><span class="p">,</span> <span class="n">y_0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">),</span>
-            <span class="n">obs</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
-        <span class="p">)</span>
+    def log_prob(self, value):
+        def obs_t(carry, y):
+            y_prev, xi_1 = carry
+            eta_1 = norm.pdf(y, loc=self.alpha[0], scale=self.sigma[0])
+            eta_2 = norm.pdf(
+                y, loc=self.alpha[1] + y_prev * self.rho, scale=self.sigma[1]
+            )
+            lik_1 = self.p[0] * eta_1 + (1 - self.p[0]) * eta_2
+            lik_2 = (1 - self.p[1]) * eta_1 + self.p[1] * eta_2
+            lik = xi_1 * lik_1 + (1 - xi_1) * lik_2
+            lik = jnp.clip(lik, a_min=1e-6)
+            return (y, xi_1 * lik_1 / lik), jnp.log(lik)
 
-    <span class="k">def</span> <span class="nf">initialize_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">):</span>
+        _, log_liks = jax.lax.scan(obs_t, (self.y_0, self.xi_0), value)
+        return jnp.sum(log_liks)
 
-        <span class="p">(</span><span class="n">init_params</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">potential_fn</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span>
-            <span class="n">rng_key</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
-            <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">},</span>
-            <span class="n">dynamic_args</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">kchain</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">)</span>
-        <span class="n">flat</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">init_params</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">init_params</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
-        <span class="p">)(</span><span class="n">kchain</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">init_params</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">name</span><span class="p">:</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">value</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="s2">&quot;sigma&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="n">value</span>
-            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="p">}</span>
-        <span class="c1"># self.init_params = {name: 3. + value if name in [&#39;sigma&#39;] else value for name, value in self.init_params.items()}</span>
-
-    <span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
-        <span class="k">return</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">potential_fn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)(</span><span class="n">params</span><span class="p">)</span>
+    def sample(self, key, sample_shape=()):
+        return jnp.zeros(sample_shape + self.event_shape)
 
 
-<span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">init_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">):</span>
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
+class RegimeSwitchHMM:
+    def __init__(self, T, y) -&gt; None:
+        self.T = T
+        self.y = y
 
-    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+    def model(self, y=None):
+        rho = numpyro.sample(&quot;rho&quot;, distrib.TruncatedNormal(1.0, 0.1, low=0.0))
+        alpha = numpyro.sample(&quot;alpha&quot;, distrib.Normal(0.0, 0.1).expand([2]))
+        sigma = numpyro.sample(&quot;sigma&quot;, distrib.HalfCauchy(1.0).expand([2]))
+        p = numpyro.sample(&quot;p&quot;, distrib.Beta(10.0, 2.0).expand([2]))
+        xi_0 = numpyro.sample(&quot;xi_0&quot;, distrib.Beta(2.0, 2.0))
+        y_0 = numpyro.sample(&quot;y_0&quot;, distrib.Normal(0.0, 1.0))
 
-    <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">init_state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="n">info</span>
+        numpyro.sample(
+            &quot;obs&quot;,
+            RegimeMixtureDistribution(alpha, rho, sigma, p, xi_0, y_0, self.T),
+            obs=y,
+        )
+
+    def initialize_model(self, rng_key, n_chain):
+
+        (init_params, *_), self.potential_fn, *_ = initialize_model(
+            rng_key,
+            self.model,
+            model_kwargs={&quot;y&quot;: self.y},
+            dynamic_args=True,
+        )
+        kchain = jax.random.split(rng_key, n_chain)
+        flat, unravel_fn = jax.flatten_util.ravel_pytree(init_params)
+        self.init_params = jax.vmap(
+            lambda k: unravel_fn(jax.random.normal(k, flat.shape))
+        )(kchain)
+        self.init_params = {
+            name: 1.0 + value if name in [&quot;p&quot;, &quot;sigma&quot;] else value
+            for name, value in self.init_params.items()
+        }
+        # self.init_params = {name: 3. + value if name in [&#39;sigma&#39;] else value for name, value in self.init_params.items()}
+
+    def logprob_fn(self, params):
+        return -self.potential_fn(self.y)(params)
+
+
+def inference_loop(rng, init_state, kernel, n_iter):
+    keys = jrnd.split(rng, n_iter)
+
+    def step(state, key):
+        state, info = kernel(key, state)
+        return state, (state, info)
+
+    _, (states, info) = jax.lax.scan(step, init_state, keys)
+    return states, info
 </pre></div>
 </div>
 </div>
@@ -505,26 +505,26 @@ title="Source repository"
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://raw.githubusercontent.com/blackjax-devs/blackjax/main/examples/data/google.csv&quot;</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">dl_ac</span><span class="o">.</span><span class="n">values</span> <span class="o">*</span> <span class="mi">100</span>
-<span class="n">T</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>url = &quot;https://raw.githubusercontent.com/blackjax-devs/blackjax/main/examples/data/google.csv&quot;
+data = pd.read_csv(url)
+y = data.dl_ac.values * 100
+T, _ = data.shape
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dist</span> <span class="o">=</span> <span class="n">RegimeSwitchHMM</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>dist = RegimeSwitchHMM(T, y)
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">n_chain</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span> <span class="mi">200</span><span class="p">]</span>
-<span class="n">ksam</span><span class="p">,</span> <span class="n">kinit</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jrnd</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">dist</span><span class="o">.</span><span class="n">initialize_model</span><span class="p">(</span><span class="n">kinit</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>[n_chain, n_warm, n_iter] = [128, 5000, 200]
+ksam, kinit = jrnd.split(jrnd.PRNGKey(0), 2)
+dist.initialize_model(kinit, n_chain)
 </pre></div>
 </div>
 </div>
@@ -536,31 +536,31 @@ title="Source repository"
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tic1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-<span class="n">k_warm</span><span class="p">,</span> <span class="n">k_sample</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">ksam</span><span class="p">)</span>
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">meads</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">)</span>
-<span class="n">init_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">k_warm</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">init_params</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>tic1 = pd.Timestamp.now()
+k_warm, k_sample = jrnd.split(ksam)
+warmup = blackjax.meads(dist.logprob_fn, n_chain)
+init_state, kernel, _ = warmup.run(k_warm, dist.init_params, n_warm)
 
-<span class="k">def</span> <span class="nf">one_chain</span><span class="p">(</span><span class="n">k_sam</span><span class="p">,</span> <span class="n">init_state</span><span class="p">):</span>
-    <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">k_sam</span><span class="p">,</span> <span class="n">init_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">info</span>
+def one_chain(k_sam, init_state):
+    state, info = inference_loop(k_sam, init_state, kernel, n_iter)
+    return state.position, info
 
-<span class="n">k_sample</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">k_sample</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">)</span>
-<span class="n">samples</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">one_chain</span><span class="p">)(</span><span class="n">k_sample</span><span class="p">,</span> <span class="n">init_state</span><span class="p">)</span>
-<span class="n">tic2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Runtime for MEADS&quot;</span><span class="p">,</span> <span class="n">tic2</span> <span class="o">-</span> <span class="n">tic1</span><span class="p">)</span>
+k_sample = jrnd.split(k_sample, n_chain)
+samples, infos = jax.vmap(one_chain)(k_sample, init_state)
+tic2 = pd.Timestamp.now()
+print(&quot;Runtime for MEADS&quot;, tic2 - tic1)
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:00:24.383732
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:00:24.000488
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print_summary(samples)
 </pre></div>
 </div>
 </div>
@@ -581,7 +581,7 @@ title="Source repository"
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,)</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]),</span> <span class="n">samples</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>samples = jax.tree_map(lambda s: s.reshape((-1,) + s.shape[2:]), samples)
 </pre></div>
 </div>
 </div>
@@ -593,29 +593,29 @@ title="Source repository"
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sam</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">sam</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-<span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="sa">r</span><span class="s2">&quot;$\alpha_1$&quot;</span><span class="p">,</span>
-    <span class="sa">r</span><span class="s2">&quot;$\alpha_2$&quot;</span><span class="p">,</span>
-    <span class="sa">r</span><span class="s2">&quot;$p_{1,1}$&quot;</span><span class="p">,</span>
-    <span class="sa">r</span><span class="s2">&quot;$p_{2,2}$&quot;</span><span class="p">,</span>
-    <span class="sa">r</span><span class="s2">&quot;$\rho$&quot;</span><span class="p">,</span>
-    <span class="sa">r</span><span class="s2">&quot;$\sigma_1$&quot;</span><span class="p">,</span>
-    <span class="sa">r</span><span class="s2">&quot;$\sigma_2$&quot;</span><span class="p">,</span>
-    <span class="sa">r</span><span class="s2">&quot;$\xi_</span><span class="si">{10}</span><span class="s2">$&quot;</span><span class="p">,</span>
-    <span class="sa">r</span><span class="s2">&quot;$r_0$&quot;</span><span class="p">,</span>
-<span class="p">]</span>
-<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">sam</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">)</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">pairplot</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">2000</span><span class="p">),</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;kde&quot;</span><span class="p">,</span> <span class="n">diag_kind</span><span class="o">=</span><span class="s2">&quot;kde&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>sam = []
+for name, value in samples.items():
+    sam.append(np.asarray(value).T)
+columns = [
+    r&quot;$\alpha_1$&quot;,
+    r&quot;$\alpha_2$&quot;,
+    r&quot;$p_{1,1}$&quot;,
+    r&quot;$p_{2,2}$&quot;,
+    r&quot;$\rho$&quot;,
+    r&quot;$\sigma_1$&quot;,
+    r&quot;$\sigma_2$&quot;,
+    r&quot;$\xi_{10}$&quot;,
+    r&quot;$r_0$&quot;,
+]
+df = pd.DataFrame(np.vstack(sam).T, columns=columns)
+sns.pairplot(df.sample(2000), kind=&quot;kde&quot;, diag_kind=&quot;kde&quot;)
+plt.show()
 </pre></div>
 </div>
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/6e2957a203cf6ea53d0331031ff52bf3bd1dce2bb0373d8cf4ffedda6f7560c8.png" src="../_images/6e2957a203cf6ea53d0331031ff52bf3bd1dce2bb0373d8cf4ffedda6f7560c8.png" />
+<img alt="../_images/78c679db14c347f687a1aa5374ac62fe4f652df8814050c0ad4e21eb44a45626.png" src="../_images/78c679db14c347f687a1aa5374ac62fe4f652df8814050c0ad4e21eb44a45626.png" />
 </div>
 </div>
 </section>

@@ -25,7 +25,7 @@ Given a vector of obervations $ \mathbf{y} $ with known variance $\sigma^2\mathb
 \end{align*}
 ```
 
-where $\Sigma$ is a covariance function of the feature vector derived from the squared exponential kenel. Thus, for any pair of observations $i$ and $j$ the covariance of these two observations is given by
+where $\Sigma$ is a covariance function of the feature vector derived from the squared exponential kernel. Thus, for any pair of observations $i$ and $j$ the covariance of these two observations is given by
 
 ```{math}
 \Sigma_{i,j} = \sigma^2_f \exp\left(-\frac{||\mathbf{X}_{i, \cdot} - \mathbf{X}_{j, \cdot}||^2}{2 l^2}\right)
