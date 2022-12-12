@@ -36,7 +36,7 @@
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="MNIST Digit Recognition With a 3-Layer Perceptron" href="SGMCMC.html" />
+    <link rel="next" title="Bayesian Regression With Latent Gaussian Sampler" href="GP_Marginal.html" />
     <link rel="prev" title="Periodic Orbital MCMC" href="PeriodicOrbitalMCMC.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -192,6 +192,11 @@
    <li class="toctree-l2 current active">
     <a class="current reference internal" href="#">
      Gaussian Regression with the Elliptical Slice Sampler
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="GP_Marginal.html">
+     Bayesian Regression With Latent Gaussian Sampler
     </a>
    </li>
    <li class="toctree-l2">
@@ -541,8 +546,8 @@ samples = states.position[n_warm:]
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.55 s, sys: 206 ms, total: 7.76 s
-Wall time: 7.42 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.2 s, sys: 237 ms, total: 7.43 s
+Wall time: 7.05 s
 </pre></div>
 </div>
 </div>
@@ -561,8 +566,8 @@ states, _ = inference_loop(key_sample, state, kernel, n_iter)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 46s, sys: 143 ms, total: 1min 46s
-Wall time: 1min 46s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 40s, sys: 145 ms, total: 1min 40s
+Wall time: 1min 40s
 </pre></div>
 </div>
 </div>
@@ -682,10 +687,10 @@ plt.show()
             <p class="prev-next-title">Periodic Orbital MCMC</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="SGMCMC.html" title="next page">
+    <a class='right-next' id="next-link" href="GP_Marginal.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">MNIST Digit Recognition With a 3-Layer Perceptron</p>
+        <p class="prev-next-title">Bayesian Regression With Latent Gaussian Sampler</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

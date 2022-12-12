@@ -194,6 +194,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="GP_Marginal.html">
+     Bayesian Regression With Latent Gaussian Sampler
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="SGMCMC.html">
      MNIST Digit Recognition With a 3-Layer Perceptron
     </a>
@@ -547,7 +552,7 @@ initial_state
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(35860.133, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1305.7283, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-66882.4, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(35087.746, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1214.9962, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-65337.617, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -595,8 +600,8 @@ scale_samples = jnp.exp(states.position[&quot;log_scale&quot;])
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.54 s, sys: 6.34 ms, total: 1.54 s
-Wall time: 1.55 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.53 s, sys: 6.2 ms, total: 1.53 s
+Wall time: 1.53 s
 </pre></div>
 </div>
 </div>
@@ -624,7 +629,7 @@ ax1.set_ylabel(&quot;scale&quot;)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/b426041d4da2cd45e73a42a94e949880bd98822ccb5bb616e7aa489cd8a92e80.png" src="../_images/b426041d4da2cd45e73a42a94e949880bd98822ccb5bb616e7aa489cd8a92e80.png" />
+<img alt="../_images/57898a580a6b71af65049d0416cee4b07f6152baaaec2360373ce1e3ac557a30.png" src="../_images/57898a580a6b71af65049d0416cee4b07f6152baaaec2360373ce1e3ac557a30.png" />
 </div>
 </div>
 </section>
@@ -651,7 +656,7 @@ initial_state
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(35860.133, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1305.7283, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-66882.4, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(35087.746, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1214.9962, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-65337.617, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -668,8 +673,8 @@ scale_samples = jnp.exp(states.position[&quot;log_scale&quot;])
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.87 s, sys: 18.8 ms, total: 6.89 s
-Wall time: 6.89 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.95 s, sys: 22.3 ms, total: 6.97 s
+Wall time: 6.97 s
 </pre></div>
 </div>
 </div>
@@ -697,7 +702,7 @@ ax1.set_ylabel(&quot;scale&quot;)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/4bfd20e36a0cb1ea15b4d4551c9ca2b92806124236e1bc2d450870bf96413997.png" src="../_images/4bfd20e36a0cb1ea15b4d4551c9ca2b92806124236e1bc2d450870bf96413997.png" />
+<img alt="../_images/c9795fcbbad835caed8bacae89c8fb4cb31a7addd8f1b116eae4ce0c396b8c33.png" src="../_images/c9795fcbbad835caed8bacae89c8fb4cb31a7addd8f1b116eae4ce0c396b8c33.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -714,8 +719,8 @@ state, kernel, _ = warmup.run(rng_key, initial_position, num_steps=1000)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.38 s, sys: 16.1 ms, total: 2.4 s
-Wall time: 2.39 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.46 s, sys: 11.8 ms, total: 2.47 s
+Wall time: 2.47 s
 </pre></div>
 </div>
 </div>
@@ -733,8 +738,8 @@ scale_samples = jnp.exp(states.position[&quot;log_scale&quot;])
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.82 s, sys: 15.9 ms, total: 1.84 s
-Wall time: 1.83 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.85 s, sys: 7.81 ms, total: 1.86 s
+Wall time: 1.86 s
 </pre></div>
 </div>
 </div>
@@ -762,7 +767,7 @@ ax1.set_ylabel(&quot;scale&quot;)
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/c0de0390529f10b456c33a76f4623ae7b3d20038fe0cb6bcd12ce1d0f3490cc6.png" src="../_images/c0de0390529f10b456c33a76f4623ae7b3d20038fe0cb6bcd12ce1d0f3490cc6.png" />
+<img alt="../_images/30627d01acf0f619dc91c4075111bde009d71dba4a78c38171efe25d6f6a83c5.png" src="../_images/30627d01acf0f619dc91c4075111bde009d71dba4a78c38171efe25d6f6a83c5.png" />
 </div>
 </div>
 </section>

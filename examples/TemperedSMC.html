@@ -195,6 +195,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="GP_Marginal.html">
+     Bayesian Regression With Latent Gaussian Sampler
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="SGMCMC.html">
      MNIST Digit Recognition With a 3-Layer Perceptron
     </a>
@@ -590,7 +595,7 @@ ax.legend(list(lambdas))
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f5e2c135880&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd11013c850&gt;
 </pre></div>
 </div>
 <img alt="../_images/640d596490ecc3e66cd07e99ddb457e7257c486aa06a0846c30164d3aa2c71f8.png" src="../_images/640d596490ecc3e66cd07e99ddb457e7257c486aa06a0846c30164d3aa2c71f8.png" />
@@ -641,8 +646,8 @@ hmc_samples = inference_loop(key, hmc.step, hmc_state, n_samples)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.27 s, sys: 12.1 ms, total: 1.29 s
-Wall time: 1.28 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.23 s, sys: 4.61 ms, total: 1.23 s
+Wall time: 1.23 s
 </pre></div>
 </div>
 </div>
@@ -682,8 +687,8 @@ nuts_samples = inference_loop(key, nuts.step, nuts_state, n_samples)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.33 s, sys: 11.9 ms, total: 7.34 s
-Wall time: 7.34 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.22 s, sys: 20.3 ms, total: 7.24 s
+Wall time: 7.23 s
 </pre></div>
 </div>
 </div>
@@ -772,8 +777,8 @@ print(&quot;Number of steps in the adaptive algorithm: &quot;, n_iter.item())
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  9
-CPU times: user 2.53 s, sys: 15.7 ms, total: 2.55 s
-Wall time: 2.51 s
+CPU times: user 2.5 s, sys: 15.9 ms, total: 2.52 s
+Wall time: 2.47 s
 </pre></div>
 </div>
 </div>
@@ -845,7 +850,7 @@ ax.legend(list(lambdas))
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f5e1c7a88e0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fd10076fb80&gt;
 </pre></div>
 </div>
 <img alt="../_images/07fc13262f5bd947ec4683f6a29cd1acde81672d7a13207fc0ca239e6ad642d5.png" src="../_images/07fc13262f5bd947ec4683f6a29cd1acde81672d7a13207fc0ca239e6ad642d5.png" />
@@ -893,8 +898,8 @@ hmc_samples = inference_loop(key, hmc.step, hmc_state, n_samples)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 900 ms, sys: 8.18 ms, total: 908 ms
-Wall time: 907 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 866 ms, sys: 11.9 ms, total: 878 ms
+Wall time: 875 ms
 </pre></div>
 </div>
 </div>
@@ -935,8 +940,8 @@ nuts_samples = inference_loop(key, nuts.step, nuts_state, n_samples)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.57 s, sys: 8.23 ms, total: 1.57 s
-Wall time: 1.58 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.53 s, sys: 4.06 ms, total: 1.53 s
+Wall time: 1.53 s
 </pre></div>
 </div>
 </div>
@@ -997,8 +1002,8 @@ print(&quot;Number of steps in the adaptive algorithm: &quot;, n_iter.item())
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  8
-CPU times: user 2.25 s, sys: 15.8 ms, total: 2.27 s
-Wall time: 2.26 s
+CPU times: user 2.23 s, sys: 31.8 ms, total: 2.26 s
+Wall time: 2.25 s
 </pre></div>
 </div>
 </div>
