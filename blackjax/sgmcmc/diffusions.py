@@ -39,11 +39,14 @@ def overdamped_langevin():
         position: PyTree,
         logdensity_grad: PyTree,
         step_size: float,
+        temperature: float = 1.0,
     ) -> PyTree:
 
         noise = generate_gaussian_noise(rng_key, position)
         position = jax.tree_util.tree_map(
-            lambda p, g, n: p + step_size * g + jnp.sqrt(2 * step_size) * n,
+            lambda p, g, n: p
+            + step_size * g
+            + jnp.sqrt(2 * temperature * step_size) * n,
             position,
             logdensity_grad,
             noise,
