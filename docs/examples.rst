@@ -11,6 +11,7 @@ Examples
    examples/HierarchicalBNN.md
    examples/PeriodicOrbitalMCMC.md
    examples/GP_EllipticalSliceSampler.md
+   examples/GP_Marginal.md
    examples/SGMCMC.md
    examples/change_of_variable_hmc.md
    examples/Pathfinder.md
