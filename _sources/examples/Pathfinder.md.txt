@@ -15,7 +15,7 @@ kernelspec:
 
 In this notebook we introduce the pathfinder algorithm and we show how to use it as a variational inference method or as an initialization tool for MCMC kernels.
 
-```{code-cell} ipython3
+```{code-cell} python
 import jax
 import jax.numpy as jnp
 import jax.random as random
@@ -26,7 +26,7 @@ from sklearn.datasets import make_biclusters
 import blackjax
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 
 plt.rcParams["axes.spines.right"] = False
@@ -38,7 +38,7 @@ plt.rcParams["figure.figsize"] = (10, 6)
 
 We create two clusters of points using [scikit-learn's `make_bicluster` function](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_biclusters.html?highlight=bicluster%20data#sklearn.datasets.make_biclusters).
 
-```{code-cell} ipython3
+```{code-cell} python
 num_points = 50
 X, rows, cols = make_biclusters(
     (num_points, 2), 2, noise=0.6, random_state=314, minval=-3, maxval=3
@@ -46,7 +46,7 @@ X, rows, cols = make_biclusters(
 y = rows[0] * 1.0  # y[i] = whether point i belongs to cluster 1
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 colors = ["tab:red" if el else "tab:blue" for el in rows[0]]
@@ -78,7 +78,7 @@ $$
 
 And $\Phi$ is the matrix that contains the data, so each row $\Phi_{i,:}$ is the vector $\left[X_0^i, X_1^i\right]$
 
-```{code-cell} ipython3
+```{code-cell} python
 Phi = X
 N, M = Phi.shape
 
@@ -111,14 +111,14 @@ The optimizer is the limited memory BFGS algorithm.
 
 To help understand the approximations that pathfinder evaluates during its run, here we plot for each step of the L-BFGS optimizer the approximation of the posterior distribution of the model derived by pathfinder and its ELBO:
 
-```{code-cell} ipython3
+```{code-cell} python
 rng_key = random.PRNGKey(314)
 w0 = random.multivariate_normal(rng_key, 2.0 + jnp.zeros(M), jnp.eye(M))
 _, info = blackjax.vi.pathfinder.approximate(rng_key, logprob_fn, w0, ftol=1e-4)
 path = info.path
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 def ellipse_confidence(mu, cov, ax, c, n_std=2.0):
@@ -175,21 +175,21 @@ fig.show()
 
 Pathfinder can be used as a variational inference method, using its kernel API:
 
-```{code-cell} ipython3
+```{code-cell} python
 pathfinder = blackjax.kernels.pathfinder(logprob_fn)
 state, _ = pathfinder.approximate(rng_key, w0, ftol=1e-4)
 ```
 
 We can now get samples from the approximation:
 
-```{code-cell} ipython3
+```{code-cell} python
 _, rng_key = random.split(rng_key)
 samples, _ = pathfinder.sample(rng_key, state, 5_000)
 ```
 
 And display the trace:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 fig, ax = plt.subplots(1, 2, figsize=(8, 2), sharey=True)
@@ -206,7 +206,7 @@ Please note that pathfinder is implemented as follows:
 
 hence it makes sense to `jit` the `init` function and then use the `blackjax.vi.pathfinder.sample_from_state` helper function instead of implementing the inference loop:
 
-```{code-cell} ipython3
+```{code-cell} python
 %%time
 
 state, _ = jax.jit(pathfinder.approximate)(rng_key, w0)
@@ -215,7 +215,7 @@ samples, _ = pathfinder.sample(rng_key, state, 5_000)
 
 Quick comparison against `rmh` kernel:
 
-```{code-cell} ipython3
+```{code-cell} python
 def inference_loop(rng_key, kernel, initial_state, num_samples):
     @jax.jit
     def one_step(state, rng_key):
@@ -230,7 +230,7 @@ state_rmh = rmh.init(w0)
 _, (samples_rmh, _) = inference_loop(rng_key, rmh.step, state_rmh, 5_000)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 fig, ax = plt.subplots(2, 2, figsize=(10, 4), sharey=True)
@@ -251,7 +251,7 @@ Pathfinder uses internally the inverse hessian estimation of the L-BFGS optimize
 
 We can calculate explicitly this inverse hessian matrix for a step of the optimization path using the `blackjax.vi.pathfinder.lbfgs_inverse_hessian_formula_1` function:
 
-```{code-cell} ipython3
+```{code-cell} python
 from blackjax.optimizers.lbfgs import lbfgs_inverse_hessian_formula_1
 
 inverse_mass_matrix = lbfgs_inverse_hessian_formula_1(
@@ -264,7 +264,7 @@ This estimation of the inverse mass matrix, coupled with Nesterov's dual averagi
 
 This scheme is implemented in `blackjax.kernel.pathfinder_adaptation` function:
 
-```{code-cell} ipython3
+```{code-cell} python
 adapt = blackjax.kernels.pathfinder_adaptation(blackjax.nuts, logprob_fn)
 state, kernel, info = adapt.run(rng_key, w0, 400)
 ```

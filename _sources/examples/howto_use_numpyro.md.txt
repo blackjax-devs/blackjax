@@ -22,7 +22,7 @@ You will need [Numpyro](https://github.com/pyro-ppl/numpyro) to run this example
 
 We reproduce the Eight Schools example from the [Numpyro documentation](https://github.com/pyro-ppl/numpyro) (all credit for the model goes to the Numpyro team).
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 import numpy as np
 
@@ -34,7 +34,7 @@ sigma = np.array([15.0, 10.0, 16.0, 11.0, 9.0, 11.0, 10.0, 18.0])
 
 We implement the non-centered version of the hierarchical model:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-output]
 
 import numpyro
@@ -62,7 +62,7 @@ The model applies a transformation to the `theta` variable. As a result, the sam
 
 We need to translate the model into a log-probability function that will be used by Blackjax to perform inference. For that we use the `initialize_model` function in Numpyro's internals. We will also use the initial position it returns to initialize the inference:
 
-```{code-cell} ipython3
+```{code-cell} python
 import jax
 
 from numpyro.infer.util import initialize_model
@@ -79,14 +79,14 @@ init_params, potential_fn_gen, *_ = initialize_model(
 Numpyro return a potential function, which is easily transformed back into a logprob function that is required by Blackjax:
 
 
-```{code-cell} ipython3
+```{code-cell} python
 logprob_fn = lambda position: -potential_fn_gen(J, sigma, y)(position)
 initial_position = init_params.z
 ```
 
 We can now run the window adaptation for the NUTS sampler:
 
-```{code-cell} ipython3
+```{code-cell} python
 import blackjax
 
 num_warmup = 2000
@@ -99,7 +99,7 @@ last_state, kernel, _ = adapt.run(rng_key, initial_position, num_warmup)
 
 Let us now perform inference with the tuned kernel:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 
 def inference_loop(rng_key, kernel, initial_state, num_samples):
@@ -118,7 +118,7 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     )
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 num_sample = 1000
 
 states, infos = inference_loop(rng_key, kernel, last_state, num_sample)
@@ -127,7 +127,7 @@ _ = states.position["mu"].block_until_ready()
 
 To make sure that the model sampled correctly, let's compute the average acceptance rate and the number of divergences:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 acceptance_rate = np.mean(infos[0])
 num_divergent = np.mean(infos[1])
@@ -138,7 +138,7 @@ print(f"There were {100*num_divergent:.2f}% divergent transitions")
 
 Finally let us now plot the distribution of the parameters. Note that since we use a transformed variable, Numpyro does not output the school treatment effect directly:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 import seaborn as sns
@@ -155,7 +155,7 @@ axes[1].set_xlabel("tau")
 fig.tight_layout()
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 fig, axes = plt.subplots(8, 2, sharex="col", sharey="col")
@@ -171,7 +171,7 @@ fig.tight_layout()
 plt.show()
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 for i in range(J):

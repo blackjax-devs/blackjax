@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [remove-cell]
 
 import os
@@ -42,7 +42,7 @@ In the following we will sample from a linear regression with a NUTS sampler. Th
 
 The model is
 
-```{code-cell} ipython3
+```{code-cell} python
 import numpy as np
 
 import jax
@@ -80,7 +80,7 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
 
 To make our demonstration more dramatic we will used a NUTS sampler with poorly chosen parameters:
 
-```{code-cell} ipython3
+```{code-cell} python
 import blackjax
 
 
@@ -92,7 +92,7 @@ nuts = blackjax.nuts(logprob, step_size, inv_mass_matrix)
 
 And finally, to put `jax.vmap` and `jax.pmap` on an equal foot we sample as many chains as the machine has CPU cores:
 
-```{code-cell} ipython3
+```{code-cell} python
 import multiprocessing
 
 
@@ -106,7 +106,7 @@ Newcomers to JAX immediately recognize the benefits of using `jax.vmap`, and for
 
 Here we apply `jax.vmap` inside the `one_step` function and vectorize the transition kernel:
 
-```{code-cell} ipython3
+```{code-cell} python
 def inference_loop_multiple_chains(
     rng_key, kernel, initial_state, num_samples, num_chains
 ):
@@ -125,14 +125,14 @@ def inference_loop_multiple_chains(
 
 We now prepare the initial states using `jax.vmap` again, to vectorize the `init` function:
 
-```{code-cell} ipython3
+```{code-cell} python
 initial_positions = {"loc": np.ones(num_chains), "log_scale": np.ones(num_chains)}
 initial_states = jax.vmap(nuts.init, in_axes=(0))(initial_positions)
 ```
 
 And finally run the sampler
 
-```{code-cell} ipython3
+```{code-cell} python
 states = inference_loop_multiple_chains(
     rng_key, nuts.step, initial_states, 2_000, num_chains
 )
@@ -164,7 +164,7 @@ Currently, this can only be done via `XLA_FLAGS` environmental variable.
 This variable has to be set before JAX or any library that imports it is imported
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 import os
 import multiprocessing
 
@@ -175,7 +175,7 @@ os.environ["XLA_FLAGS"] = "--xla_force_host_platform_device_count={}".format(
 
 We advise you to confirm that JAX has successfuly recognized our CPU as multiple devices with the following command before moving forward:
 
-```{code-cell} ipython3
+```{code-cell} python
 import jax
 
 len(jax.devices())
@@ -185,7 +185,7 @@ len(jax.devices())
 
 `jax.pmap` has one more limitation: it is not able to parallelize the execution when you ask it to perform more computations than there are available deviced. The following code snippet asks `jax.pmap` perform 1024 operations in parallel:
 
-```{code-cell} ipython3
+```{code-cell} python
 import jax.numpy as jnp
 
 def fn(x):
@@ -208,7 +208,7 @@ Another option (we advise against) is to set the device count to a number larger
 
 In case of `jax.pmap`, we apply the transformation directly to the original `inference_loop` function.
 
-```{code-cell} ipython3
+```{code-cell} python
 inference_loop_multiple_chains = jax.pmap(inference_loop, in_axes=(0, None, 0, None), static_broadcasted_argnums=(1, 3))
 ```
 
@@ -218,7 +218,7 @@ We could have done that in the `jax.vmap` example (and it wouldn't have helped),
 
 We are now ready to sample:
 
-```{code-cell} ipython3
+```{code-cell} python
 keys = jax.random.split(rng_key, num_chains)
 
 pmap_states = inference_loop_multiple_chains(

@@ -638,8 +638,8 @@ vv_kernel = jax.jit(vv_kernel)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 222 ms, sys: 0 ns, total: 222 ms
-Wall time: 222 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 245 ms, sys: 154 µs, total: 245 ms
+Wall time: 245 ms
 </pre></div>
 </div>
 </div>
@@ -656,8 +656,8 @@ weights = states.weights
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 976 ms, sys: 3.84 ms, total: 980 ms
-Wall time: 977 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.03 s, sys: 3.77 ms, total: 1.03 s
+Wall time: 1.03 s
 </pre></div>
 </div>
 </div>
@@ -688,8 +688,8 @@ ml_kernel = jax.jit(ml_kernel)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 15.2 ms, sys: 0 ns, total: 15.2 ms
-Wall time: 15.1 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17 ms, sys: 89 µs, total: 17.1 ms
+Wall time: 17 ms
 </pre></div>
 </div>
 </div>
@@ -706,8 +706,8 @@ weights = states.weights
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 917 ms, sys: 3.97 ms, total: 921 ms
-Wall time: 920 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 994 ms, sys: 7.71 ms, total: 1 s
+Wall time: 997 ms
 </pre></div>
 </div>
 </div>
@@ -744,8 +744,8 @@ yo_kernel = jax.jit(yo_kernel)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 15.5 ms, sys: 0 ns, total: 15.5 ms
-Wall time: 15.4 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.3 ms, sys: 0 ns, total: 17.3 ms
+Wall time: 17 ms
 </pre></div>
 </div>
 </div>
@@ -762,8 +762,8 @@ weights = states.weights
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 893 ms, sys: 3.62 ms, total: 897 ms
-Wall time: 893 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 948 ms, sys: 0 ns, total: 948 ms
+Wall time: 944 ms
 </pre></div>
 </div>
 </div>
@@ -844,8 +844,8 @@ ellip_kernel = jax.jit(ellip_kernel)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 15.7 ms, sys: 0 ns, total: 15.7 ms
-Wall time: 15.4 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.4 ms, sys: 0 ns, total: 17.4 ms
+Wall time: 17.1 ms
 </pre></div>
 </div>
 </div>
@@ -862,8 +862,8 @@ weights = states.weights
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 738 ms, sys: 79 µs, total: 738 ms
-Wall time: 738 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 752 ms, sys: 4.28 ms, total: 756 ms
+Wall time: 754 ms
 </pre></div>
 </div>
 </div>
@@ -1018,8 +1018,8 @@ parameters, nelbo = param_optim(
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.47 s, sys: 16 ms, total: 1.49 s
-Wall time: 1.49 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.56 s, sys: 4.01 ms, total: 1.56 s
+Wall time: 1.56 s
 </pre></div>
 </div>
 </div>
@@ -1040,7 +1040,7 @@ plt.show()
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/c75418a6e2ed34dd23dea88ce6577681b381cb710bfa92b62567d1665eba7347.png" src="../_images/c75418a6e2ed34dd23dea88ce6577681b381cb710bfa92b62567d1665eba7347.png" />
+<img alt="../_images/47f8eddf54a3ce273e02c517912d17ad61e58ea708b3dff11fb6f4e6844f1d69.png" src="../_images/47f8eddf54a3ce273e02c517912d17ad61e58ea708b3dff11fb6f4e6844f1d69.png" />
 </div>
 </div>
 <p>We define our log pullback given the learned parameters of the transformation and use the periodic orbital MCMC with an ellipsis to sample from this log pullback density.</p>
@@ -1064,8 +1064,8 @@ ellip_kernel = jax.jit(ellip_kernel)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 550 ms, sys: 3.67 ms, total: 554 ms
-Wall time: 553 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 578 ms, sys: 4.07 ms, total: 582 ms
+Wall time: 582 ms
 </pre></div>
 </div>
 </div>
@@ -1082,8 +1082,8 @@ weights = states.weights
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 892 ms, sys: 3.99 ms, total: 896 ms
-Wall time: 893 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 914 ms, sys: 0 ns, total: 914 ms
+Wall time: 912 ms
 </pre></div>
 </div>
 </div>
@@ -1124,7 +1124,7 @@ samples = {&quot;x1&quot;: samplesx1, &quot;x2&quot;: samplesx2}
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/7bec019bc02b19b392723456cad5385b9a69123c0d014f0e9310450a023b136a.png" src="../_images/7bec019bc02b19b392723456cad5385b9a69123c0d014f0e9310450a023b136a.png" />
+<img alt="../_images/55330dafc4092dc467e93bbc666e7a8b027f84b94ebaf38cf801ff3f967fe1bb.png" src="../_images/55330dafc4092dc467e93bbc666e7a8b027f84b94ebaf38cf801ff3f967fe1bb.png" />
 </div>
 </div>
 </section>

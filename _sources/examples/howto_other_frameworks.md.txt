@@ -24,7 +24,7 @@ In this example we will show you how this can be done using JAX's experimental `
 
 The following example builds a logprob function with [Aesara](https://github.com/aesara-devs/aesara), compiles it with [Numba](https://numba.pydata.org/) and uses Blackjax to sample from the posterior distribution of the model.
 
-```{code-cell} ipython3
+```{code-cell} python
 import aesara.tensor as at
 import numpy as np
 
@@ -41,7 +41,7 @@ Y_rv = N_rv[I_rv]
 
 We can sample from the prior predictive distribution to make sure the model is correctly implemented:
 
-```{code-cell} ipython3
+```{code-cell} python
 import aesara
 
 sampling_fn = aesara.function((), Y_rv)
@@ -51,7 +51,7 @@ print(sampling_fn())
 
 We do not care about the posterior distribution of the indicator variable `I_rv` so we marginalize it out, and subsequently build the logprob's graph:
 
-```{code-cell} ipython3
+```{code-cell} python
 from aeppl import joint_logprob
 
 y_vv = Y_rv.clone()
@@ -69,14 +69,14 @@ total_logprob = at.logsumexp(at.log(weights) + logprob)
 
 We are now ready to compile the logprob to Numba:
 
-```{code-cell} ipython3
+```{code-cell} python
 logprob_fn = aesara.function((y_vv,), total_logprob, mode="NUMBA")
 logprob_fn(1.)
 ```
 
 As is we cannot use these functions within jit-compiled functions written with JAX, or apply `jax.grad` to get the function's gradients:
 
-```{code-cell} ipython3
+```{code-cell} python
 try:
     jax.jit(logprob_fn)(1.)
 except Exception:
@@ -90,7 +90,7 @@ except Exception:
 
 Indeed, a function written with Numba is incompatible with JAX's primitives. Luckily Aesara can build the model's gradient graph and compile it to Numba as well:
 
-```{code-cell} ipython3
+```{code-cell} python
 total_logprob_grad = at.grad(total_logprob, y_vv)
 logprob_grad_fn = aesara.function((y_vv,), total_logprob_grad, mode="NUMBA")
 logprob_grad_fn(1.)
@@ -100,7 +100,7 @@ logprob_grad_fn(1.)
 
 In order to be able to call `logprob_fn` within JAX, we need to define a function that will call it via JAX's `host_callback`. Yet, this wrapper function is not differentiable with JAX, and so we will also need to define this functions' `custom_vjp`, and use `host_callback` to call the gradient-computing function as well:
 
-```{code-cell} ipython3
+```{code-cell} python
 import jax
 import jax.experimental.host_callback as hcb
 
@@ -122,7 +122,7 @@ numba_logpdf.defvjp(vjp_fwd, vjp_bwd)
 
 And we can now call the function from a jitted function and apply `jax.grad` without JAX complaining:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [remove-stderr]
 
 jax.jit(numba_logpdf)(1.), jax.grad(numba_logpdf)(1.)
@@ -130,7 +130,7 @@ jax.jit(numba_logpdf)(1.), jax.grad(numba_logpdf)(1.)
 
 And use Blackjax's NUTS sampler to sample from the model's posterior distribution:
 
-```{code-cell} ipython3
+```{code-cell} python
 import blackjax
 
 inverse_mass_matrix = np.ones(1)
@@ -150,7 +150,7 @@ print(state)
 
 If you run this on your machine you will notice that this runs quite slowly compared to a pure-JAX equivalent, that's because `host_callback` implied a lot of back-and-forth with Python. To see this let's compare execution times between *pure Numba on the one hand*:
 
-```{code-cell} ipython3
+```{code-cell} python
 %%time
 for _ in range(100_000):
     logprob_fn(100)
@@ -158,7 +158,7 @@ for _ in range(100_000):
 
 And *JAX on the other hand, with 100 times less iterations*:
 
-```{code-cell} ipython3
+```{code-cell} python
 %%time
 for _ in range(1_000):
     numba_logpdf(100.)

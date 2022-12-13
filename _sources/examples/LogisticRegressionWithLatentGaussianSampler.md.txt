@@ -15,7 +15,7 @@ kernelspec:
 
 In this notebook we reproduce the Logistic Regression example, but by directly leveraging the fact that the prior is Gaussian to use the latent Gaussian model. Most of the code is the same as in the previous notebook, but the sampler (and the adaptation step) will differ.
 
-```{code-cell} ipython3
+```{code-cell} python
 import jax
 import jax.numpy as jnp
 import jax.random as random
@@ -25,7 +25,7 @@ from sklearn.datasets import make_biclusters
 import blackjax
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 
 plt.rcParams["axes.spines.right"] = False
@@ -37,7 +37,7 @@ plt.rcParams["figure.figsize"] = (12, 8)
 
 We create two clusters of points using [scikit-learn's `make_bicluster` function](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_biclusters.html?highlight=bicluster%20data#sklearn.datasets.make_biclusters).
 
-```{code-cell} ipython3
+```{code-cell} python
 num_points = 50
 X, rows, cols = make_biclusters(
     (num_points, 2), 2, noise=0.6, random_state=314, minval=-3, maxval=3
@@ -45,7 +45,7 @@ X, rows, cols = make_biclusters(
 y = rows[0] * 1.0  # y[i] = whether point i belongs to cluster 1
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 colors = ["tab:red" if el else "tab:blue" for el in rows[0]]
@@ -77,7 +77,7 @@ $$
 
 And $\Phi$ is the matrix that contains the data, so each row $\Phi_{i,:}$ is the vector $\left[1, X_0^i, X_1^i\right]$
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-stderr]
 
 Phi = jnp.c_[jnp.ones(num_points)[:, None], X]
@@ -107,7 +107,7 @@ def log_likelihood(w):
 
 We use `blackjax`'s Random Walk RMH kernel to sample from the posterior distribution.
 
-```{code-cell} ipython3
+```{code-cell} python
 rng_key = random.PRNGKey(314)
 
 w0 = jnp.zeros((M,))
@@ -118,7 +118,7 @@ initial_state = init(w0)
 
 We first define a calibration loop. The goal is to find the "step-size" `delta` that approximately corresponds to an acceptance probability of 0.5.
 
-```{code-cell} ipython3
+```{code-cell} python
 def calibration_loop(
     rng_key,
     initial_state,
@@ -175,7 +175,7 @@ def inference_loop(rng_key, initial_delta, initial_state, num_samples, num_burni
 
 We can now run the inference:
 
-```{code-cell} ipython3
+```{code-cell} python
 _, rng_key = random.split(rng_key)
 states, tota_pct_accepted = inference_loop(rng_key, 0.5, initial_state, 5_000, 1_000)
 print(f"Percentage of accepted samples (after calibration): {tota_pct_accepted:.2%}")
@@ -183,7 +183,7 @@ print(f"Percentage of accepted samples (after calibration): {tota_pct_accepted:.
 
 And display the trace:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 fig, ax = plt.subplots(1, 3, figsize=(12, 2))
@@ -193,7 +193,7 @@ for i, axi in enumerate(ax):
 plt.show()
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 chains = states.position
 nsamp, _ = chains.shape
 ```
@@ -202,7 +202,7 @@ nsamp, _ = chains.shape
 
 Having infered the posterior distribution of the regression's coefficients we can compute the probability to belong to the first cluster at each position $(X_0, X_1)$.
 
-```{code-cell} ipython3
+```{code-cell} python
 # Create a meshgrid
 xmin, ymin = X.min(axis=0) - 0.1
 xmax, ymax = X.max(axis=0) + 0.1
@@ -216,7 +216,7 @@ Z_mcmc = sigmoid(jnp.einsum("mij,sm->sij", Phispace, chains))
 Z_mcmc = Z_mcmc.mean(axis=0)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 plt.contourf(*Xspace, Z_mcmc)

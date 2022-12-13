@@ -28,7 +28,7 @@ In particular we use following binomial hierarchical model where $y_{j}$ and $N_
 \end{align}
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 
 import arviz as az
@@ -49,7 +49,7 @@ plt.rc("xtick", labelsize=12)  # fontsize of the xtick labels
 plt.rc("ytick", labelsize=12)  # fontsize of the tyick labels
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 
 # index of array is type of tumor and value shows number of total people tested.
@@ -212,7 +212,7 @@ n_of_positives = jnp.array(
 n_rat_tumors = len(group_size)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 fig = plt.figure(figsize=(12, 3))
@@ -226,7 +226,7 @@ ax.spines["right"].set_visible(False)
 plt.title("No. of positives for each tumor type", fontsize=14)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 fig = plt.figure(figsize=(14, 4))
@@ -244,7 +244,7 @@ ax.spines["right"].set_visible(False)
 
 Now we use Blackjax's NUTS algorithm to get posterior samples of $a$, $b$, and $\theta$
 
-```{code-cell} ipython3
+```{code-cell} python
 from collections import namedtuple
 
 params = namedtuple("model_params", ["a", "b", "thetas"])
@@ -267,7 +267,7 @@ def joint_logprob(params):
 
 We take initial parameters from uniform distribution
 
-```{code-cell} ipython3
+```{code-cell} python
 rng_key = jax.random.PRNGKey(0)
 n_params = n_rat_tumors + 2
 
@@ -290,7 +290,7 @@ joint_logprob(init_param)  # sanity check
 
 Now we use blackjax's window adaption algorithm to get NUTS kernel and initial states. Window adaption algorithm will automatically configure `inverse_mass_matrix` and `step size`
 
-```{code-cell} ipython3
+```{code-cell} python
 %%time
 warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob)
 
@@ -309,7 +309,7 @@ initial_states, tuned_params = jax.jit(call_warmup)(keys, init_params)
 
 Now we write inference loop for multiple chains
 
-```{code-cell} ipython3
+```{code-cell} python
 def inference_loop_multiple_chains(
     rng_key, initial_states, tuned_params, log_prob_fn, num_samples, num_chains
 ):
@@ -329,7 +329,7 @@ def inference_loop_multiple_chains(
     return (states, infos)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 %%time
 n_samples = 1000
 states, infos = inference_loop_multiple_chains(
@@ -341,7 +341,7 @@ states, infos = inference_loop_multiple_chains(
 
 We have all our posterior samples stored in `states.position` dictionary and `infos` store additional information like acceptance probability, divergence, etc. Now, we can use certain diagnostics to judge if our MCMC samples are converged on stationary distribution. Some of widely diagnostics are trace plots, potential scale reduction factor (R hat), divergences, etc. `Arviz` library provides quicker ways to anaylze these diagnostics. We can use `arviz.summary()` and `arviz_plot_trace()`, but these functions take specific format (arviz's trace) as a input.
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 
 def arviz_trace_from_states(states, info, burn_in=0):
@@ -375,7 +375,7 @@ def arviz_trace_from_states(states, info, burn_in=0):
     return trace
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [output-scroll]
 
 # make arviz trace from states
@@ -386,7 +386,7 @@ summ_df
 
 **r_hat** is showing measure of each chain is converged to stationary distribution. **r_hat** should be less than or equal to 1.01, here we get r_hat far from 1.01 for each latent sample.
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 az.plot_trace(trace)
@@ -400,20 +400,20 @@ Well, it's related to support of latent variable. In HMC, the latent variable mu
 ## Change of Variable
 We can sample from logits which is in unconstrained space and in `joint_logprob()` we can convert logits to theta by suitable bijector (sigmoid). We calculate jacobian (first order derivaive) of bijector to tranform one probability distribution to another
 
-```{code-cell} ipython3
+```{code-cell} python
 transform_fn = jax.nn.sigmoid
 log_jacobian_fn = lambda logit: jnp.log(jnp.abs(jnp.diag(jax.jacfwd(transform_fn)(logit))))
 ```
 
 Alternatively, using the bijector class in `TFP` directly:
 
-```{code-cell} ipython3
+```{code-cell} python
 bij = tfb.Sigmoid()
 transform_fn = bij.forward
 log_jacobian_fn = bij.forward_log_det_jacobian
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 params = namedtuple("model_params", ["a", "b", "logits"])
 
 def joint_logprob_change_of_var(params):
@@ -437,7 +437,7 @@ def joint_logprob_change_of_var(params):
 
 except for the change of variable in `joint_logprob()` function, everthing will remain same
 
-```{code-cell} ipython3
+```{code-cell} python
 rng_key = jax.random.PRNGKey(0)
 
 
@@ -457,7 +457,7 @@ init_param = init_param_fn(rng_key)
 joint_logprob_change_of_var(init_param)  # sanity check
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 %%time
 warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob_change_of_var)
 
@@ -474,7 +474,7 @@ def call_warmup(seed, param):
 initial_states, tuned_params = call_warmup(keys, init_params)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 %%time
 n_samples = 1000
 states, infos = inference_loop_multiple_chains(
@@ -482,7 +482,7 @@ states, infos = inference_loop_multiple_chains(
 )
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 # convert logits samples to theta samples
 position = states.position._asdict()
 position["thetas"] = jax.nn.sigmoid(position["logits"])
@@ -490,21 +490,21 @@ del position["logits"]  # delete logits
 states = states._replace(position=position)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 # make arviz trace from states
 trace = arviz_trace_from_states(states, infos, burn_in=0)
 summ_df = az.summary(trace)
 summ_df
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 az.plot_trace(trace)
 plt.tight_layout()
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 print(f"Number of divergence: {infos.is_divergent.sum()}")
 ```
 
@@ -516,7 +516,7 @@ We can see that **r_hat** is less than or equal to 1.01 for each latent variable
 
 Probabilistic programming language usually provides functionality to apply change of variable easily (often done automatically). In this case for TFP, we can use its modeling API `tfd.JointDistribution*`.
 
-```{code-cell} ipython3
+```{code-cell} python
 tfed = tfp.experimental.distributions
 
 @tfd.JointDistributionCoroutineAutoBatched
@@ -533,7 +533,7 @@ def model():
 # model.sample(seed=rng_key)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 # Condition on the observed (and auxiliary variable).
 pinned = model.experimental_pin(logprob_ab=(), y=n_of_positives)
 # Get the default change of variable bijectors from the model
@@ -544,14 +544,14 @@ prior_sample = pinned.sample_unpinned(seed=rng_key)
 # bijectors.inverse(prior_sample)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 def joint_logprob(unbound_param):
     param = bijectors.forward(unbound_param)
     log_det_jacobian = bijectors.forward_log_det_jacobian(unbound_param)
     return pinned.unnormalized_log_prob(param) + log_det_jacobian
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 %%time
 rng_key = jax.random.PRNGKey(0)
 warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob)
@@ -571,7 +571,7 @@ def call_warmup(seed, param):
 initial_states, tuned_params = call_warmup(keys, init_params)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 %%time
 n_samples = 1000
 states, infos = inference_loop_multiple_chains(
@@ -579,13 +579,13 @@ states, infos = inference_loop_multiple_chains(
 )
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 # convert logits samples to theta samples
 position = states.position
 states = states._replace(position=bijectors.forward(position))
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [output-scroll]
 
 # make arviz trace from states
@@ -594,7 +594,7 @@ summ_df = az.summary(trace)
 summ_df
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 az.plot_trace(trace)
