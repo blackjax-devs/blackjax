@@ -91,7 +91,7 @@ A crucial point of this algorithm is the fact that $\mathbf{A}$ can be precomput
 
 Now that we have a high-level understanding of the algorithm, let's see how to use it in `blackjax`.
 
-```{code-cell} ipython3
+```{code-cell} python
 import jax
 import jax.numpy as jnp
 import jax.random as jrnd
@@ -104,13 +104,13 @@ from blackjax import mgrad_gaussian
 
 We generate data through a squared exponential kernel as in the example [Gaussian Regression with the Elliptical Slice Sampler](https://blackjax-devs.github.io/blackjax/examples/GP_EllipticalSliceSampler.html).
 
-```{code-cell} ipython3
+```{code-cell} python
 def squared_exponential(x, y, length, scale):
     dot_diff = jnp.dot(x, x) + jnp.dot(y, y) - 2 * jnp.dot(x, y)
     return scale**2 * jnp.exp(-0.5 * dot_diff / length**2)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 n, d = 2000, 2
 length, scale = 1.0, 1.0
 y_sd = 1.0
@@ -134,7 +134,7 @@ posterior_mean = jnp.dot(posterior_cov, y) * 1 / y_sd**2
 
 Let's visualize the distribution of the vector `y`.
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 plt.figure(figsize=(8, 5))
@@ -148,7 +148,7 @@ plt.show()
 
 Now we proceed to run the sampler. First, we set the sampler parameters:
 
-```{code-cell} ipython3
+```{code-cell} python
 # sampling parameters
 n_warm = 2000
 n_iter = 500
@@ -156,7 +156,7 @@ n_iter = 500
 
 Next, we define the the log-probability function. For this we need to set the log-likelihood function.
 
-```{code-cell} ipython3
+```{code-cell} python
 loglikelihood_fn = lambda f: -0.5 * jnp.dot(y - f, y - f) / y_sd**2
 logprob_fn = lambda f: loglikelihood_fn(f) - 0.5 * jnp.dot(f @ invSigma, f)
 ```
@@ -175,13 +175,13 @@ step:
     transition.
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 init, step = mgrad_gaussian(logprob_fn=logprob_fn, mean=jnp.zeros(n), covariance=Sigma)
 ```
 
 We continue by setting the inference loop.
 
-```{code-cell} ipython3
+```{code-cell} python
 def inference_loop(rng, init_state, kernel, n_iter):
     keys = jrnd.split(rng, n_iter)
 
@@ -199,7 +199,7 @@ We are now ready to run the sampler! The only extra parameters in the `step` fun
 Note that one can calibrate the `delta` parameter as described in the example [Bayesian Logistic Regression With Latent Gaussian Sampler](https://blackjax-devs.github.io/blackjax/examples/LogisticRegressionWithLatentGaussianSampler.html).
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 %%time
 
 kernel = lambda key, x: step(rng_key=key, state=x, delta=0.5)
@@ -213,7 +213,7 @@ samples = states.position[n_warm:]
 
 Finally we evaluate the results.
 
-```{code-cell} ipython3
+```{code-cell} python
 error_mean = jnp.mean((samples.mean(axis=0) - posterior_mean) ** 2)
 error_cov = jnp.mean((jnp.cov(samples, rowvar=False) - posterior_cov) ** 2)
 print(
@@ -221,14 +221,14 @@ print(
 )
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 keys = jrnd.split(rng, 500)
 predictive = jax.vmap(lambda k, f: f + jrnd.normal(k, (n,)) * y_sd)(
     keys, samples[-1000:]
 )
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 plt.figure(figsize=(8, 5))

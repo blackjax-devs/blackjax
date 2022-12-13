@@ -19,7 +19,7 @@ mystnb:
 
 This example is inspired form [this notebook](https://github.com/jeremiecoullon/SGMCMCJax/blob/master/docs/nbs/BNN.ipynb) in the SGMCMCJax repository. We try to use a 3-layer neural network to recognise the digits in the MNIST dataset.
 
-```{code-cell} ipython3
+```{code-cell} python
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
@@ -33,7 +33,7 @@ from functools import partial
 
 We download the MNIST data using `tensorflow-datasets`:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [remove-stdout, remove-stderr]
 
 import tensorflow_datasets as tfds
@@ -50,7 +50,7 @@ Now we need to apply several transformations to the dataset before splitting it 
 - The images are arrays of RGB codes between 0 and 255. We normalize them by the maximum value to get a range between 0 and 1;
 - We hot-encode category numbers.
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [remove-stdout, remove-stderr]
 
 def one_hot_encode(x, k, dtype=np.float32):
@@ -96,7 +96,7 @@ We will use a very simple (bayesian) neural network in this example: A MLP with 
 \end{align*}
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 class NN(nn.Module):
     @nn.compact
     def __call__(self, x):
@@ -140,7 +140,7 @@ Now we need to get initial values for the parameters, and we simply sample from 
 
 We now sample from the model's posteriors using SGLD. We discard the first 1000 samples until the sampler has reached the typical set, and then take 2000 samples. We record the model's accuracy with the current values every 100 steps.
 
-```{code-cell} ipython3
+```{code-cell} python
 from fastprogress.fastprogress import progress_bar
 
 import blackjax
@@ -183,7 +183,7 @@ for step in progress_bar(range(num_samples + num_warmup)):
 
 Let us plot the accuracy at different points in the sampling process:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 import matplotlib.pylab as plt
@@ -204,7 +204,7 @@ plt.plot();
 
 We can also use SGHMC to samples from this model
 
-```{code-cell} ipython3
+```{code-cell} python
 # Build the SGHMC kernel with a constant learning rate
 step_size = 9e-6
 grad_fn = gradients.estimator(logprior_fn, loglikelihood_fn, data_size)
@@ -229,7 +229,7 @@ for step in progress_bar(range(num_samples + num_warmup)):
         samples.append(state)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 fig = plt.figure(figsize=(12, 8))
 ax = fig.add_subplot(111)
 ld_plot, = ax.plot(steps, accuracies)
@@ -244,7 +244,7 @@ ax.legend((ld_plot, hmc_plot), ('SGLD', 'SGHMC'), loc='lower right', shadow=True
 plt.plot();
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 print(f"The average accuracy for SGLD in the sampling phase is {100 * np.mean(accuracies[10:]):.2f}%")
@@ -255,13 +255,13 @@ Which is not a bad accuracy at all for such a simple model! Remember though that
 
 Here we will say that the model is unsure of its prediction for a given image if the digit that is most often predicted for this image is predicted less tham 95% of the time.
 
-```{code-cell} ipython3
+```{code-cell} python
 predicted_class = jnp.exp(
     jnp.stack([jax.vmap(model.apply, in_axes=(None, 0))(s, X_test) for s in samples])
 )
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 num_test_samples = len(y_test)
 max_predicted = [np.argmax(predicted_class[:, i, :], axis=1) for i in range(num_test_samples)]
 freq_max_predicted = np.array(
@@ -275,7 +275,7 @@ certain_mask = freq_max_predicted > 0.95
 
 Let's plot a few examples where the model was very uncertain:
 
-```{code-cell} ipython3
+```{code-cell} python
 most_uncertain_idx = np.argsort(freq_max_predicted)
 
 for i in range(10):
@@ -287,7 +287,7 @@ for i in range(10):
 
 And now compute the average accuracy over all the samples without these uncertain predictions:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 avg_accuracy = np.mean(

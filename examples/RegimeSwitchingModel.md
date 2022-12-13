@@ -43,7 +43,7 @@ where $\eta_{jt} = p_{j,1}$, $\mathcal{N}(r_t;\alpha_1, \sigma_1^2) + p_{j,2}$, 
 
 where $\mathcal{N}^0$ indicates the truncated at 0 Gaussian distribution and $\mathcal{C}^+$ the half-Cauchy distribution.
 
-```{code-cell} ipython3
+```{code-cell} python
 import jax
 import jax.numpy as jnp
 import jax.random as jrnd
@@ -157,24 +157,24 @@ def inference_loop(rng, init_state, kernel, n_iter):
     return states, info
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 url = "https://raw.githubusercontent.com/blackjax-devs/blackjax/main/examples/data/google.csv"
 data = pd.read_csv(url)
 y = data.dl_ac.values * 100
 T, _ = data.shape
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 dist = RegimeSwitchHMM(T, y)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 [n_chain, n_warm, n_iter] = [128, 5000, 200]
 ksam, kinit = jrnd.split(jrnd.PRNGKey(0), 2)
 dist.initialize_model(kinit, n_chain)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 tic1 = pd.Timestamp.now()
 k_warm, k_sample = jrnd.split(ksam)
 warmup = blackjax.meads(dist.logprob_fn, n_chain)
@@ -190,15 +190,15 @@ tic2 = pd.Timestamp.now()
 print("Runtime for MEADS", tic2 - tic1)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 print_summary(samples)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 samples = jax.tree_map(lambda s: s.reshape((-1,) + s.shape[2:]), samples)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 sam = []

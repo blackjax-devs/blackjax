@@ -21,7 +21,7 @@ You will need [PyMC](https://github.com/pymc-devs/pymc) to run this example. Ple
 
 We will reproduce the Eight School example from the [ TFP documentation](https://www.tensorflow.org/probability/examples/Eight_Schools). Follow the link for a description of the problem and the model that is used.
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 import numpy as np
 
@@ -33,7 +33,7 @@ sigma = np.array([15.0, 10.0, 16.0, 11.0, 9.0, 11.0, 10.0, 18.0])
 
 We implement the non-centered version of the hierarchical model:
 
-```{code-cell} ipython3
+```{code-cell} python
 import pymc as pm
 
 
@@ -50,7 +50,7 @@ with pm.Model() as model:
 
 We need to translate the model into a log-probability function that will be used by Blackjax to perform inference. For that we use the `get_jaxified_logp` function in PyMC's internals.
 
-```{code-cell} ipython3
+```{code-cell} python
 from pymc.sampling_jax import get_jaxified_logp
 
 rvs = [rv.name for rv in model.value_vars]
@@ -59,7 +59,7 @@ logprob_fn = get_jaxified_logp(model)
 
 We can now run the window adaptation for the NUTS sampler:
 
-```{code-cell} ipython3
+```{code-cell} python
 import blackjax
 import jax
 
@@ -74,7 +74,7 @@ last_state, kernel, _ = adapt.run(rng_key, init_position, 1000)
 
 Let us now perform inference with the tuned kernel:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 
 def inference_loop(rng_key, kernel, initial_state, num_samples):
@@ -88,6 +88,6 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     return states, infos
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 states, infos = inference_loop(rng_key, kernel, last_state, 50_000)
 ```

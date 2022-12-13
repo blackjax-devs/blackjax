@@ -21,7 +21,7 @@ You will need [tensorflow-probability](https://www.tensorflow.org/probability) t
 
 We reproduce the Eight Schools example from the [TFP documentation](https://www.tensorflow.org/probability/examples/Eight_Schools).
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 import jax
@@ -30,7 +30,7 @@ import blackjax
 
 Please refer to the [original TFP example](https://www.tensorflow.org/probability/examples/Eight_Schools) for a description of the problem and the model that is used.
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 import numpy as np
 
@@ -46,7 +46,7 @@ treatment_stddevs = np.array(
 
 We implement the non-centered version of the hierarchical model:
 
-```{code-cell} ipython3
+```{code-cell} python
 from tensorflow_probability.substrates import jax as tfp
 tfd = tfp.distributions
 
@@ -85,7 +85,7 @@ model = tfd.JointDistributionSequential(
 
 We need to translate the model into a log-probability density function that will be used by Blackjax to perform inference.
 
-```{code-cell} ipython3
+```{code-cell} python
 def target_logprob_fn(avg_effect, avg_stddev, school_effects_standard):
     """Unnormalized target density as a function of states."""
     return model.log_prob(
@@ -98,12 +98,12 @@ logprob_fn = lambda x: target_logprob_fn(**x)
 
 We can now initialize the
 
-```{code-cell} ipython3
+```{code-cell} python
 ```
 
 Let us first run the window adaptation to find a good value for the step size and for the inverse mass matrix. As in the original example we will run the HMC integrator 3 times at each step.
 
-```{code-cell} ipython3
+```{code-cell} python
 import blackjax
 import jax
 
@@ -125,7 +125,7 @@ last_state, kernel, _ = adapt.run(rng_key, initial_position, 1000)
 
 We can now perform inference with the tuned kernel:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 
 def inference_loop(rng_key, kernel, initial_state, num_samples):
@@ -139,14 +139,14 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     return states, infos
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 states, infos = inference_loop(rng_key, kernel, last_state, 500_000)
 states.position["avg_effect"].block_until_ready()
 ```
 
 Extra information about the inference is contained in the `infos` namedtuple. Let us compute the average acceptance rate:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 acceptance_rate = np.mean(infos.acceptance_rate)
@@ -155,7 +155,7 @@ print(f"Average acceptance rate: {acceptance_rate:.2f}")
 
 The samples are contained as a dictionnary in `states.position`. Let us compute the posterior of the school treatment effect:
 
-```{code-cell} ipython3
+```{code-cell} python
 samples = states.position
 school_effects_samples = (
     samples["avg_effect"][:, np.newaxis]
@@ -165,7 +165,7 @@ school_effects_samples = (
 
 And now let us plot the correponding chains and distributions:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input,remove-stderr]
 
 import seaborn as sns

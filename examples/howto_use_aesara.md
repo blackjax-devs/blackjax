@@ -29,7 +29,7 @@ Y &\sim \operatorname{Binomial}(N, \theta)\\
 \end{align*}
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 
 # index of array is type of tumor and value shows number of total people tested.
@@ -43,7 +43,7 @@ n_rat_tumors = len(group_size)
 
 We implement the generative model in two parts, the improper prior on `a` and `b` and then the response model:
 
-```{code-cell} ipython3
+```{code-cell} python
 import aesara
 import aesara.tensor as at
 
@@ -62,7 +62,7 @@ Y_rv = srng.binomial(group_size, theta_rv)
 
 We can then easily compile a function that samples from the prior predictive distribution, i.e. returns values of `Y_rv` based on the variables' prior distribution. Let us make this function depend on the values of `a_vv` and `b_vv`:
 
-```{code-cell} ipython3
+```{code-cell} python
 prior_predictive_fn = aesara.function((a_vv, b_vv), Y_rv)
 print(prior_predictive_fn(.5, .5))
 print(prior_predictive_fn(.1, .3))
@@ -70,14 +70,14 @@ print(prior_predictive_fn(.1, .3))
 
 To sample from the posterior distribution of `theta_rv`, `a_rv` and `b_rv` we need to be able to compute the model's joint log-density. In AePPL, we use `joint_logprob` to build the graph of the joint log-density from the model graph:
 
-```{code-cell} ipython3
+```{code-cell} python
 loglikelihood, (y_vv, theta_vv) = joint_logprob(Y_rv, theta_rv)
 logprob = logprior + loglikelihood
 ```
 
 However, the Beta distribution generates samples between 0 and 1 and gradient-based algorithms like NUTS work better on unbounded intervals. We can tell AePPL to apply a log-odds transformation to the Beta-distributed variable, and subsequently sample in the transformed space:
 
-```{code-cell} ipython3
+```{code-cell} python
 from aeppl.transforms import TransformValuesRewrite, LogOddsTransform
 
 transforms_op = TransformValuesRewrite(
@@ -93,7 +93,7 @@ NUTS is not the best sampler for this model: the Beta distribution is the conjug
 
 You can alway debug the `logprob` graph by printing it:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [output_scroll]
 
 aesara.dprint(logprob)
@@ -101,7 +101,7 @@ aesara.dprint(logprob)
 
 To sample with Blackjax we will need to use Aesara's JAX backend; `logprob_jax` defined below is a function that uses JAX operators, can be passed as an argument to `jax.jit` and `jax.grad`:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [remove-stderr]
 
 logprob_fn = aesara.function((a_vv, b_vv, theta_vv, y_vv), logprob, mode="JAX")
@@ -114,7 +114,7 @@ Let's wrap this function to make our life simpler:
 2. We would like to work with dictionaries for the values of the variables;
 3. `Y_vv` is observed, so let's fix its value.
 
-```{code-cell} ipython3
+```{code-cell} python
 def logprob_fn(position):
     flat_position = tuple(position.values())
     return logprob_jax(*flat_position, n_of_positives)[0]
@@ -122,7 +122,7 @@ def logprob_fn(position):
 
 Let's define the initial position from which we are going to start sampling:
 
-```{code-cell} ipython3
+```{code-cell} python
 import jax
 
 def init_param_fn(seed):
@@ -142,7 +142,7 @@ init_position = init_param_fn(rng_key)
 
 And finally sample using Blackjax:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-cell]
 
 def inference_loop(
@@ -159,7 +159,7 @@ def inference_loop(
     return (states, infos)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 import blackjax
 
 n_adapt = 3000

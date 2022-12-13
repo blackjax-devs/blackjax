@@ -29,7 +29,7 @@ $$
 \pi_0(\beta, \lambda, \tau) = \text{Gamma}(\tau;1/2, 1/2)\prod_i \mathcal{N}(\beta_i;0, 1)\text{Gamma}(\lambda_i;1/2, 1/2)
 $$
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [remove-stderr]
 
 import jax
@@ -126,7 +126,7 @@ tic2 = pd.Timestamp.now()
 print("Runtime for MEADS", tic2 - tic1)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 
 print_summary(samples)

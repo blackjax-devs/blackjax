@@ -37,7 +37,7 @@ $$
 
 And define the function $f$ as $f(x) = -min_y g(x, y)$ which we can be implemented as:
 
-```{code-cell} ipython3
+```{code-cell} python
 import jax
 import jax.numpy as jnp
 from jax.scipy.optimize import minimize
@@ -64,7 +64,7 @@ Note the we also return the value of $y$ where the minimum of $g$ is achieved (t
 
 The gradient of the function $f$ is undefined for JAX, which cannot differentiate through `while` loops, and trying to compute it directly raises an error:
 
-```{code-cell} ipython3
+```{code-cell} python
 # We only want the gradient with respect to `x`
 try:
     jax.grad(f, has_aux=True)(0.5, 3)
@@ -105,7 +105,7 @@ i.e. the value of the derivative at $x$ is the value $y(x)$ at which the minimum
 
 We can thus now tell JAX to compute the derivative of the function using the argmin using `jax.custom_vjp`
 
-```{code-cell} ipython3
+```{code-cell} python
 from functools import partial
 
 
@@ -128,7 +128,7 @@ def f_jac_vec_prod(p, primals, tangents):
 
 Which now outputs a value:
 
-```{code-cell} ipython3
+```{code-cell} python
 jax.grad(f_with_gradient)(0.31415, 3)
 ```
 
@@ -145,7 +145,7 @@ $$
 
 Which is obviously differentiable. We implement it:
 
-```{code-cell} ipython3
+```{code-cell} python
 def true_f(x, p):
     q = 1 / (1 - 1 / p)
     out = jnp.abs(x) ** q
@@ -156,7 +156,7 @@ print(jax.grad(true_f)(0.31415, 3))
 
 And compare the gradient of this function with the custom gradient defined above:
 
-```{code-cell} ipython3
+```{code-cell} python
 :tags: [hide-input]
 print(f"Gradient of closed-form f: {jax.grad(true_f)(0.31415, 3)}")
 print(f"Custom gradient based on argmin: {jax.grad(f_with_gradient)(0.31415, 3)}")
@@ -171,7 +171,7 @@ They give close enough values! In other words, it suffices to know that the valu
 
 Let us now demonstrate that we can use `f_with_gradients` with Blackjax. We define a toy log-density function and use a gradient-based sampler:
 
-```{code-cell} ipython3
+```{code-cell} python
 import blackjax
 
 
@@ -188,6 +188,6 @@ rng_key = jax.random.PRNGKey(0)
 new_state, info = hmc.step(rng_key, state)
 ```
 
-```{code-cell} ipython3
+```{code-cell} python
 new_state
 ```
