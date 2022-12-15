@@ -591,7 +591,7 @@ plot_contour(logprob)
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 <img alt="../_images/3ca82a836b0cb647546c753f035985557621f80308c36c187574ddcd35abf897.png" src="../_images/3ca82a836b0cb647546c753f035985557621f80308c36c187574ddcd35abf897.png" />
@@ -638,8 +638,8 @@ vv_kernel = jax.jit(vv_kernel)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 245 ms, sys: 154 µs, total: 245 ms
-Wall time: 245 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 247 ms, sys: 4.42 ms, total: 252 ms
+Wall time: 251 ms
 </pre></div>
 </div>
 </div>
@@ -656,8 +656,8 @@ weights = states.weights
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.03 s, sys: 3.77 ms, total: 1.03 s
-Wall time: 1.03 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 927 ms, sys: 16.3 ms, total: 943 ms
+Wall time: 940 ms
 </pre></div>
 </div>
 </div>
@@ -688,8 +688,8 @@ ml_kernel = jax.jit(ml_kernel)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17 ms, sys: 89 µs, total: 17.1 ms
-Wall time: 17 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 15.6 ms, sys: 0 ns, total: 15.6 ms
+Wall time: 15.3 ms
 </pre></div>
 </div>
 </div>
@@ -706,8 +706,8 @@ weights = states.weights
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 994 ms, sys: 7.71 ms, total: 1 s
-Wall time: 997 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 868 ms, sys: 7.87 ms, total: 876 ms
+Wall time: 872 ms
 </pre></div>
 </div>
 </div>
@@ -744,8 +744,8 @@ yo_kernel = jax.jit(yo_kernel)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.3 ms, sys: 0 ns, total: 17.3 ms
-Wall time: 17 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 15.4 ms, sys: 0 ns, total: 15.4 ms
+Wall time: 15.2 ms
 </pre></div>
 </div>
 </div>
@@ -762,8 +762,8 @@ weights = states.weights
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 948 ms, sys: 0 ns, total: 948 ms
-Wall time: 944 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 846 ms, sys: 24 µs, total: 846 ms
+Wall time: 842 ms
 </pre></div>
 </div>
 </div>
@@ -844,8 +844,8 @@ ellip_kernel = jax.jit(ellip_kernel)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.4 ms, sys: 0 ns, total: 17.4 ms
-Wall time: 17.1 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 15.6 ms, sys: 0 ns, total: 15.6 ms
+Wall time: 15.3 ms
 </pre></div>
 </div>
 </div>
@@ -862,8 +862,8 @@ weights = states.weights
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 752 ms, sys: 4.28 ms, total: 756 ms
-Wall time: 754 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 691 ms, sys: 3.79 ms, total: 694 ms
+Wall time: 691 ms
 </pre></div>
 </div>
 </div>
@@ -913,7 +913,7 @@ from numpyro.nn import AutoregressiveNN
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tqdm/auto.py:22: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div>
 </div>
@@ -1018,8 +1018,8 @@ parameters, nelbo = param_optim(
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.56 s, sys: 4.01 ms, total: 1.56 s
-Wall time: 1.56 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.46 s, sys: 4.59 ms, total: 1.47 s
+Wall time: 1.46 s
 </pre></div>
 </div>
 </div>
@@ -1040,7 +1040,7 @@ plt.show()
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/47f8eddf54a3ce273e02c517912d17ad61e58ea708b3dff11fb6f4e6844f1d69.png" src="../_images/47f8eddf54a3ce273e02c517912d17ad61e58ea708b3dff11fb6f4e6844f1d69.png" />
+<img alt="../_images/c75418a6e2ed34dd23dea88ce6577681b381cb710bfa92b62567d1665eba7347.png" src="../_images/c75418a6e2ed34dd23dea88ce6577681b381cb710bfa92b62567d1665eba7347.png" />
 </div>
 </div>
 <p>We define our log pullback given the learned parameters of the transformation and use the periodic orbital MCMC with an ellipsis to sample from this log pullback density.</p>
@@ -1064,8 +1064,8 @@ ellip_kernel = jax.jit(ellip_kernel)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 578 ms, sys: 4.07 ms, total: 582 ms
-Wall time: 582 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 634 ms, sys: 0 ns, total: 634 ms
+Wall time: 633 ms
 </pre></div>
 </div>
 </div>
@@ -1082,8 +1082,8 @@ weights = states.weights
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 914 ms, sys: 0 ns, total: 914 ms
-Wall time: 912 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 844 ms, sys: 3.79 ms, total: 848 ms
+Wall time: 847 ms
 </pre></div>
 </div>
 </div>
@@ -1124,7 +1124,7 @@ samples = {&quot;x1&quot;: samplesx1, &quot;x2&quot;: samplesx2}
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/55330dafc4092dc467e93bbc666e7a8b027f84b94ebaf38cf801ff3f967fe1bb.png" src="../_images/55330dafc4092dc467e93bbc666e7a8b027f84b94ebaf38cf801ff3f967fe1bb.png" />
+<img alt="../_images/7bec019bc02b19b392723456cad5385b9a69123c0d014f0e9310450a023b136a.png" src="../_images/7bec019bc02b19b392723456cad5385b9a69123c0d014f0e9310450a023b136a.png" />
 </div>
 </div>
 </section>

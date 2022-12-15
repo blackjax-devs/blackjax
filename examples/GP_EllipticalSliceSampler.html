@@ -493,7 +493,7 @@ posterior_mean = jnp.dot(posterior_cov, y) * 1 / y_sd**2
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -546,8 +546,8 @@ samples = states.position[n_warm:]
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.65 s, sys: 263 ms, total: 8.91 s
-Wall time: 8.4 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.46 s, sys: 185 ms, total: 7.64 s
+Wall time: 7.25 s
 </pre></div>
 </div>
 </div>
@@ -566,8 +566,8 @@ states, _ = inference_loop(key_sample, state, kernel, n_iter)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 59s, sys: 219 ms, total: 1min 59s
-Wall time: 1min 59s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 42s, sys: 130 ms, total: 1min 42s
+Wall time: 1min 42s
 </pre></div>
 </div>
 </div>

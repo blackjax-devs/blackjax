@@ -522,7 +522,7 @@ except Exception as e:
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Reverse-mode differentiation does not work for lax.while_loop or lax.fori_loop. Try using lax.scan instead.
@@ -585,7 +585,7 @@ def f_jac_vec_prod(p, primals, tangents):
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray(0.560483, dtype=float32, weak_type=True)
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Array(0.560483, dtype=float32, weak_type=True)
 </pre></div>
 </div>
 </div>
@@ -673,7 +673,7 @@ new_state, info = hmc.step(rng_key, state)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=DeviceArray(1.0013554, dtype=float32, weak_type=True), potential_energy=DeviceArray(2.5623603, dtype=float32), potential_energy_grad=DeviceArray(1.6698307, dtype=float32, weak_type=True))
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(1.0013554, dtype=float32, weak_type=True), potential_energy=Array(2.5623603, dtype=float32), potential_energy_grad=Array(1.6698307, dtype=float32, weak_type=True))
 </pre></div>
 </div>
 </div>

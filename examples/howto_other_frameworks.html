@@ -505,9 +505,9 @@ logprob_fn(1.)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/llvmlite/llvmpy/__init__.py:3: UserWarning: The module `llvmlite.llvmpy` is deprecated and will be removed in the future.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/llvmlite/llvmpy/__init__.py:3: UserWarning: The module `llvmlite.llvmpy` is deprecated and will be removed in the future.
   warnings.warn(
-/opt/hostedtoolcache/Python/3.9.15/x64/lib/python3.9/site-packages/llvmlite/llvmpy/core.py:8: UserWarning: The module `llvmlite.llvmpy.core` is deprecated and will be removed in the future. Equivalent functionality is provided by `llvmlite.ir`.
+/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/llvmlite/llvmpy/core.py:8: UserWarning: The module `llvmlite.llvmpy.core` is deprecated and will be removed in the future. Equivalent functionality is provided by `llvmlite.ir`.
   warnings.warn(
 </pre></div>
 </div>
@@ -588,8 +588,7 @@ numba_logpdf.defvjp(vjp_fwd, vjp_bwd)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(DeviceArray(-3.1503935, dtype=float32),
- DeviceArray(-0.44711512, dtype=float32))
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(Array(-3.1503935, dtype=float32), Array(-0.44711512, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -616,7 +615,7 @@ print(state)
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=DeviceArray(-0.24151024, dtype=float32, weak_type=True), potential_energy=DeviceArray(2.9157653, dtype=float32), potential_energy_grad=DeviceArray(-0.14576946, dtype=float32))
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(-0.24151024, dtype=float32, weak_type=True), potential_energy=Array(2.9157653, dtype=float32), potential_energy_grad=Array(-0.14576946, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -631,8 +630,8 @@ for _ in range(100_000):
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.27 s, sys: 35 µs, total: 3.27 s
-Wall time: 3.27 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.99 s, sys: 3.98 ms, total: 3 s
+Wall time: 3 s
 </pre></div>
 </div>
 </div>
@@ -647,8 +646,8 @@ for _ in range(1_000):
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.2 s, sys: 124 ms, total: 13.3 s
-Wall time: 13.3 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.7 s, sys: 136 ms, total: 14.8 s
+Wall time: 14.8 s
 </pre></div>
 </div>
 </div>
