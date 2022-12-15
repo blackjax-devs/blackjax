@@ -4,6 +4,7 @@ aesara>=2.8.8
 arviz
 distrax
 flax
+ipython
 jax
 jaxlib
 jaxopt
