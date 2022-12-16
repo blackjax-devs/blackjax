@@ -442,18 +442,18 @@ title="Source repository"
 <p>The following example builds a logprob function with <a class="reference external" href="https://github.com/aesara-devs/aesara">Aesara</a>, compiles it with <a class="reference external" href="https://numba.pydata.org/">Numba</a> and uses Blackjax to sample from the posterior distribution of the model.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import aesara.tensor as at
-import numpy as np
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">aesara.tensor</span> <span class="k">as</span> <span class="nn">at</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-srng = at.random.RandomStream(0)
+<span class="n">srng</span> <span class="o">=</span> <span class="n">at</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomStream</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-loc = np.array([-2, 0, 3.2, 2.5])
-scale = np.array([1.2, 1, 5, 2.8])
-weights = np.array([0.2, 0.3, 0.1, 0.4])
+<span class="n">loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">3.2</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">])</span>
+<span class="n">scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">2.8</span><span class="p">])</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">])</span>
 
-N_rv = srng.normal(loc, scale, name=&quot;N&quot;)
-I_rv = srng.categorical(weights, name=&quot;I&quot;)
-Y_rv = N_rv[I_rv]
+<span class="n">N_rv</span> <span class="o">=</span> <span class="n">srng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;N&quot;</span><span class="p">)</span>
+<span class="n">I_rv</span> <span class="o">=</span> <span class="n">srng</span><span class="o">.</span><span class="n">categorical</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;I&quot;</span><span class="p">)</span>
+<span class="n">Y_rv</span> <span class="o">=</span> <span class="n">N_rv</span><span class="p">[</span><span class="n">I_rv</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -461,11 +461,11 @@ Y_rv = N_rv[I_rv]
 <p>We can sample from the prior predictive distribution to make sure the model is correctly implemented:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import aesara
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">aesara</span>
 
-sampling_fn = aesara.function((), Y_rv)
-print(sampling_fn())
-print(sampling_fn())
+<span class="n">sampling_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((),</span> <span class="n">Y_rv</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">sampling_fn</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">sampling_fn</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -479,19 +479,19 @@ print(sampling_fn())
 <p>We do not care about the posterior distribution of the indicator variable <code class="docutils literal notranslate"><span class="pre">I_rv</span></code> so we marginalize it out, and subsequently build the logprob’s graph:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from aeppl import joint_logprob
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">aeppl</span> <span class="kn">import</span> <span class="n">joint_logprob</span>
 
-y_vv = Y_rv.clone()
-i_vv = I_rv.clone()
+<span class="n">y_vv</span> <span class="o">=</span> <span class="n">Y_rv</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+<span class="n">i_vv</span> <span class="o">=</span> <span class="n">I_rv</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
 
-logprob = []
-for i in range(4):
-    i_vv = at.as_tensor(i, dtype=&quot;int64&quot;)
-    component_logprob, _ = joint_logprob(realized={Y_rv: y_vv, I_rv: i_vv})
-    logprob.append(component_logprob)
-logprob = at.stack(logprob, axis=0)
+<span class="n">logprob</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+    <span class="n">i_vv</span> <span class="o">=</span> <span class="n">at</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">component_logprob</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">joint_logprob</span><span class="p">(</span><span class="n">realized</span><span class="o">=</span><span class="p">{</span><span class="n">Y_rv</span><span class="p">:</span> <span class="n">y_vv</span><span class="p">,</span> <span class="n">I_rv</span><span class="p">:</span> <span class="n">i_vv</span><span class="p">})</span>
+    <span class="n">logprob</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">component_logprob</span><span class="p">)</span>
+<span class="n">logprob</span> <span class="o">=</span> <span class="n">at</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-total_logprob = at.logsumexp(at.log(weights) + logprob)
+<span class="n">total_logprob</span> <span class="o">=</span> <span class="n">at</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">at</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="o">+</span> <span class="n">logprob</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -499,8 +499,8 @@ total_logprob = at.logsumexp(at.log(weights) + logprob)
 <p>We are now ready to compile the logprob to Numba:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>logprob_fn = aesara.function((y_vv,), total_logprob, mode=&quot;NUMBA&quot;)
-logprob_fn(1.)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logprob_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((</span><span class="n">y_vv</span><span class="p">,),</span> <span class="n">total_logprob</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;NUMBA&quot;</span><span class="p">)</span>
+<span class="n">logprob_fn</span><span class="p">(</span><span class="mf">1.</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -519,15 +519,15 @@ logprob_fn(1.)
 <p>As is we cannot use these functions within jit-compiled functions written with JAX, or apply <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> to get the function’s gradients:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>try:
-    jax.jit(logprob_fn)(1.)
-except Exception:
-    print(&quot;JAX raised an exception while jit-compiling!&quot;)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">)(</span><span class="mf">1.</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;JAX raised an exception while jit-compiling!&quot;</span><span class="p">)</span>
 
-try:
-    jax.grad(logprob_fn)(1.)
-except Exception:
-    print(&quot;JAX raised an exception while differentiating!&quot;)
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">)(</span><span class="mf">1.</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;JAX raised an exception while differentiating!&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -541,9 +541,9 @@ JAX raised an exception while differentiating!
 <p>Indeed, a function written with Numba is incompatible with JAX’s primitives. Luckily Aesara can build the model’s gradient graph and compile it to Numba as well:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>total_logprob_grad = at.grad(total_logprob, y_vv)
-logprob_grad_fn = aesara.function((y_vv,), total_logprob_grad, mode=&quot;NUMBA&quot;)
-logprob_grad_fn(1.)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">total_logprob_grad</span> <span class="o">=</span> <span class="n">at</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">total_logprob</span><span class="p">,</span> <span class="n">y_vv</span><span class="p">)</span>
+<span class="n">logprob_grad_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((</span><span class="n">y_vv</span><span class="p">,),</span> <span class="n">total_logprob_grad</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;NUMBA&quot;</span><span class="p">)</span>
+<span class="n">logprob_grad_fn</span><span class="p">(</span><span class="mf">1.</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -559,23 +559,23 @@ logprob_grad_fn(1.)
 <p>In order to be able to call <code class="docutils literal notranslate"><span class="pre">logprob_fn</span></code> within JAX, we need to define a function that will call it via JAX’s <code class="docutils literal notranslate"><span class="pre">host_callback</span></code>. Yet, this wrapper function is not differentiable with JAX, and so we will also need to define this functions’ <code class="docutils literal notranslate"><span class="pre">custom_vjp</span></code>, and use <code class="docutils literal notranslate"><span class="pre">host_callback</span></code> to call the gradient-computing function as well:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import jax
-import jax.experimental.host_callback as hcb
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.experimental.host_callback</span> <span class="k">as</span> <span class="nn">hcb</span>
 
-@jax.custom_vjp
-def numba_logpdf(arg):
-    return hcb.call(lambda x: logprob_fn(x).item(), arg, result_shape=arg)
+<span class="nd">@jax</span><span class="o">.</span><span class="n">custom_vjp</span>
+<span class="k">def</span> <span class="nf">numba_logpdf</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">hcb</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">logprob_fn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">arg</span><span class="p">,</span> <span class="n">result_shape</span><span class="o">=</span><span class="n">arg</span><span class="p">)</span>
 
-def call_grad(arg):
-    return hcb.call(lambda x: logprob_grad_fn(x).item(), arg, result_shape=arg)
+<span class="k">def</span> <span class="nf">call_grad</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">hcb</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">logprob_grad_fn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">arg</span><span class="p">,</span> <span class="n">result_shape</span><span class="o">=</span><span class="n">arg</span><span class="p">)</span>
 
-def vjp_fwd(arg):
-    return numba_logpdf(arg), call_grad(arg)
+<span class="k">def</span> <span class="nf">vjp_fwd</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">numba_logpdf</span><span class="p">(</span><span class="n">arg</span><span class="p">),</span> <span class="n">call_grad</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
 
-def vjp_bwd(grad_x, y_bar):
-    return (grad_x * y_bar,)
+<span class="k">def</span> <span class="nf">vjp_bwd</span><span class="p">(</span><span class="n">grad_x</span><span class="p">,</span> <span class="n">y_bar</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">grad_x</span> <span class="o">*</span> <span class="n">y_bar</span><span class="p">,)</span>
 
-numba_logpdf.defvjp(vjp_fwd, vjp_bwd)
+<span class="n">numba_logpdf</span><span class="o">.</span><span class="n">defvjp</span><span class="p">(</span><span class="n">vjp_fwd</span><span class="p">,</span> <span class="n">vjp_bwd</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -583,7 +583,7 @@ numba_logpdf.defvjp(vjp_fwd, vjp_bwd)
 <p>And we can now call the function from a jitted function and apply <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> without JAX complaining:</p>
 <div class="cell tag_remove-stderr docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>jax.jit(numba_logpdf)(1.), jax.grad(numba_logpdf)(1.)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">numba_logpdf</span><span class="p">)(</span><span class="mf">1.</span><span class="p">),</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">numba_logpdf</span><span class="p">)(</span><span class="mf">1.</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -596,21 +596,21 @@ numba_logpdf.defvjp(vjp_fwd, vjp_bwd)
 <p>And use Blackjax’s NUTS sampler to sample from the model’s posterior distribution:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import blackjax
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax</span>
 
-inverse_mass_matrix = np.ones(1)
-step_size=1e-3
-nuts = blackjax.nuts(numba_logpdf, step_size, inverse_mass_matrix)
-init = nuts.init(0.)
+<span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">step_size</span><span class="o">=</span><span class="mf">1e-3</span>
+<span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">numba_logpdf</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">)</span>
+<span class="n">init</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="mf">0.</span><span class="p">)</span>
 
-rng_key = jax.random.PRNGKey(0)
-state, info = nuts.step(rng_key, init)
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">init</span><span class="p">)</span>
 
-for _ in range(10):
-    _, rng_key = jax.random.split(rng_key)
-    state, _ = nuts.step(rng_key, state)
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+    <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 
-print(state)
+<span class="nb">print</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -623,15 +623,15 @@ print(state)
 <p>If you run this on your machine you will notice that this runs quite slowly compared to a pure-JAX equivalent, that’s because <code class="docutils literal notranslate"><span class="pre">host_callback</span></code> implied a lot of back-and-forth with Python. To see this let’s compare execution times between <em>pure Numba on the one hand</em>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
-for _ in range(100_000):
-    logprob_fn(100)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100_000</span><span class="p">):</span>
+    <span class="n">logprob_fn</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.99 s, sys: 3.98 ms, total: 3 s
-Wall time: 3 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.97 s, sys: 0 ns, total: 2.97 s
+Wall time: 2.97 s
 </pre></div>
 </div>
 </div>
@@ -639,15 +639,15 @@ Wall time: 3 s
 <p>And <em>JAX on the other hand, with 100 times less iterations</em>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
-for _ in range(1_000):
-    numba_logpdf(100.)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1_000</span><span class="p">):</span>
+    <span class="n">numba_logpdf</span><span class="p">(</span><span class="mf">100.</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.7 s, sys: 136 ms, total: 14.8 s
-Wall time: 14.8 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 12.2 s, sys: 108 ms, total: 12.3 s
+Wall time: 12.3 s
 </pre></div>
 </div>
 </div>

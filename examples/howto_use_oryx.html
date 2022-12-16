@@ -369,12 +369,12 @@ title="Source repository"
 <p>We reproduce the <a class="reference external" href="https://www.tensorflow.org/probability/oryx/notebooks/probabilistic_programming#case_study_bayesian_neural_network">example in Oryx’s documentation</a> and train a Bayesian Neural Network (BNN) on the iris dataset:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from sklearn import datasets
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
 
-iris = datasets.load_iris()
-features, labels = iris[&#39;data&#39;], iris[&#39;target&#39;]
-num_features = features.shape[-1]
-num_classes = len(iris.target_names)
+<span class="n">iris</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_iris</span><span class="p">()</span>
+<span class="n">features</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">iris</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">iris</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]</span>
+<span class="n">num_features</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">num_classes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">iris</span><span class="o">.</span><span class="n">target_names</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -386,9 +386,9 @@ num_classes = len(iris.target_names)
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(f&quot;Number of features: {num_features}&quot;)
-print(f&quot;Number of classes: {num_classes}&quot;)
-print(f&quot;Number of data points: {features.shape[0]}&quot;)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of features: </span><span class="si">{</span><span class="n">num_features</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of classes: </span><span class="si">{</span><span class="n">num_classes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of data points: </span><span class="si">{</span><span class="n">features</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -404,31 +404,31 @@ Number of data points: 150
 <p>Oryx’s approach, like Aesara’s, is to implement probabilistic models as generative models and then apply transformations to get the log-probability density function. We begin with implementing a dense layer with normal prior probability on the weights and use the function <code class="docutils literal notranslate"><span class="pre">random_variable</span></code> to define random variables:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import jax
-from oryx.core.ppl import random_variable
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">random_variable</span>
 
 
-from tensorflow_probability.substrates import jax as tfp
-tfd = tfp.distributions
+<span class="kn">from</span> <span class="nn">tensorflow_probability.substrates</span> <span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">tfp</span>
+<span class="n">tfd</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">distributions</span>
 
 
-def dense(dim_out, activation=jax.nn.relu):
+<span class="k">def</span> <span class="nf">dense</span><span class="p">(</span><span class="n">dim_out</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">):</span>
 
-    def forward(key, x):
-        dim_in = x.shape[-1]
-        w_key, b_key = jax.random.split(key)
-        w = random_variable(
-            tfd.Sample(tfd.Normal(0., 1.), sample_shape=(dim_out, dim_in)),
-            name=&#39;w&#39;
-        )(w_key)
-        b = random_variable(
-            tfd.Sample(tfd.Normal(0., 1.), sample_shape=(dim_out,)),
-            name=&#39;b&#39;
-        )(b_key)
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">dim_in</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">w_key</span><span class="p">,</span> <span class="n">b_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">random_variable</span><span class="p">(</span>
+            <span class="n">tfd</span><span class="o">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">),</span> <span class="n">sample_shape</span><span class="o">=</span><span class="p">(</span><span class="n">dim_out</span><span class="p">,</span> <span class="n">dim_in</span><span class="p">)),</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;w&#39;</span>
+        <span class="p">)(</span><span class="n">w_key</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">random_variable</span><span class="p">(</span>
+            <span class="n">tfd</span><span class="o">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">),</span> <span class="n">sample_shape</span><span class="o">=</span><span class="p">(</span><span class="n">dim_out</span><span class="p">,)),</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;b&#39;</span>
+        <span class="p">)(</span><span class="n">b_key</span><span class="p">)</span>
 
-        return activation(jnp.dot(w, x) + b)
+        <span class="k">return</span> <span class="n">activation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span>
 
-    return forward
+    <span class="k">return</span> <span class="n">forward</span>
 </pre></div>
 </div>
 </div>
@@ -513,21 +513,21 @@ def dense(dim_out, activation=jax.nn.relu):
 <p>We now use this layer to build a multi-layer perceptron. The <code class="docutils literal notranslate"><span class="pre">nest</span></code> function is used to create “scope tags” that allows in this context to re-use our <code class="docutils literal notranslate"><span class="pre">dense</span></code> layer multiple times without name collision in the dictionary that will contain the parameters:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from oryx.core.ppl import nest
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">nest</span>
 
 
-def mlp(hidden_sizes, num_classes):
-    num_hidden = len(hidden_sizes)
+<span class="k">def</span> <span class="nf">mlp</span><span class="p">(</span><span class="n">hidden_sizes</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">):</span>
+    <span class="n">num_hidden</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hidden_sizes</span><span class="p">)</span>
 
-    def forward(key, x):
-        keys = jax.random.split(key, num_hidden + 1)
-        for i, (subkey, hidden_size) in enumerate(zip(keys[:-1], hidden_sizes)):
-            x = nest(dense(hidden_size), scope=f&#39;layer_{i + 1}&#39;)(subkey, x)
-        logits = nest(dense(num_classes, activation=lambda x: x),
-                        scope=f&#39;layer_{num_hidden + 1}&#39;)(keys[-1], x)
-        return logits
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">num_hidden</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">subkey</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">hidden_sizes</span><span class="p">)):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">nest</span><span class="p">(</span><span class="n">dense</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">),</span> <span class="n">scope</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;layer_</span><span class="si">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)(</span><span class="n">subkey</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="n">nest</span><span class="p">(</span><span class="n">dense</span><span class="p">(</span><span class="n">num_classes</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">),</span>
+                        <span class="n">scope</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;layer_</span><span class="si">{</span><span class="n">num_hidden</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)(</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">logits</span>
 
-    return forward
+    <span class="k">return</span> <span class="n">forward</span>
 </pre></div>
 </div>
 </div>
@@ -535,16 +535,16 @@ def mlp(hidden_sizes, num_classes):
 <p>Finally, we model the labels as categorical random variables:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import functools
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">functools</span>
 
-def predict(mlp):
-    def forward(key, xs):
-        mlp_key, label_key = jax.random.split(key)
-        logits = jax.vmap(functools.partial(mlp, mlp_key))(xs)
-        return random_variable(
-            tfd.Independent(tfd.Categorical(logits=logits), 1), name=&#39;y&#39;)(label_key)
+<span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">mlp</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">xs</span><span class="p">):</span>
+        <span class="n">mlp_key</span><span class="p">,</span> <span class="n">label_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">mlp</span><span class="p">,</span> <span class="n">mlp_key</span><span class="p">))(</span><span class="n">xs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">random_variable</span><span class="p">(</span>
+            <span class="n">tfd</span><span class="o">.</span><span class="n">Independent</span><span class="p">(</span><span class="n">tfd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)(</span><span class="n">label_key</span><span class="p">)</span>
 
-    return forward
+    <span class="k">return</span> <span class="n">forward</span>
 </pre></div>
 </div>
 </div>
@@ -552,14 +552,14 @@ def predict(mlp):
 <p>We can now build the BNN and sample an initial position for the inference algorithm using <code class="docutils literal notranslate"><span class="pre">joint_sample</span></code>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import jax.numpy as jnp
-from oryx.core.ppl import joint_sample
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">joint_sample</span>
 
 
-bnn = mlp([200, 200], num_classes)
-initial_weights = joint_sample(bnn)(jax.random.PRNGKey(0), jnp.ones(num_features))
+<span class="n">bnn</span> <span class="o">=</span> <span class="n">mlp</span><span class="p">([</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">],</span> <span class="n">num_classes</span><span class="p">)</span>
+<span class="n">initial_weights</span> <span class="o">=</span> <span class="n">joint_sample</span><span class="p">(</span><span class="n">bnn</span><span class="p">)(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_features</span><span class="p">))</span>
 
-print(initial_weights.keys())
+<span class="nb">print</span><span class="p">(</span><span class="n">initial_weights</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -571,8 +571,8 @@ print(initial_weights.keys())
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>num_parameters = sum([layer.size for layer in jax.tree_util.tree_flatten(initial_weights)[0]])
-print(f&quot;Number of parameters in the model: {num_parameters}&quot;)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_parameters</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">initial_weights</span><span class="p">)[</span><span class="mi">0</span><span class="p">]])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of parameters in the model: </span><span class="si">{</span><span class="n">num_parameters</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -581,10 +581,10 @@ print(f&quot;Number of parameters in the model: {num_parameters}&quot;)
 <p>To sample from this model we will need to obtain its joint distribution log-probability using <code class="docutils literal notranslate"><span class="pre">joint_log_prob</span></code>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from oryx.core.ppl import joint_log_prob
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">joint_log_prob</span>
 
-def logprob_fn(weights):
-  return joint_log_prob(predict(bnn))(dict(weights, y=labels), features)
+<span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">weights</span><span class="p">):</span>
+  <span class="k">return</span> <span class="n">joint_log_prob</span><span class="p">(</span><span class="n">predict</span><span class="p">(</span><span class="n">bnn</span><span class="p">))(</span><span class="nb">dict</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">labels</span><span class="p">),</span> <span class="n">features</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -592,12 +592,12 @@ def logprob_fn(weights):
 <p>We can now run the window adaptation to get good values for the parameters of the NUTS algorithm:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
-import blackjax
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="kn">import</span> <span class="nn">blackjax</span>
 
-rng_key = jax.random.PRNGKey(0)
-adapt = blackjax.window_adaptation(blackjax.nuts, logprob_fn)
-last_state, kernel, _ = adapt.run(rng_key, initial_weights, 100)
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
+<span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_weights</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -610,15 +610,15 @@ last_state, kernel, _ = adapt.run(rng_key, initial_weights, 100)
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def inference_loop(rng_key, kernel, initial_state, num_samples):
-    def one_step(state, rng_key):
-        state, info = kernel(rng_key, state)
-        return state, (state, info)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
 
-    keys = jax.random.split(rng_key, num_samples)
-    _, (states, infos) = jax.lax.scan(one_step, initial_state, keys)
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
 
-    return states, infos
+    <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="n">infos</span>
 </pre></div>
 </div>
 </div>
@@ -626,9 +626,9 @@ last_state, kernel, _ = adapt.run(rng_key, initial_weights, 100)
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%%time
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 
-states, infos = inference_loop(rng_key, kernel, last_state, 100)
+<span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -636,17 +636,17 @@ states, infos = inference_loop(rng_key, kernel, last_state, 100)
 <p>We can now use our samples to take an estimate of the accuracy that is averaged over the posterior distribution. We use <code class="docutils literal notranslate"><span class="pre">intervene</span></code> to “inject” the posterior values of the weights instead of sampling from the prior distribution:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from oryx.core.ppl import intervene
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">intervene</span>
 
-posterior_weights = states.position
+<span class="n">posterior_weights</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span>
 
-output_logits = jax.vmap(
-    lambda weights: jax.vmap(lambda x: intervene(bnn, **weights)(
-        jax.random.PRNGKey(0), x)
-    )(features)
-)(posterior_weights)
+<span class="n">output_logits</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
+    <span class="k">lambda</span> <span class="n">weights</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">intervene</span><span class="p">(</span><span class="n">bnn</span><span class="p">,</span> <span class="o">**</span><span class="n">weights</span><span class="p">)(</span>
+        <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span>
+    <span class="p">)(</span><span class="n">features</span><span class="p">)</span>
+<span class="p">)(</span><span class="n">posterior_weights</span><span class="p">)</span>
 
-output_probs = jax.nn.softmax(output_logits)
+<span class="n">output_probs</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">output_logits</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -658,11 +658,11 @@ output_probs = jax.nn.softmax(output_logits)
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(&#39;Average sample accuracy:&#39;, (
-    output_probs.argmax(axis=-1) == labels[None]).mean())
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Average sample accuracy:&#39;</span><span class="p">,</span> <span class="p">(</span>
+    <span class="n">output_probs</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">labels</span><span class="p">[</span><span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
 
-print(&#39;BMA accuracy:&#39;, (
-    output_probs.mean(axis=0).argmax(axis=-1) == labels[None]).mean())
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;BMA accuracy:&#39;</span><span class="p">,</span> <span class="p">(</span>
+    <span class="n">output_probs</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">labels</span><span class="p">[</span><span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>

@@ -385,13 +385,13 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># index of array is type of tumor and value shows number of total people tested.
-group_size = [20, 20, 20, 20, 20, 20, 20, 19, 19, 19, 19, 18, 18, 17, 20, 20, 20, 20, 19, 19, 18, 18, 25, 24, 23, 20, 20, 20, 20, 20, 20, 10, 49, 19, 46, 27, 17, 49, 47, 20, 20, 13, 48, 50, 20, 20, 20, 20, 20, 20, 20, 48, 19, 19, 19, 22, 46, 49, 20, 20, 23, 19, 22, 20, 20, 20, 52, 46, 47, 24, 14]
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># index of array is type of tumor and value shows number of total people tested.</span>
+<span class="n">group_size</span> <span class="o">=</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">49</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">46</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">49</span><span class="p">,</span> <span class="mi">47</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">46</span><span class="p">,</span> <span class="mi">49</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">52</span><span class="p">,</span> <span class="mi">46</span><span class="p">,</span> <span class="mi">47</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">14</span><span class="p">]</span>
 
-# index of array is type of tumor and value shows number of positve people.
-n_of_positives = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 5, 2, 5, 3, 2, 7, 7, 3, 3, 2, 9, 10, 4, 4, 4, 4, 4, 4, 4, 10, 4, 4, 4, 5, 11, 12, 5, 5, 6, 5, 6, 6, 6, 6, 16, 15, 15, 9, 4]
+<span class="c1"># index of array is type of tumor and value shows number of positve people.</span>
+<span class="n">n_of_positives</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
 
-n_rat_tumors = len(group_size)
+<span class="n">n_rat_tumors</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">group_size</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -400,20 +400,20 @@ n_rat_tumors = len(group_size)
 <p>We implement the generative model in two parts, the improper prior on <code class="docutils literal notranslate"><span class="pre">a</span></code> and <code class="docutils literal notranslate"><span class="pre">b</span></code> and then the response model:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import aesara
-import aesara.tensor as at
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">aesara</span>
+<span class="kn">import</span> <span class="nn">aesara.tensor</span> <span class="k">as</span> <span class="nn">at</span>
 
-from aeppl import joint_logprob
+<span class="kn">from</span> <span class="nn">aeppl</span> <span class="kn">import</span> <span class="n">joint_logprob</span>
 
-# improper prior on `a` and `b`.
-a_vv = at.scalar(&#39;a&#39;)
-b_vv = at.scalar(&#39;b&#39;)
-logprior = -2.5 * at.log(a_vv + b_vv)
+<span class="c1"># improper prior on `a` and `b`.</span>
+<span class="n">a_vv</span> <span class="o">=</span> <span class="n">at</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+<span class="n">b_vv</span> <span class="o">=</span> <span class="n">at</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+<span class="n">logprior</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.5</span> <span class="o">*</span> <span class="n">at</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">a_vv</span> <span class="o">+</span> <span class="n">b_vv</span><span class="p">)</span>
 
-# response model
-srng = at.random.RandomStream(0)
-theta_rv = srng.beta(a_vv, b_vv, size=(n_rat_tumors,))
-Y_rv = srng.binomial(group_size, theta_rv)
+<span class="c1"># response model</span>
+<span class="n">srng</span> <span class="o">=</span> <span class="n">at</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomStream</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">theta_rv</span> <span class="o">=</span> <span class="n">srng</span><span class="o">.</span><span class="n">beta</span><span class="p">(</span><span class="n">a_vv</span><span class="p">,</span> <span class="n">b_vv</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_rat_tumors</span><span class="p">,))</span>
+<span class="n">Y_rv</span> <span class="o">=</span> <span class="n">srng</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="n">group_size</span><span class="p">,</span> <span class="n">theta_rv</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -421,9 +421,9 @@ Y_rv = srng.binomial(group_size, theta_rv)
 <p>We can then easily compile a function that samples from the prior predictive distribution, i.e. returns values of <code class="docutils literal notranslate"><span class="pre">Y_rv</span></code> based on the variables’ prior distribution. Let us make this function depend on the values of <code class="docutils literal notranslate"><span class="pre">a_vv</span></code> and <code class="docutils literal notranslate"><span class="pre">b_vv</span></code>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>prior_predictive_fn = aesara.function((a_vv, b_vv), Y_rv)
-print(prior_predictive_fn(.5, .5))
-print(prior_predictive_fn(.1, .3))
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">prior_predictive_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((</span><span class="n">a_vv</span><span class="p">,</span> <span class="n">b_vv</span><span class="p">),</span> <span class="n">Y_rv</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">prior_predictive_fn</span><span class="p">(</span><span class="mf">.5</span><span class="p">,</span> <span class="mf">.5</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">prior_predictive_fn</span><span class="p">(</span><span class="mf">.1</span><span class="p">,</span> <span class="mf">.3</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -441,8 +441,8 @@ print(prior_predictive_fn(.1, .3))
 <p>To sample from the posterior distribution of <code class="docutils literal notranslate"><span class="pre">theta_rv</span></code>, <code class="docutils literal notranslate"><span class="pre">a_rv</span></code> and <code class="docutils literal notranslate"><span class="pre">b_rv</span></code> we need to be able to compute the model’s joint log-density. In AePPL, we use <code class="docutils literal notranslate"><span class="pre">joint_logprob</span></code> to build the graph of the joint log-density from the model graph:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>loglikelihood, (y_vv, theta_vv) = joint_logprob(Y_rv, theta_rv)
-logprob = logprior + loglikelihood
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">loglikelihood</span><span class="p">,</span> <span class="p">(</span><span class="n">y_vv</span><span class="p">,</span> <span class="n">theta_vv</span><span class="p">)</span> <span class="o">=</span> <span class="n">joint_logprob</span><span class="p">(</span><span class="n">Y_rv</span><span class="p">,</span> <span class="n">theta_rv</span><span class="p">)</span>
+<span class="n">logprob</span> <span class="o">=</span> <span class="n">logprior</span> <span class="o">+</span> <span class="n">loglikelihood</span>
 </pre></div>
 </div>
 </div>
@@ -450,13 +450,13 @@ logprob = logprior + loglikelihood
 <p>However, the Beta distribution generates samples between 0 and 1 and gradient-based algorithms like NUTS work better on unbounded intervals. We can tell AePPL to apply a log-odds transformation to the Beta-distributed variable, and subsequently sample in the transformed space:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from aeppl.transforms import TransformValuesRewrite, LogOddsTransform
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">aeppl.transforms</span> <span class="kn">import</span> <span class="n">TransformValuesRewrite</span><span class="p">,</span> <span class="n">LogOddsTransform</span>
 
-transforms_op = TransformValuesRewrite(
-     {theta_rv: LogOddsTransform()}
-)
-loglikelihood, (y_vv, theta_vv) = joint_logprob(Y_rv, theta_rv, extra_rewrites=transforms_op)
-logprob = logprior + loglikelihood
+<span class="n">transforms_op</span> <span class="o">=</span> <span class="n">TransformValuesRewrite</span><span class="p">(</span>
+     <span class="p">{</span><span class="n">theta_rv</span><span class="p">:</span> <span class="n">LogOddsTransform</span><span class="p">()}</span>
+<span class="p">)</span>
+<span class="n">loglikelihood</span><span class="p">,</span> <span class="p">(</span><span class="n">y_vv</span><span class="p">,</span> <span class="n">theta_vv</span><span class="p">)</span> <span class="o">=</span> <span class="n">joint_logprob</span><span class="p">(</span><span class="n">Y_rv</span><span class="p">,</span> <span class="n">theta_rv</span><span class="p">,</span> <span class="n">extra_rewrites</span><span class="o">=</span><span class="n">transforms_op</span><span class="p">)</span>
+<span class="n">logprob</span> <span class="o">=</span> <span class="n">logprior</span> <span class="o">+</span> <span class="n">loglikelihood</span>
 </pre></div>
 </div>
 </div>
@@ -468,7 +468,7 @@ logprob = logprior + loglikelihood
 <p>You can alway debug the <code class="docutils literal notranslate"><span class="pre">logprob</span></code> graph by printing it:</p>
 <div class="cell tag_output_scroll docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>aesara.dprint(logprob)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">aesara</span><span class="o">.</span><span class="n">dprint</span><span class="p">(</span><span class="n">logprob</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -644,7 +644,7 @@ logprob = logprior + loglikelihood
                |TensorConstant{1.0} [id FG]
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;ipykernel.iostream.OutStream at 0x7ff778958820&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;ipykernel.iostream.OutStream at 0x7fc2d55187f0&gt;
 </pre></div>
 </div>
 </div>
@@ -652,8 +652,8 @@ logprob = logprior + loglikelihood
 <p>To sample with Blackjax we will need to use Aesara’s JAX backend; <code class="docutils literal notranslate"><span class="pre">logprob_jax</span></code> defined below is a function that uses JAX operators, can be passed as an argument to <code class="docutils literal notranslate"><span class="pre">jax.jit</span></code> and <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code>:</p>
 <div class="cell tag_remove-stderr docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>logprob_fn = aesara.function((a_vv, b_vv, theta_vv, y_vv), logprob, mode=&quot;JAX&quot;)
-logprob_jax = logprob_fn.vm.jit_fn
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logprob_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((</span><span class="n">a_vv</span><span class="p">,</span> <span class="n">b_vv</span><span class="p">,</span> <span class="n">theta_vv</span><span class="p">,</span> <span class="n">y_vv</span><span class="p">),</span> <span class="n">logprob</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;JAX&quot;</span><span class="p">)</span>
+<span class="n">logprob_jax</span> <span class="o">=</span> <span class="n">logprob_fn</span><span class="o">.</span><span class="n">vm</span><span class="o">.</span><span class="n">jit_fn</span>
 </pre></div>
 </div>
 </div>
@@ -668,9 +668,9 @@ logprob_jax = logprob_fn.vm.jit_fn
 </ol>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def logprob_fn(position):
-    flat_position = tuple(position.values())
-    return logprob_jax(*flat_position, n_of_positives)[0]
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">position</span><span class="p">):</span>
+    <span class="n">flat_position</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">logprob_jax</span><span class="p">(</span><span class="o">*</span><span class="n">flat_position</span><span class="p">,</span> <span class="n">n_of_positives</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -678,21 +678,21 @@ logprob_jax = logprob_fn.vm.jit_fn
 <p>Let’s define the initial position from which we are going to start sampling:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import jax
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 
-def init_param_fn(seed):
-    &quot;&quot;&quot;
-    initialize a, b &amp; thetas
-    &quot;&quot;&quot;
-    key1, key2 = jax.random.split(seed)
-    return {
-        &quot;a&quot;: jax.random.uniform(key1, (), &quot;float64&quot;, minval=0, maxval=3),
-        &quot;b&quot;: jax.random.uniform(key2, (), &quot;float64&quot;, minval=0, maxval=3),
-        &quot;thetas&quot;: jax.random.uniform(seed, (n_rat_tumors,), &quot;float64&quot;, minval=0, maxval=1),
-    }
+<span class="k">def</span> <span class="nf">init_param_fn</span><span class="p">(</span><span class="n">seed</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    initialize a, b &amp; thetas</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="p">(),</span> <span class="s2">&quot;float64&quot;</span><span class="p">,</span> <span class="n">minval</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">maxval</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+        <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="p">(),</span> <span class="s2">&quot;float64&quot;</span><span class="p">,</span> <span class="n">minval</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">maxval</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+        <span class="s2">&quot;thetas&quot;</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="p">(</span><span class="n">n_rat_tumors</span><span class="p">,),</span> <span class="s2">&quot;float64&quot;</span><span class="p">,</span> <span class="n">minval</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">maxval</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+    <span class="p">}</span>
 
-rng_key = jax.random.PRNGKey(0)
-init_position = init_param_fn(rng_key)
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">init_position</span> <span class="o">=</span> <span class="n">init_param_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -705,18 +705,18 @@ init_position = init_param_fn(rng_key)
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def inference_loop(
-    rng_key, kernel, initial_states, num_samples
-):
-    @jax.jit
-    def one_step(states, rng_key):
-        states, infos = kernel(rng_key, states)
-        return states, (states, infos)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">num_samples</span>
+<span class="p">):</span>
+    <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
+    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+        <span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span><span class="p">)</span>
 
-    keys = jax.random.split(rng_key, num_samples)
-    _, (states, infos) = jax.lax.scan(one_step, initial_states, keys)
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
 
-    return (states, infos)
+    <span class="k">return</span> <span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -724,17 +724,17 @@ init_position = init_param_fn(rng_key)
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import blackjax
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax</span>
 
-n_adapt = 3000
-n_samples = 1000
+<span class="n">n_adapt</span> <span class="o">=</span> <span class="mi">3000</span>
+<span class="n">n_samples</span> <span class="o">=</span> <span class="mi">1000</span>
 
-adapt = blackjax.window_adaptation(blackjax.nuts, logprob_fn)
-state, kernel, _ = adapt.run(rng_key, init_position, n_adapt)
+<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
+<span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">init_position</span><span class="p">,</span> <span class="n">n_adapt</span><span class="p">)</span>
 
-states, infos = inference_loop(
-    rng_key, kernel, state, n_samples
-)
+<span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">n_samples</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>

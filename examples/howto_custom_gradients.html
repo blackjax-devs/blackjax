@@ -487,22 +487,22 @@ $$</p>
 <p>And define the function <span class="math notranslate nohighlight">\(f\)</span> as <span class="math notranslate nohighlight">\(f(x) = -min_y g(x, y)\)</span> which we can be implemented as:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import jax
-import jax.numpy as jnp
-from jax.scipy.optimize import minimize
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">from</span> <span class="nn">jax.scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
 
-def h(x, p):
-    out = jnp.abs(x) ** p
-    return out / p
+<span class="k">def</span> <span class="nf">h</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">**</span> <span class="n">p</span>
+    <span class="k">return</span> <span class="n">out</span> <span class="o">/</span> <span class="n">p</span>
 
-def f(x, p):
-    &quot;&quot;&quot;Returns the minimum value of g and where it is achieved.
-    &quot;&quot;&quot;
-    def g(y):
-        return jnp.sum(h(y, p) - x * y)
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the minimum value of g and where it is achieved.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">h</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="o">-</span> <span class="n">x</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span>
 
-    res = minimize(g, jnp.zeros((1,)), method=&quot;BFGS&quot;)
-    return -res.fun, res.x[0]
+    <span class="n">res</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,)),</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;BFGS&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">res</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -513,11 +513,11 @@ def f(x, p):
 <p>The gradient of the function <span class="math notranslate nohighlight">\(f\)</span> is undefined for JAX, which cannot differentiate through <code class="docutils literal notranslate"><span class="pre">while</span></code> loops, and trying to compute it directly raises an error:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># We only want the gradient with respect to `x`
-try:
-    jax.grad(f, has_aux=True)(0.5, 3)
-except Exception as e:
-    print(e)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># We only want the gradient with respect to `x`</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">has_aux</span><span class="o">=</span><span class="kc">True</span><span class="p">)(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -555,24 +555,24 @@ except Exception as e:
 <p>We can thus now tell JAX to compute the derivative of the function using the argmin using <code class="docutils literal notranslate"><span class="pre">jax.custom_vjp</span></code></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from functools import partial
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
 
-@partial(jax.custom_jvp, nondiff_argnums=(1,))
-def f_with_gradient(x, p):
-    # We only return the value of f
-    return f(x, p)[0]
+<span class="nd">@partial</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">custom_jvp</span><span class="p">,</span> <span class="n">nondiff_argnums</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+<span class="k">def</span> <span class="nf">f_with_gradient</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="c1"># We only return the value of f</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
-@f_with_gradient.defjvp
-def f_jac_vec_prod(p, primals, tangents):
-    x, = primals
-    x_dot, = tangents
+<span class="nd">@f_with_gradient</span><span class="o">.</span><span class="n">defjvp</span>
+<span class="k">def</span> <span class="nf">f_jac_vec_prod</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">primals</span><span class="p">,</span> <span class="n">tangents</span><span class="p">):</span>
+    <span class="n">x</span><span class="p">,</span> <span class="o">=</span> <span class="n">primals</span>
+    <span class="n">x_dot</span><span class="p">,</span> <span class="o">=</span> <span class="n">tangents</span>
 
-    # We use the fact that the gradient of f is
-    # the argmin.
-    f_out, argmin = f(x, p)
+    <span class="c1"># We use the fact that the gradient of f is</span>
+    <span class="c1"># the argmin.</span>
+    <span class="n">f_out</span><span class="p">,</span> <span class="n">argmin</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
 
-    return f_out, argmin * x_dot
+    <span class="k">return</span> <span class="n">f_out</span><span class="p">,</span> <span class="n">argmin</span> <span class="o">*</span> <span class="n">x_dot</span>
 </pre></div>
 </div>
 </div>
@@ -580,7 +580,7 @@ def f_jac_vec_prod(p, primals, tangents):
 <p>Which now outputs a value:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>jax.grad(f_with_gradient)(0.31415, 3)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">f_with_gradient</span><span class="p">)(</span><span class="mf">0.31415</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -603,12 +603,12 @@ $$</p>
 <p>Which is obviously differentiable. We implement it:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def true_f(x, p):
-    q = 1 / (1 - 1 / p)
-    out = jnp.abs(x) ** q
-    return out / q
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">true_f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">p</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">**</span> <span class="n">q</span>
+    <span class="k">return</span> <span class="n">out</span> <span class="o">/</span> <span class="n">q</span>
 
-print(jax.grad(true_f)(0.31415, 3))
+<span class="nb">print</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">true_f</span><span class="p">)(</span><span class="mf">0.31415</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -626,8 +626,8 @@ print(jax.grad(true_f)(0.31415, 3))
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(f&quot;Gradient of closed-form f: {jax.grad(true_f)(0.31415, 3)}&quot;)
-print(f&quot;Custom gradient based on argmin: {jax.grad(f_with_gradient)(0.31415, 3)}&quot;)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Gradient of closed-form f: </span><span class="si">{</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">true_f</span><span class="p">)(</span><span class="mf">0.31415</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Custom gradient based on argmin: </span><span class="si">{</span><span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">f_with_gradient</span><span class="p">)(</span><span class="mf">0.31415</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -648,27 +648,27 @@ print(f&quot;Custom gradient based on argmin: {jax.grad(f_with_gradient)(0.31415
 <p>Let us now demonstrate that we can use <code class="docutils literal notranslate"><span class="pre">f_with_gradients</span></code> with Blackjax. We define a toy log-density function and use a gradient-based sampler:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import blackjax
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax</span>
 
 
-def logprob_fn(y):
-    logprob = jax.scipy.stats.norm.logpdf(y)
-    x = f_with_gradient(y, 3)
-    logprob += jax.scipy.stats.norm.logpdf(x)
-    return logprob
+<span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+    <span class="n">logprob</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">f_with_gradient</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">logprob</span> <span class="o">+=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">logprob</span>
 
-hmc = blackjax.hmc(logprob_fn,1e-3, jnp.ones(1), 10)
-state = hmc.init(1.)
+<span class="n">hmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">,</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="mf">1.</span><span class="p">)</span>
 
-rng_key = jax.random.PRNGKey(0)
-new_state, info = hmc.step(rng_key, state)
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>new_state
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">new_state</span>
 </pre></div>
 </div>
 </div>

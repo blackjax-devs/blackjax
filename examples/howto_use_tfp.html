@@ -378,8 +378,8 @@ title="Source repository"
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import jax
-import blackjax
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">blackjax</span>
 </pre></div>
 </div>
 </div>
@@ -393,16 +393,16 @@ import blackjax
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy as np
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 
-num_schools = 8  # number of schools
-treatment_effects = np.array(
-    [28, 8, -3, 7, -1, 1, 18, 12], dtype=np.float32
-)  # treatment effects
-treatment_stddevs = np.array(
-    [15, 10, 16, 11, 9, 11, 10, 18], dtype=np.float32
-)  # treatment SE
+<span class="n">num_schools</span> <span class="o">=</span> <span class="mi">8</span>  <span class="c1"># number of schools</span>
+<span class="n">treatment_effects</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span><span class="mi">28</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span>
+<span class="p">)</span>  <span class="c1"># treatment effects</span>
+<span class="n">treatment_stddevs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span><span class="mi">15</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">18</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span>
+<span class="p">)</span>  <span class="c1"># treatment SE</span>
 </pre></div>
 </div>
 </div>
@@ -411,40 +411,40 @@ treatment_stddevs = np.array(
 <p>We implement the non-centered version of the hierarchical model:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from tensorflow_probability.substrates import jax as tfp
-tfd = tfp.distributions
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">tensorflow_probability.substrates</span> <span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">tfp</span>
+<span class="n">tfd</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">distributions</span>
 
-import jax.numpy as jnp
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
 
-model = tfd.JointDistributionSequential(
-    [
-        tfd.Normal(loc=0.0, scale=10.0, name=&quot;avg_effect&quot;),  # `mu` above
-        tfd.Normal(loc=5.0, scale=1.0, name=&quot;avg_stddev&quot;),  # `log(tau)` above
-        tfd.Independent(
-            tfd.Normal(
-                loc=jnp.zeros(num_schools),
-                scale=jnp.ones(num_schools),
-                name=&quot;school_effects_standard&quot;,
-            ),  # `theta_prime`
-            reinterpreted_batch_ndims=1,
-        ),
-        lambda school_effects_standard, avg_stddev, avg_effect: (
-            tfd.Independent(
-                tfd.Normal(
-                    loc=(
-                        avg_effect[..., jnp.newaxis]
-                        + jnp.exp(avg_stddev[..., jnp.newaxis])
-                        * school_effects_standard
-                    ),  # `theta` above
-                    scale=treatment_stddevs,
-                ),
-                name=&quot;treatment_effects&quot;,  # `y` above
-                reinterpreted_batch_ndims=1,
-            )
-        ),
-    ]
-)
+<span class="n">model</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">JointDistributionSequential</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;avg_effect&quot;</span><span class="p">),</span>  <span class="c1"># `mu` above</span>
+        <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;avg_stddev&quot;</span><span class="p">),</span>  <span class="c1"># `log(tau)` above</span>
+        <span class="n">tfd</span><span class="o">.</span><span class="n">Independent</span><span class="p">(</span>
+            <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+                <span class="n">loc</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_schools</span><span class="p">),</span>
+                <span class="n">scale</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_schools</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;school_effects_standard&quot;</span><span class="p">,</span>
+            <span class="p">),</span>  <span class="c1"># `theta_prime`</span>
+            <span class="n">reinterpreted_batch_ndims</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="k">lambda</span> <span class="n">school_effects_standard</span><span class="p">,</span> <span class="n">avg_stddev</span><span class="p">,</span> <span class="n">avg_effect</span><span class="p">:</span> <span class="p">(</span>
+            <span class="n">tfd</span><span class="o">.</span><span class="n">Independent</span><span class="p">(</span>
+                <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+                    <span class="n">loc</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">avg_effect</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+                        <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">avg_stddev</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
+                        <span class="o">*</span> <span class="n">school_effects_standard</span>
+                    <span class="p">),</span>  <span class="c1"># `theta` above</span>
+                    <span class="n">scale</span><span class="o">=</span><span class="n">treatment_stddevs</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;treatment_effects&quot;</span><span class="p">,</span>  <span class="c1"># `y` above</span>
+                <span class="n">reinterpreted_batch_ndims</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -457,14 +457,14 @@ model = tfd.JointDistributionSequential(
 <p>We need to translate the model into a log-probability density function that will be used by Blackjax to perform inference.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def target_logprob_fn(avg_effect, avg_stddev, school_effects_standard):
-    &quot;&quot;&quot;Unnormalized target density as a function of states.&quot;&quot;&quot;
-    return model.log_prob(
-        (avg_effect, avg_stddev, school_effects_standard, treatment_effects)
-    )
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">target_logprob_fn</span><span class="p">(</span><span class="n">avg_effect</span><span class="p">,</span> <span class="n">avg_stddev</span><span class="p">,</span> <span class="n">school_effects_standard</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unnormalized target density as a function of states.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">avg_effect</span><span class="p">,</span> <span class="n">avg_stddev</span><span class="p">,</span> <span class="n">school_effects_standard</span><span class="p">,</span> <span class="n">treatment_effects</span><span class="p">)</span>
+    <span class="p">)</span>
 
 
-logprob_fn = lambda x: target_logprob_fn(**x)
+<span class="n">logprob_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">target_logprob_fn</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -473,23 +473,23 @@ logprob_fn = lambda x: target_logprob_fn(**x)
 <p>Let us first run the window adaptation to find a good value for the step size and for the inverse mass matrix. As in the original example we will run the HMC integrator 3 times at each step.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import blackjax
-import jax
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax</span>
+<span class="kn">import</span> <span class="nn">jax</span>
 
 
-initial_position = {
-    &quot;avg_effect&quot;: jnp.zeros([]),
-    &quot;avg_stddev&quot;: jnp.zeros([]),
-    &quot;school_effects_standard&quot;: jnp.ones([num_schools]),
-}
+<span class="n">initial_position</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;avg_effect&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">([]),</span>
+    <span class="s2">&quot;avg_stddev&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">([]),</span>
+    <span class="s2">&quot;school_effects_standard&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="n">num_schools</span><span class="p">]),</span>
+<span class="p">}</span>
 
 
-rng_key = jax.random.PRNGKey(0)
-adapt = blackjax.window_adaptation(
-    blackjax.hmc, logprob_fn, num_integration_steps=3
-)
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span>
+    <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="o">=</span><span class="mi">3</span>
+<span class="p">)</span>
 
-last_state, kernel, _ = adapt.run(rng_key, initial_position, 1000)
+<span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -502,15 +502,15 @@ last_state, kernel, _ = adapt.run(rng_key, initial_position, 1000)
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def inference_loop(rng_key, kernel, initial_state, num_samples):
-    def one_step(state, rng_key):
-        state, info = kernel(rng_key, state)
-        return state, (state, info)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
 
-    keys = jax.random.split(rng_key, num_samples)
-    _, (states, infos) = jax.lax.scan(one_step, initial_state, keys)
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
 
-    return states, infos
+    <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="n">infos</span>
 </pre></div>
 </div>
 </div>
@@ -518,8 +518,8 @@ last_state, kernel, _ = adapt.run(rng_key, initial_position, 1000)
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>states, infos = inference_loop(rng_key, kernel, last_state, 500_000)
-states.position[&quot;avg_effect&quot;].block_until_ready()
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="mi">500_000</span><span class="p">)</span>
+<span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;avg_effect&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -538,8 +538,8 @@ states.position[&quot;avg_effect&quot;].block_until_ready()
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>acceptance_rate = np.mean(infos.acceptance_rate)
-print(f&quot;Average acceptance rate: {acceptance_rate:.2f}&quot;)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">acceptance_rate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">infos</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Average acceptance rate: </span><span class="si">{</span><span class="n">acceptance_rate</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -553,11 +553,11 @@ print(f&quot;Average acceptance rate: {acceptance_rate:.2f}&quot;)
 <p>The samples are contained as a dictionnary in <code class="docutils literal notranslate"><span class="pre">states.position</span></code>. Let us compute the posterior of the school treatment effect:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>samples = states.position
-school_effects_samples = (
-    samples[&quot;avg_effect&quot;][:, np.newaxis]
-    + np.exp(samples[&quot;avg_stddev&quot;])[:, np.newaxis] * samples[&quot;school_effects_standard&quot;]
-)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span>
+<span class="n">school_effects_samples</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">samples</span><span class="p">[</span><span class="s2">&quot;avg_effect&quot;</span><span class="p">][:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+    <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s2">&quot;avg_stddev&quot;</span><span class="p">])[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">*</span> <span class="n">samples</span><span class="p">[</span><span class="s2">&quot;school_effects_standard&quot;</span><span class="p">]</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -570,20 +570,20 @@ school_effects_samples = (
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import seaborn as sns
-from matplotlib import pyplot as plt
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
-fig, axes = plt.subplots(8, 2, sharex=&quot;col&quot;, sharey=&quot;col&quot;)
-fig.set_size_inches(12, 10)
-for i in range(num_schools):
-    axes[i][0].plot(school_effects_samples[:, i])
-    axes[i][0].title.set_text(f&quot;School {i} treatment effect chain&quot;)
-    sns.kdeplot(school_effects_samples[:, i], ax=axes[i][1], shade=True)
-    axes[i][1].title.set_text(f&quot;School {i} treatment effect distribution&quot;)
-axes[num_schools - 1][0].set_xlabel(&quot;Iteration&quot;)
-axes[num_schools - 1][1].set_xlabel(&quot;School effect&quot;)
-fig.tight_layout()
-plt.show()
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="s2">&quot;col&quot;</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="s2">&quot;col&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_schools</span><span class="p">):</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">school_effects_samples</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;School </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> treatment effect chain&quot;</span><span class="p">)</span>
+    <span class="n">sns</span><span class="o">.</span><span class="n">kdeplot</span><span class="p">(</span><span class="n">school_effects_samples</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">shade</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;School </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> treatment effect distribution&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="n">num_schools</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Iteration&quot;</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="n">num_schools</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;School effect&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>

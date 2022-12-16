@@ -440,13 +440,13 @@ title="Source repository"
 <p>In this notebook we reproduce the Logistic Regression example, but by directly leveraging the fact that the prior is Gaussian to use the latent Gaussian model. Most of the code is the same as in the previous notebook, but the sampler (and the adaptation step) will differ.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import jax
-import jax.numpy as jnp
-import jax.random as random
-import matplotlib.pyplot as plt
-from sklearn.datasets import make_biclusters
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">make_biclusters</span>
 
-import blackjax
+<span class="kn">import</span> <span class="nn">blackjax</span>
 </pre></div>
 </div>
 </div>
@@ -458,9 +458,9 @@ import blackjax
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.rcParams[&quot;axes.spines.right&quot;] = False
-plt.rcParams[&quot;axes.spines.top&quot;] = False
-plt.rcParams[&quot;figure.figsize&quot;] = (12, 8)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.spines.right&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.spines.top&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;figure.figsize&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -471,11 +471,11 @@ plt.rcParams[&quot;figure.figsize&quot;] = (12, 8)
 <p>We create two clusters of points using <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_biclusters.html?highlight=bicluster%20data#sklearn.datasets.make_biclusters">scikit-learn’s <code class="docutils literal notranslate"><span class="pre">make_bicluster</span></code> function</a>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>num_points = 50
-X, rows, cols = make_biclusters(
-    (num_points, 2), 2, noise=0.6, random_state=314, minval=-3, maxval=3
-)
-y = rows[0] * 1.0  # y[i] = whether point i belongs to cluster 1
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_points</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">make_biclusters</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">num_points</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">314</span><span class="p">,</span> <span class="n">minval</span><span class="o">=-</span><span class="mi">3</span><span class="p">,</span> <span class="n">maxval</span><span class="o">=</span><span class="mi">3</span>
+<span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.0</span>  <span class="c1"># y[i] = whether point i belongs to cluster 1</span>
 </pre></div>
 </div>
 </div>
@@ -487,11 +487,11 @@ y = rows[0] * 1.0  # y[i] = whether point i belongs to cluster 1
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>colors = [&quot;tab:red&quot; if el else &quot;tab:blue&quot; for el in rows[0]]
-plt.scatter(*X.T, edgecolors=colors, c=&quot;none&quot;)
-plt.xlabel(r&quot;$X_0$&quot;)
-plt.ylabel(r&quot;$X_1$&quot;)
-plt.show()
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;tab:red&quot;</span> <span class="k">if</span> <span class="n">el</span> <span class="k">else</span> <span class="s2">&quot;tab:blue&quot;</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$X_0$&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$X_1$&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -518,27 +518,27 @@ $$</p>
 <p>And <span class="math notranslate nohighlight">\(\Phi\)</span> is the matrix that contains the data, so each row <span class="math notranslate nohighlight">\(\Phi_{i,:}\)</span> is the vector <span class="math notranslate nohighlight">\(\left[1, X_0^i, X_1^i\right]\)</span></p>
 <div class="cell tag_hide-stderr docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>Phi = jnp.c_[jnp.ones(num_points)[:, None], X]
-N, M = Phi.shape
-alpha = 1.0
-C = jnp.eye(M) / alpha  # covariance of the prior for the weights
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Phi</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_points</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">X</span><span class="p">]</span>
+<span class="n">N</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="n">Phi</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">C</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">M</span><span class="p">)</span> <span class="o">/</span> <span class="n">alpha</span>  <span class="c1"># covariance of the prior for the weights</span>
 
 
-def sigmoid(z):
-    return jnp.exp(z) / (1 + jnp.exp(z))
+<span class="k">def</span> <span class="nf">sigmoid</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">z</span><span class="p">))</span>
 
 
-def log_sigmoid(z):
-    return z - jnp.log(1 + jnp.exp(z))
+<span class="k">def</span> <span class="nf">log_sigmoid</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">z</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">z</span><span class="p">))</span>
 
 
-def log_likelihood(w):
-    &quot;&quot;&quot;The log-probability density function of the posterior distribution of the model.&quot;&quot;&quot;
-    log_an = log_sigmoid(Phi @ w)
-    an = Phi @ w
-    log_likelihood_term = y * log_an + (1 - y) * jnp.log(1 - sigmoid(an))
+<span class="k">def</span> <span class="nf">log_likelihood</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The log-probability density function of the posterior distribution of the model.&quot;&quot;&quot;</span>
+    <span class="n">log_an</span> <span class="o">=</span> <span class="n">log_sigmoid</span><span class="p">(</span><span class="n">Phi</span> <span class="o">@</span> <span class="n">w</span><span class="p">)</span>
+    <span class="n">an</span> <span class="o">=</span> <span class="n">Phi</span> <span class="o">@</span> <span class="n">w</span>
+    <span class="n">log_likelihood_term</span> <span class="o">=</span> <span class="n">y</span> <span class="o">*</span> <span class="n">log_an</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">an</span><span class="p">))</span>
 
-    return log_likelihood_term.sum()
+    <span class="k">return</span> <span class="n">log_likelihood_term</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -554,12 +554,12 @@ def log_likelihood(w):
 <p>We use <code class="docutils literal notranslate"><span class="pre">blackjax</span></code>’s Random Walk RMH kernel to sample from the posterior distribution.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>rng_key = random.PRNGKey(314)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rng_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">314</span><span class="p">)</span>
 
-w0 = jnp.zeros((M,))
+<span class="n">w0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">M</span><span class="p">,))</span>
 
-init, step = blackjax.mgrad_gaussian(log_likelihood, C)
-initial_state = init(w0)
+<span class="n">init</span><span class="p">,</span> <span class="n">step</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mgrad_gaussian</span><span class="p">(</span><span class="n">log_likelihood</span><span class="p">,</span> <span class="n">C</span><span class="p">)</span>
+<span class="n">initial_state</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -567,58 +567,58 @@ initial_state = init(w0)
 <p>We first define a calibration loop. The goal is to find the “step-size” <code class="docutils literal notranslate"><span class="pre">delta</span></code> that approximately corresponds to an acceptance probability of 0.5.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>def calibration_loop(
-    rng_key,
-    initial_state,
-    initial_delta,
-    num_steps,
-    update_every=100,
-    target=0.5,
-    rate=0.5,
-):
-    def body(carry):
-        i, state, delta, pct_accepted, rng_key = carry
-        rng_key, rng_key2 = jax.random.split(rng_key, 2)
-        state, info = step(rng_key, state, delta)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">calibration_loop</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">,</span>
+    <span class="n">initial_state</span><span class="p">,</span>
+    <span class="n">initial_delta</span><span class="p">,</span>
+    <span class="n">num_steps</span><span class="p">,</span>
+    <span class="n">update_every</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">def</span> <span class="nf">body</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">pct_accepted</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="n">rng_key</span><span class="p">,</span> <span class="n">rng_key2</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
 
-        # restart calibration of delta
-        j = i % update_every
-        pct_accepted = (j * pct_accepted + info.is_accepted) / (j + 1)
-        diff = target - pct_accepted
-        delta = jax.lax.cond(
-            j == 0, lambda _: delta * (1 - diff * rate), lambda _: delta, None
-        )
+        <span class="c1"># restart calibration of delta</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="n">update_every</span>
+        <span class="n">pct_accepted</span> <span class="o">=</span> <span class="p">(</span><span class="n">j</span> <span class="o">*</span> <span class="n">pct_accepted</span> <span class="o">+</span> <span class="n">info</span><span class="o">.</span><span class="n">is_accepted</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">target</span> <span class="o">-</span> <span class="n">pct_accepted</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">delta</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">diff</span> <span class="o">*</span> <span class="n">rate</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">delta</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="p">)</span>
 
-        return i + 1, state, delta, pct_accepted, rng_key2
+        <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">pct_accepted</span><span class="p">,</span> <span class="n">rng_key2</span>
 
-    _, final_state, final_delta, final_pct_accepted, _ = jax.lax.while_loop(
-        lambda carry: carry[0] &lt; num_steps,
-        body,
-        (0, initial_state, initial_delta, 0.0, rng_key),
-    )
+    <span class="n">_</span><span class="p">,</span> <span class="n">final_state</span><span class="p">,</span> <span class="n">final_delta</span><span class="p">,</span> <span class="n">final_pct_accepted</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">carry</span><span class="p">:</span> <span class="n">carry</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">num_steps</span><span class="p">,</span>
+        <span class="n">body</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">initial_delta</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">),</span>
+    <span class="p">)</span>
 
-    return final_state, final_delta
+    <span class="k">return</span> <span class="n">final_state</span><span class="p">,</span> <span class="n">final_delta</span>
 
 
-def inference_loop(rng_key, initial_delta, initial_state, num_samples, num_burnin):
-    rng_key, rng_key2 = jax.random.split(rng_key, 2)
+<span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_delta</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">num_burnin</span><span class="p">):</span>
+    <span class="n">rng_key</span><span class="p">,</span> <span class="n">rng_key2</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
-    initial_state, delta = calibration_loop(
-        rng_key, initial_state, initial_delta, num_burnin
-    )
+    <span class="n">initial_state</span><span class="p">,</span> <span class="n">delta</span> <span class="o">=</span> <span class="n">calibration_loop</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">initial_delta</span><span class="p">,</span> <span class="n">num_burnin</span>
+    <span class="p">)</span>
 
-    @jax.jit
-    def one_step(carry, rng_key):
-        i, pct_accepted, state = carry
-        state, info = step(rng_key, state, delta)
-        pct_accepted = (i * pct_accepted + info.is_accepted) / (i + 1)
-        return (i + 1, pct_accepted, state), state
+    <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
+    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">pct_accepted</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+        <span class="n">pct_accepted</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">pct_accepted</span> <span class="o">+</span> <span class="n">info</span><span class="o">.</span><span class="n">is_accepted</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">pct_accepted</span><span class="p">,</span> <span class="n">state</span><span class="p">),</span> <span class="n">state</span>
 
-    keys = jax.random.split(rng_key, num_samples)
-    (_, tota_pct_accepted, _), states = jax.lax.scan(
-        one_step, (0, 0.0, initial_state), keys
-    )
-    return states, tota_pct_accepted
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">tota_pct_accepted</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">states</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+        <span class="n">one_step</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">),</span> <span class="n">keys</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">states</span><span class="p">,</span> <span class="n">tota_pct_accepted</span>
 </pre></div>
 </div>
 </div>
@@ -626,9 +626,9 @@ def inference_loop(rng_key, initial_delta, initial_state, num_samples, num_burni
 <p>We can now run the inference:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>_, rng_key = random.split(rng_key)
-states, tota_pct_accepted = inference_loop(rng_key, 0.5, initial_state, 5_000, 1_000)
-print(f&quot;Percentage of accepted samples (after calibration): {tota_pct_accepted:.2%}&quot;)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+<span class="n">states</span><span class="p">,</span> <span class="n">tota_pct_accepted</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="mi">5_000</span><span class="p">,</span> <span class="mi">1_000</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Percentage of accepted samples (after calibration): </span><span class="si">{</span><span class="n">tota_pct_accepted</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -646,11 +646,11 @@ print(f&quot;Percentage of accepted samples (after calibration): {tota_pct_accep
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, ax = plt.subplots(1, 3, figsize=(12, 2))
-for i, axi in enumerate(ax):
-    axi.plot(states.position[:, i])
-    axi.set_title(f&quot;$w_{i}$&quot;)
-plt.show()
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">axi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ax</span><span class="p">):</span>
+    <span class="n">axi</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+    <span class="n">axi</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;$w_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">$&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -661,8 +661,8 @@ plt.show()
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>chains = states.position
-nsamp, _ = chains.shape
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">chains</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span>
+<span class="n">nsamp</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">chains</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
 </div>
 </div>
@@ -672,17 +672,17 @@ nsamp, _ = chains.shape
 <p>Having infered the posterior distribution of the regression’s coefficients we can compute the probability to belong to the first cluster at each position <span class="math notranslate nohighlight">\((X_0, X_1)\)</span>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Create a meshgrid
-xmin, ymin = X.min(axis=0) - 0.1
-xmax, ymax = X.max(axis=0) + 0.1
-step = 0.1
-Xspace = jnp.mgrid[xmin:xmax:step, ymin:ymax:step]
-_, nx, ny = Xspace.shape
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a meshgrid</span>
+<span class="n">xmin</span><span class="p">,</span> <span class="n">ymin</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.1</span>
+<span class="n">xmax</span><span class="p">,</span> <span class="n">ymax</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.1</span>
+<span class="n">step</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">Xspace</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="n">xmin</span><span class="p">:</span><span class="n">xmax</span><span class="p">:</span><span class="n">step</span><span class="p">,</span> <span class="n">ymin</span><span class="p">:</span><span class="n">ymax</span><span class="p">:</span><span class="n">step</span><span class="p">]</span>
+<span class="n">_</span><span class="p">,</span> <span class="n">nx</span><span class="p">,</span> <span class="n">ny</span> <span class="o">=</span> <span class="n">Xspace</span><span class="o">.</span><span class="n">shape</span>
 
-# Compute the average probability to belong to the first cluster at each point on the meshgrid
-Phispace = jnp.concatenate([jnp.ones((1, nx, ny)), Xspace])
-Z_mcmc = sigmoid(jnp.einsum(&quot;mij,sm-&gt;sij&quot;, Phispace, chains))
-Z_mcmc = Z_mcmc.mean(axis=0)
+<span class="c1"># Compute the average probability to belong to the first cluster at each point on the meshgrid</span>
+<span class="n">Phispace</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="p">)),</span> <span class="n">Xspace</span><span class="p">])</span>
+<span class="n">Z_mcmc</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;mij,sm-&gt;sij&quot;</span><span class="p">,</span> <span class="n">Phispace</span><span class="p">,</span> <span class="n">chains</span><span class="p">))</span>
+<span class="n">Z_mcmc</span> <span class="o">=</span> <span class="n">Z_mcmc</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -694,11 +694,11 @@ Z_mcmc = Z_mcmc.mean(axis=0)
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.contourf(*Xspace, Z_mcmc)
-plt.scatter(*X.T, c=colors)
-plt.xlabel(r&quot;$X_0$&quot;)
-plt.ylabel(r&quot;$X_1$&quot;)
-plt.show()
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="o">*</span><span class="n">Xspace</span><span class="p">,</span> <span class="n">Z_mcmc</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">colors</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$X_0$&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$X_1$&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
