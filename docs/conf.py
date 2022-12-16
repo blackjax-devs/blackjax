@@ -42,6 +42,7 @@ del _curpath
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "IPython.sphinxext.ipython_console_highlighting",  # ipython3 Pygments highlighting
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
