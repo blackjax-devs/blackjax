@@ -37,14 +37,14 @@ observed = np.random.normal(loc, scale, size=1_000)
 ```
 
 ```{code-cell} python
-def logprob_fn(loc, log_scale, observed=observed):
+def logdensity_fn(loc, log_scale, observed=observed):
     """Univariate Normal"""
     scale = jnp.exp(log_scale)
     logpdf = stats.norm.logpdf(observed, loc, scale)
     return jnp.sum(logpdf)
 
 
-logprob = lambda x: logprob_fn(**x)
+logdensity = lambda x: logdensity_fn(**x)
 ```
 
 ## HMC
@@ -56,7 +56,7 @@ inv_mass_matrix = np.array([0.5, 0.01])
 num_integration_steps = 60
 step_size = 1e-3
 
-hmc = blackjax.hmc(logprob, step_size, inv_mass_matrix, num_integration_steps)
+hmc = blackjax.hmc(logdensity, step_size, inv_mass_matrix, num_integration_steps)
 ```
 
 ### Set the Initial State
@@ -125,7 +125,7 @@ NUTS is a *dynamic* algorithm: the number of integration steps is determined at 
 inv_mass_matrix = np.array([0.5, 0.01])
 step_size = 1e-3
 
-nuts = blackjax.nuts(logprob, step_size, inv_mass_matrix)
+nuts = blackjax.nuts(logdensity, step_size, inv_mass_matrix)
 ```
 
 ```{code-cell} python
@@ -165,7 +165,7 @@ The adaptation algorithm takes a function that returns a transition kernel given
 ```{code-cell} python
 %%time
 
-warmup = blackjax.window_adaptation(blackjax.nuts, logprob)
+warmup = blackjax.window_adaptation(blackjax.nuts, logdensity)
 state, kernel, _ = warmup.run(rng_key, initial_position, num_steps=1000)
 ```
 

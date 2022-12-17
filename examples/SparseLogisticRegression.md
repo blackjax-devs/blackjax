@@ -57,7 +57,7 @@ class HorseshoeLogisticReg:
             "tau": jax.random.normal(kt, (n_chain,)),
         }
 
-    def logprob(self, beta, lamda, tau):  # non-centered
+    def logdensity(self, beta, lamda, tau):  # non-centered
         # priors
         lprob = (
             jnp.sum(
@@ -74,8 +74,8 @@ class HorseshoeLogisticReg:
         lprob += jnp.sum(bernoulli.logpmf(self.y, p))
         return lprob
 
-    def logprob_fn(self, x):
-        return self.logprob(**x)
+    def logdensity_fn(self, x):
+        return self.logdensity(**x)
 
 
 def inference_loop(rng, init_state, kernel, n_iter):
@@ -109,7 +109,7 @@ dist.initialize_model(kinit, n_chain)
 
 tic1 = pd.Timestamp.now()
 k_warm, k_sample = jrnd.split(ksam)
-warmup = blackjax.meads(dist.logprob_fn, n_chain)
+warmup = blackjax.meads(dist.logdensity_fn, n_chain)
 adaptation_results = warmup.run(k_warm, dist.init_params, n_warm)
 init_state = adaptation_results.state
 kernel = adaptation_results.kernel

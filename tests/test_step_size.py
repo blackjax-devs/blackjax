@@ -13,14 +13,14 @@ from blackjax.adaptation.step_size import find_reasonable_step_size
 class StepSizeTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_reasonable_step_size(self):
-        def logprob_fn(x):
+        def logdensity_fn(x):
             return -jnp.sum(0.5 * x)
 
         rng_key = jax.random.PRNGKey(0)
         run_key0, run_key1 = jax.random.split(rng_key, 2)
 
         init_position = jnp.array([3.0])
-        reference_state = hmc.init(init_position, logprob_fn)
+        reference_state = hmc.init(init_position, logdensity_fn)
 
         inv_mass_matrix = jnp.array([1.0])
 
@@ -29,7 +29,7 @@ class StepSizeTest(chex.TestCase):
         def kernel_generator(step_size: float):
             return functools.partial(
                 kernel,
-                logprob_fn=logprob_fn,
+                logdensity_fn=logdensity_fn,
                 step_size=step_size,
                 inverse_mass_matrix=inv_mass_matrix,
                 num_integration_steps=10,

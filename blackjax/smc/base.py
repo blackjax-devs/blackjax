@@ -84,7 +84,7 @@ def kernel(
     def one_step(
         rng_key: jnp.ndarray,
         particles: PyTree,
-        logprob_fn: Callable,
+        logdensity_fn: Callable,
         log_weight_fn: Callable,
     ) -> Tuple[PyTree, SMCInfo]:
         """Take one step with the SMC kernel.
@@ -95,7 +95,7 @@ def kernel(
             JAX PRNGKey for randomness.
         particles: PyTree
             Current particles sample of the SMC algorithm.
-        logprob_fn: Callable
+        logdensity_fn: Callable
             Log probability function we wish to sample from.
         log_weight_fn: Callable
             A function that represents the Feynman-Kac log potential at time t.
@@ -112,7 +112,7 @@ def kernel(
         scan_key, resampling_key = jax.random.split(rng_key, 2)
 
         # First advance the particles using the MCMC kernel
-        mcmc_kernel = mcmc_kernel_factory(logprob_fn)
+        mcmc_kernel = mcmc_kernel_factory(logdensity_fn)
 
         def mcmc_body_fn(curr_particles, curr_key):
             keys = jax.random.split(curr_key, num_particles)
@@ -122,7 +122,7 @@ def kernel(
             return new_particles, None
 
         mcmc_state = jax.vmap(mcmc_state_generator, in_axes=(0, None))(
-            particles, logprob_fn
+            particles, logdensity_fn
         )
         keys = jax.random.split(scan_key, num_mcmc_iterations)
         proposed_states, _ = jax.lax.scan(mcmc_body_fn, mcmc_state, keys)

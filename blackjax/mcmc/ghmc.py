@@ -51,10 +51,10 @@ class GHMCState(NamedTuple):
 def init(
     rng_key: PRNGKey,
     position: PyTree,
-    logprob_fn: Callable,
+    logdensity_fn: Callable,
 ):
     def potential_fn(x):
-        return -logprob_fn(x)
+        return -logdensity_fn(x)
 
     potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
 
@@ -101,7 +101,7 @@ def kernel(
     def one_step(
         rng_key: PRNGKey,
         state: GHMCState,
-        logprob_fn: Callable,
+        logdensity_fn: Callable,
         step_size: float,
         momentum_inverse_scale: PyTree,
         alpha: float,
@@ -115,7 +115,7 @@ def kernel(
             JAX's pseudo random number generating key.
         state
             Current state of the chain.
-        logprob_fn
+        logdensity_fn
             (Unnormalized) Log density function being targeted.
         step_size
             Variable specifying the size of the integration step.
@@ -133,7 +133,7 @@ def kernel(
         """
 
         def potential_fn(x):
-            return -logprob_fn(x)
+            return -logdensity_fn(x)
 
         flat_inverse_scale = jax.flatten_util.ravel_pytree(momentum_inverse_scale)[0]
         _, kinetic_energy_fn, _ = metrics.gaussian_euclidean(flat_inverse_scale**2)

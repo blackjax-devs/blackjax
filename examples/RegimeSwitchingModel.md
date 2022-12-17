@@ -142,7 +142,7 @@ class RegimeSwitchHMM:
         }
         # self.init_params = {name: 3. + value if name in ['sigma'] else value for name, value in self.init_params.items()}
 
-    def logprob_fn(self, params):
+    def logdensity_fn(self, params):
         return -self.potential_fn(self.y)(params)
 
 
@@ -177,7 +177,7 @@ dist.initialize_model(kinit, n_chain)
 ```{code-cell} python
 tic1 = pd.Timestamp.now()
 k_warm, k_sample = jrnd.split(ksam)
-warmup = blackjax.meads(dist.logprob_fn, n_chain)
+warmup = blackjax.meads(dist.logdensity_fn, n_chain)
 init_state, kernel, _ = warmup.run(k_warm, dist.init_params, n_warm)
 
 def one_chain(k_sam, init_state):

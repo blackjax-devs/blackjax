@@ -42,7 +42,7 @@ class TemperedSMCTest(chex.TestCase):
         super().setUp()
         self.key = jax.random.PRNGKey(42)
 
-    def logprob_fn(self, log_scale, coefs, preds, x):
+    def logdensity_fn(self, log_scale, coefs, preds, x):
         """Linear regression"""
         scale = jnp.exp(log_scale)
         y = jnp.dot(x, coefs)
@@ -61,7 +61,7 @@ class TemperedSMCTest(chex.TestCase):
                 stats.expon.logpdf(jnp.exp(x[0]), 0, 1) + x[0] + stats.norm.logpdf(x[1])
             )
 
-        conditioned_logprob = lambda x: self.logprob_fn(*x, **observations)
+        conditioned_logprob = lambda x: self.logdensity_fn(*x, **observations)
 
         log_scale_init = np.log(np.random.exponential(1, N))
         coeffs_init = 3 + 2 * np.random.randn(N)
@@ -111,7 +111,7 @@ class TemperedSMCTest(chex.TestCase):
         observations = {"x": x_data, "preds": y_data}
 
         prior = lambda x: stats.norm.logpdf(x[0]) + stats.norm.logpdf(x[1])
-        conditionned_logprob = lambda x: self.logprob_fn(*x, **observations)
+        conditionned_logprob = lambda x: self.logdensity_fn(*x, **observations)
 
         log_scale_init = np.random.randn(N)
         coeffs_init = np.random.randn(N)
@@ -147,7 +147,7 @@ class TemperedSMCTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(result.particles[1]), 3.0, rtol=1e-1)
 
 
-def normal_logprob_fn(x, chol_cov):
+def normal_logdensity_fn(x, chol_cov):
     """minus log-density of a centered multivariate normal distribution"""
     dim = chol_cov.shape[0]
     y = jax.scipy.linalg.solve_triangular(chol_cov, x, lower=True)
@@ -170,7 +170,7 @@ class NormalizingConstantTest(chex.TestCase):
         iu = np.triu_indices(dim, 1)
         chol_cov = chol_cov.at[iu].set(0.0)
         cov = chol_cov @ chol_cov.T
-        conditionned_logprob = lambda x: normal_logprob_fn(x, chol_cov)
+        conditionned_logprob = lambda x: normal_logdensity_fn(x, chol_cov)
 
         prior = lambda x: stats.multivariate_normal.logpdf(
             x, jnp.zeros((dim,)), jnp.eye(dim)

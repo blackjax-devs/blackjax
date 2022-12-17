@@ -37,7 +37,7 @@ def overdamped_langevin():
     def one_step(
         rng_key: PRNGKey,
         position: PyTree,
-        logprob_grad: PyTree,
+        logdensity_grad: PyTree,
         step_size: float,
     ) -> PyTree:
 
@@ -45,7 +45,7 @@ def overdamped_langevin():
         position = jax.tree_util.tree_map(
             lambda p, g, n: p + step_size * g + jnp.sqrt(2 * step_size) * n,
             position,
-            logprob_grad,
+            logdensity_grad,
             noise,
         )
 
@@ -74,7 +74,7 @@ def sghmc(alpha: float = 0.01, beta: float = 0):
         rng_key: PRNGKey,
         position: PyTree,
         momentum: PyTree,
-        logprob_grad: PyTree,
+        logdensity_grad: PyTree,
         step_size: float,
     ):
         noise = generate_gaussian_noise(rng_key, position)
@@ -84,7 +84,7 @@ def sghmc(alpha: float = 0.01, beta: float = 0):
             + step_size * g
             + jnp.sqrt(2 * step_size * (alpha - beta)) * n,
             momentum,
-            logprob_grad,
+            logdensity_grad,
             noise,
         )
 

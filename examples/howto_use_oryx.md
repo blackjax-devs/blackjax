@@ -127,7 +127,7 @@ To sample from this model we will need to obtain its joint distribution log-prob
 ```{code-cell} python
 from oryx.core.ppl import joint_log_prob
 
-def logprob_fn(weights):
+def logdensity_fn(weights):
   return joint_log_prob(predict(bnn))(dict(weights, y=labels), features)
 ```
 
@@ -138,7 +138,7 @@ We can now run the window adaptation to get good values for the parameters of th
 import blackjax
 
 rng_key = jax.random.PRNGKey(0)
-adapt = blackjax.window_adaptation(blackjax.nuts, logprob_fn)
+adapt = blackjax.window_adaptation(blackjax.nuts, logdensity_fn)
 last_state, kernel, _ = adapt.run(rng_key, initial_weights, 100)
 ```
 

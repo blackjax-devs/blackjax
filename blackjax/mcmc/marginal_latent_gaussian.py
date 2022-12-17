@@ -41,8 +41,8 @@ class MarginalState(NamedTuple):
     """
 
     position: Array
-    logprob: float
-    logprob_grad: Array
+    logdensity: float
+    logdensity_grad: Array
 
     U_x: Array
     U_grad_x: Array
@@ -70,7 +70,7 @@ class MarginalInfo(NamedTuple):
     proposal: MarginalState
 
 
-def init_and_kernel(logprob_fn, covariance, mean=None):
+def init_and_kernel(logdensity_fn, covariance, mean=None):
     """Build the marginal version of the auxiliary gradient-based sampler
 
     Returns
@@ -85,14 +85,16 @@ def init_and_kernel(logprob_fn, covariance, mean=None):
 
     if mean is not None:
         shift = linalg.solve(covariance, mean, assume_a="pos")
-        val_and_grad = jax.value_and_grad(lambda x: logprob_fn(x) + jnp.dot(x, shift))
+        val_and_grad = jax.value_and_grad(
+            lambda x: logdensity_fn(x) + jnp.dot(x, shift)
+        )
     else:
-        val_and_grad = jax.value_and_grad(logprob_fn)
+        val_and_grad = jax.value_and_grad(logdensity_fn)
 
     def step(key: PRNGKey, state: MarginalState, delta):
         y_key, u_key = jax.random.split(key, 2)
 
-        position, logprob, logprob_grad, U_x, U_grad_x = state
+        position, logdensity, logdensity_grad, U_x, U_grad_x = state
 
         # Update Gamma(delta)
         # TODO: Ideally, we could have a dichotomy, where we only update Gamma(delta) if delta changes,
@@ -118,7 +120,7 @@ def init_and_kernel(logprob_fn, covariance, mean=None):
         hxy = jnp.dot(U_x - temp_y, Gamma_3 * U_grad_y)
         hyx = jnp.dot(U_y - temp_x, Gamma_3 * U_grad_x)
 
-        alpha = jnp.minimum(1, jnp.exp(log_p_y - logprob + hxy - hyx))
+        alpha = jnp.minimum(1, jnp.exp(log_p_y - logdensity + hxy - hyx))
         accept = jax.random.uniform(u_key) < alpha
 
         proposed_state = MarginalState(y, log_p_y, grad_y, U_y, U_grad_y)
@@ -127,9 +129,9 @@ def init_and_kernel(logprob_fn, covariance, mean=None):
         return state, info
 
     def init(position):
-        logprob, logprob_grad = val_and_grad(position)
+        logdensity, logdensity_grad = val_and_grad(position)
         return MarginalState(
-            position, logprob, logprob_grad, U_t @ position, U_t @ logprob_grad
+            position, logdensity, logdensity_grad, U_t @ position, U_t @ logdensity_grad
         )
 
     return init, step

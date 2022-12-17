@@ -20,14 +20,14 @@ It integrates really well with PPLs as long as they can provide a (potentially u
    import blackjax
 
    observed = np.random.normal(10, 20, size=1_000)
-   def logprob_fn(x):
+   def logdensity_fn(x):
        logpdf = stats.norm.logpdf(observed, x["loc"], x["scale"])
        return jnp.sum(logpdf)
 
    # Build the kernel
    step_size = 1e-3
    inverse_mass_matrix = jnp.array([1., 1.])
-   nuts = blackjax.nuts(logprob_fn, step_size, inverse_mass_matrix)
+   nuts = blackjax.nuts(logdensity_fn, step_size, inverse_mass_matrix)
 
    # Initialize the state
    initial_position = {"loc": 1., "scale": 2.}

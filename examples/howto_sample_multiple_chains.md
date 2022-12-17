@@ -54,15 +54,15 @@ loc, scale = 10, 20
 observed = np.random.normal(loc, scale, size=1_000)
 
 
-def logprob_fn(loc, log_scale, observed=observed):
+def logdensity_fn(loc, log_scale, observed=observed):
     """Univariate Normal"""
     scale = jnp.exp(log_scale)
     logpdf = stats.norm.logpdf(observed, loc, scale)
     return jnp.sum(logpdf)
 
 
-def logprob(x):
-    return logprob_fn(**x)
+def logdensity(x):
+    return logdensity_fn(**x)
 
 
 def inference_loop(rng_key, kernel, initial_state, num_samples):
@@ -87,7 +87,7 @@ import blackjax
 inv_mass_matrix = np.array([0.5, 0.01])
 step_size = 1e-3
 
-nuts = blackjax.nuts(logprob, step_size, inv_mass_matrix)
+nuts = blackjax.nuts(logdensity, step_size, inv_mass_matrix)
 ```
 
 And finally, to put `jax.vmap` and `jax.pmap` on an equal foot we sample as many chains as the machine has CPU cores:

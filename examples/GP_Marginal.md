@@ -158,7 +158,7 @@ Next, we define the the log-probability function. For this we need to set the lo
 
 ```{code-cell} python
 loglikelihood_fn = lambda f: -0.5 * jnp.dot(y - f, y - f) / y_sd**2
-logprob_fn = lambda f: loglikelihood_fn(f) - 0.5 * jnp.dot(f @ invSigma, f)
+logdensity_fn = lambda f: loglikelihood_fn(f) - 0.5 * jnp.dot(f @ invSigma, f)
 ```
 
 Now we are ready to initialize the sampler. The output is type is a `NamedTuple` with the following fields:
@@ -176,7 +176,7 @@ step:
 ```
 
 ```{code-cell} python
-init, step = mgrad_gaussian(logprob_fn=logprob_fn, mean=jnp.zeros(n), covariance=Sigma)
+init, step = mgrad_gaussian(logdensity_fn=logdensity_fn, mean=jnp.zeros(n), covariance=Sigma)
 ```
 
 We continue by setting the inference loop.

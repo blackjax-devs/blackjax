@@ -132,14 +132,14 @@ def kernel(
     def one_step(
         rng_key: PRNGKey,
         state: hmc.HMCState,
-        logprob_fn: Callable,
+        logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
     ) -> Tuple[hmc.HMCState, NUTSInfo]:
         """Generate a new sample with the NUTS kernel."""
 
         def potential_fn(x):
-            return -logprob_fn(x)
+            return -logdensity_fn(x)
 
         (
             momentum_generator,

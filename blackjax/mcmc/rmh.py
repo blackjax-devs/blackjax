@@ -28,13 +28,13 @@ class RMHState(NamedTuple):
 
     position
         Current position of the chain.
-    log_probability
-        Current value of the log-probability
+    log_density
+        Current value of the log-density
 
     """
 
     position: PyTree
-    log_probability: float
+    log_density: float
 
 
 class RMHInfo(NamedTuple):
@@ -59,19 +59,19 @@ class RMHInfo(NamedTuple):
     proposal: RMHState
 
 
-def init(position: PyTree, logprob_fn: Callable) -> RMHState:
+def init(position: PyTree, logdensity_fn: Callable) -> RMHState:
     """Create a chain state from a position.
 
     Parameters:
     -----------
     position: PyTree
         The initial position of the chain
-    logprob_fn: Callable
+    logdensity_fn: Callable
         Log-probability density function of the distribution we wish to sample
         from.
 
     """
-    return RMHState(position, logprob_fn(position))
+    return RMHState(position, logdensity_fn(position))
 
 
 def kernel():
@@ -87,7 +87,7 @@ def kernel():
     """
 
     def one_step(
-        rng_key: PRNGKey, state: RMHState, logprob_fn: Callable, sigma: Array
+        rng_key: PRNGKey, state: RMHState, logdensity_fn: Callable, sigma: Array
     ) -> Tuple[RMHState, RMHInfo]:
 
         move_proposal_generator = normal(sigma)
@@ -97,7 +97,7 @@ def kernel():
             new_position = jax.tree_util.tree_map(jnp.add, position, move_proposal)
             return new_position
 
-        kernel = rmh(logprob_fn, proposal_generator)
+        kernel = rmh(logdensity_fn, proposal_generator)
         return kernel(rng_key, state)
 
     return one_step
@@ -114,20 +114,20 @@ def kernel():
 
 
 def rmh(
-    logprob_fn: Callable,
+    logdensity_fn: Callable,
     proposal_generator: Callable,
-    proposal_logprob_fn: Optional[Callable] = None,
+    proposal_logdensity_fn: Optional[Callable] = None,
 ):
     """Build a Rosenbluth-Metropolis-Hastings kernel.
 
     Parameters
     ----------
-    logprob_fn
+    logdensity_fn
         A function that returns the log-probability at a given position.
     proposal_generator
         A function that generates a candidate transition for the markov chain.
-    proposal_logprob_fn:
-        For non-symmetric proposals, a function that returns the logprobability
+    proposal_logdensity_fn:
+        For non-symmetric proposals, a function that returns the log-density
         to obtain a given proposal knowing the current state. If it is not
         provided we assume the proposal is symmetric.
 
@@ -138,19 +138,19 @@ def rmh(
     information about the transition.
 
     """
-    if proposal_logprob_fn is None:
+    if proposal_logdensity_fn is None:
 
         def acceptance_rate(state: RMHState, proposal: RMHState):
-            return proposal.log_probability - state.log_probability
+            return proposal.log_density - state.log_density
 
     else:
 
         def acceptance_rate(state: RMHState, proposal: RMHState):
             return (
-                proposal.log_probability
-                + proposal_logprob_fn(proposal.position, state.position)  # type: ignore
-                - state.log_probability
-                - proposal_logprob_fn(state.position, proposal.position)  # type: ignore
+                proposal.log_density
+                + proposal_logdensity_fn(proposal.position, state.position)  # type: ignore
+                - state.log_density
+                - proposal_logdensity_fn(state.position, proposal.position)  # type: ignore
             )
 
     def kernel(rng_key: PRNGKey, state: RMHState) -> Tuple[RMHState, RMHInfo]:
@@ -176,8 +176,8 @@ def rmh(
         key_proposal, key_accept = jax.random.split(rng_key, 2)
 
         new_position = proposal_generator(rng_key, state.position)
-        new_log_probability = logprob_fn(new_position)
-        new_state = RMHState(new_position, new_log_probability)
+        new_log_density = logdensity_fn(new_position)
+        new_state = RMHState(new_position, new_log_density)
 
         delta = acceptance_rate(state, new_state)
         delta = jnp.where(jnp.isnan(delta), -jnp.inf, delta)

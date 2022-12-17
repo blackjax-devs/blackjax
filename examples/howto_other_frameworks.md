@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# Use a logprob function that is not compatible with JAX's primitives
+# Use a logdensity function that is not compatible with JAX's primitives
 
 
 We obviously recommend to use Blackjax with log-probability functions that are compatible with JAX's primitives. These can be built manually or with Aesara, Numpyro, Oryx, PyMC, TensorFlow-Probability.
@@ -22,7 +22,7 @@ In this example we will show you how this can be done using JAX's experimental `
 
 ## Aesara model compiled to Numba
 
-The following example builds a logprob function with [Aesara](https://github.com/aesara-devs/aesara), compiles it with [Numba](https://numba.pydata.org/) and uses Blackjax to sample from the posterior distribution of the model.
+The following example builds a logdensity function with [Aesara](https://github.com/aesara-devs/aesara), compiles it with [Numba](https://numba.pydata.org/) and uses Blackjax to sample from the posterior distribution of the model.
 
 ```{code-cell} python
 import aesara.tensor as at
@@ -49,7 +49,7 @@ print(sampling_fn())
 print(sampling_fn())
 ```
 
-We do not care about the posterior distribution of the indicator variable `I_rv` so we marginalize it out, and subsequently build the logprob's graph:
+We do not care about the posterior distribution of the indicator variable `I_rv` so we marginalize it out, and subsequently build the logdensity's graph:
 
 ```{code-cell} python
 from aeppl import joint_logprob
@@ -57,33 +57,33 @@ from aeppl import joint_logprob
 y_vv = Y_rv.clone()
 i_vv = I_rv.clone()
 
-logprob = []
+logdensity = []
 for i in range(4):
     i_vv = at.as_tensor(i, dtype="int64")
-    component_logprob, _ = joint_logprob(realized={Y_rv: y_vv, I_rv: i_vv})
-    logprob.append(component_logprob)
-logprob = at.stack(logprob, axis=0)
+    component_logdensity, _ = joint_logprob(realized={Y_rv: y_vv, I_rv: i_vv})
+    logdensity.append(component_logdensity)
+logdensity = at.stack(logdensity, axis=0)
 
-total_logprob = at.logsumexp(at.log(weights) + logprob)
+total_logdensity = at.logsumexp(at.log(weights) + logdensity)
 ```
 
-We are now ready to compile the logprob to Numba:
+We are now ready to compile the logdensity to Numba:
 
 ```{code-cell} python
-logprob_fn = aesara.function((y_vv,), total_logprob, mode="NUMBA")
-logprob_fn(1.)
+logdensity_fn = aesara.function((y_vv,), total_logdensity, mode="NUMBA")
+logdensity_fn(1.)
 ```
 
 As is we cannot use these functions within jit-compiled functions written with JAX, or apply `jax.grad` to get the function's gradients:
 
 ```{code-cell} python
 try:
-    jax.jit(logprob_fn)(1.)
+    jax.jit(logdensity_fn)(1.)
 except Exception:
     print("JAX raised an exception while jit-compiling!")
 
 try:
-    jax.grad(logprob_fn)(1.)
+    jax.grad(logdensity_fn)(1.)
 except Exception:
     print("JAX raised an exception while differentiating!")
 ```
@@ -91,14 +91,14 @@ except Exception:
 Indeed, a function written with Numba is incompatible with JAX's primitives. Luckily Aesara can build the model's gradient graph and compile it to Numba as well:
 
 ```{code-cell} python
-total_logprob_grad = at.grad(total_logprob, y_vv)
-logprob_grad_fn = aesara.function((y_vv,), total_logprob_grad, mode="NUMBA")
-logprob_grad_fn(1.)
+total_logdensity_grad = at.grad(total_logdensity, y_vv)
+logdensity_grad_fn = aesara.function((y_vv,), total_logdensity_grad, mode="NUMBA")
+logdensity_grad_fn(1.)
 ```
 
 ## Use `jax.experimental.host_callback` to call Numba functions
 
-In order to be able to call `logprob_fn` within JAX, we need to define a function that will call it via JAX's `host_callback`. Yet, this wrapper function is not differentiable with JAX, and so we will also need to define this functions' `custom_vjp`, and use `host_callback` to call the gradient-computing function as well:
+In order to be able to call `logdensity_fn` within JAX, we need to define a function that will call it via JAX's `host_callback`. Yet, this wrapper function is not differentiable with JAX, and so we will also need to define this functions' `custom_vjp`, and use `host_callback` to call the gradient-computing function as well:
 
 ```{code-cell} python
 import jax
@@ -106,10 +106,10 @@ import jax.experimental.host_callback as hcb
 
 @jax.custom_vjp
 def numba_logpdf(arg):
-    return hcb.call(lambda x: logprob_fn(x).item(), arg, result_shape=arg)
+    return hcb.call(lambda x: logdensity_fn(x).item(), arg, result_shape=arg)
 
 def call_grad(arg):
-    return hcb.call(lambda x: logprob_grad_fn(x).item(), arg, result_shape=arg)
+    return hcb.call(lambda x: logdensity_grad_fn(x).item(), arg, result_shape=arg)
 
 def vjp_fwd(arg):
     return numba_logpdf(arg), call_grad(arg)
@@ -153,7 +153,7 @@ If you run this on your machine you will notice that this runs quite slowly comp
 ```{code-cell} python
 %%time
 for _ in range(100_000):
-    logprob_fn(100)
+    logdensity_fn(100)
 ```
 
 And *JAX on the other hand, with 100 times less iterations*:
@@ -166,7 +166,7 @@ for _ in range(1_000):
 
 That's a **lot** of overhead!
 
-So while the implementation is simple considering what we're trying to achieve, it is only recommended for workloads where most of the time is spent evaluating the logprob and its gradient, and where this overhead becomes irrelevant.
+So while the implementation is simple considering what we're trying to achieve, it is only recommended for workloads where most of the time is spent evaluating the logdensity and its gradient, and where this overhead becomes irrelevant.
 
 
 ## Use custom XLA calls to call Numba functions faster

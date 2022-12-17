@@ -104,8 +104,8 @@ To sample with Blackjax we will need to use Aesara's JAX backend; `logprob_jax` 
 ```{code-cell} python
 :tags: [remove-stderr]
 
-logprob_fn = aesara.function((a_vv, b_vv, theta_vv, y_vv), logprob, mode="JAX")
-logprob_jax = logprob_fn.vm.jit_fn
+logdensity_fn = aesara.function((a_vv, b_vv, theta_vv, y_vv), logprob, mode="JAX")
+logprob_jax = logdensity_fn.vm.jit_fn
 ```
 
 Let's wrap this function to make our life simpler:
@@ -115,7 +115,7 @@ Let's wrap this function to make our life simpler:
 3. `Y_vv` is observed, so let's fix its value.
 
 ```{code-cell} python
-def logprob_fn(position):
+def logdensity_fn(position):
     flat_position = tuple(position.values())
     return logprob_jax(*flat_position, n_of_positives)[0]
 ```
@@ -165,7 +165,7 @@ import blackjax
 n_adapt = 3000
 n_samples = 1000
 
-adapt = blackjax.window_adaptation(blackjax.nuts, logprob_fn)
+adapt = blackjax.window_adaptation(blackjax.nuts, logdensity_fn)
 state, kernel, _ = adapt.run(rng_key, init_position, n_adapt)
 
 states, infos = inference_loop(

@@ -91,7 +91,7 @@ def log_sigmoid(z):
     return z - jnp.log(1 + jnp.exp(z))
 
 
-def logprob_fn(w, alpha=1.0):
+def logdensity_fn(w, alpha=1.0):
     """The log-probability density function of the posterior distribution of the model."""
     log_an = log_sigmoid(Phi @ w)
     an = Phi @ w
@@ -114,7 +114,7 @@ To help understand the approximations that pathfinder evaluates during its run, 
 ```{code-cell} python
 rng_key = random.PRNGKey(314)
 w0 = random.multivariate_normal(rng_key, 2.0 + jnp.zeros(M), jnp.eye(M))
-_, info = blackjax.vi.pathfinder.approximate(rng_key, logprob_fn, w0, ftol=1e-4)
+_, info = blackjax.vi.pathfinder.approximate(rng_key, logdensity_fn, w0, ftol=1e-4)
 path = info.path
 ```
 
@@ -142,7 +142,7 @@ step = 0.1
 x_, y_ = jnp.mgrid[-1:3:step, -1:3:step]
 pos_ = jnp.dstack((x_, y_))
 logp_ = jnp.nan_to_num(
-    jax.vmap(logprob_fn)(pos_.reshape(-1, M)).reshape(pos_.shape[0], pos_.shape[1]),
+    jax.vmap(logdensity_fn)(pos_.reshape(-1, M)).reshape(pos_.shape[0], pos_.shape[1]),
     nan=-1e10,
 )
 levels_ = jnp.percentile(logp_.flatten(), jnp.linspace(60, 100, 10))
@@ -176,7 +176,7 @@ fig.show()
 Pathfinder can be used as a variational inference method, using its kernel API:
 
 ```{code-cell} python
-pathfinder = blackjax.kernels.pathfinder(logprob_fn)
+pathfinder = blackjax.kernels.pathfinder(logdensity_fn)
 state, _ = pathfinder.approximate(rng_key, w0, ftol=1e-4)
 ```
 
@@ -225,7 +225,7 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     keys = jax.random.split(rng_key, num_samples)
     return jax.lax.scan(one_step, initial_state, keys)
 
-rmh = blackjax.kernels.rmh(logprob_fn, sigma=jnp.ones(M) * 0.7)
+rmh = blackjax.kernels.rmh(logdensity_fn, sigma=jnp.ones(M) * 0.7)
 state_rmh = rmh.init(w0)
 _, (samples_rmh, _) = inference_loop(rng_key, rmh.step, state_rmh, 5_000)
 ```
@@ -265,7 +265,7 @@ This estimation of the inverse mass matrix, coupled with Nesterov's dual averagi
 This scheme is implemented in `blackjax.kernel.pathfinder_adaptation` function:
 
 ```{code-cell} python
-adapt = blackjax.kernels.pathfinder_adaptation(blackjax.nuts, logprob_fn)
+adapt = blackjax.kernels.pathfinder_adaptation(blackjax.nuts, logdensity_fn)
 state, kernel, info = adapt.run(rng_key, w0, 400)
 ```
 
