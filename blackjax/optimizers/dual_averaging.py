@@ -15,6 +15,11 @@ from typing import Callable, NamedTuple, Tuple
 
 import jax.numpy as jnp
 
+__all__ = [
+    "DualAveragingState",
+    "dual_averaging",
+]
+
 
 class DualAveragingState(NamedTuple):
     """State carried through the dual averaging procedure.

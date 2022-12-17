@@ -17,8 +17,8 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
-import blackjax.optimizers.dual_averaging as dual_averaging
 from blackjax.mcmc.hmc import HMCState
+from blackjax.optimizers.dual_averaging import dual_averaging
 
 __all__ = [
     "dual_averaging_adaptation",
@@ -122,7 +122,7 @@ def dual_averaging_adaptation(
            of Machine Learning Research 15.1 (2014): 1593-1623.
 
     """
-    da_init, da_update, da_final = dual_averaging.dual_averaging(t0, gamma, kappa)
+    da_init, da_update, da_final = dual_averaging(t0, gamma, kappa)
 
     def init(inital_step_size: float) -> DualAveragingAdaptationState:
         """Initialize the state of the dual averaging scheme.

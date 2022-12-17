@@ -46,6 +46,7 @@ setuptools.setup(
         "jax>=0.3.13",
         "jaxlib>=0.3.10",
         "jaxopt>=0.5.5",
+        "typing-extensions>=4.4.0",
     ],
     long_description_content_type="text/markdown",
     keywords="probabilistic machine learning bayesian statistics sampling algorithms",
