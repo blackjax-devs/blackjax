@@ -78,9 +78,9 @@ class HMCInfo(NamedTuple):
     num_integration_steps: int
 
 
-def init(position: PyTree, logprob_fn: Callable):
+def init(position: PyTree, logdensity_fn: Callable):
     def potential_fn(x):
-        return -logprob_fn(x)
+        return -logdensity_fn(x)
 
     potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
     return HMCState(position, potential_energy, potential_energy_grad)
@@ -110,7 +110,7 @@ def kernel(
     def one_step(
         rng_key: PRNGKey,
         state: HMCState,
-        logprob_fn: Callable,
+        logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
         num_integration_steps: int,
@@ -118,7 +118,7 @@ def kernel(
         """Generate a new sample with the HMC kernel."""
 
         def potential_fn(x):
-            return -logprob_fn(x)
+            return -logdensity_fn(x)
 
         momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
             inverse_mass_matrix

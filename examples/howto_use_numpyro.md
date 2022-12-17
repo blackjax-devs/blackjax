@@ -76,11 +76,11 @@ init_params, potential_fn_gen, *_ = initialize_model(
 )
 ```
 
-Numpyro return a potential function, which is easily transformed back into a logprob function that is required by Blackjax:
+Numpyro return a potential function, which is easily transformed back into a logdensity function that is required by Blackjax:
 
 
 ```{code-cell} python
-logprob_fn = lambda position: -potential_fn_gen(J, sigma, y)(position)
+logdensity_fn = lambda position: -potential_fn_gen(J, sigma, y)(position)
 initial_position = init_params.z
 ```
 
@@ -92,7 +92,7 @@ import blackjax
 num_warmup = 2000
 
 adapt = blackjax.window_adaptation(
-    blackjax.nuts, logprob_fn, target_acceptance_rate=0.8
+    blackjax.nuts, logdensity_fn, target_acceptance_rate=0.8
 )
 last_state, kernel, _ = adapt.run(rng_key, initial_position, num_warmup)
 ```

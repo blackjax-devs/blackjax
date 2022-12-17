@@ -72,7 +72,9 @@ class PeriodicOrbitalInfo(NamedTuple):
     weights_variance: float
 
 
-def init(position: PyTree, logprob_fn: Callable, period: int) -> PeriodicOrbitalState:
+def init(
+    position: PyTree, logdensity_fn: Callable, period: int
+) -> PeriodicOrbitalState:
     """Create a periodic orbital state from a position.
 
     Parameters
@@ -81,7 +83,7 @@ def init(position: PyTree, logprob_fn: Callable, period: int) -> PeriodicOrbital
         the current values of the random variables whose posterior we want to
         sample from. Can be anything from a list, a (named) tuple or a dict of
         arrays. The arrays can either be Numpy or JAX arrays.
-    logprob_fn
+    logdensity_fn
         a function that returns the value of the log posterior when called
         with a position.
     period
@@ -96,7 +98,7 @@ def init(position: PyTree, logprob_fn: Callable, period: int) -> PeriodicOrbital
     """
 
     def potential_fn(x):
-        return -logprob_fn(x)
+        return -logdensity_fn(x)
 
     positions = jax.tree_util.tree_map(
         lambda position: jnp.array([position for _ in range(period)]), position
@@ -140,7 +142,7 @@ def kernel(
     def one_step(
         rng_key: PRNGKey,
         state: PeriodicOrbitalState,
-        logprob_fn: Callable,
+        logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
         period: int,
@@ -158,7 +160,7 @@ def kernel(
             pseudo random number generating key.
         state
             initial orbit.
-        logprob_fn
+        logdensity_fn
             log probability function we wish to sample from.
         step_size
             space between steps of the orbit.
@@ -175,7 +177,7 @@ def kernel(
         """
 
         def potential_fn(x):
-            return -logprob_fn(x)
+            return -logdensity_fn(x)
 
         momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
             inverse_mass_matrix

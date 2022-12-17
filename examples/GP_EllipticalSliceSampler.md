@@ -132,8 +132,8 @@ samples = states.position[n_warm:]
 %%time
 n_iter = 2000
 
-logprob_fn = lambda f: loglikelihood_fn(f) - 0.5 * jnp.dot(f @ invSigma, f)
-warmup = window_adaptation(nuts, logprob_fn, n_warm, target_acceptance_rate=0.8)
+logdensity_fn = lambda f: loglikelihood_fn(f) - 0.5 * jnp.dot(f @ invSigma, f)
+warmup = window_adaptation(nuts, logdensity_fn, n_warm, target_acceptance_rate=0.8)
 key_warm, key_sample = jrnd.split(jrnd.PRNGKey(0))
 state, kernel, _ = warmup.run(key_warm, f)
 states, _ = inference_loop(key_sample, state, kernel, n_iter)

@@ -47,7 +47,7 @@ def ess(log_weights: jnp.ndarray, log: bool = True) -> float:
 
 
 def ess_solver(
-    logprob_fn: Callable,
+    logdensity_fn: Callable,
     particles: PyTree,
     target_ess: float,
     max_delta: float,
@@ -58,7 +58,7 @@ def ess_solver(
 
     Parameters
     ----------
-    logprob_fn: Callable
+    logdensity_fn: Callable
         The log probability function we wish to sample from.
     smc_state: SMCState
         Current state of the tempered SMC algorithm
@@ -81,14 +81,14 @@ def ess_solver(
     """
     n_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
 
-    logprob = logprob_fn(particles)
+    logdensity = logdensity_fn(particles)
     if use_log_ess:
         target_val = jnp.log(n_particles * target_ess)
     else:
         target_val = n_particles * target_ess
 
     def fun_to_solve(delta):
-        log_weights = jnp.nan_to_num(-delta * logprob)
+        log_weights = jnp.nan_to_num(-delta * logdensity)
         ess_val = ess(log_weights, log=use_log_ess)
 
         return ess_val - target_val

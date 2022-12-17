@@ -54,7 +54,7 @@ We need to translate the model into a log-probability function that will be used
 from pymc.sampling_jax import get_jaxified_logp
 
 rvs = [rv.name for rv in model.value_vars]
-logprob_fn = get_jaxified_logp(model)
+logdensity_fn = get_jaxified_logp(model)
 ```
 
 We can now run the window adaptation for the NUTS sampler:
@@ -69,7 +69,7 @@ init_position = [init_position_dict[rv] for rv in rvs]
 
 rng_key = jax.random.PRNGKey(1234)
 
-adapt = blackjax.window_adaptation(blackjax.nuts, logprob_fn)
+adapt = blackjax.window_adaptation(blackjax.nuts, logdensity_fn)
 last_state, kernel, _ = adapt.run(rng_key, init_position, 1000)
 ```
 

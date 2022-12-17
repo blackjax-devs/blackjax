@@ -24,7 +24,7 @@ We initialize an algorithm using the log-probability function we wish to sample 
 
    import blackjax
 
-   algorithm = blackjax.algorithm(logprob_fn, **parameters)
+   algorithm = blackjax.algorithm(logdensity_fn, **parameters)
 
 
 One can then initialize the sampling state and take a new sample starting from a given position in the parameter space:
@@ -39,7 +39,7 @@ One can then initialize the sampling state and take a new sample starting from a
    new_state, info = algorithm.step(rng_key, state)
 
 
-Under the hood, kernels have a signature of the form ``kernel(rng_key, state, logprob_fn, **parameter)`` and this high-level interface provides convenient wrappers around these functions. It is possible to access the base kernel doing:
+Under the hood, kernels have a signature of the form ``kernel(rng_key, state, logdensity_fn, **parameter)`` and this high-level interface provides convenient wrappers around these functions. It is possible to access the base kernel doing:
 
 .. code::
 

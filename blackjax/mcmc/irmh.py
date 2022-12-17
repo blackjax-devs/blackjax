@@ -41,12 +41,12 @@ def kernel(proposal_distribution: Callable) -> Callable:
     """
 
     def one_step(
-        rng_key: PRNGKey, state: RMHState, logprob_fn: Callable
+        rng_key: PRNGKey, state: RMHState, logdensity_fn: Callable
     ) -> Tuple[RMHState, RMHInfo]:
         def proposal_generator(rng_key: PRNGKey, position: PyTree):
             return proposal_distribution(rng_key)
 
-        kernel = rmh(logprob_fn, proposal_generator)
+        kernel = rmh(logdensity_fn, proposal_generator)
         return kernel(rng_key, state)
 
     return one_step

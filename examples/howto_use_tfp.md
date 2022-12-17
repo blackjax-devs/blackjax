@@ -86,14 +86,14 @@ model = tfd.JointDistributionSequential(
 We need to translate the model into a log-probability density function that will be used by Blackjax to perform inference.
 
 ```{code-cell} python
-def target_logprob_fn(avg_effect, avg_stddev, school_effects_standard):
+def target_logdensity_fn(avg_effect, avg_stddev, school_effects_standard):
     """Unnormalized target density as a function of states."""
     return model.log_prob(
         (avg_effect, avg_stddev, school_effects_standard, treatment_effects)
     )
 
 
-logprob_fn = lambda x: target_logprob_fn(**x)
+logdensity_fn = lambda x: target_logdensity_fn(**x)
 ```
 
 We can now initialize the
@@ -117,7 +117,7 @@ initial_position = {
 
 rng_key = jax.random.PRNGKey(0)
 adapt = blackjax.window_adaptation(
-    blackjax.hmc, logprob_fn, num_integration_steps=3
+    blackjax.hmc, logdensity_fn, num_integration_steps=3
 )
 
 last_state, kernel, _ = adapt.run(rng_key, initial_position, 1000)

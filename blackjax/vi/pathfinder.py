@@ -65,7 +65,7 @@ class PathfinderInfo(NamedTuple):
 
 def approximate(
     rng_key: PRNGKey,
-    logprob_fn: Callable,
+    logdensity_fn: Callable,
     initial_position: PyTree,
     num_samples: int = 200,
     *,  # lgbfs parameters
@@ -87,7 +87,7 @@ def approximate(
     ----------
     rng_key
         PRPNG key
-    logprob_fn
+    logdensity_fn
         (un-normalized) log densify function of target distribution to take
         approximate samples from
     initial_position
@@ -122,7 +122,7 @@ def approximate(
 
     """
     initial_position_flatten, unravel_fn = ravel_pytree(initial_position)
-    objective_fn = lambda x: -logprob_fn(unravel_fn(x))
+    objective_fn = lambda x: -logdensity_fn(unravel_fn(x))
 
     (_, status), history = _minimize_lbfgs(
         objective_fn,

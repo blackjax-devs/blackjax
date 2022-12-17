@@ -73,8 +73,8 @@ class adaptive_tempered_smc:
         use_log_ess: bool = True,
         mcmc_iter: int = 10,
     ) -> MCMCSamplingAlgorithm:
-        def kernel_factory(logprob_fn):
-            return mcmc_algorithm(logprob_fn, **mcmc_parameters).step
+        def kernel_factory(logdensity_fn):
+            return mcmc_algorithm(logdensity_fn, **mcmc_parameters).step
 
         step = cls.kernel(
             logprior_fn,
@@ -122,8 +122,8 @@ class tempered_smc:
         resampling_fn: Callable,
         mcmc_iter: int = 10,
     ) -> MCMCSamplingAlgorithm:
-        def kernel_factory(logprob_fn):
-            return mcmc_algorithm(logprob_fn, **mcmc_parameters).step
+        def kernel_factory(logdensity_fn):
+            return mcmc_algorithm(logdensity_fn, **mcmc_parameters).step
 
         step = cls.kernel(
             logprior_fn,
@@ -170,7 +170,7 @@ class hmc:
 
     .. code::
 
-        hmc = blackjax.hmc(logprob_fn step_size, inverse_mass_matrix, num_integration_steps)
+        hmc = blackjax.hmc(logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
         state = hmc.init(position)
         new_state, info = hmc.step(rng_key, state)
 
@@ -188,13 +188,13 @@ class hmc:
        import blackjax.mcmc.integrators as integrators
 
        kernel = blackjax.hmc.kernel(integrators.mclachlan)
-       state = blackjax.hmc.init(position, logprob_fn)
-       state, info = kernel(rng_key, state, logprob_fn, step_size, inverse_mass_matrix, num_integration_steps)
+       state = blackjax.hmc.init(position, logdensity_fn)
+       state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
 
     Parameters
     ----------
-    logprob_fn
-        The logprobability density function we wish to draw samples from. This
+    logdensity_fn
+        The log-density function we wish to draw samples from. This
         is minus the potential function.
     step_size
         The value to use for the step size in the symplectic integrator.
@@ -221,7 +221,7 @@ class hmc:
 
     def __new__(  # type: ignore[misc]
         cls,
-        logprob_fn: Callable,
+        logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
         num_integration_steps: int,
@@ -232,13 +232,13 @@ class hmc:
         step = cls.kernel(integrator, divergence_threshold)
 
         def init_fn(position: PyTree):
-            return cls.init(position, logprob_fn)
+            return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
             return step(
                 rng_key,
                 state,
-                logprob_fn,
+                logdensity_fn,
                 step_size,
                 inverse_mass_matrix,
                 num_integration_steps,
@@ -265,7 +265,7 @@ class mala:
 
     .. code::
 
-        mala = blackjax.mala(logprob_fn, step_size)
+        mala = blackjax.mala(logdensity_fn, step_size)
         state = mala.init(position)
         new_state, info = mala.step(rng_key, state)
 
@@ -280,14 +280,14 @@ class mala:
 
     .. code::
 
-       kernel = blackjax.mala.kernel(logprob_fn)
-       state = blackjax.mala.init(position, logprob_fn)
-       state, info = kernel(rng_key, state, logprob_fn, step_size)
+       kernel = blackjax.mala.kernel(logdensity_fn)
+       state = blackjax.mala.init(position, logdensity_fn)
+       state, info = kernel(rng_key, state, logdensity_fn, step_size)
 
     Parameters
     ----------
-    logprob_fn
-        The logprobability density function we wish to draw samples from. This
+    logdensity_fn
+        The log-density function we wish to draw samples from. This
         is minus the potential function.
     step_size
         The value to use for the step size in the symplectic integrator.
@@ -303,16 +303,16 @@ class mala:
 
     def __new__(  # type: ignore[misc]
         cls,
-        logprob_fn: Callable,
+        logdensity_fn: Callable,
         step_size: float,
     ) -> MCMCSamplingAlgorithm:
         step = cls.kernel()
 
         def init_fn(position: PyTree):
-            return cls.init(position, logprob_fn)
+            return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(rng_key, state, logprob_fn, step_size)
+            return step(rng_key, state, logdensity_fn, step_size)
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
 
@@ -327,7 +327,7 @@ class nuts:
 
     .. code::
 
-        nuts = blackjax.nuts(logprob_fn step_size, inverse_mass_matrix)
+        nuts = blackjax.nuts(logdensity_fn, step_size, inverse_mass_matrix)
         state = nuts.init(position)
         new_state, info = nuts.step(rng_key, state)
 
@@ -345,13 +345,13 @@ class nuts:
        import blackjax.mcmc.integrators as integrators
 
        kernel = blackjax.nuts.kernel(integrators.yoshida)
-       state = blackjax.nuts.init(position, logprob_fn)
-       state, info = kernel(rng_key, state, logprob_fn, step_size, inverse_mass_matrix)
+       state = blackjax.nuts.init(position, logdensity_fn)
+       state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix)
 
     Parameters
     ----------
-    logprob_fn
-        The logprobability density function we wish to draw samples from. This
+    logdensity_fn
+        The log-density function we wish to draw samples from. This
         is minus the potential function.
     step_size
         The value to use for the step size in the symplectic integrator.
@@ -379,7 +379,7 @@ class nuts:
 
     def __new__(  # type: ignore[misc]
         cls,
-        logprob_fn: Callable,
+        logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
         *,
@@ -390,13 +390,13 @@ class nuts:
         step = cls.kernel(integrator, divergence_threshold, max_num_doublings)
 
         def init_fn(position: PyTree):
-            return cls.init(position, logprob_fn)
+            return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
             return step(
                 rng_key,
                 state,
-                logprob_fn,
+                logdensity_fn,
                 step_size,
                 inverse_mass_matrix,
             )
@@ -429,7 +429,7 @@ class mgrad_gaussian:
 
     Parameters
     ----------
-    logprob_fn
+    logdensity_fn
         The logarithm of the likelihood function for the latent Gaussian model.
     covariance
         The covariance of the prior Gaussian density.
@@ -447,12 +447,12 @@ class mgrad_gaussian:
 
     def __new__(  # type: ignore[misc]
         cls,
-        logprob_fn: Callable,
+        logdensity_fn: Callable,
         covariance: Array,
         mean: Optional[Array] = None,
     ) -> MCMCSamplingAlgorithm:
         init, step = mcmc.marginal_latent_gaussian.init_and_kernel(
-            logprob_fn, covariance, mean
+            logdensity_fn, covariance, mean
         )
 
         def init_fn(position: Array):
@@ -636,7 +636,7 @@ class AdaptationResults(NamedTuple):
 
 def window_adaptation(
     algorithm: Union[hmc, nuts],
-    logprob_fn: Callable,
+    logdensity_fn: Callable,
     is_mass_matrix_diagonal: bool = True,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
@@ -660,7 +660,7 @@ def window_adaptation(
     ----------
     algorithm
         The algorithm whose parameters are being tuned.
-    logprob_fn
+    logdensity_fn
         The log density probability density function from which we wish to
         sample.
     is_mass_matrix_diagonal
@@ -695,7 +695,7 @@ def window_adaptation(
         new_state, info = step_fn(
             rng_key,
             state,
-            logprob_fn,
+            logdensity_fn,
             adaptation_state.step_size,
             adaptation_state.inverse_mass_matrix,
             **extra_parameters,
@@ -714,7 +714,7 @@ def window_adaptation(
 
     def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 1000):
 
-        init_state = algorithm.init(position, logprob_fn)
+        init_state = algorithm.init(position, logdensity_fn)
         init_adaptation_state = init(position, initial_step_size)
 
         if progress_bar:
@@ -740,7 +740,7 @@ def window_adaptation(
         }
 
         def kernel(rng_key, state):
-            return step_fn(rng_key, state, logprob_fn, **parameters)
+            return step_fn(rng_key, state, logdensity_fn, **parameters)
 
         return AdaptationResults(last_chain_state, kernel, parameters)
 
@@ -748,7 +748,7 @@ def window_adaptation(
 
 
 def meads(
-    logprob_fn: Callable,
+    logdensity_fn: Callable,
     num_chains: int,
 ) -> AdaptationAlgorithm:
     """Adapt the parameters of the Generalized HMC algorithm.
@@ -775,7 +775,7 @@ def meads(
 
     Parameters
     ----------
-    logprob_fn
+    logdensity_fn
         The log density probability density function from which we wish to sample.
     num_chains
         Number of chains used for cross-chain warm-up training.
@@ -791,7 +791,7 @@ def meads(
 
     init, update = adaptation.meads.base()
 
-    batch_init = jax.vmap(lambda r, p: ghmc.init(r, p, logprob_fn))
+    batch_init = jax.vmap(lambda r, p: ghmc.init(r, p, logdensity_fn))
 
     def one_step(carry, rng_key):
         states, adaptation_state = carry
@@ -800,7 +800,7 @@ def meads(
             return step_fn(
                 rng_key,
                 state,
-                logprob_fn,
+                logdensity_fn,
                 adaptation_state.step_size,
                 adaptation_state.position_sigma,
                 adaptation_state.alpha,
@@ -843,7 +843,7 @@ def meads(
             return step_fn(
                 rng_key,
                 state,
-                logprob_fn,
+                logdensity_fn,
                 **parameters,
             )
 
@@ -862,7 +862,7 @@ class rmh:
 
     .. code::
 
-        rmh = blackjax.rmh(logprob_fn, sigma)
+        rmh = blackjax.rmh(logdensity_fn, sigma)
         state = rmh.init(position)
         new_state, info = rmh.step(rng_key, state)
 
@@ -875,7 +875,7 @@ class rmh:
 
     Parameters
     ----------
-    logprob_fn
+    logdensity_fn
         The log density probability density function from which we wish to sample.
     sigma
         The value of the covariance matrix of the gaussian proposal distribution.
@@ -891,19 +891,19 @@ class rmh:
 
     def __new__(  # type: ignore[misc]
         cls,
-        logprob_fn: Callable,
+        logdensity_fn: Callable,
         sigma: Array,
     ) -> MCMCSamplingAlgorithm:
         step = cls.kernel()
 
         def init_fn(position: PyTree):
-            return cls.init(position, logprob_fn)
+            return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
             return step(
                 rng_key,
                 state,
-                logprob_fn,
+                logdensity_fn,
                 sigma,
             )
 
@@ -920,7 +920,7 @@ class irmh:
 
     .. code::
 
-        rmh = blackjax.irmh(logprob_fn, proposal_distribution)
+        rmh = blackjax.irmh(logdensity_fn, proposal_distribution)
         state = rmh.init(position)
         new_state, info = rmh.step(rng_key, state)
 
@@ -933,7 +933,7 @@ class irmh:
 
     Parameters
     ----------
-    logprob_fn
+    logdensity_fn
         The log density probability density function from which we wish to sample.
     proposal_distribution
         A Callable that takes a random number generator and produces a new proposal. The
@@ -950,17 +950,17 @@ class irmh:
 
     def __new__(  # type: ignore[misc]
         cls,
-        logprob_fn: Callable,
+        logdensity_fn: Callable,
         proposal_distribution: Callable,
     ) -> MCMCSamplingAlgorithm:
 
         step = cls.kernel(proposal_distribution)
 
         def init_fn(position: PyTree):
-            return cls.init(position, logprob_fn)
+            return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(rng_key, state, logprob_fn)
+            return step(rng_key, state, logdensity_fn)
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
 
@@ -980,7 +980,7 @@ class orbital_hmc:
 
     .. code::
 
-        per_orbit = blackjax.orbital_hmc(logprob_fn, step_size, inverse_mass_matrix, period)
+        per_orbit = blackjax.orbital_hmc(logdensity_fn, step_size, inverse_mass_matrix, period)
         state = per_orbit.init(position)
         new_state, info = per_orbit.step(rng_key, state)
 
@@ -993,7 +993,7 @@ class orbital_hmc:
 
     Parameters
     ----------
-    logprob_fn
+    logdensity_fn
         The logarithm of the probability density function we wish to draw samples from. This
         is minus the potential energy function.
     step_size
@@ -1016,7 +1016,7 @@ class orbital_hmc:
 
     def __new__(  # type: ignore[misc]
         cls,
-        logprob_fn: Callable,
+        logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,  # assume momentum is always Gaussian
         period: int,
@@ -1026,13 +1026,13 @@ class orbital_hmc:
         step = cls.kernel(bijection)
 
         def init_fn(position: PyTree):
-            return cls.init(position, logprob_fn, period)
+            return cls.init(position, logdensity_fn, period)
 
         def step_fn(rng_key: PRNGKey, state):
             return step(
                 rng_key,
                 state,
-                logprob_fn,
+                logdensity_fn,
                 step_size,
                 inverse_mass_matrix,
                 period,
@@ -1124,7 +1124,7 @@ class ghmc:
 
     .. code::
 
-        ghmc_kernel = blackjax.ghmc(logprob_fn, step_size, alpha, delta)
+        ghmc_kernel = blackjax.ghmc(logdensity_fn, step_size, alpha, delta)
         state = ghmc_kernel.init(rng_key, position)
         new_state, info = ghmc_kernel.step(rng_key, state)
 
@@ -1137,8 +1137,8 @@ class ghmc:
 
     Parameters
     ----------
-    logprob_fn
-        The logprobability density function we wish to draw samples from. This
+    logdensity_fn
+        The log-density function we wish to draw samples from. This
         is minus the potential function.
     step_size
         A PyTree of the same structure as the target PyTree (position) with the
@@ -1167,7 +1167,7 @@ class ghmc:
 
     def __new__(  # type: ignore[misc]
         cls,
-        logprob_fn: Callable,
+        logdensity_fn: Callable,
         step_size: float,
         momentum_inverse_scale: PyTree,
         alpha: float,
@@ -1180,13 +1180,13 @@ class ghmc:
         step = cls.kernel(noise_gn, divergence_threshold)
 
         def init_fn(position: PyTree, rng_key: PRNGKey):
-            return cls.init(rng_key, position, logprob_fn)
+            return cls.init(rng_key, position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
             return step(
                 rng_key,
                 state,
-                logprob_fn,
+                logdensity_fn,
                 step_size,
                 momentum_inverse_scale,
                 alpha,
@@ -1223,7 +1223,7 @@ class pathfinder:
     approximate = staticmethod(vi.pathfinder.approximate)
     sample = staticmethod(vi.pathfinder.sample)
 
-    def __new__(cls, logprob_fn: Callable) -> VIAlgorithm:  # type: ignore[misc]
+    def __new__(cls, logdensity_fn: Callable) -> VIAlgorithm:  # type: ignore[misc]
         def approximate_fn(
             rng_key: PRNGKey,
             position: PyTree,
@@ -1231,7 +1231,7 @@ class pathfinder:
             **lbfgs_parameters,
         ):
             return cls.approximate(
-                rng_key, logprob_fn, position, num_samples, **lbfgs_parameters
+                rng_key, logdensity_fn, position, num_samples, **lbfgs_parameters
             )
 
         def sample_fn(
@@ -1244,7 +1244,7 @@ class pathfinder:
 
 def pathfinder_adaptation(
     algorithm: Union[hmc, nuts],
-    logprob_fn: Callable,
+    logdensity_fn: Callable,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
     **extra_parameters,
@@ -1256,7 +1256,7 @@ def pathfinder_adaptation(
     ----------
     algorithm
         The algorithm whose parameters are being tuned.
-    logprob_fn
+    logdensity_fn
         The log density probability density function from which we wish to sample.
     initial_step_size
         The initial step size used in the algorithm.
@@ -1284,7 +1284,7 @@ def pathfinder_adaptation(
         new_state, info = step_fn(
             rng_key,
             state,
-            logprob_fn,
+            logdensity_fn,
             adaptation_state.step_size,
             adaptation_state.inverse_mass_matrix,
             **extra_parameters,
@@ -1301,7 +1301,9 @@ def pathfinder_adaptation(
 
         init_key, sample_key, rng_key = jax.random.split(rng_key, 3)
 
-        pathfinder_state, _ = vi.pathfinder.approximate(init_key, logprob_fn, position)
+        pathfinder_state, _ = vi.pathfinder.approximate(
+            init_key, logdensity_fn, position
+        )
         init_warmup_state = init(
             pathfinder_state.alpha,
             pathfinder_state.beta,
@@ -1310,7 +1312,7 @@ def pathfinder_adaptation(
         )
 
         init_position, _ = vi.pathfinder.sample(sample_key, pathfinder_state)
-        init_state = algorithm.init(init_position, logprob_fn)
+        init_state = algorithm.init(init_position, logdensity_fn)
 
         keys = jax.random.split(rng_key, num_steps)
         last_state, warmup_chain = jax.lax.scan(
@@ -1328,7 +1330,7 @@ def pathfinder_adaptation(
         }
 
         def kernel(rng_key, state):
-            return step_fn(rng_key, state, logprob_fn, **parameters)
+            return step_fn(rng_key, state, logdensity_fn, **parameters)
 
         return AdaptationResults(last_chain_state, kernel, parameters)
 

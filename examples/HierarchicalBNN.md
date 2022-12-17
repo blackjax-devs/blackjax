@@ -165,7 +165,7 @@ def get_mean_predictions(predictions, threshold=0.5):
 
 ```{code-cell} python
 def fit_and_eval(
-    rng_key, model, logprob_fn, X_train, Y_train, X_test, grid, n_groups=None
+    rng_key, model, logdensity_fn, X_train, Y_train, X_test, grid, n_groups=None
 ):
     init_key, warmup_key, inference_key, train_key, test_key, grid_key = split(
         rng_key, 6
@@ -177,7 +177,7 @@ def fit_and_eval(
         initial_position = model.init(rng_key, jnp.ones(X_train.shape))
 
     # initialization
-    logprob = partial(logprob_fn, X=X_train, Y=Y_train, model=model)
+    logprob = partial(logdensity_fn, X=X_train, Y=Y_train, model=model)
 
     # warm up
     adapt = blackjax.window_adaptation(blackjax.nuts, logprob)
@@ -249,7 +249,7 @@ def loglikelihood_fn(params, X, Y, model):
     logits = jnp.ravel(model.apply(params, X))
     return jnp.sum(distrax.Bernoulli(logits).log_prob(Y))
 
-def logprob_fn_of_bnn(params, X, Y, model):
+def logdensity_fn_of_bnn(params, X, Y, model):
     return logprior_fn(params) + loglikelihood_fn(params, X, Y, model)
 ```
 
@@ -260,7 +260,7 @@ keys = split(rng_key, n_groups)
 
 def fit_and_eval_single_mlp(key, X_train, Y_train, X_test):
     return fit_and_eval(
-        key, bnn, logprob_fn_of_bnn, X_train, Y_train, X_test, grid, n_groups=None
+        key, bnn, logdensity_fn_of_bnn, X_train, Y_train, X_test, grid, n_groups=None
     )
 
 Ys_pred_train, Ys_pred_test, ppc_grid_single = vmap(fit_and_eval_single_mlp)(
@@ -389,7 +389,7 @@ def loglikelihood_fn(params, X, Y, model):
     logits = jnp.ravel(model.apply(params, X))
     return jnp.sum(distrax.Bernoulli(logits).log_prob(jnp.ravel(Y)))
 
-def logprob_fn_of_hnn(params, X, Y, model):
+def logdensity_fn_of_hnn(params, X, Y, model):
     return logprior_fn_of_hnn(params, model) + loglikelihood_fn(params, X, Y, model)
 ```
 
@@ -400,7 +400,7 @@ rng_key = PRNGKey(0)
 Ys_hierarchical_pred_train, Ys_hierarchical_pred_test, ppc_grid = fit_and_eval(
     rng_key,
     hnn,
-    logprob_fn_of_hnn,
+    logdensity_fn_of_hnn,
     Xs_train,
     Ys_train,
     Xs_test,

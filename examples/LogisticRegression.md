@@ -92,7 +92,7 @@ def log_sigmoid(z):
     return z - jnp.log(1 + jnp.exp(z))
 
 
-def logprob_fn(w, alpha=1.0):
+def logdensity_fn(w, alpha=1.0):
     """The log-probability density function of the posterior distribution of the model."""
     log_an = log_sigmoid(Phi @ w)
     an = Phi @ w
@@ -111,7 +111,7 @@ rng_key = random.PRNGKey(314)
 
 w0 = random.multivariate_normal(rng_key, 0.1 + jnp.zeros(M), jnp.eye(M))
 
-rmh = blackjax.rmh(logprob_fn, sigma=jnp.ones(M) * 0.7)
+rmh = blackjax.rmh(logdensity_fn, sigma=jnp.ones(M) * 0.7)
 initial_state = rmh.init(w0)
 ```
 

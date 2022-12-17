@@ -35,8 +35,8 @@ class MALAState(NamedTuple):
     """
 
     position: PyTree
-    logprob: float
-    logprob_grad: PyTree
+    logdensity: float
+    logdensity_grad: PyTree
 
 
 class MALAInfo(NamedTuple):
@@ -57,10 +57,10 @@ class MALAInfo(NamedTuple):
     is_accepted: bool
 
 
-def init(position: PyTree, logprob_fn: Callable) -> MALAState:
-    grad_fn = jax.value_and_grad(logprob_fn)
-    logprob, logprob_grad = grad_fn(position)
-    return MALAState(position, logprob, logprob_grad)
+def init(position: PyTree, logdensity_fn: Callable) -> MALAState:
+    grad_fn = jax.value_and_grad(logdensity_fn)
+    logdensity, logdensity_grad = grad_fn(position)
+    return MALAState(position, logdensity, logdensity_grad)
 
 
 def kernel():
@@ -80,7 +80,7 @@ def kernel():
             lambda new_x, x, g: new_x - x - step_size * g,
             new_state.position,
             state.position,
-            state.logprob_grad,
+            state.logdensity_grad,
         )
         theta_dot = jax.tree_util.tree_reduce(
             operator.add, jax.tree_util.tree_map(lambda x: jnp.sum(x * x), theta)
@@ -88,10 +88,10 @@ def kernel():
         return -0.25 * (1.0 / step_size) * theta_dot
 
     def one_step(
-        rng_key: PRNGKey, state: MALAState, logprob_fn: Callable, step_size: float
+        rng_key: PRNGKey, state: MALAState, logdensity_fn: Callable, step_size: float
     ) -> Tuple[MALAState, MALAInfo]:
         """Generate a new sample with the MALA kernel."""
-        grad_fn = jax.value_and_grad(logprob_fn)
+        grad_fn = jax.value_and_grad(logdensity_fn)
         integrator = diffusions.overdamped_langevin(grad_fn)
 
         key_integrator, key_rmh = jax.random.split(rng_key)
@@ -99,8 +99,8 @@ def kernel():
         new_state = integrator(key_integrator, state, step_size)
 
         delta = (
-            new_state.logprob
-            - state.logprob
+            new_state.logdensity
+            - state.logdensity
             + transition_probability(new_state, state, step_size)
             - transition_probability(state, new_state, step_size)
         )

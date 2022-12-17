@@ -510,10 +510,10 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         cov = cov.at[0, 1].set(rho * scale[0] * scale[1])
         cov = cov.at[1, 0].set(rho * scale[0] * scale[1])
 
-        def logprob_fn(x):
+        def logdensity_fn(x):
             return stats.multivariate_normal.logpdf(x, loc, cov).sum()
 
-        return logprob_fn, loc, scale, rho
+        return logdensity_fn, loc, scale, rho
 
     def mcse_test(self, samples, true_param, p_val=0.01):
         posterior_mean = jnp.mean(samples, axis=[0, 1])
@@ -530,11 +530,14 @@ class MonteCarloStandardErrorTest(chex.TestCase):
     def test_mcse(self, algorithm, parameters):
         """Test convergence using Monte Carlo CLT across multiple chains."""
         init_fn_key, pos_init_key, sample_key = jax.random.split(self.key, 3)
-        logprob_fn, true_loc, true_scale, true_rho = self.generate_multivariate_target(
-            None
-        )
+        (
+            logdensity_fn,
+            true_loc,
+            true_scale,
+            true_rho,
+        ) = self.generate_multivariate_target(None)
         kernel = algorithm(
-            logprob_fn,
+            logdensity_fn,
             inverse_mass_matrix=true_scale,
             **parameters,
         )

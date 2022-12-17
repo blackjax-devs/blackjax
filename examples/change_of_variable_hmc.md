@@ -250,19 +250,19 @@ from collections import namedtuple
 params = namedtuple("model_params", ["a", "b", "thetas"])
 
 
-def joint_logprob(params):
+def joint_logdensity(params):
     # improper prior for a,b
-    logprob_ab = jnp.log(jnp.power(params.a + params.b, -2.5))
+    logdensity_ab = jnp.log(jnp.power(params.a + params.b, -2.5))
 
-    # logprob prior of theta
-    logprob_thetas = tfd.Beta(params.a, params.b).log_prob(params.thetas).sum()
+    # logdensity prior of theta
+    logdensity_thetas = tfd.Beta(params.a, params.b).log_prob(params.thetas).sum()
 
     # loglikelihood of y
-    logprob_y = jnp.sum(
+    logdensity_y = jnp.sum(
         tfd.Binomial(group_size, probs=params.thetas).log_prob(n_of_positives)
     )
 
-    return logprob_ab + logprob_thetas + logprob_y
+    return logdensity_ab + logdensity_thetas + logdensity_y
 ```
 
 We take initial parameters from uniform distribution
@@ -285,14 +285,14 @@ def init_param_fn(seed):
 
 
 init_param = init_param_fn(rng_key)
-joint_logprob(init_param)  # sanity check
+joint_logdensity(init_param)  # sanity check
 ```
 
 Now we use blackjax's window adaption algorithm to get NUTS kernel and initial states. Window adaption algorithm will automatically configure `inverse_mass_matrix` and `step size`
 
 ```{code-cell} python
 %%time
-warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob)
+warmup = blackjax.window_adaptation(blackjax.nuts, joint_logdensity)
 
 # we use 4 chains for sampling
 n_chains = 4
@@ -333,7 +333,7 @@ def inference_loop_multiple_chains(
 %%time
 n_samples = 1000
 states, infos = inference_loop_multiple_chains(
-    rng_key, initial_states, tuned_params, joint_logprob, n_samples, n_chains
+    rng_key, initial_states, tuned_params, joint_logdensity, n_samples, n_chains
 )
 ```
 
@@ -398,7 +398,7 @@ Trace plots also looks terrible and does not seems to be converged! Also, black 
 Well, it's related to support of latent variable. In HMC, the latent variable must be in an unconstrained space, but in above model `theta` is constrained in between 0 to 1. We can use change of variable trick to solve above problem
 
 ## Change of Variable
-We can sample from logits which is in unconstrained space and in `joint_logprob()` we can convert logits to theta by suitable bijector (sigmoid). We calculate jacobian (first order derivaive) of bijector to tranform one probability distribution to another
+We can sample from logits which is in unconstrained space and in `joint_logdensity()` we can convert logits to theta by suitable bijector (sigmoid). We calculate jacobian (first order derivaive) of bijector to tranform one probability distribution to another
 
 ```{code-cell} python
 transform_fn = jax.nn.sigmoid
@@ -416,26 +416,26 @@ log_jacobian_fn = bij.forward_log_det_jacobian
 ```{code-cell} python
 params = namedtuple("model_params", ["a", "b", "logits"])
 
-def joint_logprob_change_of_var(params):
+def joint_logdensity_change_of_var(params):
     # change of variable
     thetas = transform_fn(params.logits)
     log_det_jacob = jnp.sum(log_jacobian_fn(params.logits))
 
     # improper prior for a,b
-    logprob_ab = jnp.log(jnp.power(params.a + params.b, -2.5))
+    logdensity_ab = jnp.log(jnp.power(params.a + params.b, -2.5))
 
-    # logprob prior of theta
-    logprob_thetas = tfd.Beta(params.a, params.b).log_prob(thetas).sum()
+    # logdensity prior of theta
+    logdensity_thetas = tfd.Beta(params.a, params.b).log_prob(thetas).sum()
 
     # loglikelihood of y
-    logprob_y = jnp.sum(
+    logdensity_y = jnp.sum(
         tfd.Binomial(group_size, probs=thetas).log_prob(n_of_positives)
     )
 
-    return logprob_ab + logprob_thetas + logprob_y + log_det_jacob
+    return logdensity_ab + logdensity_thetas + logdensity_y + log_det_jacob
 ```
 
-except for the change of variable in `joint_logprob()` function, everthing will remain same
+except for the change of variable in `joint_logdensity()` function, everthing will remain same
 
 ```{code-cell} python
 rng_key = jax.random.PRNGKey(0)
@@ -454,12 +454,12 @@ def init_param_fn(seed):
 
 
 init_param = init_param_fn(rng_key)
-joint_logprob_change_of_var(init_param)  # sanity check
+joint_logdensity_change_of_var(init_param)  # sanity check
 ```
 
 ```{code-cell} python
 %%time
-warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob_change_of_var)
+warmup = blackjax.window_adaptation(blackjax.nuts, joint_logdensity_change_of_var)
 
 # we use 4 chains for sampling
 n_chains = 4
@@ -478,7 +478,7 @@ initial_states, tuned_params = call_warmup(keys, init_params)
 %%time
 n_samples = 1000
 states, infos = inference_loop_multiple_chains(
-    rng_key, initial_states, tuned_params, joint_logprob_change_of_var, n_samples, n_chains
+    rng_key, initial_states, tuned_params, joint_logdensity_change_of_var, n_samples, n_chains
 )
 ```
 
@@ -524,7 +524,7 @@ def model():
     # TFP does not have improper prior, use uninformative prior instead
     a = yield tfd.HalfCauchy(0, 100, name='a')
     b = yield tfd.HalfCauchy(0, 100, name='b')
-    yield tfed.IncrementLogProb(jnp.log(jnp.power(a + b, -2.5)), name='logprob_ab')
+    yield tfed.IncrementLogProb(jnp.log(jnp.power(a + b, -2.5)), name='logdensity_ab')
 
     thetas = yield tfd.Sample(tfd.Beta(a, b), n_rat_tumors, name='thetas')
     yield tfd.Binomial(group_size, probs=thetas, name='y')
@@ -535,7 +535,7 @@ def model():
 
 ```{code-cell} python
 # Condition on the observed (and auxiliary variable).
-pinned = model.experimental_pin(logprob_ab=(), y=n_of_positives)
+pinned = model.experimental_pin(logdensity_ab=(), y=n_of_positives)
 # Get the default change of variable bijectors from the model
 bijectors = pinned.experimental_default_event_space_bijector()
 
@@ -545,7 +545,7 @@ prior_sample = pinned.sample_unpinned(seed=rng_key)
 ```
 
 ```{code-cell} python
-def joint_logprob(unbound_param):
+def joint_logdensity(unbound_param):
     param = bijectors.forward(unbound_param)
     log_det_jacobian = bijectors.forward_log_det_jacobian(unbound_param)
     return pinned.unnormalized_log_prob(param) + log_det_jacobian
@@ -554,7 +554,7 @@ def joint_logprob(unbound_param):
 ```{code-cell} python
 %%time
 rng_key = jax.random.PRNGKey(0)
-warmup = blackjax.window_adaptation(blackjax.nuts, joint_logprob)
+warmup = blackjax.window_adaptation(blackjax.nuts, joint_logdensity)
 
 # we use 4 chains for sampling
 n_chains = 4
@@ -575,7 +575,7 @@ initial_states, tuned_params = call_warmup(keys, init_params)
 %%time
 n_samples = 1000
 states, infos = inference_loop_multiple_chains(
-    rng_key, initial_states, tuned_params, joint_logprob, n_samples, n_chains
+    rng_key, initial_states, tuned_params, joint_logdensity, n_samples, n_chains
 )
 ```
 

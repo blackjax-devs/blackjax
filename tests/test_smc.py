@@ -13,7 +13,7 @@ import blackjax.smc.base as base
 import blackjax.smc.resampling as resampling
 
 
-def kernel_logprob_fn(position):
+def kernel_logdensity_fn(position):
     return jnp.sum(stats.norm.logpdf(position))
 
 
@@ -30,8 +30,8 @@ class SMCTest(chex.TestCase):
     @parameterized.parameters([500, 1000, 5000])
     def test_smc(self, N):
 
-        mcmc_factory = lambda logprob_fn: blackjax.hmc(
-            logprob_fn,
+        mcmc_factory = lambda logdensity_fn: blackjax.hmc(
+            logdensity_fn,
             step_size=1e-2,
             inverse_mass_matrix=jnp.eye(1),
             num_integration_steps=50,
@@ -49,7 +49,7 @@ class SMCTest(chex.TestCase):
         updated_particles, _ = self.variant(
             functools.partial(
                 kernel,
-                logprob_fn=kernel_logprob_fn,
+                logdensity_fn=kernel_logdensity_fn,
                 log_weight_fn=specialized_log_weights_fn,
             )
         )(self.key, init_particles)
