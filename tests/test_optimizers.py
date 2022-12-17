@@ -10,7 +10,7 @@ from absl.testing import absltest, parameterized
 from jax.flatten_util import ravel_pytree
 from jaxopt._src.lbfgs import compute_gamma, inv_hessian_product
 
-import blackjax.optimizers.dual_averaging as dual_averaging
+from blackjax.optimizers.dual_averaging import dual_averaging
 from blackjax.optimizers.lbfgs import (
     lbfgs_inverse_hessian_factors,
     lbfgs_inverse_hessian_formula_1,
@@ -38,7 +38,7 @@ class OptimizerTest(chex.TestCase):
 
         # Our target gradient is 0. we increase the rate of convergence by
         # increasing the value of gamma (see documentation of the algorithm).
-        init, update, final = dual_averaging.dual_averaging(gamma=0.3)
+        init, update, final = dual_averaging(gamma=0.3)
         unpdate_fn = self.variant(update)
 
         da_state = init(3)
