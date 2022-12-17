@@ -17,8 +17,8 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.optimizers.dual_averaging import dual_averaging
 from blackjax.mcmc.hmc import HMCState
+from blackjax.optimizers.dual_averaging import dual_averaging
 
 __all__ = [
     "dual_averaging_adaptation",

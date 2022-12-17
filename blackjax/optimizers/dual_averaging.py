@@ -20,6 +20,7 @@ __all__ = [
     "dual_averaging",
 ]
 
+
 class DualAveragingState(NamedTuple):
     """State carried through the dual averaging procedure.
 
