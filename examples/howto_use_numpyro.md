@@ -163,7 +163,7 @@ fig.set_size_inches(12, 10)
 for i in range(J):
     axes[i][0].plot(samples["theta_base"][:, i])
     axes[i][0].title.set_text(f"School {i} relative treatment effect chain")
-    sns.kdeplot(samples["theta_base"][:, i], ax=axes[i][1], shade=True)
+    sns.kdeplot(samples["theta_base"][:, i], ax=axes[i][1], fill=True)
     axes[i][1].title.set_text(f"School {i} relative treatment effect distribution")
 axes[J - 1][0].set_xlabel("Iteration")
 axes[J - 1][1].set_xlabel("School effect")
