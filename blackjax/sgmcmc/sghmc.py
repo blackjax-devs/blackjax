@@ -35,12 +35,13 @@ def kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
         minibatch: PyTree,
         step_size: float,
         num_integration_steps: int,
+        temperature: float = 1.0,
     ) -> PyTree:
         def body_fn(state, rng_key):
             position, momentum = state
             logdensity_grad = grad_estimator(position, minibatch)
             position, momentum = integrator(
-                rng_key, position, momentum, logdensity_grad, step_size
+                rng_key, position, momentum, logdensity_grad, step_size, temperature
             )
             return ((position, momentum), position)
 

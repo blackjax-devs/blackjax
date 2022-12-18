@@ -79,13 +79,14 @@ def sghmc(alpha: float = 0.01, beta: float = 0):
         momentum: PyTree,
         logdensity_grad: PyTree,
         step_size: float,
+        temperature: float = 1.0,
     ):
         noise = generate_gaussian_noise(rng_key, position)
         position = jax.tree_util.tree_map(lambda x, p: x + p, position, momentum)
         momentum = jax.tree_util.tree_map(
             lambda p, g, n: (1.0 - alpha) * p
             + step_size * g
-            + jnp.sqrt(2 * step_size * (alpha - beta)) * n,
+            + jnp.sqrt(2 * step_size * (alpha - beta) * temperature) * n,
             momentum,
             logdensity_grad,
             noise,
