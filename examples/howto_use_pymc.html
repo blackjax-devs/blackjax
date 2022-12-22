@@ -418,7 +418,7 @@ title="Source repository"
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pymc.sampling_jax</span> <span class="kn">import</span> <span class="n">get_jaxified_logp</span>
 
 <span class="n">rvs</span> <span class="o">=</span> <span class="p">[</span><span class="n">rv</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">rv</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">value_vars</span><span class="p">]</span>
-<span class="n">logprob_fn</span> <span class="o">=</span> <span class="n">get_jaxified_logp</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">logdensity_fn</span> <span class="o">=</span> <span class="n">get_jaxified_logp</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -431,8 +431,8 @@ title="Source repository"
 Ambiguities exist in dispatched function _unify
 
 The following signatures may result in ambiguous behavior:
+	[object, ConstrainedVar, Mapping], [ConstrainedVar, Var, Mapping]
 	[object, ConstrainedVar, Mapping], [ConstrainedVar, object, Mapping]
-	[ConstrainedVar, Var, Mapping], [object, ConstrainedVar, Mapping]
 	[ConstrainedVar, object, Mapping], [object, ConstrainedVar, Mapping]
 	[object, ConstrainedVar, Mapping], [ConstrainedVar, Var, Mapping]
 
@@ -468,7 +468,7 @@ WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 
 
 <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1234</span><span class="p">)</span>
 
-<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
+<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 <span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">init_position</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>

@@ -649,7 +649,7 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
                |TensorConstant{1.0} [id FG]
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;ipykernel.iostream.OutStream at 0x7f9a8bdfd5b0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;ipykernel.iostream.OutStream at 0x7f40dc7fe550&gt;
 </pre></div>
 </div>
 </div>
@@ -657,8 +657,8 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 <p>To sample with Blackjax we will need to use Aesara’s JAX backend; <code class="docutils literal notranslate"><span class="pre">logprob_jax</span></code> defined below is a function that uses JAX operators, can be passed as an argument to <code class="docutils literal notranslate"><span class="pre">jax.jit</span></code> and <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code>:</p>
 <div class="cell tag_remove-stderr docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logprob_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((</span><span class="n">a_vv</span><span class="p">,</span> <span class="n">b_vv</span><span class="p">,</span> <span class="n">theta_vv</span><span class="p">,</span> <span class="n">y_vv</span><span class="p">),</span> <span class="n">logprob</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;JAX&quot;</span><span class="p">)</span>
-<span class="n">logprob_jax</span> <span class="o">=</span> <span class="n">logprob_fn</span><span class="o">.</span><span class="n">vm</span><span class="o">.</span><span class="n">jit_fn</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logdensity_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((</span><span class="n">a_vv</span><span class="p">,</span> <span class="n">b_vv</span><span class="p">,</span> <span class="n">theta_vv</span><span class="p">,</span> <span class="n">y_vv</span><span class="p">),</span> <span class="n">logprob</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;JAX&quot;</span><span class="p">)</span>
+<span class="n">logprob_jax</span> <span class="o">=</span> <span class="n">logdensity_fn</span><span class="o">.</span><span class="n">vm</span><span class="o">.</span><span class="n">jit_fn</span>
 </pre></div>
 </div>
 </div>
@@ -673,7 +673,7 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 </ol>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">position</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logdensity_fn</span><span class="p">(</span><span class="n">position</span><span class="p">):</span>
     <span class="n">flat_position</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
     <span class="k">return</span> <span class="n">logprob_jax</span><span class="p">(</span><span class="o">*</span><span class="n">flat_position</span><span class="p">,</span> <span class="n">n_of_positives</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
@@ -734,7 +734,7 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 <span class="n">n_adapt</span> <span class="o">=</span> <span class="mi">3000</span>
 <span class="n">n_samples</span> <span class="o">=</span> <span class="mi">1000</span>
 
-<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
+<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 <span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">init_position</span><span class="p">,</span> <span class="n">n_adapt</span><span class="p">)</span>
 
 <span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span>

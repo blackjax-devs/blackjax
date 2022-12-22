@@ -175,13 +175,13 @@ Let us now demonstrate that we can use `f_with_gradients` with Blackjax. We defi
 import blackjax
 
 
-def logprob_fn(y):
-    logprob = jax.scipy.stats.norm.logpdf(y)
+def logdensity_fn(y):
+    logdensity = jax.scipy.stats.norm.logpdf(y)
     x = f_with_gradient(y, 3)
-    logprob += jax.scipy.stats.norm.logpdf(x)
-    return logprob
+    logdensity += jax.scipy.stats.norm.logpdf(x)
+    return logdensity
 
-hmc = blackjax.hmc(logprob_fn,1e-3, jnp.ones(1), 10)
+hmc = blackjax.hmc(logdensity_fn,1e-3, jnp.ones(1), 10)
 state = hmc.init(1.)
 
 rng_key = jax.random.PRNGKey(0)

@@ -105,7 +105,7 @@ def inference_loop(rng_key, mcmc_kernel, initial_state, num_samples):
     return states
 
 
-def full_logprob(x):
+def full_logdensity(x):
     return -V(x) + prior_log_prob(x)
 
 
@@ -126,7 +126,7 @@ hmc_parameters = dict(
     step_size=1e-4, inverse_mass_matrix=inv_mass_matrix, num_integration_steps=50
 )
 
-hmc = blackjax.hmc(full_logprob, **hmc_parameters)
+hmc = blackjax.hmc(full_logdensity, **hmc_parameters)
 hmc_state = hmc.init(jnp.ones((1,)))
 hmc_samples = inference_loop(key, hmc.step, hmc_state, n_samples)
 ```
@@ -148,7 +148,7 @@ We now use a NUTS kernel.
 
 nuts_parameters = dict(step_size=1e-4, inverse_mass_matrix=inv_mass_matrix)
 
-nuts = blackjax.nuts(full_logprob, **nuts_parameters)
+nuts = blackjax.nuts(full_logdensity, **nuts_parameters)
 nuts_state = nuts.init(jnp.ones((1,)))
 nuts_samples = inference_loop(key, nuts.step, nuts_state, n_samples)
 ```
@@ -298,7 +298,7 @@ hmc_parameters = dict(
     step_size=1e-2, inverse_mass_matrix=inv_mass_matrix, num_integration_steps=50
 )
 
-hmc = blackjax.hmc(full_logprob, **hmc_parameters)
+hmc = blackjax.hmc(full_logdensity, **hmc_parameters)
 hmc_state = hmc.init(jnp.ones((1,)))
 hmc_samples = inference_loop(key, hmc.step, hmc_state, n_samples)
 ```
@@ -321,7 +321,7 @@ We do the same using a NUTS kernel.
 
 nuts_parameters = dict(step_size=1e-2, inverse_mass_matrix=inv_mass_matrix)
 
-nuts = blackjax.nuts(full_logprob, **nuts_parameters)
+nuts = blackjax.nuts(full_logdensity, **nuts_parameters)
 nuts_state = nuts.init(jnp.ones((1,)))
 nuts_samples = inference_loop(key, nuts.step, nuts_state, n_samples)
 ```

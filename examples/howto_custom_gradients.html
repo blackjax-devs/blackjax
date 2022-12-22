@@ -36,7 +36,7 @@
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Use a logprob function that is not compatible with JAX’s primitives" href="howto_other_frameworks.html" />
+    <link rel="next" title="Use a logdensity function that is not compatible with JAX’s primitives" href="howto_other_frameworks.html" />
     <link rel="prev" title="Sample with multiple chains in parallel" href="howto_sample_multiple_chains.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -656,13 +656,13 @@ $$</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax</span>
 
 
-<span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
-    <span class="n">logprob</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">logdensity_fn</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+    <span class="n">logdensity</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">f_with_gradient</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-    <span class="n">logprob</span> <span class="o">+=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">logprob</span>
+    <span class="n">logdensity</span> <span class="o">+=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">logdensity</span>
 
-<span class="n">hmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">logprob_fn</span><span class="p">,</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">hmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="mf">1.</span><span class="p">)</span>
 
 <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -705,7 +705,7 @@ $$</p>
     <a class='right-next' id="next-link" href="howto_other_frameworks.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Use a logprob function that is not compatible with JAX’s primitives</p>
+        <p class="prev-next-title">Use a logdensity function that is not compatible with JAX’s primitives</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

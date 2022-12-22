@@ -607,7 +607,7 @@ title="Source repository"
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">loglikelihood_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">f</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="n">f</span><span class="p">)</span> <span class="o">/</span> <span class="n">y_sd</span><span class="o">**</span><span class="mi">2</span>
-<span class="n">logprob_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">loglikelihood_fn</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">f</span> <span class="o">@</span> <span class="n">invSigma</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+<span class="n">logdensity_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">loglikelihood_fn</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">f</span> <span class="o">@</span> <span class="n">invSigma</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -626,7 +626,7 @@ title="Source repository"
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">init</span><span class="p">,</span> <span class="n">step</span> <span class="o">=</span> <span class="n">mgrad_gaussian</span><span class="p">(</span><span class="n">logprob_fn</span><span class="o">=</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">covariance</span><span class="o">=</span><span class="n">Sigma</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">init</span><span class="p">,</span> <span class="n">step</span> <span class="o">=</span> <span class="n">mgrad_gaussian</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">covariance</span><span class="o">=</span><span class="n">Sigma</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -665,8 +665,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10.6 s, sys: 119 ms, total: 10.7 s
-Wall time: 10.6 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 12.3 s, sys: 94.3 ms, total: 12.4 s
+Wall time: 12.2 s
 </pre></div>
 </div>
 </div>

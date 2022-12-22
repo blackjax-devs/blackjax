@@ -710,19 +710,19 @@ title="Source repository"
 <span class="n">params</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;model_params&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;thetas&quot;</span><span class="p">])</span>
 
 
-<span class="k">def</span> <span class="nf">joint_logprob</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">joint_logdensity</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
     <span class="c1"># improper prior for a,b</span>
-    <span class="n">logprob_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">a</span> <span class="o">+</span> <span class="n">params</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.5</span><span class="p">))</span>
+    <span class="n">logdensity_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">a</span> <span class="o">+</span> <span class="n">params</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.5</span><span class="p">))</span>
 
-    <span class="c1"># logprob prior of theta</span>
-    <span class="n">logprob_thetas</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">thetas</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="c1"># logdensity prior of theta</span>
+    <span class="n">logdensity_thetas</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">thetas</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
     <span class="c1"># loglikelihood of y</span>
-    <span class="n">logprob_y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+    <span class="n">logdensity_y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
         <span class="n">tfd</span><span class="o">.</span><span class="n">Binomial</span><span class="p">(</span><span class="n">group_size</span><span class="p">,</span> <span class="n">probs</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">thetas</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">n_of_positives</span><span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">logprob_ab</span> <span class="o">+</span> <span class="n">logprob_thetas</span> <span class="o">+</span> <span class="n">logprob_y</span>
+    <span class="k">return</span> <span class="n">logdensity_ab</span> <span class="o">+</span> <span class="n">logdensity_thetas</span> <span class="o">+</span> <span class="n">logdensity_y</span>
 </pre></div>
 </div>
 </div>
@@ -747,7 +747,7 @@ title="Source repository"
 
 
 <span class="n">init_param</span> <span class="o">=</span> <span class="n">init_param_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-<span class="n">joint_logprob</span><span class="p">(</span><span class="n">init_param</span><span class="p">)</span>  <span class="c1"># sanity check</span>
+<span class="n">joint_logdensity</span><span class="p">(</span><span class="n">init_param</span><span class="p">)</span>  <span class="c1"># sanity check</span>
 </pre></div>
 </div>
 </div>
@@ -761,7 +761,7 @@ title="Source repository"
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">joint_logprob</span><span class="p">)</span>
+<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">joint_logdensity</span><span class="p">)</span>
 
 <span class="c1"># we use 4 chains for sampling</span>
 <span class="n">n_chains</span> <span class="o">=</span> <span class="mi">4</span>
@@ -778,8 +778,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.54 s, sys: 74.7 ms, total: 9.61 s
-Wall time: 9.59 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.92 s, sys: 57.2 ms, total: 9.97 s
+Wall time: 9.95 s
 </pre></div>
 </div>
 </div>
@@ -813,14 +813,14 @@ Wall time: 9.59 s
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 <span class="n">n_samples</span> <span class="o">=</span> <span class="mi">1000</span>
 <span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span><span class="p">,</span> <span class="n">joint_logprob</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_chains</span>
+    <span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span><span class="p">,</span> <span class="n">joint_logdensity</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_chains</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.7 s, sys: 39.6 ms, total: 8.74 s
-Wall time: 8.73 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.96 s, sys: 48.2 ms, total: 9.01 s
+Wall time: 9 s
 </pre></div>
 </div>
 </div>
@@ -1813,7 +1813,7 @@ Wall time: 8.73 s
 </section>
 <section id="change-of-variable">
 <h2>Change of Variable<a class="headerlink" href="#change-of-variable" title="Permalink to this headline">#</a></h2>
-<p>We can sample from logits which is in unconstrained space and in <code class="docutils literal notranslate"><span class="pre">joint_logprob()</span></code> we can convert logits to theta by suitable bijector (sigmoid). We calculate jacobian (first order derivaive) of bijector to tranform one probability distribution to another</p>
+<p>We can sample from logits which is in unconstrained space and in <code class="docutils literal notranslate"><span class="pre">joint_logdensity()</span></code> we can convert logits to theta by suitable bijector (sigmoid). We calculate jacobian (first order derivaive) of bijector to tranform one probability distribution to another</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">transform_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span>
@@ -1836,28 +1836,28 @@ Wall time: 8.73 s
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">params</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;model_params&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;logits&quot;</span><span class="p">])</span>
 
-<span class="k">def</span> <span class="nf">joint_logprob_change_of_var</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">joint_logdensity_change_of_var</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
     <span class="c1"># change of variable</span>
     <span class="n">thetas</span> <span class="o">=</span> <span class="n">transform_fn</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">logits</span><span class="p">)</span>
     <span class="n">log_det_jacob</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">log_jacobian_fn</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">logits</span><span class="p">))</span>
 
     <span class="c1"># improper prior for a,b</span>
-    <span class="n">logprob_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">a</span> <span class="o">+</span> <span class="n">params</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.5</span><span class="p">))</span>
+    <span class="n">logdensity_ab</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">a</span> <span class="o">+</span> <span class="n">params</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.5</span><span class="p">))</span>
 
-    <span class="c1"># logprob prior of theta</span>
-    <span class="n">logprob_thetas</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">thetas</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="c1"># logdensity prior of theta</span>
+    <span class="n">logdensity_thetas</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">thetas</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
     <span class="c1"># loglikelihood of y</span>
-    <span class="n">logprob_y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+    <span class="n">logdensity_y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
         <span class="n">tfd</span><span class="o">.</span><span class="n">Binomial</span><span class="p">(</span><span class="n">group_size</span><span class="p">,</span> <span class="n">probs</span><span class="o">=</span><span class="n">thetas</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">n_of_positives</span><span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">logprob_ab</span> <span class="o">+</span> <span class="n">logprob_thetas</span> <span class="o">+</span> <span class="n">logprob_y</span> <span class="o">+</span> <span class="n">log_det_jacob</span>
+    <span class="k">return</span> <span class="n">logdensity_ab</span> <span class="o">+</span> <span class="n">logdensity_thetas</span> <span class="o">+</span> <span class="n">logdensity_y</span> <span class="o">+</span> <span class="n">log_det_jacob</span>
 </pre></div>
 </div>
 </div>
 </div>
-<p>except for the change of variable in <code class="docutils literal notranslate"><span class="pre">joint_logprob()</span></code> function, everthing will remain same</p>
+<p>except for the change of variable in <code class="docutils literal notranslate"><span class="pre">joint_logdensity()</span></code> function, everthing will remain same</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -1876,7 +1876,7 @@ Wall time: 8.73 s
 
 
 <span class="n">init_param</span> <span class="o">=</span> <span class="n">init_param_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-<span class="n">joint_logprob_change_of_var</span><span class="p">(</span><span class="n">init_param</span><span class="p">)</span>  <span class="c1"># sanity check</span>
+<span class="n">joint_logdensity_change_of_var</span><span class="p">(</span><span class="n">init_param</span><span class="p">)</span>  <span class="c1"># sanity check</span>
 </pre></div>
 </div>
 </div>
@@ -1889,7 +1889,7 @@ Wall time: 8.73 s
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">joint_logprob_change_of_var</span><span class="p">)</span>
+<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">joint_logdensity_change_of_var</span><span class="p">)</span>
 
 <span class="c1"># we use 4 chains for sampling</span>
 <span class="n">n_chains</span> <span class="o">=</span> <span class="mi">4</span>
@@ -1906,8 +1906,8 @@ Wall time: 8.73 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.2 s, sys: 27.7 ms, total: 13.2 s
-Wall time: 13.2 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.8 s, sys: 23.8 ms, total: 13.8 s
+Wall time: 13.8 s
 </pre></div>
 </div>
 </div>
@@ -1917,14 +1917,14 @@ Wall time: 13.2 s
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 <span class="n">n_samples</span> <span class="o">=</span> <span class="mi">1000</span>
 <span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span><span class="p">,</span> <span class="n">joint_logprob_change_of_var</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_chains</span>
+    <span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span><span class="p">,</span> <span class="n">joint_logdensity_change_of_var</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_chains</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.88 s, sys: 32 ms, total: 8.91 s
-Wall time: 8.91 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.11 s, sys: 27.9 ms, total: 9.14 s
+Wall time: 9.13 s
 </pre></div>
 </div>
 </div>
@@ -2903,7 +2903,7 @@ Wall time: 8.91 s
     <span class="c1"># TFP does not have improper prior, use uninformative prior instead</span>
     <span class="n">a</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">tfd</span><span class="o">.</span><span class="n">HalfCauchy</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
     <span class="n">b</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">tfd</span><span class="o">.</span><span class="n">HalfCauchy</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
-    <span class="k">yield</span> <span class="n">tfed</span><span class="o">.</span><span class="n">IncrementLogProb</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.5</span><span class="p">)),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;logprob_ab&#39;</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">tfed</span><span class="o">.</span><span class="n">IncrementLogProb</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.5</span><span class="p">)),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;logdensity_ab&#39;</span><span class="p">)</span>
 
     <span class="n">thetas</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">tfd</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">n_rat_tumors</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;thetas&#39;</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Binomial</span><span class="p">(</span><span class="n">group_size</span><span class="p">,</span> <span class="n">probs</span><span class="o">=</span><span class="n">thetas</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
@@ -2917,7 +2917,7 @@ Wall time: 8.91 s
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Condition on the observed (and auxiliary variable).</span>
-<span class="n">pinned</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">experimental_pin</span><span class="p">(</span><span class="n">logprob_ab</span><span class="o">=</span><span class="p">(),</span> <span class="n">y</span><span class="o">=</span><span class="n">n_of_positives</span><span class="p">)</span>
+<span class="n">pinned</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">experimental_pin</span><span class="p">(</span><span class="n">logdensity_ab</span><span class="o">=</span><span class="p">(),</span> <span class="n">y</span><span class="o">=</span><span class="n">n_of_positives</span><span class="p">)</span>
 <span class="c1"># Get the default change of variable bijectors from the model</span>
 <span class="n">bijectors</span> <span class="o">=</span> <span class="n">pinned</span><span class="o">.</span><span class="n">experimental_default_event_space_bijector</span><span class="p">()</span>
 
@@ -2930,7 +2930,7 @@ Wall time: 8.91 s
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">joint_logprob</span><span class="p">(</span><span class="n">unbound_param</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">joint_logdensity</span><span class="p">(</span><span class="n">unbound_param</span><span class="p">):</span>
     <span class="n">param</span> <span class="o">=</span> <span class="n">bijectors</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">unbound_param</span><span class="p">)</span>
     <span class="n">log_det_jacobian</span> <span class="o">=</span> <span class="n">bijectors</span><span class="o">.</span><span class="n">forward_log_det_jacobian</span><span class="p">(</span><span class="n">unbound_param</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">pinned</span><span class="o">.</span><span class="n">unnormalized_log_prob</span><span class="p">(</span><span class="n">param</span><span class="p">)</span> <span class="o">+</span> <span class="n">log_det_jacobian</span>
@@ -2942,7 +2942,7 @@ Wall time: 8.91 s
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">joint_logprob</span><span class="p">)</span>
+<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">joint_logdensity</span><span class="p">)</span>
 
 <span class="c1"># we use 4 chains for sampling</span>
 <span class="n">n_chains</span> <span class="o">=</span> <span class="mi">4</span>
@@ -2961,8 +2961,8 @@ Wall time: 8.91 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 16.6 s, sys: 67.7 ms, total: 16.7 s
-Wall time: 16.7 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.4 s, sys: 68 ms, total: 17.4 s
+Wall time: 17.4 s
 </pre></div>
 </div>
 </div>
@@ -2972,14 +2972,14 @@ Wall time: 16.7 s
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 <span class="n">n_samples</span> <span class="o">=</span> <span class="mi">1000</span>
 <span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span><span class="p">,</span> <span class="n">joint_logprob</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_chains</span>
+    <span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="n">tuned_params</span><span class="p">,</span> <span class="n">joint_logdensity</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_chains</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.83 s, sys: 23.9 ms, total: 9.85 s
-Wall time: 9.84 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10.3 s, sys: 32 ms, total: 10.3 s
+Wall time: 10.3 s
 </pre></div>
 </div>
 </div>

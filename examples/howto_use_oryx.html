@@ -524,7 +524,7 @@ Number of data points: 150
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">joint_log_prob</span>
 
-<span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">weights</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">logdensity_fn</span><span class="p">(</span><span class="n">weights</span><span class="p">):</span>
   <span class="k">return</span> <span class="n">joint_log_prob</span><span class="p">(</span><span class="n">predict</span><span class="p">(</span><span class="n">bnn</span><span class="p">))(</span><span class="nb">dict</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">labels</span><span class="p">),</span> <span class="n">features</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -537,14 +537,14 @@ Number of data points: 150
 <span class="kn">import</span> <span class="nn">blackjax</span>
 
 <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">)</span>
+<span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 <span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_weights</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2min 24s, sys: 2.5 s, total: 2min 26s
-Wall time: 1min 53s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2min 28s, sys: 2.99 s, total: 2min 31s
+Wall time: 1min 57s
 </pre></div>
 </div>
 </div>
@@ -580,8 +580,8 @@ Wall time: 1min 53s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2min 46s, sys: 3.27 s, total: 2min 50s
-Wall time: 2min 10s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2min 49s, sys: 3.24 s, total: 2min 52s
+Wall time: 2min 12s
 </pre></div>
 </div>
 </div>

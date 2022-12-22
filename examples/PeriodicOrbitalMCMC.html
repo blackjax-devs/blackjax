@@ -525,13 +525,13 @@ $$</p>
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_contour</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Contour plots for density w/ or w/o samples.&quot;&quot;&quot;</span>
     <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="o">-</span><span class="mf">7.5</span><span class="p">,</span> <span class="mf">7.5</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mf">12.5</span>
     <span class="n">x1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
     <span class="n">x2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
     <span class="n">y</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
-        <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">logprob</span><span class="p">({</span><span class="s2">&quot;x1&quot;</span><span class="p">:</span> <span class="n">x1</span><span class="p">,</span> <span class="s2">&quot;x2&quot;</span><span class="p">:</span> <span class="n">x2</span><span class="p">})),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
+        <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">logdensity</span><span class="p">({</span><span class="s2">&quot;x1&quot;</span><span class="p">:</span> <span class="n">x1</span><span class="p">,</span> <span class="s2">&quot;x2&quot;</span><span class="p">:</span> <span class="n">x2</span><span class="p">})),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
         <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
     <span class="p">)(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span>
     <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">17</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
@@ -582,15 +582,15 @@ $$</p>
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logdensity_fn</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Banana density&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">8.0</span><span class="p">))</span> <span class="o">+</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span>
         <span class="n">x2</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">x1</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="mf">1.0</span>
     <span class="p">)</span>
 
 
-<span class="n">logprob</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">logprob_fn</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">)</span>
-<span class="n">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">)</span>
+<span class="n">logdensity</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">)</span>
+<span class="n">plot_contour</span><span class="p">(</span><span class="n">logdensity</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -635,7 +635,7 @@ $$</p>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 <span class="n">init_fn</span><span class="p">,</span> <span class="n">vv_kernel</span> <span class="o">=</span> <span class="n">orbital</span><span class="p">(</span>
-    <span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">bijection</span><span class="o">=</span><span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span>
+    <span class="n">logdensity</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">bijection</span><span class="o">=</span><span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span>
 <span class="p">)</span>
 <span class="n">initial_state</span> <span class="o">=</span> <span class="n">init_fn</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
 <span class="n">vv_kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">vv_kernel</span><span class="p">)</span>
@@ -643,8 +643,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 207 ms, sys: 3.43 ms, total: 210 ms
-Wall time: 210 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 234 ms, sys: 4.36 ms, total: 239 ms
+Wall time: 237 ms
 </pre></div>
 </div>
 </div>
@@ -661,15 +661,15 @@ Wall time: 210 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 968 ms, sys: 4.57 ms, total: 973 ms
-Wall time: 973 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1 s, sys: 20.2 ms, total: 1.02 s
+Wall time: 1.02 s
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -685,7 +685,7 @@ Wall time: 973 ms
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 <span class="n">init_fn</span><span class="p">,</span> <span class="n">ml_kernel</span> <span class="o">=</span> <span class="n">orbital</span><span class="p">(</span>
-    <span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">bijection</span><span class="o">=</span><span class="n">integrators</span><span class="o">.</span><span class="n">mclachlan</span>
+    <span class="n">logdensity</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">bijection</span><span class="o">=</span><span class="n">integrators</span><span class="o">.</span><span class="n">mclachlan</span>
 <span class="p">)</span>
 <span class="n">initial_state</span> <span class="o">=</span> <span class="n">init_fn</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
 <span class="n">ml_kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">ml_kernel</span><span class="p">)</span>
@@ -693,7 +693,7 @@ Wall time: 973 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.8 ms, sys: 0 ns, total: 13.8 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.6 ms, sys: 67 µs, total: 13.6 ms
 Wall time: 13.5 ms
 </pre></div>
 </div>
@@ -711,8 +711,8 @@ Wall time: 13.5 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 890 ms, sys: 11.6 ms, total: 901 ms
-Wall time: 896 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 912 ms, sys: 12.1 ms, total: 924 ms
+Wall time: 923 ms
 </pre></div>
 </div>
 </div>
@@ -724,7 +724,7 @@ Wall time: 896 ms
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -741,7 +741,7 @@ Wall time: 896 ms
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 <span class="n">init_fn</span><span class="p">,</span> <span class="n">yo_kernel</span> <span class="o">=</span> <span class="n">orbital</span><span class="p">(</span>
-    <span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">bijection</span><span class="o">=</span><span class="n">integrators</span><span class="o">.</span><span class="n">yoshida</span>
+    <span class="n">logdensity</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">bijection</span><span class="o">=</span><span class="n">integrators</span><span class="o">.</span><span class="n">yoshida</span>
 <span class="p">)</span>
 <span class="n">initial_state</span> <span class="o">=</span> <span class="n">init_fn</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
 <span class="n">yo_kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">yo_kernel</span><span class="p">)</span>
@@ -749,8 +749,8 @@ Wall time: 896 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.94 ms, sys: 4.11 ms, total: 14 ms
-Wall time: 13.7 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.1 ms, sys: 48 µs, total: 14.2 ms
+Wall time: 14 ms
 </pre></div>
 </div>
 </div>
@@ -767,8 +767,8 @@ Wall time: 13.7 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 881 ms, sys: 4.07 ms, total: 885 ms
-Wall time: 885 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 895 ms, sys: 0 ns, total: 895 ms
+Wall time: 891 ms
 </pre></div>
 </div>
 </div>
@@ -780,7 +780,7 @@ Wall time: 885 ms
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -841,7 +841,7 @@ v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 <span class="n">init_fn</span><span class="p">,</span> <span class="n">ellip_kernel</span> <span class="o">=</span> <span class="n">orbital</span><span class="p">(</span>
-    <span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">bijection</span><span class="o">=</span><span class="n">elliptical_bijection</span>
+    <span class="n">logdensity</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">bijection</span><span class="o">=</span><span class="n">elliptical_bijection</span>
 <span class="p">)</span>
 <span class="n">initial_state</span> <span class="o">=</span> <span class="n">init_fn</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
 <span class="n">ellip_kernel</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">ellip_kernel</span><span class="p">)</span>
@@ -849,8 +849,8 @@ v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.3 ms, sys: 255 µs, total: 13.5 ms
-Wall time: 14 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.3 ms, sys: 0 ns, total: 14.3 ms
+Wall time: 16.1 ms
 </pre></div>
 </div>
 </div>
@@ -867,8 +867,8 @@ Wall time: 14 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 740 ms, sys: 0 ns, total: 740 ms
-Wall time: 738 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 744 ms, sys: 0 ns, total: 744 ms
+Wall time: 741 ms
 </pre></div>
 </div>
 </div>
@@ -880,7 +880,7 @@ Wall time: 738 ms
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -959,7 +959,7 @@ v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logpullback</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
     <span class="n">mean</span><span class="p">,</span> <span class="n">log_sd</span> <span class="o">=</span> <span class="n">apply_fun</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_sd</span><span class="p">)</span> <span class="o">*</span> <span class="n">z</span> <span class="o">+</span> <span class="n">mean</span>
-    <span class="k">return</span> <span class="n">logprob</span><span class="p">(</span><span class="n">unraveler</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">log_sd</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">logdensity</span><span class="p">(</span><span class="n">unraveler</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">log_sd</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -1023,8 +1023,8 @@ v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.47 s, sys: 3.96 ms, total: 1.47 s
-Wall time: 1.47 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.51 s, sys: 4.09 ms, total: 1.51 s
+Wall time: 1.51 s
 </pre></div>
 </div>
 </div>
@@ -1069,8 +1069,8 @@ Wall time: 1.47 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 587 ms, sys: 3.98 ms, total: 591 ms
-Wall time: 590 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 657 ms, sys: 4.23 ms, total: 661 ms
+Wall time: 659 ms
 </pre></div>
 </div>
 </div>
@@ -1087,8 +1087,8 @@ Wall time: 590 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 877 ms, sys: 4.04 ms, total: 881 ms
-Wall time: 877 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 892 ms, sys: 220 µs, total: 893 ms
+Wall time: 889 ms
 </pre></div>
 </div>
 </div>
@@ -1123,7 +1123,7 @@ Wall time: 877 ms
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_contour</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">orbits</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

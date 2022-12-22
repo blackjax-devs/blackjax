@@ -452,10 +452,10 @@ title="Source repository"
 </div>
 </div>
 </div>
-<p>Numpyro return a potential function, which is easily transformed back into a logprob function that is required by Blackjax:</p>
+<p>Numpyro return a potential function, which is easily transformed back into a logdensity function that is required by Blackjax:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logprob_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">position</span><span class="p">:</span> <span class="o">-</span><span class="n">potential_fn_gen</span><span class="p">(</span><span class="n">J</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">y</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logdensity_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">position</span><span class="p">:</span> <span class="o">-</span><span class="n">potential_fn_gen</span><span class="p">(</span><span class="n">J</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">y</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
 <span class="n">initial_position</span> <span class="o">=</span> <span class="n">init_params</span><span class="o">.</span><span class="n">z</span>
 </pre></div>
 </div>
@@ -469,7 +469,7 @@ title="Source repository"
 <span class="n">num_warmup</span> <span class="o">=</span> <span class="mi">2000</span>
 
 <span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span>
-    <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="mf">0.8</span>
+    <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="mf">0.8</span>
 <span class="p">)</span>
 <span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">,</span> <span class="n">num_warmup</span><span class="p">)</span>
 </pre></div>

@@ -490,7 +490,7 @@ title="Source repository"
         <span class="p">}</span>
         <span class="c1"># self.init_params = {name: 3. + value if name in [&#39;sigma&#39;] else value for name, value in self.init_params.items()}</span>
 
-    <span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">logdensity_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
         <span class="k">return</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">potential_fn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)(</span><span class="n">params</span><span class="p">)</span>
 
 
@@ -543,7 +543,7 @@ title="Source repository"
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tic1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
 <span class="n">k_warm</span><span class="p">,</span> <span class="n">k_sample</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">ksam</span><span class="p">)</span>
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">meads</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">logprob_fn</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">)</span>
+<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">meads</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">)</span>
 <span class="n">init_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">k_warm</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">init_params</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">one_chain</span><span class="p">(</span><span class="n">k_sam</span><span class="p">,</span> <span class="n">init_state</span><span class="p">):</span>
@@ -558,7 +558,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:00:24.538611
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:00:25.254642
 </pre></div>
 </div>
 </div>
@@ -620,7 +620,7 @@ title="Source repository"
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/cbbe690df2bcf015a705428d141625d5dfe901e523dd81dc726f79f8573e1798.png" src="../_images/cbbe690df2bcf015a705428d141625d5dfe901e523dd81dc726f79f8573e1798.png" />
+<img alt="../_images/3af89c673b88c79939e885e3f3f795278d6c589a4a94c3444ce3da9ed8b6e431.png" src="../_images/3af89c673b88c79939e885e3f3f795278d6c589a4a94c3444ce3da9ed8b6e431.png" />
 </div>
 </div>
 </section>

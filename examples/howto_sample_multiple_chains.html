@@ -550,15 +550,15 @@ and <a class="reference external" href="https://jax.readthedocs.io/en/latest/jax
 <span class="n">observed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1_000</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">log_scale</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="n">observed</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">logdensity_fn</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">log_scale</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="n">observed</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Univariate Normal&quot;&quot;&quot;</span>
     <span class="n">scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_scale</span><span class="p">)</span>
     <span class="n">logpdf</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">observed</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">logpdf</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">logprob</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">logprob_fn</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">logdensity</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
@@ -585,7 +585,7 @@ and <a class="reference external" href="https://jax.readthedocs.io/en/latest/jax
 <span class="n">inv_mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">])</span>
 <span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-3</span>
 
-<span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">)</span>
+<span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

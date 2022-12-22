@@ -62,13 +62,13 @@ from blackjax import orbital_hmc as orbital
 ```{code-cell} python
 :tags: [hide-cell]
 
-def plot_contour(logprob, orbits=None, weights=None):
+def plot_contour(logdensity, orbits=None, weights=None):
     """Contour plots for density w/ or w/o samples."""
     a, b, c, d = -7.5, 7.5, -5, 12.5
     x1 = jnp.linspace(a, b, 1000)
     x2 = jnp.linspace(c, d, 1000)
     y = jax.vmap(
-        jax.vmap(lambda x1, x2: jnp.exp(logprob({"x1": x1, "x2": x2})), (0, None)),
+        jax.vmap(lambda x1, x2: jnp.exp(logdensity({"x1": x1, "x2": x2})), (0, None)),
         (None, 0),
     )(x1, x2)
     fig, ax = plt.subplots(1, 2, figsize=(17, 6))
@@ -105,15 +105,15 @@ We will be sampling from the banana density:
 
 ```{code-cell} python
 :tags: [hide-input]
-def logprob_fn(x1, x2):
+def logdensity_fn(x1, x2):
     """Banana density"""
     return stats.norm.logpdf(x1, 0.0, jnp.sqrt(8.0)) + stats.norm.logpdf(
         x2, 1 / 4 * x1**2, 1.0
     )
 
 
-logprob = lambda x: logprob_fn(**x)
-plot_contour(logprob)
+logdensity = lambda x: logdensity_fn(**x)
+plot_contour(logdensity)
 ```
 
 ## Initial State and Sampler Parameters
@@ -145,7 +145,7 @@ The plots include the unweighted samples to get an idea of how the integrator is
 ```{code-cell} python
 %%time
 init_fn, vv_kernel = orbital(
-    logprob, step_size, inv_mass_matrix, period, bijection=integrators.velocity_verlet
+    logdensity, step_size, inv_mass_matrix, period, bijection=integrators.velocity_verlet
 )
 initial_state = init_fn(initial_position)
 vv_kernel = jax.jit(vv_kernel)
@@ -161,7 +161,7 @@ weights = states.weights
 ```
 
 ```{code-cell} python
-plot_contour(logprob, orbits=samples, weights=weights)
+plot_contour(logdensity, orbits=samples, weights=weights)
 ```
 
 ## McLachlan
@@ -171,7 +171,7 @@ A different method of discretizing the solution to Hamilton's equations, see [Bl
 ```{code-cell} python
 %%time
 init_fn, ml_kernel = orbital(
-    logprob, step_size, inv_mass_matrix, period, bijection=integrators.mclachlan
+    logdensity, step_size, inv_mass_matrix, period, bijection=integrators.mclachlan
 )
 initial_state = init_fn(initial_position)
 ml_kernel = jax.jit(ml_kernel)
@@ -189,7 +189,7 @@ weights = states.weights
 ```{code-cell} python
 :tags: [hide-input]
 
-plot_contour(logprob, orbits=samples, weights=weights)
+plot_contour(logdensity, orbits=samples, weights=weights)
 ```
 
 ## Yoshida
@@ -199,7 +199,7 @@ A different method of discretizing the solution to Hamilton's equations, see [Bl
 ```{code-cell} python
 %%time
 init_fn, yo_kernel = orbital(
-    logprob, step_size, inv_mass_matrix, period, bijection=integrators.yoshida
+    logdensity, step_size, inv_mass_matrix, period, bijection=integrators.yoshida
 )
 initial_state = init_fn(initial_position)
 yo_kernel = jax.jit(yo_kernel)
@@ -217,7 +217,7 @@ weights = states.weights
 ```{code-cell} python
 :tags: [hide-input]
 
-plot_contour(logprob, orbits=samples, weights=weights)
+plot_contour(logdensity, orbits=samples, weights=weights)
 ```
 
 ## Ellipsis
@@ -272,7 +272,7 @@ step_size = 2 * jnp.pi / period
 ```{code-cell} python
 %%time
 init_fn, ellip_kernel = orbital(
-    logprob, step_size, inv_mass_matrix, period, bijection=elliptical_bijection
+    logdensity, step_size, inv_mass_matrix, period, bijection=elliptical_bijection
 )
 initial_state = init_fn(initial_position)
 ellip_kernel = jax.jit(ellip_kernel)
@@ -290,7 +290,7 @@ weights = states.weights
 ```{code-cell} python
 :tags: [hide-input]
 
-plot_contour(logprob, orbits=samples, weights=weights)
+plot_contour(logdensity, orbits=samples, weights=weights)
 ```
 
 ## Ellipsis + IAF
@@ -357,7 +357,7 @@ Define the log pullback density, our loss function (negative ELBO) and the optim
 def logpullback(params, z):
     mean, log_sd = apply_fun(params, z)
     x = jnp.exp(log_sd) * z + mean
-    return logprob(unraveler(x)) + jnp.sum(log_sd)
+    return logdensity(unraveler(x)) + jnp.sum(log_sd)
 ```
 
 ```{code-cell} python
@@ -467,5 +467,5 @@ The pushed samples are much better at targeting the banana density than the algo
 ```{code-cell} python
 :tags: [hide-input]
 
-plot_contour(logprob, orbits=samples, weights=weights)
+plot_contour(logdensity, orbits=samples, weights=weights)
 ```

@@ -551,8 +551,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.51 s, sys: 197 ms, total: 7.7 s
-Wall time: 7.31 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.96 s, sys: 193 ms, total: 8.15 s
+Wall time: 7.76 s
 </pre></div>
 </div>
 </div>
@@ -562,8 +562,8 @@ Wall time: 7.31 s
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 <span class="n">n_iter</span> <span class="o">=</span> <span class="mi">2000</span>
 
-<span class="n">logprob_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">loglikelihood_fn</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">f</span> <span class="o">@</span> <span class="n">invSigma</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">window_adaptation</span><span class="p">(</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">,</span> <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">logdensity_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">loglikelihood_fn</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">f</span> <span class="o">@</span> <span class="n">invSigma</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+<span class="n">warmup</span> <span class="o">=</span> <span class="n">window_adaptation</span><span class="p">(</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">,</span> <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
 <span class="n">key_warm</span><span class="p">,</span> <span class="n">key_sample</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jrnd</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
 <span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">key_warm</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
 <span class="n">states</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">key_sample</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
@@ -571,8 +571,8 @@ Wall time: 7.31 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 47s, sys: 129 ms, total: 1min 48s
-Wall time: 1min 48s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1min 45s, sys: 224 ms, total: 1min 45s
+Wall time: 1min 45s
 </pre></div>
 </div>
 </div>

@@ -513,14 +513,14 @@ title="Source repository"
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logprob_fn</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">log_scale</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="n">observed</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">logdensity_fn</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">log_scale</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="n">observed</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Univariate Normal&quot;&quot;&quot;</span>
     <span class="n">scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_scale</span><span class="p">)</span>
     <span class="n">logpdf</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">observed</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">logpdf</span><span class="p">)</span>
 
 
-<span class="n">logprob</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">logprob_fn</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">)</span>
+<span class="n">logdensity</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -536,7 +536,7 @@ title="Source repository"
 <span class="n">num_integration_steps</span> <span class="o">=</span> <span class="mi">60</span>
 <span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-3</span>
 
-<span class="n">hmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
+<span class="n">hmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -557,7 +557,7 @@ title="Source repository"
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(34220.973, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1053.5525, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-63604.08, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(33179.734, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1217.2448, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-61521.598, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -605,8 +605,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.42 s, sys: 24.6 ms, total: 1.44 s
-Wall time: 1.44 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.49 s, sys: 24.8 ms, total: 1.51 s
+Wall time: 1.51 s
 </pre></div>
 </div>
 </div>
@@ -634,7 +634,7 @@ Wall time: 1.44 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/997ce8359f9aa815cc21481ca9da60c83d5e886811153ba41be4b96ec9ae4ec0.png" src="../_images/997ce8359f9aa815cc21481ca9da60c83d5e886811153ba41be4b96ec9ae4ec0.png" />
+<img alt="../_images/15ea554f314288b37179e230c9455872ac2e41b69412ffe933989bb0e1bca8f4.png" src="../_images/15ea554f314288b37179e230c9455872ac2e41b69412ffe933989bb0e1bca8f4.png" />
 </div>
 </div>
 </section>
@@ -647,7 +647,7 @@ Wall time: 1.44 s
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inv_mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">])</span>
 <span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-3</span>
 
-<span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logprob</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">)</span>
+<span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inv_mass_matrix</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -661,7 +661,7 @@ Wall time: 1.44 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(34220.973, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1053.5525, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-63604.08, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(33179.734, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1217.2448, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-61521.598, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -678,8 +678,8 @@ Wall time: 1.44 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.35 s, sys: 8.68 ms, total: 6.36 s
-Wall time: 6.36 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.3 s, sys: 12.9 ms, total: 6.31 s
+Wall time: 6.3 s
 </pre></div>
 </div>
 </div>
@@ -707,7 +707,7 @@ Wall time: 6.36 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/6367550241f22a10cc36d2ab80ca4e9b578300d055f621468c72233965cb44d7.png" src="../_images/6367550241f22a10cc36d2ab80ca4e9b578300d055f621468c72233965cb44d7.png" />
+<img alt="../_images/cb95d960c17e3ee7928825cb5ba741128580d6d0ff273d263586be16b6050471.png" src="../_images/cb95d960c17e3ee7928825cb5ba741128580d6d0ff273d263586be16b6050471.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -718,14 +718,14 @@ Wall time: 6.36 s
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logprob</span><span class="p">)</span>
+<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">)</span>
 <span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.36 s, sys: 28.1 ms, total: 2.39 s
-Wall time: 2.38 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.46 s, sys: 16 ms, total: 2.48 s
+Wall time: 2.47 s
 </pre></div>
 </div>
 </div>
@@ -743,8 +743,8 @@ Wall time: 2.38 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.78 s, sys: 0 ns, total: 1.78 s
-Wall time: 1.77 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.81 s, sys: 4.04 ms, total: 1.81 s
+Wall time: 1.81 s
 </pre></div>
 </div>
 </div>
@@ -772,7 +772,7 @@ Wall time: 1.77 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/431ffed0eb758a484960ff9d7e4c7109a9523ae832017db0c21e814b61911f22.png" src="../_images/431ffed0eb758a484960ff9d7e4c7109a9523ae832017db0c21e814b61911f22.png" />
+<img alt="../_images/875e4d8cbbd5675cbd4f1fa0107613b70e32865aad52fbf80a0a34992b293bc1.png" src="../_images/875e4d8cbbd5675cbd4f1fa0107613b70e32865aad52fbf80a0a34992b293bc1.png" />
 </div>
 </div>
 </section>
