@@ -176,7 +176,7 @@ fig.set_size_inches(12, 10)
 for i in range(num_schools):
     axes[i][0].plot(school_effects_samples[:, i])
     axes[i][0].title.set_text(f"School {i} treatment effect chain")
-    sns.kdeplot(school_effects_samples[:, i], ax=axes[i][1], shade=True)
+    sns.kdeplot(school_effects_samples[:, i], ax=axes[i][1], fill=True)
     axes[i][1].title.set_text(f"School {i} treatment effect distribution")
 axes[num_schools - 1][0].set_xlabel("Iteration")
 axes[num_schools - 1][1].set_xlabel("School effect")

@@ -418,13 +418,13 @@ class mgrad_gaussian:
     .. code::
 
         mgrad_gaussian = blackjax.mgrad_gaussian(f, C, use_inverse=False, mean=m)
-        state = latent_gaussian.init(zeros)  # Starting at the mean of the prior
+        state = mgrad_gaussian.init(zeros)  # Starting at the mean of the prior
         new_state, info = mgrad_gaussian.step(rng_key, state, delta)
 
     We can JIT-compile the step function for better performance
 
     .. code::
-        step = jax.jit(latent_gaussian.step)
+        step = jax.jit(mgrad_gaussian.step)
         new_state, info = step(rng_key, state, delta)
 
     Parameters
