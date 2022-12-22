@@ -120,6 +120,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_pymc.html">
+     Use with PyMC models
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -588,7 +593,8 @@ JAX raised an exception while differentiating!
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(Array(-3.1503935, dtype=float32), Array(-0.44711512, dtype=float32))
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(DeviceArray(-3.1503935, dtype=float32),
+ DeviceArray(-0.44711512, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -615,7 +621,7 @@ JAX raised an exception while differentiating!
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(-0.24151024, dtype=float32, weak_type=True), potential_energy=Array(2.9157653, dtype=float32), potential_energy_grad=Array(-0.14576946, dtype=float32))
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=DeviceArray(-0.24151024, dtype=float32, weak_type=True), potential_energy=DeviceArray(2.9157653, dtype=float32), potential_energy_grad=DeviceArray(-0.14576946, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -630,8 +636,8 @@ JAX raised an exception while differentiating!
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.55 s, sys: 3.92 ms, total: 6.56 s
-Wall time: 6.56 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.01 s, sys: 115 µs, total: 3.01 s
+Wall time: 3.01 s
 </pre></div>
 </div>
 </div>
@@ -646,8 +652,8 @@ Wall time: 6.56 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 18.3 s, sys: 176 ms, total: 18.5 s
-Wall time: 18.5 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 12.5 s, sys: 132 ms, total: 12.6 s
+Wall time: 12.6 s
 </pre></div>
 </div>
 </div>

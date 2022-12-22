@@ -120,6 +120,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_pymc.html">
+     Use with PyMC models
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -549,10 +554,10 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=Array(36316.836, dtype=float32), potential_energy_grad={&#39;loc&#39;: Array(-1194.102, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(-67795.8, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(34220.973, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1053.5525, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-63604.08, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -600,8 +605,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.52 s, sys: 17.3 ms, total: 2.54 s
-Wall time: 2.53 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.42 s, sys: 24.6 ms, total: 1.44 s
+Wall time: 1.44 s
 </pre></div>
 </div>
 </div>
@@ -629,7 +634,7 @@ Wall time: 2.53 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/569997da8f23fb0fe627587b0f238f274935155d0c9e6d635de323481e851fb9.png" src="../_images/569997da8f23fb0fe627587b0f238f274935155d0c9e6d635de323481e851fb9.png" />
+<img alt="../_images/997ce8359f9aa815cc21481ca9da60c83d5e886811153ba41be4b96ec9ae4ec0.png" src="../_images/997ce8359f9aa815cc21481ca9da60c83d5e886811153ba41be4b96ec9ae4ec0.png" />
 </div>
 </div>
 </section>
@@ -656,7 +661,7 @@ Wall time: 2.53 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=Array(36316.836, dtype=float32), potential_energy_grad={&#39;loc&#39;: Array(-1194.102, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(-67795.8, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(34220.973, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1053.5525, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-63604.08, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -673,8 +678,8 @@ Wall time: 2.53 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11.7 s, sys: 20.4 ms, total: 11.7 s
-Wall time: 11.7 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.35 s, sys: 8.68 ms, total: 6.36 s
+Wall time: 6.36 s
 </pre></div>
 </div>
 </div>
@@ -702,7 +707,7 @@ Wall time: 11.7 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/3285f83b64ed6fa515344439ae71c3de7d6a53dd7febefb3492ae8b541c75a59.png" src="../_images/3285f83b64ed6fa515344439ae71c3de7d6a53dd7febefb3492ae8b541c75a59.png" />
+<img alt="../_images/6367550241f22a10cc36d2ab80ca4e9b578300d055f621468c72233965cb44d7.png" src="../_images/6367550241f22a10cc36d2ab80ca4e9b578300d055f621468c72233965cb44d7.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -719,8 +724,8 @@ Wall time: 11.7 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.1 s, sys: 24 ms, total: 3.12 s
-Wall time: 3.11 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.36 s, sys: 28.1 ms, total: 2.39 s
+Wall time: 2.38 s
 </pre></div>
 </div>
 </div>
@@ -738,8 +743,8 @@ Wall time: 3.11 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.39 s, sys: 3.96 ms, total: 2.39 s
-Wall time: 2.4 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.78 s, sys: 0 ns, total: 1.78 s
+Wall time: 1.77 s
 </pre></div>
 </div>
 </div>
@@ -767,7 +772,7 @@ Wall time: 2.4 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/661a13586430c2ebf5cecaf5061ac0ebeafa3d2657797da50c48f31230c6c0b0.png" src="../_images/661a13586430c2ebf5cecaf5061ac0ebeafa3d2657797da50c48f31230c6c0b0.png" />
+<img alt="../_images/431ffed0eb758a484960ff9d7e4c7109a9523ae832017db0c21e814b61911f22.png" src="../_images/431ffed0eb758a484960ff9d7e4c7109a9523ae832017db0c21e814b61911f22.png" />
 </div>
 </div>
 </section>

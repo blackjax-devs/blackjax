@@ -121,6 +121,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_pymc.html">
+     Use with PyMC models
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -582,7 +587,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -689,7 +694,7 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/db58d894cdc0aeee2aee1aa28701dfff4a97a1d1d41f84cdc5ec8a27635ba19a.png" src="../_images/db58d894cdc0aeee2aee1aa28701dfff4a97a1d1d41f84cdc5ec8a27635ba19a.png" />
+<img alt="../_images/154021a8e18c6e6c106e0b13add41a15b8edadc035326f8c5a1d95e7ccc085f5.png" src="../_images/154021a8e18c6e6c106e0b13add41a15b8edadc035326f8c5a1d95e7ccc085f5.png" />
 </div>
 </div>
 <p>Please note that pathfinder is implemented as follows:</p>
@@ -708,8 +713,8 @@ The optimizer is the limited memory BFGS algorithm.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 5.92 s, sys: 23.4 ms, total: 5.95 s
-Wall time: 5.93 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 5.16 s, sys: 16.1 ms, total: 5.18 s
+Wall time: 5.17 s
 </pre></div>
 </div>
 </div>
@@ -755,7 +760,7 @@ Wall time: 5.93 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/7ecb5bbe3bb157150eb54e1677a512fefb01188ff0378baaf3f274a309f81035.png" src="../_images/7ecb5bbe3bb157150eb54e1677a512fefb01188ff0378baaf3f274a309f81035.png" />
+<img alt="../_images/ee7bba82ae3c4b1ff9724d62edfcc5c7ef0798d343b2a84b3b8e67db85354e14.png" src="../_images/ee7bba82ae3c4b1ff9724d62edfcc5c7ef0798d343b2a84b3b8e67db85354e14.png" />
 </div>
 </div>
 <section id="pathfinder-as-an-initialization-tool-for-mcmc-kernels">
@@ -774,8 +779,8 @@ Wall time: 5.93 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Array([[ 0.22071722, -0.05641346],
-       [-0.05641348,  0.23935081]], dtype=float32)
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([[ 0.22071719, -0.05641349],
+             [-0.05641348,  0.23935075]], dtype=float32)
 </pre></div>
 </div>
 </div>

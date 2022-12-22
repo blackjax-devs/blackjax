@@ -36,7 +36,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Sample with multiple chains in parallel" href="howto_sample_multiple_chains.html" />
-    <link rel="prev" title="Use with Oryx models" href="howto_use_oryx.html" />
+    <link rel="prev" title="Use with PyMC models" href="howto_use_pymc.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -117,6 +117,11 @@
    <li class="toctree-l2">
     <a class="reference internal" href="howto_use_oryx.html">
      Use with Oryx models
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_pymc.html">
+     Use with PyMC models
     </a>
    </li>
    <li class="toctree-l2 current active">
@@ -449,7 +454,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -524,8 +529,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Array([ 8.428744  , 12.777976  ,  8.609686  , ...,  0.63661945,
-        4.0685477 ,  5.861053  ], dtype=float32)
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>DeviceArray([ 8.597747 , 13.942627 ,  6.4901786, ..., -4.8346705,
+              2.4805205,  3.9454405], dtype=float32)
 </pre></div>
 </div>
 </div>
@@ -545,7 +550,7 @@ title="Source repository"
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Average acceptance rate: 0.96
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Average acceptance rate: 0.94
 </pre></div>
 </div>
 </div>
@@ -578,7 +583,7 @@ title="Source repository"
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_schools</span><span class="p">):</span>
     <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">school_effects_samples</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
     <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;School </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> treatment effect chain&quot;</span><span class="p">)</span>
-    <span class="n">sns</span><span class="o">.</span><span class="n">kdeplot</span><span class="p">(</span><span class="n">school_effects_samples</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">shade</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sns</span><span class="o">.</span><span class="n">kdeplot</span><span class="p">(</span><span class="n">school_effects_samples</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">fill</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;School </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> treatment effect distribution&quot;</span><span class="p">)</span>
 <span class="n">axes</span><span class="p">[</span><span class="n">num_schools</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Iteration&quot;</span><span class="p">)</span>
 <span class="n">axes</span><span class="p">[</span><span class="n">num_schools</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;School effect&quot;</span><span class="p">)</span>
@@ -589,7 +594,7 @@ title="Source repository"
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/caf3775e74d41285de699b799dc5a29330c0a90af2fc74db86a91f9ad2cb342b.png" src="../_images/caf3775e74d41285de699b799dc5a29330c0a90af2fc74db86a91f9ad2cb342b.png" />
+<img alt="../_images/2ab4390d12885ebdadf512cb2569fd4aa040bf7ce9379b4491aba87ed3ab5d29.png" src="../_images/2ab4390d12885ebdadf512cb2569fd4aa040bf7ce9379b4491aba87ed3ab5d29.png" />
 </div>
 </div>
 </section>
@@ -602,11 +607,11 @@ title="Source repository"
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="howto_use_oryx.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="howto_use_pymc.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Use with Oryx models</p>
+            <p class="prev-next-title">Use with PyMC models</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="howto_sample_multiple_chains.html" title="next page">

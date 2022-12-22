@@ -121,6 +121,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_pymc.html">
+     Use with PyMC models
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -591,7 +596,7 @@ $$</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 <img alt="../_images/3ca82a836b0cb647546c753f035985557621f80308c36c187574ddcd35abf897.png" src="../_images/3ca82a836b0cb647546c753f035985557621f80308c36c187574ddcd35abf897.png" />
@@ -638,8 +643,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 349 ms, sys: 280 µs, total: 349 ms
-Wall time: 350 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 207 ms, sys: 3.43 ms, total: 210 ms
+Wall time: 210 ms
 </pre></div>
 </div>
 </div>
@@ -656,8 +661,8 @@ Wall time: 350 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.31 s, sys: 373 µs, total: 1.31 s
-Wall time: 1.31 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 968 ms, sys: 4.57 ms, total: 973 ms
+Wall time: 973 ms
 </pre></div>
 </div>
 </div>
@@ -688,8 +693,8 @@ Wall time: 1.31 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 26.7 ms, sys: 189 µs, total: 26.9 ms
-Wall time: 26.3 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.8 ms, sys: 0 ns, total: 13.8 ms
+Wall time: 13.5 ms
 </pre></div>
 </div>
 </div>
@@ -706,8 +711,8 @@ Wall time: 26.3 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.23 s, sys: 15.8 ms, total: 1.24 s
-Wall time: 1.24 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 890 ms, sys: 11.6 ms, total: 901 ms
+Wall time: 896 ms
 </pre></div>
 </div>
 </div>
@@ -744,8 +749,8 @@ Wall time: 1.24 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 24.1 ms, sys: 8 µs, total: 24.1 ms
-Wall time: 24 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.94 ms, sys: 4.11 ms, total: 14 ms
+Wall time: 13.7 ms
 </pre></div>
 </div>
 </div>
@@ -762,8 +767,8 @@ Wall time: 24 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.22 s, sys: 8.7 ms, total: 1.23 s
-Wall time: 1.22 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 881 ms, sys: 4.07 ms, total: 885 ms
+Wall time: 885 ms
 </pre></div>
 </div>
 </div>
@@ -844,8 +849,8 @@ v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 25.3 ms, sys: 63 µs, total: 25.3 ms
-Wall time: 25 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.3 ms, sys: 255 µs, total: 13.5 ms
+Wall time: 14 ms
 </pre></div>
 </div>
 </div>
@@ -862,8 +867,8 @@ Wall time: 25 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 987 ms, sys: 4.1 ms, total: 991 ms
-Wall time: 988 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 740 ms, sys: 0 ns, total: 740 ms
+Wall time: 738 ms
 </pre></div>
 </div>
 </div>
@@ -1018,8 +1023,8 @@ v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.02 s, sys: 16 ms, total: 2.03 s
-Wall time: 2.03 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.47 s, sys: 3.96 ms, total: 1.47 s
+Wall time: 1.47 s
 </pre></div>
 </div>
 </div>
@@ -1040,7 +1045,7 @@ Wall time: 2.03 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/882a2243bd60ce05c0ba7011232fae1446e2343048de500e0e3df864db275a9a.png" src="../_images/882a2243bd60ce05c0ba7011232fae1446e2343048de500e0e3df864db275a9a.png" />
+<img alt="../_images/d24713e00f7ec549c7143cb0cc695ae7cea15449179d2f17b4ae9f01fcc36f7a.png" src="../_images/d24713e00f7ec549c7143cb0cc695ae7cea15449179d2f17b4ae9f01fcc36f7a.png" />
 </div>
 </div>
 <p>We define our log pullback given the learned parameters of the transformation and use the periodic orbital MCMC with an ellipsis to sample from this log pullback density.</p>
@@ -1064,8 +1069,8 @@ Wall time: 2.03 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 813 ms, sys: 8.21 ms, total: 821 ms
-Wall time: 821 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 587 ms, sys: 3.98 ms, total: 591 ms
+Wall time: 590 ms
 </pre></div>
 </div>
 </div>
@@ -1082,8 +1087,8 @@ Wall time: 821 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.18 s, sys: 0 ns, total: 1.18 s
-Wall time: 1.18 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 877 ms, sys: 4.04 ms, total: 881 ms
+Wall time: 877 ms
 </pre></div>
 </div>
 </div>
@@ -1124,7 +1129,7 @@ Wall time: 1.18 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/3f0e3c1118690493b8f8dc239d0a8518d380633162b096d2049c33b98de79874.png" src="../_images/3f0e3c1118690493b8f8dc239d0a8518d380633162b096d2049c33b98de79874.png" />
+<img alt="../_images/7bec019bc02b19b392723456cad5385b9a69123c0d014f0e9310450a023b136a.png" src="../_images/7bec019bc02b19b392723456cad5385b9a69123c0d014f0e9310450a023b136a.png" />
 </div>
 </div>
 </section>

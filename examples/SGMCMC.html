@@ -121,6 +121,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_pymc.html">
+     Use with PyMC models
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -629,7 +634,7 @@ title="Source repository"
 </div><div class="output text_html">
     <div>
       <progress value='3340' class='' max='3340' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [3340/3340 00:39&lt;00:00]
+      100.00% [3340/3340 00:25&lt;00:00]
     </div>
     </div></div>
 </div>
@@ -658,7 +663,7 @@ title="Source repository"
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/ab83bcf59834b24d4dea330799c19ea85e88eb0b802c41f46aa4cf4d09cae5ac.png" src="../_images/ab83bcf59834b24d4dea330799c19ea85e88eb0b802c41f46aa4cf4d09cae5ac.png" />
+<img alt="../_images/5615f77337c5be1530eb73e806796df0e88afa45e8c39ed6192b271d9b2d9a71.png" src="../_images/5615f77337c5be1530eb73e806796df0e88afa45e8c39ed6192b271d9b2d9a71.png" />
 </div>
 </div>
 <section id="sampling-with-sghmc">
@@ -710,111 +715,10 @@ title="Source repository"
 </style>
 </div><div class="output text_html">
     <div>
-      <progress value='3323' class='' max='3340' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      99.49% [3323/3340 03:19&lt;00:01]
+      <progress value='3340' class='' max='3340' style='width:300px; height:20px; vertical-align: middle;'></progress>
+      100.00% [3340/3340 02:23&lt;00:00]
     </div>
-    </div><div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">KeyboardInterrupt</span><span class="g g-Whitespace">                         </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="n">line</span> <span class="mi">15</span>
-<span class="g g-Whitespace">     </span><span class="mi">13</span> <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">progress_bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_samples</span> <span class="o">+</span> <span class="n">num_warmup</span><span class="p">)):</span>
-<span class="g g-Whitespace">     </span><span class="mi">14</span>     <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-<span class="ne">---&gt; </span><span class="mi">15</span>     <span class="n">minibatch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">16</span>     <span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">sghmc</span><span class="p">)(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">17</span>     <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-
-<span class="nn">Cell In[3], line 25,</span> in <span class="ni">batch_data</span><span class="nt">(rng_key, data, batch_size, data_size)</span>
-<span class="g g-Whitespace">     </span><span class="mi">21</span> <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">22</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
-<span class="g g-Whitespace">     </span><span class="mi">23</span>     <span class="n">key</span><span class="o">=</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">data_size</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,)</span>
-<span class="g g-Whitespace">     </span><span class="mi">24</span> <span class="p">)</span>
-<span class="ne">---&gt; </span><span class="mi">25</span> <span class="n">minibatch</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">elem</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">26</span> <span class="k">yield</span> <span class="n">minibatch</span>
-
-<span class="nn">Cell In[3], line 25,</span> in <span class="ni">&lt;genexpr&gt;</span><span class="nt">(.0)</span>
-<span class="g g-Whitespace">     </span><span class="mi">21</span> <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">22</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
-<span class="g g-Whitespace">     </span><span class="mi">23</span>     <span class="n">key</span><span class="o">=</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">data_size</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,)</span>
-<span class="g g-Whitespace">     </span><span class="mi">24</span> <span class="p">)</span>
-<span class="ne">---&gt; </span><span class="mi">25</span> <span class="n">minibatch</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">elem</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">26</span> <span class="k">yield</span> <span class="n">minibatch</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jax/_src/array.py:261,</span> in <span class="ni">ArrayImpl.__getitem__</span><span class="nt">(self, idx)</span>
-<span class="g g-Whitespace">    </span><span class="mi">258</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_deleted</span><span class="p">()</span>
-<span class="g g-Whitespace">    </span><span class="mi">260</span> <span class="k">if</span> <span class="n">dispatch</span><span class="o">.</span><span class="n">is_single_device_sharding</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sharding</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fully_replicated</span><span class="p">:</span>
-<span class="ne">--&gt; </span><span class="mi">261</span>   <span class="k">return</span> <span class="n">lax_numpy</span><span class="o">.</span><span class="n">_rewriting_take</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">262</span> <span class="c1"># TODO(yashkatariya): Make it work for other Shardings too wherever its</span>
-<span class="g g-Whitespace">    </span><span class="mi">263</span> <span class="c1"># possible to not do data movement.</span>
-<span class="g g-Whitespace">    </span><span class="mi">264</span> <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sharding</span><span class="p">,</span> <span class="n">PmapSharding</span><span class="p">):</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jax/_src/numpy/lax_numpy.py:3828,</span> in <span class="ni">_rewriting_take</span><span class="nt">(arr, idx, indices_are_sorted, unique_indices, mode, fill_value)</span>
-<span class="g g-Whitespace">   </span><span class="mi">3825</span>       <span class="k">return</span> <span class="n">lax</span><span class="o">.</span><span class="n">dynamic_index_in_dim</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">3827</span> <span class="n">treedef</span><span class="p">,</span> <span class="n">static_idx</span><span class="p">,</span> <span class="n">dynamic_idx</span> <span class="o">=</span> <span class="n">_split_index_for_jit</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-<span class="ne">-&gt; </span><span class="mi">3828</span> <span class="k">return</span> <span class="n">_gather</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">treedef</span><span class="p">,</span> <span class="n">static_idx</span><span class="p">,</span> <span class="n">dynamic_idx</span><span class="p">,</span> <span class="n">indices_are_sorted</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">3829</span>                <span class="n">unique_indices</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">fill_value</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jax/_src/numpy/lax_numpy.py:3837,</span> in <span class="ni">_gather</span><span class="nt">(arr, treedef, static_idx, dynamic_idx, indices_are_sorted, unique_indices, mode, fill_value)</span>
-<span class="g g-Whitespace">   </span><span class="mi">3834</span> <span class="k">def</span> <span class="nf">_gather</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">treedef</span><span class="p">,</span> <span class="n">static_idx</span><span class="p">,</span> <span class="n">dynamic_idx</span><span class="p">,</span> <span class="n">indices_are_sorted</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">3835</span>             <span class="n">unique_indices</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">fill_value</span><span class="p">):</span>
-<span class="g g-Whitespace">   </span><span class="mi">3836</span>   <span class="n">idx</span> <span class="o">=</span> <span class="n">_merge_static_and_dynamic_indices</span><span class="p">(</span><span class="n">treedef</span><span class="p">,</span> <span class="n">static_idx</span><span class="p">,</span> <span class="n">dynamic_idx</span><span class="p">)</span>
-<span class="ne">-&gt; </span><span class="mi">3837</span>   <span class="n">indexer</span> <span class="o">=</span> <span class="n">_index_to_gather</span><span class="p">(</span><span class="n">shape</span><span class="p">(</span><span class="n">arr</span><span class="p">),</span> <span class="n">idx</span><span class="p">)</span>  <span class="c1"># shared with _scatter_update</span>
-<span class="g g-Whitespace">   </span><span class="mi">3838</span>   <span class="n">y</span> <span class="o">=</span> <span class="n">arr</span>
-<span class="g g-Whitespace">   </span><span class="mi">3840</span>   <span class="k">if</span> <span class="n">fill_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jax/_src/numpy/lax_numpy.py:4007,</span> in <span class="ni">_index_to_gather</span><span class="nt">(x_shape, idx, normalize_indices)</span>
-<span class="g g-Whitespace">   </span><span class="mi">4000</span> <span class="k">for</span> <span class="n">idx_pos</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">idx</span><span class="p">):</span>
-<span class="g g-Whitespace">   </span><span class="mi">4001</span>   <span class="c1"># Handle the advanced indices here if:</span>
-<span class="g g-Whitespace">   </span><span class="mi">4002</span>   <span class="c1"># * the advanced indices were not contiguous and we are the start.</span>
-<span class="g g-Whitespace">   </span><span class="mi">4003</span>   <span class="c1"># * we are at the position of the first advanced index.</span>
-<span class="g g-Whitespace">   </span><span class="mi">4004</span>   <span class="k">if</span> <span class="p">(</span><span class="n">advanced_indexes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
-<span class="g g-Whitespace">   </span><span class="mi">4005</span>       <span class="p">(</span><span class="n">advanced_axes_are_contiguous</span> <span class="ow">and</span> <span class="n">idx_pos</span> <span class="o">==</span> <span class="n">idx_advanced_axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">or</span>
-<span class="g g-Whitespace">   </span><span class="mi">4006</span>        <span class="ow">not</span> <span class="n">advanced_axes_are_contiguous</span> <span class="ow">and</span> <span class="n">idx_pos</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)):</span>
-<span class="ne">-&gt; </span><span class="mi">4007</span>     <span class="n">advanced_indexes</span> <span class="o">=</span> <span class="n">broadcast_arrays</span><span class="p">(</span><span class="o">*</span><span class="n">advanced_indexes</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">4008</span>     <span class="n">shape</span> <span class="o">=</span> <span class="n">advanced_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
-<span class="g g-Whitespace">   </span><span class="mi">4009</span>     <span class="n">ndim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jax/_src/numpy/lax_numpy.py:1159,</span> in <span class="ni">broadcast_arrays</span><span class="nt">(*args)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1155</span> <span class="nd">@_wraps</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">,</span> <span class="n">lax_description</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="g g-Whitespace">   </span><span class="mi">1156</span><span class="s2"> The JAX version does not necessarily return a view of the input.</span>
-<span class="g g-Whitespace">   </span><span class="mi">1157</span><span class="s2"> &quot;&quot;&quot;</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1158</span> <span class="k">def</span> <span class="nf">broadcast_arrays</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Array</span><span class="p">]:</span>
-<span class="ne">-&gt; </span><span class="mi">1159</span>   <span class="k">return</span> <span class="n">_broadcast_arrays</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-
-    <span class="p">[</span><span class="o">...</span> <span class="n">skipping</span> <span class="n">hidden</span> <span class="mi">1</span> <span class="n">frame</span><span class="p">]</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jax/_src/api.py:612,</span> in <span class="ni">_cpp_jit.&lt;locals&gt;.cache_miss</span><span class="nt">(*args, **kwargs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">608</span>   <span class="n">flat_fun</span> <span class="o">=</span> <span class="n">lu</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">flat_fun</span><span class="p">,</span> <span class="n">in_type</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">610</span> <span class="n">primitive</span> <span class="o">=</span> <span class="n">xla</span><span class="o">.</span><span class="n">xla_call_p</span>
-<span class="g g-Whitespace">    </span><span class="mi">611</span> <span class="n">call_bind_continuation</span><span class="p">,</span> <span class="n">top_trace</span><span class="p">,</span> <span class="n">fun_</span><span class="p">,</span> <span class="n">tracers</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="p">(</span>
-<span class="ne">--&gt; </span><span class="mi">612</span>     <span class="n">core</span><span class="o">.</span><span class="n">call_bind_with_continuation</span><span class="p">(</span><span class="n">primitive</span><span class="p">,</span> <span class="n">flat_fun</span><span class="p">,</span> <span class="o">*</span><span class="n">args_flat</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">613</span>     <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">614</span>     <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">615</span>     <span class="n">name</span><span class="o">=</span><span class="n">flat_fun</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">616</span>     <span class="n">donated_invars</span><span class="o">=</span><span class="n">donated_invars</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">617</span>     <span class="n">inline</span><span class="o">=</span><span class="n">inline</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">618</span>     <span class="n">keep_unused</span><span class="o">=</span><span class="n">keep_unused</span><span class="p">))</span>
-<span class="g g-Whitespace">    </span><span class="mi">619</span> <span class="n">execute</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="g g-Whitespace">    </span><span class="mi">620</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">top_trace</span><span class="p">,</span> <span class="n">core</span><span class="o">.</span><span class="n">EvalTrace</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">621</span>     <span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">jax_debug_nans</span> <span class="ow">or</span> <span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">jax_debug_infs</span><span class="p">):</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jax/core.py:2036,</span> in <span class="ni">call_bind_with_continuation</span><span class="nt">(primitive, fun, *args, **params)</span>
-<span class="g g-Whitespace">   </span><span class="mi">2035</span> <span class="k">def</span> <span class="nf">call_bind_with_continuation</span><span class="p">(</span><span class="n">primitive</span><span class="p">:</span> <span class="n">CallPrimitive</span><span class="p">,</span> <span class="n">fun</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-<span class="ne">-&gt; </span><span class="mi">2036</span>   <span class="n">top_trace</span> <span class="o">=</span> <span class="n">find_top_trace</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">2037</span>   <span class="n">fun_</span><span class="p">,</span> <span class="n">env_trace_todo</span> <span class="o">=</span> <span class="n">process_env_traces_call</span><span class="p">(</span>
-<span class="g g-Whitespace">   </span><span class="mi">2038</span>       <span class="n">fun</span><span class="p">,</span> <span class="n">primitive</span><span class="p">,</span> <span class="n">top_trace</span> <span class="ow">and</span> <span class="n">top_trace</span><span class="o">.</span><span class="n">level</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
-<span class="g g-Whitespace">   </span><span class="mi">2039</span>   <span class="n">tracers</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">top_trace</span><span class="o">.</span><span class="n">full_raise</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jax/core.py:1123,</span> in <span class="ni">find_top_trace</span><span class="nt">(xs)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1121</span> <span class="k">else</span><span class="p">:</span>
-<span class="g g-Whitespace">   </span><span class="mi">1122</span>   <span class="n">top_main</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
-<span class="ne">-&gt; </span><span class="mi">1123</span> <span class="n">dynamic</span> <span class="o">=</span> <span class="n">thread_local_state</span><span class="o">.</span><span class="n">trace_state</span><span class="o">.</span><span class="n">trace_stack</span><span class="o">.</span><span class="n">dynamic</span>
-<span class="g g-Whitespace">   </span><span class="mi">1124</span> <span class="n">top_main</span> <span class="o">=</span> <span class="p">(</span><span class="n">dynamic</span> <span class="k">if</span> <span class="n">top_main</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dynamic</span><span class="o">.</span><span class="n">level</span> <span class="o">&gt;</span> <span class="n">top_main</span><span class="o">.</span><span class="n">level</span>
-<span class="g g-Whitespace">   </span><span class="mi">1125</span>             <span class="k">else</span> <span class="n">top_main</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1126</span> <span class="k">return</span> <span class="n">top_main</span> <span class="ow">and</span> <span class="n">top_main</span><span class="o">.</span><span class="n">with_cur_sublevel</span><span class="p">()</span>
-
-<span class="ne">KeyboardInterrupt</span>: 
-</pre></div>
-</div>
-</div>
+    </div></div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -833,6 +737,9 @@ title="Source repository"
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<img alt="../_images/b515d8fe1152855dc57c026eac92d8a91dbaa32db5f2c986bfba98a01f1bcbd7.png" src="../_images/b515d8fe1152855dc57c026eac92d8a91dbaa32db5f2c986bfba98a01f1bcbd7.png" />
+</div>
 </div>
 <div class="cell tag_hide-input docutils container">
 <details class="hide above-input">
@@ -847,6 +754,12 @@ title="Source repository"
 </div>
 </div>
 </details>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The average accuracy for SGLD in the sampling phase is 92.28%
+The average accuracy for SGHMC in the sampling phase is 93.07%
+</pre></div>
+</div>
+</div>
 </div>
 <p>Which is not a bad accuracy at all for such a simple model! Remember though that we draw samples from the posterior distribution of the digit probabilities; we can thus use this information to filter out examples for which the model is “unsure” of its prediction.</p>
 <p>Here we will say that the model is unsure of its prediction for a given image if the digit that is most often predicted for this image is predicted less tham 95% of the time.</p>
@@ -887,6 +800,30 @@ title="Source repository"
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[0.     0.     0.065  0.047  0.0005 0.0015 0.0985 0.     0.123  0.164 ]
+[0.126  0.     0.0775 0.116  0.     0.0075 0.     0.0005 0.0075 0.1645]
+[0.     0.089  0.0025 0.003  0.169  0.     0.     0.103  0.0505 0.0825]
+[0.109  0.     0.0705 0.     0.     0.     0.1695 0.     0.     0.1505]
+[0.     0.     0.016  0.     0.174  0.036  0.     0.005  0.124  0.1445]
+[0.1635 0.     0.049  0.     0.1745 0.0085 0.     0.     0.103  0.001 ]
+[0.     0.     0.     0.     0.     0.     0.     0.153  0.175  0.1715]
+[0.     0.003  0.07   0.176  0.001  0.002  0.     0.0795 0.0115 0.1565]
+[0.     0.017  0.002  0.     0.0005 0.     0.1765 0.     0.172  0.1315]
+[0.     0.     0.     0.1045 0.     0.142  0.     0.033  0.0425 0.1775]
+</pre></div>
+</div>
+<img alt="../_images/226a179c6221db5aac928153b58ccea93e0c143daa1f0bd4afcfab8110aed1c7.png" src="../_images/226a179c6221db5aac928153b58ccea93e0c143daa1f0bd4afcfab8110aed1c7.png" />
+<img alt="../_images/bf26835ee5d9c2802afe7756b59ec2a11e49ae061bf0734a47957457a309b39d.png" src="../_images/bf26835ee5d9c2802afe7756b59ec2a11e49ae061bf0734a47957457a309b39d.png" />
+<img alt="../_images/441e5a73db84c3780f830d83395d095c9f1348dec7e559ecd23ebdf5ac7e27c7.png" src="../_images/441e5a73db84c3780f830d83395d095c9f1348dec7e559ecd23ebdf5ac7e27c7.png" />
+<img alt="../_images/76039fa436eaaf1090ac269cfd1fc5c5794b97c5832fba9119b8ad159be623c1.png" src="../_images/76039fa436eaaf1090ac269cfd1fc5c5794b97c5832fba9119b8ad159be623c1.png" />
+<img alt="../_images/6855e3aa4c8c81f140ffc5a2d033698f4dc3eefb62148ff23a620e3f495f84ff.png" src="../_images/6855e3aa4c8c81f140ffc5a2d033698f4dc3eefb62148ff23a620e3f495f84ff.png" />
+<img alt="../_images/cefc856455fb943841a2e668aa5a23207525cb612f6d3dc22a350b45646ebab3.png" src="../_images/cefc856455fb943841a2e668aa5a23207525cb612f6d3dc22a350b45646ebab3.png" />
+<img alt="../_images/ec60a9ded29b0f876ba0877c10a71392b131382d2dfb60d6b8717998ba6f1517.png" src="../_images/ec60a9ded29b0f876ba0877c10a71392b131382d2dfb60d6b8717998ba6f1517.png" />
+<img alt="../_images/d935d22b27e73e79a0567c9efbdf018686da6ed81abfe21cb98184dadf280afd.png" src="../_images/d935d22b27e73e79a0567c9efbdf018686da6ed81abfe21cb98184dadf280afd.png" />
+<img alt="../_images/ec80073e8f457b49820f62d9f7a9b6cdc1cdeb43464b6e102eae9adb7df39955.png" src="../_images/ec80073e8f457b49820f62d9f7a9b6cdc1cdeb43464b6e102eae9adb7df39955.png" />
+<img alt="../_images/58f39b7a8eb71b0d4fb4c4dfb69abae6125d73ea40f984f961084fa14fbe1aa0.png" src="../_images/58f39b7a8eb71b0d4fb4c4dfb69abae6125d73ea40f984f961084fa14fbe1aa0.png" />
+</div>
 </div>
 <p>And now compute the average accuracy over all the samples without these uncertain predictions:</p>
 <div class="cell tag_hide-input docutils container">
@@ -906,6 +843,11 @@ title="Source repository"
 </div>
 </div>
 </details>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The average accuracy removing the samples for which the model is uncertain is 98.514%
+</pre></div>
+</div>
+</div>
 </div>
 </section>
 </section>

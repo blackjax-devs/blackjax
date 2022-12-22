@@ -120,6 +120,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="howto_use_pymc.html">
+     Use with PyMC models
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="howto_use_tfp.html">
      Use with TFP models
     </a>
@@ -446,11 +451,6 @@ title="Source repository"
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-</div>
 </div>
 <p>Numpyro return a potential function, which is easily transformed back into a logprob function that is required by Blackjax:</p>
 <div class="cell docutils container">
@@ -577,7 +577,7 @@ There were 0.00% divergent transitions
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">J</span><span class="p">):</span>
     <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s2">&quot;theta_base&quot;</span><span class="p">][:,</span> <span class="n">i</span><span class="p">])</span>
     <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;School </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> relative treatment effect chain&quot;</span><span class="p">)</span>
-    <span class="n">sns</span><span class="o">.</span><span class="n">kdeplot</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s2">&quot;theta_base&quot;</span><span class="p">][:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">shade</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sns</span><span class="o">.</span><span class="n">kdeplot</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s2">&quot;theta_base&quot;</span><span class="p">][:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">fill</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;School </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> relative treatment effect distribution&quot;</span><span class="p">)</span>
 <span class="n">axes</span><span class="p">[</span><span class="n">J</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Iteration&quot;</span><span class="p">)</span>
 <span class="n">axes</span><span class="p">[</span><span class="n">J</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;School effect&quot;</span><span class="p">)</span>
@@ -588,58 +588,6 @@ There were 0.00% divergent transitions
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/tmp/ipykernel_5225/2569034133.py:6: FutureWarning: 
-
-`shade` is now deprecated in favor of `fill`; setting `fill=True`.
-This will become an error in seaborn v0.14.0; please update your code.
-
-  sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_5225/2569034133.py:6: FutureWarning: 
-
-`shade` is now deprecated in favor of `fill`; setting `fill=True`.
-This will become an error in seaborn v0.14.0; please update your code.
-
-  sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_5225/2569034133.py:6: FutureWarning: 
-
-`shade` is now deprecated in favor of `fill`; setting `fill=True`.
-This will become an error in seaborn v0.14.0; please update your code.
-
-  sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_5225/2569034133.py:6: FutureWarning: 
-
-`shade` is now deprecated in favor of `fill`; setting `fill=True`.
-This will become an error in seaborn v0.14.0; please update your code.
-
-  sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_5225/2569034133.py:6: FutureWarning: 
-
-`shade` is now deprecated in favor of `fill`; setting `fill=True`.
-This will become an error in seaborn v0.14.0; please update your code.
-
-  sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/tmp/ipykernel_5225/2569034133.py:6: FutureWarning: 
-
-`shade` is now deprecated in favor of `fill`; setting `fill=True`.
-This will become an error in seaborn v0.14.0; please update your code.
-
-  sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_5225/2569034133.py:6: FutureWarning: 
-
-`shade` is now deprecated in favor of `fill`; setting `fill=True`.
-This will become an error in seaborn v0.14.0; please update your code.
-
-  sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-/tmp/ipykernel_5225/2569034133.py:6: FutureWarning: 
-
-`shade` is now deprecated in favor of `fill`; setting `fill=True`.
-This will become an error in seaborn v0.14.0; please update your code.
-
-  sns.kdeplot(samples[&quot;theta_base&quot;][:, i], ax=axes[i][1], shade=True)
-</pre></div>
-</div>
 <img alt="../_images/56e25e424c6cca572aa0635cfa8c89d420f48abde52b2e3c791b3324ee2f1cef.png" src="../_images/56e25e424c6cca572aa0635cfa8c89d420f48abde52b2e3c791b3324ee2f1cef.png" />
 </div>
 </div>

@@ -35,6 +35,8 @@
     <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Use with TFP models" href="howto_use_tfp.html" />
+    <link rel="prev" title="Use with Oryx models" href="howto_use_oryx.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -91,17 +93,17 @@
   HOW TO
  </span>
 </p>
-<ul class="nav bd-sidenav">
- <li class="toctree-l1 has-children">
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active has-children">
   <a class="reference internal" href="../howto_use_ppl.html">
    Use the model I built with X?
   </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
   <label for="toctree-checkbox-1">
    <i class="fas fa-chevron-down">
    </i>
   </label>
-  <ul>
+  <ul class="current">
    <li class="toctree-l2">
     <a class="reference internal" href="howto_use_aesara.html">
      Use with Aesara models
@@ -115,6 +117,11 @@
    <li class="toctree-l2">
     <a class="reference internal" href="howto_use_oryx.html">
      Use with Oryx models
+    </a>
+   </li>
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
+     Use with PyMC models
     </a>
    </li>
    <li class="toctree-l2">
@@ -416,7 +423,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/pymc/sampling/jax.py:37: UserWarning: This module is experimental.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/pymc/sampling/jax.py:39: UserWarning: This module is experimental.
   warnings.warn(&quot;This module is experimental.&quot;)
 </pre></div>
 </div>
@@ -424,10 +431,10 @@ title="Source repository"
 Ambiguities exist in dispatched function _unify
 
 The following signatures may result in ambiguous behavior:
-	[object, ConstrainedVar, Mapping], [ConstrainedVar, Var, Mapping]
-	[object, ConstrainedVar, Mapping], [ConstrainedVar, Var, Mapping]
 	[object, ConstrainedVar, Mapping], [ConstrainedVar, object, Mapping]
-	[object, ConstrainedVar, Mapping], [ConstrainedVar, object, Mapping]
+	[ConstrainedVar, Var, Mapping], [object, ConstrainedVar, Mapping]
+	[ConstrainedVar, object, Mapping], [object, ConstrainedVar, Mapping]
+	[object, ConstrainedVar, Mapping], [ConstrainedVar, Var, Mapping]
 
 
 Consider making the following additions:
@@ -444,7 +451,7 @@ def _unify(...)
 @dispatch(ConstrainedVar, ConstrainedVar, Mapping)
 def _unify(...)
   warn(warning_text(dispatcher.name, ambiguities), AmbiguityWarning)
-No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -506,6 +513,20 @@ No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="howto_use_oryx.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Use with Oryx models</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="howto_use_tfp.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Use with TFP models</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
 </div>
             </footer>
         </div>
