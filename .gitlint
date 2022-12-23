@@ -1,0 +1,20 @@
+[title-max-length]
+line-length=120
+
+[title-min-length]
+min-length=15
+
+[title-match-regex]
+# python-style regex that the commit-msg title must match
+# Note that the regex can contradict with other rules if not used correctly
+# (e.g. title-must-not-contain-word).
+regex=^[A-Z].*$
+
+[title-must-not-contain-word]
+# Comma-separated list of words that should not occur in the title. Matching is case
+# insensitive. It's fine if the keyword occurs as part of a larger word (so "WIPING"
+# will not cause a violation, but "WIP: my title" will.
+words=wip
+
+[body-max-line-length]
+line-length=72

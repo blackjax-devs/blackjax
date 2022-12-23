@@ -1,6 +1,5 @@
 exclude: |
     (?x)^(
-        versioneer\.py|
         blackjax/_version\.py|
     )$
 repos:
@@ -46,3 +45,8 @@ repos:
       args: ['--profile=black']
     - id: nbqa-flake8
       args: ['--ignore=E501,E203,E302,E402,E731,W503']
+- repo: https://github.com/jorisroovers/gitlint
+  rev: v0.18.0
+  hooks:
+    - id: gitlint
+    - id: gitlint-ci
