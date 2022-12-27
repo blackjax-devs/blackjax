@@ -1,3 +1,5 @@
+from blackjax._version import __version__
+
 from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
 from .kernels import (
@@ -22,6 +24,7 @@ from .kernels import (
 from .optimizers import dual_averaging, lbfgs
 
 __all__ = [
+    "__version__",
     "dual_averaging",  # optimizers
     "lbfgs",
     "hmc",  # mcmc
@@ -44,7 +47,3 @@ __all__ = [
     "ess",  # diagnostics
     "rhat",
 ]
-
-from . import _version
-
-__version__ = _version.get_versions()["version"]
