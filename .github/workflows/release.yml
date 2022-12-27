@@ -7,32 +7,40 @@ on:
 
 jobs:
   release-job:
-    name: Release on PyPi
+    name: Build and publish on PyPi
     runs-on: ubuntu-latest
-    env:
-      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
-        python-version: 3.7
-    - name: Install release tooling
+        python-version: 3.9
+    - name: Build sdist and wheel
       run: |
-        pip install twine wheel
-    - name: Build package
+        python -m pip install -U pip
+        python -m pip install build
+        python -m build
+    - name: Check that the package version matches the Release name
       run: |
-        python setup.py sdist bdist_wheel
-    - name: Check that `blackjax.__version__` matches the Release name
-      run: |
-        echo "GITHUB_REF: ${GITHUB_REF}"
-        # The GITHUB_REF should be something like "refs/tags/v3.x.x"
-        # Make sure the package version is the same as the tag
         grep -Rq "^Version: ${GITHUB_REF:10}$" blackjax.egg-info/PKG-INFO
+    - name: Check sdist install and imports
+        mkdir -p test-sdist
+        cd test-sdist
+        python -m venv venv-sdist
+        venv-sdist/bin/python -m pip install ../dist/blackjax-*.tar.gz
+        venv-sdist/bin/python -c "import blackjax"
+    - name: Check wheel install and imports
+        mkdir -p test-wheel
+        cd test-wheel
+        python -m venv venv-wheel
+        venv-wheel/bin/python -m pip install ../dist/blackjax-*.whl
+        venv-wheel/bin/python -c "import blackjax"
     - name: Publish to PyPi
-      run: |
-        twine check dist/*
-        twine upload --repository pypi --username __token__ --password ${PYPI_TOKEN} dist/*
+      uses: pypa/gh-action-pypi-publish@v1.4.2
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}
+
   test-install-job:
     name: Test install from PyPi
     needs: release-job
