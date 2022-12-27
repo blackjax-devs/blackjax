@@ -10,12 +10,11 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
 import pathlib
 import sys
 from datetime import date
 
-import versioneer
+import blackjax
 
 PROJECT_DIR = pathlib.Path(__file__).absolute().parent.parent
 sys.path.append(str(PROJECT_DIR))
@@ -25,15 +24,7 @@ sys.path.append(str(PROJECT_DIR))
 project = "blackjax"
 copyright = f"{date.today().year}, The Blackjax developers"
 author = "The Blackjax developers"
-
-
-# -- Get the current version with versioneer ---------------------------------
-# For versioneer to work we need to be in the root of the project
-_curpath = os.getcwd()
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
-version = versioneer.get_version()  # full version possibly with tags
-os.chdir(_curpath)
-del _curpath
+version = blackjax.__version__
 
 
 # General configuration ---------------------------------------------------
