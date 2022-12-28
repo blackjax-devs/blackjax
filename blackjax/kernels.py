@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Blackjax high-level interface with sampling algorithms."""
-from typing import Callable, Dict, NamedTuple, Optional, Union
+from typing import Callable, Dict, NamedTuple, Optional, Tuple, Union
 
 import jax
 import jax.numpy as jnp
+from optax import GradientTransformation
 
 import blackjax.adaptation as adaptation
 import blackjax.mcmc as mcmc
@@ -1251,6 +1252,11 @@ class ghmc:
 # -----------------------------------------------------------------------------
 
 
+class PathFinderAlgorithm(NamedTuple):
+    approximate: Callable
+    sample: Callable
+
+
 class pathfinder:
     """Implements the (basic) user interface for the pathfinder kernel.
 
@@ -1273,7 +1279,7 @@ class pathfinder:
     approximate = staticmethod(vi.pathfinder.approximate)
     sample = staticmethod(vi.pathfinder.sample)
 
-    def __new__(cls, logdensity_fn: Callable) -> VIAlgorithm:  # type: ignore[misc]
+    def __new__(cls, logdensity_fn: Callable) -> PathFinderAlgorithm:  # type: ignore[misc]
         def approximate_fn(
             rng_key: PRNGKey,
             position: PyTree,
@@ -1289,7 +1295,7 @@ class pathfinder:
         ):
             return cls.sample(rng_key, state, num_samples)
 
-        return VIAlgorithm(approximate_fn, sample_fn)
+        return PathFinderAlgorithm(approximate_fn, sample_fn)
 
 
 def pathfinder_adaptation(
@@ -1385,3 +1391,30 @@ def pathfinder_adaptation(
         return AdaptationResults(last_chain_state, kernel, parameters)
 
     return AdaptationAlgorithm(run)
+
+
+class meanfield_vi:
+    init = staticmethod(vi.meanfield_vi.init)
+    step = staticmethod(vi.meanfield_vi.step)
+    sample = staticmethod(vi.meanfield_vi.sample)
+
+    def __new__(
+        cls,
+        logdensity_fn: Callable,
+        optimizer: GradientTransformation,
+        num_samples: int = 100,
+    ):  # type: ignore[misc]
+        def init_fn(position: PyTree):
+            return cls.init(position, optimizer)
+
+        def step_fn(
+            rng_key: PRNGKey, state: vi.meanfield_vi.MFVIState
+        ) -> Tuple[vi.meanfield_vi.MFVIState, vi.meanfield_vi.MFVIInfo]:
+            return cls.step(rng_key, state, logdensity_fn, optimizer, num_samples)
+
+        def sample_fn(
+            rng_key: PRNGKey, state: vi.meanfield_vi.MFVIState, num_samples: int
+        ):
+            return cls.sample(rng_key, state, num_samples)
+
+        return VIAlgorithm(init_fn, step_fn, sample_fn)

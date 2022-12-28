@@ -11,6 +11,7 @@ from .kernels import (
     irmh,
     mala,
     meads,
+    meanfield_vi,
     mgrad_gaussian,
     nuts,
     orbital_hmc,
@@ -45,7 +46,8 @@ __all__ = [
     "pathfinder_adaptation",
     "adaptive_tempered_smc",  # smc
     "tempered_smc",
-    "pathfinder",  # variational inference
+    "meanfield_vi",  # variational inference
+    "pathfinder",
     "ess",  # diagnostics
     "rhat",
 ]

@@ -1,3 +1,3 @@
-from . import pathfinder
+from . import meanfield_vi, pathfinder
 
-__all__ = ["pathfinder"]
+__all__ = ["pathfinder", "meanfield_vi"]
