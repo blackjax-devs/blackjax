@@ -24,12 +24,14 @@ jobs:
       run: |
         grep -Rq "^Version: ${GITHUB_REF:10}$" blackjax.egg-info/PKG-INFO
     - name: Check sdist install and imports
+      run: |
         mkdir -p test-sdist
         cd test-sdist
         python -m venv venv-sdist
         venv-sdist/bin/python -m pip install ../dist/blackjax-*.tar.gz
         venv-sdist/bin/python -c "import blackjax"
     - name: Check wheel install and imports
+      run: |
         mkdir -p test-wheel
         cd test-wheel
         python -m venv venv-wheel
