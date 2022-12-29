@@ -2,8 +2,7 @@ name: Nightly
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build_and_publish:
@@ -13,9 +12,11 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
+
     - uses: actions/setup-python@v2
       with:
         python-version: 3.9
+
     - name: Update pyproject.toml
       # Taken from https://github.com/aesara-devs/aesara/pull/1375
       run: |
@@ -24,23 +25,29 @@ jobs:
         /tmp/dasel put -f pyproject.toml project.name -v blackjax-nightly
         /tmp/dasel put -f pyproject.toml tool.setuptools_scm.version_scheme -v post-release
         /tmp/dasel put -f pyproject.toml tool.setuptools_scm.local_scheme -v no-local-version
+
     - name: Build the sdist and wheel
       run: |
         python -m pip install -U pip
         python -m pip install build
         python -m build
+
     - name: Check sdist install and imports
+      run: |
         mkdir -p test-sdist
         cd test-sdist
         python -m venv venv-sdist
         venv-sdist/bin/python -m pip install ../dist/blackjax-*.tar.gz
         venv-sdist/bin/python -c "import blackjax"
+
     - name: Check wheel install and imports
+      run: |
         mkdir -p test-wheel
         cd test-wheel
         python -m venv venv-wheel
         venv-wheel/bin/python -m pip install ../dist/blackjax-*.whl
         venv-wheel/bin/python -c "import blackjax"
+
     - name: Publish to PyPi
       uses: pypa/gh-action-pypi-publish@v1.4.2
       with:
