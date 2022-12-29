@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "blackjax"
 authors= [{name = "The Blackjax team", email = "remi@thetypicalset.com"}]
-description="Flexible and fast sampling in Python"
+description = "Flexible and fast sampling in Python"
 requires-python = ">=3.7"
 keywords=[
     "probability",
@@ -51,7 +51,7 @@ files=["LICENSE"]
 
 [project.readme]
 file="README.md"
-content-type = "file/markdown"
+content-type = "text/markdown"
 
 [tool.setuptools]
 platforms = [
