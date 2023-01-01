@@ -105,7 +105,7 @@ def log_likelihood(w):
 
 ## Posterior sampling
 
-We use `blackjax`'s Random Walk RMH kernel to sample from the posterior distribution.
+We use `blackjax`'s Latent Gaussian sampler to sample from the posterior distribution.
 
 ```{code-cell} python
 rng_key = random.PRNGKey(314)

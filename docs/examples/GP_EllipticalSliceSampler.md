@@ -16,7 +16,7 @@ mystnb:
 
 # Gaussian Regression with the Elliptical Slice Sampler
 
-Given a vector of obervations $ \mathbf{y}$ with known variance $\sigma^2\mathbb{I}$ and Gaussian likelihood, we model the mean parameter of these observations as a Gaussian process given input/feature matrix $\mathbf{X}$
+Given a vector of obervations $\mathbf{y}$ with known variance $\sigma^2\mathbb{I}$ and Gaussian likelihood, we model the mean parameter of these observations as a Gaussian process given input/feature matrix $\mathbf{X}$
 
 ```{math}
 \begin{align*}
