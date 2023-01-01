@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Welcome to Blackjax &#8212; Blackjax</title>
+    <title>Welcome to Blackjax!</title>
     
   <!-- Loaded before other Sphinx assets -->
   <link href="_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
     
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
@@ -33,9 +34,10 @@
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script src="_static/design-tabs.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Use the model I built with X?" href="howto_use_ppl.html" />
+    <link rel="next" title="Sample with multiple chains in parallel" href="examples/howto_sample_multiple_chains.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -79,8 +81,6 @@
       <img src="_static/blackjax.png" class="logo" alt="logo">
       
       
-      <h1 class="site-logo" id="site-title">Blackjax</h1>
-      
     </a>
 </div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
   <i class="icon fas fa-search"></i>
@@ -93,6 +93,21 @@
  </span>
 </p>
 <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="examples/howto_sample_multiple_chains.html">
+   Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="examples/howto_custom_gradients.html">
+   Use custom gradients?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="examples/howto_other_frameworks.html">
+   Use non-JAX log-prob functions?
+  </a>
+ </li>
  <li class="toctree-l1 has-children">
   <a class="reference internal" href="howto_use_ppl.html">
    Use the model I built with X?
@@ -130,25 +145,10 @@
    </li>
   </ul>
  </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="examples/howto_sample_multiple_chains.html">
-   Sample with multiple chains?
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="examples/howto_custom_gradients.html">
-   Use custom gradients?
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="examples/howto_other_frameworks.html">
-   Use non-JAX log-prob functions?
-  </a>
- </li>
 </ul>
 <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
-  Blackjax by example
+  LEARN BY EXAMPLE
  </span>
 </p>
 <ul class="nav bd-sidenav">
@@ -232,13 +232,13 @@
 </ul>
 <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
-  API Documentation
+  API
  </span>
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="mcmc.html">
-   MCMC sampling
+   MCMC
   </a>
  </li>
  <li class="toctree-l1">
@@ -367,7 +367,12 @@ title="Source repository"
         <ul class="visible nav section-nav flex-column">
  <li class="toc-h1 nav-item toc-entry">
   <a class="reference internal nav-link" href="#">
-   Welcome to Blackjax
+   Welcome to Blackjax!
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#hello-world">
+   Hello World
   </a>
  </li>
  <li class="toc-h1 nav-item toc-entry">
@@ -384,11 +389,6 @@ title="Source repository"
    </li>
   </ul>
  </li>
- <li class="toc-h1 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#index">
-   Index
-  </a>
- </li>
 </ul>
 
     </nav>
@@ -398,7 +398,7 @@ title="Source repository"
         <div class="col pl-md-3 pl-lg-5 content-container">
             <!-- Table of contents that is only displayed when printing the page -->
             <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Welcome to Blackjax</h1>
+                <h1>Welcome to Blackjax!</h1>
                 <!-- Table of contents -->
                 <div id="print-main-content">
                     <div id="jb-print-toc">
@@ -410,7 +410,12 @@ title="Source repository"
                             <ul class="visible nav section-nav flex-column">
  <li class="toc-h1 nav-item toc-entry">
   <a class="reference internal nav-link" href="#">
-   Welcome to Blackjax
+   Welcome to Blackjax!
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#hello-world">
+   Hello World
   </a>
  </li>
  <li class="toc-h1 nav-item toc-entry">
@@ -426,11 +431,6 @@ title="Source repository"
     </ul>
    </li>
   </ul>
- </li>
- <li class="toc-h1 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#index">
-   Index
-  </a>
  </li>
 </ul>
 
@@ -443,15 +443,18 @@ title="Source repository"
               <div>
                 
   <section id="welcome-to-blackjax">
-<h1>Welcome to Blackjax<a class="headerlink" href="#welcome-to-blackjax" title="Permalink to this headline">#</a></h1>
-<p><em>The documentation corresponds to the current state of the `main` branch. There may be differences with the latest released version.</em></p>
-<p>Blackjax is a library of samplers for <a class="reference external" href="https://github.com/google/jax">JAX</a> that works on CPU as well as GPU. It is designed with two categories of users in mind:</p>
+<h1>Welcome to Blackjax!<a class="headerlink" href="#welcome-to-blackjax" title="Permalink to this headline">#</a></h1>
+<p><em>The documentation corresponds to the current state of the <code class="docutils literal notranslate"><span class="pre">main</span></code> branch. There may be differences with the latest released version.</em></p>
+<p>Blackjax is a library of samplers for <code class="docutils literal notranslate"><span class="pre">JAX</span> <span class="pre">&lt;https://github.com/google/jax&gt;</span></code>_ that works on CPU as well as GPU. It is designed with two categories of users in mind:</p>
 <ul class="simple">
 <li><p>People who just need state-of-the-art samplers that are fast, robust and well tested;</p></li>
 <li><p>Researchers who can use the library’s building blocks to design new algorithms.</p></li>
 </ul>
-<p>It integrates really well with PPLs as long as they can provide a (potentially unnormalized) log-probability density function compatible with JAX. And while you’re here:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<p>It integrates really well with PPLs as long as they can provide a (potentially unnormalized) log-probability density function compatible with JAX.</p>
+</section>
+<section id="hello-world">
+<h1>Hello World<a class="headerlink" href="#hello-world" title="Permalink to this headline">#</a></h1>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.scipy.stats</span> <span class="k">as</span> <span class="nn">stats</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -460,8 +463,8 @@ title="Source repository"
 
 <span class="n">observed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1_000</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">logdensity_fn</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="n">logpdf</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">observed</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;scale&quot;</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">logpdf</span><span class="p">)</span>
+      <span class="n">logpdf</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">observed</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;scale&quot;</span><span class="p">])</span>
+      <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">logpdf</span><span class="p">)</span>
 
 <span class="c1"># Build the kernel</span>
 <span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-3</span>
@@ -480,108 +483,50 @@ title="Source repository"
    <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you want to use Blackjax with a model implemented with a PPL, go to the <a class="reference internal" href="howto_use_ppl.html"><span class="doc std std-doc">related tutorials</span></a>.</p>
+</div>
 </section>
 <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">#</a></h1>
-<p>The latest release of Blackjax can be installed from PyPi using <cite>pip</cite>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install blackjax
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-0" name="sd-tab-set-0" type="radio">
+</input><label class="sd-tab-label" for="sd-tab-item-0">
+Latest</label><div class="sd-tab-content docutils">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>blackjax
 </pre></div>
 </div>
-<p>The current development branch can be installed from GitHub using <cite>pip</cite> as well:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install git+https://github.com/blackjax-devs/blackjax
+</div>
+<input id="sd-tab-item-1" name="sd-tab-set-0" type="radio">
+</input><label class="sd-tab-label" for="sd-tab-item-1">
+Nightly</label><div class="sd-tab-content docutils">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>blackjax-nightly
 </pre></div>
+</div>
+</div>
+<input id="sd-tab-item-2" name="sd-tab-set-0" type="radio">
+</input><label class="sd-tab-label" for="sd-tab-item-2">
+Conda</label><div class="sd-tab-content docutils">
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>blackjax<span class="w"> </span>-c<span class="w"> </span>conda-forge
+</pre></div>
+</div>
+</div>
 </div>
 <section id="gpu-specific-instructions">
 <h2>GPU-specific instructions<a class="headerlink" href="#gpu-specific-instructions" title="Permalink to this headline">#</a></h2>
 <p>BlackJAX is written in pure Python but depends on XLA via JAX. By default, the
 version of JAX that will be installed along with BlackJAX will make your code
 run on CPU only. <strong>If you want to use BlackJAX on GPU/TPU</strong> we recommend you follow
-[these instructions](<a class="reference external" href="https://github.com/google/jax#installation">https://github.com/google/jax#installation</a>) to install JAX
+<a class="reference external" href="https://github.com/google/jax#installation">these instructions</a> to install JAX
 with the relevant hardware acceleration support.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install blackjax
-</pre></div>
+<div class="toctree-wrapper compound">
 </div>
 <div class="toctree-wrapper compound">
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="howto_use_ppl.html">Use the model I built with X?</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples/howto_use_aesara.html">Use with Aesara models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/howto_use_numpyro.html">Use with Numpyro models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/howto_use_oryx.html">Use with Oryx models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/howto_use_pymc.html">Use with PyMC models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/howto_use_tfp.html">Use with TFP models</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples/howto_sample_multiple_chains.html#vectorization-vs-parallelization">Vectorization vs parallelization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/howto_sample_multiple_chains.html#nuts-in-parallel">NUTS in parallel</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="examples/howto_custom_gradients.html">Use custom gradients?</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples/howto_custom_gradients.html#functions-defined-as-the-minimum-of-another-function">Functions defined as the minimum of another function</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples/howto_other_frameworks.html#aesara-model-compiled-to-numba">Aesara model compiled to Numba</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/howto_other_frameworks.html#use-jax-experimental-host-callback-to-call-numba-functions">Use <code class="docutils literal notranslate"><span class="pre">jax.experimental.host_callback</span></code> to call Numba functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/howto_other_frameworks.html#use-custom-xla-calls-to-call-numba-functions-faster">Use custom XLA calls to call Numba functions faster</a></li>
-</ul>
-</li>
-</ul>
 </div>
 <div class="toctree-wrapper compound">
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">Blackjax by example</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-</ul>
-</div>
-<div class="toctree-wrapper compound">
-<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="mcmc.html">MCMC sampling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="mcmc.html#nuts">NUTS</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mcmc.html#hmc">HMC</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mcmc.html#generalized-hmc">Generalized HMC</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mcmc.html#mala">MALA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mcmc.html#marginal-gradient-sampler-for-latent-gaussian-model">Marginal gradient sampler for latent gaussian model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mcmc.html#periodic-orbital">Periodic Orbital</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mcmc.html#elliptical-slice-sampler">Elliptical Slice Sampler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mcmc.html#rmh">RMH</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="sgmcmc.html">Stochastic gradient MCMC</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="sgmcmc.html#stochastic-gradient-langevin-dynamics">Stochastic Gradient Langevin Dynamics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sgmcmc.html#stochastic-gradient-hmc">Stochastic Gradient HMC</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="smc.html">Sequential Monte Carlo</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="smc.html#tempered-smc">Tempered SMC</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="vi.html">Variational Inference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="vi.html#pathfinder">Pathfinder</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="adaptation.html">Adaptation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="adaptation.html#window-adaptation">Window adaptation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="adaptation.html#pathfinder-adaptation">Pathfinder adaptation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="adaptation.html#meads">MEADS</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="diagnostics.html">Diagnostics</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="diagnostics.html#effective-sample-size">Effective sample size</a></li>
-<li class="toctree-l2"><a class="reference internal" href="diagnostics.html#potential-scale-reduction">Potential scale reduction</a></li>
-</ul>
-</li>
-</ul>
 </div>
 </section>
-</section>
-<section id="index">
-<h1>Index<a class="headerlink" href="#index" title="Permalink to this headline">#</a></h1>
-<ul class="simple">
-<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
-</ul>
 </section>
 
 
@@ -592,10 +537,10 @@ with the relevant hardware acceleration support.</p>
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='right-next' id="next-link" href="howto_use_ppl.html" title="next page">
+    <a class='right-next' id="next-link" href="examples/howto_sample_multiple_chains.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Use the model I built with X?</p>
+        <p class="prev-next-title">Sample with multiple chains in parallel</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>
@@ -608,7 +553,7 @@ with the relevant hardware acceleration support.</p>
   
     By The Blackjax developers<br/>
   
-      &copy; Copyright 2022, The Blackjax developers.<br/>
+      &copy; Copyright 2023, The Blackjax developers.<br/>
 </p>
         </footer>
     </div>

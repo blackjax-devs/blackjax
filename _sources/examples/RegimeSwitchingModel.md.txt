@@ -158,7 +158,7 @@ def inference_loop(rng, init_state, kernel, n_iter):
 ```
 
 ```{code-cell} python
-url = "https://raw.githubusercontent.com/blackjax-devs/blackjax/main/examples/data/google.csv"
+url = "https://raw.githubusercontent.com/blackjax-devs/blackjax/main/docs/examples/data/google.csv"
 data = pd.read_csv(url)
 y = data.dl_ac.values * 100
 T, _ = data.shape
