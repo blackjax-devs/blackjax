@@ -90,10 +90,42 @@
     <div class="bd-toc-item active">
         <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
-  HOW TO
+  PPL INTEGRATION
  </span>
 </p>
 <ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_aesara.html">
+   Aesara
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_numpyro.html">
+   Numpyro
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Oryx
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_pymc.html">
+   PyMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_tfp.html">
+   Tensorflow-Probability
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  HOW TO
+ </span>
+</p>
+<ul class="nav bd-sidenav">
  <li class="toctree-l1">
   <a class="reference internal" href="howto_sample_multiple_chains.html">
    Sample with multiple chains?
@@ -109,43 +141,6 @@
    Use non-JAX log-prob functions?
   </a>
  </li>
- <li class="toctree-l1 current active has-children">
-  <a class="reference internal" href="../howto_use_ppl.html">
-   Use the model I built with X?
-  </a>
-  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
-   <i class="fas fa-chevron-down">
-   </i>
-  </label>
-  <ul class="current">
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_aesara.html">
-     Use with Aesara models
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_numpyro.html">
-     Use with Numpyro models
-    </a>
-   </li>
-   <li class="toctree-l2 current active">
-    <a class="current reference internal" href="#">
-     Use with Oryx models
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_tfp.html">
-     Use with TFP models
-    </a>
-   </li>
-  </ul>
- </li>
 </ul>
 <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
@@ -157,8 +152,8 @@
   <a class="reference internal" href="../examples.html">
    Examples
   </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
-  <label for="toctree-checkbox-2">
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
    <i class="fas fa-chevron-down">
    </i>
   </label>
@@ -374,7 +369,7 @@ title="Source repository"
 <p>We reproduce the <a class="reference external" href="https://www.tensorflow.org/probability/oryx/notebooks/probabilistic_programming#case_study_bayesian_neural_network">example in Oryx’s documentation</a> and train a Bayesian Neural Network (BNN) on the iris dataset:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">datasets</span>
 
 <span class="n">iris</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_iris</span><span class="p">()</span>
 <span class="n">features</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">iris</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">iris</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]</span>
@@ -391,18 +386,25 @@ title="Source repository"
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of features: </span><span class="si">{</span><span class="n">num_features</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of features: </span><span class="si">{</span><span class="n">num_features</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of classes: </span><span class="si">{</span><span class="n">num_classes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of data points: </span><span class="si">{</span><span class="n">features</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </details>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of features: 4
+Number of classes: 3
+Number of data points: 150
+</pre></div>
+</div>
+</div>
 </div>
 <p>Oryx’s approach, like Aesara’s, is to implement probabilistic models as generative models and then apply transformations to get the log-probability density function. We begin with implementing a dense layer with normal prior probability on the weights and use the function <code class="docutils literal notranslate"><span class="pre">random_variable</span></code> to define random variables:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">random_variable</span>
 
 
@@ -434,7 +436,7 @@ title="Source repository"
 <p>We now use this layer to build a multi-layer perceptron. The <code class="docutils literal notranslate"><span class="pre">nest</span></code> function is used to create “scope tags” that allows in this context to re-use our <code class="docutils literal notranslate"><span class="pre">dense</span></code> layer multiple times without name collision in the dictionary that will contain the parameters:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">nest</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">nest</span>
 
 
 <span class="k">def</span> <span class="nf">mlp</span><span class="p">(</span><span class="n">hidden_sizes</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">):</span>
@@ -456,7 +458,7 @@ title="Source repository"
 <p>Finally, we model the labels as categorical random variables:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">functools</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">functools</span>
 
 <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">mlp</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">xs</span><span class="p">):</span>
@@ -473,7 +475,7 @@ title="Source repository"
 <p>We can now build the BNN and sample an initial position for the inference algorithm using <code class="docutils literal notranslate"><span class="pre">joint_sample</span></code>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">joint_sample</span>
 
 
@@ -481,6 +483,14 @@ title="Source repository"
 <span class="n">initial_weights</span> <span class="o">=</span> <span class="n">joint_sample</span><span class="p">(</span><span class="n">bnn</span><span class="p">)(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_features</span><span class="p">))</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">initial_weights</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>dict_keys([&#39;layer_1&#39;, &#39;layer_2&#39;, &#39;layer_3&#39;])
 </pre></div>
 </div>
 </div>
@@ -492,17 +502,22 @@ title="Source repository"
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">num_parameters</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">initial_weights</span><span class="p">)[</span><span class="mi">0</span><span class="p">]])</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_parameters</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">initial_weights</span><span class="p">)[</span><span class="mi">0</span><span class="p">]])</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of parameters in the model: </span><span class="si">{</span><span class="n">num_parameters</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </details>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of parameters in the model: 41803
+</pre></div>
+</div>
+</div>
 </div>
 <p>To sample from this model we will need to obtain its joint distribution log-probability using <code class="docutils literal notranslate"><span class="pre">joint_log_prob</span></code>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">joint_log_prob</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">joint_log_prob</span>
 
 <span class="k">def</span> <span class="nf">logdensity_fn</span><span class="p">(</span><span class="n">weights</span><span class="p">):</span>
   <span class="k">return</span> <span class="n">joint_log_prob</span><span class="p">(</span><span class="n">predict</span><span class="p">(</span><span class="n">bnn</span><span class="p">))(</span><span class="nb">dict</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">labels</span><span class="p">),</span> <span class="n">features</span><span class="p">)</span>
@@ -513,12 +528,18 @@ title="Source repository"
 <p>We can now run the window adaptation to get good values for the parameters of the NUTS algorithm:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">%%</span><span class="n">time</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 <span class="kn">import</span> <span class="nn">blackjax</span>
 
 <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 <span class="n">last_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_weights</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2min 27s, sys: 2.83 s, total: 2min 30s
+Wall time: 1min 57s
 </pre></div>
 </div>
 </div>
@@ -531,7 +552,7 @@ title="Source repository"
 <span class="expanded">Hide code cell content</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
@@ -547,9 +568,15 @@ title="Source repository"
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">%%</span><span class="n">time</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 
 <span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2min 45s, sys: 3.26 s, total: 2min 49s
+Wall time: 2min 11s
 </pre></div>
 </div>
 </div>
@@ -557,7 +584,7 @@ title="Source repository"
 <p>We can now use our samples to take an estimate of the accuracy that is averaged over the posterior distribution. We use <code class="docutils literal notranslate"><span class="pre">intervene</span></code> to “inject” the posterior values of the weights instead of sampling from the prior distribution:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">intervene</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">intervene</span>
 
 <span class="n">posterior_weights</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span>
 
@@ -579,7 +606,7 @@ title="Source repository"
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Average sample accuracy:&#39;</span><span class="p">,</span> <span class="p">(</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Average sample accuracy:&#39;</span><span class="p">,</span> <span class="p">(</span>
     <span class="n">output_probs</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">labels</span><span class="p">[</span><span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;BMA accuracy:&#39;</span><span class="p">,</span> <span class="p">(</span>
@@ -588,6 +615,12 @@ title="Source repository"
 </div>
 </div>
 </details>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Average sample accuracy: 0.98873335
+BMA accuracy: 0.99333334
+</pre></div>
+</div>
+</div>
 </div>
 </section>
 

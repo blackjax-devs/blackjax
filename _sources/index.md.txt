@@ -81,6 +81,18 @@ run on CPU only. **If you want to use BlackJAX on GPU/TPU** we recommend you fol
 [these instructions](https://github.com/google/jax#installation) to install JAX
 with the relevant hardware acceleration support.
 
+```{toctree}
+---
+maxdepth: 1
+caption: PPL INTEGRATION
+hidden:
+---
+Aesara<examples/howto_use_aesara.md>
+Numpyro<examples/howto_use_numpyro.md>
+Oryx<examples/howto_use_oryx.md>
+PyMC<examples/howto_use_pymc.md>
+Tensorflow-Probability<examples/howto_use_tfp.md>
+```
 
 ```{toctree}
 ---
@@ -91,7 +103,6 @@ hidden:
 Sample with multiple chains?<examples/howto_sample_multiple_chains.md>
 Use custom gradients?<examples/howto_custom_gradients.md>
 Use non-JAX log-prob functions?<examples/howto_other_frameworks.md>
-howto_use_ppl
 ```
 
 ```{toctree}

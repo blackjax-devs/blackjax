@@ -91,6 +91,38 @@
     <div class="bd-toc-item active">
         <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
+  PPL INTEGRATION
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_aesara.html">
+   Aesara
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_numpyro.html">
+   Numpyro
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_oryx.html">
+   Oryx
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_pymc.html">
+   PyMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_tfp.html">
+   Tensorflow-Probability
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
   HOW TO
  </span>
 </p>
@@ -110,43 +142,6 @@
    Use non-JAX log-prob functions?
   </a>
  </li>
- <li class="toctree-l1 has-children">
-  <a class="reference internal" href="../howto_use_ppl.html">
-   Use the model I built with X?
-  </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
-   <i class="fas fa-chevron-down">
-   </i>
-  </label>
-  <ul>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_aesara.html">
-     Use with Aesara models
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_numpyro.html">
-     Use with Numpyro models
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_oryx.html">
-     Use with Oryx models
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_tfp.html">
-     Use with TFP models
-    </a>
-   </li>
-  </ul>
- </li>
 </ul>
 <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
@@ -158,8 +153,8 @@
   <a class="reference internal" href="../examples.html">
    Examples
   </a>
-  <input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
-  <label for="toctree-checkbox-2">
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
    <i class="fas fa-chevron-down">
    </i>
   </label>
@@ -382,7 +377,7 @@ $$</p>
 $$</p>
 <div class="cell tag_remove-stderr docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.random</span> <span class="k">as</span> <span class="nn">jrnd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -477,6 +472,11 @@ $$</p>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:02:01.628343
+</pre></div>
+</div>
+</div>
 </div>
 <div class="cell tag_hide-input docutils container">
 <details class="hide above-input">
@@ -485,11 +485,67 @@ $$</p>
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">print_summary</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </details>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>                mean       std    median      5.0%     95.0%     n_eff     r_hat
+   beta[0]      0.36      0.89      0.40     -1.13      1.83   8236.19      1.01
+   beta[1]      1.15      0.56      1.06      0.27      1.99   4531.35      1.03
+   beta[2]     -1.26      0.57     -1.18     -2.14     -0.34   6066.22      1.02
+   beta[3]      1.10      0.57      1.01      0.22      1.94   5563.85      1.02
+   beta[4]     -0.46      0.83     -0.48     -1.84      0.94   7782.99      1.02
+   beta[5]      0.97      0.57      0.86      0.13      1.81   5609.28      1.02
+   beta[6]      0.66      0.70      0.61     -0.30      1.96   6378.09      1.02
+   beta[7]      0.66      0.71      0.62     -0.37      1.94   7076.83      1.02
+   beta[8]      0.04      0.82      0.03     -1.35      1.40   8757.97      1.01
+   beta[9]     -0.66      0.69     -0.60     -1.93      0.28   5958.57      1.02
+  beta[10]      0.37      0.83      0.37     -1.01      1.76   8604.83      1.01
+  beta[11]      0.82      0.60      0.73      0.05      1.79   6755.64      1.02
+  beta[12]     -0.44      0.83     -0.45     -1.85      0.93   6281.65      1.02
+  beta[13]     -0.07      0.82     -0.06     -1.49      1.29   9929.29      1.01
+  beta[14]      0.33      0.76      0.31     -0.94      1.64   4508.53      1.03
+  beta[15]      0.71      0.72      0.68     -0.37      2.00   7340.54      1.02
+  beta[16]     -0.90      0.57     -0.79     -1.73     -0.08   5082.09      1.03
+  beta[17]      0.87      0.61      0.78      0.06      1.85   4834.35      1.03
+  beta[18]     -0.70      0.72     -0.66     -2.01      0.34   5546.06      1.02
+  beta[19]     -0.76      0.72     -0.74     -2.07      0.28   6550.93      1.02
+  beta[20]     -0.53      0.75     -0.49     -1.83      0.69   5799.64      1.02
+  beta[21]      0.34      0.80      0.34     -0.98      1.75   6510.96      1.02
+  beta[22]      0.02      0.85      0.03     -1.39      1.44   7308.28      1.02
+  beta[23]     -0.02      0.82     -0.02     -1.41      1.34   7561.61      1.02
+  beta[24]     -0.04      0.81     -0.04     -1.42      1.33   9833.30      1.01
+  lamda[0]     -1.39      2.19     -0.86     -4.42      1.57   3802.77      1.03
+  lamda[1]      0.64      0.59      0.65     -0.34      1.61   3767.92      1.03
+  lamda[2]      0.90      0.57      0.92     -0.01      1.87   4691.98      1.03
+  lamda[3]      0.50      0.63      0.51     -0.53      1.57   4677.85      1.02
+  lamda[4]     -1.29      2.09     -0.77     -4.34      1.52   5322.00      1.02
+  lamda[5]      0.11      0.74      0.11     -1.10      1.30   4647.82      1.03
+  lamda[6]     -0.94      1.72     -0.57     -3.28      1.46   3129.76      1.04
+  lamda[7]     -0.88      1.75     -0.50     -3.27      1.50   2741.36      1.05
+  lamda[8]     -2.50      2.26     -2.07     -5.84      0.82   4465.62      1.03
+  lamda[9]     -0.95      1.77     -0.58     -3.27      1.45   2714.40      1.05
+ lamda[10]     -1.69      2.15     -1.19     -4.87      1.31   5602.88      1.02
+ lamda[11]     -0.43      1.24     -0.29     -1.90      1.34   2879.85      1.05
+ lamda[12]     -1.49      2.09     -0.99     -4.58      1.39   3299.30      1.04
+ lamda[13]     -2.51      2.27     -2.09     -5.82      0.87   5708.16      1.02
+ lamda[14]     -2.23      2.21     -1.77     -5.42      1.00   4115.18      1.03
+ lamda[15]     -0.69      1.81     -0.25     -3.13      1.66   3892.39      1.04
+ lamda[16]     -0.20      0.91     -0.17     -1.50      1.18   2443.85      1.05
+ lamda[17]     -0.23      1.22     -0.07     -1.63      1.49   2215.63      1.06
+ lamda[18]     -0.79      1.74     -0.38     -3.27      1.55   3985.92      1.03
+ lamda[19]     -0.55      1.84     -0.09     -2.90      1.76   2453.94      1.05
+ lamda[20]     -1.41      1.97     -0.97     -4.17      1.35   3832.73      1.04
+ lamda[21]     -1.89      2.14     -1.42     -4.95      1.20   4335.41      1.03
+ lamda[22]     -2.09      2.32     -1.61     -5.33      1.15   5130.52      1.02
+ lamda[23]     -2.53      2.28     -2.10     -5.86      0.83   5911.77      1.02
+ lamda[24]     -2.66      2.31     -2.24     -5.96      0.83   5359.09      1.02
+       tau     -0.83      0.41     -0.84     -1.50     -0.17   3285.30      1.04
+</pre></div>
+</div>
+</div>
 </div>
 </section>
 

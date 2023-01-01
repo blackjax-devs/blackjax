@@ -39,7 +39,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Use custom gradients" href="howto_custom_gradients.html" />
-    <link rel="prev" title="Welcome to Blackjax!" href="../index.html" />
+    <link rel="prev" title="Use with TFP models" href="howto_use_tfp.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -91,6 +91,38 @@
     <div class="bd-toc-item active">
         <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
+  PPL INTEGRATION
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_aesara.html">
+   Aesara
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_numpyro.html">
+   Numpyro
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_oryx.html">
+   Oryx
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_pymc.html">
+   PyMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_use_tfp.html">
+   Tensorflow-Probability
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
   HOW TO
  </span>
 </p>
@@ -110,43 +142,6 @@
    Use non-JAX log-prob functions?
   </a>
  </li>
- <li class="toctree-l1 has-children">
-  <a class="reference internal" href="../howto_use_ppl.html">
-   Use the model I built with X?
-  </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
-   <i class="fas fa-chevron-down">
-   </i>
-  </label>
-  <ul>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_aesara.html">
-     Use with Aesara models
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_numpyro.html">
-     Use with Numpyro models
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_oryx.html">
-     Use with Oryx models
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_pymc.html">
-     Use with PyMC models
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="howto_use_tfp.html">
-     Use with TFP models
-    </a>
-   </li>
-  </ul>
- </li>
 </ul>
 <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
@@ -158,8 +153,8 @@
   <a class="reference internal" href="../examples.html">
    Examples
   </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
-  <label for="toctree-checkbox-2">
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
    <i class="fas fa-chevron-down">
    </i>
   </label>
@@ -539,7 +534,7 @@ and <a class="reference external" href="https://jax.readthedocs.io/en/latest/jax
 <p>The model is</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -579,7 +574,7 @@ and <a class="reference external" href="https://jax.readthedocs.io/en/latest/jax
 <p>To make our demonstration more dramatic we will used a NUTS sampler with poorly chosen parameters:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax</span>
 
 
 <span class="n">inv_mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">])</span>
@@ -593,11 +588,16 @@ and <a class="reference external" href="https://jax.readthedocs.io/en/latest/jax
 <p>And finally, to put <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> and <code class="docutils literal notranslate"><span class="pre">jax.pmap</span></code> on an equal foot we sample as many chains as the machine has CPU cores:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">multiprocessing</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">multiprocessing</span>
 
 
 <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">num_chains</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -608,7 +608,7 @@ and <a class="reference external" href="https://jax.readthedocs.io/en/latest/jax
 <p>Here we apply <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> inside the <code class="docutils literal notranslate"><span class="pre">one_step</span></code> function and vectorize the transition kernel:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop_multiple_chains</span><span class="p">(</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">inference_loop_multiple_chains</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">num_chains</span>
 <span class="p">):</span>
 
@@ -629,7 +629,7 @@ and <a class="reference external" href="https://jax.readthedocs.io/en/latest/jax
 <p>We now prepare the initial states using <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> again, to vectorize the <code class="docutils literal notranslate"><span class="pre">init</span></code> function:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">initial_positions</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_chains</span><span class="p">),</span> <span class="s2">&quot;log_scale&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_chains</span><span class="p">)}</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">initial_positions</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_chains</span><span class="p">),</span> <span class="s2">&quot;log_scale&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_chains</span><span class="p">)}</span>
 <span class="n">initial_states</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">))(</span><span class="n">initial_positions</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -638,7 +638,7 @@ and <a class="reference external" href="https://jax.readthedocs.io/en/latest/jax
 <p>And finally run the sampler</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="mi">2_000</span><span class="p">,</span> <span class="n">num_chains</span>
 <span class="p">)</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
@@ -668,7 +668,7 @@ to instruct JAX to split the CPU into multiple devices. See <a class="reference 
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">multiprocessing</span>
 
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;XLA_FLAGS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;--xla_force_host_platform_device_count=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -681,9 +681,14 @@ to instruct JAX to split the CPU into multiple devices. See <a class="reference 
 <p>We advise you to confirm that JAX has successfuly recognized our CPU as multiple devices with the following command before moving forward:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
 
 <span class="nb">len</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">devices</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2
 </pre></div>
 </div>
 </div>
@@ -693,7 +698,7 @@ to instruct JAX to split the CPU into multiple devices. See <a class="reference 
 <p><code class="docutils literal notranslate"><span class="pre">jax.pmap</span></code> has one more limitation: it is not able to parallelize the execution when you ask it to perform more computations than there are available deviced. The following code snippet asks <code class="docutils literal notranslate"><span class="pre">jax.pmap</span></code> perform 1024 operations in parallel:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
 <span class="k">def</span> <span class="nf">fn</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span>
@@ -704,6 +709,11 @@ to instruct JAX to split the CPU into multiple devices. See <a class="reference 
     <span class="n">parallel_fn</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>compiling computation that requires 1024 logical devices, but only 2 XLA devices are available (num_replicas=1024, num_partitions=1)
 </pre></div>
 </div>
 </div>
@@ -719,7 +729,7 @@ and a workaround involving nesting <code class="docutils literal notranslate"><s
 <p>In case of <code class="docutils literal notranslate"><span class="pre">jax.pmap</span></code>, we apply the transformation directly to the original <code class="docutils literal notranslate"><span class="pre">inference_loop</span></code> function.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">inference_loop_multiple_chains</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">pmap</span><span class="p">(</span><span class="n">inference_loop</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">static_broadcasted_argnums</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inference_loop_multiple_chains</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">pmap</span><span class="p">(</span><span class="n">inference_loop</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">static_broadcasted_argnums</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -731,7 +741,7 @@ and a workaround involving nesting <code class="docutils literal notranslate"><s
 <p>We are now ready to sample:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
 
 <span class="n">pmap_states</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
     <span class="n">keys</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="mi">2_000</span>
@@ -759,11 +769,11 @@ and a workaround involving nesting <code class="docutils literal notranslate"><s
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="../index.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="howto_use_tfp.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Welcome to Blackjax!</p>
+            <p class="prev-next-title">Use with TFP models</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="howto_custom_gradients.html" title="next page">
