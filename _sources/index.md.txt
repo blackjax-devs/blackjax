@@ -73,13 +73,18 @@ conda install blackjax -c conda-forge
 
 ::::
 
-## GPU-specific instructions
+:::{admonition} GPU instructions
+:class: tip
 
 BlackJAX is written in pure Python but depends on XLA via JAX. By default, the
 version of JAX that will be installed along with BlackJAX will make your code
 run on CPU only. **If you want to use BlackJAX on GPU/TPU** we recommend you follow
 [these instructions](https://github.com/google/jax#installation) to install JAX
 with the relevant hardware acceleration support.
+:::
+
+## GPU-specific instructions
+
 
 ```{toctree}
 ---
