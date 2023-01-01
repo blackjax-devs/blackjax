@@ -1,8 +1,10 @@
 # Welcome to Blackjax!
 
-*The documentation corresponds to the current state of the `main` branch. There may be differences with the latest released version.*
+```{warning}
+The documentation corresponds to the current state of the `main` branch. There may be differences with the latest released version.
+```
 
-Blackjax is a library of samplers for `JAX <https://github.com/google/jax>`_ that works on CPU as well as GPU. It is designed with two categories of users in mind:
+Blackjax is a library of samplers for [JAX](https://github.com/google/jax) that works on CPU as well as GPU. It is designed with two categories of users in mind:
 
 - People who just need state-of-the-art samplers that are fast, robust and well tested;
 - Researchers who can use the library's building blocks to design new algorithms.
