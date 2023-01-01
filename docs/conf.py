@@ -42,6 +42,7 @@ extensions = [
     "sphinx_math_dollar",
     "sphinx.ext.mathjax",
     "myst_nb",
+    "sphinx_design",
 ]
 
 intersphinx_mapping = {
@@ -75,7 +76,7 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-html_title = "Blackjax"
+html_title = ""
 html_logo = "_static/blackjax.png"
 html_css_files = ["custom.css"]
 
@@ -88,10 +89,11 @@ add_module_names = False
 
 source_suffix = {".rst": "restructuredtext", ".ipynb": "myst-nb", ".md": "myst-nb"}
 
-nb_execution_mode = "auto"
+nb_execution_mode = "off"
 nb_execution_timeout = 300
 suppress_warnings = ["mystnb.unknown_mime_type"]
 
 nb_custom_formats = {
     ".md": ["jupytext.reads", {"fmt": "mystnb"}],
 }
+myst_enable_extensions = ["colon_fence"]

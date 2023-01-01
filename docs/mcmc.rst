@@ -1,5 +1,5 @@
-MCMC sampling
-=============
+MCMC
+====
 
 .. currentmodule:: blackjax
 
