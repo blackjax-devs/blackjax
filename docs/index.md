@@ -83,9 +83,6 @@ run on CPU only. **If you want to use BlackJAX on GPU/TPU** we recommend you fol
 with the relevant hardware acceleration support.
 :::
 
-## GPU-specific instructions
-
-
 ```{toctree}
 ---
 maxdepth: 1
