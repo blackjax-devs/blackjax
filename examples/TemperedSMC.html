@@ -38,8 +38,8 @@
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Hierarchical Bayesian Neural Networks" href="HierarchicalBNN.html" />
-    <link rel="prev" title="Bayesian Logistic Regression With Latent Gaussian Sampler" href="LogisticRegressionWithLatentGaussianSampler.html" />
+    <link rel="next" title="Periodic Orbital MCMC" href="PeriodicOrbitalMCMC.html" />
+    <link rel="prev" title="Sparse logistic regression" href="SparseLogisticRegression.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -174,14 +174,14 @@
      Bayesian Logistic Regression With Latent Gaussian Sampler
     </a>
    </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="SparseLogisticRegression.html">
+     Sparse logistic regression
+    </a>
+   </li>
    <li class="toctree-l2 current active">
     <a class="current reference internal" href="#">
      Use Tempered SMC to Improve Exploration of MCMC Methods.
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="HierarchicalBNN.html">
-     Hierarchical Bayesian Neural Networks
     </a>
    </li>
    <li class="toctree-l2">
@@ -200,11 +200,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="SGMCMC.html">
-     MNIST Digit Recognition With a 3-Layer Perceptron
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="change_of_variable_hmc.html">
      Change of Variable in HMC
     </a>
@@ -220,8 +215,18 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="SparseLogisticRegression.html">
-     Sparse logistic regression
+    <a class="reference internal" href="HierarchicalBNN.html">
+     Hierarchical Bayesian Neural Networks
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="SGMCMC.html">
+     MNIST Digit Recognition With a 3-Layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="contour_sgld.html">
+     Contour stochastic gradient Langevin dynamics
     </a>
    </li>
   </ul>
@@ -595,7 +600,7 @@ $$</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f81909b1730&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fde480daca0&gt;
 </pre></div>
 </div>
 <img alt="../_images/640d596490ecc3e66cd07e99ddb457e7257c486aa06a0846c30164d3aa2c71f8.png" src="../_images/640d596490ecc3e66cd07e99ddb457e7257c486aa06a0846c30164d3aa2c71f8.png" />
@@ -646,8 +651,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.35 s, sys: 24.2 ms, total: 1.37 s
-Wall time: 1.37 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.47 s, sys: 7.54 ms, total: 1.48 s
+Wall time: 1.48 s
 </pre></div>
 </div>
 </div>
@@ -687,8 +692,8 @@ Wall time: 1.37 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.08 s, sys: 12.2 ms, total: 7.1 s
-Wall time: 7.09 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.27 s, sys: 12.6 ms, total: 8.28 s
+Wall time: 8.28 s
 </pre></div>
 </div>
 </div>
@@ -777,8 +782,8 @@ Wall time: 7.09 s
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  9
-CPU times: user 3.02 s, sys: 44 ms, total: 3.07 s
-Wall time: 3.02 s
+CPU times: user 3.36 s, sys: 28.5 ms, total: 3.39 s
+Wall time: 3.35 s
 </pre></div>
 </div>
 </div>
@@ -850,7 +855,7 @@ Wall time: 3.02 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f817ce58af0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fde405336a0&gt;
 </pre></div>
 </div>
 <img alt="../_images/07fc13262f5bd947ec4683f6a29cd1acde81672d7a13207fc0ca239e6ad642d5.png" src="../_images/07fc13262f5bd947ec4683f6a29cd1acde81672d7a13207fc0ca239e6ad642d5.png" />
@@ -898,8 +903,8 @@ Wall time: 3.02 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.02 s, sys: 0 ns, total: 1.02 s
-Wall time: 1.02 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.1 s, sys: 4.27 ms, total: 1.11 s
+Wall time: 1.11 s
 </pre></div>
 </div>
 </div>
@@ -940,8 +945,8 @@ Wall time: 1.02 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.63 s, sys: 12.1 ms, total: 1.64 s
-Wall time: 1.64 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.86 s, sys: 12 ms, total: 1.87 s
+Wall time: 1.87 s
 </pre></div>
 </div>
 </div>
@@ -1002,8 +1007,8 @@ We correct the bias introduced by the (arbitrary) prior.</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  8
-CPU times: user 3.02 s, sys: 24.1 ms, total: 3.04 s
-Wall time: 3.03 s
+CPU times: user 3.65 s, sys: 24.1 ms, total: 3.68 s
+Wall time: 3.67 s
 </pre></div>
 </div>
 </div>
@@ -1040,17 +1045,17 @@ Wall time: 3.03 s
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="LogisticRegressionWithLatentGaussianSampler.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="SparseLogisticRegression.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Bayesian Logistic Regression With Latent Gaussian Sampler</p>
+            <p class="prev-next-title">Sparse logistic regression</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="HierarchicalBNN.html" title="next page">
+    <a class='right-next' id="next-link" href="PeriodicOrbitalMCMC.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Hierarchical Bayesian Neural Networks</p>
+        <p class="prev-next-title">Periodic Orbital MCMC</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

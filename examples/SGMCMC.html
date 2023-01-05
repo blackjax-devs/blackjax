@@ -38,8 +38,8 @@
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Change of Variable in HMC" href="change_of_variable_hmc.html" />
-    <link rel="prev" title="Bayesian Regression With Latent Gaussian Sampler" href="GP_Marginal.html" />
+    <link rel="next" title="Contour stochastic gradient Langevin dynamics" href="contour_sgld.html" />
+    <link rel="prev" title="Hierarchical Bayesian Neural Networks" href="HierarchicalBNN.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -175,13 +175,13 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="TemperedSMC.html">
-     Use Tempered SMC to Improve Exploration of MCMC Methods.
+    <a class="reference internal" href="SparseLogisticRegression.html">
+     Sparse logistic regression
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="HierarchicalBNN.html">
-     Hierarchical Bayesian Neural Networks
+    <a class="reference internal" href="TemperedSMC.html">
+     Use Tempered SMC to Improve Exploration of MCMC Methods.
     </a>
    </li>
    <li class="toctree-l2">
@@ -197,11 +197,6 @@
    <li class="toctree-l2">
     <a class="reference internal" href="GP_Marginal.html">
      Bayesian Regression With Latent Gaussian Sampler
-    </a>
-   </li>
-   <li class="toctree-l2 current active">
-    <a class="current reference internal" href="#">
-     MNIST Digit Recognition With a 3-Layer Perceptron
     </a>
    </li>
    <li class="toctree-l2">
@@ -220,8 +215,18 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="SparseLogisticRegression.html">
-     Sparse logistic regression
+    <a class="reference internal" href="HierarchicalBNN.html">
+     Hierarchical Bayesian Neural Networks
+    </a>
+   </li>
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
+     MNIST Digit Recognition With a 3-Layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="contour_sgld.html">
+     Contour stochastic gradient Langevin dynamics
     </a>
    </li>
   </ul>
@@ -571,7 +576,7 @@ title="Source repository"
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">fastprogress.fastprogress</span> <span class="kn">import</span> <span class="n">progress_bar</span>
 
 <span class="kn">import</span> <span class="nn">blackjax</span>
-<span class="kn">import</span> <span class="nn">blackjax.sgmcmc.gradients</span> <span class="k">as</span> <span class="nn">gradients</span>
+<span class="kn">from</span> <span class="nn">blackjax.sgmcmc</span> <span class="kn">import</span> <span class="n">grad_estimator</span>
 
 
 <span class="n">data_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_train</span><span class="p">)</span>
@@ -589,7 +594,7 @@ title="Source repository"
 <span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">init</span><span class="p">)(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
 
 <span class="c1"># Build the SGLD kernel with a constant learning rate</span>
-<span class="n">grad_fn</span> <span class="o">=</span> <span class="n">gradients</span><span class="o">.</span><span class="n">estimator</span><span class="p">(</span><span class="n">logprior_fn</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">data_size</span><span class="p">)</span>
+<span class="n">grad_fn</span> <span class="o">=</span> <span class="n">grad_estimator</span><span class="p">(</span><span class="n">logprior_fn</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">data_size</span><span class="p">)</span>
 <span class="n">sgld</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sgld</span><span class="p">(</span><span class="n">grad_fn</span><span class="p">)</span>
 
 <span class="c1"># Sample from the posterior</span>
@@ -629,7 +634,7 @@ title="Source repository"
 </div><div class="output text_html">
     <div>
       <progress value='3340' class='' max='3340' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [3340/3340 00:29&lt;00:00]
+      100.00% [3340/3340 00:31&lt;00:00]
     </div>
     </div></div>
 </div>
@@ -668,7 +673,7 @@ title="Source repository"
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build the SGHMC kernel with a constant learning rate</span>
 <span class="n">step_size</span> <span class="o">=</span> <span class="mf">9e-6</span>
-<span class="n">grad_fn</span> <span class="o">=</span> <span class="n">gradients</span><span class="o">.</span><span class="n">estimator</span><span class="p">(</span><span class="n">logprior_fn</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">data_size</span><span class="p">)</span>
+<span class="n">grad_fn</span> <span class="o">=</span> <span class="n">grad_estimator</span><span class="p">(</span><span class="n">logprior_fn</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">data_size</span><span class="p">)</span>
 <span class="n">sghmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sghmc</span><span class="p">(</span><span class="n">grad_fn</span><span class="p">)</span>
 
 <span class="c1"># Batch the data</span>
@@ -711,7 +716,7 @@ title="Source repository"
 </div><div class="output text_html">
     <div>
       <progress value='3340' class='' max='3340' style='width:300px; height:20px; vertical-align: middle;'></progress>
-      100.00% [3340/3340 02:27&lt;00:00]
+      100.00% [3340/3340 02:34&lt;00:00]
     </div>
     </div></div>
 </div>
@@ -856,17 +861,17 @@ The average accuracy for SGHMC in the sampling phase is 93.07%
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="GP_Marginal.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="HierarchicalBNN.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Bayesian Regression With Latent Gaussian Sampler</p>
+            <p class="prev-next-title">Hierarchical Bayesian Neural Networks</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="change_of_variable_hmc.html" title="next page">
+    <a class='right-next' id="next-link" href="contour_sgld.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Change of Variable in HMC</p>
+        <p class="prev-next-title">Contour stochastic gradient Langevin dynamics</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

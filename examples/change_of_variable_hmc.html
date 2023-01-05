@@ -39,7 +39,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Pathfinder" href="Pathfinder.html" />
-    <link rel="prev" title="MNIST Digit Recognition With a 3-Layer Perceptron" href="SGMCMC.html" />
+    <link rel="prev" title="Bayesian Regression With Latent Gaussian Sampler" href="GP_Marginal.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -175,13 +175,13 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="TemperedSMC.html">
-     Use Tempered SMC to Improve Exploration of MCMC Methods.
+    <a class="reference internal" href="SparseLogisticRegression.html">
+     Sparse logistic regression
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="HierarchicalBNN.html">
-     Hierarchical Bayesian Neural Networks
+    <a class="reference internal" href="TemperedSMC.html">
+     Use Tempered SMC to Improve Exploration of MCMC Methods.
     </a>
    </li>
    <li class="toctree-l2">
@@ -197,11 +197,6 @@
    <li class="toctree-l2">
     <a class="reference internal" href="GP_Marginal.html">
      Bayesian Regression With Latent Gaussian Sampler
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="SGMCMC.html">
-     MNIST Digit Recognition With a 3-Layer Perceptron
     </a>
    </li>
    <li class="toctree-l2 current active">
@@ -220,8 +215,18 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="SparseLogisticRegression.html">
-     Sparse logistic regression
+    <a class="reference internal" href="HierarchicalBNN.html">
+     Hierarchical Bayesian Neural Networks
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="SGMCMC.html">
+     MNIST Digit Recognition With a 3-Layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="contour_sgld.html">
+     Contour stochastic gradient Langevin dynamics
     </a>
    </li>
   </ul>
@@ -773,8 +778,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10.8 s, sys: 96 ms, total: 10.9 s
-Wall time: 10.9 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11.7 s, sys: 94.6 ms, total: 11.8 s
+Wall time: 11.8 s
 </pre></div>
 </div>
 </div>
@@ -814,8 +819,8 @@ Wall time: 10.9 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.73 s, sys: 35.8 ms, total: 9.76 s
-Wall time: 9.75 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11.3 s, sys: 60.9 ms, total: 11.4 s
+Wall time: 11.4 s
 </pre></div>
 </div>
 </div>
@@ -1901,8 +1906,8 @@ Wall time: 9.75 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.8 s, sys: 64.1 ms, total: 14.9 s
-Wall time: 14.9 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.3 s, sys: 44 ms, total: 17.4 s
+Wall time: 17.3 s
 </pre></div>
 </div>
 </div>
@@ -1918,8 +1923,8 @@ Wall time: 14.9 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10 s, sys: 32 ms, total: 10 s
-Wall time: 10 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11.5 s, sys: 52.1 ms, total: 11.6 s
+Wall time: 11.6 s
 </pre></div>
 </div>
 </div>
@@ -2956,8 +2961,8 @@ Wall time: 10 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 18.7 s, sys: 63.8 ms, total: 18.7 s
-Wall time: 18.7 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 21.2 s, sys: 95.9 ms, total: 21.3 s
+Wall time: 21.3 s
 </pre></div>
 </div>
 </div>
@@ -2973,8 +2978,8 @@ Wall time: 18.7 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10.5 s, sys: 56 ms, total: 10.6 s
-Wall time: 10.6 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 12.2 s, sys: 60 ms, total: 12.3 s
+Wall time: 12.2 s
 </pre></div>
 </div>
 </div>
@@ -3936,11 +3941,11 @@ Wall time: 10.6 s
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="SGMCMC.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="GP_Marginal.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">MNIST Digit Recognition With a 3-Layer Perceptron</p>
+            <p class="prev-next-title">Bayesian Regression With Latent Gaussian Sampler</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="Pathfinder.html" title="next page">

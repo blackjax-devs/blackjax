@@ -39,7 +39,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Gaussian Regression with the Elliptical Slice Sampler" href="GP_EllipticalSliceSampler.html" />
-    <link rel="prev" title="Hierarchical Bayesian Neural Networks" href="HierarchicalBNN.html" />
+    <link rel="prev" title="Use Tempered SMC to Improve Exploration of MCMC Methods." href="TemperedSMC.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -175,13 +175,13 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="TemperedSMC.html">
-     Use Tempered SMC to Improve Exploration of MCMC Methods.
+    <a class="reference internal" href="SparseLogisticRegression.html">
+     Sparse logistic regression
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="HierarchicalBNN.html">
-     Hierarchical Bayesian Neural Networks
+    <a class="reference internal" href="TemperedSMC.html">
+     Use Tempered SMC to Improve Exploration of MCMC Methods.
     </a>
    </li>
    <li class="toctree-l2 current active">
@@ -200,11 +200,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="SGMCMC.html">
-     MNIST Digit Recognition With a 3-Layer Perceptron
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="change_of_variable_hmc.html">
      Change of Variable in HMC
     </a>
@@ -220,8 +215,18 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="SparseLogisticRegression.html">
-     Sparse logistic regression
+    <a class="reference internal" href="HierarchicalBNN.html">
+     Hierarchical Bayesian Neural Networks
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="SGMCMC.html">
+     MNIST Digit Recognition With a 3-Layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="contour_sgld.html">
+     Contour stochastic gradient Langevin dynamics
     </a>
    </li>
   </ul>
@@ -638,8 +643,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 257 ms, sys: 0 ns, total: 257 ms
-Wall time: 256 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 334 ms, sys: 108 µs, total: 334 ms
+Wall time: 333 ms
 </pre></div>
 </div>
 </div>
@@ -656,8 +661,8 @@ Wall time: 256 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.03 s, sys: 3.76 ms, total: 1.04 s
-Wall time: 1.03 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.25 s, sys: 7.87 ms, total: 1.26 s
+Wall time: 1.26 s
 </pre></div>
 </div>
 </div>
@@ -688,8 +693,8 @@ Wall time: 1.03 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 18.3 ms, sys: 0 ns, total: 18.3 ms
-Wall time: 18.1 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 20.7 ms, sys: 52 µs, total: 20.7 ms
+Wall time: 20.5 ms
 </pre></div>
 </div>
 </div>
@@ -706,8 +711,8 @@ Wall time: 18.1 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.01 s, sys: 0 ns, total: 1.01 s
-Wall time: 1.01 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.16 s, sys: 3.85 ms, total: 1.17 s
+Wall time: 1.16 s
 </pre></div>
 </div>
 </div>
@@ -744,8 +749,8 @@ Wall time: 1.01 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 15.4 ms, sys: 0 ns, total: 15.4 ms
-Wall time: 15.2 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 18.6 ms, sys: 163 µs, total: 18.8 ms
+Wall time: 18.5 ms
 </pre></div>
 </div>
 </div>
@@ -762,8 +767,8 @@ Wall time: 15.2 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 942 ms, sys: 0 ns, total: 942 ms
-Wall time: 938 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.2 s, sys: 12.2 ms, total: 1.21 s
+Wall time: 1.21 s
 </pre></div>
 </div>
 </div>
@@ -844,8 +849,8 @@ v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 15.7 ms, sys: 0 ns, total: 15.7 ms
-Wall time: 15.5 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.3 ms, sys: 73 µs, total: 17.4 ms
+Wall time: 17.3 ms
 </pre></div>
 </div>
 </div>
@@ -862,8 +867,8 @@ Wall time: 15.5 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 791 ms, sys: 0 ns, total: 791 ms
-Wall time: 791 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.06 s, sys: 3.96 ms, total: 1.06 s
+Wall time: 1.06 s
 </pre></div>
 </div>
 </div>
@@ -1018,8 +1023,8 @@ v(t) &amp;= v(0) \cos(t) - x(t) \sin(t),
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.57 s, sys: 4.09 ms, total: 1.57 s
-Wall time: 1.57 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.88 s, sys: 24.2 ms, total: 1.9 s
+Wall time: 1.9 s
 </pre></div>
 </div>
 </div>
@@ -1064,8 +1069,8 @@ Wall time: 1.57 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 720 ms, sys: 4 ms, total: 724 ms
-Wall time: 721 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 816 ms, sys: 0 ns, total: 816 ms
+Wall time: 814 ms
 </pre></div>
 </div>
 </div>
@@ -1082,8 +1087,8 @@ Wall time: 721 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 929 ms, sys: 4 ms, total: 933 ms
-Wall time: 930 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.23 s, sys: 3.99 ms, total: 1.23 s
+Wall time: 1.23 s
 </pre></div>
 </div>
 </div>
@@ -1139,11 +1144,11 @@ Wall time: 930 ms
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="HierarchicalBNN.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="TemperedSMC.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Hierarchical Bayesian Neural Networks</p>
+            <p class="prev-next-title">Use Tempered SMC to Improve Exploration of MCMC Methods.</p>
         </div>
     </a>
     <a class='right-next' id="next-link" href="GP_EllipticalSliceSampler.html" title="next page">

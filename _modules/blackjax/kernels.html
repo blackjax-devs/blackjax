@@ -171,13 +171,13 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="../../examples/TemperedSMC.html">
-     Use Tempered SMC to Improve Exploration of MCMC Methods.
+    <a class="reference internal" href="../../examples/SparseLogisticRegression.html">
+     Sparse logistic regression
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="../../examples/HierarchicalBNN.html">
-     Hierarchical Bayesian Neural Networks
+    <a class="reference internal" href="../../examples/TemperedSMC.html">
+     Use Tempered SMC to Improve Exploration of MCMC Methods.
     </a>
    </li>
    <li class="toctree-l2">
@@ -196,11 +196,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="../../examples/SGMCMC.html">
-     MNIST Digit Recognition With a 3-Layer Perceptron
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="../../examples/change_of_variable_hmc.html">
      Change of Variable in HMC
     </a>
@@ -216,8 +211,18 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="../../examples/SparseLogisticRegression.html">
-     Sparse logistic regression
+    <a class="reference internal" href="../../examples/HierarchicalBNN.html">
+     Hierarchical Bayesian Neural Networks
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/SGMCMC.html">
+     MNIST Digit Recognition With a 3-Layer Perceptron
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../examples/contour_sgld.html">
+     Contour stochastic gradient Langevin dynamics
     </a>
    </li>
   </ul>
@@ -398,6 +403,7 @@ title="Source repository"
     <span class="s2">&quot;rmh&quot;</span><span class="p">,</span>
     <span class="s2">&quot;sgld&quot;</span><span class="p">,</span>
     <span class="s2">&quot;sghmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;csgld&quot;</span><span class="p">,</span>
     <span class="s2">&quot;tempered_smc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;window_adaptation&quot;</span><span class="p">,</span>
     <span class="s2">&quot;irmh&quot;</span><span class="p">,</span>
@@ -896,13 +902,21 @@ title="Source repository"
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">grad_estimator</span><span class="p">:</span> <span class="n">sgmcmc</span><span class="o">.</span><span class="n">gradients</span><span class="o">.</span><span class="n">GradientEstimator</span><span class="p">,</span>
+        <span class="n">grad_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 
         <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
 
-        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">grad_estimator</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">minibatch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+            <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">grad_estimator</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">temperature</span>
+            <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">step_fn</span></div>
 
@@ -984,6 +998,47 @@ title="Source repository"
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">step_fn</span></div>
+
+
+<span class="k">class</span> <span class="nc">csgld</span><span class="p">:</span>
+
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">csgld</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">csgld</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">logdensity_estimator_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">zeta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+        <span class="n">num_partitions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+        <span class="n">energy_gap</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">min_energy</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
+
+        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">num_partitions</span><span class="p">,</span> <span class="n">energy_gap</span><span class="p">,</span> <span class="n">min_energy</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">num_partitions</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">minibatch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+            <span class="n">step_size_diff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="n">step_size_stoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">logdensity_estimator_fn</span><span class="p">,</span>
+                <span class="n">minibatch</span><span class="p">,</span>
+                <span class="n">step_size_diff</span><span class="p">,</span>
+                <span class="n">step_size_stoch</span><span class="p">,</span>
+                <span class="n">zeta</span><span class="p">,</span>
+                <span class="n">temperature</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
 
 
 <span class="c1"># -----------------------------------------------------------------------------</span>
