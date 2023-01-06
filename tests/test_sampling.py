@@ -200,16 +200,12 @@ class LinearRegressionTest(chex.TestCase):
         log_scales = 1.0 + jax.random.normal(scale_key, (num_chains,))
         coefs = 4.0 + jax.random.normal(coefs_key, (num_chains,))
         initial_positions = {"log_scale": log_scales, "coefs": coefs}
-        last_states, kernel, _ = warmup.run(
+        warmup_states, kernel, _ = warmup.run(
             warmup_key,
             initial_positions,
-            num_steps=1000,
+            num_steps=1100,
         )
-
-        chain_keys = jax.random.split(inference_key, num_chains)
-        states = jax.vmap(lambda key, state: inference_loop(kernel, 100, key, state))(
-            chain_keys, last_states
-        )
+        states = jax.tree_util.tree_map(lambda s: s[-100:], warmup_states)
 
         coefs_samples = states.position["coefs"]
         scale_samples = np.exp(states.position["log_scale"])

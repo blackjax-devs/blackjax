@@ -110,18 +110,9 @@ dist.initialize_model(kinit, n_chain)
 tic1 = pd.Timestamp.now()
 k_warm, k_sample = jrnd.split(ksam)
 warmup = blackjax.meads(dist.logdensity_fn, n_chain)
-adaptation_results = warmup.run(k_warm, dist.init_params, n_warm)
-init_state = adaptation_results.state
-kernel = adaptation_results.kernel
-
-
-def one_chain(k_sam, init_state):
-    state, info = inference_loop(k_sam, init_state, kernel, n_iter)
-    return state.position, info
-
-
-k_sample = jrnd.split(k_sample, n_chain)
-samples, infos = jax.vmap(one_chain)(k_sample, init_state)
+warmup_states, kernel, _ = warmup.run(k_warm, dist.init_params, n_warm+n_iter)
+states = jax.tree_util.tree_map(lambda s: s[n_warm:], warmup_states)
+samples = states.position
 tic2 = pd.Timestamp.now()
 print("Runtime for MEADS", tic2 - tic1)
 ```

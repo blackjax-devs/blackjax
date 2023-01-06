@@ -832,8 +832,8 @@ def meads(
 
     Returns
     -------
-    A function that returns the last cross-chain state, a sampling kernel with the
-    tuned parameter values, and all the warm-up states for diagnostics.
+    A function that returns every cross-chain state, a sampling kernel with the
+    tuned parameter values, and the learned parameters.
 
     """
 
@@ -878,7 +878,7 @@ def meads(
         init_adaptation_state = init(positions, init_states.potential_energy_grad)
 
         keys = jax.random.split(key_adapt, num_steps)
-        (last_states, last_adaptation_state), _ = jax.lax.scan(
+        (_, last_adaptation_state), (warmup_states, *_) = jax.lax.scan(
             one_step, (init_states, init_adaptation_state), keys
         )
 
@@ -897,7 +897,7 @@ def meads(
                 **parameters,
             )
 
-        return AdaptationResults(last_states, kernel, parameters)
+        return AdaptationResults(warmup_states, kernel, parameters)
 
     return AdaptationAlgorithm(run)  # type: ignore[arg-type]
 
