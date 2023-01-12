@@ -83,8 +83,7 @@ for _ in range(100):
     state, _ = nuts.step(rng_key, state)
 ```
 
-See [this
-notebook](https://github.com/blackjax-devs/blackjax/blob/main/examples/Introduction.md) for more examples of how to use the library: how to write inference loops for one or several chains, how to use the Stan warmup, etc.
+See [the documentation](https://blackjax-devs.github.io/blackjax/index.html) for more examples of how to use the library: how to write inference loops for one or several chains, how to use the Stan warmup, etc.
 
 ## Philosophy
 
