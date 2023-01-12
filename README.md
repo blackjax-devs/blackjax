@@ -1,7 +1,7 @@
 # BlackJAX
 ![CI](https://github.com/blackjax-devs/blackjax/workflows/Run%20tests/badge.svg?branch=main)
 [![codecov](https://codecov.io/gh/blackjax-devs/blackjax/branch/main/graph/badge.svg)](https://codecov.io/gh/blackjax-devs/blackjax)
-
+[![Matrix](https://img.shields.io/matrix/blackjax_blackjax:matrix.org?label=matrix&logo=matrix)(https://matrix.to/#/#blackjax_blackjax:matrix.org)]
 
 ## What is BlackJAX?
 
