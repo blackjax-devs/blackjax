@@ -1,4 +1,6 @@
 """Test the resampling functions for SMC."""
+import itertools
+
 import chex
 import jax
 import jax.numpy as jnp
@@ -26,9 +28,11 @@ def integrand(x):
 
 
 class ResamplingTest(chex.TestCase):
-    @chex.all_variants(with_pmap=False)
-    @parameterized.parameters(resampling_methods.keys())
-    def test_resampling_methods(self, method_name):
+    @chex.variants(with_jit=True, without_jit=True)
+    @parameterized.parameters(
+        itertools.product([100, 1000, 2000], resampling_methods.keys())
+    )
+    def test_resampling_methods(self, num_samples, method_name):
         N = 10_000
 
         np.random.seed(42)
@@ -39,9 +43,13 @@ class ResamplingTest(chex.TestCase):
 
         resampling_keys = jax.random.split(jax.random.PRNGKey(42), batch_size)
 
-        resampling_idx = self.variant(
-            jax.vmap(resampling_methods[method_name], in_axes=[None, 0])
-        )(w, resampling_keys)
+        resampling_idx = jax.vmap(
+            self.variant(resampling_methods[method_name], static_argnums=(2,)),
+            in_axes=[0, None, None],
+        )(resampling_keys, w, num_samples)
+
+        self.assertEqual(resampling_idx.shape[-1], num_samples)
+
         resampling_idx = np.asarray(resampling_idx)
         batch_x = np.repeat(x.reshape(1, -1), batch_size, axis=0)
         batch_resampled_x = np.take_along_axis(batch_x, resampling_idx, axis=1)

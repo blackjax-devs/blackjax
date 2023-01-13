@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple, Optional, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -56,6 +56,7 @@ def step(
     update_fn: Callable,
     weigh_fn: Callable,
     resample_fn: Callable,
+    num_resample: Optional[int] = None,
 ) -> Tuple[SMCState, SMCInfo]:
     """General SMC sampling step.
 
@@ -93,6 +94,11 @@ def step(
         Function that assigns a weight to the particles.
     resample_fn
         Function that resamples the particles.
+    num_resample
+        The number of particles to resample. This can be used to implement
+        Waste-Free SMC [0]_, in which case we resample a number :math:`M<N`
+        of particles, and the update function is in charge of returning
+        :math:`N` samples.
 
     Returns
     -------
@@ -102,14 +108,21 @@ def step(
         An `SMCInfo` object that contains extra information about the SMC
         transition.
 
-    """
+    References
+    ----------
+    .. [0]: Dau, H. D., & Chopin, N. (2022). Waste‐free sequential Monte Carlo.
+            Journal of the Royal Statistical Society Series B, 84(1), 114-148.
 
+    """
     updating_key, resampling_key = jax.random.split(rng_key, 2)
 
-    resampling_idx = resample_fn(state.weights, resampling_key)
+    num_particles = state.weights.shape[0]
+
+    if num_resample is None:
+        num_resample = num_particles
+    resampling_idx = resample_fn(resampling_key, state.weights, num_resample)
     particles = jax.tree_map(lambda x: x[resampling_idx], state.particles)
 
-    num_particles = state.weights.shape[0]
     keys = jax.random.split(updating_key, num_particles)
     particles, update_info = update_fn(keys, particles)
 
