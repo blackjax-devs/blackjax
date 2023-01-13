@@ -56,7 +56,7 @@ def step(
     update_fn: Callable,
     weigh_fn: Callable,
     resample_fn: Callable,
-    num_resample: Optional[int] = None,
+    num_resampled: Optional[int] = None,
 ) -> Tuple[SMCState, SMCInfo]:
     """General SMC sampling step.
 
@@ -94,7 +94,7 @@ def step(
         Function that assigns a weight to the particles.
     resample_fn
         Function that resamples the particles.
-    num_resample
+    num_resampled
         The number of particles to resample. This can be used to implement
         Waste-Free SMC [0]_, in which case we resample a number :math:`M<N`
         of particles, and the update function is in charge of returning
@@ -118,12 +118,13 @@ def step(
 
     num_particles = state.weights.shape[0]
 
-    if num_resample is None:
-        num_resample = num_particles
-    resampling_idx = resample_fn(resampling_key, state.weights, num_resample)
+    if num_resampled is None:
+        num_resampled = num_particles
+
+    resampling_idx = resample_fn(resampling_key, state.weights, num_resampled)
     particles = jax.tree_map(lambda x: x[resampling_idx], state.particles)
 
-    keys = jax.random.split(updating_key, num_particles)
+    keys = jax.random.split(updating_key, num_resampled)
     particles, update_info = update_fn(keys, particles)
 
     log_weights = weigh_fn(particles)
