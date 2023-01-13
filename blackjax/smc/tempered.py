@@ -134,8 +134,8 @@ def kernel(
                 return new_state, info
 
             keys = jax.random.split(rng_key, num_mcmc_steps)
-            state, info = jax.lax.scan(body_fn, state, keys)
-            return state.position, info
+            last_state, info = jax.lax.scan(body_fn, state, keys)
+            return last_state.position, info
 
         smc_state, info = smc.base.step(
             rng_key,
