@@ -13,7 +13,7 @@ kernelspec:
 
 # Use with Aesara models
 
-Blackjax accepts any log-probability function as long as it is compatible with `jax.jit`, `jax.grad` (for gradient-based samplers) and `jax.vmap`. In this example we will show ho we can use [Aesara](https://github.com/aesara-devs/aesara) as a modeling language and Blackjax as an inference library.
+Blackjax accepts any log-probability function as long as it is compatible with `jax.jit`, `jax.grad` (for gradient-based samplers) and `jax.vmap`. In this example we will show how we can use [Aesara](https://github.com/aesara-devs/aesara) as a modeling language and Blackjax as an inference library.
 
 ``` {admonition} Before you start
 You will need [Aesara](https://github.com/aesara-devs/aesara) and [AePPL](https://github.com/aesara-devs/aeppl) to run this example. Please follow the installation instructions on their respective repository.

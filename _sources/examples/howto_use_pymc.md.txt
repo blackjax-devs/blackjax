@@ -44,7 +44,7 @@ with pm.Model() as model:
 
     theta = pm.Normal("theta", mu=0, sigma=1, shape=J)
     theta_1 = mu + tau * theta
-    obs = pm.Normal("obs", mu=theta, sigma=sigma, shape=J, observed=y)
+    obs = pm.Normal("obs", mu=theta_1, sigma=sigma, shape=J, observed=y)
 ```
 
 
