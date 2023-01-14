@@ -380,10 +380,11 @@ title="Source repository"
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;Blackjax high-level interface with sampling algorithms.&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">from</span> <span class="nn">optax</span> <span class="kn">import</span> <span class="n">GradientTransformation</span>
 
 <span class="kn">import</span> <span class="nn">blackjax.adaptation</span> <span class="k">as</span> <span class="nn">adaptation</span>
 <span class="kn">import</span> <span class="nn">blackjax.mcmc</span> <span class="k">as</span> <span class="nn">mcmc</span>
@@ -1619,6 +1620,11 @@ title="Source repository"
 <span class="c1"># -----------------------------------------------------------------------------</span>
 
 
+<span class="k">class</span> <span class="nc">PathFinderAlgorithm</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">approximate</span><span class="p">:</span> <span class="n">Callable</span>
+    <span class="n">sample</span><span class="p">:</span> <span class="n">Callable</span>
+
+
 <div class="viewcode-block" id="pathfinder"><a class="viewcode-back" href="../../vi.html#blackjax.pathfinder">[docs]</a><span class="k">class</span> <span class="nc">pathfinder</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the pathfinder kernel.</span>
 
@@ -1641,7 +1647,7 @@ title="Source repository"
     <span class="n">approximate</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">approximate</span><span class="p">)</span>
     <span class="n">sample</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">sample</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VIAlgorithm</span><span class="p">:</span>  <span class="c1"># type: ignore[misc]</span>
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PathFinderAlgorithm</span><span class="p">:</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="k">def</span> <span class="nf">approximate_fn</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
             <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
@@ -1657,7 +1663,7 @@ title="Source repository"
         <span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">VIAlgorithm</span><span class="p">(</span><span class="n">approximate_fn</span><span class="p">,</span> <span class="n">sample_fn</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">PathFinderAlgorithm</span><span class="p">(</span><span class="n">approximate_fn</span><span class="p">,</span> <span class="n">sample_fn</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="pathfinder_adaptation"><a class="viewcode-back" href="../../adaptation.html#blackjax.pathfinder_adaptation">[docs]</a><span class="k">def</span> <span class="nf">pathfinder_adaptation</span><span class="p">(</span>
@@ -1753,6 +1759,33 @@ title="Source repository"
         <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">last_chain_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="meanfield_vi"><a class="viewcode-back" href="../../vi.html#blackjax.meanfield_vi">[docs]</a><span class="k">class</span> <span class="nc">meanfield_vi</span><span class="p">:</span>
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">meanfield_vi</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">meanfield_vi</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+    <span class="n">sample</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">meanfield_vi</span><span class="o">.</span><span class="n">sample</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">GradientTransformation</span><span class="p">,</span>
+        <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="p">):</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">vi</span><span class="o">.</span><span class="n">meanfield_vi</span><span class="o">.</span><span class="n">MFVIState</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">vi</span><span class="o">.</span><span class="n">meanfield_vi</span><span class="o">.</span><span class="n">MFVIState</span><span class="p">,</span> <span class="n">vi</span><span class="o">.</span><span class="n">meanfield_vi</span><span class="o">.</span><span class="n">MFVIInfo</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">sample_fn</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">vi</span><span class="o">.</span><span class="n">meanfield_vi</span><span class="o">.</span><span class="n">MFVIState</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">VIAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">,</span> <span class="n">sample_fn</span><span class="p">)</span></div>
 </pre></div>
 
               </div>

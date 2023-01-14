@@ -371,6 +371,11 @@ title="Source repository"
    Pathfinder
   </a>
  </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mean-field-vi">
+   Mean-field VI
+  </a>
+ </li>
 </ul>
 
     </nav>
@@ -395,6 +400,11 @@ title="Source repository"
    Pathfinder
   </a>
  </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mean-field-vi">
+   Mean-field VI
+  </a>
+ </li>
 </ul>
 
                         </nav>
@@ -415,6 +425,9 @@ title="Source repository"
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.pathfinder" title="blackjax.pathfinder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathfinder</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the pathfinder kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.meanfield_vi" title="blackjax.meanfield_vi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">meanfield_vi</span></code></a></p></td>
+<td><p></p></td>
 </tr>
 </tbody>
 </table>
@@ -437,6 +450,23 @@ function is just a drawing a sample from a normal distribution</p>
 </dd>
 <dt class="field-even">Parameters</dt>
 <dd class="field-even"><p><strong>logdensity_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="mean-field-vi">
+<h2>Mean-field VI<a class="headerlink" href="#mean-field-vi" title="Permalink to this headline">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.meanfield_vi">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">meanfield_vi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/blackjax/kernels.html#meanfield_vi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.meanfield_vi" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a>) – </p></li>
+<li><p><strong>optimizer</strong> (<em>optax._src.base.GradientTransformation</em>) – </p></li>
+<li><p><strong>num_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – </p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
