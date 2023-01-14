@@ -219,11 +219,6 @@
     </a>
    </li>
    <li class="toctree-l2">
-    <a class="reference internal" href="SGMCMC.html">
-     MNIST Digit Recognition With a 3-Layer Perceptron
-    </a>
-   </li>
-   <li class="toctree-l2">
     <a class="reference internal" href="contour_sgld.html">
      Contour stochastic gradient Langevin dynamics
     </a>
@@ -431,10 +426,10 @@ title="Source repository"
 Ambiguities exist in dispatched function _unify
 
 The following signatures may result in ambiguous behavior:
-	[object, ConstrainedVar, Mapping], [ConstrainedVar, Var, Mapping]
-	[ConstrainedVar, object, Mapping], [object, ConstrainedVar, Mapping]
-	[object, ConstrainedVar, Mapping], [ConstrainedVar, object, Mapping]
 	[ConstrainedVar, Var, Mapping], [object, ConstrainedVar, Mapping]
+	[ConstrainedVar, Var, Mapping], [object, ConstrainedVar, Mapping]
+	[ConstrainedVar, object, Mapping], [object, ConstrainedVar, Mapping]
+	[ConstrainedVar, object, Mapping], [object, ConstrainedVar, Mapping]
 
 
 Consider making the following additions:
