@@ -25,25 +25,26 @@ __all__ = ["mclachlan", "velocity_verlet", "yoshida"]
 class IntegratorState(NamedTuple):
     """State of the trajectory integration.
 
-    We keep the gradient of the potential energy to speedup computations.
+    We keep the gradient of the logdensity function (negative potential energy)
+    to speedup computations.
     """
 
     position: PyTree
     momentum: PyTree
-    potential_energy: float
-    potential_energy_grad: PyTree
+    logdensity: float
+    logdensity_grad: PyTree
 
 
 EuclideanIntegrator = Callable[[IntegratorState, float], IntegratorState]
 
 
-def new_integrator_state(potential_fn, position, momentum):
-    potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
-    return IntegratorState(position, momentum, potential_energy, potential_energy_grad)
+def new_integrator_state(logdensity_fn, position, momentum):
+    logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
+    return IntegratorState(position, momentum, logdensity, logdensity_grad)
 
 
 def velocity_verlet(
-    potential_fn: Callable,
+    logdensity_fn: Callable,
     kinetic_energy_fn: EuclideanKineticEnergy,
 ) -> EuclideanIntegrator:
     """The velocity Verlet (or Verlet-Störmer) integrator.
@@ -81,16 +82,17 @@ def velocity_verlet(
     b1 = 0.5
     a2 = 1 - 2 * a1
 
-    potential_and_grad_fn = jax.value_and_grad(potential_fn)
+    logdensity_and_grad_fn = jax.value_and_grad(logdensity_fn)
     kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
-        position, momentum, _, potential_energy_grad = state
+        position, momentum, _, logdensity_grad = state
 
         momentum = jax.tree_util.tree_map(
-            lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
+            lambda momentum, logdensity_grad: momentum
+            + b1 * step_size * logdensity_grad,
             momentum,
-            potential_energy_grad,
+            logdensity_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
@@ -100,22 +102,21 @@ def velocity_verlet(
             kinetic_grad,
         )
 
-        potential_energy, potential_energy_grad = potential_and_grad_fn(position)
+        logdensity, logdensity_grad = logdensity_and_grad_fn(position)
         momentum = jax.tree_util.tree_map(
-            lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
+            lambda momentum, logdensity_grad: momentum
+            + b1 * step_size * logdensity_grad,
             momentum,
-            potential_energy_grad,
+            logdensity_grad,
         )
 
-        return IntegratorState(
-            position, momentum, potential_energy, potential_energy_grad
-        )
+        return IntegratorState(position, momentum, logdensity, logdensity_grad)
 
     return one_step
 
 
 def mclachlan(
-    potential_fn: Callable,
+    logdensity_fn: Callable,
     kinetic_energy_fn: Callable,
 ) -> EuclideanIntegrator:
     """Two-stage palindromic symplectic integrator derived in [1]_
@@ -140,16 +141,17 @@ def mclachlan(
     a1 = 0.5
     b2 = 1 - 2 * b1
 
-    potential_and_grad_fn = jax.value_and_grad(potential_fn)
+    logdensity_and_grad_fn = jax.value_and_grad(logdensity_fn)
     kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
-        position, momentum, _, potential_energy_grad = state
+        position, momentum, _, logdensity_grad = state
 
         momentum = jax.tree_util.tree_map(
-            lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
+            lambda momentum, logdensity_grad: momentum
+            + b1 * step_size * logdensity_grad,
             momentum,
-            potential_energy_grad,
+            logdensity_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
@@ -159,11 +161,12 @@ def mclachlan(
             kinetic_grad,
         )
 
-        _, potential_energy_grad = potential_and_grad_fn(position)
+        _, logdensity_grad = logdensity_and_grad_fn(position)
         momentum = jax.tree_util.tree_map(
-            lambda momentum, potential_grad: momentum - b2 * step_size * potential_grad,
+            lambda momentum, logdensity_grad: momentum
+            + b2 * step_size * logdensity_grad,
             momentum,
-            potential_energy_grad,
+            logdensity_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
@@ -173,22 +176,21 @@ def mclachlan(
             kinetic_grad,
         )
 
-        potential_energy, potential_energy_grad = potential_and_grad_fn(position)
+        logdensity, logdensity_grad = logdensity_and_grad_fn(position)
         momentum = jax.tree_util.tree_map(
-            lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
+            lambda momentum, logdensity_grad: momentum
+            + b1 * step_size * logdensity_grad,
             momentum,
-            potential_energy_grad,
+            logdensity_grad,
         )
 
-        return IntegratorState(
-            position, momentum, potential_energy, potential_energy_grad
-        )
+        return IntegratorState(position, momentum, logdensity, logdensity_grad)
 
     return one_step
 
 
 def yoshida(
-    potential_fn: Callable,
+    logdensity_fn: Callable,
     kinetic_energy_fn: Callable,
 ) -> EuclideanIntegrator:
     """Three stages palindromic symplectic integrator derived in [1]_
@@ -211,16 +213,17 @@ def yoshida(
     b2 = 0.5 - b1
     a2 = 1 - 2 * a1
 
-    potential_and_grad_fn = jax.value_and_grad(potential_fn)
+    logdensity_and_grad_fn = jax.value_and_grad(logdensity_fn)
     kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
-        position, momentum, _, potential_energy_grad = state
+        position, momentum, _, logdensity_grad = state
 
         momentum = jax.tree_util.tree_map(
-            lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
+            lambda momentum, logdensity_grad: momentum
+            + b1 * step_size * logdensity_grad,
             momentum,
-            potential_energy_grad,
+            logdensity_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
@@ -230,11 +233,12 @@ def yoshida(
             kinetic_grad,
         )
 
-        _, potential_energy_grad = potential_and_grad_fn(position)
+        _, logdensity_grad = logdensity_and_grad_fn(position)
         momentum = jax.tree_util.tree_map(
-            lambda momentum, potential_grad: momentum - b2 * step_size * potential_grad,
+            lambda momentum, logdensity_grad: momentum
+            + b2 * step_size * logdensity_grad,
             momentum,
-            potential_energy_grad,
+            logdensity_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
@@ -244,11 +248,12 @@ def yoshida(
             kinetic_grad,
         )
 
-        _, potential_energy_grad = potential_and_grad_fn(position)
+        _, logdensity_grad = logdensity_and_grad_fn(position)
         momentum = jax.tree_util.tree_map(
-            lambda momentum, potential_grad: momentum - b2 * step_size * potential_grad,
+            lambda momentum, logdensity_grad: momentum
+            + b2 * step_size * logdensity_grad,
             momentum,
-            potential_energy_grad,
+            logdensity_grad,
         )
 
         kinetic_grad = kinetic_energy_grad_fn(momentum)
@@ -258,15 +263,14 @@ def yoshida(
             kinetic_grad,
         )
 
-        potential_energy, potential_energy_grad = potential_and_grad_fn(position)
+        logdensity, logdensity_grad = logdensity_and_grad_fn(position)
         momentum = jax.tree_util.tree_map(
-            lambda momentum, potential_grad: momentum - b1 * step_size * potential_grad,
+            lambda momentum, logdensity_grad: momentum
+            + b1 * step_size * logdensity_grad,
             momentum,
-            potential_energy_grad,
+            logdensity_grad,
         )
 
-        return IntegratorState(
-            position, momentum, potential_energy, potential_energy_grad
-        )
+        return IntegratorState(position, momentum, logdensity, logdensity_grad)
 
     return one_step

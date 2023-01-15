@@ -45,14 +45,14 @@ def proposal_generator(
     kinetic_energy: Callable, divergence_threshold: float
 ) -> Tuple[Callable, Callable]:
     def new(state: IntegratorState) -> Proposal:
-        energy = state.potential_energy + kinetic_energy(state.momentum)
+        energy = -state.logdensity + kinetic_energy(state.momentum)
         return Proposal(state, energy, 0.0, -np.inf)
 
     def update(initial_energy: float, state: IntegratorState) -> Tuple[Proposal, bool]:
         """Generate a new proposal from a trajectory state.
 
         The trajectory state records information about the position in the state
-        space and corresponding potential energy. A proposal also carries a
+        space and corresponding logdensity. A proposal also carries a
         weight that is equal to the difference between the current energy and
         the previous one. It thus carries information about the previous states
         as well as the current state.
@@ -65,7 +65,7 @@ def proposal_generator(
             The new state.
 
         """
-        new_energy = state.potential_energy + kinetic_energy(state.momentum)
+        new_energy = -state.logdensity + kinetic_energy(state.momentum)
 
         delta_energy = initial_energy - new_energy
         delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)

@@ -138,15 +138,12 @@ def kernel(
     ) -> Tuple[hmc.HMCState, NUTSInfo]:
         """Generate a new sample with the NUTS kernel."""
 
-        def potential_fn(x):
-            return -logdensity_fn(x)
-
         (
             momentum_generator,
             kinetic_energy_fn,
             uturn_check_fn,
         ) = metrics.gaussian_euclidean(inverse_mass_matrix)
-        symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
+        symplectic_integrator = integrator(logdensity_fn, kinetic_energy_fn)
         proposal_generator = iterative_nuts_proposal(
             symplectic_integrator,
             kinetic_energy_fn,
@@ -157,15 +154,15 @@ def kernel(
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
 
-        position, potential_energy, potential_energy_grad = state
+        position, logdensity, logdensity_grad = state
         momentum = momentum_generator(key_momentum, position)
 
         integrator_state = integrators.IntegratorState(
-            position, momentum, potential_energy, potential_energy_grad
+            position, momentum, logdensity, logdensity_grad
         )
         proposal, info = proposal_generator(key_integrator, integrator_state, step_size)
         proposal = hmc.HMCState(
-            proposal.position, proposal.potential_energy, proposal.potential_energy_grad
+            proposal.position, proposal.logdensity, proposal.logdensity_grad
         )
         return proposal, info
 
@@ -224,7 +221,7 @@ def iterative_nuts_proposal(
     )
 
     def _compute_energy(state: integrators.IntegratorState) -> float:
-        energy = state.potential_energy + kinetic_energy(state.momentum)
+        energy = -state.logdensity + kinetic_energy(state.momentum)
         return energy
 
     def propose(rng_key, initial_state: integrators.IntegratorState, step_size):

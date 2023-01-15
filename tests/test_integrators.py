@@ -11,40 +11,40 @@ import blackjax.mcmc.integrators as integrators
 def HarmonicOscillator(inv_mass_matrix, k=1.0, m=1.0):
     """Potential and Kinetic energy of an harmonic oscillator."""
 
-    def potential_energy(q):
-        return jnp.sum(0.5 * k * jnp.square(q["x"]))
+    def neg_potential_energy(q):
+        return -jnp.sum(0.5 * k * jnp.square(q["x"]))
 
     def kinetic_energy(p):
         v = jnp.multiply(inv_mass_matrix, p["x"])
         return jnp.sum(0.5 * jnp.dot(v, p["x"]))
 
-    return potential_energy, kinetic_energy
+    return neg_potential_energy, kinetic_energy
 
 
 def FreeFall(inv_mass_matrix, g=1.0):
     """Potential and kinetic energy of a free-falling object."""
 
-    def potential_energy(q):
-        return jnp.sum(g * q["x"])
+    def neg_potential_energy(q):
+        return -jnp.sum(g * q["x"])
 
     def kinetic_energy(p):
         v = jnp.multiply(inv_mass_matrix, p["x"])
         return jnp.sum(0.5 * jnp.dot(v, p["x"]))
 
-    return potential_energy, kinetic_energy
+    return neg_potential_energy, kinetic_energy
 
 
 def PlanetaryMotion(inv_mass_matrix):
     """Potential and kinetic energy for planar planetary motion."""
 
-    def potential_energy(q):
-        return -1.0 / jnp.power(q["x"] ** 2 + q["y"] ** 2, 0.5)
+    def neg_potential_energy(q):
+        return 1.0 / jnp.power(q["x"] ** 2 + q["y"] ** 2, 0.5)
 
     def kinetic_energy(p):
         z = jnp.stack([p["x"], p["y"]], axis=-1)
         return 0.5 * jnp.dot(inv_mass_matrix, z**2)
 
-    return potential_energy, kinetic_energy
+    return neg_potential_energy, kinetic_energy
 
 
 algorithms = {
@@ -109,16 +109,16 @@ class IntegratorTest(chex.TestCase):
         example = examples[example_name]
 
         model = example["model"]
-        potential, kinetic_energy = model(example["inv_mass_matrix"])
+        neg_potential, kinetic_energy = model(example["inv_mass_matrix"])
 
-        step = self.variant(integrator["algorithm"](potential, kinetic_energy))
+        step = self.variant(integrator["algorithm"](neg_potential, kinetic_energy))
 
         step_size = example["step_size"]
 
         q = example["q_init"]
         p = example["p_init"]
         initial_state = integrators.IntegratorState(
-            q, p, potential(q), jax.grad(potential)(q)
+            q, p, neg_potential(q), jax.grad(neg_potential)(q)
         )
         final_state = jax.lax.fori_loop(
             0,
@@ -131,8 +131,8 @@ class IntegratorTest(chex.TestCase):
         chex.assert_tree_all_close(final_state.position, example["q_final"], atol=1e-2)
 
         # We now check the conservation of energy, the property that matters the most in HMC.
-        energy = potential(q) + kinetic_energy(p)
-        new_energy = potential(final_state.position) + kinetic_energy(
+        energy = -neg_potential(q) + kinetic_energy(p)
+        new_energy = -neg_potential(final_state.position) + kinetic_energy(
             final_state.momentum
         )
         self.assertAlmostEqual(energy, new_energy, delta=integrator["precision"])

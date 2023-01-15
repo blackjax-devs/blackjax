@@ -61,7 +61,7 @@ hmc = blackjax.hmc(logdensity, step_size, inv_mass_matrix, num_integration_steps
 
 ### Set the Initial State
 
-The initial state of the HMC algorithm requires not only an initial position, but also the potential energy and gradient of the potential energy at this position. BlackJAX provides a `new_state` function to initialize the state from an initial position.
+The initial state of the HMC algorithm requires not only an initial position, but also the potential energy and gradient of the potential energy at this position (for example, in the context of Bayesian modeling, the output of the log posterior function evaluated at the initial position). BlackJAX provides a `new_state` function to initialize the state from an initial position.
 
 ```{code-cell} python
 initial_position = {"loc": 1.0, "log_scale": 1.0}
