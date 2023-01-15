@@ -195,8 +195,7 @@ class hmc:
     Parameters
     ----------
     logdensity_fn
-        The log-density function we wish to draw samples from. This
-        is minus the potential function.
+        The log-density function we wish to draw samples from.
     step_size
         The value to use for the step size in the symplectic integrator.
     inverse_mass_matrix
@@ -288,8 +287,7 @@ class mala:
     Parameters
     ----------
     logdensity_fn
-        The log-density function we wish to draw samples from. This
-        is minus the potential function.
+        The log-density function we wish to draw samples from.
     step_size
         The value to use for the step size in the symplectic integrator.
 
@@ -352,8 +350,7 @@ class nuts:
     Parameters
     ----------
     logdensity_fn
-        The log-density function we wish to draw samples from. This
-        is minus the potential function.
+        The log-density function we wish to draw samples from.
     step_size
         The value to use for the step size in the symplectic integrator.
     inverse_mass_matrix
@@ -860,7 +857,7 @@ def meads(
         keys = jax.random.split(rng_key, num_chains)
         new_states, info = jax.vmap(kernel)(keys, states)
         new_adaptation_state = update(
-            adaptation_state, new_states.position, new_states.potential_energy_grad
+            adaptation_state, new_states.position, new_states.logdensity_grad
         )
 
         return (new_states, new_adaptation_state), (
@@ -875,7 +872,7 @@ def meads(
 
         rng_keys = jax.random.split(key_init, num_chains)
         init_states = batch_init(rng_keys, positions)
-        init_adaptation_state = init(positions, init_states.potential_energy_grad)
+        init_adaptation_state = init(positions, init_states.logdensity_grad)
 
         keys = jax.random.split(key_adapt, num_steps)
         (last_states, last_adaptation_state), _ = jax.lax.scan(
@@ -1044,8 +1041,7 @@ class orbital_hmc:
     Parameters
     ----------
     logdensity_fn
-        The logarithm of the probability density function we wish to draw samples from. This
-        is minus the potential energy function.
+        The logarithm of the probability density function we wish to draw samples from.
     step_size
         The value to use for the step size in for the symplectic integrator to buid the orbit.
     inverse_mass_matrix
@@ -1188,8 +1184,7 @@ class ghmc:
     Parameters
     ----------
     logdensity_fn
-        The log-density function we wish to draw samples from. This
-        is minus the potential function.
+        The log-density function we wish to draw samples from.
     step_size
         A PyTree of the same structure as the target PyTree (position) with the
         values used for as a step size for each dimension of the target space in

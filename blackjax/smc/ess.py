@@ -71,7 +71,8 @@ def ess_solver(
         a min value `min_delta`, and a max value `max_delta`.
         Default is `BFGS` minimization of `f ** 2` and ignores `min_delta` and `max_delta`.
     use_log_ess: bool
-        Solve using the log ESS or the ESS directly. This may have different behaviours based on the potential function.
+        Solve using the log ESS or the ESS directly. This may have different behaviours based on
+        the logdensity function.
 
     Returns
     -------
@@ -82,13 +83,12 @@ def ess_solver(
     n_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
 
     logdensity = logdensity_fn(particles)
+    target_val = n_particles * target_ess
     if use_log_ess:
-        target_val = jnp.log(n_particles * target_ess)
-    else:
-        target_val = n_particles * target_ess
+        target_val = jnp.log(target_val)
 
     def fun_to_solve(delta):
-        log_weights = jnp.nan_to_num(-delta * logdensity)
+        log_weights = jnp.nan_to_num(delta * logdensity)
         ess_val = ess(log_weights, log=use_log_ess)
 
         return ess_val - target_val

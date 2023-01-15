@@ -73,7 +73,7 @@ def base():
     """
 
     def compute_parameters(
-        positions: PyTree, potential_energy_grad: PyTree, current_iteration: int
+        positions: PyTree, logdensity_grad: PyTree, current_iteration: int
     ):
         """Compute values for the parameters based on statistics collected from
         multiple chains.
@@ -82,8 +82,8 @@ def base():
         ----------
         positions:
             A PyTree that contains the current position of every chains.
-        potential_energy_grad:
-            A PyTree that contains the gradients of the potential energy
+        logdensity_grad:
+            A PyTree that contains the gradients of the logdensity
             function evaluated at the current position of every chains.
         current_iteration:
             The current iteration index in the adaptation process.
@@ -103,9 +103,8 @@ def base():
             sd_position,
         )
 
-        batch_grad = jax.tree_map(lambda x: -x, potential_energy_grad)
         batch_grad_scaled = jax.tree_map(
-            lambda grad, sd: grad * sd, batch_grad, sd_position
+            lambda grad, sd: grad * sd, logdensity_grad, sd_position
         )
 
         epsilon = jnp.minimum(
@@ -119,14 +118,14 @@ def base():
         delta = alpha / 2
         return epsilon, sd_position, alpha, delta
 
-    def init(positions: PyTree, potential_energy_grad: PyTree):
-        parameters = compute_parameters(positions, potential_energy_grad, 0)
+    def init(positions: PyTree, logdensity_grad: PyTree):
+        parameters = compute_parameters(positions, logdensity_grad, 0)
         return MEADSAdaptationState(0, *parameters)
 
     def update(
         adaptation_state: MEADSAdaptationState,
         positions: PyTree,
-        potential_energy_grad: PyTree,
+        logdensity_grad: PyTree,
     ):
         """Update the adaptation state and parameter values.
 
@@ -140,9 +139,9 @@ def base():
             The current state of the adaptation algorithm
         positions
             The current position of every chain.
-        potential_energy_grad
-            The gradients of the potential energy function
-            evaluated at the current position of every chain.
+        logdensity_grad
+            The gradients of the logdensity function evaluated at the
+            current position of every chain.
 
         Returns
         -------
@@ -152,7 +151,7 @@ def base():
         """
         current_iteration = adaptation_state.current_iteration
         step_size, position_sigma, alpha, delta = compute_parameters(
-            positions, potential_energy_grad, current_iteration
+            positions, logdensity_grad, current_iteration
         )
 
         return MEADSAdaptationState(

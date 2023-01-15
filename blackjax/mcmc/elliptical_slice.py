@@ -28,13 +28,13 @@ class EllipSliceState(NamedTuple):
 
     position
         Current position of the chain.
-    loglikelihood
-        Current value of the log likelihood only.
+    logdensity
+        Current value of the logdensity (evaluated at current position).
 
     """
 
     position: PyTree
-    loglikelihood: PyTree
+    logdensity: PyTree
 
 
 class EllipSliceInfo(NamedTuple):
@@ -61,9 +61,9 @@ class EllipSliceInfo(NamedTuple):
     subiter: int
 
 
-def init(position: PyTree, loglikelihood_fn: Callable):
-    loglikelihood = loglikelihood_fn(position)
-    return EllipSliceState(position, loglikelihood)
+def init(position: PyTree, logdensity_fn: Callable):
+    logdensity = logdensity_fn(position)
+    return EllipSliceState(position, logdensity)
 
 
 def kernel(cov_matrix: Array, mean: Array):
@@ -108,10 +108,10 @@ def kernel(cov_matrix: Array, mean: Array):
     def one_step(
         rng_key: PRNGKey,
         state: EllipSliceState,
-        loglikelihood_fn: Callable,
+        logdensity_fn: Callable,
     ) -> Tuple[EllipSliceState, EllipSliceInfo]:
         proposal_generator = elliptical_proposal(
-            loglikelihood_fn, momentum_generator, mean
+            logdensity_fn, momentum_generator, mean
         )
         return proposal_generator(rng_key, state)
 
@@ -119,7 +119,7 @@ def kernel(cov_matrix: Array, mean: Array):
 
 
 def elliptical_proposal(
-    loglikelihood_fn: Callable,
+    logdensity_fn: Callable,
     momentum_generator: Callable,
     mean: Array,
 ) -> Callable:
@@ -131,7 +131,7 @@ def elliptical_proposal(
 
     Parameters
     ----------
-    loglikelihood_fn
+    logdensity_fn
         A function that returns the log-likelihood at a given position.
     momentum_generator
         A function that generates a new latent momentum variable.
@@ -147,12 +147,12 @@ def elliptical_proposal(
     def generate(
         rng_key: PRNGKey, state: EllipSliceState
     ) -> Tuple[EllipSliceState, EllipSliceInfo]:
-        position, loglikelihood = state
+        position, logdensity = state
         key_momentum, key_uniform, key_theta = jax.random.split(rng_key, 3)
         # step 1: sample momentum
         momentum = momentum_generator(key_momentum, position)
         # step 2: get slice (y)
-        logy = loglikelihood + jnp.log(jax.random.uniform(key_uniform))
+        logy = logdensity + jnp.log(jax.random.uniform(key_uniform))
         # step 3: get theta (ellipsis move), set inital interval
         theta = 2 * jnp.pi * jax.random.uniform(key_theta)
         theta_min = theta - 2 * jnp.pi
@@ -160,7 +160,7 @@ def elliptical_proposal(
         # step 4: proposal
         p, m = ellipsis(position, momentum, theta, mean)
         # step 5: acceptance
-        loglikelihood = loglikelihood_fn(p)
+        logdensity = logdensity_fn(p)
 
         def slice_fn(vals):
             """Perform slice sampling around the ellipsis.
@@ -179,19 +179,19 @@ def elliptical_proposal(
             rng, thetak = jax.random.split(rng)
             theta = jax.random.uniform(thetak, minval=theta_min, maxval=theta_max)
             p, m = ellipsis(position, momentum, theta, mean)
-            loglikelihood = loglikelihood_fn(p)
+            logdensity = logdensity_fn(p)
             theta_min = jnp.where(theta < 0, theta, theta_min)
             theta_max = jnp.where(theta > 0, theta, theta_max)
             subiter += 1
-            return rng, loglikelihood, subiter, theta, theta_min, theta_max, p, m
+            return rng, logdensity, subiter, theta, theta_min, theta_max, p, m
 
-        _, loglikelihood, subiter, theta, *_, position, momentum = jax.lax.while_loop(
+        _, logdensity, subiter, theta, *_, position, momentum = jax.lax.while_loop(
             lambda vals: vals[1] <= logy,
             slice_fn,
-            (rng_key, loglikelihood, 1, theta, theta_min, theta_max, p, m),
+            (rng_key, logdensity, 1, theta, theta_min, theta_max, p, m),
         )
         return (
-            EllipSliceState(position, loglikelihood),
+            EllipSliceState(position, logdensity),
             EllipSliceInfo(momentum, theta, subiter),
         )
 

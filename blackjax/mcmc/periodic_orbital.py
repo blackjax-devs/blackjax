@@ -37,19 +37,19 @@ class PeriodicOrbitalState(NamedTuple):
         they are from the target distribution.
     directions
         an integer indicating the position on the orbit of each point.
-    potential_energies
-        vector with energies (negative log densities) for each point in
+    logdensities
+        vector with logdensities (negative potential energies) for each point in
         the orbit.
-    potential_energies_grad
-        matrix where each row is a vector with gradients of the energy
+    logdensities_grad
+        matrix where each row is a vector with gradients of the logdensity
         function for each point in the orbit.
     """
 
     positions: PyTree
     weights: Array
     directions: Array
-    potential_energies: Array
-    potential_energies_grad: PyTree
+    logdensities: Array
+    logdensities_grad: PyTree
 
 
 class PeriodicOrbitalInfo(NamedTuple):
@@ -97,9 +97,6 @@ def init(
     gradient.
     """
 
-    def potential_fn(x):
-        return -logdensity_fn(x)
-
     positions = jax.tree_util.tree_map(
         lambda position: jnp.array([position for _ in range(period)]), position
     )
@@ -108,12 +105,12 @@ def init(
 
     directions = jnp.arange(period)
 
-    potential_energies, potential_energies_grad = jax.vmap(
-        jax.value_and_grad(potential_fn)
-    )(positions)
+    logdensities, logdensities_grad = jax.vmap(jax.value_and_grad(logdensity_fn))(
+        positions
+    )
 
     return PeriodicOrbitalState(
-        positions, weights, directions, potential_energies, potential_energies_grad
+        positions, weights, directions, logdensities, logdensities_grad
     )
 
 
@@ -176,13 +173,10 @@ def kernel(
 
         """
 
-        def potential_fn(x):
-            return -logdensity_fn(x)
-
         momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
             inverse_mass_matrix
         )
-        bijection_fn = bijection(potential_fn, kinetic_energy_fn)
+        bijection_fn = bijection(logdensity_fn, kinetic_energy_fn)
         proposal_generator = periodic_orbital_proposal(
             bijection_fn, kinetic_energy_fn, period, step_size
         )
@@ -193,8 +187,8 @@ def kernel(
             positions,
             weights,
             directions,
-            potential_energies,
-            potential_energies_grad,
+            logdensities,
+            logdensities_grad,
         ) = state
 
         choice_indx = jax.random.choice(key_choice, len(weights), p=weights)
@@ -204,9 +198,9 @@ def kernel(
         direction = directions[choice_indx]
         period = jnp.max(directions) + 1
         direction = jnp.mod(direction + jnp.array(period / 2, int), period)
-        potential_energy = potential_energies[choice_indx]
-        potential_energy_grad = jax.tree_util.tree_map(
-            lambda p_energy_grad: p_energy_grad[choice_indx], potential_energies_grad
+        logdensity = logdensities[choice_indx]
+        logdensity_grad = jax.tree_util.tree_map(
+            lambda p_energy_grad: p_energy_grad[choice_indx], logdensities_grad
         )
 
         momentum = momentum_generator(key_momentum, position)
@@ -214,8 +208,8 @@ def kernel(
         augmented_state = integrators.IntegratorState(
             position,
             momentum,
-            potential_energy,
-            potential_energy_grad,
+            logdensity,
+            logdensity_grad,
         )
         proposal, info = proposal_generator(direction, augmented_state)
 
@@ -283,7 +277,7 @@ def periodic_orbital_proposal(
                 operand=None,
             )
             kinetic_energy = kinetic_energy_fn(state.momentum)
-            weight = -(state.potential_energy + kinetic_energy)
+            weight = state.logdensity - kinetic_energy
             return state, (state, jnp.exp(weight))
 
         _, (states, weights) = jax.lax.scan(orbit_fn, init_state, index_steps)
@@ -296,8 +290,8 @@ def periodic_orbital_proposal(
             states.position,
             weights / jnp.sum(weights),
             directions,
-            states.potential_energy,
-            states.potential_energy_grad,
+            states.logdensity,
+            states.logdensity_grad,
         )
         info = PeriodicOrbitalInfo(
             states.momentum,

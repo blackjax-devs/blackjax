@@ -30,14 +30,13 @@ class HMCState(NamedTuple):
 
     The HMC algorithm takes one position of the chain and returns another
     position. In order to make computations more efficient, we also store
-    the current potential energy as well as the current gradient of the
-    potential energy.
+    the current logdensity as well as the current gradient of the logdensity.
 
     """
 
     position: PyTree
-    potential_energy: float
-    potential_energy_grad: PyTree
+    logdensity: float
+    logdensity_grad: PyTree
 
 
 class HMCInfo(NamedTuple):
@@ -58,7 +57,7 @@ class HMCInfo(NamedTuple):
         Whether the difference in energy between the original and the new state
         exceeded the divergence threshold.
     energy:
-        Energy of the transition.
+        Total energy of the transition.
     proposal
         The state proposed by the proposal. Typically includes the position and
         momentum.
@@ -79,11 +78,8 @@ class HMCInfo(NamedTuple):
 
 
 def init(position: PyTree, logdensity_fn: Callable):
-    def potential_fn(x):
-        return -logdensity_fn(x)
-
-    potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
-    return HMCState(position, potential_energy, potential_energy_grad)
+    logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
+    return HMCState(position, logdensity, logdensity_grad)
 
 
 def kernel(
@@ -117,13 +113,10 @@ def kernel(
     ) -> Tuple[HMCState, HMCInfo]:
         """Generate a new sample with the HMC kernel."""
 
-        def potential_fn(x):
-            return -logdensity_fn(x)
-
         momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
             inverse_mass_matrix
         )
-        symplectic_integrator = integrator(potential_fn, kinetic_energy_fn)
+        symplectic_integrator = integrator(logdensity_fn, kinetic_energy_fn)
         proposal_generator = hmc_proposal(
             symplectic_integrator,
             kinetic_energy_fn,
@@ -134,15 +127,15 @@ def kernel(
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
 
-        position, potential_energy, potential_energy_grad = state
+        position, logdensity, logdensity_grad = state
         momentum = momentum_generator(key_momentum, position)
 
         integrator_state = integrators.IntegratorState(
-            position, momentum, potential_energy, potential_energy_grad
+            position, momentum, logdensity, logdensity_grad
         )
         proposal, info = proposal_generator(key_integrator, integrator_state)
         proposal = HMCState(
-            proposal.position, proposal.potential_energy, proposal.potential_energy_grad
+            proposal.position, proposal.logdensity, proposal.logdensity_grad
         )
 
         return proposal, info
@@ -231,6 +224,6 @@ def flip_momentum(
     return integrators.IntegratorState(
         state.position,
         flipped_momentum,
-        state.potential_energy,
-        state.potential_energy_grad,
+        state.logdensity,
+        state.logdensity_grad,
     )
