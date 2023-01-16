@@ -15,4 +15,3 @@ Examples
    examples/change_of_variable_hmc.md
    examples/Pathfinder.md
    examples/RegimeSwitchingModel.md
-   examples/HierarchicalBNN.md
