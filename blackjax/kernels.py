@@ -680,8 +680,13 @@ class csgld:
 
 class AdaptationResults(NamedTuple):
     state: PyTree
-    kernel: Callable
     parameters: dict
+
+
+class AdaptationInfo(NamedTuple):
+    state: NamedTuple
+    info: NamedTuple
+    adaptation_state: NamedTuple
 
 
 def window_adaptation(
@@ -731,9 +736,9 @@ def window_adaptation(
 
     """
 
-    step_fn = algorithm.kernel()
+    mcmc_step = algorithm.kernel()
 
-    init, update, final = adaptation.window_adaptation.base(
+    adapt_init, adapt_step, adapt_final = adaptation.window_adaptation.base(
         is_mass_matrix_diagonal,
         target_acceptance_rate=target_acceptance_rate,
     )
@@ -742,7 +747,7 @@ def window_adaptation(
         _, rng_key, adaptation_stage = xs
         state, adaptation_state = carry
 
-        new_state, info = step_fn(
+        new_state, info = mcmc_step(
             rng_key,
             state,
             logdensity_fn,
@@ -750,7 +755,7 @@ def window_adaptation(
             adaptation_state.inverse_mass_matrix,
             **extra_parameters,
         )
-        new_adaptation_state = update(
+        new_adaptation_state = adapt_step(
             adaptation_state,
             adaptation_stage,
             new_state.position,
@@ -759,13 +764,13 @@ def window_adaptation(
 
         return (
             (new_state, new_adaptation_state),
-            (new_state, info, new_adaptation_state),
+            AdaptationInfo(new_state, info, new_adaptation_state),
         )
 
     def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 1000):
 
         init_state = algorithm.init(position, logdensity_fn)
-        init_adaptation_state = init(position, initial_step_size)
+        init_adaptation_state = adapt_init(position, initial_step_size)
 
         if progress_bar:
             print("Running window adaptation")
@@ -775,29 +780,32 @@ def window_adaptation(
 
         keys = jax.random.split(rng_key, num_steps)
         schedule = adaptation.window_adaptation.schedule(num_steps)
-        last_state, adaptation_chain = jax.lax.scan(
+        last_state, info = jax.lax.scan(
             one_step_,
             (init_state, init_adaptation_state),
             (jnp.arange(num_steps), keys, schedule),
         )
         last_chain_state, last_warmup_state, *_ = last_state
 
-        step_size, inverse_mass_matrix = final(last_warmup_state)
+        step_size, inverse_mass_matrix = adapt_final(last_warmup_state)
         parameters = {
             "step_size": step_size,
             "inverse_mass_matrix": inverse_mass_matrix,
             **extra_parameters,
         }
 
-        def kernel(rng_key, state):
-            return step_fn(rng_key, state, logdensity_fn, **parameters)
-
-        return AdaptationResults(last_chain_state, kernel, parameters)
+        return (
+            AdaptationResults(
+                last_chain_state,
+                parameters,
+            ),
+            info,
+        )
 
     return AdaptationAlgorithm(run)
 
 
-def meads(
+def meads_adaptation(
     logdensity_fn: Callable,
     num_chains: int,
 ) -> AdaptationAlgorithm:
@@ -837,33 +845,32 @@ def meads(
 
     """
 
-    step_fn = ghmc.kernel()
+    ghmc_step = ghmc.kernel()
 
-    init, update = adaptation.meads.base()
+    adapt_init, adapt_update = adaptation.meads_adaptation.base()
 
     batch_init = jax.vmap(lambda r, p: ghmc.init(r, p, logdensity_fn))
 
     def one_step(carry, rng_key):
         states, adaptation_state = carry
 
-        def kernel(rng_key, state):
-            return step_fn(
-                rng_key,
-                state,
-                logdensity_fn,
-                adaptation_state.step_size,
-                adaptation_state.position_sigma,
-                adaptation_state.alpha,
-                adaptation_state.delta,
-            )
-
         keys = jax.random.split(rng_key, num_chains)
-        new_states, info = jax.vmap(kernel)(keys, states)
-        new_adaptation_state = update(
+        new_states, info = jax.vmap(
+            ghmc_step, in_axes=(0, 0, None, None, None, None, None)
+        )(
+            keys,
+            states,
+            logdensity_fn,
+            adaptation_state.step_size,
+            adaptation_state.position_sigma,
+            adaptation_state.alpha,
+            adaptation_state.delta,
+        )
+        new_adaptation_state = adapt_update(
             adaptation_state, new_states.position, new_states.logdensity_grad
         )
 
-        return (new_states, new_adaptation_state), (
+        return (new_states, new_adaptation_state), AdaptationInfo(
             new_states,
             info,
             new_adaptation_state,
@@ -875,10 +882,10 @@ def meads(
 
         rng_keys = jax.random.split(key_init, num_chains)
         init_states = batch_init(rng_keys, positions)
-        init_adaptation_state = init(positions, init_states.logdensity_grad)
+        init_adaptation_state = adapt_init(positions, init_states.logdensity_grad)
 
         keys = jax.random.split(key_adapt, num_steps)
-        (last_states, last_adaptation_state), _ = jax.lax.scan(
+        (last_states, last_adaptation_state), info = jax.lax.scan(
             one_step, (init_states, init_adaptation_state), keys
         )
 
@@ -889,15 +896,7 @@ def meads(
             "delta": last_adaptation_state.delta,
         }
 
-        def kernel(rng_key, state):
-            return step_fn(
-                rng_key,
-                state,
-                logdensity_fn,
-                **parameters,
-            )
-
-        return AdaptationResults(last_states, kernel, parameters)
+        return AdaptationResults(last_states, parameters), info
 
     return AdaptationAlgorithm(run)  # type: ignore[arg-type]
 
@@ -1326,15 +1325,15 @@ def pathfinder_adaptation(
 
     """
 
-    step_fn = algorithm.kernel()
+    mcmc_step = algorithm.kernel()
 
-    init, update, final = adaptation.pathfinder_adaptation.base(
+    adapt_init, adapt_update, adapt_final = adaptation.pathfinder_adaptation.base(
         target_acceptance_rate,
     )
 
     def one_step(carry, rng_key):
         state, adaptation_state = carry
-        new_state, info = step_fn(
+        new_state, info = mcmc_step(
             rng_key,
             state,
             logdensity_fn,
@@ -1342,12 +1341,12 @@ def pathfinder_adaptation(
             adaptation_state.inverse_mass_matrix,
             **extra_parameters,
         )
-        new_adaptation_state = update(
+        new_adaptation_state = adapt_update(
             adaptation_state, new_state.position, info.acceptance_rate
         )
         return (
             (new_state, new_adaptation_state),
-            (new_state, info, new_adaptation_state.ss_state),
+            AdaptationInfo(new_state, info, new_adaptation_state),
         )
 
     def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 400):
@@ -1357,7 +1356,7 @@ def pathfinder_adaptation(
         pathfinder_state, _ = vi.pathfinder.approximate(
             init_key, logdensity_fn, position
         )
-        init_warmup_state = init(
+        init_warmup_state = adapt_init(
             pathfinder_state.alpha,
             pathfinder_state.beta,
             pathfinder_state.gamma,
@@ -1368,24 +1367,21 @@ def pathfinder_adaptation(
         init_state = algorithm.init(init_position, logdensity_fn)
 
         keys = jax.random.split(rng_key, num_steps)
-        last_state, warmup_chain = jax.lax.scan(
+        last_state, info = jax.lax.scan(
             one_step,
             (init_state, init_warmup_state),
             keys,
         )
         last_chain_state, last_warmup_state = last_state
 
-        step_size, inverse_mass_matrix = final(last_warmup_state)
+        step_size, inverse_mass_matrix = adapt_final(last_warmup_state)
         parameters = {
             "step_size": step_size,
             "inverse_mass_matrix": inverse_mass_matrix,
             **extra_parameters,
         }
 
-        def kernel(rng_key, state):
-            return step_fn(rng_key, state, logdensity_fn, **parameters)
-
-        return AdaptationResults(last_chain_state, kernel, parameters)
+        return AdaptationResults(last_chain_state, parameters), info
 
     return AdaptationAlgorithm(run)
 

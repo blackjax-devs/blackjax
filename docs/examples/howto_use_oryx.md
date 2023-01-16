@@ -138,7 +138,8 @@ import blackjax
 
 rng_key = jax.random.PRNGKey(0)
 adapt = blackjax.window_adaptation(blackjax.nuts, logdensity_fn)
-last_state, kernel, _ = adapt.run(rng_key, initial_weights, 100)
+(last_state, parameters), _ = adapt.run(rng_key, initial_weights, 100)
+kernel = blackjax.nuts(logdensity_fn, **parameters).step
 ```
 
 and sample from the model's posterior distribution:

@@ -177,8 +177,9 @@ dist.initialize_model(kinit, n_chain)
 ```{code-cell} python
 tic1 = pd.Timestamp.now()
 k_warm, k_sample = jrnd.split(ksam)
-warmup = blackjax.meads(dist.logdensity_fn, n_chain)
-init_state, kernel, _ = warmup.run(k_warm, dist.init_params, n_warm)
+warmup = blackjax.meads_adaptation(dist.logdensity_fn, n_chain)
+(init_state, parameters), _ = warmup.run(k_warm, dist.init_params, n_warm)
+kernel = blackjax.ghmc(dist.logdensity_fn, **parameters).step
 
 def one_chain(k_sam, init_state):
     state, info = inference_loop(k_sam, init_state, kernel, n_iter)
