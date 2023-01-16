@@ -10,7 +10,7 @@ from .kernels import (
     hmc,
     irmh,
     mala,
-    meads,
+    meads_adaptation,
     meanfield_vi,
     mgrad_gaussian,
     nuts,
@@ -38,11 +38,11 @@ __all__ = [
     "irmh",
     "elliptical_slice",
     "ghmc",
-    "meads",
     "sgld",  # stochastic gradient mcmc
     "sghmc",
     "csgld",
     "window_adaptation",  # mcmc adaptation
+    "meads_adaptation",
     "pathfinder_adaptation",
     "adaptive_tempered_smc",  # smc
     "tempered_smc",

@@ -43,18 +43,21 @@ def run_regression(algorithm, **parameters):
     x_data = jax.random.normal(init_key0, shape=(100_000, 1))
     y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
 
-    logposterior_fn_ = functools.partial(regression_logprob, x=x_data, preds=y_data)
-    logposterior_fn = lambda x: logposterior_fn_(**x)
+    logdensity_fn_ = functools.partial(regression_logprob, x=x_data, preds=y_data)
+    logdensity_fn = lambda x: logdensity_fn_(**x)
 
     warmup_key, inference_key = jax.random.split(rng_key, 2)
 
     warmup = blackjax.window_adaptation(
         algorithm,
-        logposterior_fn,
+        logdensity_fn,
         is_mass_matrix_diagonal=False,
         **parameters,
     )
-    state, kernel, _ = warmup.run(warmup_key, {"log_scale": 0.0, "coefs": 2.0}, 1000)
+    (state, parameters), _ = warmup.run(
+        warmup_key, {"log_scale": 0.0, "coefs": 2.0}, 1000
+    )
+    kernel = algorithm(logdensity_fn, **parameters).step
 
     states = inference_loop(kernel, 10_000, inference_key, state)
 
