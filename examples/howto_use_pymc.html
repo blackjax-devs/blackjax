@@ -421,10 +421,10 @@ title="Source repository"
 Ambiguities exist in dispatched function _unify
 
 The following signatures may result in ambiguous behavior:
+	[object, ConstrainedVar, Mapping], [ConstrainedVar, object, Mapping]
 	[ConstrainedVar, Var, Mapping], [object, ConstrainedVar, Mapping]
-	[ConstrainedVar, object, Mapping], [object, ConstrainedVar, Mapping]
-	[ConstrainedVar, object, Mapping], [object, ConstrainedVar, Mapping]
 	[object, ConstrainedVar, Mapping], [ConstrainedVar, Var, Mapping]
+	[object, ConstrainedVar, Mapping], [ConstrainedVar, object, Mapping]
 
 
 Consider making the following additions:
