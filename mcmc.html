@@ -554,8 +554,7 @@ title="Source repository"
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>logdensity_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a>) – The log-density function we wish to draw samples from. This
-is minus the potential function.</p></li>
+<li><p><strong>logdensity_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a>) – The log-density function we wish to draw samples from.</p></li>
 <li><p><strong>step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – The value to use for the step size in the symplectic integrator.</p></li>
 <li><p><strong>inverse_mass_matrix</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)"><em>numpy.ndarray</em></a><em>, </em><em>jax._src.basearray.Array</em><em>]</em>) – The value to use for the inverse mass matrix when drawing a value for
 the momentum and computing the kinetic energy.</p></li>
@@ -609,8 +608,7 @@ users only need to pass <cite>blackjax.hmc</cite> to SMC, adaptation, etc. algor
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>logdensity_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a>) – The log-density function we wish to draw samples from. This
-is minus the potential function.</p></li>
+<li><p><strong>logdensity_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a>) – The log-density function we wish to draw samples from.</p></li>
 <li><p><strong>step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – The value to use for the step size in the symplectic integrator.</p></li>
 <li><p><strong>inverse_mass_matrix</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)"><em>numpy.ndarray</em></a><em>, </em><em>jax._src.basearray.Array</em><em>]</em>) – The value to use for the inverse mass matrix when drawing a value for
 the momentum and computing the kinetic energy.</p></li>
@@ -662,8 +660,7 @@ the algorithm a good candiate for running many chains in parallel.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>logdensity_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a>) – The log-density function we wish to draw samples from. This
-is minus the potential function.</p></li>
+<li><p><strong>logdensity_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a>) – The log-density function we wish to draw samples from.</p></li>
 <li><p><strong>step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – A PyTree of the same structure as the target PyTree (position) with the
 values used for as a step size for each dimension of the target space in
 the velocity verlet integrator.</p></li>
@@ -718,8 +715,7 @@ users only need to pass <cite>blackjax.mala</cite> to SMC, adaptation, etc. algo
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>logdensity_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a>) – The log-density function we wish to draw samples from. This
-is minus the potential function.</p></li>
+<li><p><strong>logdensity_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a>) – The log-density function we wish to draw samples from.</p></li>
 <li><p><strong>step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – The value to use for the step size in the symplectic integrator.</p></li>
 </ul>
 </dd>
@@ -791,8 +787,7 @@ integrator with discretization parameter <code class="docutils literal notransla
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>logdensity_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a>) – The logarithm of the probability density function we wish to draw samples from. This
-is minus the potential energy function.</p></li>
+<li><p><strong>logdensity_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.11)"><em>Callable</em></a>) – The logarithm of the probability density function we wish to draw samples from.</p></li>
 <li><p><strong>step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – The value to use for the step size in for the symplectic integrator to buid the orbit.</p></li>
 <li><p><strong>inverse_mass_matrix</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><em>Union</em></a><em>[</em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)"><em>numpy.ndarray</em></a><em>, </em><em>jax._src.basearray.Array</em><em>]</em>) – The value to use for the inverse mass matrix when drawing a value for
 the momentum and computing the kinetic energy.</p></li>

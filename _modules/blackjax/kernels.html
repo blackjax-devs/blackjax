@@ -559,8 +559,7 @@ title="Source repository"
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    logdensity_fn</span>
-<span class="sd">        The log-density function we wish to draw samples from. This</span>
-<span class="sd">        is minus the potential function.</span>
+<span class="sd">        The log-density function we wish to draw samples from.</span>
 <span class="sd">    step_size</span>
 <span class="sd">        The value to use for the step size in the symplectic integrator.</span>
 <span class="sd">    inverse_mass_matrix</span>
@@ -652,8 +651,7 @@ title="Source repository"
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    logdensity_fn</span>
-<span class="sd">        The log-density function we wish to draw samples from. This</span>
-<span class="sd">        is minus the potential function.</span>
+<span class="sd">        The log-density function we wish to draw samples from.</span>
 <span class="sd">    step_size</span>
 <span class="sd">        The value to use for the step size in the symplectic integrator.</span>
 
@@ -716,8 +714,7 @@ title="Source repository"
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    logdensity_fn</span>
-<span class="sd">        The log-density function we wish to draw samples from. This</span>
-<span class="sd">        is minus the potential function.</span>
+<span class="sd">        The log-density function we wish to draw samples from.</span>
 <span class="sd">    step_size</span>
 <span class="sd">        The value to use for the step size in the symplectic integrator.</span>
 <span class="sd">    inverse_mass_matrix</span>
@@ -1224,7 +1221,7 @@ title="Source repository"
         <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
         <span class="n">new_states</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">kernel</span><span class="p">)(</span><span class="n">keys</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span>
         <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">update</span><span class="p">(</span>
-            <span class="n">adaptation_state</span><span class="p">,</span> <span class="n">new_states</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">new_states</span><span class="o">.</span><span class="n">potential_energy_grad</span>
+            <span class="n">adaptation_state</span><span class="p">,</span> <span class="n">new_states</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">new_states</span><span class="o">.</span><span class="n">logdensity_grad</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="p">(</span><span class="n">new_states</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span> <span class="p">(</span>
@@ -1239,7 +1236,7 @@ title="Source repository"
 
         <span class="n">rng_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key_init</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
         <span class="n">init_states</span> <span class="o">=</span> <span class="n">batch_init</span><span class="p">(</span><span class="n">rng_keys</span><span class="p">,</span> <span class="n">positions</span><span class="p">)</span>
-        <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">init_states</span><span class="o">.</span><span class="n">potential_energy_grad</span><span class="p">)</span>
+        <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">init_states</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">)</span>
 
         <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key_adapt</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
         <span class="p">(</span><span class="n">last_states</span><span class="p">,</span> <span class="n">last_adaptation_state</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
@@ -1408,8 +1405,7 @@ title="Source repository"
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    logdensity_fn</span>
-<span class="sd">        The logarithm of the probability density function we wish to draw samples from. This</span>
-<span class="sd">        is minus the potential energy function.</span>
+<span class="sd">        The logarithm of the probability density function we wish to draw samples from.</span>
 <span class="sd">    step_size</span>
 <span class="sd">        The value to use for the step size in for the symplectic integrator to buid the orbit.</span>
 <span class="sd">    inverse_mass_matrix</span>
@@ -1552,8 +1548,7 @@ title="Source repository"
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    logdensity_fn</span>
-<span class="sd">        The log-density function we wish to draw samples from. This</span>
-<span class="sd">        is minus the potential function.</span>
+<span class="sd">        The log-density function we wish to draw samples from.</span>
 <span class="sd">    step_size</span>
 <span class="sd">        A PyTree of the same structure as the target PyTree (position) with the</span>
 <span class="sd">        values used for as a step size for each dimension of the target space in</span>

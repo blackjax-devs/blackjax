@@ -539,7 +539,7 @@ title="Source repository"
 </section>
 <section id="set-the-initial-state">
 <h3>Set the Initial State<a class="headerlink" href="#set-the-initial-state" title="Permalink to this headline">#</a></h3>
-<p>The initial state of the HMC algorithm requires not only an initial position, but also the potential energy and gradient of the potential energy at this position. BlackJAX provides a <code class="docutils literal notranslate"><span class="pre">new_state</span></code> function to initialize the state from an initial position.</p>
+<p>The initial state of the HMC algorithm requires not only an initial position, but also the potential energy and gradient of the potential energy at this position (for example, in the context of Bayesian modeling, the output of the log posterior function evaluated at the initial position). BlackJAX provides a <code class="docutils literal notranslate"><span class="pre">new_state</span></code> function to initialize the state from an initial position.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">initial_position</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loc&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;log_scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
@@ -552,7 +552,7 @@ title="Source repository"
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(36186.516, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1272.921, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-67535.17, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=DeviceArray(-34371.023, dtype=float32), logdensity_grad={&#39;loc&#39;: DeviceArray(1355.493, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(63904.17, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -600,8 +600,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.43 s, sys: 10.1 ms, total: 1.44 s
-Wall time: 1.44 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.68 s, sys: 1.35 ms, total: 2.68 s
+Wall time: 2.68 s
 </pre></div>
 </div>
 </div>
@@ -629,7 +629,7 @@ Wall time: 1.44 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/e29a7d42b5c25238fe688499806f17f6eec37b47a6b664790c8e26b73b3f6415.png" src="../_images/e29a7d42b5c25238fe688499806f17f6eec37b47a6b664790c8e26b73b3f6415.png" />
+<img alt="../_images/a0773cc518e9bb4c85cf5fe220a68ca93830fe5120a77c1a9ff66206b83375a1.png" src="../_images/a0773cc518e9bb4c85cf5fe220a68ca93830fe5120a77c1a9ff66206b83375a1.png" />
 </div>
 </div>
 </section>
@@ -656,7 +656,7 @@ Wall time: 1.44 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, potential_energy=DeviceArray(36186.516, dtype=float32), potential_energy_grad={&#39;loc&#39;: DeviceArray(-1272.921, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(-67535.17, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=DeviceArray(-34371.023, dtype=float32), logdensity_grad={&#39;loc&#39;: DeviceArray(1355.493, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(63904.17, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -673,8 +673,8 @@ Wall time: 1.44 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.26 s, sys: 17.4 ms, total: 6.27 s
-Wall time: 6.27 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 12.5 s, sys: 25 ms, total: 12.5 s
+Wall time: 12.5 s
 </pre></div>
 </div>
 </div>
@@ -702,7 +702,7 @@ Wall time: 6.27 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/bf8d621d83e05d4cfbeb8488c210b70b17825c1fa432b8b5e999b9e9bf0b0b50.png" src="../_images/bf8d621d83e05d4cfbeb8488c210b70b17825c1fa432b8b5e999b9e9bf0b0b50.png" />
+<img alt="../_images/c3456525cc59a497911dec750c51a5b415cb3a74dddbf04753fc404f86ae2bdd.png" src="../_images/c3456525cc59a497911dec750c51a5b415cb3a74dddbf04753fc404f86ae2bdd.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -719,8 +719,8 @@ Wall time: 6.27 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.48 s, sys: 7.6 ms, total: 2.49 s
-Wall time: 2.49 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.14 s, sys: 19.8 ms, total: 3.16 s
+Wall time: 3.16 s
 </pre></div>
 </div>
 </div>
@@ -738,8 +738,8 @@ Wall time: 2.49 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.89 s, sys: 7.83 ms, total: 1.9 s
-Wall time: 1.9 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.45 s, sys: 16 ms, total: 2.46 s
+Wall time: 2.46 s
 </pre></div>
 </div>
 </div>
@@ -767,7 +767,7 @@ Wall time: 1.9 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/ab8cb98a5b79e687e6525d2493de220cab86ba081c506620dfacf0c4be174418.png" src="../_images/ab8cb98a5b79e687e6525d2493de220cab86ba081c506620dfacf0c4be174418.png" />
+<img alt="../_images/2493ab60ef2b670981f18e76ff19785dfd00990d2701856e73565c0d2b9f3567.png" src="../_images/2493ab60ef2b670981f18e76ff19785dfd00990d2701856e73565c0d2b9f3567.png" />
 </div>
 </div>
 </section>
