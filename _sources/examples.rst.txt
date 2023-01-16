@@ -16,5 +16,3 @@ Examples
    examples/Pathfinder.md
    examples/RegimeSwitchingModel.md
    examples/HierarchicalBNN.md
-   examples/SGMCMC.md
-   examples/contour_sgld.md
