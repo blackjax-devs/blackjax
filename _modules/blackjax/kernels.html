@@ -420,23 +420,27 @@ title="Source repository"
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">logprior_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">loglikelihood_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">mcmc_step_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">mcmc_algorithm</span><span class="p">:</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">,</span>
         <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
         <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">target_ess</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">root_solver</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">smc</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">dichotomy</span><span class="p">,</span>
-        <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">use_log_ess</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">mcmc_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">kernel_factory</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">mcmc_algorithm</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">mcmc_parameters</span><span class="p">)</span><span class="o">.</span><span class="n">step</span>
 
         <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span>
             <span class="n">logprior_fn</span><span class="p">,</span>
             <span class="n">loglikelihood_fn</span><span class="p">,</span>
-            <span class="n">mcmc_step_fn</span><span class="p">,</span>
-            <span class="n">mcmc_init_fn</span><span class="p">,</span>
+            <span class="n">kernel_factory</span><span class="p">,</span>
+            <span class="n">mcmc_algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>
             <span class="n">resampling_fn</span><span class="p">,</span>
             <span class="n">target_ess</span><span class="p">,</span>
             <span class="n">root_solver</span><span class="p">,</span>
+            <span class="n">use_log_ess</span><span class="p">,</span>
+            <span class="n">mcmc_iter</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
@@ -446,8 +450,6 @@ title="Source repository"
             <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
-                <span class="n">num_mcmc_steps</span><span class="p">,</span>
-                <span class="n">mcmc_parameters</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
@@ -470,19 +472,21 @@ title="Source repository"
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">logprior_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">loglikelihood_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">mcmc_step_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">mcmc_algorithm</span><span class="p">:</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">,</span>
         <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
         <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">mcmc_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">kernel_factory</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">mcmc_algorithm</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">mcmc_parameters</span><span class="p">)</span><span class="o">.</span><span class="n">step</span>
 
         <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span>
             <span class="n">logprior_fn</span><span class="p">,</span>
             <span class="n">loglikelihood_fn</span><span class="p">,</span>
-            <span class="n">mcmc_step_fn</span><span class="p">,</span>
-            <span class="n">mcmc_init_fn</span><span class="p">,</span>
+            <span class="n">kernel_factory</span><span class="p">,</span>
+            <span class="n">mcmc_algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>
             <span class="n">resampling_fn</span><span class="p">,</span>
+            <span class="n">mcmc_iter</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
@@ -492,9 +496,7 @@ title="Source repository"
             <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
-                <span class="n">num_mcmc_steps</span><span class="p">,</span>
                 <span class="n">lmbda</span><span class="p">,</span>
-                <span class="n">mcmc_parameters</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
