@@ -7,7 +7,6 @@ Examples
    examples/Introduction.md
    examples/LogisticRegression.md
    examples/LogisticRegressionWithLatentGaussianSampler.md
-   examples/SparseLogisticRegression.md
    examples/TemperedSMC.md
    examples/PeriodicOrbitalMCMC.md
    examples/GP_EllipticalSliceSampler.md
