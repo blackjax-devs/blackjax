@@ -45,7 +45,7 @@ for _ in range(1_000):
 ```
 
 :::{note}
-If you want to use Blackjax with a model implemented with a PPL, go to the [related tutorials](howto_use_ppl.rst).
+If you want to use Blackjax with a model implemented with a PPL, go to the related tutorials in the left menu.
 :::
 
 
