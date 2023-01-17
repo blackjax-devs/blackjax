@@ -414,6 +414,7 @@ class mgrad_gaussian:
     --------
     A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C) can be initialized and
     used for a given "step size" delta with the following code:
+
     .. code::
 
         mgrad_gaussian = blackjax.mgrad_gaussian(f, C, use_inverse=False, mean=m)
@@ -423,6 +424,7 @@ class mgrad_gaussian:
     We can JIT-compile the step function for better performance
 
     .. code::
+
         step = jax.jit(mgrad_gaussian.step)
         new_state, info = step(rng_key, state, delta)
 
