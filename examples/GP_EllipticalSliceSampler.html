@@ -536,8 +536,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.97 s, sys: 288 ms, total: 10.3 s
-Wall time: 9.76 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.34 s, sys: 194 ms, total: 7.53 s
+Wall time: 7.14 s
 </pre></div>
 </div>
 </div>
@@ -550,14 +550,18 @@ Wall time: 9.76 s
 <span class="n">logdensity_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">loglikelihood_fn</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">f</span> <span class="o">@</span> <span class="n">invSigma</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
 <span class="n">warmup</span> <span class="o">=</span> <span class="n">window_adaptation</span><span class="p">(</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">,</span> <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
 <span class="n">key_warm</span><span class="p">,</span> <span class="n">key_sample</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jrnd</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
-<span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">key_warm</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+<span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">key_warm</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">nuts</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">)</span><span class="o">.</span><span class="n">step</span>
 <span class="n">states</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">key_sample</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2min 20s, sys: 215 ms, total: 2min 20s
-Wall time: 2min 20s
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">NameError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
+<span class="n">File</span> <span class="o">&lt;</span><span class="n">timed</span> <span class="n">exec</span><span class="o">&gt;</span><span class="p">:</span><span class="mi">7</span>
+
+<span class="ne">NameError</span>: name &#39;parameters&#39; is not defined
 </pre></div>
 </div>
 </div>

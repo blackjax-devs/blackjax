@@ -266,7 +266,7 @@ This scheme is implemented in `blackjax.kernel.pathfinder_adaptation` function:
 
 ```{code-cell} python
 adapt = blackjax.kernels.pathfinder_adaptation(blackjax.nuts, logdensity_fn)
-state, kernel, info = adapt.run(rng_key, w0, 400)
+(state, parameters), info = adapt.run(rng_key, w0, 400)
 ```
 
 ## Some Caveats

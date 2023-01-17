@@ -420,27 +420,23 @@ title="Source repository"
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">logprior_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">loglikelihood_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">mcmc_algorithm</span><span class="p">:</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">,</span>
+        <span class="n">mcmc_step_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
         <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">target_ess</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">root_solver</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">smc</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">dichotomy</span><span class="p">,</span>
-        <span class="n">use_log_ess</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">mcmc_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
-        <span class="k">def</span> <span class="nf">kernel_factory</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">mcmc_algorithm</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">mcmc_parameters</span><span class="p">)</span><span class="o">.</span><span class="n">step</span>
 
         <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span>
             <span class="n">logprior_fn</span><span class="p">,</span>
             <span class="n">loglikelihood_fn</span><span class="p">,</span>
-            <span class="n">kernel_factory</span><span class="p">,</span>
-            <span class="n">mcmc_algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>
+            <span class="n">mcmc_step_fn</span><span class="p">,</span>
+            <span class="n">mcmc_init_fn</span><span class="p">,</span>
             <span class="n">resampling_fn</span><span class="p">,</span>
             <span class="n">target_ess</span><span class="p">,</span>
             <span class="n">root_solver</span><span class="p">,</span>
-            <span class="n">use_log_ess</span><span class="p">,</span>
-            <span class="n">mcmc_iter</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
@@ -450,6 +446,8 @@ title="Source repository"
             <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
+                <span class="n">num_mcmc_steps</span><span class="p">,</span>
+                <span class="n">mcmc_parameters</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
@@ -472,21 +470,19 @@ title="Source repository"
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">logprior_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">loglikelihood_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">mcmc_algorithm</span><span class="p">:</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">,</span>
+        <span class="n">mcmc_step_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
         <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">mcmc_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
-        <span class="k">def</span> <span class="nf">kernel_factory</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">mcmc_algorithm</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">mcmc_parameters</span><span class="p">)</span><span class="o">.</span><span class="n">step</span>
 
         <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span>
             <span class="n">logprior_fn</span><span class="p">,</span>
             <span class="n">loglikelihood_fn</span><span class="p">,</span>
-            <span class="n">kernel_factory</span><span class="p">,</span>
-            <span class="n">mcmc_algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>
+            <span class="n">mcmc_step_fn</span><span class="p">,</span>
+            <span class="n">mcmc_init_fn</span><span class="p">,</span>
             <span class="n">resampling_fn</span><span class="p">,</span>
-            <span class="n">mcmc_iter</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
@@ -496,7 +492,9 @@ title="Source repository"
             <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
+                <span class="n">num_mcmc_steps</span><span class="p">,</span>
                 <span class="n">lmbda</span><span class="p">,</span>
+                <span class="n">mcmc_parameters</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
@@ -767,6 +765,7 @@ title="Source repository"
 <span class="sd">    --------</span>
 <span class="sd">    A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C) can be initialized and</span>
 <span class="sd">    used for a given &quot;step size&quot; delta with the following code:</span>
+
 <span class="sd">    .. code::</span>
 
 <span class="sd">        mgrad_gaussian = blackjax.mgrad_gaussian(f, C, use_inverse=False, mean=m)</span>
@@ -776,6 +775,7 @@ title="Source repository"
 <span class="sd">    We can JIT-compile the step function for better performance</span>
 
 <span class="sd">    .. code::</span>
+
 <span class="sd">        step = jax.jit(mgrad_gaussian.step)</span>
 <span class="sd">        new_state, info = step(rng_key, state, delta)</span>
 
@@ -1031,8 +1031,13 @@ title="Source repository"
 
 <span class="k">class</span> <span class="nc">AdaptationResults</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">PyTree</span>
-    <span class="n">kernel</span><span class="p">:</span> <span class="n">Callable</span>
     <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span>
+
+
+<span class="k">class</span> <span class="nc">AdaptationInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">state</span><span class="p">:</span> <span class="n">NamedTuple</span>
+    <span class="n">info</span><span class="p">:</span> <span class="n">NamedTuple</span>
+    <span class="n">adaptation_state</span><span class="p">:</span> <span class="n">NamedTuple</span>
 
 
 <div class="viewcode-block" id="window_adaptation"><a class="viewcode-back" href="../../adaptation.html#blackjax.window_adaptation">[docs]</a><span class="k">def</span> <span class="nf">window_adaptation</span><span class="p">(</span>
@@ -1082,9 +1087,9 @@ title="Source repository"
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">step_fn</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
+    <span class="n">mcmc_step</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
 
-    <span class="n">init</span><span class="p">,</span> <span class="n">update</span><span class="p">,</span> <span class="n">final</span> <span class="o">=</span> <span class="n">adaptation</span><span class="o">.</span><span class="n">window_adaptation</span><span class="o">.</span><span class="n">base</span><span class="p">(</span>
+    <span class="n">adapt_init</span><span class="p">,</span> <span class="n">adapt_step</span><span class="p">,</span> <span class="n">adapt_final</span> <span class="o">=</span> <span class="n">adaptation</span><span class="o">.</span><span class="n">window_adaptation</span><span class="o">.</span><span class="n">base</span><span class="p">(</span>
         <span class="n">is_mass_matrix_diagonal</span><span class="p">,</span>
         <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="n">target_acceptance_rate</span><span class="p">,</span>
     <span class="p">)</span>
@@ -1093,7 +1098,7 @@ title="Source repository"
         <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">adaptation_stage</span> <span class="o">=</span> <span class="n">xs</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
 
-        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step_fn</span><span class="p">(</span>
+        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mcmc_step</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">,</span>
             <span class="n">state</span><span class="p">,</span>
             <span class="n">logdensity_fn</span><span class="p">,</span>
@@ -1101,7 +1106,7 @@ title="Source repository"
             <span class="n">adaptation_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
             <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">update</span><span class="p">(</span>
+        <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_step</span><span class="p">(</span>
             <span class="n">adaptation_state</span><span class="p">,</span>
             <span class="n">adaptation_stage</span><span class="p">,</span>
             <span class="n">new_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
@@ -1110,13 +1115,13 @@ title="Source repository"
 
         <span class="k">return</span> <span class="p">(</span>
             <span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
-            <span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
+            <span class="n">AdaptationInfo</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">):</span>
 
         <span class="n">init_state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
-        <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">initial_step_size</span><span class="p">)</span>
+        <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">initial_step_size</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">progress_bar</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Running window adaptation&quot;</span><span class="p">)</span>
@@ -1126,29 +1131,32 @@ title="Source repository"
 
         <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
         <span class="n">schedule</span> <span class="o">=</span> <span class="n">adaptation</span><span class="o">.</span><span class="n">window_adaptation</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
-        <span class="n">last_state</span><span class="p">,</span> <span class="n">adaptation_chain</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+        <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
             <span class="n">one_step_</span><span class="p">,</span>
             <span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">),</span>
             <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="n">keys</span><span class="p">,</span> <span class="n">schedule</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">last_chain_state</span><span class="p">,</span> <span class="n">last_warmup_state</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">last_state</span>
 
-        <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">final</span><span class="p">(</span><span class="n">last_warmup_state</span><span class="p">)</span>
+        <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">adapt_final</span><span class="p">(</span><span class="n">last_warmup_state</span><span class="p">)</span>
         <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="n">step_size</span><span class="p">,</span>
             <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">:</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span>
             <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
         <span class="p">}</span>
 
-        <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">last_chain_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">AdaptationResults</span><span class="p">(</span>
+                <span class="n">last_chain_state</span><span class="p">,</span>
+                <span class="n">parameters</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">info</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="meads"><a class="viewcode-back" href="../../adaptation.html#blackjax.meads">[docs]</a><span class="k">def</span> <span class="nf">meads</span><span class="p">(</span>
+<div class="viewcode-block" id="meads_adaptation"><a class="viewcode-back" href="../../adaptation.html#blackjax.meads_adaptation">[docs]</a><span class="k">def</span> <span class="nf">meads_adaptation</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">num_chains</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdaptationAlgorithm</span><span class="p">:</span>
@@ -1188,33 +1196,32 @@ title="Source repository"
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">step_fn</span> <span class="o">=</span> <span class="n">ghmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
+    <span class="n">ghmc_step</span> <span class="o">=</span> <span class="n">ghmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
 
-    <span class="n">init</span><span class="p">,</span> <span class="n">update</span> <span class="o">=</span> <span class="n">adaptation</span><span class="o">.</span><span class="n">meads</span><span class="o">.</span><span class="n">base</span><span class="p">()</span>
+    <span class="n">adapt_init</span><span class="p">,</span> <span class="n">adapt_update</span> <span class="o">=</span> <span class="n">adaptation</span><span class="o">.</span><span class="n">meads_adaptation</span><span class="o">.</span><span class="n">base</span><span class="p">()</span>
 
     <span class="n">batch_init</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">ghmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
         <span class="n">states</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
 
-        <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step_fn</span><span class="p">(</span>
-                <span class="n">rng_key</span><span class="p">,</span>
-                <span class="n">state</span><span class="p">,</span>
-                <span class="n">logdensity_fn</span><span class="p">,</span>
-                <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
-                <span class="n">adaptation_state</span><span class="o">.</span><span class="n">position_sigma</span><span class="p">,</span>
-                <span class="n">adaptation_state</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span>
-                <span class="n">adaptation_state</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span>
-            <span class="p">)</span>
-
         <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
-        <span class="n">new_states</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">kernel</span><span class="p">)(</span><span class="n">keys</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span>
-        <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">update</span><span class="p">(</span>
+        <span class="n">new_states</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
+            <span class="n">ghmc_step</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="p">)(</span>
+            <span class="n">keys</span><span class="p">,</span>
+            <span class="n">states</span><span class="p">,</span>
+            <span class="n">logdensity_fn</span><span class="p">,</span>
+            <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+            <span class="n">adaptation_state</span><span class="o">.</span><span class="n">position_sigma</span><span class="p">,</span>
+            <span class="n">adaptation_state</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span>
+            <span class="n">adaptation_state</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_update</span><span class="p">(</span>
             <span class="n">adaptation_state</span><span class="p">,</span> <span class="n">new_states</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">new_states</span><span class="o">.</span><span class="n">logdensity_grad</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="p">(</span><span class="n">new_states</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span> <span class="p">(</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">new_states</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span> <span class="n">AdaptationInfo</span><span class="p">(</span>
             <span class="n">new_states</span><span class="p">,</span>
             <span class="n">info</span><span class="p">,</span>
             <span class="n">new_adaptation_state</span><span class="p">,</span>
@@ -1226,10 +1233,10 @@ title="Source repository"
 
         <span class="n">rng_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key_init</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
         <span class="n">init_states</span> <span class="o">=</span> <span class="n">batch_init</span><span class="p">(</span><span class="n">rng_keys</span><span class="p">,</span> <span class="n">positions</span><span class="p">)</span>
-        <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">init_states</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">)</span>
+        <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_init</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">init_states</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">)</span>
 
         <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key_adapt</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
-        <span class="p">(</span><span class="n">last_states</span><span class="p">,</span> <span class="n">last_adaptation_state</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">last_states</span><span class="p">,</span> <span class="n">last_adaptation_state</span><span class="p">),</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
             <span class="n">one_step</span><span class="p">,</span> <span class="p">(</span><span class="n">init_states</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">),</span> <span class="n">keys</span>
         <span class="p">)</span>
 
@@ -1240,15 +1247,7 @@ title="Source repository"
             <span class="s2">&quot;delta&quot;</span><span class="p">:</span> <span class="n">last_adaptation_state</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span>
         <span class="p">}</span>
 
-        <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step_fn</span><span class="p">(</span>
-                <span class="n">rng_key</span><span class="p">,</span>
-                <span class="n">state</span><span class="p">,</span>
-                <span class="n">logdensity_fn</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">parameters</span><span class="p">,</span>
-            <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">last_states</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">last_states</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">info</span>
 
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 
@@ -1677,15 +1676,15 @@ title="Source repository"
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">step_fn</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
+    <span class="n">mcmc_step</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
 
-    <span class="n">init</span><span class="p">,</span> <span class="n">update</span><span class="p">,</span> <span class="n">final</span> <span class="o">=</span> <span class="n">adaptation</span><span class="o">.</span><span class="n">pathfinder_adaptation</span><span class="o">.</span><span class="n">base</span><span class="p">(</span>
+    <span class="n">adapt_init</span><span class="p">,</span> <span class="n">adapt_update</span><span class="p">,</span> <span class="n">adapt_final</span> <span class="o">=</span> <span class="n">adaptation</span><span class="o">.</span><span class="n">pathfinder_adaptation</span><span class="o">.</span><span class="n">base</span><span class="p">(</span>
         <span class="n">target_acceptance_rate</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
-        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step_fn</span><span class="p">(</span>
+        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mcmc_step</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">,</span>
             <span class="n">state</span><span class="p">,</span>
             <span class="n">logdensity_fn</span><span class="p">,</span>
@@ -1693,12 +1692,12 @@ title="Source repository"
             <span class="n">adaptation_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
             <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">update</span><span class="p">(</span>
+        <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_update</span><span class="p">(</span>
             <span class="n">adaptation_state</span><span class="p">,</span> <span class="n">new_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
-            <span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="o">.</span><span class="n">ss_state</span><span class="p">),</span>
+            <span class="n">AdaptationInfo</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">400</span><span class="p">):</span>
@@ -1708,7 +1707,7 @@ title="Source repository"
         <span class="n">pathfinder_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">approximate</span><span class="p">(</span>
             <span class="n">init_key</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">position</span>
         <span class="p">)</span>
-        <span class="n">init_warmup_state</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span>
+        <span class="n">init_warmup_state</span> <span class="o">=</span> <span class="n">adapt_init</span><span class="p">(</span>
             <span class="n">pathfinder_state</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span>
             <span class="n">pathfinder_state</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span>
             <span class="n">pathfinder_state</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span>
@@ -1719,24 +1718,21 @@ title="Source repository"
         <span class="n">init_state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">init_position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 
         <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
-        <span class="n">last_state</span><span class="p">,</span> <span class="n">warmup_chain</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+        <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
             <span class="n">one_step</span><span class="p">,</span>
             <span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">init_warmup_state</span><span class="p">),</span>
             <span class="n">keys</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">last_chain_state</span><span class="p">,</span> <span class="n">last_warmup_state</span> <span class="o">=</span> <span class="n">last_state</span>
 
-        <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">final</span><span class="p">(</span><span class="n">last_warmup_state</span><span class="p">)</span>
+        <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">adapt_final</span><span class="p">(</span><span class="n">last_warmup_state</span><span class="p">)</span>
         <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="n">step_size</span><span class="p">,</span>
             <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">:</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span>
             <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
         <span class="p">}</span>
 
-        <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">last_chain_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">last_chain_state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">info</span>
 
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span></div>
 

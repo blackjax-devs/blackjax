@@ -20,4 +20,4 @@ MEADS
 
 .. currentmodule:: blackjax
 
-.. autoclass:: blackjax.meads
+.. autoclass:: blackjax.meads_adaptation

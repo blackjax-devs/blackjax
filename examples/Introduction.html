@@ -542,7 +542,7 @@ title="Source repository"
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=DeviceArray(-34690.62, dtype=float32), logdensity_grad={&#39;loc&#39;: DeviceArray(1096.0999, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(64543.363, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=DeviceArray(-34005.387, dtype=float32), logdensity_grad={&#39;loc&#39;: DeviceArray(1155.1255, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(63172.9, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -590,8 +590,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.73 s, sys: 16.4 ms, total: 1.74 s
-Wall time: 1.74 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.48 s, sys: 8.22 ms, total: 1.49 s
+Wall time: 1.49 s
 </pre></div>
 </div>
 </div>
@@ -619,7 +619,7 @@ Wall time: 1.74 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/0e5457a816c7efd5e61cf9c8c8606dcb110e4d6cf339356db726f96411b57eb3.png" src="../_images/0e5457a816c7efd5e61cf9c8c8606dcb110e4d6cf339356db726f96411b57eb3.png" />
+<img alt="../_images/5f60b05802d41d8067954b7f1ead1037ac0a4f4cecdcfadaae51a5119018d690.png" src="../_images/5f60b05802d41d8067954b7f1ead1037ac0a4f4cecdcfadaae51a5119018d690.png" />
 </div>
 </div>
 </section>
@@ -646,7 +646,7 @@ Wall time: 1.74 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=DeviceArray(-34690.62, dtype=float32), logdensity_grad={&#39;loc&#39;: DeviceArray(1096.0999, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(64543.363, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=DeviceArray(-34005.387, dtype=float32), logdensity_grad={&#39;loc&#39;: DeviceArray(1155.1255, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(63172.9, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -663,8 +663,8 @@ Wall time: 1.74 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.55 s, sys: 24 ms, total: 7.57 s
-Wall time: 7.57 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.92 s, sys: 16.3 ms, total: 6.94 s
+Wall time: 6.93 s
 </pre></div>
 </div>
 </div>
@@ -692,7 +692,7 @@ Wall time: 7.57 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/b758d65142823d14bf994781ec95e9bc59c0a5ea3e7df00e6c238ef8fd5e0d72.png" src="../_images/b758d65142823d14bf994781ec95e9bc59c0a5ea3e7df00e6c238ef8fd5e0d72.png" />
+<img alt="../_images/17d355c751856956371b4d1df059dc9444d7adc1457452b9114568d99ccc89fa.png" src="../_images/17d355c751856956371b4d1df059dc9444d7adc1457452b9114568d99ccc89fa.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -704,13 +704,13 @@ Wall time: 7.57 s
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 
 <span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">)</span>
-<span class="n">state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.94 s, sys: 32.3 ms, total: 2.97 s
-Wall time: 2.97 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.35 s, sys: 7.84 ms, total: 2.35 s
+Wall time: 2.35 s
 </pre></div>
 </div>
 </div>
@@ -720,6 +720,7 @@ Wall time: 2.97 s
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">)</span>
 <span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="mi">1_000</span><span class="p">)</span>
 
 <span class="n">loc_samples</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
@@ -728,8 +729,25 @@ Wall time: 2.97 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.26 s, sys: 16 ms, total: 2.28 s
-Wall time: 2.27 s
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
+<span class="n">File</span> <span class="o">&lt;</span><span class="n">timed</span> <span class="n">exec</span><span class="o">&gt;</span><span class="p">:</span><span class="mi">2</span>
+
+<span class="nn">Cell In[7], line 8,</span> in <span class="ni">inference_loop</span><span class="nt">(rng_key, kernel, initial_state, num_samples)</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span>     <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">state</span>
+<span class="g g-Whitespace">      </span><span class="mi">7</span> <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
+<span class="ne">----&gt; </span><span class="mi">8</span> <span class="n">_</span><span class="p">,</span> <span class="n">states</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">10</span> <span class="k">return</span> <span class="n">states</span>
+
+    <span class="p">[</span><span class="o">...</span> <span class="n">skipping</span> <span class="n">hidden</span> <span class="mi">16</span> <span class="n">frame</span><span class="p">]</span>
+
+<span class="nn">Cell In[7], line 4,</span> in <span class="ni">inference_loop.&lt;locals&gt;.one_step</span><span class="nt">(state, rng_key)</span>
+<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+<span class="ne">----&gt; </span><span class="mi">4</span>     <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span>     <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">state</span>
+
+<span class="ne">TypeError</span>: &#39;MCMCSamplingAlgorithm&#39; object is not callable
 </pre></div>
 </div>
 </div>
@@ -757,7 +775,7 @@ Wall time: 2.27 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/658416eafcb0bed2febd5faea25065d5e8f7d3e757373194ca452ebe2c9cae84.png" src="../_images/658416eafcb0bed2febd5faea25065d5e8f7d3e757373194ca452ebe2c9cae84.png" />
+<img alt="../_images/17d355c751856956371b4d1df059dc9444d7adc1457452b9114568d99ccc89fa.png" src="../_images/17d355c751856956371b4d1df059dc9444d7adc1457452b9114568d99ccc89fa.png" />
 </div>
 </div>
 </section>

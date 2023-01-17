@@ -727,14 +727,17 @@ Interestingly, the only parameter that needs calibrating is the “step size” 
 Calibrating it to have an acceptance rate of roughly 50% is a good starting point.</p>
 <p class="rubric">Examples</p>
 <p>A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C) can be initialized and
-used for a given “step size” delta with the following code:
-.. code:</p>
+used for a given “step size” delta with the following code:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mgrad_gaussian</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mgrad_gaussian</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">use_inverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">m</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">mgrad_gaussian</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">zeros</span><span class="p">)</span>  <span class="c1"># Starting at the mean of the prior</span>
 <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mgrad_gaussian</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>We can JIT-compile the step function for better performance</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">mgrad_gaussian</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">

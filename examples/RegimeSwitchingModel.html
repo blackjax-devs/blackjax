@@ -528,8 +528,9 @@ title="Source repository"
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tic1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
 <span class="n">k_warm</span><span class="p">,</span> <span class="n">k_sample</span> <span class="o">=</span> <span class="n">jrnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">ksam</span><span class="p">)</span>
-<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">meads</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">)</span>
-<span class="n">init_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">k_warm</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">init_params</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">)</span>
+<span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">meads_adaptation</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">n_chain</span><span class="p">)</span>
+<span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">k_warm</span><span class="p">,</span> <span class="n">dist</span><span class="o">.</span><span class="n">init_params</span><span class="p">,</span> <span class="n">n_warm</span><span class="p">)</span>
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">ghmc</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">)</span><span class="o">.</span><span class="n">step</span>
 
 <span class="k">def</span> <span class="nf">one_chain</span><span class="p">(</span><span class="n">k_sam</span><span class="p">,</span> <span class="n">init_state</span><span class="p">):</span>
     <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">k_sam</span><span class="p">,</span> <span class="n">init_state</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
@@ -543,7 +544,7 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:00:33.192435
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Runtime for MEADS 0 days 00:00:24.995268
 </pre></div>
 </div>
 </div>
@@ -605,7 +606,7 @@ title="Source repository"
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/0aacefeed073f2c5f38d2993b43649dc2e66a3f0e1b060b4c6847276d0082a47.png" src="../_images/0aacefeed073f2c5f38d2993b43649dc2e66a3f0e1b060b4c6847276d0082a47.png" />
+<img alt="../_images/10fdb977d89ec2d493a4ada75532ba92ec683884f480bddd44e6bd85500f1c28.png" src="../_images/10fdb977d89ec2d493a4ada75532ba92ec683884f480bddd44e6bd85500f1c28.png" />
 </div>
 </div>
 </section>
