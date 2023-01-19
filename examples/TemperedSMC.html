@@ -580,7 +580,7 @@ $$</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7fe3884f46d0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f5d8098c190&gt;
 </pre></div>
 </div>
 <img alt="../_images/2e00a41288fabd005c10a4159fa891d29bb4eae070f8653acc2f5b391a45ff74.png" src="../_images/2e00a41288fabd005c10a4159fa891d29bb4eae070f8653acc2f5b391a45ff74.png" />
@@ -631,8 +631,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.42 s, sys: 7.9 ms, total: 1.42 s
-Wall time: 1.42 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.46 s, sys: 16.3 ms, total: 1.48 s
+Wall time: 1.47 s
 </pre></div>
 </div>
 </div>
@@ -672,8 +672,8 @@ Wall time: 1.42 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.26 s, sys: 15.9 ms, total: 8.27 s
-Wall time: 8.27 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.36 s, sys: 24.2 ms, total: 8.38 s
+Wall time: 8.38 s
 </pre></div>
 </div>
 </div>
@@ -743,11 +743,12 @@ Wall time: 8.27 s
 <span class="n">tempered</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">adaptive_tempered_smc</span><span class="p">(</span>
     <span class="n">prior_log_prob</span><span class="p">,</span>
     <span class="n">loglikelihood</span><span class="p">,</span>
-    <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">,</span>
+    <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">(),</span>
+    <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>
     <span class="n">hmc_parameters</span><span class="p">,</span>
     <span class="n">resampling</span><span class="o">.</span><span class="n">systematic</span><span class="p">,</span>
     <span class="mf">0.5</span><span class="p">,</span>
-    <span class="n">mcmc_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">num_mcmc_steps</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">initial_smc_state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span>
@@ -761,11 +762,9 @@ Wall time: 8.27 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
-<span class="n">File</span> <span class="o">&lt;</span><span class="n">timed</span> <span class="n">exec</span><span class="o">&gt;</span><span class="p">:</span><span class="mi">7</span>
-
-<span class="ne">TypeError</span>: __new__() got an unexpected keyword argument &#39;mcmc_iter&#39;
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of steps in the adaptive algorithm:  12
+CPU times: user 3.99 s, sys: 68.4 ms, total: 4.06 s
+Wall time: 3.96 s
 </pre></div>
 </div>
 </div>
@@ -785,16 +784,7 @@ Wall time: 8.27 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">NameError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">11</span><span class="p">],</span> <span class="n">line</span> <span class="mi">1</span>
-<span class="ne">----&gt; </span><span class="mi">1</span> <span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">smc_samples</span><span class="o">.</span><span class="n">particles</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
-<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">linspace</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="n">density</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-
-<span class="ne">NameError</span>: name &#39;smc_samples&#39; is not defined
-</pre></div>
-</div>
+<img alt="../_images/38593d2cbb7b38ca923fc4d1cedcf4fcb0fa31c9a57545efff770936c0e0070b.png" src="../_images/38593d2cbb7b38ca923fc4d1cedcf4fcb0fa31c9a57545efff770936c0e0070b.png" />
 </div>
 </div>
 </section>
@@ -845,6 +835,12 @@ Wall time: 8.27 s
 </div>
 </div>
 </details>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;matplotlib.legend.Legend at 0x7f5d70fcff40&gt;
+</pre></div>
+</div>
+<img alt="../_images/69b910a68f358121b8183c83377aa40a714328886f09a7979728e30ce068fcb0.png" src="../_images/69b910a68f358121b8183c83377aa40a714328886f09a7979728e30ce068fcb0.png" />
+</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -887,6 +883,12 @@ Wall time: 8.27 s
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.02 s, sys: 13 µs, total: 1.02 s
+Wall time: 1.02 s
+</pre></div>
+</div>
+</div>
 </div>
 <div class="cell tag_hide-input docutils container">
 <details class="hide above-input">
@@ -903,6 +905,9 @@ Wall time: 8.27 s
 </div>
 </div>
 </details>
+<div class="cell_output docutils container">
+<img alt="../_images/746ea9f6958fb8376a0791217cae672cb9e276c6603359e7861577d2cb442bca.png" src="../_images/746ea9f6958fb8376a0791217cae672cb9e276c6603359e7861577d2cb442bca.png" />
+</div>
 </div>
 </section>
 <section id="nuts-sampler">
@@ -917,6 +922,12 @@ Wall time: 8.27 s
 <span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">full_logdensity</span><span class="p">,</span> <span class="o">**</span><span class="n">nuts_parameters</span><span class="p">)</span>
 <span class="n">nuts_state</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,)))</span>
 <span class="n">nuts_samples</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">nuts_state</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.86 s, sys: 16 ms, total: 1.88 s
+Wall time: 1.87 s
 </pre></div>
 </div>
 </div>
@@ -936,6 +947,9 @@ Wall time: 8.27 s
 </div>
 </div>
 </details>
+<div class="cell_output docutils container">
+<img alt="../_images/a9601768222e0c0c77770dc1ff7dd094dd33ea733252ec4c6f48e2e269aab611.png" src="../_images/a9601768222e0c0c77770dc1ff7dd094dd33ea733252ec4c6f48e2e269aab611.png" />
+</div>
 </div>
 </section>
 <section id="id2">
@@ -972,6 +986,15 @@ We correct the bias introduced by the (arbitrary) prior.</p>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
+<span class="n">File</span> <span class="o">&lt;</span><span class="n">timed</span> <span class="n">exec</span><span class="o">&gt;</span><span class="p">:</span><span class="mi">7</span>
+
+<span class="ne">TypeError</span>: __new__() got an unexpected keyword argument &#39;mcmc_iter&#39;
+</pre></div>
+</div>
+</div>
 </div>
 <div class="cell tag_hide-input docutils container">
 <details class="hide above-input">
@@ -988,6 +1011,9 @@ We correct the bias introduced by the (arbitrary) prior.</p>
 </div>
 </div>
 </details>
+<div class="cell_output docutils container">
+<img alt="../_images/fcebf51acefa1205211c4bb0e79dd3109063ceae27c4e6f6506642c621504810.png" src="../_images/fcebf51acefa1205211c4bb0e79dd3109063ceae27c4e6f6506642c621504810.png" />
+</div>
 </div>
 <p>The tempered SMC algorithm with the HMC kernel clearly outperfoms the HMC and NUTS kernels alone.</p>
 </section>
