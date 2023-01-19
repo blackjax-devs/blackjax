@@ -141,6 +141,11 @@
    Use non-JAX log-prob functions?
   </a>
  </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_metropolis_within_gibbs.html">
+   Build a Metropolis-Within-Gibbs sampler?
+  </a>
+ </li>
 </ul>
 <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
@@ -537,7 +542,7 @@ title="Source repository"
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=DeviceArray(-34603.797, dtype=float32), logdensity_grad={&#39;loc&#39;: DeviceArray(1385.5332, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(64369.723, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=DeviceArray(-33542.88, dtype=float32), logdensity_grad={&#39;loc&#39;: DeviceArray(1145.0131, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(62247.887, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -585,8 +590,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.71 s, sys: 11.9 ms, total: 1.72 s
-Wall time: 1.72 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.47 s, sys: 7.65 ms, total: 1.48 s
+Wall time: 1.48 s
 </pre></div>
 </div>
 </div>
@@ -614,7 +619,7 @@ Wall time: 1.72 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/561ba83ad0bcc12048a66621f257520b0e0a404c791a96eec6bd1e3a875ccf7e.png" src="../_images/561ba83ad0bcc12048a66621f257520b0e0a404c791a96eec6bd1e3a875ccf7e.png" />
+<img alt="../_images/2cdd77f2804cdf0c9964c8d5ce6933dcc3945f02908451ee011958fb698db109.png" src="../_images/2cdd77f2804cdf0c9964c8d5ce6933dcc3945f02908451ee011958fb698db109.png" />
 </div>
 </div>
 </section>
@@ -641,7 +646,7 @@ Wall time: 1.72 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=DeviceArray(-34603.797, dtype=float32), logdensity_grad={&#39;loc&#39;: DeviceArray(1385.5332, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(64369.723, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=DeviceArray(-33542.88, dtype=float32), logdensity_grad={&#39;loc&#39;: DeviceArray(1145.0131, dtype=float32, weak_type=True), &#39;log_scale&#39;: DeviceArray(62247.887, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -658,8 +663,8 @@ Wall time: 1.72 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.39 s, sys: 15.7 ms, total: 7.41 s
-Wall time: 7.4 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.35 s, sys: 7.96 ms, total: 6.36 s
+Wall time: 6.36 s
 </pre></div>
 </div>
 </div>
@@ -687,7 +692,7 @@ Wall time: 7.4 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/c5528b186d20bd1da123693aa9b95be7a69e46c1adbf6ed8c87d62af89316015.png" src="../_images/c5528b186d20bd1da123693aa9b95be7a69e46c1adbf6ed8c87d62af89316015.png" />
+<img alt="../_images/f836249ede8d2fa6af5f0318ac4c34cea02446b14c80c24738a63e384dd6c25c.png" src="../_images/f836249ede8d2fa6af5f0318ac4c34cea02446b14c80c24738a63e384dd6c25c.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -704,8 +709,8 @@ Wall time: 7.4 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.82 s, sys: 27.9 ms, total: 2.85 s
-Wall time: 2.85 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.31 s, sys: 20 ms, total: 2.33 s
+Wall time: 2.33 s
 </pre></div>
 </div>
 </div>
@@ -770,7 +775,7 @@ Wall time: 2.85 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/c5528b186d20bd1da123693aa9b95be7a69e46c1adbf6ed8c87d62af89316015.png" src="../_images/c5528b186d20bd1da123693aa9b95be7a69e46c1adbf6ed8c87d62af89316015.png" />
+<img alt="../_images/f836249ede8d2fa6af5f0318ac4c34cea02446b14c80c24738a63e384dd6c25c.png" src="../_images/f836249ede8d2fa6af5f0318ac4c34cea02446b14c80c24738a63e384dd6c25c.png" />
 </div>
 </div>
 </section>

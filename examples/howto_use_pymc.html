@@ -141,6 +141,11 @@
    Use non-JAX log-prob functions?
   </a>
  </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="howto_metropolis_within_gibbs.html">
+   Build a Metropolis-Within-Gibbs sampler?
+  </a>
+ </li>
 </ul>
 <p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
@@ -407,31 +412,7 @@ title="Source repository"
   warnings.warn(&quot;This module is experimental.&quot;)
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/multipledispatch/dispatcher.py:27: AmbiguityWarning: 
-Ambiguities exist in dispatched function _unify
-
-The following signatures may result in ambiguous behavior:
-	[object, ConstrainedVar, Mapping], [ConstrainedVar, object, Mapping]
-	[object, ConstrainedVar, Mapping], [ConstrainedVar, object, Mapping]
-	[object, ConstrainedVar, Mapping], [ConstrainedVar, Var, Mapping]
-	[object, ConstrainedVar, Mapping], [ConstrainedVar, Var, Mapping]
-
-
-Consider making the following additions:
-
-@dispatch(ConstrainedVar, ConstrainedVar, Mapping)
-def _unify(...)
-
-@dispatch(ConstrainedVar, ConstrainedVar, Mapping)
-def _unify(...)
-
-@dispatch(ConstrainedVar, ConstrainedVar, Mapping)
-def _unify(...)
-
-@dispatch(ConstrainedVar, ConstrainedVar, Mapping)
-def _unify(...)
-  warn(warning_text(dispatcher.name, ambiguities), AmbiguityWarning)
-WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
