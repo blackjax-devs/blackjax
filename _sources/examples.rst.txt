@@ -12,5 +12,4 @@ Examples
    examples/GP_EllipticalSliceSampler.md
    examples/GP_Marginal.md
    examples/change_of_variable_hmc.md
-   examples/Pathfinder.md
    examples/RegimeSwitchingModel.md
