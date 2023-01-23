@@ -417,6 +417,83 @@ Number of data points: 150
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ImportError</span><span class="g g-Whitespace">                               </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">line</span> <span class="mi">2</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">import</span> <span class="nn">jax</span>
+<span class="ne">----&gt; </span><span class="mi">2</span> <span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">random_variable</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">from</span> <span class="nn">tensorflow_probability.substrates</span> <span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">tfp</span>
+<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="n">tfd</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">distributions</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.16</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">16</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Copyright 2020 The TensorFlow Probability Authors.</span>
+<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="c1">#</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">13</span> <span class="c1"># limitations under the License.</span>
+<span class="g g-Whitespace">     </span><span class="mi">14</span> <span class="c1"># ============================================================================</span>
+<span class="g g-Whitespace">     </span><span class="mi">15</span><span class="w"> </span><span class="sd">&quot;&quot;&quot;Oryx is a neural network mini-library built on top of Jax.&quot;&quot;&quot;</span>
+<span class="ne">---&gt; </span><span class="mi">16</span> <span class="kn">from</span> <span class="nn">oryx</span> <span class="kn">import</span> <span class="n">bijectors</span>
+<span class="g g-Whitespace">     </span><span class="mi">17</span> <span class="kn">from</span> <span class="nn">oryx</span> <span class="kn">import</span> <span class="n">core</span>
+<span class="g g-Whitespace">     </span><span class="mi">18</span> <span class="kn">from</span> <span class="nn">oryx</span> <span class="kn">import</span> <span class="n">distributions</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.16</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="n">bijectors</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">19</span>
+<span class="g g-Whitespace">     </span><span class="mi">16</span> <span class="kn">import</span> <span class="nn">inspect</span>
+<span class="g g-Whitespace">     </span><span class="mi">18</span> <span class="kn">from</span> <span class="nn">tensorflow_probability.python.experimental.substrates</span> <span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">tfp</span>
+<span class="ne">---&gt; </span><span class="mi">19</span> <span class="kn">from</span> <span class="nn">oryx.bijectors</span> <span class="kn">import</span> <span class="n">bijector_extensions</span>
+<span class="g g-Whitespace">     </span><span class="mi">21</span> <span class="n">tfb</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">bijectors</span>
+<span class="g g-Whitespace">     </span><span class="mi">23</span> <span class="n">_bijectors</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.16</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="n">bijectors</span><span class="o">/</span><span class="n">bijector_extensions</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">28</span>
+<span class="g g-Whitespace">     </span><span class="mi">26</span> <span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="nb">zip</span>
+<span class="g g-Whitespace">     </span><span class="mi">27</span> <span class="kn">from</span> <span class="nn">tensorflow_probability.python.experimental.substrates</span> <span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">tfp</span>
+<span class="ne">---&gt; </span><span class="mi">28</span> <span class="kn">from</span> <span class="nn">oryx</span> <span class="kn">import</span> <span class="n">core</span>
+<span class="g g-Whitespace">     </span><span class="mi">29</span> <span class="kn">from</span> <span class="nn">oryx.core.interpreters</span> <span class="kn">import</span> <span class="n">inverse</span>
+<span class="g g-Whitespace">     </span><span class="mi">31</span> <span class="n">safe_map</span> <span class="o">=</span> <span class="n">jax_util</span><span class="o">.</span><span class="n">safe_map</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.16</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="n">core</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">16</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Copyright 2020 The TensorFlow Probability Authors.</span>
+<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="c1">#</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">13</span> <span class="c1"># limitations under the License.</span>
+<span class="g g-Whitespace">     </span><span class="mi">14</span> <span class="c1"># ============================================================================</span>
+<span class="g g-Whitespace">     </span><span class="mi">15</span><span class="w"> </span><span class="sd">&quot;&quot;&quot;Contains core logic for Oryx classes.&quot;&quot;&quot;</span>
+<span class="ne">---&gt; </span><span class="mi">16</span> <span class="kn">from</span> <span class="nn">oryx.core</span> <span class="kn">import</span> <span class="n">ppl</span>
+<span class="g g-Whitespace">     </span><span class="mi">17</span> <span class="kn">from</span> <span class="nn">oryx.core.interpreters.inverse</span> <span class="kn">import</span> <span class="n">ildj</span>
+<span class="g g-Whitespace">     </span><span class="mi">18</span> <span class="kn">from</span> <span class="nn">oryx.core.interpreters.inverse</span> <span class="kn">import</span> <span class="n">ildj_registry</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.16</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="n">core</span><span class="o">/</span><span class="n">ppl</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">17</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Copyright 2020 The TensorFlow Probability Authors.</span>
+<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="c1">#</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">14</span> <span class="c1"># ============================================================================</span>
+<span class="g g-Whitespace">     </span><span class="mi">15</span> <span class="c1"># Lint as: python3</span>
+<span class="g g-Whitespace">     </span><span class="mi">16</span><span class="w"> </span><span class="sd">&quot;&quot;&quot;Module for probabilistic programming features.&quot;&quot;&quot;</span>
+<span class="ne">---&gt; </span><span class="mi">17</span> <span class="kn">from</span> <span class="nn">oryx.core.ppl.transformations</span> <span class="kn">import</span> <span class="n">conditional</span>
+<span class="g g-Whitespace">     </span><span class="mi">18</span> <span class="kn">from</span> <span class="nn">oryx.core.ppl.transformations</span> <span class="kn">import</span> <span class="n">graph_replace</span>
+<span class="g g-Whitespace">     </span><span class="mi">19</span> <span class="kn">from</span> <span class="nn">oryx.core.ppl.transformations</span> <span class="kn">import</span> <span class="n">intervene</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.16</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="n">core</span><span class="o">/</span><span class="n">ppl</span><span class="o">/</span><span class="n">transformations</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">204</span>
+<span class="g g-Whitespace">    </span><span class="mi">201</span> <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">util</span> <span class="k">as</span> <span class="n">jax_util</span>
+<span class="g g-Whitespace">    </span><span class="mi">203</span> <span class="kn">from</span> <span class="nn">oryx.core</span> <span class="kn">import</span> <span class="n">primitive</span>
+<span class="ne">--&gt; </span><span class="mi">204</span> <span class="kn">from</span> <span class="nn">oryx.core.interpreters</span> <span class="kn">import</span> <span class="n">harvest</span>
+<span class="g g-Whitespace">    </span><span class="mi">205</span> <span class="kn">from</span> <span class="nn">oryx.core.interpreters</span> <span class="kn">import</span> <span class="n">log_prob</span> <span class="k">as</span> <span class="n">lp</span>
+<span class="g g-Whitespace">    </span><span class="mi">207</span> <span class="n">Program</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.16</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="n">core</span><span class="o">/</span><span class="n">interpreters</span><span class="o">/</span><span class="n">harvest</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">136</span>
+<span class="g g-Whitespace">    </span><span class="mi">134</span> <span class="kn">from</span> <span class="nn">jax.interpreters</span> <span class="kn">import</span> <span class="n">ad</span>
+<span class="g g-Whitespace">    </span><span class="mi">135</span> <span class="kn">from</span> <span class="nn">jax.interpreters</span> <span class="kn">import</span> <span class="n">batching</span>
+<span class="ne">--&gt; </span><span class="mi">136</span> <span class="kn">from</span> <span class="nn">jax.interpreters</span> <span class="kn">import</span> <span class="n">masking</span>
+<span class="g g-Whitespace">    </span><span class="mi">137</span> <span class="kn">from</span> <span class="nn">jax.interpreters</span> <span class="kn">import</span> <span class="n">xla</span>
+<span class="g g-Whitespace">    </span><span class="mi">138</span> <span class="kn">from</span> <span class="nn">jax.lib.xla_bridge</span> <span class="kn">import</span> <span class="n">xla_client</span> <span class="k">as</span> <span class="n">xc</span>
+
+<span class="ne">ImportError</span>: cannot import name &#39;masking&#39; from &#39;jax.interpreters&#39; (/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jax/interpreters/__init__.py)
+</pre></div>
+</div>
+</div>
 </div>
 <p>We now use this layer to build a multi-layer perceptron. The <code class="docutils literal notranslate"><span class="pre">nest</span></code> function is used to create “scope tags” that allows in this context to re-use our <code class="docutils literal notranslate"><span class="pre">dense</span></code> layer multiple times without name collision in the dictionary that will contain the parameters:</p>
 <div class="cell docutils container">
@@ -471,14 +548,6 @@ Number of data points: 150
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>dict_keys([&#39;layer_1&#39;, &#39;layer_2&#39;, &#39;layer_3&#39;])
-</pre></div>
-</div>
-</div>
 </div>
 <div class="cell tag_hide-input docutils container">
 <details class="hide above-input">
@@ -493,11 +562,6 @@ Number of data points: 150
 </div>
 </div>
 </details>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Number of parameters in the model: 2953
-</pre></div>
-</div>
-</div>
 </div>
 <p>To sample from this model we will need to obtain its joint distribution log-probability using <code class="docutils literal notranslate"><span class="pre">joint_log_prob</span></code>:</p>
 <div class="cell docutils container">
@@ -520,12 +584,6 @@ Number of data points: 150
 <span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 <span class="p">(</span><span class="n">last_state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_weights</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
 <span class="n">kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">)</span><span class="o">.</span><span class="n">step</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 21.1 s, sys: 132 ms, total: 21.2 s
-Wall time: 21.2 s
 </pre></div>
 </div>
 </div>
@@ -557,12 +615,6 @@ Wall time: 21.2 s
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 
 <span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 19.7 s, sys: 68 ms, total: 19.8 s
-Wall time: 19.7 s
 </pre></div>
 </div>
 </div>
@@ -601,12 +653,6 @@ Wall time: 19.7 s
 </div>
 </div>
 </details>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Average sample accuracy: 0.97940004
-BMA accuracy: 0.9866667
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 

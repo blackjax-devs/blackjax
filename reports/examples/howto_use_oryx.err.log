@@ -1,0 +1,121 @@
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/nbclient/client.py", line 1204, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/nbclient/util.py", line 84, in wrapped
+    return just_run(coro(*args, **kwargs))
+  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/nbclient/util.py", line 62, in just_run
+    return loop.run_until_complete(coro)
+  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/asyncio/base_events.py", line 647, in run_until_complete
+    return future.result()
+  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/nbclient/client.py", line 663, in async_execute
+    await self.async_execute_cell(
+  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/nbclient/client.py", line 965, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/nbclient/client.py", line 862, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+import jax
+from oryx.core.ppl import random_variable
+
+
+from tensorflow_probability.substrates import jax as tfp
+tfd = tfp.distributions
+
+
+def dense(dim_out, activation=jax.nn.relu):
+
+    def forward(key, x):
+        dim_in = x.shape[-1]
+        w_key, b_key = jax.random.split(key)
+        w = random_variable(
+            tfd.Sample(tfd.Normal(0., 1.), sample_shape=(dim_out, dim_in)),
+            name='w'
+        )(w_key)
+        b = random_variable(
+            tfd.Sample(tfd.Normal(0., 1.), sample_shape=(dim_out,)),
+            name='b'
+        )(b_key)
+
+        return activation(jnp.dot(w, x) + b)
+
+    return forward
+------------------
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mImportError[0m                               Traceback (most recent call last)
+Cell [0;32mIn[3], line 2[0m
+[1;32m      1[0m [38;5;28;01mimport[39;00m [38;5;21;01mjax[39;00m
+[0;32m----> 2[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcore[39;00m[38;5;21;01m.[39;00m[38;5;21;01mppl[39;00m [38;5;28;01mimport[39;00m random_variable
+[1;32m      5[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01msubstrates[39;00m [38;5;28;01mimport[39;00m jax [38;5;28;01mas[39;00m tfp
+[1;32m      6[0m tfd [38;5;241m=[39m tfp[38;5;241m.[39mdistributions
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/oryx/__init__.py:16[0m
+[1;32m      1[0m [38;5;66;03m# Copyright 2020 The TensorFlow Probability Authors.[39;00m
+[1;32m      2[0m [38;5;66;03m#[39;00m
+[1;32m      3[0m [38;5;66;03m# Licensed under the Apache License, Version 2.0 (the "License");[39;00m
+[0;32m   (...)[0m
+[1;32m     13[0m [38;5;66;03m# limitations under the License.[39;00m
+[1;32m     14[0m [38;5;66;03m# ============================================================================[39;00m
+[1;32m     15[0m [38;5;124;03m"""Oryx is a neural network mini-library built on top of Jax."""[39;00m
+[0;32m---> 16[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m [38;5;28;01mimport[39;00m bijectors
+[1;32m     17[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m [38;5;28;01mimport[39;00m core
+[1;32m     18[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m [38;5;28;01mimport[39;00m distributions
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/oryx/bijectors/__init__.py:19[0m
+[1;32m     16[0m [38;5;28;01mimport[39;00m [38;5;21;01minspect[39;00m
+[1;32m     18[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m[38;5;21;01m.[39;00m[38;5;21;01msubstrates[39;00m [38;5;28;01mimport[39;00m jax [38;5;28;01mas[39;00m tfp
+[0;32m---> 19[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbijectors[39;00m [38;5;28;01mimport[39;00m bijector_extensions
+[1;32m     21[0m tfb [38;5;241m=[39m tfp[38;5;241m.[39mbijectors
+[1;32m     23[0m _bijectors [38;5;241m=[39m {}
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/oryx/bijectors/bijector_extensions.py:28[0m
+[1;32m     26[0m [38;5;28;01mfrom[39;00m [38;5;21;01msix[39;00m[38;5;21;01m.[39;00m[38;5;21;01mmoves[39;00m [38;5;28;01mimport[39;00m [38;5;28mzip[39m
+[1;32m     27[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m[38;5;21;01m.[39;00m[38;5;21;01msubstrates[39;00m [38;5;28;01mimport[39;00m jax [38;5;28;01mas[39;00m tfp
+[0;32m---> 28[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m [38;5;28;01mimport[39;00m core
+[1;32m     29[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcore[39;00m[38;5;21;01m.[39;00m[38;5;21;01minterpreters[39;00m [38;5;28;01mimport[39;00m inverse
+[1;32m     31[0m safe_map [38;5;241m=[39m jax_util[38;5;241m.[39msafe_map
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/oryx/core/__init__.py:16[0m
+[1;32m      1[0m [38;5;66;03m# Copyright 2020 The TensorFlow Probability Authors.[39;00m
+[1;32m      2[0m [38;5;66;03m#[39;00m
+[1;32m      3[0m [38;5;66;03m# Licensed under the Apache License, Version 2.0 (the "License");[39;00m
+[0;32m   (...)[0m
+[1;32m     13[0m [38;5;66;03m# limitations under the License.[39;00m
+[1;32m     14[0m [38;5;66;03m# ============================================================================[39;00m
+[1;32m     15[0m [38;5;124;03m"""Contains core logic for Oryx classes."""[39;00m
+[0;32m---> 16[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcore[39;00m [38;5;28;01mimport[39;00m ppl
+[1;32m     17[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcore[39;00m[38;5;21;01m.[39;00m[38;5;21;01minterpreters[39;00m[38;5;21;01m.[39;00m[38;5;21;01minverse[39;00m [38;5;28;01mimport[39;00m ildj
+[1;32m     18[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcore[39;00m[38;5;21;01m.[39;00m[38;5;21;01minterpreters[39;00m[38;5;21;01m.[39;00m[38;5;21;01minverse[39;00m [38;5;28;01mimport[39;00m ildj_registry
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/oryx/core/ppl/__init__.py:17[0m
+[1;32m      1[0m [38;5;66;03m# Copyright 2020 The TensorFlow Probability Authors.[39;00m
+[1;32m      2[0m [38;5;66;03m#[39;00m
+[1;32m      3[0m [38;5;66;03m# Licensed under the Apache License, Version 2.0 (the "License");[39;00m
+[0;32m   (...)[0m
+[1;32m     14[0m [38;5;66;03m# ============================================================================[39;00m
+[1;32m     15[0m [38;5;66;03m# Lint as: python3[39;00m
+[1;32m     16[0m [38;5;124;03m"""Module for probabilistic programming features."""[39;00m
+[0;32m---> 17[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcore[39;00m[38;5;21;01m.[39;00m[38;5;21;01mppl[39;00m[38;5;21;01m.[39;00m[38;5;21;01mtransformations[39;00m [38;5;28;01mimport[39;00m conditional
+[1;32m     18[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcore[39;00m[38;5;21;01m.[39;00m[38;5;21;01mppl[39;00m[38;5;21;01m.[39;00m[38;5;21;01mtransformations[39;00m [38;5;28;01mimport[39;00m graph_replace
+[1;32m     19[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcore[39;00m[38;5;21;01m.[39;00m[38;5;21;01mppl[39;00m[38;5;21;01m.[39;00m[38;5;21;01mtransformations[39;00m [38;5;28;01mimport[39;00m intervene
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/oryx/core/ppl/transformations.py:204[0m
+[1;32m    201[0m [38;5;28;01mfrom[39;00m [38;5;21;01mjax[39;00m [38;5;28;01mimport[39;00m util [38;5;28;01mas[39;00m jax_util
+[1;32m    203[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcore[39;00m [38;5;28;01mimport[39;00m primitive
+[0;32m--> 204[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcore[39;00m[38;5;21;01m.[39;00m[38;5;21;01minterpreters[39;00m [38;5;28;01mimport[39;00m harvest
+[1;32m    205[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcore[39;00m[38;5;21;01m.[39;00m[38;5;21;01minterpreters[39;00m [38;5;28;01mimport[39;00m log_prob [38;5;28;01mas[39;00m lp
+[1;32m    207[0m Program [38;5;241m=[39m Callable[[38;5;241m.[39m[38;5;241m.[39m[38;5;241m.[39m, Any]
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/oryx/core/interpreters/harvest.py:136[0m
+[1;32m    134[0m [38;5;28;01mfrom[39;00m [38;5;21;01mjax[39;00m[38;5;21;01m.[39;00m[38;5;21;01minterpreters[39;00m [38;5;28;01mimport[39;00m ad
+[1;32m    135[0m [38;5;28;01mfrom[39;00m [38;5;21;01mjax[39;00m[38;5;21;01m.[39;00m[38;5;21;01minterpreters[39;00m [38;5;28;01mimport[39;00m batching
+[0;32m--> 136[0m [38;5;28;01mfrom[39;00m [38;5;21;01mjax[39;00m[38;5;21;01m.[39;00m[38;5;21;01minterpreters[39;00m [38;5;28;01mimport[39;00m masking
+[1;32m    137[0m [38;5;28;01mfrom[39;00m [38;5;21;01mjax[39;00m[38;5;21;01m.[39;00m[38;5;21;01minterpreters[39;00m [38;5;28;01mimport[39;00m xla
+[1;32m    138[0m [38;5;28;01mfrom[39;00m [38;5;21;01mjax[39;00m[38;5;21;01m.[39;00m[38;5;21;01mlib[39;00m[38;5;21;01m.[39;00m[38;5;21;01mxla_bridge[39;00m [38;5;28;01mimport[39;00m xla_client [38;5;28;01mas[39;00m xc
+
+[0;31mImportError[0m: cannot import name 'masking' from 'jax.interpreters' (/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jax/interpreters/__init__.py)
+ImportError: cannot import name 'masking' from 'jax.interpreters' (/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jax/interpreters/__init__.py)
+
