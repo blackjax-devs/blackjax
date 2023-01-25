@@ -174,7 +174,7 @@ We can use the obtained parameters to define a new kernel. Note that we do not h
 ```{code-cell} python
 %%time
 
-kernel = blackjax.nuts(logdensity_fn, **parameters)
+kernel = blackjax.nuts(logdensity, **parameters).step
 states = inference_loop(rng_key, kernel, state, 1_000)
 
 loc_samples = states.position["loc"].block_until_ready()
