@@ -43,6 +43,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "myst_nb",
     "sphinx_design",
+    "autoapi.extension",
 ]
 
 intersphinx_mapping = {
@@ -50,6 +51,10 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable", None),
     "jax": ("https://jax.readthedocs.io/en/latest", None),
 }
+
+# AutoAPI configuration
+autoapi_dirs = ["../blackjax"]
+autoapi_type = "python"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
