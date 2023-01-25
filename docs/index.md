@@ -138,3 +138,12 @@ vi
 adaptation
 diagnostics
 ```
+
+```{toctree}
+---
+maxdepth: 3
+caption: AutoAPI
+hidden:
+---
+autoapi/index
+```
