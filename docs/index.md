@@ -141,9 +141,8 @@ diagnostics
 
 ```{toctree}
 ---
-maxdepth: 3
-caption: AutoAPI
 hidden:
+maxdepth: 3
 ---
-autoapi/index
+API Reference<autoapi/blackjax/index>
 ```

@@ -55,6 +55,13 @@ intersphinx_mapping = {
 # AutoAPI configuration
 autoapi_dirs = ["../blackjax"]
 autoapi_type = "python"
+autoapi_add_toctree_entry = False
+# autoapi_options = [
+#      "undoc-members"
+# #     "show-module-summary"
+# #     "show-imported-members"
+#  ]
+autodoc_typehints = "signature"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -89,7 +96,6 @@ html_css_files = ["custom.css"]
 # be better in the signature, because we cannot apply our CSS trick to add
 # line breaks in the signature when the typehints are present.
 autosummary_generate = True
-autodoc_typehints = "description"
 add_module_names = False
 
 source_suffix = {".rst": "restructuredtext", ".ipynb": "myst-nb", ".md": "myst-nb"}
@@ -102,3 +108,25 @@ nb_custom_formats = {
     ".md": ["jupytext.reads", {"fmt": "mystnb"}],
 }
 myst_enable_extensions = ["colon_fence"]
+
+
+# Skip files we do not want to be included in the documentation
+def skip_util_classes(app, what, name, obj, skip, options):
+    excluded_modules = [
+        "blackjax._version",
+        "blackjax.progress_bar",
+        "blackjax.util",
+        "blackjax.types",
+    ]
+    if what == "module" and name in excluded_modules:
+        skip = True
+
+    excluded_packages = ["blackjax.optimizers"]
+    if what == "package" and name in excluded_packages:
+        skip = True
+
+    return skip
+
+
+def setup(sphinx):
+    sphinx.connect("autoapi-skip-member", skip_util_classes)
