@@ -45,7 +45,7 @@ for _ in range(1_000):
 ```
 
 :::{note}
-If you want to use Blackjax with a model implemented with a PPL, go to the [related tutorials](howto_use_ppl.rst).
+If you want to use Blackjax with a model implemented with a PPL, go to the related tutorials in the left menu.
 :::
 
 
@@ -105,6 +105,7 @@ hidden:
 Sample with multiple chains?<examples/howto_sample_multiple_chains.md>
 Use custom gradients?<examples/howto_custom_gradients.md>
 Use non-JAX log-prob functions?<examples/howto_other_frameworks.md>
+Build a Metropolis-Within-Gibbs sampler?<examples/howto_metropolis_within_gibbs.md>
 ```
 
 ```{toctree}

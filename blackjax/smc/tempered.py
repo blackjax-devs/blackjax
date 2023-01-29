@@ -13,7 +13,11 @@
 # limitations under the License.
 from typing import Callable, NamedTuple, Tuple
 
+import jax
+import jax.numpy as jnp
+
 import blackjax.smc as smc
+from blackjax.smc.base import SMCState
 from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["TemperedSMCState", "init", "kernel"]
@@ -30,20 +34,22 @@ class TemperedSMCState(NamedTuple):
     """
 
     particles: PyTree
+    weights: jax.Array
     lmbda: float
 
 
-def init(position: PyTree):
-    return TemperedSMCState(position, 0.0)
+def init(particles: PyTree):
+    num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
+    weights = jnp.ones(num_particles) / num_particles
+    return TemperedSMCState(particles, weights, 0.0)
 
 
 def kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
-    mcmc_kernel_factory: Callable,
-    make_mcmc_state: Callable,
+    mcmc_step_fn: Callable,
+    mcmc_init_fn: Callable,
     resampling_fn: Callable,
-    num_mcmc_iterations: int,
 ) -> Callable:
     """Build the base Tempered SMC kernel.
 
@@ -52,9 +58,10 @@ def kernel(
     .. math::
         p(x) \\propto p_0(x) \\exp(-V(x)) \\mathrm{d}x
 
-    where :math:`p_0` is the prior distribution, typically easy to sample from and for which the density
-    is easy to compute, and :math:`\\exp(-V(x))` is an unnormalized likelihood term for which :math:`V(x)` is easy
-    to compute pointwise.
+    where :math:`p_0` is the prior distribution, typically easy to sample from
+    and for which the density is easy to compute, and :math:`\\exp(-V(x))` is an
+    unnormalized likelihood term for which :math:`V(x)` is easy to compute
+    pointwise.
 
     Parameters
     ----------
@@ -63,9 +70,9 @@ def kernel(
     loglikelihood_fn
         A function that returns the probability at a given
         position.
-    mcmc_kernel_factory
+    mcmc_step_fn
         A function that creates a mcmc kernel from a log-probability density function.
-    make_mcmc_state: Callable
+    mcmc_init_fn: Callable
         A function that creates a new mcmc state from a position and a
         log-probability density function.
     resampling_fn
@@ -80,12 +87,13 @@ def kernel(
     information about the transition.
 
     """
-    kernel = smc.base.kernel(
-        mcmc_kernel_factory, make_mcmc_state, resampling_fn, num_mcmc_iterations
-    )
 
     def one_step(
-        rng_key: PRNGKey, state: TemperedSMCState, lmbda: float
+        rng_key: PRNGKey,
+        state: TemperedSMCState,
+        num_mcmc_steps: int,
+        lmbda: float,
+        mcmc_parameters: dict,
     ) -> Tuple[TemperedSMCState, smc.base.SMCInfo]:
         """Move the particles one step using the Tempered SMC algorithm.
 
@@ -116,11 +124,30 @@ def kernel(
             tempered_loglikelihood = state.lmbda * loglikelihood_fn(position)
             return logprior + tempered_loglikelihood
 
-        smc_state, info = kernel(
-            rng_key, state.particles, tempered_logposterior_fn, log_weights_fn
-        )
-        state = TemperedSMCState(smc_state, state.lmbda + delta)
+        def mcmc_kernel(rng_key, position):
+            state = mcmc_init_fn(position, tempered_logposterior_fn)
 
-        return state, info
+            def body_fn(state, rng_key):
+                new_state, info = mcmc_step_fn(
+                    rng_key, state, tempered_logposterior_fn, **mcmc_parameters
+                )
+                return new_state, info
+
+            keys = jax.random.split(rng_key, num_mcmc_steps)
+            last_state, info = jax.lax.scan(body_fn, state, keys)
+            return last_state.position, info
+
+        smc_state, info = smc.base.step(
+            rng_key,
+            SMCState(state.particles, state.weights),
+            jax.vmap(mcmc_kernel),
+            jax.vmap(log_weights_fn),
+            resampling_fn,
+        )
+        tempered_state = TemperedSMCState(
+            smc_state.particles, smc_state.weights, state.lmbda + delta
+        )
+
+        return tempered_state, info
 
     return one_step

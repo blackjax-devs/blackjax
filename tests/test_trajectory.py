@@ -24,8 +24,7 @@ class TrajectoryTest(chex.TestCase):
     ):
         rng_key = jax.random.PRNGKey(0)
 
-        def potential_fn(x):
-            return -jax.scipy.stats.norm.logpdf(x)
+        logdensity_fn = jax.scipy.stats.norm.logpdf
 
         position = 1.0
         inverse_mass_matrix = jnp.array([1.0])
@@ -36,7 +35,7 @@ class TrajectoryTest(chex.TestCase):
             uturn_check_fn,
         ) = metrics.gaussian_euclidean(inverse_mass_matrix)
 
-        integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
+        integrator = integrators.velocity_verlet(logdensity_fn, kinetic_energy_fn)
         (
             new_criterion_state,
             update_criterion_state,
@@ -54,9 +53,9 @@ class TrajectoryTest(chex.TestCase):
         # Initialize
         direction = 1
         initial_state = integrators.new_integrator_state(
-            potential_fn, position, momentum_generator(rng_key, position)
+            logdensity_fn, position, momentum_generator(rng_key, position)
         )
-        initial_energy = initial_state.potential_energy + kinetic_energy_fn(
+        initial_energy = -initial_state.logdensity + kinetic_energy_fn(
             initial_state.momentum
         )
         termination_state = new_criterion_state(initial_state, 10)
@@ -77,8 +76,8 @@ class TrajectoryTest(chex.TestCase):
     def test_dynamic_progressive_equal_recursive(self):
         rng_key = jax.random.PRNGKey(23132)
 
-        def potential_fn(x):
-            return (1.0 - x[0]) ** 2 + 1.5 * (x[1] - x[0] ** 2) ** 2
+        def logdensity_fn(x):
+            return -((1.0 - x[0]) ** 2) - 1.5 * (x[1] - x[0] ** 2) ** 2
 
         inverse_mass_matrix = jnp.asarray([[1.0, 0.5], [0.5, 1.25]])
         (
@@ -87,7 +86,7 @@ class TrajectoryTest(chex.TestCase):
             uturn_check_fn,
         ) = metrics.gaussian_euclidean(inverse_mass_matrix)
 
-        integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
+        integrator = integrators.velocity_verlet(logdensity_fn, kinetic_energy_fn)
         (
             new_criterion_state,
             update_criterion_state,
@@ -136,12 +135,12 @@ class TrajectoryTest(chex.TestCase):
             direction = jax.random.choice(rng_direction, jnp.array([-1, 1]))
             tree_depth = jax.random.choice(rng_tree_depth, np.arange(2, 5))
             initial_state = integrators.new_integrator_state(
-                potential_fn,
+                logdensity_fn,
                 jax.random.normal(rng_position, [2]),
                 jax.random.normal(rng_momentum, [2]),
             )
             step_size = jnp.abs(jax.random.normal(rng_step_size, [])) * 0.1
-            initial_energy = initial_state.potential_energy + kinetic_energy_fn(
+            initial_energy = -initial_state.logdensity + kinetic_energy_fn(
                 initial_state.momentum
             )
 
@@ -205,8 +204,8 @@ class TrajectoryTest(chex.TestCase):
     ):
         rng_key = jax.random.PRNGKey(0)
 
-        def potential_fn(x):
-            return 0.5 * x**2
+        def logdensity_fn(x):
+            return -0.5 * x**2
 
         position = 0.0
         inverse_mass_matrix = jnp.array([1.0])
@@ -217,7 +216,7 @@ class TrajectoryTest(chex.TestCase):
             uturn_check_fn,
         ) = metrics.gaussian_euclidean(inverse_mass_matrix)
 
-        integrator = integrators.velocity_verlet(potential_fn, kinetic_energy_fn)
+        integrator = integrators.velocity_verlet(logdensity_fn, kinetic_energy_fn)
         (
             new_criterion_state,
             update_criterion_state,
@@ -237,9 +236,9 @@ class TrajectoryTest(chex.TestCase):
         )
 
         state = integrators.new_integrator_state(
-            potential_fn, position, momentum_generator(rng_key, position)
+            logdensity_fn, position, momentum_generator(rng_key, position)
         )
-        energy = state.potential_energy + kinetic_energy_fn(state.momentum)
+        energy = -state.logdensity + kinetic_energy_fn(state.momentum)
         initial_proposal = proposal.Proposal(state, energy, 0.0, -np.inf)
         initial_termination_state = new_criterion_state(state, 10)
         initial_trajectory = trajectory.Trajectory(

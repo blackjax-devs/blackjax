@@ -91,8 +91,8 @@ class CompilationTest(chex.TestCase):
             target_acceptance_rate=0.8,
             num_integration_steps=10,
         )
-        state, kernel, _ = warmup.run(rng_key, 1.0, num_steps=100)
-        kernel = jax.jit(kernel)
+        (state, parameters), _ = warmup.run(rng_key, 1.0, num_steps=100)
+        kernel = jax.jit(blackjax.hmc(logdensity_fn, **parameters).step)
 
         for _ in range(10):
             rng_key, sample_key = jax.random.split(rng_key)
@@ -118,8 +118,8 @@ class CompilationTest(chex.TestCase):
             logdensity_fn=logdensity_fn,
             target_acceptance_rate=0.8,
         )
-        state, kernel, _ = warmup.run(rng_key, 1.0, num_steps=100)
-        step = jax.jit(kernel)
+        (state, parameters), _ = warmup.run(rng_key, 1.0, num_steps=100)
+        step = jax.jit(blackjax.nuts(logdensity_fn, **parameters).step)
 
         for _ in range(10):
             rng_key, sample_key = jax.random.split(rng_key)

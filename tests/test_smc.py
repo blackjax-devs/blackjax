@@ -1,24 +1,24 @@
 """Test the generic SMC sampler"""
-import functools
-
 import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
-from absl.testing import absltest, parameterized
+from absl.testing import absltest
 
 import blackjax
-import blackjax.smc.base as base
 import blackjax.smc.resampling as resampling
+from blackjax.smc.base import init, step
 
 
-def kernel_logdensity_fn(position):
+def logdensity_fn(position):
     return jnp.sum(stats.norm.logpdf(position))
 
 
-def log_weights_fn(x, y):
-    return jnp.sum(stats.norm.logpdf(y - x))
+def _weighted_avg_and_std(values, weights):
+    average = jnp.average(values, weights=weights)
+    variance = jnp.average((values - average) ** 2, weights=weights)
+    return average, jnp.sqrt(variance)
 
 
 class SMCTest(chex.TestCase):
@@ -26,56 +26,98 @@ class SMCTest(chex.TestCase):
         super().setUp()
         self.key = jax.random.PRNGKey(42)
 
-    @chex.all_variants(with_pmap=False)
-    @parameterized.parameters([500, 1000, 5000])
-    def test_smc(self, N):
+    @chex.variants(with_jit=True)
+    def test_smc(self):
 
-        mcmc_factory = lambda logdensity_fn: blackjax.hmc(
+        num_mcmc_steps = 20
+        num_particles = 1000
+
+        hmc = blackjax.hmc(
             logdensity_fn,
             step_size=1e-2,
             inverse_mass_matrix=jnp.eye(1),
             num_integration_steps=50,
-        ).step
-
-        specialized_log_weights_fn = lambda tree: log_weights_fn(tree, 1.0)
-
-        kernel = base.kernel(
-            mcmc_factory, blackjax.mcmc.hmc.init, resampling.systematic, 1000
         )
 
-        # Don't use exactly the invariant distribution for the MCMC kernel
-        init_particles = 0.25 + np.random.randn(N)
+        def update_fn(rng_key, position):
+            state = hmc.init(position)
 
-        updated_particles, _ = self.variant(
-            functools.partial(
-                kernel,
-                logdensity_fn=kernel_logdensity_fn,
-                log_weight_fn=specialized_log_weights_fn,
-            )
-        )(self.key, init_particles)
+            def body_fn(state, rng_key):
+                new_state, info = hmc.step(rng_key, state)
+                return new_state, info
 
-        expected_mean = 0.5
-        expected_std = np.sqrt(0.5)
+            keys = jax.random.split(rng_key, num_mcmc_steps)
+            last_state, info = jax.lax.scan(body_fn, state, keys)
+            return last_state.position, info
 
-        np.testing.assert_allclose(
-            expected_mean, updated_particles.mean(), rtol=1e-2, atol=1e-1
+        init_key, sample_key = jax.random.split(self.key)
+
+        # Initialize the state of the SMC sampler
+        init_particles = 0.25 + jax.random.normal(init_key, shape=(num_particles,))
+        state = init(init_particles)
+
+        # Run the SMC sampler once
+        new_state, info = self.variant(step, static_argnums=(2, 3, 4))(
+            sample_key,
+            state,
+            jax.vmap(update_fn),
+            jax.vmap(logdensity_fn),
+            resampling.systematic,
         )
-        np.testing.assert_allclose(
-            expected_std, updated_particles.std(), rtol=1e-2, atol=1e-1
+
+        mean, std = _weighted_avg_and_std(new_state.particles, state.weights)
+        np.testing.assert_allclose(0.0, mean, atol=1e-1)
+        np.testing.assert_allclose(1.0, std, atol=1e-1)
+
+    @chex.variants(with_jit=True)
+    def test_smc_waste_free(self):
+
+        num_mcmc_steps = 10
+        num_particles = 1000
+        num_resampled = num_particles // num_mcmc_steps
+
+        hmc = blackjax.hmc(
+            logdensity_fn,
+            step_size=1e-2,
+            inverse_mass_matrix=jnp.eye(1),
+            num_integration_steps=100,
         )
 
-    @chex.all_variants(with_pmap=False)
-    def test_normalize(self):
-        logw = jax.random.normal(self.key, shape=[1234])
-        w, loglikelihood_increment = self.variant(base._normalize)(logw)
+        def waste_free_update_fn(keys, particles):
+            def one_particle_fn(rng_key, position):
+                state = hmc.init(position)
 
-        np.testing.assert_allclose(np.sum(w), 1.0, rtol=1e-6)
-        np.testing.assert_allclose(
-            np.max(np.log(w) - logw), np.min(np.log(w) - logw), rtol=1e-6
+                def body_fn(state, rng_key):
+                    new_state, info = hmc.step(rng_key, state)
+                    return new_state, (state, info)
+
+                keys = jax.random.split(rng_key, num_mcmc_steps)
+                _, (states, info) = jax.lax.scan(body_fn, state, keys)
+                return states.position, info
+
+            particles, info = jax.vmap(one_particle_fn)(keys, particles)
+            particles = particles.reshape((num_particles,))
+            return particles, info
+
+        init_key, sample_key = jax.random.split(self.key)
+
+        # Initialize the state of the SMC sampler
+        init_particles = 0.25 + jax.random.normal(init_key, shape=(num_particles,))
+        state = init(init_particles)
+
+        # Run the SMC sampler once
+        new_state, info = self.variant(step, static_argnums=(2, 3, 4, 5))(
+            sample_key,
+            state,
+            waste_free_update_fn,
+            jax.vmap(logdensity_fn),
+            resampling.systematic,
+            num_resampled,
         )
-        np.testing.assert_allclose(
-            loglikelihood_increment, np.log(np.mean(np.exp(logw))), rtol=1e-6
-        )
+
+        mean, std = _weighted_avg_and_std(new_state.particles, state.weights)
+        np.testing.assert_allclose(0.0, mean, atol=1e-1)
+        np.testing.assert_allclose(1.0, std, atol=1e-1)
 
 
 if __name__ == "__main__":

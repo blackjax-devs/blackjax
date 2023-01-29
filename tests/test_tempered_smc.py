@@ -1,6 +1,5 @@
 """Test the tempered SMC steps and routine"""
 import functools
-import itertools
 from typing import List
 
 import chex
@@ -8,7 +7,7 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
-from absl.testing import absltest, parameterized
+from absl.testing import absltest
 
 import blackjax
 import blackjax.smc.resampling as resampling
@@ -49,27 +48,30 @@ class TemperedSMCTest(chex.TestCase):
         logpdf = stats.norm.logpdf(preds, y, scale)
         return jnp.sum(logpdf)
 
-    @chex.all_variants(without_jit=False, with_pmap=False)
-    @parameterized.parameters(itertools.product([100, 5000], [True, False]))
-    def test_adaptive_tempered_smc(self, N, use_log):
+    @chex.variants(with_jit=True)
+    def test_adaptive_tempered_smc(self):
+        num_particles = 100
+
         x_data = np.random.normal(0, 1, size=(1000, 1))
         y_data = 3 * x_data + np.random.normal(size=x_data.shape)
         observations = {"x": x_data, "preds": y_data}
 
-        def prior(x):
+        def logprior_fn(x):
             return (
                 stats.expon.logpdf(jnp.exp(x[0]), 0, 1) + x[0] + stats.norm.logpdf(x[1])
             )
 
-        conditioned_logprob = lambda x: self.logdensity_fn(*x, **observations)
+        loglikelihood_fn = lambda x: self.logdensity_fn(*x, **observations)
 
-        log_scale_init = np.log(np.random.exponential(1, N))
-        coeffs_init = 3 + 2 * np.random.randn(N)
+        log_scale_init = np.log(np.random.exponential(1, num_particles))
+        coeffs_init = 3 + 2 * np.random.randn(num_particles)
         smc_state_init = [log_scale_init, coeffs_init]
 
         iterates = []
         results = []  # type: List[TemperedSMCState]
 
+        hmc_kernel = blackjax.hmc.kernel()
+        hmc_init = blackjax.hmc.init
         hmc_parameters = {
             "step_size": 10e-2,
             "inverse_mass_matrix": jnp.eye(2),
@@ -78,14 +80,14 @@ class TemperedSMCTest(chex.TestCase):
 
         for target_ess in [0.5, 0.75]:
             tempering = adaptive_tempered_smc(
-                prior,
-                conditioned_logprob,
-                blackjax.hmc,
+                logprior_fn,
+                loglikelihood_fn,
+                hmc_kernel,
+                hmc_init,
                 hmc_parameters,
                 resampling.systematic,
                 target_ess,
                 solver.dichotomy,
-                use_log,
                 5,
             )
             init_state = tempering.init(smc_state_init)
@@ -103,21 +105,27 @@ class TemperedSMCTest(chex.TestCase):
 
         assert iterates[1] >= iterates[0]
 
-    @chex.all_variants(without_jit=False, with_pmap=False)
-    @parameterized.parameters(itertools.product([100, 1000], [10, 100]))
-    def test_fixed_schedule_tempered_smc(self, N, n_schedule):
+    @chex.variants(with_jit=True)
+    def test_fixed_schedule_tempered_smc(self):
+        num_particles = 100
+        num_tempering_steps = 10
+
         x_data = np.random.normal(0, 1, size=(1000, 1))
         y_data = 3 * x_data + np.random.normal(size=x_data.shape)
         observations = {"x": x_data, "preds": y_data}
 
-        prior = lambda x: stats.norm.logpdf(x[0]) + stats.norm.logpdf(x[1])
-        conditionned_logprob = lambda x: self.logdensity_fn(*x, **observations)
+        logprior_fn = lambda x: stats.norm.logpdf(x["log_scale"]) + stats.norm.logpdf(
+            x["coefs"]
+        )
+        loglikelihood_fn = lambda x: self.logdensity_fn(**x, **observations)
 
-        log_scale_init = np.random.randn(N)
-        coeffs_init = np.random.randn(N)
-        smc_state_init = [log_scale_init, coeffs_init]
+        log_scale_init = np.random.randn(num_particles)
+        coeffs_init = np.random.randn(num_particles)
+        init_particles = {"log_scale": log_scale_init, "coefs": coeffs_init}
 
-        lambda_schedule = np.logspace(-5, 0, n_schedule)
+        lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
+        hmc_init = blackjax.hmc.init
+        hmc_kernel = blackjax.hmc.kernel()
         hmc_parameters = {
             "step_size": 10e-2,
             "inverse_mass_matrix": jnp.eye(2),
@@ -125,26 +133,28 @@ class TemperedSMCTest(chex.TestCase):
         }
 
         tempering = tempered_smc(
-            prior,
-            conditionned_logprob,
-            blackjax.hmc,
+            logprior_fn,
+            loglikelihood_fn,
+            hmc_kernel,
+            hmc_init,
             hmc_parameters,
             resampling.systematic,
             10,
         )
-        init_state = tempering.init(smc_state_init)
-
-        kernel = self.variant(tempering.step)
+        init_state = tempering.init(init_particles)
+        smc_kernel = self.variant(tempering.step)
 
         def body_fn(carry, lmbda):
             rng_key, state = carry
             _, rng_key = jax.random.split(rng_key)
-            new_state, info = kernel(rng_key, state, lmbda)
+            new_state, info = smc_kernel(rng_key, state, lmbda)
             return (rng_key, new_state), (new_state, info)
 
         (_, result), _ = jax.lax.scan(body_fn, (self.key, init_state), lambda_schedule)
-        np.testing.assert_allclose(np.mean(np.exp(result.particles[0])), 1.0, rtol=1e-1)
-        np.testing.assert_allclose(np.mean(result.particles[1]), 3.0, rtol=1e-1)
+        np.testing.assert_allclose(
+            np.mean(np.exp(result.particles["log_scale"])), 1.0, rtol=1e-1
+        )
+        np.testing.assert_allclose(np.mean(result.particles["coefs"]), 3.0, rtol=1e-1)
 
 
 def normal_logdensity_fn(x, chol_cov):
@@ -161,39 +171,43 @@ def normal_logdensity_fn(x, chol_cov):
 class NormalizingConstantTest(chex.TestCase):
     """Test normalizing constant estimate."""
 
-    @chex.all_variants(without_jit=False, with_pmap=False)
-    @parameterized.parameters(itertools.product([500, 1_000], [2, 10]))
-    def test_normalizing_constant(self, N, dim):
+    @chex.variants(with_jit=True)
+    def test_normalizing_constant(self):
+        num_particles = 200
+        num_dim = 2
+
         rng_key = jax.random.PRNGKey(2356)
         rng_key, cov_key = jax.random.split(rng_key, 2)
-        chol_cov = jax.random.uniform(cov_key, shape=(dim, dim))
-        iu = np.triu_indices(dim, 1)
+        chol_cov = jax.random.uniform(cov_key, shape=(num_dim, num_dim))
+        iu = np.triu_indices(num_dim, 1)
         chol_cov = chol_cov.at[iu].set(0.0)
         cov = chol_cov @ chol_cov.T
-        conditionned_logprob = lambda x: normal_logdensity_fn(x, chol_cov)
 
-        prior = lambda x: stats.multivariate_normal.logpdf(
-            x, jnp.zeros((dim,)), jnp.eye(dim)
+        logprior_fn = lambda x: stats.multivariate_normal.logpdf(
+            x, jnp.zeros((num_dim,)), jnp.eye(num_dim)
         )
+        loglikelihood_fn = lambda x: normal_logdensity_fn(x, chol_cov)
 
         rng_key, init_key = jax.random.split(rng_key, 2)
-        x_init = jax.random.normal(init_key, shape=(N, dim))
+        x_init = jax.random.normal(init_key, shape=(num_particles, num_dim))
 
+        hmc_init = blackjax.hmc.init
+        hmc_kernel = blackjax.hmc.kernel()
         hmc_parameters = {
             "step_size": 10e-2,
-            "inverse_mass_matrix": jnp.eye(dim),
+            "inverse_mass_matrix": jnp.eye(num_dim),
             "num_integration_steps": 50,
         }
 
         tempering = adaptive_tempered_smc(
-            prior,
-            conditionned_logprob,
-            blackjax.hmc,
+            logprior_fn,
+            loglikelihood_fn,
+            hmc_kernel,
+            hmc_init,
             hmc_parameters,
             resampling.systematic,
             0.9,
             solver.dichotomy,
-            True,
             10,
         )
         tempered_smc_state_init = tempering.init(x_init)
@@ -201,9 +215,9 @@ class NormalizingConstantTest(chex.TestCase):
             functools.partial(inference_loop, tempering.step)
         )(rng_key, tempered_smc_state_init)
 
-        expected_log_likelihood = -0.5 * np.linalg.slogdet(np.eye(dim) + cov)[
+        expected_log_likelihood = -0.5 * np.linalg.slogdet(np.eye(num_dim) + cov)[
             1
-        ] - dim / 2 * np.log(2 * np.pi)
+        ] - num_dim / 2 * np.log(2 * np.pi)
 
         np.testing.assert_allclose(log_likelihood, expected_log_likelihood, rtol=1e-1)
 

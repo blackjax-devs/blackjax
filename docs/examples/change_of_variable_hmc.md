@@ -301,7 +301,7 @@ init_params = jax.vmap(init_param_fn)(keys)
 
 @jax.vmap
 def call_warmup(seed, param):
-    initial_states, _, tuned_params = warmup.run(seed, param, 1000)
+    (initial_states, tuned_params), _ = warmup.run(seed, param, 1000)
     return initial_states, tuned_params
 
 initial_states, tuned_params = jax.jit(call_warmup)(keys, init_params)
@@ -468,7 +468,7 @@ init_params = jax.vmap(init_param_fn)(keys)
 
 @jax.vmap
 def call_warmup(seed, param):
-    initial_states, _, tuned_params = warmup.run(seed, param, 1000)
+    (initial_states, tuned_params), _ = warmup.run(seed, param, 1000)
     return initial_states, tuned_params
 
 initial_states, tuned_params = call_warmup(keys, init_params)
@@ -565,7 +565,7 @@ keys = jax.random.split(warmup_key, n_chains)
 
 @jax.vmap
 def call_warmup(seed, param):
-    initial_states, _, tuned_params = warmup.run(seed, param, 1000)
+    (initial_states, tuned_params), _ = warmup.run(seed, param, 1000)
     return initial_states, tuned_params
 
 initial_states, tuned_params = call_warmup(keys, init_params)

@@ -61,7 +61,7 @@ hmc = blackjax.hmc(logdensity, step_size, inv_mass_matrix, num_integration_steps
 
 ### Set the Initial State
 
-The initial state of the HMC algorithm requires not only an initial position, but also the potential energy and gradient of the potential energy at this position. BlackJAX provides a `new_state` function to initialize the state from an initial position.
+The initial state of the HMC algorithm requires not only an initial position, but also the potential energy and gradient of the potential energy at this position (for example, in the context of Bayesian modeling, the output of the log posterior function evaluated at the initial position). BlackJAX provides a `new_state` function to initialize the state from an initial position.
 
 ```{code-cell} python
 initial_position = {"loc": 1.0, "log_scale": 1.0}
@@ -166,7 +166,7 @@ The adaptation algorithm takes a function that returns a transition kernel given
 %%time
 
 warmup = blackjax.window_adaptation(blackjax.nuts, logdensity)
-state, kernel, _ = warmup.run(rng_key, initial_position, num_steps=1000)
+(state, parameters), _ = warmup.run(rng_key, initial_position, num_steps=1000)
 ```
 
 We can use the obtained parameters to define a new kernel. Note that we do not have to use the same kernel that was used for the adaptation:
@@ -174,6 +174,7 @@ We can use the obtained parameters to define a new kernel. Note that we do not h
 ```{code-cell} python
 %%time
 
+kernel = blackjax.nuts(logdensity, **parameters).step
 states = inference_loop(rng_key, kernel, state, 1_000)
 
 loc_samples = states.position["loc"].block_until_ready()

@@ -94,7 +94,8 @@ num_warmup = 2000
 adapt = blackjax.window_adaptation(
     blackjax.nuts, logdensity_fn, target_acceptance_rate=0.8
 )
-last_state, kernel, _ = adapt.run(rng_key, initial_position, num_warmup)
+(last_state, parameters), _ = adapt.run(rng_key, initial_position, num_warmup)
+kernel = blackjax.nuts(logdensity_fn, **parameters).step
 ```
 
 Let us now perform inference with the tuned kernel:

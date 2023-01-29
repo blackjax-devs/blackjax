@@ -120,7 +120,8 @@ adapt = blackjax.window_adaptation(
     blackjax.hmc, logdensity_fn, num_integration_steps=3
 )
 
-last_state, kernel, _ = adapt.run(rng_key, initial_position, 1000)
+(last_state, parameters), _ = adapt.run(rng_key, initial_position, 1000)
+kernel = blackjax.hmc(logdensity_fn, **parameters).step
 ```
 
 We can now perform inference with the tuned kernel:

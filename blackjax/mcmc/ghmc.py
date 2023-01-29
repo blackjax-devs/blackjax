@@ -36,15 +36,15 @@ class GHMCState(NamedTuple):
     to perform a non-reversible Metropolis Hastings update, thus we also
     store the current slice variable and return its updated version after
     each iteration. To make computations more efficient, we also store
-    the current potential energy as well as the current gradient of the
-    potential energy.
+    the current logdensity as well as the current gradient of the
+    logdensity.
 
     """
 
     position: PyTree
     momentum: PyTree
-    potential_energy: float
-    potential_energy_grad: PyTree
+    logdensity: float
+    logdensity_grad: PyTree
     slice: float
 
 
@@ -53,16 +53,14 @@ def init(
     position: PyTree,
     logdensity_fn: Callable,
 ):
-    def potential_fn(x):
-        return -logdensity_fn(x)
 
-    potential_energy, potential_energy_grad = jax.value_and_grad(potential_fn)(position)
+    logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
 
     key_mometum, key_slice = jax.random.split(rng_key)
     momentum = generate_gaussian_noise(key_mometum, position)
     slice = jax.random.uniform(key_slice, minval=-1.0, maxval=1.0)
 
-    return GHMCState(position, momentum, potential_energy, potential_energy_grad, slice)
+    return GHMCState(position, momentum, logdensity, logdensity_grad, slice)
 
 
 def kernel(
@@ -132,14 +130,11 @@ def kernel(
 
         """
 
-        def potential_fn(x):
-            return -logdensity_fn(x)
-
         flat_inverse_scale = jax.flatten_util.ravel_pytree(momentum_inverse_scale)[0]
         _, kinetic_energy_fn, _ = metrics.gaussian_euclidean(flat_inverse_scale**2)
 
         symplectic_integrator = integrators.velocity_verlet(
-            potential_fn, kinetic_energy_fn
+            logdensity_fn, kinetic_energy_fn
         )
         proposal_generator = hmc.hmc_proposal(
             symplectic_integrator,
@@ -150,7 +145,7 @@ def kernel(
         )
 
         key_momentum, key_noise = jax.random.split(rng_key)
-        position, momentum, potential_energy, potential_energy_grad, slice = state
+        position, momentum, logdensity, logdensity_grad, slice = state
         # New momentum is persistent
         momentum = update_momentum(key_momentum, state, alpha)
         momentum = jax.tree_map(lambda m, s: m / s, momentum, momentum_inverse_scale)
@@ -158,15 +153,15 @@ def kernel(
         slice = ((slice + 1.0 + delta + noise_fn(key_noise)) % 2) - 1.0
 
         integrator_state = integrators.IntegratorState(
-            position, momentum, potential_energy, potential_energy_grad
+            position, momentum, logdensity, logdensity_grad
         )
         proposal, info = proposal_generator(slice, integrator_state)
         proposal = hmc.flip_momentum(proposal)
         state = GHMCState(
             proposal.position,
             jax.tree_map(lambda m, s: m * s, proposal.momentum, momentum_inverse_scale),
-            proposal.potential_energy,
-            proposal.potential_energy_grad,
+            proposal.logdensity,
+            proposal.logdensity_grad,
             info.acceptance_rate,
         )
 

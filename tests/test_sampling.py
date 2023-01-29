@@ -99,14 +99,15 @@ class LinearRegressionTest(chex.TestCase):
             progress_bar=True,
             **case["parameters"],
         )
-        state, kernel, _ = warmup.run(
+        (state, parameters), _ = warmup.run(
             warmup_key,
             case["initial_position"],
             case["num_warmup_steps"],
         )
+        algorithm = case["algorithm"](logposterior_fn, **parameters)
 
         states = inference_loop(
-            kernel, case["num_sampling_steps"], inference_key, state
+            algorithm.step, case["num_sampling_steps"], inference_key, state
         )
 
         coefs_samples = states.position["coefs"]
@@ -164,11 +165,12 @@ class LinearRegressionTest(chex.TestCase):
             logposterior_fn,
             **parameters,
         )
-        state, kernel, _ = warmup.run(
+        (state, parameters), _ = warmup.run(
             warmup_key,
             initial_position,
             num_warmup_steps,
         )
+        kernel = algorithm(logposterior_fn, **parameters).step
 
         states = inference_loop(kernel, num_sampling_steps, inference_key, state)
 
@@ -192,7 +194,7 @@ class LinearRegressionTest(chex.TestCase):
         init_key, warmup_key, inference_key = jax.random.split(rng_key, 3)
 
         num_chains = 128
-        warmup = blackjax.meads(
+        warmup = blackjax.meads_adaptation(
             logposterior_fn,
             num_chains=num_chains,
         )
@@ -200,11 +202,12 @@ class LinearRegressionTest(chex.TestCase):
         log_scales = 1.0 + jax.random.normal(scale_key, (num_chains,))
         coefs = 4.0 + jax.random.normal(coefs_key, (num_chains,))
         initial_positions = {"log_scale": log_scales, "coefs": coefs}
-        last_states, kernel, _ = warmup.run(
+        (last_states, parameters), _ = warmup.run(
             warmup_key,
             initial_positions,
             num_steps=1000,
         )
+        kernel = blackjax.ghmc(logposterior_fn, **parameters).step
 
         chain_keys = jax.random.split(inference_key, num_chains)
         states = jax.vmap(lambda key, state: inference_loop(kernel, 100, key, state))(

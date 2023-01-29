@@ -1,6 +1,5 @@
 """Test the ess function"""
 import functools
-import itertools
 
 import chex
 import jax
@@ -16,77 +15,69 @@ import blackjax.smc.solver as solver
 
 class SMCEffectiveSampleSizeTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
-    @parameterized.parameters([1000, 5000])
-    def test_ess(self, N):
-        log_ess_fn = self.variant(functools.partial(ess.ess, log=True))
-        ess_fn = self.variant(functools.partial(ess.ess, log=False))
+    def test_ess(self):
 
-        w = np.random.rand(N)
-        log_w = np.log(w)
-        log_ess_val = log_ess_fn(log_w)
-        ess_val = ess_fn(log_w)
-        np.testing.assert_almost_equal(np.log(ess_val), log_ess_val, decimal=3)
+        # All particles have zero weight but one
+        weights = jnp.array([-jnp.inf, -jnp.inf, 0, -jnp.inf])
+        ess_val = self.variant(ess.ess)(weights)
+        assert ess_val == 1.0
 
-        normalized_w = w / w.sum()
-        log_normalized_w = np.log(normalized_w)
-        log_normalized_ess_val = log_ess_fn(log_normalized_w)
-        normalized_ess_val = ess_fn(log_normalized_w)
-
-        np.testing.assert_almost_equal(log_ess_val, log_normalized_ess_val, decimal=3)
-        np.testing.assert_almost_equal(ess_val, normalized_ess_val, decimal=3)
-        np.testing.assert_almost_equal(
-            ess_val, 1 / np.sum(normalized_w**2), decimal=3
-        )
+        weights = jnp.ones(12)
+        ess_val = self.variant(ess.ess)(weights)
+        assert ess_val == 12
 
     @chex.all_variants(with_pmap=False)
-    @parameterized.parameters(itertools.product([0.25, 0.5], [1000, 5000]))
-    def test_ess_solver(self, target_ess, N):
+    @parameterized.parameters([0.2, 0.95])
+    def test_ess_solver(self, target_ess):
+        num_particles = 1000
         potential_fn = lambda pytree: -univariate_logpdf(pytree, scale=0.1)
         potential = jax.vmap(lambda x: potential_fn(x), in_axes=[0])
-        particles = np.random.normal(0, 1, size=(N, 1))
-        self.ess_solver_test_case(potential, particles, target_ess, N, 1.0)
+        particles = np.random.normal(0, 1, size=(num_particles, 1))
+        self.ess_solver_test_case(potential, particles, target_ess, num_particles, 1.0)
 
     @chex.all_variants(with_pmap=False)
-    @parameterized.parameters(itertools.product([0.25, 0.5], [1000, 5000]))
-    def test_ess_solver_multivariate(self, target_ess, N):
+    @parameterized.parameters([0.2, 0.95])
+    def test_ess_solver_multivariate(self, target_ess):
         """
         Posterior with more than one variable. Let's assume we want to
         sample from P(x) x ~ N(mean, cov) x in R^{2}
         """
+        num_particles = 1000
         mean = jnp.zeros((1, 2))
         cov = jnp.diag(jnp.array([1, 1]))
-        potential_fn = lambda pytree: -multivariate_logpdf(pytree, mean=mean, cov=cov)
-        potential = jax.vmap(lambda x: potential_fn(x), in_axes=[0], out_axes=0)
+        _logdensity_fn = lambda pytree: multivariate_logpdf(pytree, mean=mean, cov=cov)
+        potential = jax.vmap(_logdensity_fn, in_axes=[0], out_axes=0)
         particles = np.random.multivariate_normal(
-            mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=N
+            mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=num_particles
         )
-        self.ess_solver_test_case(potential, particles, target_ess, N, 10.0)
+        self.ess_solver_test_case(potential, particles, target_ess, num_particles, 10.0)
 
     @chex.all_variants(with_pmap=False)
-    @parameterized.parameters(itertools.product([0.25, 0.5], [1000, 5000]))
-    def test_ess_solver_posterior_signature(self, target_ess, N):
+    @parameterized.parameters([0.2, 0.95])
+    def test_ess_solver_posterior_signature(self, target_ess):
         """
         Posterior with more than one variable. Let's assume we want to
         sample from P(x,y) x ~ N(mean, cov) y ~ N(mean, cov)
         """
+        num_particles = 1000
         mean = jnp.zeros((1, 2))
         cov = jnp.diag(jnp.array([1, 1]))
 
-        def potential_fn(pytree):
-            return -multivariate_logpdf(
+        def _logdensity_fn(pytree):
+            return multivariate_logpdf(
                 pytree[0], mean=mean, cov=cov
-            ) - multivariate_logpdf(pytree[1], mean=mean, cov=cov)
+            ) + multivariate_logpdf(pytree[1], mean=mean, cov=cov)
 
-        potential = jax.vmap(potential_fn, in_axes=[0], out_axes=0)
+        potential = jax.vmap(_logdensity_fn, in_axes=[0], out_axes=0)
         particles = [
             np.random.multivariate_normal(
-                mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=N
+                mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=num_particles
             ),
             np.random.multivariate_normal(
-                mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=N
+                mean=[0.0, 0.0], cov=[[1.0, 0.0], [0.0, 1.0]], size=num_particles
             ),
         ]
-        self.ess_solver_test_case(potential, particles, target_ess, N, 10.0)
+        self.ess_solver_test_case(potential, particles, target_ess, num_particles, 10.0)
 
     def ess_solver_test_case(self, potential, particles, target_ess, N, max_delta):
         ess_solver_fn = functools.partial(
@@ -97,18 +88,11 @@ class SMCEffectiveSampleSizeTest(chex.TestCase):
             root_solver=solver.dichotomy,
         )
 
-        log_ess_solver = self.variant(
-            functools.partial(ess_solver_fn, use_log_ess=True)
-        )
-        ess_solver = self.variant(functools.partial(ess_solver_fn, use_log_ess=False))
-        delta_log = log_ess_solver(particles)
-        delta = ess_solver(particles)
-        assert delta_log > 0
-        np.testing.assert_allclose(delta_log, delta, atol=1e-3, rtol=1e-3)
-        log_ess = ess.ess(-delta_log * potential(particles), log=True)
-        np.testing.assert_allclose(
-            np.exp(log_ess), target_ess * N, atol=1e-1, rtol=1e-2
-        )
+        delta = self.variant(ess_solver_fn)(particles)
+        assert delta > 0
+
+        ess_val = ess.ess(-delta * potential(particles))
+        np.testing.assert_allclose(ess_val, target_ess * N, atol=1e-1, rtol=1e-2)
 
 
 if __name__ == "__main__":

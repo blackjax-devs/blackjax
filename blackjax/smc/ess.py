@@ -16,34 +16,32 @@ from typing import Callable
 
 import jax
 import jax.numpy as jnp
+import jax.scipy as jsp
 
 from blackjax.types import PyTree
 
 
-def ess(log_weights: jnp.ndarray, log: bool = True) -> float:
+def ess(log_weights: jnp.ndarray) -> float:
+    return jnp.exp(log_ess(log_weights))
+
+
+def log_ess(log_weights: jnp.ndarray) -> float:
     """Compute the effective sample size.
 
     Parameters
     ----------
     log_weights: np.ndarray
         log-weights of the sample
-    log: bool
-        Compute the log-ESS or the ESS
 
     Returns
     -------
-    ess: float
-        The effective sample size
+    log_ess: float
+        The logarithm of the effective sample size
 
     """
-    log_weights = log_weights - jnp.max(log_weights)
-    w = jnp.exp(log_weights)
-    if log:
-        w2: jnp.ndarray = jnp.exp(2 * log_weights)
-        res = 2 * jnp.log(w.sum()) - jnp.log(w2.sum())
-    else:
-        res = jnp.sum(w) ** 2 / jnp.sum(w**2)
-    return res
+    return 2 * jsp.special.logsumexp(log_weights) - jsp.special.logsumexp(
+        2 * log_weights
+    )
 
 
 def ess_solver(
@@ -52,7 +50,6 @@ def ess_solver(
     target_ess: float,
     max_delta: float,
     root_solver: Callable,
-    use_log_ess: bool = True,
 ):
     """Build a Tempered SMC step.
 
@@ -70,8 +67,6 @@ def ess_solver(
         A solver to find the root of a function, takes a function `f`, a starting point `delta0`,
         a min value `min_delta`, and a max value `max_delta`.
         Default is `BFGS` minimization of `f ** 2` and ignores `min_delta` and `max_delta`.
-    use_log_ess: bool
-        Solve using the log ESS or the ESS directly. This may have different behaviours based on the potential function.
 
     Returns
     -------
@@ -81,15 +76,12 @@ def ess_solver(
     """
     n_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
 
-    logdensity = logdensity_fn(particles)
-    if use_log_ess:
-        target_val = jnp.log(n_particles * target_ess)
-    else:
-        target_val = n_particles * target_ess
+    logprob = logdensity_fn(particles)
+    target_val = jnp.log(n_particles * target_ess)
 
     def fun_to_solve(delta):
-        log_weights = jnp.nan_to_num(-delta * logdensity)
-        ess_val = ess(log_weights, log=use_log_ess)
+        log_weights = jnp.nan_to_num(-delta * logprob)
+        ess_val = log_ess(log_weights)
 
         return ess_val - target_val
 
