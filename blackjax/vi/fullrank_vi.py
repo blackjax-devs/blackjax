@@ -126,7 +126,7 @@ def step(
 
 def sample(rng_key: PRNGKey, state: FullrankVIState, num_samples: int = 1):
     """Sample from the fullrank VI approximation."""
-    return _sample(rng_key, state.mu, state.rho, num_samples)
+    return _sample(rng_key, state.mu, state.L, num_samples)
 
 
 def _sample(rng_key, mu, L, num_samples):
