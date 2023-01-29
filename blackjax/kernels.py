@@ -1418,3 +1418,30 @@ class meanfield_vi:
             return cls.sample(rng_key, state, num_samples)
 
         return VIAlgorithm(init_fn, step_fn, sample_fn)
+
+
+class fullrank_vi:
+    init = staticmethod(vi.fullrank_vi.init)
+    step = staticmethod(vi.fullrank_vi.step)
+    sample = staticmethod(vi.fullrank_vi.sample)
+
+    def __new__(
+        cls,
+        logdensity_fn: Callable,
+        optimizer: GradientTransformation,
+        num_samples: int = 100,
+    ):  # type: ignore[misc]
+        def init_fn(position: PyTree):
+            return cls.init(position, optimizer)
+
+        def step_fn(
+            rng_key: PRNGKey, state: vi.meanfield_vi.MFVIState
+        ) -> Tuple[vi.fullrank_vi.FullrankVIState, vi.fullrank_vi.FullrankVIInfo]:
+            return cls.step(rng_key, state, logdensity_fn, optimizer, num_samples)
+
+        def sample_fn(
+            rng_key: PRNGKey, state: vi.meanfield_vi.MFVIState, num_samples: int
+        ):
+            return cls.sample(rng_key, state, num_samples)
+
+        return VIAlgorithm(init_fn, step_fn, sample_fn)
