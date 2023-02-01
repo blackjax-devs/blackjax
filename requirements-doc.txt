@@ -2,7 +2,6 @@
 aeppl>=0.0.40
 aesara>=2.8.8
 arviz
-distrax
 flax
 ipython
 jax
@@ -23,7 +22,6 @@ sphinx-book-theme
 sphinx-design
 sphinx-math-dollar
 tensorflow-cpu
-tensorflow-datasets
 tfp-nightly[jax]
 versioneer
 watermark
