@@ -13,6 +13,7 @@ class MFVITest(chex.TestCase):
         super().setUp()
         self.key = jax.random.PRNGKey(42)
 
+    @chex.variants(with_jit=True, without_jit=True)
     def test_recover_posterior(self):
         ground_truth = [
             # loc, scale
@@ -38,7 +39,7 @@ class MFVITest(chex.TestCase):
         rng_key = self.key
         for _ in range(num_steps):
             rng_key, _ = jax.random.split(rng_key)
-            state, _ = jax.jit(mfvi.step)(rng_key, state)
+            state, _ = self.variant(mfvi.step)(rng_key, state)
 
         loc_1, loc_2 = state.mu["x_1"], state.mu["x_2"]
         scale = jax.tree_map(jnp.exp, state.rho)
