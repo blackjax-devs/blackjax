@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from jax import numpy as jnp
 
-from blackjax.mcmc.rmh import normal
+from blackjax.mcmc.random_walk import normal
 
 
 class TestNormalProposalDistribution(chex.TestCase):

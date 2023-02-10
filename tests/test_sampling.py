@@ -43,6 +43,10 @@ def irmh_proposal_distribution(rng_key):
     return 1.0 + jax.random.normal(rng_key) * 25.0
 
 
+def rmh_proposal_distribution(rng_key, position):
+    return position + jax.random.normal(rng_key) * 25.0
+
+
 regression_test_cases = [
     {
         "algorithm": blackjax.hmc,
@@ -397,9 +401,16 @@ normal_test_cases = [
         "burnin": 15_000,
     },
     {
-        "algorithm": blackjax.rmh,
+        "algorithm": blackjax.random_walk.normal_random_walk,
         "initial_position": 1.0,
         "parameters": {"sigma": jnp.array([1.0])},
+        "num_sampling_steps": 20_000,
+        "burnin": 5_000,
+    },
+    {
+        "algorithm": blackjax.rmh,
+        "parameters": {},
+        "initial_position": 1.0,
         "num_sampling_steps": 20_000,
         "burnin": 5_000,
     },
@@ -456,6 +467,9 @@ class UnivariateNormalTest(chex.TestCase):
     ):
         if algorithm == blackjax.irmh:
             parameters["proposal_distribution"] = irmh_proposal_distribution
+
+        if algorithm == blackjax.rmh:
+            parameters["proposal_generator"] = rmh_proposal_distribution
 
         algo = algorithm(self.normal_logprob, **parameters)
         if algorithm == blackjax.elliptical_slice:

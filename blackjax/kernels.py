@@ -20,6 +20,7 @@ from optax import GradientTransformation
 
 import blackjax.adaptation as adaptation
 import blackjax.mcmc as mcmc
+import blackjax.mcmc.random_walk
 import blackjax.sgmcmc as sgmcmc
 import blackjax.smc as smc
 import blackjax.vi as vi
@@ -33,6 +34,7 @@ __all__ = [
     "mala",
     "nuts",
     "orbital_hmc",
+    "random_walk",
     "rmh",
     "sgld",
     "sghmc",
@@ -75,7 +77,6 @@ class adaptive_tempered_smc:
         root_solver: Callable = smc.solver.dichotomy,
         num_mcmc_steps: int = 10,
     ) -> MCMCSamplingAlgorithm:
-
         step = cls.kernel(
             logprior_fn,
             loglikelihood_fn,
@@ -123,7 +124,6 @@ class tempered_smc:
         resampling_fn: Callable,
         num_mcmc_steps: int = 10,
     ) -> MCMCSamplingAlgorithm:
-
         step = cls.kernel(
             logprior_fn,
             loglikelihood_fn,
@@ -534,7 +534,6 @@ class sgld:
         cls,
         grad_estimator: Callable,
     ) -> Callable:
-
         step = cls.kernel()
 
         def step_fn(
@@ -614,7 +613,6 @@ class sghmc:
         grad_estimator: Callable,
         num_integration_steps: int = 10,
     ) -> Callable:
-
         step = cls.kernel()
 
         def step_fn(rng_key: PRNGKey, state, minibatch: PyTree, step_size: float):
@@ -631,7 +629,6 @@ class sghmc:
 
 
 class csgld:
-
     init = staticmethod(sgmcmc.csgld.init)
     kernel = staticmethod(sgmcmc.csgld.kernel)
 
@@ -644,7 +641,6 @@ class csgld:
         energy_gap: float = 100,
         min_energy: float = 0,
     ) -> MCMCSamplingAlgorithm:
-
         step = cls.kernel(num_partitions, energy_gap, min_energy)
 
         def init_fn(position: PyTree):
@@ -875,7 +871,6 @@ def meads_adaptation(
         )
 
     def run(rng_key: PRNGKey, positions: PyTree, num_steps: int = 1000):
-
         key_init, key_adapt = jax.random.split(rng_key)
 
         rng_keys = jax.random.split(key_init, num_chains)
@@ -899,7 +894,7 @@ def meads_adaptation(
     return AdaptationAlgorithm(run)  # type: ignore[arg-type]
 
 
-class rmh:
+class random_walk:
     """Implements the (basic) user interface for the gaussian random walk kernel
 
     Examples
@@ -909,50 +904,95 @@ class rmh:
 
     .. code::
 
-        rmh = blackjax.rmh(logdensity_fn, sigma)
-        state = rmh.init(position)
-        new_state, info = rmh.step(rng_key, state)
+        random_walk = blackjax.random_walk(logdensity_fn, lambda key, position: ...)
+        state = random_walk.init(position)
+        new_state, info = random_walk.step(rng_key, state)
 
     We can JIT-compile the step function for better performance
 
     .. code::
 
-        step = jax.jit(rmh.step)
+        step = jax.jit(random_walk.step)
         new_state, info = step(rng_key, state)
 
     Parameters
     ----------
     logdensity_fn
         The log density probability density function from which we wish to sample.
-    sigma
-        The value of the covariance matrix of the gaussian proposal distribution.
-
+    random_step:
+        A callable that given a position, generates a movement/jump in the position space.
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
-
+        A ``MCMCSamplingAlgorithm``.
     """
 
     init = staticmethod(mcmc.rmh.init)
-    kernel = staticmethod(mcmc.rmh.kernel)
+    kernel = staticmethod(blackjax.mcmc.random_walk.kernel)
+
+    @classmethod
+    def normal_random_walk(cls, logdensity_fn: Callable, sigma):
+        """
+        Parameters
+        ----------
+        logdensity_fn
+            The log density probability density function from which we wish to sample.
+        sigma
+            The value of the covariance matrix of the gaussian proposal distribution.
+        Returns
+        -------
+             A ``MCMCSamplingAlgorithm``.
+        """
+        return cls(logdensity_fn, blackjax.mcmc.random_walk.normal(sigma))
 
     def __new__(  # type: ignore[misc]
-        cls,
-        logdensity_fn: Callable,
-        sigma: Array,
+        cls, logdensity_fn: Callable, random_step: Callable
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel()
+        step = cls.kernel(random_step)
 
         def init_fn(position: PyTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(
-                rng_key,
-                state,
-                logdensity_fn,
-                sigma,
-            )
+            return step(rng_key, state, logdensity_fn)
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
+
+
+class rmh:
+    """Implements the user interface for the Rosenbluth-Metropolis-Hastings
+
+    Parameters
+    ----------
+    logdensity_fn
+        A function that returns the log-probability at a given position.
+    proposal_generator
+        A function that generates a candidate transition for the markov chain.
+    proposal_logdensity_fn:
+        For non-symmetric proposals, a function that returns the log-density
+        to obtain a given proposal knowing the current state. If it is not
+        provided we assume the proposal is symmetric.
+
+    Returns
+    -------
+        A ``MCMCSamplingAlgorithm``.
+    """
+
+    init = staticmethod(mcmc.rmh.init)
+    kernel = staticmethod(blackjax.mcmc.rmh.rmh)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_fn: Callable,
+        proposal_generator: Callable[[PRNGKey, PyTree], PyTree],
+        proposal_logdensity_fn: Optional[Callable[[PyTree], PyTree]] = None,
+    ) -> MCMCSamplingAlgorithm:
+        step = cls.kernel(logdensity_fn, proposal_generator, proposal_logdensity_fn)
+
+        def init_fn(position: PyTree):
+            return cls.init(position, logdensity_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return step(rng_key, state)
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
 
@@ -1000,7 +1040,6 @@ class irmh:
         logdensity_fn: Callable,
         proposal_distribution: Callable,
     ) -> MCMCSamplingAlgorithm:
-
         step = cls.kernel(proposal_distribution)
 
         def init_fn(position: PyTree):
@@ -1221,7 +1260,6 @@ class ghmc:
         divergence_threshold: int = 1000,
         noise_gn: Callable = lambda _: 0.0,
     ) -> MCMCSamplingAlgorithm:
-
         step = cls.kernel(noise_gn, divergence_threshold)
 
         def init_fn(position: PyTree, rng_key: PRNGKey):
@@ -1348,7 +1386,6 @@ def pathfinder_adaptation(
         )
 
     def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 400):
-
         init_key, sample_key, rng_key = jax.random.split(rng_key, 3)
 
         pathfinder_state, _ = vi.pathfinder.approximate(
