@@ -134,3 +134,12 @@ maxdepth: 2
 API Reference<autoapi/blackjax/index>
 Bibliography<bib.rst>
 ```
+
+```{toctree}
+---
+maxdepth: 1
+caption: DEVELOPER DOCUMENTATION
+hidden:
+---
+Guidelines<developer/principles.md>
+```
