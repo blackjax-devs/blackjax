@@ -4,7 +4,6 @@ from typing import Union
 
 import jax.numpy as jnp
 from jax import jit, lax
-from jax._src.numpy.util import _promote_dtypes
 from jax.flatten_util import ravel_pytree
 from jax.random import normal
 from jax.tree_util import tree_leaves
@@ -42,7 +41,9 @@ def linear_map(diag_or_dense_a, b, *, precision="highest"):
     -------
         The result vector of the matrix multiplication.
     """
-    diag_or_dense_a, b = _promote_dtypes(diag_or_dense_a, b)
+    dtype = jnp.result_type(diag_or_dense_a.dtype, b.dtype)
+    diag_or_dense_a = diag_or_dense_a.astype(dtype)
+    b = b.astype(dtype)
     ndim = jnp.ndim(diag_or_dense_a)
 
     if ndim <= 1:
