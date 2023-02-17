@@ -120,6 +120,7 @@ def minimize_lbfgs(
         state=LbfgsState(
             iter_num=last_step_raveled.state.iter_num,
             value=last_step_raveled.state.value,
+            grad=unravel_fn(last_step_raveled.state.grad),
             stepsize=last_step_raveled.state.stepsize,
             error=last_step_raveled.state.error,
             s_history=unravel_fn_mapped(last_step_raveled.state.s_history),
