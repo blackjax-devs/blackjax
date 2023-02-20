@@ -89,7 +89,6 @@ def kernel():
     def one_step(
         rng_key: PRNGKey, state: RMHState, logdensity_fn: Callable, sigma: Array
     ) -> Tuple[RMHState, RMHInfo]:
-
         move_proposal_generator = normal(sigma)
 
         def proposal_generator(key_proposal, position):

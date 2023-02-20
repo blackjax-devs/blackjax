@@ -4,15 +4,15 @@ exclude: |
     )$
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.1.0
+  rev: v4.4.0
   hooks:
     -   id: check-merge-conflict
     -   id: debug-statements
     -   id: end-of-file-fixer
     -   id: requirements-txt-fixer
     -   id: trailing-whitespace
-- repo: https://github.com/PyCQA/isort
-  rev: 5.10.1
+- repo: https://github.com/pycqa/isort
+  rev: 5.12.0
   hooks:
     - id: isort
       args: [--profile, black]
@@ -21,18 +21,16 @@ repos:
   hooks:
     - id: pyupgrade
       args: [--py37-plus]
-- repo: https://github.com/PyCQA/flake8
-  rev: 4.0.1
+- repo: https://github.com/pycqa/flake8
+  rev: 6.0.0
   hooks:
    - id: flake8
-     additional_dependencies: [flake8-typing-imports==1.7.0]
-     args: ['--ignore=E501,E203,E731,W503']
 - repo: https://github.com/psf/black
-  rev: 22.3.0
+  rev: 23.1.0
   hooks:
     - id: black
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v0.942
+  rev: v1.0.1
   hooks:
     - id: mypy
 - repo: https://github.com/nbQA-dev/nbQA
