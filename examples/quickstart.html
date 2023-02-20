@@ -37,8 +37,8 @@
     <script src="../_static/design-tabs.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Bayesian Logistic Regression" href="LogisticRegression.html" />
-    <link rel="prev" title="Examples" href="../examples.html" />
+    <link rel="next" title="Use with Aesara models" href="howto_use_aesara.html" />
+    <link rel="prev" title="Welcome to Blackjax!" href="../index.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -88,7 +88,14 @@
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item active">
-        <p aria-level="2" class="caption" role="heading">
+        <ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Quickstart
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
  <span class="caption-text">
   PPL INTEGRATION
  </span>
@@ -152,63 +159,11 @@
   LEARN BY EXAMPLE
  </span>
 </p>
-<ul class="current nav bd-sidenav">
- <li class="toctree-l1 current active has-children">
-  <a class="reference internal" href="../examples.html">
-   Examples
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference external" href="https://blackjax-devs.github.io/sampling-book">
+   The Sampling Book
   </a>
-  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
-   <i class="fas fa-chevron-down">
-   </i>
-  </label>
-  <ul class="current">
-   <li class="toctree-l2 current active">
-    <a class="current reference internal" href="#">
-     A Quick Introduction to Blackjax
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="LogisticRegression.html">
-     Bayesian Logistic Regression
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="LogisticRegressionWithLatentGaussianSampler.html">
-     Bayesian Logistic Regression With Latent Gaussian Sampler
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="TemperedSMC.html">
-     Use Tempered SMC to Improve Exploration of MCMC Methods.
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="PeriodicOrbitalMCMC.html">
-     Periodic Orbital MCMC
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="GP_EllipticalSliceSampler.html">
-     Gaussian Regression with the Elliptical Slice Sampler
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="GP_Marginal.html">
-     Bayesian Regression With Latent Gaussian Sampler
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="change_of_variable_hmc.html">
-     Change of Variable in HMC
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="RegimeSwitchingModel.html">
-     Regime switching Hidden Markov model
-    </a>
-   </li>
-  </ul>
  </li>
 </ul>
 <p aria-level="2" class="caption" role="heading">
@@ -537,7 +492,7 @@ title="Source repository"
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-33199.055, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1182.2566, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(61560.23, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-34120.477, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1200.5004, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(63403.08, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -585,8 +540,8 @@ title="Source repository"
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.45 s, sys: 12 ms, total: 1.46 s
-Wall time: 1.46 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.38 s, sys: 4.68 ms, total: 1.38 s
+Wall time: 1.38 s
 </pre></div>
 </div>
 </div>
@@ -614,7 +569,7 @@ Wall time: 1.46 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/e8cb413181ab0c6ea603944469a40bfe95fd44b326477ff2d2718166c1f453ac.png" src="../_images/e8cb413181ab0c6ea603944469a40bfe95fd44b326477ff2d2718166c1f453ac.png" />
+<img alt="../_images/bb17be49fcefa01d9a6e8a3ec1ef7f2f68884bafdc50892eb1a3462cacaa02ee.png" src="../_images/bb17be49fcefa01d9a6e8a3ec1ef7f2f68884bafdc50892eb1a3462cacaa02ee.png" />
 </div>
 </div>
 </section>
@@ -641,7 +596,7 @@ Wall time: 1.46 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-33199.055, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1182.2566, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(61560.23, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-34120.477, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1200.5004, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(63403.08, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -658,8 +613,8 @@ Wall time: 1.46 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.86 s, sys: 17 ms, total: 6.88 s
-Wall time: 6.87 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.36 s, sys: 5.05 ms, total: 6.36 s
+Wall time: 6.36 s
 </pre></div>
 </div>
 </div>
@@ -687,7 +642,7 @@ Wall time: 6.87 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/1f705265357c54cd0e67d19e180ac9b4d467ed66ec792cd68fcd9e7c6bee8e74.png" src="../_images/1f705265357c54cd0e67d19e180ac9b4d467ed66ec792cd68fcd9e7c6bee8e74.png" />
+<img alt="../_images/da8f4b4ef5085d5408b789165e0d36b4568834e556666167be78714a14eed0be.png" src="../_images/da8f4b4ef5085d5408b789165e0d36b4568834e556666167be78714a14eed0be.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -704,8 +659,8 @@ Wall time: 6.87 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.03 s, sys: 7.95 ms, total: 2.04 s
-Wall time: 2.03 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.08 s, sys: 24.1 ms, total: 2.11 s
+Wall time: 2.1 s
 </pre></div>
 </div>
 </div>
@@ -724,8 +679,8 @@ Wall time: 2.03 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.58 s, sys: 76 µs, total: 1.58 s
-Wall time: 1.59 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.59 s, sys: 20.1 ms, total: 1.61 s
+Wall time: 1.61 s
 </pre></div>
 </div>
 </div>
@@ -753,7 +708,7 @@ Wall time: 1.59 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/1e38721a023136f9655e90c276ea0a87e9a4378d1748dcceddbf2e95c35ab5e9.png" src="../_images/1e38721a023136f9655e90c276ea0a87e9a4378d1748dcceddbf2e95c35ab5e9.png" />
+<img alt="../_images/b425022dded64f75893d8b84e8ea35ec574659f0992460b5eab39f0fb101d69c.png" src="../_images/b425022dded64f75893d8b84e8ea35ec574659f0992460b5eab39f0fb101d69c.png" />
 </div>
 </div>
 </section>
@@ -768,17 +723,17 @@ Wall time: 1.59 s
                 
     <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="../examples.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="../index.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Examples</p>
+            <p class="prev-next-title">Welcome to Blackjax!</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="LogisticRegression.html" title="next page">
+    <a class='right-next' id="next-link" href="howto_use_aesara.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Bayesian Logistic Regression</p>
+        <p class="prev-next-title">Use with Aesara models</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>
