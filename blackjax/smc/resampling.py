@@ -90,7 +90,6 @@ def multinomial(rng_key: PRNGKey, weights: jax.Array, num_samples: int) -> jnp.n
     introduction of N+1 in the array as a 'sink state' for unused indices.""",
 )
 def residual(rng_key: PRNGKey, weights: jax.Array, num_samples: int) -> jax.Array:
-
     key1, key2 = jax.random.split(rng_key)
     N = weights.shape[0]
     N_sample_weights = num_samples * weights

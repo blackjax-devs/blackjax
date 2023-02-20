@@ -75,7 +75,6 @@ class adaptive_tempered_smc:
         root_solver: Callable = smc.solver.dichotomy,
         num_mcmc_steps: int = 10,
     ) -> MCMCSamplingAlgorithm:
-
         step = cls.kernel(
             logprior_fn,
             loglikelihood_fn,
@@ -123,7 +122,6 @@ class tempered_smc:
         resampling_fn: Callable,
         num_mcmc_steps: int = 10,
     ) -> MCMCSamplingAlgorithm:
-
         step = cls.kernel(
             logprior_fn,
             loglikelihood_fn,
@@ -534,7 +532,6 @@ class sgld:
         cls,
         grad_estimator: Callable,
     ) -> Callable:
-
         step = cls.kernel()
 
         def step_fn(
@@ -614,7 +611,6 @@ class sghmc:
         grad_estimator: Callable,
         num_integration_steps: int = 10,
     ) -> Callable:
-
         step = cls.kernel()
 
         def step_fn(rng_key: PRNGKey, state, minibatch: PyTree, step_size: float):
@@ -631,7 +627,6 @@ class sghmc:
 
 
 class csgld:
-
     init = staticmethod(sgmcmc.csgld.init)
     kernel = staticmethod(sgmcmc.csgld.kernel)
 
@@ -644,7 +639,6 @@ class csgld:
         energy_gap: float = 100,
         min_energy: float = 0,
     ) -> MCMCSamplingAlgorithm:
-
         step = cls.kernel(num_partitions, energy_gap, min_energy)
 
         def init_fn(position: PyTree):
@@ -766,7 +760,6 @@ def window_adaptation(
         )
 
     def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 1000):
-
         init_state = algorithm.init(position, logdensity_fn)
         init_adaptation_state = adapt_init(position, initial_step_size)
 
@@ -875,7 +868,6 @@ def meads_adaptation(
         )
 
     def run(rng_key: PRNGKey, positions: PyTree, num_steps: int = 1000):
-
         key_init, key_adapt = jax.random.split(rng_key)
 
         rng_keys = jax.random.split(key_init, num_chains)
@@ -1000,7 +992,6 @@ class irmh:
         logdensity_fn: Callable,
         proposal_distribution: Callable,
     ) -> MCMCSamplingAlgorithm:
-
         step = cls.kernel(proposal_distribution)
 
         def init_fn(position: PyTree):
@@ -1221,7 +1212,6 @@ class ghmc:
         divergence_threshold: int = 1000,
         noise_gn: Callable = lambda _: 0.0,
     ) -> MCMCSamplingAlgorithm:
-
         step = cls.kernel(noise_gn, divergence_threshold)
 
         def init_fn(position: PyTree, rng_key: PRNGKey):
@@ -1348,7 +1338,6 @@ def pathfinder_adaptation(
         )
 
     def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 400):
-
         init_key, sample_key, rng_key = jax.random.split(rng_key, 3)
 
         pathfinder_state, _ = vi.pathfinder.approximate(
