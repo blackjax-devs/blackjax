@@ -762,7 +762,6 @@ def window_adaptation(
         )
 
     def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 1000):
-
         init_state = algorithm.init(position, logdensity_fn)
         init_adaptation_state = adapt_init(position, initial_step_size)
 

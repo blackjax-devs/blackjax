@@ -240,7 +240,6 @@ class SGMCMCTest(chex.TestCase):
         return -0.5 * jnp.dot(w, w)
 
     def test_linear_regression_contour_sgld(self):
-
         rng_key, data_key = jax.random.split(self.key, 2)
 
         data_size = 1000
@@ -258,7 +257,6 @@ class SGMCMCTest(chex.TestCase):
         _ = csgld.step(rng_key, init_state, data_batch, 1e-3, 1e-2)
 
     def test_linear_regression_sgld(self):
-
         rng_key, data_key = jax.random.split(self.key, 2)
 
         data_size = 1000
@@ -275,7 +273,6 @@ class SGMCMCTest(chex.TestCase):
         _ = sgld(rng_key, init_position, data_batch, 1e-3)
 
     def test_linear_regression_sgld_cv(self):
-
         rng_key, data_key = jax.random.split(self.key, 2)
 
         data_size = 1000
@@ -298,7 +295,6 @@ class SGMCMCTest(chex.TestCase):
         _ = sgld(rng_key, init_position, data_batch, 1e-3)
 
     def test_linear_regression_sghmc(self):
-
         rng_key, data_key = jax.random.split(self.key, 2)
 
         data_size = 1000
@@ -316,7 +312,6 @@ class SGMCMCTest(chex.TestCase):
         _ = sghmc(rng_key, init_position, data_batch, 1e-3)
 
     def test_linear_regression_sghmc_cv(self):
-
         rng_key, data_key = jax.random.split(self.key, 2)
 
         data_size = 1000

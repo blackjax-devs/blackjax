@@ -28,7 +28,6 @@ class SMCTest(chex.TestCase):
 
     @chex.variants(with_jit=True)
     def test_smc(self):
-
         num_mcmc_steps = 20
         num_particles = 1000
 
@@ -71,7 +70,6 @@ class SMCTest(chex.TestCase):
 
     @chex.variants(with_jit=True)
     def test_smc_waste_free(self):
-
         num_mcmc_steps = 10
         num_particles = 1000
         num_resampled = num_particles // num_mcmc_steps

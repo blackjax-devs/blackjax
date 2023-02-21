@@ -1,6 +1,5 @@
 """Test the tempered SMC steps and routine"""
 import functools
-from typing import List
 
 import chex
 import jax
@@ -13,7 +12,6 @@ import blackjax
 import blackjax.smc.resampling as resampling
 import blackjax.smc.solver as solver
 from blackjax import adaptive_tempered_smc, tempered_smc
-from blackjax.smc.tempered import TemperedSMCState
 
 
 def inference_loop(kernel, rng_key, initial_state):

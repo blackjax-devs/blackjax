@@ -37,7 +37,7 @@ def init(
     position: PyTree,
     optimizer: GradientTransformation,
     *optimizer_args,
-    **optimizer_kwargs
+    **optimizer_kwargs,
 ) -> MFVIState:
     """Initialize the mean-field VI state."""
     mu = jax.tree_map(jnp.zeros_like, position)

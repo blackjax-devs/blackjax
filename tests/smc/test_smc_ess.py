@@ -16,7 +16,6 @@ import blackjax.smc.solver as solver
 class SMCEffectiveSampleSizeTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_ess(self):
-
         # All particles have zero weight but one
         weights = jnp.array([-jnp.inf, -jnp.inf, 0, -jnp.inf])
         ess_val = self.variant(ess.ess)(weights)

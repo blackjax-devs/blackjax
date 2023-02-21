@@ -53,7 +53,6 @@ def init(
     position: PyTree,
     logdensity_fn: Callable,
 ):
-
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
 
     key_mometum, key_slice = jax.random.split(rng_key)
