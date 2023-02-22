@@ -71,18 +71,10 @@ def step(
         at each step to compute the Kullback-Leibler divergence between
         the approximation and the target log-density.
     stl_estimator
-        Whether to use stick-the-landing (STL) gradient estimator [1] for gradient estimation.
+        Whether to use stick-the-landing (STL) gradient estimator :cite:p:`roeder2017sticking` for gradient estimation.
         The STL estimator has lower gradient variance by removing the score function term
-        from the gradient. It is suggested by [2] to always keep it in order for better results.
+        from the gradient. It is suggested by :cite:p:`agrawal2020advances` to always keep it in order for better results.
 
-    References
-    ----------
-    .. [1]: Roeder, G., Wu, Y., & Duvenaud, D. K. (2017).
-        Sticking the landing: Simple, lower-variance gradient estimators for variational inference.
-        Advances in Neural Information Processing Systems, 30.
-    .. [2]: Agrawal, A., Sheldon, D. R., & Domke, J. (2020).
-        Advances in black-box VI: Normalizing flows, importance weighting, and optimization.
-        Advances in Neural Information Processing Systems, 33.
     """
 
     parameters = (state.mu, state.rho)

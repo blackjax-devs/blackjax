@@ -23,8 +23,7 @@ __all__ = ["kernel"]
 def kernel(proposal_distribution: Callable) -> Callable:
     """
     Build an Independent Random Walk Rosenbluth-Metropolis-Hastings kernel. This implies
-    that the proposal distribution does not depend on the particle being mutated.
-    Reference: Algorithm 2 from https://arxiv.org/pdf/2008.02455.pdf
+    that the proposal distribution does not depend on the particle being mutated :cite:p:`wang2022exact`.
 
     Parameters
     ----------

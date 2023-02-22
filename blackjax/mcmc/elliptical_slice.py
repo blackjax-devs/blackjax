@@ -67,7 +67,7 @@ def init(position: PyTree, logdensity_fn: Callable):
 
 
 def kernel(cov_matrix: Array, mean: Array):
-    """Build an Elliptical Slice sampling kernel [1]_.
+    """Build an Elliptical Slice sampling kernel :cite:p:`murray2010elliptical`.
 
     Parameters
     ----------
@@ -80,12 +80,6 @@ def kernel(cov_matrix: Array, mean: Array):
     A kernel that takes a rng_key and a Pytree that contains the current state
     of the chain and that returns a new state of the chain along with
     information about the transition.
-
-    References
-    ----------
-    .. [1] Murray, Iain, Ryan Adams, and David MacKay. "Elliptical slice sampling."
-            Proceedings of the thirteenth international conference on artificial intelligence
-            and statistics. JMLR Workshop and Conference Proceedings, 2010.
 
     """
     ndim = jnp.ndim(cov_matrix)  # type: ignore[arg-type]

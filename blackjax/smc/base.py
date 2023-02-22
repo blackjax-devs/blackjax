@@ -96,7 +96,7 @@ def step(
         Function that resamples the particles.
     num_resampled
         The number of particles to resample. This can be used to implement
-        Waste-Free SMC [Dau2022]_, in which case we resample a number :math:`M<N`
+        Waste-Free SMC :cite:p:`dau2020waste`, in which case we resample a number :math:`M<N`
         of particles, and the update function is in charge of returning
         :math:`N` samples.
 
@@ -107,11 +107,6 @@ def step(
     info
         An `SMCInfo` object that contains extra information about the SMC
         transition.
-
-    References
-    ----------
-    .. [Dau2022] Dau, H. D., & Chopin, N. (2022). Waste‐free sequential Monte Carlo.
-            Journal of the Royal Statistical Society Series B, 84(1), 114-148.
 
     """
     updating_key, resampling_key = jax.random.split(rng_key, 2)

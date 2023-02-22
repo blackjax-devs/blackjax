@@ -44,6 +44,7 @@ extensions = [
     "myst_nb",
     "sphinx_design",
     "autoapi.extension",
+    "sphinxcontrib.bibtex",
 ]
 
 intersphinx_mapping = {
@@ -127,3 +128,7 @@ def skip_util_classes(app, what, name, obj, skip, options):
 
 def setup(sphinx):
     sphinx.connect("autoapi-skip-member", skip_util_classes)
+
+
+bibtex_bibfiles = ["refs.bib"]
+bibtex_default_style = "alpha"  # alpha, plain, unsrt, unsrtalpha
