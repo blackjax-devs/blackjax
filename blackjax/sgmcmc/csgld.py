@@ -2,14 +2,14 @@
 
 References
 ----------
-.. [0]: Deng, W., Lin, G., Liang, F. (2020).
-        A Contour Stochastic Gradient Langevin Dynamics Algorithm
-        for Simulations of Multi-modal Distributions.
-        In Neural Information Processing Systems (NeurIPS 2020).
+.. [DLL20] Deng, W., Lin, G., Liang, F. (2020).
+       A Contour Stochastic Gradient Langevin Dynamics Algorithm
+       for Simulations of Multi-modal Distributions.
+       In Neural Information Processing Systems (NeurIPS 2020).
 
-.. [1]: Deng, W., Liang, S., Hao, B., Lin, G., Liang, F. (2022)
-        Interacting Contour Stochastic Gradient Langevin Dynamics
-        In International Conference on Learning Representations (ICLR)
+.. [DLH+22] Deng, W., Liang, S., Hao, B., Lin, G., Liang, F. (2022)
+       Interacting Contour Stochastic Gradient Langevin Dynamics
+       In International Conference on Learning Representations (ICLR)
 """
 from typing import Callable, NamedTuple
 
@@ -122,12 +122,12 @@ def kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
 
         References
         ----------
-        .. [Deng2020] Deng, W., Lin, G., Liang, F. (2020).
+        .. [DLL20] Deng, W., Lin, G., Liang, F. (2020).
                 A Contour Stochastic Gradient Langevin Dynamics Algorithm
                 for Simulations of Multi-modal Distributions.
                 In Neural Information Processing Systems (NeurIPS 2020).
 
-        .. [Deng2022] Deng, W., Liang, S., Hao, B., Lin, G., Liang, F. (2022)
+        .. [DLH+22] Deng, W., Liang, S., Hao, B., Lin, G., Liang, F. (2022)
                 Interacting Contour Stochastic Gradient Langevin Dynamics
                 In International Conference on Learning Representations (ICLR)
         """

@@ -13,7 +13,7 @@
 # limitations under the License.
 """Procedures to build trajectories for algorithms in the HMC family.
 
-To propose a new state, algorithms in the HMC family generally proceed by [Betancourt2017]_:
+To propose a new state, algorithms in the HMC family generally proceed by [Bet17]_:
 
 1. Sampling a trajectory starting from the initial point;
 2. Sampling a new state from this sampled trajectory.
@@ -38,7 +38,7 @@ memory by keeping states that will subsequently be discarded.
 
 References
 ----------
-.. [Betancourt2017] Betancourt, Michael.
+.. [Bet17] Betancourt, Michael.
         "A conceptual introduction to Hamiltonian Monte Carlo."
         arXiv preprint arXiv:1701.02434 (2017).
 
@@ -310,7 +310,7 @@ def dynamic_recursive_integration(
     """Integrate a trajectory and update the proposal recursively in Python
     until the termination criterion is met.
 
-    This is the implementation of Algorithm 6 from [1]_ with multinomial sampling.
+    This is the implementation of Algorithm 6 from [HG14]_ with multinomial sampling.
     The implemenation here is mostly for validating the progressive implementation
     to make sure the two are equivalent. The recursive implementation should not
     be used for actually sampling as it cannot be jitted and thus likely slow.
@@ -330,7 +330,8 @@ def dynamic_recursive_integration(
 
     References
     ----------
-    .. [1] Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo." J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
+    .. [HG14] Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo."
+           J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
 
     """
     _, generate_proposal = proposal_generator(kinetic_energy, divergence_threshold)
