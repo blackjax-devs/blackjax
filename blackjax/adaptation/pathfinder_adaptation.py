@@ -23,7 +23,7 @@ from blackjax.adaptation.step_size import (
 from blackjax.optimizers.lbfgs import lbfgs_inverse_hessian_formula_1
 from blackjax.types import Array, PyTree
 
-__all__ = ["base"]
+__all__ = ["PathfinderAdaptationState", "base"]
 
 
 class PathfinderAdaptationState(NamedTuple):
