@@ -141,6 +141,8 @@ class VIAlgorithm(NamedTuple):
 
 
 class RunFn(Protocol):
+    """A `Callable` used to run the adaptation procedure."""
+
     def __call__(self, rng_key: PRNGKey, position: PyTree):
         """Run the compiled algorithm."""
 
