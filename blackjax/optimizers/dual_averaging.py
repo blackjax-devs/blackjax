@@ -56,22 +56,22 @@ def dual_averaging(
     """Find the state that minimizes an objective function using a primal-dual
     subgradient method.
 
-    See [1]_ for a detailed explanation of the algorithm and its mathematical
+    See :cite:p:`nesterov2009primal` for a detailed explanation of the algorithm and its mathematical
     properties.
 
     Parameters
     ----------
     t0: float >= 0
         Free parameter that stabilizes the initial iterations of the algorithm.
-        Large values may slow down convergence. Introduced in [2]_ with a default
+        Large values may slow down convergence. Introduced in :cite:p:`hoffman2014no` with a default
         value of 10.
     gamma
-        Controls the speed of convergence of the scheme. The authors of [2]_ recommend
+        Controls the speed of convergence of the scheme. The authors of :cite:p:`hoffman2014no` recommend
         a value of 0.05.
     kappa: float in ]0.5, 1]
         Controls the weights of past steps in the current update. The scheme will
         quickly forget earlier step for a small value of `kappa`. Introduced
-        in [2]_, with a recommended value of .75
+        in :cite:p:`hoffman2014no`, with a recommended value of .75
 
     Returns
     -------
@@ -81,13 +81,6 @@ def dual_averaging(
         a function that updates the state of the dual averaging scheme.
     final
         a function that returns the state that minimizes the objective function.
-
-    References
-    ----------
-
-    .. [1] Nesterov, Yurii. "Primal-dual subgradient methods for convex
-            problems." Mathematical programming 120.1 (2009): 221-259.
-    .. [2] Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo." J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
 
     """
 

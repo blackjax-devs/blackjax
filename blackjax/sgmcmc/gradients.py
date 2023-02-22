@@ -24,13 +24,13 @@ def logdensity_estimator(
 ) -> Callable:
     """Builds a simple estimator for the log-density.
 
-    This estimator first appeared in [RM51]_. The `logprior_fn` function has a
+    This estimator first appeared in :cite:p:`robbins1951stochastic`. The `logprior_fn` function has a
     single argument:  the current position (value of parameters). The
     `loglikelihood_fn` takes two arguments: the current position and a batch of
     data; if there are several variables (as, for instance, in a supervised
     learning contexts), they are passed in a tuple.
 
-    This algorithm was ported from [CN22]_.
+    This algorithm was ported from :cite:p:`coullon2022sgmcmcjax`.
 
     Parameters
     ----------
@@ -41,14 +41,6 @@ def logdensity_estimator(
         The log-probability density function corresponding to the likelihood.
     data_size
         The number of items in the full dataset.
-
-    References
-    ----------
-    .. [RM51] Robbins H. and Monro S. A stochastic approximation method. Annals
-            of Mathematical Statistics, 22(30):400-407, 1951.
-    .. [CN22] Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
-            library for stochastic gradient Markov chain Monte Carlo algorithms.
-            Journal of Open Source Software, 7(72), 4113.
 
     """
 
@@ -93,9 +85,9 @@ def control_variates(
     centering_position: PyTree,
     data: PyTree,
 ) -> Callable:
-    """Builds a control variate gradient estimator [Baker2019]_.
+    """Builds a control variate gradient estimator :cite:p:`baker2019control`.
 
-    This algorithm was ported from [CN22]_.
+    This algorithm was ported from :cite:p:`coullon2022sgmcmcjax`.
 
     Parameters
     ----------
@@ -105,15 +97,6 @@ def control_variates(
         The full dataset.
     centering_position
         Centering position for the control variates (typically the MAP).
-
-    References
-    ----------
-    .. [Baker2019] Baker, J., Fearnhead, P., Fox, E. B., & Nemeth, C. (2019).
-            Control variates for stochastic gradient MCMC. Statistics
-            and Computing, 29(3), 599-615.
-    .. [CN22] Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
-            library for stochastic gradient Markov chain Monte Carlo algorithms.
-            Journal of Open Source Software, 7(72), 4113.
 
     """
     cv_grad_value = logdensity_grad_estimator(centering_position, data)

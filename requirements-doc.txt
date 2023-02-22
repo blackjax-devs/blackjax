@@ -22,6 +22,7 @@ sphinx-autobuild
 sphinx-book-theme
 sphinx-design
 sphinx-math-dollar
+sphinxcontrib-bibtex
 tensorflow-cpu
 tfp-nightly[jax]
 versioneer

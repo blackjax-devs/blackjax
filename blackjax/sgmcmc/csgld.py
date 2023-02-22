@@ -1,15 +1,5 @@
-"""Public API for the Contour Stochastic gradient Langevin Dynamics kernel.
+"""Public API for the Contour Stochastic gradient Langevin Dynamics kernel :cite:p:`deng2020contour,deng2022interacting`.
 
-References
-----------
-.. [DLL20] Deng, W., Lin, G., Liang, F. (2020).
-       A Contour Stochastic Gradient Langevin Dynamics Algorithm
-       for Simulations of Multi-modal Distributions.
-       In Neural Information Processing Systems (NeurIPS 2020).
-
-.. [DLH+22] Deng, W., Liang, S., Hao, B., Lin, G., Liang, F. (2022)
-       Interacting Contour Stochastic Gradient Langevin Dynamics
-       In International Conference on Learning Representations (ICLR)
 """
 from typing import Callable, NamedTuple
 
@@ -81,7 +71,7 @@ def kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
         zeta: float = 1,
         temperature: float = 1.0,
     ) -> ContourSGLDState:
-        r"""Multil-modal sampling via Contour SGLD.
+        r"""Multil-modal sampling via Contour SGLD :cite:p:`deng2020contour,deng2022interacting`.
 
         We are interested in the simulations of :math:`\exp(-U(x) / T)`,
         where :math:`U` is an energy function and :math:`T` is the temperature.
@@ -120,16 +110,6 @@ def kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
         temperature
             Temperature parameter :math:`T`.
 
-        References
-        ----------
-        .. [DLL20] Deng, W., Lin, G., Liang, F. (2020).
-                A Contour Stochastic Gradient Langevin Dynamics Algorithm
-                for Simulations of Multi-modal Distributions.
-                In Neural Information Processing Systems (NeurIPS 2020).
-
-        .. [DLH+22] Deng, W., Liang, S., Hao, B., Lin, G., Liang, F. (2022)
-                Interacting Contour Stochastic Gradient Langevin Dynamics
-                In International Conference on Learning Representations (ICLR)
         """
 
         position, energy_pdf, idx = state

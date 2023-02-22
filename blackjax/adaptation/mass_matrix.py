@@ -14,11 +14,8 @@
 """Algorithms to adapt the mass matrix used by algorithms in the Hamiltonian
 Monte Carlo family to the current geometry.
 
-The Stan Manual [1]_ is a very good reference on automatic tuning of
+The Stan Manual :cite:p:`stan_hmc_param` is a very good reference on automatic tuning of
 parameters used in Hamiltonian Monte Carlo.
-
-.. [1] "HMC Algorithm Parameters", Stan Manual
-        https://mc-stan.org/docs/2_20/reference-manual/hmc-algorithm-parameters.html
 
 """
 from typing import Callable, NamedTuple, Tuple

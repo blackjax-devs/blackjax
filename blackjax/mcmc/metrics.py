@@ -17,21 +17,14 @@ An important particular case (and the most used in practice) of metric for the
 position space in the Euclidean metric. It is defined by a definite positive
 matrix :math:`M` with fixed value so that the kinetic energy of the hamiltonian
 dynamic is independent of the position and only depends on the momentum
-:math:`p` [Bet17]_.
+:math:`p` :cite:p:`betancourt2017geometric`.
 
 For a Newtonian hamiltonian dynamic the kinetic energy is given by:
 
 .. math::
     K(p) = \frac{1}{2} p^T M^{-1} p
 
-We can also generate a relativistic dynamic [LPH+17]_.
-
-References
-----------
-.. [Bet17] Betancourt, Michael, et al. "The geometric foundations of hamiltonian
-        monte carlo." Bernoulli 23.4A (2017): 2257-2298.
-.. [LPH+17] Lu, Xiaoyu, et al. "Relativistic monte carlo."
-        Artificial Intelligence and Statistics. PMLR, 2017.
+We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
 
 """
 from typing import Callable, Tuple
@@ -51,7 +44,7 @@ EuclideanKineticEnergy = Callable[[PyTree], float]
 def gaussian_euclidean(
     inverse_mass_matrix: Array,
 ) -> Tuple[Callable, EuclideanKineticEnergy, Callable]:
-    r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum.
+    r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum :cite:p:`betancourt2013general`.
 
     The gaussian euclidean metric is a euclidean metric further characterized
     by setting the conditional probability density :math:`\pi(momentum|position)`
@@ -115,7 +108,7 @@ def gaussian_euclidean(
     def is_turning(
         momentum_left: PyTree, momentum_right: PyTree, momentum_sum: PyTree
     ) -> bool:
-        """Generalized U-turn criterion.
+        """Generalized U-turn criterion :cite:p:`betancourt2013generalizing,nuts_uturn`.
 
         Parameters
         ----------
@@ -125,12 +118,6 @@ def gaussian_euclidean(
             Momentum of the rightmost point of the trajectory.
         momentum_sum
             Sum of the momenta along the trajectory.
-
-        References
-        ----------
-        .. [Bet13] Betancourt, Michael J. "Generalizing the no-U-turn sampler to Riemannian manifolds." arXiv preprint arXiv:1304.1920 (2013).
-        .. [Sta19] "NUTS misses U-turn, runs in cicles until max depth", Stan Discourse Forum
-                https://discourse.mc-stan.org/t/nuts-misses-u-turns-runs-in-circles-until-max-treedepth/9727/46
 
         """
         m_left, _ = ravel_pytree(momentum_left)

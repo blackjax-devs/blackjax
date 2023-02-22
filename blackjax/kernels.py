@@ -442,7 +442,7 @@ class nuts:
 
 
 class mgrad_gaussian:
-    """Implements the marginal sampler for latent Gaussian model of [TP18].
+    """Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.
 
     It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
     Interestingly, the only parameter that needs calibrating is the "step size" delta, which can be done very efficiently.
@@ -478,11 +478,6 @@ class mgrad_gaussian:
     Returns
     -------
     A ``MCMCSamplingAlgorithm``.
-
-    References
-    ----------
-    .. [TP18] Titsias, M.K. and Papaspiliopoulos, O. (2018),
-        Auxiliary gradient-based sampling algorithms. J. R. Stat. Soc. B, 80: 749-767. https://doi.org/10.1111/rssb.12269
 
     """
 
