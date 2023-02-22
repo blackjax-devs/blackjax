@@ -21,6 +21,7 @@ from blackjax.mcmc.hmc import HMCState
 from blackjax.optimizers.dual_averaging import dual_averaging
 
 __all__ = [
+    "DualAveragingAdaptationState",
     "dual_averaging_adaptation",
     "find_reasonable_step_size",
 ]

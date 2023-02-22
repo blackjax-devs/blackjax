@@ -28,7 +28,12 @@ import jax.numpy as jnp
 
 from blackjax.types import Array
 
-__all__ = ["mass_matrix_adaptation", "welford_algorithm"]
+__all__ = [
+    "WelfordAlgorithmState",
+    "MassMatrixAdaptationState",
+    "mass_matrix_adaptation",
+    "welford_algorithm",
+]
 
 
 class WelfordAlgorithmState(NamedTuple):
@@ -155,7 +160,7 @@ def mass_matrix_adaptation(
 
 
 def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Callable]:
-    """Welford's online estimator of covariance.
+    r"""Welford's online estimator of covariance.
 
     It is possible to compute the variance of a population of values in an
     on-line fashion to avoid storing intermediate results. The naive recurrence
@@ -163,7 +168,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
     however not numerically stable.
 
     Welford's algorithm uses the sum of square of differences
-    :math:`M_{2,n} = \\sum_{i=1}^n \\left(x_i-\\overline{x_n}\right)^2`
+    :math:`M_{2,n} = \sum_{i=1}^n \left(x_i-\overline{x_n}\right)^2`
     for updating where :math:`x_n` is the current mean and the following
     recurrence relationships
 
@@ -177,10 +182,6 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
     ----
     It might seem pedantic to separate the Welford algorithm from mass adaptation,
     but this covariance estimator is used in other parts of the library.
-
-    .. math:
-        M_{2,n} = M_{2, n-1} + (x_n-\\overline{x}_{n-1})(x_n-\\overline{x}_n)
-        \\sigma_n^2 = \\frac{M_{2,n}}{n}
 
     """
 

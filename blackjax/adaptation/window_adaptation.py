@@ -28,7 +28,7 @@ from blackjax.adaptation.step_size import (
 from blackjax.types import Array, PyTree
 from blackjax.util import pytree_size
 
-__all__ = ["base", "schedule"]
+__all__ = ["WindowAdaptationState", "base", "schedule"]
 
 
 class WindowAdaptationState(NamedTuple):
