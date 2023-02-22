@@ -56,11 +56,7 @@ intersphinx_mapping = {
 autoapi_dirs = ["../blackjax"]
 autoapi_type = "python"
 autoapi_add_toctree_entry = False
-# autoapi_options = [
-#      "undoc-members"
-# #     "show-module-summary"
-# #     "show-imported-members"
-#  ]
+autoapi_options = ["show-module-summary", "undoc-members"]
 autodoc_typehints = "signature"
 
 # Add any paths that contain templates here, relative to this directory.
