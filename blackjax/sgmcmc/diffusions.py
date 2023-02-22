@@ -24,11 +24,11 @@ __all__ = ["overdamped_langevin", "sghmc"]
 def overdamped_langevin():
     """Euler solver for overdamped Langevin diffusion.
 
-    This algorithm was ported from [Coullon2022]_.
+    This algorithm was ported from [CN22]_.
 
     References
     ----------
-    .. [Coullon2022] Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
+    .. [CN22] Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
             library for stochastic gradient Markov chain Monte Carlo algorithms.
             Journal of Open Source Software, 7(72), 4113.
 
@@ -57,16 +57,16 @@ def overdamped_langevin():
 
 
 def sghmc(alpha: float = 0.01, beta: float = 0):
-    """Solver for the diffusion equation of the SGHMC algorithm [Chen2014]_.
+    """Solver for the diffusion equation of the SGHMC algorithm [CFG14]_.
 
-    This algorithm was ported from [Coullon2022]_.
+    This algorithm was ported from [CN22]_.
 
     References
     ----------
-    .. [Chen2014] Chen, T., Fox, E., & Guestrin, C. (2014, June). Stochastic
+    .. [CFG14] Chen, T., Fox, E., & Guestrin, C. (2014, June). Stochastic
              gradient hamiltonian monte carlo. In International conference on
              machine learning (pp. 1683-1691). PMLR.
-    .. [Coullon2022] Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
+    .. [CN22] Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
             library for stochastic gradient Markov chain Monte Carlo algorithms.
             Journal of Open Source Software, 7(72), 4113.
 

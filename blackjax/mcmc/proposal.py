@@ -160,9 +160,9 @@ def progressive_biased_sampling(rng_key, proposal, new_proposal):
 
     References
     ----------
-    .. [Betancourt2017] Betancourt, Michael.
-            "A conceptual introduction to Hamiltonian Monte Carlo."
-            arXiv preprint arXiv:1701.02434 (2017).
+    .. [Bet17] Betancourt, Michael.
+        "A conceptual introduction to Hamiltonian Monte Carlo."
+        arXiv preprint arXiv:1701.02434 (2017).
 
     """
     p_accept = jnp.clip(jnp.exp(new_proposal.weight - proposal.weight), a_max=1)
@@ -199,14 +199,14 @@ def nonreversible_slice_sampling(slice, proposal, new_proposal):
     """Slice sampling for non-reversible Metropolis-Hasting update.
 
     Performs a non-reversible update of a uniform [0, 1] value
-    for Metropolis-Hastings accept/reject decisions [Neal2020]_, in addition
+    for Metropolis-Hastings accept/reject decisions [Nea20]_, in addition
     to the accept/reject step of a current state and new proposal.
 
     References
     ----------
-    .. [Neal2020] Neal, R. M. (2020).
-            "Non-reversibly updating a uniform [0, 1] value for Metropolis accept/reject decisions."
-            arXiv preprint arXiv:2001.11950.
+    .. [Nea20] Neal, R. M. (2020).
+        "Non-reversibly updating a uniform [0, 1] value for Metropolis accept/reject decisions."
+        arXiv preprint arXiv:2001.11950.
 
     """
     delta_energy = new_proposal.weight
