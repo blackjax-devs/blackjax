@@ -49,16 +49,17 @@ def velocity_verlet(
 ) -> EuclideanIntegrator:
     """The velocity Verlet (or Verlet-Störmer) integrator.
 
-    The velocity Verlet is a two-stage palindromic integrator [1]_ of the form
+    The velocity Verlet is a two-stage palindromic integrator [BouRabee2018]_ of the form
     (a1, b1, a2, b1, a1) with a1 = 0. It is numerically stable for values of
     the step size that range between 0 and 2 (when the mass matrix is the
     identity).
 
     While the position (a1 = 0.5) and velocity Verlet are the most commonly used
-    in samplers, it is known in the numerical computation literature that the value
-    $a1 \approx 0.1932$ leads to a lower integration error [2,3]_. The authors of [1]_
-    show that the value $a1 \approx 0.21132$ leads to an even higher step acceptance
-    rate, up to 3 times higher than with the standard position verlet (p.22, Fig.4).
+    in samplers, it is known in the numerical computation literature that the
+    value $a1 \approx 0.1932$ leads to a lower integration error
+    [McLachlan1995,Schlick2010]_. The authors of [BouRabee2018]_ show that the
+    value $a1 \approx 0.21132$ leads to an even higher step acceptance rate, up
+    to 3 times higher than with the standard position verlet (p.22, Fig.4).
 
     By choosing the velocity verlet we avoid two computations of the gradient
     of the kinetic energy. We are trading accuracy in exchange, and it is not
@@ -67,13 +68,13 @@ def velocity_verlet(
 
     References
     ----------
-    .. [1]: Bou-Rabee, Nawaf, and Jesús Marıa Sanz-Serna. "Geometric
+    .. [BouRabee2018] Bou-Rabee, Nawaf, and Jesús Marıa Sanz-Serna. "Geometric
             integrators and the Hamiltonian Monte Carlo method." Acta Numerica 27
             (2018): 113-206.
-    .. [2]: McLachlan, Robert I. "On the numerical integration of ordinary
+    .. [McLachlan1995] McLachlan, Robert I. "On the numerical integration of ordinary
             differential equations by symmetric composition methods." SIAM Journal on
             Scientific Computing 16.1 (1995): 151-168.
-    .. [3]: Schlick, Tamar. Molecular modeling and simulation: an
+    .. [Schlick2010] Schlick, Tamar. Molecular modeling and simulation: an
             interdisciplinary guide: Vol. 21. Springer
             Science & Business Media, 2010.
 
@@ -119,20 +120,20 @@ def mclachlan(
     logdensity_fn: Callable,
     kinetic_energy_fn: Callable,
 ) -> EuclideanIntegrator:
-    """Two-stage palindromic symplectic integrator derived in [1]_
+    """Two-stage palindromic symplectic integrator derived in [Blanes2014]_
 
     The integrator is of the form (b1, a1, b2, a1, b1). The choice of the parameters
     determine both the bound on the integration error and the stability of the
     method with respect to the value of `step_size`. The values used here are
-    the ones derived in [2]_; note that [1]_ is more focused on stability
+    the ones derived in [McLachlan1995]_; note that [Blanes2014]_ is more focused on stability
     and derives different values.
 
     References
     ----------
-    .. [1]: Blanes, Sergio, Fernando Casas, and J. M. Sanz-Serna. "Numerical
+    .. [Blanes2014] Blanes, Sergio, Fernando Casas, and J. M. Sanz-Serna. "Numerical
             integrators for the Hybrid Monte Carlo method." SIAM Journal on Scientific
             Computing 36.4 (2014): A1556-A1580.
-    .. [2]: McLachlan, Robert I. "On the numerical integration of ordinary
+    .. [McLachlan1995] McLachlan, Robert I. "On the numerical integration of ordinary
             differential equations by symmetric composition methods." SIAM Journal on
             Scientific Computing 16.1 (1995): 151-168.
 
@@ -198,12 +199,12 @@ def yoshida(
     The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of
     the parameters determine both the bound on the integration error and the
     stability of the method with respect to the value of `step_size`. The
-    values used here are the ones derived in [1]_ which guarantees a stability
+    values used here are the ones derived in [Blanes2014]_ which guarantees a stability
     interval length approximately equal to 4.67.
 
     References
     ----------
-    .. [1]: Blanes, Sergio, Fernando Casas, and J. M. Sanz-Serna. "Numerical
+    .. [Blanes2014] Blanes, Sergio, Fernando Casas, and J. M. Sanz-Serna. "Numerical
             integrators for the Hybrid Monte Carlo method." SIAM Journal on Scientific
             Computing 36.4 (2014): A1556-A1580.
 

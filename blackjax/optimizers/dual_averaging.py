@@ -85,8 +85,9 @@ def dual_averaging(
     References
     ----------
 
-    .. [1]: Nesterov, Yurii. "Primal-dual subgradient methods for convex
+    .. [1] Nesterov, Yurii. "Primal-dual subgradient methods for convex
             problems." Mathematical programming 120.1 (2009): 221-259.
+    .. [2] Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo." J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
 
     """
 

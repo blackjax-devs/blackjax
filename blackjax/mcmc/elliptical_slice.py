@@ -83,7 +83,7 @@ def kernel(cov_matrix: Array, mean: Array):
 
     References
     ----------
-    .. [1]: Murray, Iain, Ryan Adams, and David MacKay. "Elliptical slice sampling."
+    .. [1] Murray, Iain, Ryan Adams, and David MacKay. "Elliptical slice sampling."
             Proceedings of the thirteenth international conference on artificial intelligence
             and statistics. JMLR Workshop and Conference Proceedings, 2010.
 

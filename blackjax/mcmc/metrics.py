@@ -28,9 +28,9 @@ We can also generate a relativistic dynamic [2]_.
 
 References
 ----------
-.. [1]: Betancourt, Michael, et al. "The geometric foundations of hamiltonian
+.. [1] Betancourt, Michael, et al. "The geometric foundations of hamiltonian
         monte carlo." Bernoulli 23.4A (2017): 2257-2298.
-.. [2]: Lu, Xiaoyu, et al. "Relativistic monte carlo." Artificial Intelligence and Statistics. PMLR, 2017.
+.. [2] Lu, Xiaoyu, et al. "Relativistic monte carlo." Artificial Intelligence and Statistics. PMLR, 2017.
 
 """
 from typing import Callable, Tuple
@@ -82,7 +82,7 @@ def gaussian_euclidean(
 
     References
     ----------
-    .. [1]: Betancourt, Michael. "A general metric for Riemannian manifold
+    .. [Betancourt2013] Betancourt, Michael. "A general metric for Riemannian manifold
             Hamiltonian Monte Carlo." International Conference on Geometric Science of
             Information. Springer, Berlin, Heidelberg, 2013.
 
@@ -131,7 +131,7 @@ def gaussian_euclidean(
         momentum_sum
             Sum of the momenta along the trajectory.
 
-        .. [1]: Betancourt, Michael J. "Generalizing the no-U-turn sampler to Riemannian manifolds." arXiv preprint arXiv:1304.1920 (2013).
+        .. [Betancourt2013b]: Betancourt, Michael J. "Generalizing the no-U-turn sampler to Riemannian manifolds." arXiv preprint arXiv:1304.1920 (2013).
         .. [2]: "NUTS misses U-turn, runs in cicles until max depth", Stan Discourse Forum
                 https://discourse.mc-stan.org/t/nuts-misses-u-turns-runs-in-circles-until-max-treedepth/9727/46
 

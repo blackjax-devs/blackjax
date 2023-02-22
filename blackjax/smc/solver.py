@@ -32,7 +32,7 @@ def dichotomy(fun, _delta0, min_delta, max_delta, eps=1e-4, max_iter=100):
     max_delta: float
         End point of the interval search
     eps: float
-        Tolerance for |f(a) - f(b)|
+        Tolerance for :math:`|f(a) - f(b)|`
     max_iter: int
         Maximum of iterations in the dichotomy search
 

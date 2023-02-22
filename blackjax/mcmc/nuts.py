@@ -114,16 +114,16 @@ def kernel(
 
     References
     ----------
-    .. [Hoffman2014]: Hoffman, Matthew D., and Andrew Gelman.
+    .. [Hoffman2014] Hoffman, Matthew D., and Andrew Gelman.
                       "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo."
                       J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
-    .. [Betancourt2017]: Betancourt, Michael.
+    .. [Betancourt2017] Betancourt, Michael.
                          "A conceptual introduction to Hamiltonian Monte Carlo."
                          arXiv preprint arXiv:1701.02434 (2017).
-    .. [Phan2019]: Phan Du, Neeraj Pradhan, and Martin Jankowiak.
+    .. [Phan2019] Phan Du, Neeraj Pradhan, and Martin Jankowiak.
                    "Composable effects for flexible and accelerated probabilistic programming in NumPyro."
                    arXiv preprint arXiv:1912.11554 (2019).
-    .. [Lao2020]: Lao, Junpeng, et al.
+    .. [Lao2020] Lao, Junpeng, et al.
                   "tfp. mcmc: Modern markov chain monte carlo tools built for modern hardware."
                   arXiv preprint arXiv:2002.01184 (2020).
 
