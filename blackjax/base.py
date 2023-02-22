@@ -97,8 +97,6 @@ class MCMCSamplingAlgorithm(NamedTuple):
     on states which contain the chain state and additional information that
     needs to be carried over for the next step.
 
-    Attributes
-    ---------
     init:
         A pure function which when called with the initial position and the
         target density probability function will return the kernel's initial
@@ -123,8 +121,6 @@ class VIAlgorithm(NamedTuple):
     potentially a guide), and a sampling function that uses the approximation to
     draw samples.
 
-    Attributes
-    ----------
     approximate
         A pure function, which when called with an initial position (and
         potentially a guide function) returns a state that allows to build

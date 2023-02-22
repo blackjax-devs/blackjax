@@ -32,11 +32,9 @@ class MarginalState(NamedTuple):
         Current value of the log-likelihood of the model
     grad_x
         Current value of the gradient of the log-likelihood of the model
-
-    Other Attributes:
-    -----------------
-    U_x, U_grad_x: Array
+    U_x
         Auxiliary attributes
+    U_grad_x
 
     """
 

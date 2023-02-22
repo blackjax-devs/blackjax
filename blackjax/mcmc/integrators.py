@@ -57,7 +57,7 @@ def velocity_verlet(
     While the position (a1 = 0.5) and velocity Verlet are the most commonly used
     in samplers, it is known in the numerical computation literature that the
     value $a1 \approx 0.1932$ leads to a lower integration error
-    [McLachlan1995,Schlick2010]_. The authors of [BouRabee2018]_ show that the
+    [McLachlan1995]_, [Schlick2010]_. The authors of [BouRabee2018]_ show that the
     value $a1 \approx 0.21132$ leads to an even higher step acceptance rate, up
     to 3 times higher than with the standard position verlet (p.22, Fig.4).
 
@@ -194,7 +194,7 @@ def yoshida(
     logdensity_fn: Callable,
     kinetic_energy_fn: Callable,
 ) -> EuclideanIntegrator:
-    """Three stages palindromic symplectic integrator derived in [1]_
+    """Three stages palindromic symplectic integrator derived in [Blanes2014]_
 
     The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of
     the parameters determine both the bound on the integration error and the

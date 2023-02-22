@@ -80,12 +80,6 @@ def gaussian_euclidean(
         A function that determines whether a trajectory is turning back on
         itself given the values of the momentum along the trajectory.
 
-    References
-    ----------
-    .. [Betancourt2013] Betancourt, Michael. "A general metric for Riemannian manifold
-            Hamiltonian Monte Carlo." International Conference on Geometric Science of
-            Information. Springer, Berlin, Heidelberg, 2013.
-
     """
     ndim = jnp.ndim(inverse_mass_matrix)  # type: ignore[arg-type]
     shape = jnp.shape(inverse_mass_matrix)[:1]  # type: ignore[arg-type]
@@ -132,7 +126,7 @@ def gaussian_euclidean(
             Sum of the momenta along the trajectory.
 
         .. [Betancourt2013b]: Betancourt, Michael J. "Generalizing the no-U-turn sampler to Riemannian manifolds." arXiv preprint arXiv:1304.1920 (2013).
-        .. [2]: "NUTS misses U-turn, runs in cicles until max depth", Stan Discourse Forum
+        .. [Stan]: "NUTS misses U-turn, runs in cicles until max depth", Stan Discourse Forum
                 https://discourse.mc-stan.org/t/nuts-misses-u-turns-runs-in-circles-until-max-treedepth/9727/46
 
         """
