@@ -132,7 +132,7 @@ def kernel(
 
     References
     ----------
-    .. [1]: Kirill Neklyudov and Max Welling "Orbital MCMC." arXiv preprint
+    .. [1] Kirill Neklyudov and Max Welling "Orbital MCMC." arXiv preprint
             arXiv:2010.08047 (2021).
     """
 
@@ -263,7 +263,7 @@ def periodic_orbital_proposal(
 
         References
         ----------
-        .. [1]: Kirill Neklyudov and Max Welling "Orbital MCMC." arXiv preprint
+        .. [1] Kirill Neklyudov and Max Welling "Orbital MCMC." arXiv preprint
                 arXiv:2010.08047 (2021).
         """
 

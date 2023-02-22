@@ -78,7 +78,7 @@ def base(
 
     References
     ----------
-    .. [1]: Stan Reference Manual v2.22
+    .. [1] Stan Reference Manual v2.22
             Section 15.2 "HMC Algorithm"
 
     Parameters

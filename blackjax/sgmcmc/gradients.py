@@ -24,13 +24,13 @@ def logdensity_estimator(
 ) -> Callable:
     """Builds a simple estimator for the log-density.
 
-    This estimator first appeared in [1]_. The `logprior_fn` function has a
+    This estimator first appeared in [Robbins1951]_. The `logprior_fn` function has a
     single argument:  the current position (value of parameters). The
     `loglikelihood_fn` takes two arguments: the current position and a batch of
     data; if there are several variables (as, for instance, in a supervised
     learning contexts), they are passed in a tuple.
 
-    This algorithm was ported from [2]_.
+    This algorithm was ported from [Coullon2022]_.
 
     Parameters
     ----------
@@ -44,9 +44,9 @@ def logdensity_estimator(
 
     References
     ----------
-    .. [1]: Robbins H. and Monro S. A stochastic approximation method. Annals
+    .. [Robbins1951] Robbins H. and Monro S. A stochastic approximation method. Annals
             of Mathematical Statistics, 22(30):400-407, 1951.
-    .. [2]: Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
+    .. [Coullon2022] Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
             library for stochastic gradient Markov chain Monte Carlo algorithms.
             Journal of Open Source Software, 7(72), 4113.
 
@@ -93,9 +93,9 @@ def control_variates(
     centering_position: PyTree,
     data: PyTree,
 ) -> Callable:
-    """Builds a control variate gradient estimator [1]_.
+    """Builds a control variate gradient estimator [Baker2019]_.
 
-    This algorithm was ported from [2]_.
+    This algorithm was ported from [Coullon2022]_.
 
     Parameters
     ----------
@@ -108,10 +108,10 @@ def control_variates(
 
     References
     ----------
-    .. [1]: Baker, J., Fearnhead, P., Fox, E. B., & Nemeth, C. (2019).
+    .. [Baker2019] Baker, J., Fearnhead, P., Fox, E. B., & Nemeth, C. (2019).
             Control variates for stochastic gradient MCMC. Statistics
             and Computing, 29(3), 599-615.
-    .. [2]: Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
+    .. [Coullon2022] Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
             library for stochastic gradient Markov chain Monte Carlo algorithms.
             Journal of Open Source Software, 7(72), 4113.
 

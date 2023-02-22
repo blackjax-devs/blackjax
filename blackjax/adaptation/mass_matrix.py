@@ -17,7 +17,7 @@ Monte Carlo family to the current geometry.
 The Stan Manual [1]_ is a very good reference on automatic tuning of
 parameters used in Hamiltonian Monte Carlo.
 
-.. [1]: "HMC Algorithm Parameters", Stan Manual
+.. [1] "HMC Algorithm Parameters", Stan Manual
         https://mc-stan.org/docs/2_20/reference-manual/hmc-algorithm-parameters.html
 
 """
