@@ -22,6 +22,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
     <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
     
@@ -170,34 +171,421 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../mcmc.html">
-   MCMC
+  <a class="reference internal" href="../autoapi/blackjax/kernels/index.html">
+   Sampling algorithms
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../sgmcmc.html">
-   Stochastic gradient MCMC
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../smc.html">
-   Sequential Monte Carlo
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../vi.html">
-   Variational Inference
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../adaptation.html">
-   Adaptation
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../diagnostics.html">
+  <a class="reference internal" href="../autoapi/blackjax/diagnostics/index.html">
    Diagnostics
   </a>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../autoapi/blackjax/index.html">
+   API Reference
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../autoapi/blackjax/adaptation/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.adaptation
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+    <label for="toctree-checkbox-2">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/adaptation/mass_matrix/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.mass_matrix
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/adaptation/meads_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.meads_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.pathfinder_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/adaptation/step_size/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.step_size
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/adaptation/window_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.window_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../autoapi/blackjax/mcmc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.mcmc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+    <label for="toctree-checkbox-3">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/diffusions/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.diffusions
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/elliptical_slice/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.elliptical_slice
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/ghmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.ghmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/hmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.hmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/integrators/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.integrators
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/irmh/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.irmh
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/mala/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.mala
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.marginal_latent_gaussian
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/metrics/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.metrics
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/nuts/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.nuts
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/periodic_orbital/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.periodic_orbital
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/proposal/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.proposal
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/rmh/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.rmh
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/termination/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.termination
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/mcmc/trajectory/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.trajectory
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../autoapi/blackjax/sgmcmc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.sgmcmc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+    <label for="toctree-checkbox-4">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/sgmcmc/csgld/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.csgld
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/sgmcmc/diffusions/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.diffusions
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/sgmcmc/gradients/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.gradients
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/sgmcmc/sghmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.sghmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/sgmcmc/sgld/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.sgld
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../autoapi/blackjax/smc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.smc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/>
+    <label for="toctree-checkbox-5">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/smc/adaptive_tempered/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.adaptive_tempered
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/smc/base/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.base
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/smc/ess/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.ess
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/smc/resampling/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.resampling
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/smc/solver/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.solver
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/smc/tempered/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.tempered
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../autoapi/blackjax/vi/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.vi
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/>
+    <label for="toctree-checkbox-6">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/vi/meanfield_vi/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.vi.meanfield_vi
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../autoapi/blackjax/vi/pathfinder/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.vi.pathfinder
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../autoapi/blackjax/diagnostics/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.diagnostics
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../autoapi/blackjax/kernels/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.kernels
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
  </li>
 </ul>
 
@@ -301,8 +689,47 @@ title="Source repository"
               <div>
                 
   <h1>All modules for which code is available</h1>
-<ul><li><a href="blackjax/diagnostics.html">blackjax.diagnostics</a></li>
+<ul><li><a href="blackjax/adaptation/mass_matrix.html">blackjax.adaptation.mass_matrix</a></li>
+<li><a href="blackjax/adaptation/meads_adaptation.html">blackjax.adaptation.meads_adaptation</a></li>
+<li><a href="blackjax/adaptation/pathfinder_adaptation.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li><a href="blackjax/adaptation/step_size.html">blackjax.adaptation.step_size</a></li>
+<li><a href="blackjax/adaptation/window_adaptation.html">blackjax.adaptation.window_adaptation</a></li>
+<li><a href="blackjax/base.html">blackjax.base</a></li>
+<li><a href="blackjax/diagnostics.html">blackjax.diagnostics</a></li>
 <li><a href="blackjax/kernels.html">blackjax.kernels</a></li>
+<li><a href="blackjax/mcmc/diffusions.html">blackjax.mcmc.diffusions</a></li>
+<li><a href="blackjax/mcmc/elliptical_slice.html">blackjax.mcmc.elliptical_slice</a></li>
+<li><a href="blackjax/mcmc/ghmc.html">blackjax.mcmc.ghmc</a></li>
+<li><a href="blackjax/mcmc/hmc.html">blackjax.mcmc.hmc</a></li>
+<li><a href="blackjax/mcmc/integrators.html">blackjax.mcmc.integrators</a></li>
+<li><a href="blackjax/mcmc/irmh.html">blackjax.mcmc.irmh</a></li>
+<li><a href="blackjax/mcmc/mala.html">blackjax.mcmc.mala</a></li>
+<li><a href="blackjax/mcmc/marginal_latent_gaussian.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li><a href="blackjax/mcmc/metrics.html">blackjax.mcmc.metrics</a></li>
+<li><a href="blackjax/mcmc/nuts.html">blackjax.mcmc.nuts</a></li>
+<li><a href="blackjax/mcmc/periodic_orbital.html">blackjax.mcmc.periodic_orbital</a></li>
+<li><a href="blackjax/mcmc/proposal.html">blackjax.mcmc.proposal</a></li>
+<li><a href="blackjax/mcmc/rmh.html">blackjax.mcmc.rmh</a></li>
+<li><a href="blackjax/mcmc/termination.html">blackjax.mcmc.termination</a></li>
+<li><a href="blackjax/mcmc/trajectory.html">blackjax.mcmc.trajectory</a></li>
+<li><a href="blackjax/optimizers/dual_averaging.html">blackjax.optimizers.dual_averaging</a></li>
+<li><a href="blackjax/optimizers/lbfgs.html">blackjax.optimizers.lbfgs</a></li>
+<li><a href="blackjax/progress_bar.html">blackjax.progress_bar</a></li>
+<li><a href="blackjax/sgmcmc/csgld.html">blackjax.sgmcmc.csgld</a></li>
+<li><a href="blackjax/sgmcmc/diffusions.html">blackjax.sgmcmc.diffusions</a></li>
+<li><a href="blackjax/sgmcmc/gradients.html">blackjax.sgmcmc.gradients</a></li>
+<li><a href="blackjax/sgmcmc/sghmc.html">blackjax.sgmcmc.sghmc</a></li>
+<li><a href="blackjax/sgmcmc/sgld.html">blackjax.sgmcmc.sgld</a></li>
+<li><a href="blackjax/smc/adaptive_tempered.html">blackjax.smc.adaptive_tempered</a></li>
+<li><a href="blackjax/smc/base.html">blackjax.smc.base</a></li>
+<li><a href="blackjax/smc/ess.html">blackjax.smc.ess</a></li>
+<li><a href="blackjax/smc/resampling.html">blackjax.smc.resampling</a></li>
+<li><a href="blackjax/smc/solver.html">blackjax.smc.solver</a></li>
+<li><a href="blackjax/smc/tempered.html">blackjax.smc.tempered</a></li>
+<li><a href="blackjax/types.html">blackjax.types</a></li>
+<li><a href="blackjax/util.html">blackjax.util</a></li>
+<li><a href="blackjax/vi/meanfield_vi.html">blackjax.vi.meanfield_vi</a></li>
+<li><a href="blackjax/vi/pathfinder.html">blackjax.vi.pathfinder</a></li>
 </ul>
 
               </div>

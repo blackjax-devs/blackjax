@@ -1,0 +1,1063 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>blackjax.adaptation.window_adaptation</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script src="../../../../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="blackjax.mcmc" href="../../mcmc/index.html" />
+    <link rel="prev" title="blackjax.adaptation.step_size" href="../step_size/index.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../../../index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="../../../../_static/blackjax.png" class="logo" alt="logo">
+      
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../examples/quickstart.html">
+   Quickstart
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  PPL INTEGRATION
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../examples/howto_use_aesara.html">
+   Aesara
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../examples/howto_use_numpyro.html">
+   Numpyro
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../examples/howto_use_oryx.html">
+   Oryx
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../examples/howto_use_pymc.html">
+   PyMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../examples/howto_use_tfp.html">
+   Tensorflow-Probability
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  HOW TO
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../examples/howto_sample_multiple_chains.html">
+   Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../examples/howto_custom_gradients.html">
+   Use custom gradients?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../examples/howto_other_frameworks.html">
+   Use non-JAX log-prob functions?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../examples/howto_metropolis_within_gibbs.html">
+   Build a Metropolis-Within-Gibbs sampler?
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  LEARN BY EXAMPLE
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference external" href="https://blackjax-devs.github.io/sampling-book">
+   The Sampling Book
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../kernels/index.html">
+   Sampling algorithms
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../diagnostics/index.html">
+   Diagnostics
+  </a>
+ </li>
+ <li class="toctree-l1 current active has-children">
+  <a class="reference internal" href="../../index.html">
+   API Reference
+  </a>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul class="current">
+   <li class="toctree-l2 current active has-children">
+    <a class="reference internal" href="../index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.adaptation
+      </span>
+     </code>
+    </a>
+    <input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+    <label for="toctree-checkbox-2">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul class="current">
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mass_matrix/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.mass_matrix
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../meads_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.meads_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../pathfinder_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.pathfinder_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../step_size/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.step_size
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3 current active">
+      <a class="current reference internal" href="#">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.window_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../mcmc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.mcmc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+    <label for="toctree-checkbox-3">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/diffusions/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.diffusions
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/elliptical_slice/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.elliptical_slice
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/ghmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.ghmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/hmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.hmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/integrators/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.integrators
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/irmh/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.irmh
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/mala/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.mala
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/marginal_latent_gaussian/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.marginal_latent_gaussian
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/metrics/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.metrics
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/nuts/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.nuts
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/periodic_orbital/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.periodic_orbital
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/proposal/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.proposal
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/rmh/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.rmh
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/termination/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.termination
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../mcmc/trajectory/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.trajectory
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../sgmcmc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.sgmcmc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+    <label for="toctree-checkbox-4">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../sgmcmc/csgld/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.csgld
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../sgmcmc/diffusions/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.diffusions
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../sgmcmc/gradients/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.gradients
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../sgmcmc/sghmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.sghmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../sgmcmc/sgld/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.sgld
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../smc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.smc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/>
+    <label for="toctree-checkbox-5">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../smc/adaptive_tempered/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.adaptive_tempered
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../smc/base/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.base
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../smc/ess/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.ess
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../smc/resampling/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.resampling
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../smc/solver/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.solver
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../smc/tempered/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.tempered
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../vi/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.vi
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/>
+    <label for="toctree-checkbox-6">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../vi/meanfield_vi/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.vi.meanfield_vi
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../vi/pathfinder/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.vi.pathfinder
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../diagnostics/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.diagnostics
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../kernels/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.kernels
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+<a href="https://github.com/blackjax-devs/blackjax"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="bottom"
+title="Source repository"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+<label for="__page-toc"
+  class="headerbtn headerbtn-page-toc"
+  
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-list"></i>
+  </span>
+
+</label>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+    <div class="tocsection onthispage pt-5 pb-3">
+        <i class="fas fa-list"></i> Contents
+    </div>
+    <nav id="bd-toc-nav" aria-label="Page">
+        <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-contents">
+   Module Contents
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#classes">
+     Classes
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#functions">
+     Functions
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState">
+       WindowAdaptationState
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState.ss_state">
+         ss_state
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState.imm_state">
+         imm_state
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState.step_size">
+         step_size
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState.inverse_mass_matrix">
+         inverse_mass_matrix
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.base">
+       base
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.schedule">
+       schedule
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </nav>
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>blackjax.adaptation.window_adaptation</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-contents">
+   Module Contents
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#classes">
+     Classes
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#functions">
+     Functions
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState">
+       WindowAdaptationState
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState.ss_state">
+         ss_state
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState.imm_state">
+         imm_state
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState.step_size">
+         step_size
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState.inverse_mass_matrix">
+         inverse_mass_matrix
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.base">
+       base
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.adaptation.window_adaptation.schedule">
+       schedule
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <section id="module-blackjax.adaptation.window_adaptation">
+<span id="blackjax-adaptation-window-adaptation"></span><h1><a class="reference internal" href="#module-blackjax.adaptation.window_adaptation" title="blackjax.adaptation.window_adaptation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.window_adaptation</span></code></a><a class="headerlink" href="#module-blackjax.adaptation.window_adaptation" title="Permalink to this headline">#</a></h1>
+<p>Implementation of the Stan warmup for the HMC family of sampling algorithms.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">#</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this headline">#</a></h3>
+<table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState" title="blackjax.adaptation.window_adaptation.WindowAdaptationState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WindowAdaptationState</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">#</a></h3>
+<table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.window_adaptation.base" title="blackjax.adaptation.window_adaptation.base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base</span></code></a>(→ Tuple[Callable, Callable, Callable])</p></td>
+<td><p>Warmup scheme for sampling procedures based on euclidean manifold HMC.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.window_adaptation.schedule" title="blackjax.adaptation.window_adaptation.schedule"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schedule</span></code></a>(→ List[Tuple[int, bool]])</p></td>
+<td><p>Return the schedule for Stan's warmup.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.adaptation.window_adaptation.WindowAdaptationState">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">WindowAdaptationState</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/window_adaptation.html#WindowAdaptationState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState" title="Permalink to this definition">#</a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.window_adaptation.WindowAdaptationState.ss_state">
+<span class="sig-name descname"><span class="pre">ss_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../step_size/index.html#blackjax.adaptation.step_size.DualAveragingAdaptationState" title="blackjax.adaptation.step_size.DualAveragingAdaptationState"><span class="pre">blackjax.adaptation.step_size.DualAveragingAdaptationState</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/adaptation/window_adaptation.html#WindowAdaptationState.ss_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState.ss_state" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.window_adaptation.WindowAdaptationState.imm_state">
+<span class="sig-name descname"><span class="pre">imm_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../mass_matrix/index.html#blackjax.adaptation.mass_matrix.MassMatrixAdaptationState" title="blackjax.adaptation.mass_matrix.MassMatrixAdaptationState"><span class="pre">blackjax.adaptation.mass_matrix.MassMatrixAdaptationState</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/adaptation/window_adaptation.html#WindowAdaptationState.imm_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState.imm_state" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.window_adaptation.WindowAdaptationState.step_size">
+<span class="sig-name descname"><span class="pre">step_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/adaptation/window_adaptation.html#WindowAdaptationState.step_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState.step_size" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.window_adaptation.WindowAdaptationState.inverse_mass_matrix">
+<span class="sig-name descname"><span class="pre">inverse_mass_matrix</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></em><a class="reference internal" href="../../../../_modules/blackjax/adaptation/window_adaptation.html#WindowAdaptationState.inverse_mass_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState.inverse_mass_matrix" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.window_adaptation.base">
+<span class="sig-name descname"><span class="pre">base</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">is_mass_matrix_diagonal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_acceptance_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/window_adaptation.html#base"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.window_adaptation.base" title="Permalink to this definition">#</a></dt>
+<dd><p>Warmup scheme for sampling procedures based on euclidean manifold HMC.
+The schedule and algorithms used match Stan’s <a class="footnote-reference brackets" href="#id2" id="id1">1</a> as closely as possible.</p>
+<p>Unlike several other libraries, we separate the warmup and sampling phases
+explicitly. This ensure a better modularity; a change in the warmup does
+not affect the sampling. It also allows users to run their own warmup
+should they want to.
+We also decouple generating a new sample with the mcmc algorithm and
+updating the values of the parameters.</p>
+<p>Stan’s warmup consists in the three following phases:</p>
+<p>1. A fast adaptation window where only the step size is adapted using
+Nesterov’s dual averaging scheme to match a target acceptance rate.
+2. A succession of slow adapation windows (where the size of a window is
+double that of the previous window) where both the mass matrix and the step
+size are adapted. The mass matrix is recomputed at the end of each window;
+the step size is re-initialized to a “reasonable” value.
+3. A last fast adaptation window where only the step size is adapted.</p>
+<p>Schematically:</p>
+<table class="table">
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 5%" />
+<col style="width: 10%" />
+<col style="width: 20%" />
+<col style="width: 40%" />
+<col style="width: 10%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>fast</p></td>
+<td><p>s</p></td>
+<td><p>slow</p></td>
+<td><p>slow</p></td>
+<td><p>slow</p></td>
+<td><p>fast</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>2</p></td>
+<td><p>3</p></td>
+<td><p>3</p></td>
+<td><p>3</p></td>
+<td><p>3</p></td>
+</tr>
+</tbody>
+</table>
+<p>Step (1) consists in find a “reasonable” first step size that is used to
+initialize the dual averaging scheme. In (2) we initialize the mass matrix
+to the matrix. In (3) we compute the mass matrix to use in the kernel and
+re-initialize the mass matrix adaptation. The step size is still adapated
+in slow adaptation windows, and is not re-initialized between windows.</p>
+<p class="rubric">References</p>
+<dl class="footnote brackets">
+<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>Stan Reference Manual v2.22
+Section 15.2 “HMC Algorithm”</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>is_mass_matrix_diagonal</strong> – Create and adapt a diagonal mass matrix if True, a dense matrix
+otherwise.</p></li>
+<li><p><strong>target_acceptance_rate</strong> – The target acceptance rate for the step size adaptation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>init</em> – Function that initializes the warmup.</p></li>
+<li><p><em>update</em> – Function that moves the warmup one step.</p></li>
+<li><p><em>final</em> – Function that returns the step size and mass matrix given a warmup
+state.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.window_adaptation.schedule">
+<span class="sig-name descname"><span class="pre">schedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_buffer_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_buffer_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">25</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/window_adaptation.html#schedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.window_adaptation.schedule" title="Permalink to this definition">#</a></dt>
+<dd><p>Return the schedule for Stan’s warmup.</p>
+<p>The schedule below is intended to be as close as possible to Stan’s _[1].
+The warmup period is split into three stages:</p>
+<p>1. An initial fast interval to reach the typical set. Only the step size is
+adapted in this window.
+2. “Slow” parameters that require global information (typically covariance)
+are estimated in a series of expanding intervals with no memory; the step
+size is re-initialized at the end of each window. Each window is twice the
+size of the preceding window.
+3. A final fast interval during which the step size is adapted using the
+computed mass matrix.</p>
+<p>Schematically:</p>
+<p><code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">+---------+---+------+------------+------------------------+------+</span>
+<span class="pre">|</span>&#160; <span class="pre">fast</span>&#160;&#160; <span class="pre">|</span> <span class="pre">s</span> <span class="pre">|</span> <span class="pre">slow</span> <span class="pre">|</span>&#160;&#160; <span class="pre">slow</span>&#160;&#160;&#160;&#160; <span class="pre">|</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">slow</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">|</span> <span class="pre">fast</span> <span class="pre">|</span>
+<span class="pre">+---------+---+------+------------+------------------------+------+</span>
+<span class="pre">`</span></code></p>
+<p>The distinction slow/fast comes from the speed at which the algorithms
+converge to a stable value; in the common case, estimation of covariance
+requires more steps than dual averaging to give an accurate value. See _[1]
+for a more detailed explanation.</p>
+<p>Fast intervals are given the label 0 and slow intervals the label 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – The number of warmup steps to perform.</p></li>
+<li><p><strong>initial_buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – The width of the initial fast adaptation interval.</p></li>
+<li><p><strong>first_window_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – The width of the first slow adaptation interval.</p></li>
+<li><p><strong>final_buffer_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – The width of the final fast adaptation interval.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A list of tuples (window_label, is_middle_window_end).</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="../step_size/index.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.step_size</span></code></p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="../../mcmc/index.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc</span></code></p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By The Blackjax developers<br/>
+  
+      &copy; Copyright 2023, The Blackjax developers.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>

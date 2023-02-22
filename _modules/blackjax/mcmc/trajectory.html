@@ -1,0 +1,1357 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.mcmc.trajectory</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../../index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="../../../_static/blackjax.png" class="logo" alt="logo">
+      
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/quickstart.html">
+   Quickstart
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  PPL INTEGRATION
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_aesara.html">
+   Aesara
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_numpyro.html">
+   Numpyro
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_oryx.html">
+   Oryx
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_pymc.html">
+   PyMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_tfp.html">
+   Tensorflow-Probability
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  HOW TO
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_sample_multiple_chains.html">
+   Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_custom_gradients.html">
+   Use custom gradients?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_other_frameworks.html">
+   Use non-JAX log-prob functions?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_metropolis_within_gibbs.html">
+   Build a Metropolis-Within-Gibbs sampler?
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  LEARN BY EXAMPLE
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference external" href="https://blackjax-devs.github.io/sampling-book">
+   The Sampling Book
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html">
+   Sampling algorithms
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">
+   Diagnostics
+  </a>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../../autoapi/blackjax/index.html">
+   API Reference
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.adaptation
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+    <label for="toctree-checkbox-2">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.mass_matrix
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.meads_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.pathfinder_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/adaptation/step_size/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.step_size
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.window_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.mcmc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+    <label for="toctree-checkbox-3">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.diffusions
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.elliptical_slice
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/ghmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.ghmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/hmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.hmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/integrators/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.integrators
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/irmh/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.irmh
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/mala/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.mala
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.marginal_latent_gaussian
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/metrics/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.metrics
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/nuts/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.nuts
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.periodic_orbital
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.proposal
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmh/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.rmh
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.termination
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.trajectory
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.sgmcmc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+    <label for="toctree-checkbox-4">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.csgld
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.diffusions
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.gradients
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.sghmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.sgld
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../../autoapi/blackjax/smc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.smc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/>
+    <label for="toctree-checkbox-5">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.adaptive_tempered
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/smc/base/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.base
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/smc/ess/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.ess
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.resampling
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.solver
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.tempered
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../../autoapi/blackjax/vi/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.vi
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/>
+    <label for="toctree-checkbox-6">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.vi.meanfield_vi
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.vi.pathfinder
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.diagnostics
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.kernels
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+<a href="https://github.com/blackjax-devs/blackjax"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="bottom"
+title="Source repository"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1></h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <h1>Source code for blackjax.mcmc.trajectory</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;Procedures to build trajectories for algorithms in the HMC family.</span>
+
+<span class="sd">To propose a new state, algorithms in the HMC family generally proceed by [Bet17]_:</span>
+
+<span class="sd">1. Sampling a trajectory starting from the initial point;</span>
+<span class="sd">2. Sampling a new state from this sampled trajectory.</span>
+
+<span class="sd">Step (1) ensures that the process is reversible and thus that detailed balance</span>
+<span class="sd">is respected. The traditional implementation of HMC does not sample a</span>
+<span class="sd">trajectory, but instead takes a fixed number of steps in the same direction and</span>
+<span class="sd">flips the momentum of the last state.</span>
+
+<span class="sd">We distinguish here between two different methods to sample trajectories: static</span>
+<span class="sd">and dynamic sampling. In the static setting we sample trajectories with a fixed</span>
+<span class="sd">number of steps, while in the dynamic setting the total number of steps is</span>
+<span class="sd">determined by a dynamic termination criterion. Traditional HMC falls in the</span>
+<span class="sd">former category, NUTS in the latter.</span>
+
+<span class="sd">There are also two methods to sample proposals from these trajectories. In the</span>
+<span class="sd">static setting we first build the trajectory and then sample a proposal from</span>
+<span class="sd">this trajectory. In the progressive setting we update the proposal as the</span>
+<span class="sd">trajectory is being sampled. While the former is faster, we risk saturating the</span>
+<span class="sd">memory by keeping states that will subsequently be discarded.</span>
+
+
+<span class="sd">References</span>
+<span class="sd">----------</span>
+<span class="sd">.. [Bet17] Betancourt, Michael.</span>
+<span class="sd">        &quot;A conceptual introduction to Hamiltonian Monte Carlo.&quot;</span>
+<span class="sd">        arXiv preprint arXiv:1701.02434 (2017).</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+
+<span class="kn">from</span> <span class="nn">blackjax.mcmc.integrators</span> <span class="kn">import</span> <span class="n">IntegratorState</span>
+<span class="kn">from</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Proposal</span><span class="p">,</span>
+    <span class="n">progressive_biased_sampling</span><span class="p">,</span>
+    <span class="n">progressive_uniform_sampling</span><span class="p">,</span>
+    <span class="n">proposal_generator</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+
+
+<div class="viewcode-block" id="Trajectory"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory">[docs]</a><span class="k">class</span> <span class="nc">Trajectory</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<div class="viewcode-block" id="Trajectory.leftmost_state"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory.leftmost_state">[docs]</a>    <span class="n">leftmost_state</span><span class="p">:</span> <span class="n">IntegratorState</span></div>
+<div class="viewcode-block" id="Trajectory.rightmost_state"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory.rightmost_state">[docs]</a>    <span class="n">rightmost_state</span><span class="p">:</span> <span class="n">IntegratorState</span></div>
+<div class="viewcode-block" id="Trajectory.momentum_sum"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory.momentum_sum">[docs]</a>    <span class="n">momentum_sum</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="Trajectory.num_states"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory.num_states">[docs]</a>    <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span></div></div>
+
+
+<div class="viewcode-block" id="append_to_trajectory"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.append_to_trajectory">[docs]</a><span class="k">def</span> <span class="nf">append_to_trajectory</span><span class="p">(</span><span class="n">trajectory</span><span class="p">:</span> <span class="n">Trajectory</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Trajectory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Append a state to the (right of the) trajectory to form a new trajectory.&quot;&quot;&quot;</span>
+    <span class="n">momentum_sum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">momentum_sum</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">momentum</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">Trajectory</span><span class="p">(</span>
+        <span class="n">trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">momentum_sum</span><span class="p">,</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">num_states</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="reorder_trajectories"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.reorder_trajectories">[docs]</a><span class="k">def</span> <span class="nf">reorder_trajectories</span><span class="p">(</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">trajectory</span><span class="p">:</span> <span class="n">Trajectory</span><span class="p">,</span> <span class="n">new_trajectory</span><span class="p">:</span> <span class="n">Trajectory</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Trajectory</span><span class="p">,</span> <span class="n">Trajectory</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Order the two trajectories depending on the direction.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+        <span class="n">direction</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span>
+            <span class="n">trajectory</span><span class="p">,</span>
+            <span class="n">new_trajectory</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span>
+            <span class="n">new_trajectory</span><span class="p">,</span>
+            <span class="n">trajectory</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="merge_trajectories"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.merge_trajectories">[docs]</a><span class="k">def</span> <span class="nf">merge_trajectories</span><span class="p">(</span><span class="n">left_trajectory</span><span class="p">:</span> <span class="n">Trajectory</span><span class="p">,</span> <span class="n">right_trajectory</span><span class="p">:</span> <span class="n">Trajectory</span><span class="p">):</span>
+    <span class="n">momentum_sum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">left_trajectory</span><span class="o">.</span><span class="n">momentum_sum</span><span class="p">,</span> <span class="n">right_trajectory</span><span class="o">.</span><span class="n">momentum_sum</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">Trajectory</span><span class="p">(</span>
+        <span class="n">left_trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="p">,</span>
+        <span class="n">right_trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="p">,</span>
+        <span class="n">momentum_sum</span><span class="p">,</span>
+        <span class="n">left_trajectory</span><span class="o">.</span><span class="n">num_states</span> <span class="o">+</span> <span class="n">right_trajectory</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<span class="c1"># -------------------------------------------------------------------</span>
+<span class="c1">#                             Integration</span>
+<span class="c1">#</span>
+<span class="c1"># Generating samples by choosing a direction and running the integrator</span>
+<span class="c1"># several times along this direction. Distinct from sampling.</span>
+<span class="c1"># -------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="static_integration"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.static_integration">[docs]</a><span class="k">def</span> <span class="nf">static_integration</span><span class="p">(</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a trajectory by integrating several times in one direction.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">integrate</span><span class="p">(</span>
+        <span class="n">initial_state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">num_integration_steps</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IntegratorState</span><span class="p">:</span>
+        <span class="n">directed_step_size</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">step_size</span><span class="p">:</span> <span class="n">direction</span> <span class="o">*</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">step_size</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">directed_step_size</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">state</span>
+
+        <span class="n">last_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+            <span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_integration_steps</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">last_state</span>
+
+    <span class="k">return</span> <span class="n">integrate</span></div>
+
+
+<div class="viewcode-block" id="DynamicIntegrationState"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicIntegrationState">[docs]</a><span class="k">class</span> <span class="nc">DynamicIntegrationState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<div class="viewcode-block" id="DynamicIntegrationState.step"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicIntegrationState.step">[docs]</a>    <span class="n">step</span><span class="p">:</span> <span class="nb">int</span></div>
+<div class="viewcode-block" id="DynamicIntegrationState.proposal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicIntegrationState.proposal">[docs]</a>    <span class="n">proposal</span><span class="p">:</span> <span class="n">Proposal</span></div>
+<div class="viewcode-block" id="DynamicIntegrationState.trajectory"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicIntegrationState.trajectory">[docs]</a>    <span class="n">trajectory</span><span class="p">:</span> <span class="n">Trajectory</span></div>
+<div class="viewcode-block" id="DynamicIntegrationState.termination_state"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicIntegrationState.termination_state">[docs]</a>    <span class="n">termination_state</span><span class="p">:</span> <span class="n">NamedTuple</span></div></div>
+
+
+<div class="viewcode-block" id="dynamic_progressive_integration"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.dynamic_progressive_integration">[docs]</a><span class="k">def</span> <span class="nf">dynamic_progressive_integration</span><span class="p">(</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">kinetic_energy</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">update_termination_state</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">is_criterion_met</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Integrate a trajectory and update the proposal sequentially in one direction</span>
+<span class="sd">    until the termination criterion is met.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    integrator</span>
+<span class="sd">        The symplectic integrator used to integrate the hamiltonian trajectory.</span>
+<span class="sd">    kinetic_energy</span>
+<span class="sd">        Function to compute the current value of the kinetic energy.</span>
+<span class="sd">    update_termination_state</span>
+<span class="sd">        Updates the state of the termination mechanism.</span>
+<span class="sd">    is_criterion_met</span>
+<span class="sd">        Determines whether the termination criterion has been met.</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        Value of the difference of energy between two consecutive states above</span>
+<span class="sd">        which we say a transition is divergent.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">generate_proposal</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
+    <span class="n">sample_proposal</span> <span class="o">=</span> <span class="n">progressive_uniform_sampling</span>
+
+    <span class="k">def</span> <span class="nf">integrate</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">initial_state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">,</span>
+        <span class="n">direction</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">termination_state</span><span class="p">,</span>
+        <span class="n">max_num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">,</span>
+        <span class="n">initial_energy</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Integrate the trajectory starting from `initial_state` and update the</span>
+<span class="sd">        proposal sequentially (hence progressive) until the termination</span>
+<span class="sd">        criterion is met (hence dynamic).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rng_key</span>
+<span class="sd">            Key used by JAX&#39;s random number generator.</span>
+<span class="sd">        initial_state</span>
+<span class="sd">            The initial state from which we start expanding the trajectory.</span>
+<span class="sd">        direction int in {-1, 1}</span>
+<span class="sd">            The direction in which to expand the trajectory.</span>
+<span class="sd">        termination_state</span>
+<span class="sd">            The state that keeps track of the information needed for the</span>
+<span class="sd">            termination criterion.</span>
+<span class="sd">        max_num_steps</span>
+<span class="sd">            The maximum number of integration steps. The expansion will stop</span>
+<span class="sd">            when this number is reached if the termination criterion has not</span>
+<span class="sd">            been met.</span>
+<span class="sd">        step_size</span>
+<span class="sd">            The step size of the symplectic integrator.</span>
+<span class="sd">        initial_energy</span>
+<span class="sd">            Initial energy H0 of the HMC step (not to confused with the initial</span>
+<span class="sd">            energy of the subtree)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">do_keep_integrating</span><span class="p">(</span><span class="n">loop_state</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Decide whether we should continue integrating the trajectory&quot;&quot;&quot;</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">integration_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">has_terminated</span><span class="p">)</span> <span class="o">=</span> <span class="n">loop_state</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">integration_state</span><span class="o">.</span><span class="n">step</span> <span class="o">&lt;</span> <span class="n">max_num_steps</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="o">~</span><span class="n">has_terminated</span>
+                <span class="o">&amp;</span> <span class="o">~</span><span class="n">is_diverging</span>
+            <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">add_one_state</span><span class="p">(</span><span class="n">loop_state</span><span class="p">):</span>
+            <span class="n">rng_key</span><span class="p">,</span> <span class="n">integration_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">loop_state</span>
+            <span class="n">step</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">trajectory</span><span class="p">,</span> <span class="n">termination_state</span> <span class="o">=</span> <span class="n">integration_state</span>
+            <span class="n">rng_key</span><span class="p">,</span> <span class="n">proposal_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+
+            <span class="n">new_state</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="p">,</span> <span class="n">direction</span> <span class="o">*</span> <span class="n">step_size</span><span class="p">)</span>
+            <span class="n">new_proposal</span><span class="p">,</span> <span class="n">is_diverging</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">new_state</span><span class="p">)</span>
+
+            <span class="c1"># At step 0, we always accept the proposal, since we</span>
+            <span class="c1"># take one step to get the leftmost state of the tree.</span>
+            <span class="p">(</span><span class="n">new_trajectory</span><span class="p">,</span> <span class="n">sampled_proposal</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+                <span class="n">step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="n">Trajectory</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">new_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                    <span class="n">new_proposal</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="n">append_to_trajectory</span><span class="p">(</span><span class="n">trajectory</span><span class="p">,</span> <span class="n">new_state</span><span class="p">),</span>
+                    <span class="n">sample_proposal</span><span class="p">(</span><span class="n">proposal_key</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">),</span>
+                <span class="p">),</span>
+                <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">new_termination_state</span> <span class="o">=</span> <span class="n">update_termination_state</span><span class="p">(</span>
+                <span class="n">termination_state</span><span class="p">,</span> <span class="n">new_trajectory</span><span class="o">.</span><span class="n">momentum_sum</span><span class="p">,</span> <span class="n">new_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span> <span class="n">step</span>
+            <span class="p">)</span>
+            <span class="n">has_terminated</span> <span class="o">=</span> <span class="n">is_criterion_met</span><span class="p">(</span>
+                <span class="n">new_termination_state</span><span class="p">,</span> <span class="n">new_trajectory</span><span class="o">.</span><span class="n">momentum_sum</span><span class="p">,</span> <span class="n">new_state</span><span class="o">.</span><span class="n">momentum</span>
+            <span class="p">)</span>
+
+            <span class="n">new_integration_state</span> <span class="o">=</span> <span class="n">DynamicIntegrationState</span><span class="p">(</span>
+                <span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">sampled_proposal</span><span class="p">,</span>
+                <span class="n">new_trajectory</span><span class="p">,</span>
+                <span class="n">new_termination_state</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">new_integration_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">has_terminated</span><span class="p">))</span>
+
+        <span class="n">proposal_placeholder</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">)</span>
+        <span class="n">trajectory_placeholder</span> <span class="o">=</span> <span class="n">Trajectory</span><span class="p">(</span>
+            <span class="n">initial_state</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">initial_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="n">integration_state_placeholder</span> <span class="o">=</span> <span class="n">DynamicIntegrationState</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="n">proposal_placeholder</span><span class="p">,</span>
+            <span class="n">trajectory_placeholder</span><span class="p">,</span>
+            <span class="n">termination_state</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">integration_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">has_terminated</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
+            <span class="n">do_keep_integrating</span><span class="p">,</span>
+            <span class="n">add_one_state</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">integration_state_placeholder</span><span class="p">,</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+        <span class="p">)</span>
+        <span class="n">step</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">trajectory</span><span class="p">,</span> <span class="n">termination_state</span> <span class="o">=</span> <span class="n">integration_state</span>
+
+        <span class="c1"># In the while_loop we always extend on the right most direction.</span>
+        <span class="n">new_trajectory</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">direction</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">trajectory</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">Trajectory</span><span class="p">(</span>
+                <span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="p">,</span>
+                <span class="n">trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="p">,</span>
+                <span class="n">trajectory</span><span class="o">.</span><span class="n">momentum_sum</span><span class="p">,</span>
+                <span class="n">trajectory</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">proposal</span><span class="p">,</span>
+            <span class="n">new_trajectory</span><span class="p">,</span>
+            <span class="n">termination_state</span><span class="p">,</span>
+            <span class="n">is_diverging</span><span class="p">,</span>
+            <span class="n">has_terminated</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">integrate</span></div>
+
+
+<div class="viewcode-block" id="dynamic_recursive_integration"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.dynamic_recursive_integration">[docs]</a><span class="k">def</span> <span class="nf">dynamic_recursive_integration</span><span class="p">(</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">kinetic_energy</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">uturn_check_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">use_robust_uturn_check</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Integrate a trajectory and update the proposal recursively in Python</span>
+<span class="sd">    until the termination criterion is met.</span>
+
+<span class="sd">    This is the implementation of Algorithm 6 from [HG14]_ with multinomial sampling.</span>
+<span class="sd">    The implemenation here is mostly for validating the progressive implementation</span>
+<span class="sd">    to make sure the two are equivalent. The recursive implementation should not</span>
+<span class="sd">    be used for actually sampling as it cannot be jitted and thus likely slow.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    integrator</span>
+<span class="sd">        The symplectic integrator used to integrate the hamiltonian trajectory.</span>
+<span class="sd">    kinetic_energy</span>
+<span class="sd">        Function to compute the current value of the kinetic energy.</span>
+<span class="sd">    uturn_check_fn</span>
+<span class="sd">        Determines whether the termination criterion has been met.</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        Value of the difference of energy between two consecutive states above which we say a transition is divergent.</span>
+<span class="sd">    use_robust_uturn_check</span>
+<span class="sd">        Bool to indicate whether to perform additional U turn check between two trajectory.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. [HG14] Hoffman, Matthew D., and Andrew Gelman. &quot;The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo.&quot;</span>
+<span class="sd">           J. Mach. Learn. Res. 15.1 (2014): 1593-1623.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">generate_proposal</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
+    <span class="n">sample_proposal</span> <span class="o">=</span> <span class="n">progressive_uniform_sampling</span>
+
+    <span class="k">def</span> <span class="nf">buildtree_integrate</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">initial_state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">,</span>
+        <span class="n">direction</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">tree_depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">,</span>
+        <span class="n">initial_energy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Integrate the trajectory starting from `initial_state` and update</span>
+<span class="sd">        the proposal recursively with tree doubling until the termination criterion is met.</span>
+
+<span class="sd">        The function `buildtree_integrate` calls itself for tree_depth &gt; 0, thus invokes</span>
+<span class="sd">        the recursive scheme that builds a trajectory by doubling a binary tree.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rng_key</span>
+<span class="sd">            Key used by JAX&#39;s random number generator.</span>
+<span class="sd">        initial_state</span>
+<span class="sd">            The initial state from which we start expanding the trajectory.</span>
+<span class="sd">        direction int in {-1, 1}</span>
+<span class="sd">            The direction in which to expand the trajectory.</span>
+<span class="sd">        tree_depth</span>
+<span class="sd">            The depth of the binary tree doubling.</span>
+<span class="sd">        step_size</span>
+<span class="sd">            The step size of the symplectic integrator.</span>
+<span class="sd">        initial_energy</span>
+<span class="sd">            Initial energy H0 of the HMC step (not to confused with the initial energy of the subtree)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tree_depth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Base case - take one leapfrog step in the direction v.</span>
+            <span class="n">next_state</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">direction</span> <span class="o">*</span> <span class="n">step_size</span><span class="p">)</span>
+            <span class="n">new_proposal</span><span class="p">,</span> <span class="n">is_diverging</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">next_state</span><span class="p">)</span>
+            <span class="n">trajectory</span> <span class="o">=</span> <span class="n">Trajectory</span><span class="p">(</span><span class="n">next_state</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">next_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">new_proposal</span><span class="p">,</span>
+                <span class="n">trajectory</span><span class="p">,</span>
+                <span class="n">is_diverging</span><span class="p">,</span>
+                <span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">proposal</span><span class="p">,</span>
+                <span class="n">trajectory</span><span class="p">,</span>
+                <span class="n">is_diverging</span><span class="p">,</span>
+                <span class="n">is_turning</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="n">buildtree_integrate</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">initial_state</span><span class="p">,</span>
+                <span class="n">direction</span><span class="p">,</span>
+                <span class="n">tree_depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">step_size</span><span class="p">,</span>
+                <span class="n">initial_energy</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># Note that is_diverging and is_turning is inplace updated</span>
+            <span class="k">if</span> <span class="o">~</span><span class="n">is_diverging</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">is_turning</span><span class="p">:</span>
+                <span class="n">start_state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+                    <span class="n">direction</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="p">,</span>
+                    <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="p">,</span>
+                    <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="p">(</span>
+                    <span class="n">rng_key</span><span class="p">,</span>
+                    <span class="n">new_proposal</span><span class="p">,</span>
+                    <span class="n">new_trajectory</span><span class="p">,</span>
+                    <span class="n">is_diverging</span><span class="p">,</span>
+                    <span class="n">is_turning</span><span class="p">,</span>
+                <span class="p">)</span> <span class="o">=</span> <span class="n">buildtree_integrate</span><span class="p">(</span>
+                    <span class="n">rng_key</span><span class="p">,</span>
+                    <span class="n">start_state</span><span class="p">,</span>
+                    <span class="n">direction</span><span class="p">,</span>
+                    <span class="n">tree_depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="n">step_size</span><span class="p">,</span>
+                    <span class="n">initial_energy</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">left_trajectory</span><span class="p">,</span> <span class="n">right_trajectory</span> <span class="o">=</span> <span class="n">reorder_trajectories</span><span class="p">(</span>
+                    <span class="n">direction</span><span class="p">,</span> <span class="n">trajectory</span><span class="p">,</span> <span class="n">new_trajectory</span>
+                <span class="p">)</span>
+                <span class="n">trajectory</span> <span class="o">=</span> <span class="n">merge_trajectories</span><span class="p">(</span><span class="n">left_trajectory</span><span class="p">,</span> <span class="n">right_trajectory</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="o">~</span><span class="n">is_turning</span><span class="p">:</span>
+                    <span class="n">is_turning</span> <span class="o">=</span> <span class="n">uturn_check_fn</span><span class="p">(</span>
+                        <span class="n">trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+                        <span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+                        <span class="n">trajectory</span><span class="o">.</span><span class="n">momentum_sum</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">use_robust_uturn_check</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">tree_depth</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                        <span class="n">momentum_sum_left</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+                            <span class="n">jnp</span><span class="o">.</span><span class="n">add</span><span class="p">,</span>
+                            <span class="n">left_trajectory</span><span class="o">.</span><span class="n">momentum_sum</span><span class="p">,</span>
+                            <span class="n">right_trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="n">is_turning_left</span> <span class="o">=</span> <span class="n">uturn_check_fn</span><span class="p">(</span>
+                            <span class="n">left_trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+                            <span class="n">right_trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+                            <span class="n">momentum_sum_left</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="n">momentum_sum_right</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+                            <span class="n">jnp</span><span class="o">.</span><span class="n">add</span><span class="p">,</span>
+                            <span class="n">left_trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+                            <span class="n">right_trajectory</span><span class="o">.</span><span class="n">momentum_sum</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="n">is_turning_right</span> <span class="o">=</span> <span class="n">uturn_check_fn</span><span class="p">(</span>
+                            <span class="n">left_trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+                            <span class="n">right_trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+                            <span class="n">momentum_sum_right</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="n">is_turning</span> <span class="o">=</span> <span class="n">is_turning</span> <span class="o">|</span> <span class="n">is_turning_left</span> <span class="o">|</span> <span class="n">is_turning_right</span>
+                <span class="n">rng_key</span><span class="p">,</span> <span class="n">proposal_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+                <span class="n">proposal</span> <span class="o">=</span> <span class="n">sample_proposal</span><span class="p">(</span><span class="n">proposal_key</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">,</span>
+            <span class="n">proposal</span><span class="p">,</span>
+            <span class="n">trajectory</span><span class="p">,</span>
+            <span class="n">is_diverging</span><span class="p">,</span>
+            <span class="n">is_turning</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">buildtree_integrate</span></div>
+
+
+<span class="c1"># -------------------------------------------------------------------</span>
+<span class="c1">#                             Sampling</span>
+<span class="c1">#</span>
+<span class="c1"># Sampling a trajectory by choosing a direction at random and integrating</span>
+<span class="c1"># the trajectory in this direction. In the simplest case we perform one</span>
+<span class="c1"># integration step, but can also perform several as is the case in the</span>
+<span class="c1"># NUTS algorithm.</span>
+<span class="c1"># -------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="DynamicExpansionState"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicExpansionState">[docs]</a><span class="k">class</span> <span class="nc">DynamicExpansionState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<div class="viewcode-block" id="DynamicExpansionState.step"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicExpansionState.step">[docs]</a>    <span class="n">step</span><span class="p">:</span> <span class="nb">int</span></div>
+<div class="viewcode-block" id="DynamicExpansionState.proposal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicExpansionState.proposal">[docs]</a>    <span class="n">proposal</span><span class="p">:</span> <span class="n">Proposal</span></div>
+<div class="viewcode-block" id="DynamicExpansionState.trajectory"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicExpansionState.trajectory">[docs]</a>    <span class="n">trajectory</span><span class="p">:</span> <span class="n">Trajectory</span></div>
+<div class="viewcode-block" id="DynamicExpansionState.termination_state"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicExpansionState.termination_state">[docs]</a>    <span class="n">termination_state</span><span class="p">:</span> <span class="n">NamedTuple</span></div></div>
+
+
+<div class="viewcode-block" id="dynamic_multiplicative_expansion"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.dynamic_multiplicative_expansion">[docs]</a><span class="k">def</span> <span class="nf">dynamic_multiplicative_expansion</span><span class="p">(</span>
+    <span class="n">trajectory_integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">uturn_check_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">max_num_expansions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sample a trajectory and update the proposal sequentially</span>
+<span class="sd">    until the termination criterion is met.</span>
+
+<span class="sd">    The trajectory is sampled with the following procedure:</span>
+<span class="sd">    1. Pick a direction at random;</span>
+<span class="sd">    2. Integrate `num_step` steps in this direction;</span>
+<span class="sd">    3. If the integration has stopped prematurely, do not update the proposal;</span>
+<span class="sd">    4. Else if the trajectory is performing a U-turn, return current proposal;</span>
+<span class="sd">    5. Else update proposal, `num_steps = num_steps ** rate` and repeat from (1).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    trajectory_integrator</span>
+<span class="sd">        A function that runs the symplectic integrators and returns a new proposal</span>
+<span class="sd">        and the integrated trajectory.</span>
+<span class="sd">    uturn_check_fn</span>
+<span class="sd">        Function used to check the U-Turn criterion.</span>
+<span class="sd">    step_size</span>
+<span class="sd">        The step size used by the symplectic integrator.</span>
+<span class="sd">    max_num_expansions</span>
+<span class="sd">        The maximum number of trajectory expansions until the proposal is</span>
+<span class="sd">        returned.</span>
+<span class="sd">    rate</span>
+<span class="sd">        The rate of the geometrical expansion. Typically 2 in NUTS, this is why</span>
+<span class="sd">        the literature often refers to &quot;tree doubling&quot;.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">proposal_sampler</span> <span class="o">=</span> <span class="n">progressive_biased_sampling</span>
+
+    <span class="k">def</span> <span class="nf">expand</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">initial_expansion_state</span><span class="p">:</span> <span class="n">DynamicExpansionState</span><span class="p">,</span>
+        <span class="n">initial_energy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">def</span> <span class="nf">do_keep_expanding</span><span class="p">(</span><span class="n">loop_state</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Determine whether we need to keep expanding the trajectory.&quot;&quot;&quot;</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">expansion_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">)</span> <span class="o">=</span> <span class="n">loop_state</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">expansion_state</span><span class="o">.</span><span class="n">step</span> <span class="o">&lt;</span> <span class="n">max_num_expansions</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="o">~</span><span class="n">is_diverging</span>
+                <span class="o">&amp;</span> <span class="o">~</span><span class="n">is_turning</span>
+            <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">expand_once</span><span class="p">(</span><span class="n">loop_state</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Expand the current trajectory.</span>
+
+<span class="sd">            At each step we draw a direction at random, build a subtrajectory</span>
+<span class="sd">            starting from the leftmost or rightmost point of the current</span>
+<span class="sd">            trajectory that is twice as long as the current trajectory.</span>
+
+<span class="sd">            Once that is done, possibly update the current proposal with that of</span>
+<span class="sd">            the subtrajectory.</span>
+
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">rng_key</span><span class="p">,</span> <span class="n">expansion_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">loop_state</span>
+            <span class="n">step</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">trajectory</span><span class="p">,</span> <span class="n">termination_state</span> <span class="o">=</span> <span class="n">expansion_state</span>
+
+            <span class="n">rng_key</span><span class="p">,</span> <span class="n">direction_key</span><span class="p">,</span> <span class="n">trajectory_key</span><span class="p">,</span> <span class="n">proposal_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span> <span class="mi">4</span>
+            <span class="p">)</span>
+
+            <span class="c1"># create new subtrajectory that is twice as long as the current</span>
+            <span class="c1"># trajectory.</span>
+            <span class="n">direction</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">(</span><span class="n">direction_key</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">start_state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+                <span class="n">direction</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="p">,</span>
+                <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="p">(</span>
+                <span class="n">new_proposal</span><span class="p">,</span>
+                <span class="n">new_trajectory</span><span class="p">,</span>
+                <span class="n">termination_state</span><span class="p">,</span>
+                <span class="n">is_diverging</span><span class="p">,</span>
+                <span class="n">is_turning_subtree</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="n">trajectory_integrator</span><span class="p">(</span>
+                <span class="n">trajectory_key</span><span class="p">,</span>
+                <span class="n">start_state</span><span class="p">,</span>
+                <span class="n">direction</span><span class="p">,</span>
+                <span class="n">termination_state</span><span class="p">,</span>
+                <span class="n">rate</span><span class="o">**</span><span class="n">step</span><span class="p">,</span>
+                <span class="n">step_size</span><span class="p">,</span>
+                <span class="n">initial_energy</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Update the proposal</span>
+            <span class="c1">#</span>
+            <span class="c1"># We do not accept proposals that come from diverging or turning</span>
+            <span class="c1"># subtrajectories.  However the definition of the acceptance</span>
+            <span class="c1"># probability is such that the acceptance probability needs to be</span>
+            <span class="c1"># computed across the entire trajectory.</span>
+            <span class="k">def</span> <span class="nf">update_sum_log_p_accept</span><span class="p">(</span><span class="n">inputs</span><span class="p">):</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span> <span class="o">=</span> <span class="n">inputs</span>
+                <span class="k">return</span> <span class="n">Proposal</span><span class="p">(</span>
+                    <span class="n">proposal</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                    <span class="n">proposal</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span>
+                    <span class="n">proposal</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span>
+                    <span class="n">jnp</span><span class="o">.</span><span class="n">logaddexp</span><span class="p">(</span>
+                        <span class="n">proposal</span><span class="o">.</span><span class="n">sum_log_p_accept</span><span class="p">,</span> <span class="n">new_proposal</span><span class="o">.</span><span class="n">sum_log_p_accept</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+
+            <span class="n">updated_proposal</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+                <span class="n">is_diverging</span> <span class="o">|</span> <span class="n">is_turning_subtree</span><span class="p">,</span>
+                <span class="n">update_sum_log_p_accept</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">proposal_sampler</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">),</span>
+                <span class="n">operand</span><span class="o">=</span><span class="p">(</span><span class="n">proposal_key</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">),</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Is the full trajectory making a U-Turn?</span>
+            <span class="c1">#</span>
+            <span class="c1"># We first merge the subtrajectory that was just generated with the</span>
+            <span class="c1"># trajectory and check the U-Turn criterior on the whole trajectory.</span>
+            <span class="n">left_trajectory</span><span class="p">,</span> <span class="n">right_trajectory</span> <span class="o">=</span> <span class="n">reorder_trajectories</span><span class="p">(</span>
+                <span class="n">direction</span><span class="p">,</span> <span class="n">trajectory</span><span class="p">,</span> <span class="n">new_trajectory</span>
+            <span class="p">)</span>
+
+            <span class="n">merged_trajectory</span> <span class="o">=</span> <span class="n">merge_trajectories</span><span class="p">(</span><span class="n">left_trajectory</span><span class="p">,</span> <span class="n">right_trajectory</span><span class="p">)</span>
+
+            <span class="n">is_turning</span> <span class="o">=</span> <span class="n">uturn_check_fn</span><span class="p">(</span>
+                <span class="n">merged_trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+                <span class="n">merged_trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+                <span class="n">merged_trajectory</span><span class="o">.</span><span class="n">momentum_sum</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">new_state</span> <span class="o">=</span> <span class="n">DynamicExpansionState</span><span class="p">(</span>
+                <span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">updated_proposal</span><span class="p">,</span> <span class="n">merged_trajectory</span><span class="p">,</span> <span class="n">termination_state</span>
+            <span class="p">)</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">is_turning_subtree</span> <span class="o">|</span> <span class="n">is_turning</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">expansion_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
+            <span class="n">do_keep_expanding</span><span class="p">,</span>
+            <span class="n">expand_once</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_expansion_state</span><span class="p">,</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">expansion_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">expand</span></div>
+</pre></div>
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By The Blackjax developers<br/>
+  
+      &copy; Copyright 2023, The Blackjax developers.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>

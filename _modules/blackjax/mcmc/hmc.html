@@ -1,0 +1,955 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.mcmc.hmc</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../../index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="../../../_static/blackjax.png" class="logo" alt="logo">
+      
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/quickstart.html">
+   Quickstart
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  PPL INTEGRATION
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_aesara.html">
+   Aesara
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_numpyro.html">
+   Numpyro
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_oryx.html">
+   Oryx
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_pymc.html">
+   PyMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_tfp.html">
+   Tensorflow-Probability
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  HOW TO
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_sample_multiple_chains.html">
+   Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_custom_gradients.html">
+   Use custom gradients?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_other_frameworks.html">
+   Use non-JAX log-prob functions?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_metropolis_within_gibbs.html">
+   Build a Metropolis-Within-Gibbs sampler?
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  LEARN BY EXAMPLE
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference external" href="https://blackjax-devs.github.io/sampling-book">
+   The Sampling Book
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html">
+   Sampling algorithms
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">
+   Diagnostics
+  </a>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../../autoapi/blackjax/index.html">
+   API Reference
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.adaptation
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+    <label for="toctree-checkbox-2">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.mass_matrix
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.meads_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.pathfinder_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/adaptation/step_size/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.step_size
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.window_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.mcmc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+    <label for="toctree-checkbox-3">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.diffusions
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.elliptical_slice
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/ghmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.ghmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/hmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.hmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/integrators/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.integrators
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/irmh/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.irmh
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/mala/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.mala
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.marginal_latent_gaussian
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/metrics/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.metrics
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/nuts/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.nuts
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.periodic_orbital
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.proposal
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmh/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.rmh
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.termination
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.trajectory
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.sgmcmc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+    <label for="toctree-checkbox-4">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.csgld
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.diffusions
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.gradients
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.sghmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.sgld
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../../autoapi/blackjax/smc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.smc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/>
+    <label for="toctree-checkbox-5">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.adaptive_tempered
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/smc/base/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.base
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/smc/ess/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.ess
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.resampling
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.solver
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.tempered
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../../autoapi/blackjax/vi/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.vi
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/>
+    <label for="toctree-checkbox-6">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.vi.meanfield_vi
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.vi.pathfinder
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.diagnostics
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.kernels
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+<a href="https://github.com/blackjax-devs/blackjax"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="bottom"
+title="Source repository"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1></h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <h1>Source code for blackjax.mcmc.hmc</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;Public API for the HMC Kernel&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">jax</span>
+
+<span class="kn">import</span> <span class="nn">blackjax.mcmc.integrators</span> <span class="k">as</span> <span class="nn">integrators</span>
+<span class="kn">import</span> <span class="nn">blackjax.mcmc.metrics</span> <span class="k">as</span> <span class="nn">metrics</span>
+<span class="kn">import</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="k">as</span> <span class="nn">proposal</span>
+<span class="kn">import</span> <span class="nn">blackjax.mcmc.trajectory</span> <span class="k">as</span> <span class="nn">trajectory</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;HMCState&quot;</span><span class="p">,</span> <span class="s2">&quot;HMCInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;kernel&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="HMCState"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState">[docs]</a><span class="k">class</span> <span class="nc">HMCState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the HMC algorithm.</span>
+
+<span class="sd">    The HMC algorithm takes one position of the chain and returns another</span>
+<span class="sd">    position. In order to make computations more efficient, we also store</span>
+<span class="sd">    the current logdensity as well as the current gradient of the logdensity.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="HMCState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="HMCState.logdensity"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState.logdensity">[docs]</a>    <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span></div>
+<div class="viewcode-block" id="HMCState.logdensity_grad"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState.logdensity_grad">[docs]</a>    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">PyTree</span></div></div>
+
+
+<div class="viewcode-block" id="HMCInfo"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo">[docs]</a><span class="k">class</span> <span class="nc">HMCInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on the HMC transition.</span>
+
+<span class="sd">    This additional information can be used for debugging or computing</span>
+<span class="sd">    diagnostics.</span>
+
+<span class="sd">    momentum:</span>
+<span class="sd">        The momentum that was sampled and used to integrate the trajectory.</span>
+<span class="sd">    acceptance_rate</span>
+<span class="sd">        The acceptance probability of the transition, linked to the energy</span>
+<span class="sd">        difference between the original and the proposed states.</span>
+<span class="sd">    is_accepted</span>
+<span class="sd">        Whether the proposed position was accepted or the original position</span>
+<span class="sd">        was returned.</span>
+<span class="sd">    is_divergent</span>
+<span class="sd">        Whether the difference in energy between the original and the new state</span>
+<span class="sd">        exceeded the divergence threshold.</span>
+<span class="sd">    energy:</span>
+<span class="sd">        Total energy of the transition.</span>
+<span class="sd">    proposal</span>
+<span class="sd">        The state proposed by the proposal. Typically includes the position and</span>
+<span class="sd">        momentum.</span>
+<span class="sd">    step_size</span>
+<span class="sd">        Size of the integration step.</span>
+<span class="sd">    num_integration_steps</span>
+<span class="sd">        Number of times we run the symplectic integrator to build the trajectory</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="HMCInfo.momentum"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo.momentum">[docs]</a>    <span class="n">momentum</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="HMCInfo.acceptance_rate"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo.acceptance_rate">[docs]</a>    <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span></div>
+<div class="viewcode-block" id="HMCInfo.is_accepted"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo.is_accepted">[docs]</a>    <span class="n">is_accepted</span><span class="p">:</span> <span class="nb">bool</span></div>
+<div class="viewcode-block" id="HMCInfo.is_divergent"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo.is_divergent">[docs]</a>    <span class="n">is_divergent</span><span class="p">:</span> <span class="nb">bool</span></div>
+<div class="viewcode-block" id="HMCInfo.energy"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo.energy">[docs]</a>    <span class="n">energy</span><span class="p">:</span> <span class="nb">float</span></div>
+<div class="viewcode-block" id="HMCInfo.proposal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo.proposal">[docs]</a>    <span class="n">proposal</span><span class="p">:</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span></div>
+<div class="viewcode-block" id="HMCInfo.num_integration_steps"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo.num_integration_steps">[docs]</a>    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span></div></div>
+
+
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
+    <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HMCState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.kernel">[docs]</a><span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
+    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a HMC kernel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    integrator</span>
+<span class="sd">        The symplectic integrator to use to integrate the Hamiltonian dynamics.</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        Value of the difference in energy above which we consider that the transition is divergent.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A kernel that takes a rng_key and a Pytree that contains the current state</span>
+<span class="sd">    of the chain and that returns a new state of the chain along with</span>
+<span class="sd">    information about the transition.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">HMCState</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">HMCState</span><span class="p">,</span> <span class="n">HMCInfo</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new sample with the HMC kernel.&quot;&quot;&quot;</span>
+
+        <span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">gaussian_euclidean</span><span class="p">(</span>
+            <span class="n">inverse_mass_matrix</span>
+        <span class="p">)</span>
+        <span class="n">symplectic_integrator</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">)</span>
+        <span class="n">proposal_generator</span> <span class="o">=</span> <span class="n">hmc_proposal</span><span class="p">(</span>
+            <span class="n">symplectic_integrator</span><span class="p">,</span>
+            <span class="n">kinetic_energy_fn</span><span class="p">,</span>
+            <span class="n">step_size</span><span class="p">,</span>
+            <span class="n">num_integration_steps</span><span class="p">,</span>
+            <span class="n">divergence_threshold</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">key_momentum</span><span class="p">,</span> <span class="n">key_integrator</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">state</span>
+        <span class="n">momentum</span> <span class="o">=</span> <span class="n">momentum_generator</span><span class="p">(</span><span class="n">key_momentum</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+
+        <span class="n">integrator_state</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span><span class="p">(</span>
+            <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span>
+        <span class="p">)</span>
+        <span class="n">proposal</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="n">key_integrator</span><span class="p">,</span> <span class="n">integrator_state</span><span class="p">)</span>
+        <span class="n">proposal</span> <span class="o">=</span> <span class="n">HMCState</span><span class="p">(</span>
+            <span class="n">proposal</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">proposal</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">proposal</span><span class="o">.</span><span class="n">logdensity_grad</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">info</span>
+
+    <span class="k">return</span> <span class="n">one_step</span></div>
+
+
+<span class="k">def</span> <span class="nf">hmc_proposal</span><span class="p">(</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">kinetic_energy</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">step_size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">PyTree</span><span class="p">],</span>
+    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">sample_proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">static_binomial_sampling</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vanilla HMC algorithm.</span>
+
+<span class="sd">    The algorithm integrates the trajectory applying a symplectic integrator</span>
+<span class="sd">    `num_integration_steps` times in one direction to get a proposal and uses a</span>
+<span class="sd">    Metropolis-Hastings acceptance step to either reject or accept this</span>
+<span class="sd">    proposal. This is what people usually refer to when they talk about &quot;the</span>
+<span class="sd">    HMC algorithm&quot;.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    integrator</span>
+<span class="sd">        Symplectic integrator used to build the trajectory step by step.</span>
+<span class="sd">    kinetic_energy</span>
+<span class="sd">        Function that computes the kinetic energy.</span>
+<span class="sd">    step_size</span>
+<span class="sd">        Size of the integration step.</span>
+<span class="sd">    num_integration_steps</span>
+<span class="sd">        Number of times we run the symplectic integrator to build the trajectory</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        Threshold above which we say that there is a divergence.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A kernel that generates a new chain state and information about the transition.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">build_trajectory</span> <span class="o">=</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">static_integration</span><span class="p">(</span><span class="n">integrator</span><span class="p">)</span>
+    <span class="n">init_proposal</span><span class="p">,</span> <span class="n">generate_proposal</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">proposal_generator</span><span class="p">(</span>
+        <span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">divergence_threshold</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span><span class="p">,</span> <span class="n">HMCInfo</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new chain state.&quot;&quot;&quot;</span>
+        <span class="n">end_state</span> <span class="o">=</span> <span class="n">build_trajectory</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
+        <span class="n">end_state</span> <span class="o">=</span> <span class="n">flip_momentum</span><span class="p">(</span><span class="n">end_state</span><span class="p">)</span>
+        <span class="n">proposal</span> <span class="o">=</span> <span class="n">init_proposal</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="n">new_proposal</span><span class="p">,</span> <span class="n">is_diverging</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">proposal</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span> <span class="n">end_state</span><span class="p">)</span>
+        <span class="n">sampled_proposal</span><span class="p">,</span> <span class="o">*</span><span class="n">info</span> <span class="o">=</span> <span class="n">sample_proposal</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">)</span>
+        <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span> <span class="o">=</span> <span class="n">info</span>
+
+        <span class="n">info</span> <span class="o">=</span> <span class="n">HMCInfo</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+            <span class="n">p_accept</span><span class="p">,</span>
+            <span class="n">do_accept</span><span class="p">,</span>
+            <span class="n">is_diverging</span><span class="p">,</span>
+            <span class="n">new_proposal</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span>
+            <span class="n">new_proposal</span><span class="p">,</span>
+            <span class="n">num_integration_steps</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sampled_proposal</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span>
+
+    <span class="k">return</span> <span class="n">generate</span>
+
+
+<span class="k">def</span> <span class="nf">flip_momentum</span><span class="p">(</span>
+    <span class="n">state</span><span class="p">:</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flip the momentum at the end of the trajectory.</span>
+
+<span class="sd">    To guarantee time-reversibility (hence detailed balance) we</span>
+<span class="sd">    need to flip the last state&#39;s momentum. If we run the hamiltonian</span>
+<span class="sd">    dynamics starting from the last state with flipped momentum we</span>
+<span class="sd">    should indeed retrieve the initial state (with flipped momentum).</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">flipped_momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">m</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">momentum</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span><span class="p">(</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+        <span class="n">flipped_momentum</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By The Blackjax developers<br/>
+  
+      &copy; Copyright 2023, The Blackjax developers.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>

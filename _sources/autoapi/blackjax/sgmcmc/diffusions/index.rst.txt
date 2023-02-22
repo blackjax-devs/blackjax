@@ -1,0 +1,54 @@
+:py:mod:`blackjax.sgmcmc.diffusions`
+====================================
+
+.. py:module:: blackjax.sgmcmc.diffusions
+
+.. autoapi-nested-parse::
+
+   Solvers for Langevin diffusions.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   blackjax.sgmcmc.diffusions.overdamped_langevin
+   blackjax.sgmcmc.diffusions.sghmc
+
+
+
+.. py:function:: overdamped_langevin()
+
+   Euler solver for overdamped Langevin diffusion.
+
+   This algorithm was ported from [CN22]_.
+
+   .. rubric:: References
+
+   .. [CN22] Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
+           library for stochastic gradient Markov chain Monte Carlo algorithms.
+           Journal of Open Source Software, 7(72), 4113.
+
+
+.. py:function:: sghmc(alpha: float = 0.01, beta: float = 0)
+
+   Solver for the diffusion equation of the SGHMC algorithm [CFG14]_.
+
+   This algorithm was ported from [CN22]_.
+
+   .. rubric:: References
+
+   .. [CFG14] Chen, T., Fox, E., & Guestrin, C. (2014, June). Stochastic
+            gradient hamiltonian monte carlo. In International conference on
+            machine learning (pp. 1683-1691). PMLR.
+   .. [CN22] Coullon, J., & Nemeth, C. (2022). SGMCMCJax: a lightweight JAX
+           library for stochastic gradient Markov chain Monte Carlo algorithms.
+           Journal of Open Source Software, 7(72), 4113.
+
+

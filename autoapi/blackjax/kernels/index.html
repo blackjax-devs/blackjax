@@ -1,0 +1,2234 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>blackjax.kernels</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="blackjax.diagnostics" href="../diagnostics/index.html" />
+    <link rel="prev" title="How to build a Metropolis-Within-Gibbs sampler?" href="../../../examples/howto_metropolis_within_gibbs.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../../index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="../../../_static/blackjax.png" class="logo" alt="logo">
+      
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/quickstart.html">
+   Quickstart
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  PPL INTEGRATION
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_aesara.html">
+   Aesara
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_numpyro.html">
+   Numpyro
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_oryx.html">
+   Oryx
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_pymc.html">
+   PyMC
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_use_tfp.html">
+   Tensorflow-Probability
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  HOW TO
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_sample_multiple_chains.html">
+   Sample with multiple chains?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_custom_gradients.html">
+   Use custom gradients?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_other_frameworks.html">
+   Use non-JAX log-prob functions?
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../examples/howto_metropolis_within_gibbs.html">
+   Build a Metropolis-Within-Gibbs sampler?
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  LEARN BY EXAMPLE
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference external" href="https://blackjax-devs.github.io/sampling-book">
+   The Sampling Book
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  API
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Sampling algorithms
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../diagnostics/index.html">
+   Diagnostics
+  </a>
+ </li>
+ <li class="toctree-l1 current active has-children">
+  <a class="reference internal" href="../index.html">
+   API Reference
+  </a>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul class="current">
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../adaptation/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.adaptation
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+    <label for="toctree-checkbox-2">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../adaptation/mass_matrix/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.mass_matrix
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../adaptation/meads_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.meads_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../adaptation/pathfinder_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.pathfinder_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../adaptation/step_size/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.step_size
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../adaptation/window_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.window_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../mcmc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.mcmc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+    <label for="toctree-checkbox-3">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/diffusions/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.diffusions
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/elliptical_slice/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.elliptical_slice
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/ghmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.ghmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/hmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.hmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/integrators/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.integrators
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/irmh/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.irmh
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/mala/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.mala
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/marginal_latent_gaussian/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.marginal_latent_gaussian
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/metrics/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.metrics
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/nuts/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.nuts
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/periodic_orbital/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.periodic_orbital
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/proposal/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.proposal
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/rmh/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.rmh
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/termination/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.termination
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../mcmc/trajectory/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.trajectory
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../sgmcmc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.sgmcmc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+    <label for="toctree-checkbox-4">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../sgmcmc/csgld/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.csgld
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../sgmcmc/diffusions/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.diffusions
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../sgmcmc/gradients/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.gradients
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../sgmcmc/sghmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.sghmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../sgmcmc/sgld/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.sgld
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../smc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.smc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/>
+    <label for="toctree-checkbox-5">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../smc/adaptive_tempered/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.adaptive_tempered
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../smc/base/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.base
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../smc/ess/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.ess
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../smc/resampling/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.resampling
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../smc/solver/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.solver
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../smc/tempered/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.tempered
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../vi/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.vi
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/>
+    <label for="toctree-checkbox-6">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../vi/meanfield_vi/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.vi.meanfield_vi
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../vi/pathfinder/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.vi.pathfinder
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../diagnostics/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.diagnostics
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.kernels
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+<a href="https://github.com/blackjax-devs/blackjax"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="bottom"
+title="Source repository"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+<label for="__page-toc"
+  class="headerbtn headerbtn-page-toc"
+  
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-list"></i>
+  </span>
+
+</label>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+    <div class="tocsection onthispage pt-5 pb-3">
+        <i class="fas fa-list"></i> Contents
+    </div>
+    <nav id="bd-toc-nav" aria-label="Page">
+        <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-contents">
+   Module Contents
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#classes">
+     Classes
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#functions">
+     Functions
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.adaptive_tempered_smc">
+       adaptive_tempered_smc
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.adaptive_tempered_smc.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.adaptive_tempered_smc.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.tempered_smc">
+       tempered_smc
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.tempered_smc.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.tempered_smc.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.hmc">
+       hmc
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.hmc.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.hmc.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.mala">
+       mala
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.mala.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.mala.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.nuts">
+       nuts
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.nuts.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.nuts.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.mgrad_gaussian">
+       mgrad_gaussian
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.sgld">
+       sgld
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.sgld.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.sghmc">
+       sghmc
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.sghmc.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.csgld">
+       csgld
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.csgld.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.csgld.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.window_adaptation">
+       window_adaptation
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.meads_adaptation">
+       meads_adaptation
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.rmh">
+       rmh
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.rmh.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.rmh.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.irmh">
+       irmh
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.irmh.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.irmh.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.orbital_hmc">
+       orbital_hmc
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.orbital_hmc.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.orbital_hmc.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.elliptical_slice">
+       elliptical_slice
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.elliptical_slice.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.elliptical_slice.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.ghmc">
+       ghmc
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.ghmc.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.ghmc.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.pathfinder">
+       pathfinder
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.pathfinder.approximate">
+         approximate
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.pathfinder.sample">
+         sample
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.pathfinder_adaptation">
+       pathfinder_adaptation
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.meanfield_vi">
+       meanfield_vi
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.meanfield_vi.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.meanfield_vi.step">
+         step
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.meanfield_vi.sample">
+         sample
+        </a>
+       </li>
+      </ul>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </nav>
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>blackjax.kernels</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-contents">
+   Module Contents
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#classes">
+     Classes
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#functions">
+     Functions
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.adaptive_tempered_smc">
+       adaptive_tempered_smc
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.adaptive_tempered_smc.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.adaptive_tempered_smc.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.tempered_smc">
+       tempered_smc
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.tempered_smc.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.tempered_smc.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.hmc">
+       hmc
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.hmc.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.hmc.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.mala">
+       mala
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.mala.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.mala.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.nuts">
+       nuts
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.nuts.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.nuts.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.mgrad_gaussian">
+       mgrad_gaussian
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.sgld">
+       sgld
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.sgld.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.sghmc">
+       sghmc
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.sghmc.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.csgld">
+       csgld
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.csgld.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.csgld.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.window_adaptation">
+       window_adaptation
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.meads_adaptation">
+       meads_adaptation
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.rmh">
+       rmh
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.rmh.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.rmh.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.irmh">
+       irmh
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.irmh.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.irmh.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.orbital_hmc">
+       orbital_hmc
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.orbital_hmc.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.orbital_hmc.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.elliptical_slice">
+       elliptical_slice
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.elliptical_slice.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.elliptical_slice.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.ghmc">
+       ghmc
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.ghmc.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.ghmc.kernel">
+         kernel
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.pathfinder">
+       pathfinder
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.pathfinder.approximate">
+         approximate
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.pathfinder.sample">
+         sample
+        </a>
+       </li>
+      </ul>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.pathfinder_adaptation">
+       pathfinder_adaptation
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#blackjax.kernels.meanfield_vi">
+       meanfield_vi
+      </a>
+      <ul class="nav section-nav flex-column">
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.meanfield_vi.init">
+         init
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.meanfield_vi.step">
+         step
+        </a>
+       </li>
+       <li class="toc-h5 nav-item toc-entry">
+        <a class="reference internal nav-link" href="#blackjax.kernels.meanfield_vi.sample">
+         sample
+        </a>
+       </li>
+      </ul>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <section id="module-blackjax.kernels">
+<span id="blackjax-kernels"></span><h1><a class="reference internal" href="#module-blackjax.kernels" title="blackjax.kernels"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a><a class="headerlink" href="#module-blackjax.kernels" title="Permalink to this headline">#</a></h1>
+<p>Blackjax high-level interface with sampling algorithms.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">#</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this headline">#</a></h3>
+<table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.kernels.adaptive_tempered_smc" title="blackjax.kernels.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.kernels.tempered_smc" title="blackjax.kernels.tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.kernels.hmc" title="blackjax.kernels.hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hmc</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the HMC kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.kernels.mala" title="blackjax.kernels.mala"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mala</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the MALA kernel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.kernels.nuts" title="blackjax.kernels.nuts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nuts</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the nuts kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.kernels.mgrad_gaussian" title="blackjax.kernels.mgrad_gaussian"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mgrad_gaussian</span></code></a></p></td>
+<td><p>Implements the marginal sampler for latent Gaussian model of [TP18].</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.kernels.sgld" title="blackjax.kernels.sgld"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgld</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the SGLD kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.kernels.sghmc" title="blackjax.kernels.sghmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sghmc</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the SGHMC kernel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.kernels.csgld" title="blackjax.kernels.csgld"><code class="xref py py-obj docutils literal notranslate"><span class="pre">csgld</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the Contour SGLD kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.kernels.rmh" title="blackjax.kernels.rmh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the gaussian random walk kernel</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.kernels.irmh" title="blackjax.kernels.irmh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">irmh</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the independent RMH.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.kernels.orbital_hmc" title="blackjax.kernels.orbital_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">orbital_hmc</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.kernels.elliptical_slice" title="blackjax.kernels.elliptical_slice"><code class="xref py py-obj docutils literal notranslate"><span class="pre">elliptical_slice</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.kernels.ghmc" title="blackjax.kernels.ghmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ghmc</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the Generalized HMC kernel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.kernels.pathfinder" title="blackjax.kernels.pathfinder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathfinder</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the pathfinder kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.kernels.meanfield_vi" title="blackjax.kernels.meanfield_vi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">meanfield_vi</span></code></a></p></td>
+<td><p>High-level implementation of Mean-Field Variational Inference.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">#</a></h3>
+<table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.kernels.window_adaptation" title="blackjax.kernels.window_adaptation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">window_adaptation</span></code></a>(→ blackjax.base.AdaptationAlgorithm)</p></td>
+<td><p>Adapt the value of the inverse mass matrix and step size parameters of</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.kernels.meads_adaptation" title="blackjax.kernels.meads_adaptation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">meads_adaptation</span></code></a>(→ blackjax.base.AdaptationAlgorithm)</p></td>
+<td><p>Adapt the parameters of the Generalized HMC algorithm.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.kernels.pathfinder_adaptation" title="blackjax.kernels.pathfinder_adaptation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathfinder_adaptation</span></code></a>(→ blackjax.base.AdaptationAlgorithm)</p></td>
+<td><p>Adapt the value of the inverse mass matrix and step size parameters of</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.adaptive_tempered_smc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">adaptive_tempered_smc</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#adaptive_tempered_smc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.adaptive_tempered_smc" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logprior_fn</strong> – The log-prior function of the model we wish to draw samples from.</p></li>
+<li><p><strong>loglikelihood_fn</strong> – The log-likelihood function of the model we wish to draw samples from.</p></li>
+<li><p><strong>mcmc_step_fn</strong> – The MCMC step function used to update the particles.</p></li>
+<li><p><strong>mcmc_init_fn</strong> – The MCMC init function used to build a MCMC state from a particle position.</p></li>
+<li><p><strong>mcmc_parameters</strong> – The parameters of the MCMC step function.</p></li>
+<li><p><strong>resampling_fn</strong> – The function used to resample the particles.</p></li>
+<li><p><strong>target_ess</strong> – The number of effective sample size to aim for at each step.</p></li>
+<li><p><strong>root_solver</strong> – The solver used to adaptively compute the temperature given a target number
+of effective samples.</p></li>
+<li><p><strong>num_mcmc_steps</strong> – The number of times the MCMC kernel is applied to the particles per step.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.adaptive_tempered_smc.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#adaptive_tempered_smc.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.adaptive_tempered_smc.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.adaptive_tempered_smc.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#adaptive_tempered_smc.kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.adaptive_tempered_smc.kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.tempered_smc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tempered_smc</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#tempered_smc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.tempered_smc" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logprior_fn</strong> – The log-prior function of the model we wish to draw samples from.</p></li>
+<li><p><strong>loglikelihood_fn</strong> – The log-likelihood function of the model we wish to draw samples from.</p></li>
+<li><p><strong>mcmc_step_fn</strong> – The MCMC step function used to update the particles.</p></li>
+<li><p><strong>mcmc_init_fn</strong> – The MCMC init function used to build a MCMC state from a particle position.</p></li>
+<li><p><strong>mcmc_parameters</strong> – The parameters of the MCMC step function.</p></li>
+<li><p><strong>resampling_fn</strong> – The function used to resample the particles.</p></li>
+<li><p><strong>num_mcmc_steps</strong> – The number of times the MCMC kernel is applied to the particles per step.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.tempered_smc.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#tempered_smc.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.tempered_smc.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.tempered_smc.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#tempered_smc.kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.tempered_smc.kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.hmc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hmc</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#hmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.hmc" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the HMC kernel.</p>
+<p>The general hmc kernel (<a class="reference internal" href="../mcmc/hmc/index.html#blackjax.mcmc.hmc.kernel" title="blackjax.mcmc.hmc.kernel"><code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.hmc.kernel()</span></code></a>, alias <cite>blackjax.hmc.kernel</cite>) can be
+cumbersome to manipulate. Since most users only need to specify the kernel
+parameters at initialization time, we provide a helper function that
+specializes the general kernel.</p>
+<p>We also add the general kernel and state generator as an attribute to this class so
+users only need to pass <cite>blackjax.hmc</cite> to SMC, adaptation, etc. algorithms.</p>
+<p class="rubric">Examples</p>
+<p>A new HMC kernel can be initialized and used with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">hmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Kernels are not jit-compiled by default so you will need to do it manually:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">hmc</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Should you need to you can always use the base kernel directly:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax.mcmc.integrators</span> <span class="k">as</span> <span class="nn">integrators</span>
+
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">integrators</span><span class="o">.</span><span class="n">mclachlan</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
+<span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – The log-density function we wish to draw samples from.</p></li>
+<li><p><strong>step_size</strong> – The value to use for the step size in the symplectic integrator.</p></li>
+<li><p><strong>inverse_mass_matrix</strong> – The value to use for the inverse mass matrix when drawing a value for
+the momentum and computing the kinetic energy.</p></li>
+<li><p><strong>num_integration_steps</strong> – The number of steps we take with the symplectic integrator at each
+sample step before returning a sample.</p></li>
+<li><p><strong>divergence_threshold</strong> – The absolute value of the difference in energy between two states above
+which we say that the transition is divergent. The default value is
+commonly found in other libraries, and yet is arbitrary.</p></li>
+<li><p><strong>integrator</strong> – (algorithm parameter) The symplectic integrator to use to integrate the trajectory.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.hmc.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#hmc.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.hmc.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.hmc.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#hmc.kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.hmc.kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.mala">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mala</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#mala"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.mala" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the MALA kernel.</p>
+<p>The general mala kernel (<a class="reference internal" href="../mcmc/mala/index.html#blackjax.mcmc.mala.kernel" title="blackjax.mcmc.mala.kernel"><code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.mala.kernel()</span></code></a>, alias <cite>blackjax.mala.kernel</cite>) can be
+cumbersome to manipulate. Since most users only need to specify the kernel
+parameters at initialization time, we provide a helper function that
+specializes the general kernel.</p>
+<p>We also add the general kernel and state generator as an attribute to this class so
+users only need to pass <cite>blackjax.mala</cite> to SMC, adaptation, etc. algorithms.</p>
+<p class="rubric">Examples</p>
+<p>A new MALA kernel can be initialized and used with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mala</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mala</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">mala</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mala</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Kernels are not jit-compiled by default so you will need to do it manually:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">mala</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Should you need to you can always use the base kernel directly:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mala</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mala</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
+<span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – The log-density function we wish to draw samples from.</p></li>
+<li><p><strong>step_size</strong> – The value to use for the step size in the symplectic integrator.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.mala.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#mala.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.mala.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.mala.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#mala.kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.mala.kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.nuts">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nuts</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#nuts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.nuts" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the nuts kernel.</p>
+<p class="rubric">Examples</p>
+<p>A new NUTS kernel can be initialized and used with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can JIT-compile the step function for more speed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can always use the base kernel should you need to:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax.mcmc.integrators</span> <span class="k">as</span> <span class="nn">integrators</span>
+
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">integrators</span><span class="o">.</span><span class="n">yoshida</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
+<span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – The log-density function we wish to draw samples from.</p></li>
+<li><p><strong>step_size</strong> – The value to use for the step size in the symplectic integrator.</p></li>
+<li><p><strong>inverse_mass_matrix</strong> – The value to use for the inverse mass matrix when drawing a value for
+the momentum and computing the kinetic energy.</p></li>
+<li><p><strong>max_num_doublings</strong> – The maximum number of times we double the length of the trajectory before
+returning if no U-turn has been obserbed or no divergence has occured.</p></li>
+<li><p><strong>divergence_threshold</strong> – The absolute value of the difference in energy between two states above
+which we say that the transition is divergent. The default value is
+commonly found in other libraries, and yet is arbitrary.</p></li>
+<li><p><strong>integrator</strong> – (algorithm parameter) The symplectic integrator to use to integrate the trajectory.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.nuts.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#nuts.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.nuts.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.nuts.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#nuts.kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.nuts.kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.mgrad_gaussian">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mgrad_gaussian</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#mgrad_gaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.mgrad_gaussian" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the marginal sampler for latent Gaussian model of [TP18].</p>
+<p>It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
+Interestingly, the only parameter that needs calibrating is the “step size” delta, which can be done very efficiently.
+Calibrating it to have an acceptance rate of roughly 50% is a good starting point.</p>
+<p class="rubric">Examples</p>
+<p>A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C) can be initialized and
+used for a given “step size” delta with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mgrad_gaussian</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mgrad_gaussian</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">use_inverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">m</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">mgrad_gaussian</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">zeros</span><span class="p">)</span>  <span class="c1"># Starting at the mean of the prior</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mgrad_gaussian</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can JIT-compile the step function for better performance</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">mgrad_gaussian</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – The logarithm of the likelihood function for the latent Gaussian model.</p></li>
+<li><p><strong>covariance</strong> – The covariance of the prior Gaussian density.</p></li>
+<li><p><strong>mean</strong> (<em>optional</em>) – Mean of the prior Gaussian density. Default is zero.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="tp18"><span class="brackets">TP18</span></dt>
+<dd><p>Titsias, M.K. and Papaspiliopoulos, O. (2018),
+Auxiliary gradient-based sampling algorithms. J. R. Stat. Soc. B, 80: 749-767. <a class="reference external" href="https://doi.org/10.1111/rssb.12269">https://doi.org/10.1111/rssb.12269</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.sgld">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sgld</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#sgld"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.sgld" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the SGLD kernel.</p>
+<p>The general sgld kernel (<code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.sgld.kernel()</span></code>, alias
+<cite>blackjax.sgld.kernel</cite>) can be cumbersome to manipulate. Since most users
+only need to specify the kernel parameters at initialization time, we
+provide a helper function that specializes the general kernel.</p>
+<p class="rubric">Example</p>
+<p>To initialize a SGLD kernel one needs to specify a schedule function, which
+returns a step size at each sampling step, and a gradient estimator
+function. Here for a constant step size, and <cite>data_size</cite> data samples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">grad_fn</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">gradients</span><span class="o">.</span><span class="n">grad_estimator</span><span class="p">(</span><span class="n">logprior_fn</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">data_size</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can now initialize the sgld kernel and the state:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sgld</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sgld</span><span class="p">(</span><span class="n">grad_fn</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">sgld</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Assuming we have an iterator <cite>batches</cite> that yields batches of data we can
+perform one step:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-3</span>
+<span class="n">minibatch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span>
+<span class="n">new_state</span> <span class="o">=</span> <span class="n">sgld</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Kernels are not jit-compiled by default so you will need to do it manually:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">sgld</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>grad_estimator</strong> – A function that takes a position, a batch of data and returns an estimation
+of the gradient of the log-density at this position.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.sgld.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#sgld.kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.sgld.kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.sghmc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sghmc</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#sghmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.sghmc" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the SGHMC kernel.</p>
+<p>The general sghmc kernel (<code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.sghmc.kernel()</span></code>, alias
+<cite>blackjax.sghmc.kernel</cite>) can be cumbersome to manipulate. Since most users
+only need to specify the kernel parameters at initialization time, we
+provide a helper function that specializes the general kernel.</p>
+<p class="rubric">Example</p>
+<p>To initialize a SGHMC kernel one needs to specify a schedule function, which
+returns a step size at each sampling step, and a gradient estimator
+function. Here for a constant step size, and <cite>data_size</cite> data samples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">grad_estimator</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">gradients</span><span class="o">.</span><span class="n">grad_estimator</span><span class="p">(</span><span class="n">logprior_fn</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">data_size</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can now initialize the sghmc kernel and the state. Like HMC, SGHMC needs the user to specify a number of integration steps.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sghmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sghmc</span><span class="p">(</span><span class="n">grad_estimator</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">sghmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Assuming we have an iterator <cite>batches</cite> that yields batches of data we can
+perform one step:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-3</span>
+<span class="n">minibatch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span>
+<span class="n">new_state</span> <span class="o">=</span> <span class="n">sghmc</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Kernels are not jit-compiled by default so you will need to do it manually:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">sghmc</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>grad_estimator</strong> – A function that takes a position, a batch of data and returns an estimation
+of the gradient of the log-density at this position.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.sghmc.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#sghmc.kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.sghmc.kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.csgld">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">csgld</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#csgld"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.csgld" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the Contour SGLD kernel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_estimator_fn</strong> – A function that returns an estimation of the model’s logdensity given
+a position and a batch of data.</p></li>
+<li><p><strong>zeta</strong> – Hyperparameter that controls the geometric property of the flattened
+density. If <cite>zeta=0</cite> the function reduces to the SGLD step function.</p></li>
+<li><p><strong>temperature</strong> – Temperature parameter.</p></li>
+<li><p><strong>num_partitions</strong> – The number of partitions we divide the energy landscape into.</p></li>
+<li><p><strong>energy_gap</strong> – The difference in energy <span class="math notranslate nohighlight">\(\Delta u\)</span> between the successive
+partitions. Can be determined by running e.g. an optimizer to determine
+the range of energies. <cite>num_partition</cite> * <cite>energy_gap</cite> should match this
+range.</p></li>
+<li><p><strong>min_energy</strong> – A rough estimate of the minimum energy in a dataset, which should be
+strictly smaller than the exact minimum energy! e.g. if the minimum
+energy of a dataset is 3456, we can set min_energy to be any value
+smaller than 3456. Set it to 0 is acceptable, but not efficient enough.
+the closer the gap between min_energy and 3456 is, the better.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.csgld.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#csgld.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.csgld.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.csgld.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#csgld.kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.csgld.kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.kernels.window_adaptation">
+<span class="sig-name descname"><span class="pre">window_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#blackjax.kernels.hmc" title="blackjax.kernels.hmc"><span class="pre">hmc</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#blackjax.kernels.nuts" title="blackjax.kernels.nuts"><span class="pre">nuts</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_mass_matrix_diagonal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_acceptance_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_parameters</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../base/index.html#blackjax.base.AdaptationAlgorithm" title="blackjax.base.AdaptationAlgorithm"><span class="pre">blackjax.base.AdaptationAlgorithm</span></a></span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#window_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.window_adaptation" title="Permalink to this definition">#</a></dt>
+<dd><p>Adapt the value of the inverse mass matrix and step size parameters of
+algorithms in the HMC fmaily.</p>
+<p>Algorithms in the HMC family on a euclidean manifold depend on the value of
+at least two parameters: the step size, related to the trajectory
+integrator, and the mass matrix, linked to the euclidean metric.</p>
+<p>Good tuning is very important, especially for algorithms like NUTS which can
+be extremely inefficient with the wrong parameter values. This function
+provides a general-purpose algorithm to tune the values of these parameters.
+Originally based on Stan’s window adaptation, the algorithm has evolved to
+improve performance and quality.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>algorithm</strong> – The algorithm whose parameters are being tuned.</p></li>
+<li><p><strong>logdensity_fn</strong> – The log density probability density function from which we wish to
+sample.</p></li>
+<li><p><strong>is_mass_matrix_diagonal</strong> – Whether we should adapt a diagonal mass matrix.</p></li>
+<li><p><strong>initial_step_size</strong> – The initial step size used in the algorithm.</p></li>
+<li><p><strong>target_acceptance_rate</strong> – The acceptance rate that we target during step size adaptation.</p></li>
+<li><p><strong>progress_bar</strong> – Whether we should display a progress bar.</p></li>
+<li><p><strong>**extra_parameters</strong> – The extra parameters to pass to the algorithm, e.g. the number of
+integration steps for HMC.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A function that runs the adaptation and returns an <cite>AdaptationResult</cite> object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.kernels.meads_adaptation">
+<span class="sig-name descname"><span class="pre">meads_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_chains</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../base/index.html#blackjax.base.AdaptationAlgorithm" title="blackjax.base.AdaptationAlgorithm"><span class="pre">blackjax.base.AdaptationAlgorithm</span></a></span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#meads_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.meads_adaptation" title="Permalink to this definition">#</a></dt>
+<dd><p>Adapt the parameters of the Generalized HMC algorithm.</p>
+<p>The Generalized HMC algorithm depends on three parameters, each controlling
+one element of its behaviour: step size controls the integrator’s dynamics,
+alpha controls the persistency of the momentum variable, and delta controls
+the deterministic transformation of the slice variable used to perform the
+non-reversible Metropolis-Hastings accept/reject step.</p>
+<p>The step size parameter is chosen to ensure the stability of the velocity
+verlet integrator, the alpha parameter to make the influence of the current
+state on future states of the momentum variable to decay exponentially, and
+the delta parameter to maximize the acceptance of proposal but with good
+mixing properties for the slice variable. These characteristics are targeted
+by controlling heuristics based on the maximum eigenvalues of the correlation
+and gradient matrices of the cross-chain samples, under simpifyng assumptions.</p>
+<p>Good tuning is fundamental for the non-reversible Generalized HMC sampling
+algorithm to explore the target space efficienty and output uncorrelated, or
+as uncorrelated as possible, samples from the target space. Furthermore, the
+single integrator step of the algorithm lends itself for fast sampling
+on parallel computer architectures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – The log density probability density function from which we wish to sample.</p></li>
+<li><p><strong>num_chains</strong> – Number of chains used for cross-chain warm-up training.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A function that returns the last cross-chain state, a sampling kernel with the</em></p></li>
+<li><p><em>tuned parameter values, and all the warm-up states for diagnostics.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.rmh">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rmh</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#rmh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.rmh" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the gaussian random walk kernel</p>
+<p class="rubric">Examples</p>
+<p>A new Gaussian Random Walk kernel can be initialized and used with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rmh</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">rmh</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">rmh</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">rmh</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can JIT-compile the step function for better performance</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">rmh</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – The log density probability density function from which we wish to sample.</p></li>
+<li><p><strong>sigma</strong> – The value of the covariance matrix of the gaussian proposal distribution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.rmh.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#rmh.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.rmh.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.rmh.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#rmh.kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.rmh.kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.irmh">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">irmh</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#irmh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.irmh" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the independent RMH.</p>
+<p class="rubric">Examples</p>
+<p>A new kernel can be initialized and used with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rmh</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">irmh</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">proposal_distribution</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">rmh</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">rmh</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can JIT-compile the step function for better performance</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">rmh</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – The log density probability density function from which we wish to sample.</p></li>
+<li><p><strong>proposal_distribution</strong> – A Callable that takes a random number generator and produces a new proposal. The
+proposal is independent of the sampler’s current state.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.irmh.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#irmh.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.irmh.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.irmh.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#irmh.kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.irmh.kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.orbital_hmc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">orbital_hmc</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#orbital_hmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.orbital_hmc" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel.</p>
+<p>Each iteration of the periodic orbital MCMC outputs <code class="docutils literal notranslate"><span class="pre">period</span></code> weighted samples from
+a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable
+with precision matrix <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code>, evaluated using the <code class="docutils literal notranslate"><span class="pre">bijection</span></code> as an
+integrator with discretization parameter <code class="docutils literal notranslate"><span class="pre">step_size</span></code>.</p>
+<p class="rubric">Examples</p>
+<p>A new Periodic orbital MCMC kernel can be initialized and used with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">per_orbit</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">orbital_hmc</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">per_orbit</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">per_orbit</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can JIT-compile the step function for better performance</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">per_orbit</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – The logarithm of the probability density function we wish to draw samples from.</p></li>
+<li><p><strong>step_size</strong> – The value to use for the step size in for the symplectic integrator to buid the orbit.</p></li>
+<li><p><strong>inverse_mass_matrix</strong> – The value to use for the inverse mass matrix when drawing a value for
+the momentum and computing the kinetic energy.</p></li>
+<li><p><strong>period</strong> – The number of steps used to build the orbit.</p></li>
+<li><p><strong>bijection</strong> – (algorithm parameter) The symplectic integrator to use to build the orbit.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.orbital_hmc.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#orbital_hmc.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.orbital_hmc.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.orbital_hmc.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#orbital_hmc.kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.orbital_hmc.kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.elliptical_slice">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">elliptical_slice</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#elliptical_slice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.elliptical_slice" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel.</p>
+<p class="rubric">Examples</p>
+<p>A new Elliptical Slice sampling kernel can be initialized and used with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ellip_slice</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">elliptical_slice</span><span class="p">(</span><span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">cov_matrix</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">ellip_slice</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">ellip_slice</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can JIT-compile the step function for better performance</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">ellip_slice</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>loglikelihood_fn</strong> – Only the log likelihood function from the posterior distributon we wish to sample.</p></li>
+<li><p><strong>cov_matrix</strong> – The value of the covariance matrix of the gaussian prior distribution from the posterior we wish to sample.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.elliptical_slice.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#elliptical_slice.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.elliptical_slice.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.elliptical_slice.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#elliptical_slice.kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.elliptical_slice.kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.ghmc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ghmc</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#ghmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.ghmc" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the Generalized HMC kernel.</p>
+<p>The Generalized HMC kernel performs a similar procedure to the standard HMC
+kernel with the difference of a persistent momentum variable and a non-reversible
+Metropolis-Hastings step instead of the standard Metropolis-Hastings acceptance
+step.</p>
+<p>This means that the sampling of the momentum variable depends on the previous
+momentum, the rate of persistence depends on the alpha parameter, and that the
+Metropolis-Hastings accept/reject step is done through slice sampling with a
+non-reversible slice variable also dependent on the previous slice, the determinisitc
+transformation is defined by the delta parameter.</p>
+<p>The Generalized HMC does not have a trajectory length parameter, it always performs
+one iteration of the velocity verlet integrator with a given step size, making
+the algorithm a good candiate for running many chains in parallel.</p>
+<p class="rubric">Examples</p>
+<p>A new Generalized HMC kernel can be initialized and used with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ghmc_kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">ghmc</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">ghmc_kernel</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">ghmc_kernel</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can JIT-compile the step function for better performance</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">ghmc_kernel</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – The log-density function we wish to draw samples from.</p></li>
+<li><p><strong>step_size</strong> – A PyTree of the same structure as the target PyTree (position) with the
+values used for as a step size for each dimension of the target space in
+the velocity verlet integrator.</p></li>
+<li><p><strong>alpha</strong> – The value defining the persistence of the momentum variable.</p></li>
+<li><p><strong>delta</strong> – The value defining the deterministic translation of the slice variable.</p></li>
+<li><p><strong>divergence_threshold</strong> – The absolute value of the difference in energy between two states above
+which we say that the transition is divergent. The default value is
+commonly found in other libraries, and yet is arbitrary.</p></li>
+<li><p><strong>noise_gn</strong> – A function that takes as input the slice variable and outputs a random
+variable used as a noise correction of the persistent slice update.
+The parameter defaults to a random variable with a single atom at 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.ghmc.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#ghmc.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.ghmc.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.ghmc.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#ghmc.kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.ghmc.kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.pathfinder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pathfinder</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#pathfinder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.pathfinder" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the pathfinder kernel.</p>
+<p>Pathfinder locates normal approximations to the target density along a
+quasi-Newton optimization path, with local covariance estimated using
+the inverse Hessian estimates produced by the L-BFGS optimizer.
+Pathfinder returns draws from the approximation with the lowest estimated
+Kullback-Leibler (KL) divergence to the true posterior.</p>
+<p>Note: all the heavy processing in performed in the init function, step
+function is just a drawing a sample from a normal distribution</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>logdensity_fn</strong> – A function that represents the log-density of the model we want
+to sample from.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">VISamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.pathfinder.approximate">
+<span class="sig-name descname"><span class="pre">approximate</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#pathfinder.approximate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.pathfinder.approximate" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.pathfinder.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#pathfinder.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.pathfinder.sample" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.kernels.pathfinder_adaptation">
+<span class="sig-name descname"><span class="pre">pathfinder_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#blackjax.kernels.hmc" title="blackjax.kernels.hmc"><span class="pre">hmc</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#blackjax.kernels.nuts" title="blackjax.kernels.nuts"><span class="pre">nuts</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_acceptance_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_parameters</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../base/index.html#blackjax.base.AdaptationAlgorithm" title="blackjax.base.AdaptationAlgorithm"><span class="pre">blackjax.base.AdaptationAlgorithm</span></a></span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#pathfinder_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.pathfinder_adaptation" title="Permalink to this definition">#</a></dt>
+<dd><p>Adapt the value of the inverse mass matrix and step size parameters of
+algorithms in the HMC fmaily.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>algorithm</strong> – The algorithm whose parameters are being tuned.</p></li>
+<li><p><strong>logdensity_fn</strong> – The log density probability density function from which we wish to sample.</p></li>
+<li><p><strong>initial_step_size</strong> – The initial step size used in the algorithm.</p></li>
+<li><p><strong>target_acceptance_rate</strong> – The acceptance rate that we target during step size adaptation.</p></li>
+<li><p><strong>**extra_parameters</strong> – The extra parameters to pass to the algorithm, e.g. the number of
+integration steps for HMC.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A function that returns the last chain state and a sampling kernel with the</em></p></li>
+<li><p><em>tuned parameter values from an initial state.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.kernels.meanfield_vi">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">meanfield_vi</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#meanfield_vi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.meanfield_vi" title="Permalink to this definition">#</a></dt>
+<dd><p>High-level implementation of Mean-Field Variational Inference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – A function that represents the log-density function associated with
+the distribution we want to sample from.</p></li>
+<li><p><strong>optimizer</strong> – Optax optimizer to use to optimize the ELBO.</p></li>
+<li><p><strong>num_samples</strong> – Number of samples to take at each step to optimize the ELBO.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">VIAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.meanfield_vi.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#meanfield_vi.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.meanfield_vi.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.meanfield_vi.step">
+<span class="sig-name descname"><span class="pre">step</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#meanfield_vi.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.meanfield_vi.step" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.kernels.meanfield_vi.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><a class="reference internal" href="../../../_modules/blackjax/kernels.html#meanfield_vi.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.kernels.meanfield_vi.sample" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="../../../examples/howto_metropolis_within_gibbs.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">How to build a Metropolis-Within-Gibbs sampler?</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="../diagnostics/index.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By The Blackjax developers<br/>
+  
+      &copy; Copyright 2023, The Blackjax developers.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>

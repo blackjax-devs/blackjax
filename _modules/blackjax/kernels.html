@@ -22,6 +22,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
     
@@ -170,34 +171,421 @@
 </p>
 <ul class="nav bd-sidenav">
  <li class="toctree-l1">
-  <a class="reference internal" href="../../mcmc.html">
-   MCMC
+  <a class="reference internal" href="../../autoapi/blackjax/kernels/index.html">
+   Sampling algorithms
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="../../sgmcmc.html">
-   Stochastic gradient MCMC
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../smc.html">
-   Sequential Monte Carlo
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../vi.html">
-   Variational Inference
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../adaptation.html">
-   Adaptation
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../diagnostics.html">
+  <a class="reference internal" href="../../autoapi/blackjax/diagnostics/index.html">
    Diagnostics
   </a>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../autoapi/blackjax/index.html">
+   API Reference
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../autoapi/blackjax/adaptation/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.adaptation
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+    <label for="toctree-checkbox-2">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/adaptation/mass_matrix/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.mass_matrix
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/adaptation/meads_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.meads_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.pathfinder_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/adaptation/step_size/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.step_size
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/adaptation/window_adaptation/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.adaptation.window_adaptation
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../autoapi/blackjax/mcmc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.mcmc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+    <label for="toctree-checkbox-3">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/diffusions/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.diffusions
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/elliptical_slice/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.elliptical_slice
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/ghmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.ghmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/hmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.hmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/integrators/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.integrators
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/irmh/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.irmh
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/mala/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.mala
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.marginal_latent_gaussian
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/metrics/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.metrics
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/nuts/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.nuts
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/periodic_orbital/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.periodic_orbital
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/proposal/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.proposal
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/rmh/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.rmh
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/termination/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.termination
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/mcmc/trajectory/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.mcmc.trajectory
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../autoapi/blackjax/sgmcmc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.sgmcmc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+    <label for="toctree-checkbox-4">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/sgmcmc/csgld/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.csgld
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/sgmcmc/diffusions/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.diffusions
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/sgmcmc/gradients/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.gradients
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/sgmcmc/sghmc/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.sghmc
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/sgmcmc/sgld/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.sgmcmc.sgld
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../autoapi/blackjax/smc/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.smc
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/>
+    <label for="toctree-checkbox-5">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/smc/adaptive_tempered/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.adaptive_tempered
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/smc/base/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.base
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/smc/ess/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.ess
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/smc/resampling/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.resampling
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/smc/solver/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.solver
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/smc/tempered/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.smc.tempered
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../../autoapi/blackjax/vi/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.vi
+      </span>
+     </code>
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/>
+    <label for="toctree-checkbox-6">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/vi/meanfield_vi/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.vi.meanfield_vi
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../../autoapi/blackjax/vi/pathfinder/index.html">
+       <code class="xref py py-mod docutils literal notranslate">
+        <span class="pre">
+         blackjax.vi.pathfinder
+        </span>
+       </code>
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../autoapi/blackjax/diagnostics/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.diagnostics
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../autoapi/blackjax/kernels/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       blackjax.kernels
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
  </li>
 </ul>
 
@@ -335,11 +723,15 @@ title="Source repository"
     <span class="s2">&quot;hmc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;mala&quot;</span><span class="p">,</span>
     <span class="s2">&quot;nuts&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ghmc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;orbital_hmc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;rmh&quot;</span><span class="p">,</span>
     <span class="s2">&quot;sgld&quot;</span><span class="p">,</span>
     <span class="s2">&quot;sghmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;meanfield_vi&quot;</span><span class="p">,</span>
     <span class="s2">&quot;csgld&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;elliptical_slice&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;meads_adaptation&quot;</span><span class="p">,</span>
     <span class="s2">&quot;tempered_smc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;window_adaptation&quot;</span><span class="p">,</span>
     <span class="s2">&quot;irmh&quot;</span><span class="p">,</span>
@@ -354,8 +746,30 @@ title="Source repository"
 <span class="c1"># -----------------------------------------------------------------------------</span>
 
 
-<div class="viewcode-block" id="adaptive_tempered_smc"><a class="viewcode-back" href="../../smc.html#blackjax.adaptive_tempered_smc">[docs]</a><span class="k">class</span> <span class="nc">adaptive_tempered_smc</span><span class="p">:</span>
+<div class="viewcode-block" id="adaptive_tempered_smc"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.adaptive_tempered_smc">[docs]</a><span class="k">class</span> <span class="nc">adaptive_tempered_smc</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logprior_fn</span>
+<span class="sd">        The log-prior function of the model we wish to draw samples from.</span>
+<span class="sd">    loglikelihood_fn</span>
+<span class="sd">        The log-likelihood function of the model we wish to draw samples from.</span>
+<span class="sd">    mcmc_step_fn</span>
+<span class="sd">        The MCMC step function used to update the particles.</span>
+<span class="sd">    mcmc_init_fn</span>
+<span class="sd">        The MCMC init function used to build a MCMC state from a particle position.</span>
+<span class="sd">    mcmc_parameters</span>
+<span class="sd">        The parameters of the MCMC step function.</span>
+<span class="sd">    resampling_fn</span>
+<span class="sd">        The function used to resample the particles.</span>
+<span class="sd">    target_ess</span>
+<span class="sd">        The number of effective sample size to aim for at each step.</span>
+<span class="sd">    root_solver</span>
+<span class="sd">        The solver used to adaptively compute the temperature given a target number</span>
+<span class="sd">        of effective samples.</span>
+<span class="sd">    num_mcmc_steps</span>
+<span class="sd">        The number of times the MCMC kernel is applied to the particles per step.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -363,8 +777,8 @@ title="Source repository"
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">tempered</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">adaptive_tempered</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+<div class="viewcode-block" id="adaptive_tempered_smc.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.adaptive_tempered_smc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">tempered</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="adaptive_tempered_smc.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.adaptive_tempered_smc.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">adaptive_tempered</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -402,9 +816,25 @@ title="Source repository"
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="tempered_smc"><a class="viewcode-back" href="../../smc.html#blackjax.tempered_smc">[docs]</a><span class="k">class</span> <span class="nc">tempered_smc</span><span class="p">:</span>
+<div class="viewcode-block" id="tempered_smc"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.tempered_smc">[docs]</a><span class="k">class</span> <span class="nc">tempered_smc</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</span>
 
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logprior_fn</span>
+<span class="sd">        The log-prior function of the model we wish to draw samples from.</span>
+<span class="sd">    loglikelihood_fn</span>
+<span class="sd">        The log-likelihood function of the model we wish to draw samples from.</span>
+<span class="sd">    mcmc_step_fn</span>
+<span class="sd">        The MCMC step function used to update the particles.</span>
+<span class="sd">    mcmc_init_fn</span>
+<span class="sd">        The MCMC init function used to build a MCMC state from a particle position.</span>
+<span class="sd">    mcmc_parameters</span>
+<span class="sd">        The parameters of the MCMC step function.</span>
+<span class="sd">    resampling_fn</span>
+<span class="sd">        The function used to resample the particles.</span>
+<span class="sd">    num_mcmc_steps</span>
+<span class="sd">        The number of times the MCMC kernel is applied to the particles per step.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -412,8 +842,8 @@ title="Source repository"
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">tempered</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">tempered</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+<div class="viewcode-block" id="tempered_smc.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.tempered_smc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">tempered</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="tempered_smc.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.tempered_smc.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">tempered</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -453,7 +883,7 @@ title="Source repository"
 <span class="c1"># -----------------------------------------------------------------------------</span>
 
 
-<div class="viewcode-block" id="hmc"><a class="viewcode-back" href="../../mcmc.html#blackjax.hmc">[docs]</a><span class="k">class</span> <span class="nc">hmc</span><span class="p">:</span>
+<div class="viewcode-block" id="hmc"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.hmc">[docs]</a><span class="k">class</span> <span class="nc">hmc</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the HMC kernel.</span>
 
 <span class="sd">    The general hmc kernel (:meth:`blackjax.mcmc.hmc.kernel`, alias `blackjax.hmc.kernel`) can be</span>
@@ -516,8 +946,8 @@ title="Source repository"
 <span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+<div class="viewcode-block" id="hmc.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.hmc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="hmc.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.hmc.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -547,7 +977,7 @@ title="Source repository"
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="mala"><a class="viewcode-back" href="../../mcmc.html#blackjax.mala">[docs]</a><span class="k">class</span> <span class="nc">mala</span><span class="p">:</span>
+<div class="viewcode-block" id="mala"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.mala">[docs]</a><span class="k">class</span> <span class="nc">mala</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the MALA kernel.</span>
 
 <span class="sd">    The general mala kernel (:meth:`blackjax.mcmc.mala.kernel`, alias `blackjax.mala.kernel`) can be</span>
@@ -597,8 +1027,8 @@ title="Source repository"
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mala</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mala</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+<div class="viewcode-block" id="mala.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.mala.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mala</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="mala.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.mala.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mala</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -616,7 +1046,7 @@ title="Source repository"
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="nuts"><a class="viewcode-back" href="../../mcmc.html#blackjax.nuts">[docs]</a><span class="k">class</span> <span class="nc">nuts</span><span class="p">:</span>
+<div class="viewcode-block" id="nuts"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.nuts">[docs]</a><span class="k">class</span> <span class="nc">nuts</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the nuts kernel.</span>
 
 <span class="sd">    Examples</span>
@@ -672,8 +1102,8 @@ title="Source repository"
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">nuts</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+<div class="viewcode-block" id="nuts.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.nuts.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="nuts.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.nuts.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">nuts</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -702,8 +1132,8 @@ title="Source repository"
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="mgrad_gaussian"><a class="viewcode-back" href="../../mcmc.html#blackjax.mgrad_gaussian">[docs]</a><span class="k">class</span> <span class="nc">mgrad_gaussian</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the marginal sampler for latent Gaussian model of [1].</span>
+<div class="viewcode-block" id="mgrad_gaussian"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.mgrad_gaussian">[docs]</a><span class="k">class</span> <span class="nc">mgrad_gaussian</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the marginal sampler for latent Gaussian model of [TP18].</span>
 
 <span class="sd">    It uses a first order approximation to the log_likelihood of a model with Gaussian prior.</span>
 <span class="sd">    Interestingly, the only parameter that needs calibrating is the &quot;step size&quot; delta, which can be done very efficiently.</span>
@@ -742,7 +1172,9 @@ title="Source repository"
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
-<span class="sd">    [1]: Titsias, M.K. and Papaspiliopoulos, O. (2018), Auxiliary gradient-based sampling algorithms. J. R. Stat. Soc. B, 80: 749-767. https://doi.org/10.1111/rssb.12269</span>
+<span class="sd">    .. [TP18] Titsias, M.K. and Papaspiliopoulos, O. (2018),</span>
+<span class="sd">        Auxiliary gradient-based sampling algorithms. J. R. Stat. Soc. B, 80: 749-767. https://doi.org/10.1111/rssb.12269</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
@@ -773,7 +1205,7 @@ title="Source repository"
 <span class="c1"># -----------------------------------------------------------------------------</span>
 
 
-<div class="viewcode-block" id="sgld"><a class="viewcode-back" href="../../sgmcmc.html#blackjax.sgld">[docs]</a><span class="k">class</span> <span class="nc">sgld</span><span class="p">:</span>
+<div class="viewcode-block" id="sgld"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.sgld">[docs]</a><span class="k">class</span> <span class="nc">sgld</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the SGLD kernel.</span>
 
 <span class="sd">    The general sgld kernel (:meth:`blackjax.mcmc.sgld.kernel`, alias</span>
@@ -817,11 +1249,9 @@ title="Source repository"
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    gradient_estimator</span>
-<span class="sd">       A tuple of functions that initialize and update the gradient estimation</span>
-<span class="sd">       state.</span>
-<span class="sd">    schedule_fn</span>
-<span class="sd">       A function which returns a step size given a step number.</span>
+<span class="sd">    grad_estimator</span>
+<span class="sd">       A function that takes a position, a batch of data and returns an estimation</span>
+<span class="sd">       of the gradient of the log-density at this position.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -829,7 +1259,7 @@ title="Source repository"
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">sgld</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+<div class="viewcode-block" id="sgld.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.sgld.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">sgld</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -851,7 +1281,7 @@ title="Source repository"
         <span class="k">return</span> <span class="n">step_fn</span></div>
 
 
-<div class="viewcode-block" id="sghmc"><a class="viewcode-back" href="../../sgmcmc.html#blackjax.sghmc">[docs]</a><span class="k">class</span> <span class="nc">sghmc</span><span class="p">:</span>
+<div class="viewcode-block" id="sghmc"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.sghmc">[docs]</a><span class="k">class</span> <span class="nc">sghmc</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the SGHMC kernel.</span>
 
 <span class="sd">    The general sghmc kernel (:meth:`blackjax.mcmc.sghmc.kernel`, alias</span>
@@ -895,11 +1325,9 @@ title="Source repository"
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    gradient_estimator</span>
-<span class="sd">       A tuple of functions that initialize and update the gradient estimation</span>
-<span class="sd">       state.</span>
-<span class="sd">    schedule_fn</span>
-<span class="sd">       A function which returns a step size given a step number.</span>
+<span class="sd">    grad_estimator</span>
+<span class="sd">       A function that takes a position, a batch of data and returns an estimation</span>
+<span class="sd">       of the gradient of the log-density at this position.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -907,7 +1335,7 @@ title="Source repository"
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">sghmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+<div class="viewcode-block" id="sghmc.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.sghmc.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">sghmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -929,9 +1357,40 @@ title="Source repository"
         <span class="k">return</span> <span class="n">step_fn</span></div>
 
 
-<span class="k">class</span> <span class="nc">csgld</span><span class="p">:</span>
-    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">csgld</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">csgld</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+<div class="viewcode-block" id="csgld"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.csgld">[docs]</a><span class="k">class</span> <span class="nc">csgld</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Contour SGLD kernel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_estimator_fn</span>
+<span class="sd">        A function that returns an estimation of the model&#39;s logdensity given</span>
+<span class="sd">        a position and a batch of data.</span>
+<span class="sd">    zeta</span>
+<span class="sd">        Hyperparameter that controls the geometric property of the flattened</span>
+<span class="sd">        density. If `zeta=0` the function reduces to the SGLD step function.</span>
+<span class="sd">    temperature</span>
+<span class="sd">        Temperature parameter.</span>
+<span class="sd">    num_partitions</span>
+<span class="sd">        The number of partitions we divide the energy landscape into.</span>
+<span class="sd">    energy_gap</span>
+<span class="sd">        The difference in energy :math:`\Delta u` between the successive</span>
+<span class="sd">        partitions. Can be determined by running e.g. an optimizer to determine</span>
+<span class="sd">        the range of energies. `num_partition` * `energy_gap` should match this</span>
+<span class="sd">        range.</span>
+<span class="sd">    min_energy</span>
+<span class="sd">        A rough estimate of the minimum energy in a dataset, which should be</span>
+<span class="sd">        strictly smaller than the exact minimum energy! e.g. if the minimum</span>
+<span class="sd">        energy of a dataset is 3456, we can set min_energy to be any value</span>
+<span class="sd">        smaller than 3456. Set it to 0 is acceptable, but not efficient enough.</span>
+<span class="sd">        the closer the gap between min_energy and 3456 is, the better.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="csgld.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.csgld.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">csgld</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="csgld.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.csgld.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">csgld</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -965,7 +1424,7 @@ title="Source repository"
                 <span class="n">temperature</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 
 
 <span class="c1"># -----------------------------------------------------------------------------</span>
@@ -984,7 +1443,7 @@ title="Source repository"
     <span class="n">adaptation_state</span><span class="p">:</span> <span class="n">NamedTuple</span>
 
 
-<div class="viewcode-block" id="window_adaptation"><a class="viewcode-back" href="../../adaptation.html#blackjax.window_adaptation">[docs]</a><span class="k">def</span> <span class="nf">window_adaptation</span><span class="p">(</span>
+<div class="viewcode-block" id="window_adaptation"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.window_adaptation">[docs]</a><span class="k">def</span> <span class="nf">window_adaptation</span><span class="p">(</span>
     <span class="n">algorithm</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hmc</span><span class="p">,</span> <span class="n">nuts</span><span class="p">],</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">is_mass_matrix_diagonal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -1099,7 +1558,7 @@ title="Source repository"
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="meads_adaptation"><a class="viewcode-back" href="../../adaptation.html#blackjax.meads_adaptation">[docs]</a><span class="k">def</span> <span class="nf">meads_adaptation</span><span class="p">(</span>
+<div class="viewcode-block" id="meads_adaptation"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.meads_adaptation">[docs]</a><span class="k">def</span> <span class="nf">meads_adaptation</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">num_chains</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdaptationAlgorithm</span><span class="p">:</span>
@@ -1194,7 +1653,7 @@ title="Source repository"
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 
 
-<div class="viewcode-block" id="rmh"><a class="viewcode-back" href="../../mcmc.html#blackjax.rmh">[docs]</a><span class="k">class</span> <span class="nc">rmh</span><span class="p">:</span>
+<div class="viewcode-block" id="rmh"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.rmh">[docs]</a><span class="k">class</span> <span class="nc">rmh</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the gaussian random walk kernel</span>
 
 <span class="sd">    Examples</span>
@@ -1228,8 +1687,8 @@ title="Source repository"
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">rmh</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">rmh</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+<div class="viewcode-block" id="rmh.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.rmh.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">rmh</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="rmh.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.rmh.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">rmh</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -1252,7 +1711,7 @@ title="Source repository"
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
-<span class="k">class</span> <span class="nc">irmh</span><span class="p">:</span>
+<div class="viewcode-block" id="irmh"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.irmh">[docs]</a><span class="k">class</span> <span class="nc">irmh</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the independent RMH.</span>
 
 <span class="sd">    Examples</span>
@@ -1287,8 +1746,8 @@ title="Source repository"
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">rmh</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">irmh</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+<div class="viewcode-block" id="irmh.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.irmh.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">rmh</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="irmh.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.irmh.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">irmh</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -1303,10 +1762,10 @@ title="Source repository"
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="orbital_hmc"><a class="viewcode-back" href="../../mcmc.html#blackjax.orbital_hmc">[docs]</a><span class="k">class</span> <span class="nc">orbital_hmc</span><span class="p">:</span>
+<div class="viewcode-block" id="orbital_hmc"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.orbital_hmc">[docs]</a><span class="k">class</span> <span class="nc">orbital_hmc</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Periodic orbital MCMC kernel.</span>
 
 <span class="sd">    Each iteration of the periodic orbital MCMC outputs ``period`` weighted samples from</span>
@@ -1351,8 +1810,8 @@ title="Source repository"
 <span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">periodic_orbital</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">periodic_orbital</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+<div class="viewcode-block" id="orbital_hmc.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.orbital_hmc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">periodic_orbital</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="orbital_hmc.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.orbital_hmc.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">periodic_orbital</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -1381,7 +1840,7 @@ title="Source repository"
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="elliptical_slice"><a class="viewcode-back" href="../../mcmc.html#blackjax.elliptical_slice">[docs]</a><span class="k">class</span> <span class="nc">elliptical_slice</span><span class="p">:</span>
+<div class="viewcode-block" id="elliptical_slice"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.elliptical_slice">[docs]</a><span class="k">class</span> <span class="nc">elliptical_slice</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Elliptical Slice sampling kernel.</span>
 
 <span class="sd">    Examples</span>
@@ -1414,8 +1873,8 @@ title="Source repository"
 <span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">elliptical_slice</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">elliptical_slice</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+<div class="viewcode-block" id="elliptical_slice.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.elliptical_slice.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">elliptical_slice</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="elliptical_slice.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.elliptical_slice.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">elliptical_slice</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -1439,7 +1898,7 @@ title="Source repository"
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ghmc"><a class="viewcode-back" href="../../mcmc.html#blackjax.ghmc">[docs]</a><span class="k">class</span> <span class="nc">ghmc</span><span class="p">:</span>
+<div class="viewcode-block" id="ghmc"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.ghmc">[docs]</a><span class="k">class</span> <span class="nc">ghmc</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Generalized HMC kernel.</span>
 
 <span class="sd">    The Generalized HMC kernel performs a similar procedure to the standard HMC</span>
@@ -1501,8 +1960,8 @@ title="Source repository"
 <span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">ghmc</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">ghmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span>
+<div class="viewcode-block" id="ghmc.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.ghmc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">ghmc</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="ghmc.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.ghmc.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">ghmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -1544,7 +2003,7 @@ title="Source repository"
     <span class="n">sample</span><span class="p">:</span> <span class="n">Callable</span>
 
 
-<div class="viewcode-block" id="pathfinder"><a class="viewcode-back" href="../../vi.html#blackjax.pathfinder">[docs]</a><span class="k">class</span> <span class="nc">pathfinder</span><span class="p">:</span>
+<div class="viewcode-block" id="pathfinder"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.pathfinder">[docs]</a><span class="k">class</span> <span class="nc">pathfinder</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the pathfinder kernel.</span>
 
 <span class="sd">    Pathfinder locates normal approximations to the target density along a</span>
@@ -1556,6 +2015,11 @@ title="Source repository"
 <span class="sd">    Note: all the heavy processing in performed in the init function, step</span>
 <span class="sd">    function is just a drawing a sample from a normal distribution</span>
 
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        A function that represents the log-density of the model we want</span>
+<span class="sd">        to sample from.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1563,8 +2027,8 @@ title="Source repository"
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">approximate</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">approximate</span><span class="p">)</span>
-    <span class="n">sample</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">sample</span><span class="p">)</span>
+<div class="viewcode-block" id="pathfinder.approximate"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.pathfinder.approximate">[docs]</a>    <span class="n">approximate</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">approximate</span><span class="p">)</span></div>
+<div class="viewcode-block" id="pathfinder.sample"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.pathfinder.sample">[docs]</a>    <span class="n">sample</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">sample</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PathFinderAlgorithm</span><span class="p">:</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="k">def</span> <span class="nf">approximate_fn</span><span class="p">(</span>
@@ -1585,7 +2049,7 @@ title="Source repository"
         <span class="k">return</span> <span class="n">PathFinderAlgorithm</span><span class="p">(</span><span class="n">approximate_fn</span><span class="p">,</span> <span class="n">sample_fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="pathfinder_adaptation"><a class="viewcode-back" href="../../adaptation.html#blackjax.pathfinder_adaptation">[docs]</a><span class="k">def</span> <span class="nf">pathfinder_adaptation</span><span class="p">(</span>
+<div class="viewcode-block" id="pathfinder_adaptation"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.pathfinder_adaptation">[docs]</a><span class="k">def</span> <span class="nf">pathfinder_adaptation</span><span class="p">(</span>
     <span class="n">algorithm</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">hmc</span><span class="p">,</span> <span class="n">nuts</span><span class="p">],</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
@@ -1676,10 +2140,28 @@ title="Source repository"
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="meanfield_vi"><a class="viewcode-back" href="../../vi.html#blackjax.meanfield_vi">[docs]</a><span class="k">class</span> <span class="nc">meanfield_vi</span><span class="p">:</span>
-    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">meanfield_vi</span><span class="o">.</span><span class="n">init</span><span class="p">)</span>
-    <span class="n">step</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">meanfield_vi</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
-    <span class="n">sample</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">meanfield_vi</span><span class="o">.</span><span class="n">sample</span><span class="p">)</span>
+<div class="viewcode-block" id="meanfield_vi"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.meanfield_vi">[docs]</a><span class="k">class</span> <span class="nc">meanfield_vi</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;High-level implementation of Mean-Field Variational Inference.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        A function that represents the log-density function associated with</span>
+<span class="sd">        the distribution we want to sample from.</span>
+<span class="sd">    optimizer</span>
+<span class="sd">        Optax optimizer to use to optimize the ELBO.</span>
+<span class="sd">    num_samples</span>
+<span class="sd">        Number of samples to take at each step to optimize the ELBO.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``VIAlgorithm``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="meanfield_vi.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.meanfield_vi.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">meanfield_vi</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="meanfield_vi.step"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.meanfield_vi.step">[docs]</a>    <span class="n">step</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">meanfield_vi</span><span class="o">.</span><span class="n">step</span><span class="p">)</span></div>
+<div class="viewcode-block" id="meanfield_vi.sample"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.meanfield_vi.sample">[docs]</a>    <span class="n">sample</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">vi</span><span class="o">.</span><span class="n">meanfield_vi</span><span class="o">.</span><span class="n">sample</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
