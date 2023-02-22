@@ -40,8 +40,6 @@ MIN_STEP_SIZE = 1e-3
 class LBFGSHistory(NamedTuple):
     """Container for the optimization path of a L-BFGS run
 
-    Attributes
-    ---------
     x
         History of positions
     f
