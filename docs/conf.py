@@ -117,6 +117,7 @@ def skip_util_classes(app, what, name, obj, skip, options):
         "blackjax.progress_bar",
         "blackjax.util",
         "blackjax.types",
+        "blackjax.base",
     ]
     if what == "module" and name in excluded_modules:
         skip = True
