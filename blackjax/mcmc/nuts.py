@@ -80,13 +80,13 @@ def kernel(
 ):
     """Build an iterative NUTS kernel.
 
-    This algorithm is an iteration on the original NUTS algorithm [Hoffman2014]_
+    This algorithm is an iteration on the original NUTS algorithm :cite:p:`hoffman2014no`
     with two major differences:
 
     - We do not use slice samplig but multinomial sampling for the proposal
-      [Betancourt2017]_;
-    - The trajectory expansion is not recursive but iterative [Phan2019]_,
-      [Lao2020]_.
+      :cite:p:`betancourt2017conceptual`;
+    - The trajectory expansion is not recursive but iterative :cite:p:`phan2019composable`,
+      :cite:p:`lao2020tfp`.
 
     The implementation can seem unusual for those familiar with similar
     algorithms. Indeed, we do not conceptualize the trajectory construction as
@@ -111,21 +111,6 @@ def kernel(
         The maximum number of times we expand the trajectory by
         doubling the number of steps if the trajectory does not
         turn onto itself.
-
-    References
-    ----------
-    .. [Hoffman2014]: Hoffman, Matthew D., and Andrew Gelman.
-                      "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo."
-                      J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
-    .. [Betancourt2017]: Betancourt, Michael.
-                         "A conceptual introduction to Hamiltonian Monte Carlo."
-                         arXiv preprint arXiv:1701.02434 (2017).
-    .. [Phan2019]: Phan Du, Neeraj Pradhan, and Martin Jankowiak.
-                   "Composable effects for flexible and accelerated probabilistic programming in NumPyro."
-                   arXiv preprint arXiv:1912.11554 (2019).
-    .. [Lao2020]: Lao, Junpeng, et al.
-                  "tfp. mcmc: Modern markov chain monte carlo tools built for modern hardware."
-                  arXiv preprint arXiv:2002.01184 (2020).
 
     """
 

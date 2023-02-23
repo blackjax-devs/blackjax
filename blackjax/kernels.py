@@ -33,12 +33,16 @@ __all__ = [
     "hmc",
     "mala",
     "nuts",
+    "ghmc",
     "orbital_hmc",
     "random_walk",
     "rmh",
     "sgld",
     "sghmc",
+    "meanfield_vi",
     "csgld",
+    "elliptical_slice",
+    "meads_adaptation",
     "tempered_smc",
     "window_adaptation",
     "irmh",
@@ -55,6 +59,28 @@ __all__ = [
 
 class adaptive_tempered_smc:
     """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
+
+    Parameters
+    ----------
+    logprior_fn
+        The log-prior function of the model we wish to draw samples from.
+    loglikelihood_fn
+        The log-likelihood function of the model we wish to draw samples from.
+    mcmc_step_fn
+        The MCMC step function used to update the particles.
+    mcmc_init_fn
+        The MCMC init function used to build a MCMC state from a particle position.
+    mcmc_parameters
+        The parameters of the MCMC step function.
+    resampling_fn
+        The function used to resample the particles.
+    target_ess
+        The number of effective sample size to aim for at each step.
+    root_solver
+        The solver used to adaptively compute the temperature given a target number
+        of effective samples.
+    num_mcmc_steps
+        The number of times the MCMC kernel is applied to the particles per step.
 
     Returns
     -------
@@ -104,6 +130,22 @@ class adaptive_tempered_smc:
 class tempered_smc:
     """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
 
+    Parameters
+    ----------
+    logprior_fn
+        The log-prior function of the model we wish to draw samples from.
+    loglikelihood_fn
+        The log-likelihood function of the model we wish to draw samples from.
+    mcmc_step_fn
+        The MCMC step function used to update the particles.
+    mcmc_init_fn
+        The MCMC init function used to build a MCMC state from a particle position.
+    mcmc_parameters
+        The parameters of the MCMC step function.
+    resampling_fn
+        The function used to resample the particles.
+    num_mcmc_steps
+        The number of times the MCMC kernel is applied to the particles per step.
 
     Returns
     -------
@@ -402,7 +444,7 @@ class nuts:
 
 
 class mgrad_gaussian:
-    """Implements the marginal sampler for latent Gaussian model of [1].
+    """Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.
 
     It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
     Interestingly, the only parameter that needs calibrating is the "step size" delta, which can be done very efficiently.
@@ -439,9 +481,6 @@ class mgrad_gaussian:
     -------
     A ``MCMCSamplingAlgorithm``.
 
-    References
-    ----------
-    [1]: Titsias, M.K. and Papaspiliopoulos, O. (2018), Auxiliary gradient-based sampling algorithms. J. R. Stat. Soc. B, 80: 749-767. https://doi.org/10.1111/rssb.12269
     """
 
     def __new__(  # type: ignore[misc]
@@ -516,11 +555,9 @@ class sgld:
 
     Parameters
     ----------
-    gradient_estimator
-       A tuple of functions that initialize and update the gradient estimation
-       state.
-    schedule_fn
-       A function which returns a step size given a step number.
+    grad_estimator
+       A function that takes a position, a batch of data and returns an estimation
+       of the gradient of the log-density at this position.
 
     Returns
     -------
@@ -594,11 +631,9 @@ class sghmc:
 
     Parameters
     ----------
-    gradient_estimator
-       A tuple of functions that initialize and update the gradient estimation
-       state.
-    schedule_fn
-       A function which returns a step size given a step number.
+    grad_estimator
+       A function that takes a position, a batch of data and returns an estimation
+       of the gradient of the log-density at this position.
 
     Returns
     -------
@@ -629,6 +664,37 @@ class sghmc:
 
 
 class csgld:
+    r"""Implements the (basic) user interface for the Contour SGLD kernel.
+
+    Parameters
+    ----------
+    logdensity_estimator_fn
+        A function that returns an estimation of the model's logdensity given
+        a position and a batch of data.
+    zeta
+        Hyperparameter that controls the geometric property of the flattened
+        density. If `zeta=0` the function reduces to the SGLD step function.
+    temperature
+        Temperature parameter.
+    num_partitions
+        The number of partitions we divide the energy landscape into.
+    energy_gap
+        The difference in energy :math:`\Delta u` between the successive
+        partitions. Can be determined by running e.g. an optimizer to determine
+        the range of energies. `num_partition` * `energy_gap` should match this
+        range.
+    min_energy
+        A rough estimate of the minimum energy in a dataset, which should be
+        strictly smaller than the exact minimum energy! e.g. if the minimum
+        energy of a dataset is 3456, we can set min_energy to be any value
+        smaller than 3456. Set it to 0 is acceptable, but not efficient enough.
+        the closer the gap between min_energy and 3456 is, the better.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+
+    """
     init = staticmethod(sgmcmc.csgld.init)
     kernel = staticmethod(sgmcmc.csgld.kernel)
 
@@ -1300,6 +1366,11 @@ class pathfinder:
     Note: all the heavy processing in performed in the init function, step
     function is just a drawing a sample from a normal distribution
 
+    Parameters
+    ----------
+    logdensity_fn
+        A function that represents the log-density of the model we want
+        to sample from.
 
     Returns
     -------
@@ -1421,6 +1492,24 @@ def pathfinder_adaptation(
 
 
 class meanfield_vi:
+    """High-level implementation of Mean-Field Variational Inference.
+
+    Parameters
+    ----------
+    logdensity_fn
+        A function that represents the log-density function associated with
+        the distribution we want to sample from.
+    optimizer
+        Optax optimizer to use to optimize the ELBO.
+    num_samples
+        Number of samples to take at each step to optimize the ELBO.
+
+    Returns
+    -------
+    A ``VIAlgorithm``.
+
+    """
+
     init = staticmethod(vi.meanfield_vi.init)
     step = staticmethod(vi.meanfield_vi.step)
     sample = staticmethod(vi.meanfield_vi.sample)

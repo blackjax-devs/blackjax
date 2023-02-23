@@ -81,7 +81,7 @@ def approximate(
     quasi-Newton optimization path, with local covariance estimated using
     the inverse Hessian estimates produced by the L-BFGS optimizer.
 
-    Function implements the algorithm 3 in [1]:
+    Function implements the algorithm 3 in :cite:p:`zhang2022pathfinder`:
 
     Parameters
     ----------
@@ -113,12 +113,6 @@ def approximate(
     A PathfinderState with information on the iteration in the optimization path
     whose approximate samples yields the highest ELBO, and PathfinderInfo that
     contains all the states traversed.
-
-    References
-    ----------
-
-    .. [1]: Pathfinder: Parallel quasi-newton variational inference,
-            Lu Zhang et al., arXiv:2108.03782
 
     """
     initial_position_flatten, unravel_fn = ravel_pytree(initial_position)

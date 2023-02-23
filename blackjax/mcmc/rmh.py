@@ -61,8 +61,8 @@ class RMHInfo(NamedTuple):
 def init(position: PyTree, logdensity_fn: Callable) -> RMHState:
     """Create a chain state from a position.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     position: PyTree
         The initial position of the chain
     logdensity_fn: Callable

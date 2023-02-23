@@ -44,7 +44,7 @@ class MEADSAdaptationState(NamedTuple):
 
 def base():
     """Maximum-Eigenvalue Adaptation of damping and step size for the generalized
-    Hamiltonian Monte Carlo kernel [1]_.
+    Hamiltonian Monte Carlo kernel :cite:p:`hoffman2022tuning`.
 
 
     This algorithm performs a cross-chain adaptation scheme for the generalized
@@ -54,7 +54,7 @@ def base():
     covariance and gradient matrices given by the grouped samples of all chains
     with shape.
 
-    This is an implementation of Algorithm 3 of [1]_ using cross-chain
+    This is an implementation of Algorithm 3 of :cite:p:`hoffman2022tuning` using cross-chain
     adaptation instead of parallel ensample chain adaptation.
 
     Returns
@@ -63,12 +63,6 @@ def base():
         Function that initializes the warmup.
     update
         Function that moves the warmup one step.
-
-    References
-    ----------
-    .. [1]: Hoffman, M. D., & Sountsov, P. (2022). Tuning-Free Generalized
-            Hamiltonian Monte Carlo. In International Conference on Artificial
-            Intelligence and Statistics (pp. 7799-7813). PML
 
     """
 

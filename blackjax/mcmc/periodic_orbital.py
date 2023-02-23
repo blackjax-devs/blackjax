@@ -117,7 +117,7 @@ def init(
 def kernel(
     bijection: Callable = integrators.velocity_verlet,
 ):
-    """Build a Periodic Orbital kernel [1]_.
+    """Build a Periodic Orbital kernel :cite:p:`neklyudov2022orbital`.
 
     Parameters
     ----------
@@ -130,10 +130,6 @@ def kernel(
     of the chain and that returns a new state of the chain along with
     information about the transition.
 
-    References
-    ----------
-    .. [1]: Kirill Neklyudov and Max Welling "Orbital MCMC." arXiv preprint
-            arXiv:2010.08047 (2021).
     """
 
     def one_step(
@@ -254,17 +250,13 @@ def periodic_orbital_proposal(
     ) -> Tuple[PeriodicOrbitalState, PeriodicOrbitalInfo]:
         """Generate orbit by applying bijection forwards and backwards on period.
 
-        As described in algorithm 2 of [1]_, each iteration of the periodic orbital
+        As described in algorithm 2 of :cite:p:`neklyudov2022orbital`, each iteration of the periodic orbital
         MCMC takes a position and its direction, i.e. its step in the orbit, then
         it runs the bijection backwards until it reaches the direction 0 and forwards
         until it reaches the direction period-1. For each step it calculates its
         weight using the target density, the auxilary variable's density and the
         bijection.
 
-        References
-        ----------
-        .. [1]: Kirill Neklyudov and Max Welling "Orbital MCMC." arXiv preprint
-                arXiv:2010.08047 (2021).
         """
 
         index_steps = jnp.arange(period) - direction

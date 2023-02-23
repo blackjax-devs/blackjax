@@ -28,7 +28,7 @@ from blackjax.adaptation.step_size import (
 from blackjax.types import Array, PyTree
 from blackjax.util import pytree_size
 
-__all__ = ["base", "schedule"]
+__all__ = ["WindowAdaptationState", "base", "schedule"]
 
 
 class WindowAdaptationState(NamedTuple):
@@ -43,7 +43,7 @@ def base(
     target_acceptance_rate: float = 0.80,
 ) -> Tuple[Callable, Callable, Callable]:
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
-    The schedule and algorithms used match Stan's [1]_ as closely as possible.
+    The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
 
     Unlike several other libraries, we separate the warmup and sampling phases
     explicitly. This ensure a better modularity; a change in the warmup does
@@ -75,11 +75,6 @@ def base(
     to the matrix. In (3) we compute the mass matrix to use in the kernel and
     re-initialize the mass matrix adaptation. The step size is still adapated
     in slow adaptation windows, and is not re-initialized between windows.
-
-    References
-    ----------
-    .. [1]: Stan Reference Manual v2.22
-            Section 15.2 "HMC Algorithm"
 
     Parameters
     ----------
@@ -247,7 +242,7 @@ def schedule(
 ) -> List[Tuple[int, bool]]:
     """Return the schedule for Stan's warmup.
 
-    The schedule below is intended to be as close as possible to Stan's _[1].
+    The schedule below is intended to be as close as possible to Stan's :cite:p:`stan_hmc_param`.
     The warmup period is split into three stages:
 
     1. An initial fast interval to reach the typical set. Only the step size is
@@ -269,7 +264,7 @@ def schedule(
 
     The distinction slow/fast comes from the speed at which the algorithms
     converge to a stable value; in the common case, estimation of covariance
-    requires more steps than dual averaging to give an accurate value. See _[1]
+    requires more steps than dual averaging to give an accurate value. See :cite:p:`stan_hmc_param`
     for a more detailed explanation.
 
     Fast intervals are given the label 0 and slow intervals the label 1.
@@ -288,11 +283,6 @@ def schedule(
     Returns
     -------
     A list of tuples (window_label, is_middle_window_end).
-
-    References
-    ----------
-    .. [1]: Stan Reference Manual v2.22
-            Section 15.2 "HMC Algorithm"
 
     """
     schedule = []

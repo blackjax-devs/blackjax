@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Progress bar decorators for use with step functions.
-Adapted from Jeremie Coullon's blog post [1]
-.. [1]: "How to add a progress bar to JAX scans and loops"
-        https://www.jeremiecoullon.com/2021/01/29/jax_progress_bar/
+Adapted from Jeremie Coullon's blog post :cite:p:`progress_bar`.
 """
 from fastprogress.fastprogress import progress_bar
 from jax import lax

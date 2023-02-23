@@ -13,7 +13,7 @@
 # limitations under the License.
 """Procedures to build trajectories for algorithms in the HMC family.
 
-To propose a new state, algorithms in the HMC family generally proceed by [1]_:
+To propose a new state, algorithms in the HMC family generally proceed by :cite:p:`betancourt2017conceptual`:
 
 1. Sampling a trajectory starting from the initial point;
 2. Sampling a new state from this sampled trajectory.
@@ -34,13 +34,6 @@ static setting we first build the trajectory and then sample a proposal from
 this trajectory. In the progressive setting we update the proposal as the
 trajectory is being sampled. While the former is faster, we risk saturating the
 memory by keeping states that will subsequently be discarded.
-
-
-References
-----------
-.. [1]: Betancourt, Michael.
-        "A conceptual introduction to Hamiltonian Monte Carlo."
-        arXiv preprint arXiv:1701.02434 (2017).
 
 """
 from typing import Callable, NamedTuple, Tuple
@@ -310,7 +303,7 @@ def dynamic_recursive_integration(
     """Integrate a trajectory and update the proposal recursively in Python
     until the termination criterion is met.
 
-    This is the implementation of Algorithm 6 from [1] with multinomial sampling.
+    This is the implementation of Algorithm 6 from :cite:p:`hoffman2014no` with multinomial sampling.
     The implemenation here is mostly for validating the progressive implementation
     to make sure the two are equivalent. The recursive implementation should not
     be used for actually sampling as it cannot be jitted and thus likely slow.
@@ -327,10 +320,6 @@ def dynamic_recursive_integration(
         Value of the difference of energy between two consecutive states above which we say a transition is divergent.
     use_robust_uturn_check
         Bool to indicate whether to perform additional U turn check between two trajectory.
-
-    References
-    ----------
-    .. [1]: Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo." J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
 
     """
     _, generate_proposal = proposal_generator(kinetic_energy, divergence_threshold)

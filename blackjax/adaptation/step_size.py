@@ -21,6 +21,7 @@ from blackjax.mcmc.hmc import HMCState
 from blackjax.optimizers.dual_averaging import dual_averaging
 
 __all__ = [
+    "DualAveragingAdaptationState",
     "dual_averaging_adaptation",
     "find_reasonable_step_size",
 ]
@@ -76,7 +77,7 @@ def dual_averaging_adaptation(
     the error at time t. We would like to find a procedure that adapts the
     value of :math:`\\epsilon` such that :math:`h(x) =\\mathbb{E}\\left[H_t|\\epsilon\\right] = 0`
 
-    Following [Nesterov2009]_, the authors of [Hoffman2014]_ proposed the following update scheme. If
+    Following :cite:p:`nesterov2009primal`, the authors of :cite:p:`hoffman2014no` proposed the following update scheme. If
     we note :math:`x = \\log \\epsilon` we follow:
 
     .. math:
@@ -87,21 +88,21 @@ def dual_averaging_adaptation(
     :math:`h(\\overline{x}_t)` converges to 0, i.e. the Metropolis acceptance
     rate converges to the desired rate.
 
-    See reference [Hoffman2014a]_ (section 3.2.1) for a detailed discussion.
+    See reference :cite:p:`hoffman2014no` (section 3.2.1) for a detailed discussion.
 
     Parameters
     ----------
     t0: float >= 0
         Free parameter that stabilizes the initial iterations of the algorithm.
-        Large values may slow down convergence. Introduced in [Hoffman2014a]_ with a default
+        Large values may slow down convergence. Introduced in :cite:p:`hoffman2014no` with a default
         value of 10.
     gamma:
-        Controls the speed of convergence of the scheme. The authors of [Hoffman2014a]_ recommend
+        Controls the speed of convergence of the scheme. The authors of :cite:p:`hoffman2014no` recommend
         a value of 0.05.
     kappa: float in ]0.5, 1]
         Controls the weights of past steps in the current update. The scheme will
         quickly forget earlier step for a small value of `kappa`. Introduced
-        in [Hoffman2014a]_, with a recommended value of .75
+        in :cite:p:`hoffman2014no`, with a recommended value of .75
     target:
         Target acceptance rate.
 
@@ -111,15 +112,6 @@ def dual_averaging_adaptation(
         A function that initializes the state of the dual averaging scheme.
     update
         A function that updates the state of the dual averaging scheme.
-
-    References
-    ----------
-
-    .. [Nesterov2009] Nesterov, Yurii. "Primal-dual subgradient methods for convex
-            problems." Mathematical programming 120.1 (2009): 221-259.
-    .. [Hoffman2014a] Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler:
-           adaptively setting path lengths in Hamiltonian Monte Carlo." Journal
-           of Machine Learning Research 15.1 (2014): 1593-1623.
 
     """
     da_init, da_update, da_final = dual_averaging(t0, gamma, kappa)
@@ -198,7 +190,7 @@ def find_reasonable_step_size(
     value for the step size starting from any value, choosing a good first
     value can speed up the convergence. This heuristics doubles and halves the
     step size until the acceptance probability of the HMC proposal crosses the
-    target value [Hoffman2014b]_.
+    target value :cite:p:`hoffman2014no`.
 
     Parameters
     ----------
@@ -223,12 +215,6 @@ def find_reasonable_step_size(
     float
         A reasonable first value for the step size.
 
-    References
-    ----------
-    .. [Hoffman2014b] Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler:
-           adaptively setting path lengths in Hamiltonian Monte Carlo." Journal
-           of Machine Learning Research 15.1 (2014): 1593-1623.
-
     """
     fp_limit = jnp.finfo(jax.lax.dtype(initial_step_size))
 
@@ -240,13 +226,9 @@ def find_reasonable_step_size(
 
         Note
         ----
-        Per JAX's documentation [1]_ the `jnp.finfo` object is cached so we do not
+        Per JAX's documentation :cite:p:`jax_finfo` the `jnp.finfo` object is cached so we do not
         occur any performance penalty when calling it repeatedly inside this
         function.
-
-        References
-        ----------
-        .. [1] jax.numpy.finfo documentation. https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.finfo.html
 
         """
         _, direction, previous_direction, step_size = rss_state

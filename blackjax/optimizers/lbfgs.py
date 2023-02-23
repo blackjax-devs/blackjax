@@ -40,8 +40,6 @@ MIN_STEP_SIZE = 1e-3
 class LBFGSHistory(NamedTuple):
     """Container for the optimization path of a L-BFGS run
 
-    Attributes
-    ---------
     x
         History of positions
     f
@@ -233,7 +231,7 @@ def _minimize_lbfgs(
 def lbfgs_recover_alpha(alpha_lm1, s_l, z_l, epsilon=1e-12):
     """
     Compute diagonal elements of the inverse Hessian approximation from optimation path.
-    It implements the inner loop body of Algorithm 3 in [1].
+    It implements the inner loop body of Algorithm 3 in :cite:p:`zhang2022pathfinder`.
 
     Parameters
     ----------
@@ -242,7 +240,7 @@ def lbfgs_recover_alpha(alpha_lm1, s_l, z_l, epsilon=1e-12):
     s_l
         The update of the position (current position - previous position)
     z_l
-        The update of the gradient (current gradient - previous gradient). Note that in [1]
+        The update of the gradient (current gradient - previous gradient). Note that in :cite:p:`zhang2022pathfinder`
         it is defined as the negative of the update of the gradient, but since we are optimizing
         the negative log prob function taking the update of the gradient is correct here.
 
@@ -253,12 +251,6 @@ def lbfgs_recover_alpha(alpha_lm1, s_l, z_l, epsilon=1e-12):
     mask_l
         The indicator of whether the update of position and gradient are included in
         the inverse-Hessian approximation or not.
-
-    References
-    ----------
-
-    .. [1]: Pathfinder: Parallel quasi-newton variational inference,
-            Lu Zhang et al., arXiv:2108.03782
 
     """
 
