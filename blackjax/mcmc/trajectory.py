@@ -48,6 +48,7 @@ from blackjax.mcmc.proposal import (
     progressive_uniform_sampling,
     proposal_generator,
 )
+from blackjax.mcmc.rmh import RWState
 from blackjax.types import PRNGKey, PyTree
 
 
@@ -617,3 +618,18 @@ def dynamic_multiplicative_expansion(
         return expansion_state, (is_diverging, is_turning)
 
     return expand
+
+
+def stochastic_trajectory(
+    transition_distribution: Callable, logdensity_fn: Callable
+) -> Callable:
+    """Simple trajectory that only depends on stochastic
+    component, a transition distribution conditioned on a current state.
+    """
+
+    def transition(rng_key, initial_state: RWState) -> RWState:
+        position, logdensity = initial_state
+        new_position = transition_distribution(rng_key, position)
+        return RWState(new_position, logdensity_fn(new_position))
+
+    return transition

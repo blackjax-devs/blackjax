@@ -14,7 +14,7 @@
 """Public API for the Independent Rosenbluth-Metropolis-Hastings kernels."""
 from typing import Callable, Tuple
 
-from blackjax.mcmc.rmh import RMHInfo, RMHState, rmh
+from blackjax.mcmc.rmh import RWInfo, RWState, rmh
 from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["kernel"]
@@ -40,8 +40,8 @@ def kernel(proposal_distribution: Callable) -> Callable:
     """
 
     def one_step(
-        rng_key: PRNGKey, state: RMHState, logdensity_fn: Callable
-    ) -> Tuple[RMHState, RMHInfo]:
+        rng_key: PRNGKey, state: RWState, logdensity_fn: Callable
+    ) -> Tuple[RWState, RWInfo]:
         def proposal_generator(rng_key: PRNGKey, position: PyTree):
             return proposal_distribution(rng_key)
 

@@ -16,8 +16,23 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 import numpy as np
+from typing_extensions import Protocol
 
-from blackjax.mcmc.integrators import IntegratorState
+from blackjax.types import PyTree
+
+
+class StateWithPosition(Protocol):
+    """
+    State of a trajectory.
+    """
+
+    @property
+    def position(self) -> PyTree:
+        ...
+
+    @property
+    def logdensity(self) -> PyTree:
+        ...
 
 
 class Proposal(NamedTuple):
@@ -35,7 +50,7 @@ class Proposal(NamedTuple):
 
     """
 
-    state: IntegratorState
+    state: StateWithPosition
     energy: float
     weight: float
     sum_log_p_accept: float
@@ -44,11 +59,21 @@ class Proposal(NamedTuple):
 def proposal_generator(
     kinetic_energy: Callable, divergence_threshold: float
 ) -> Tuple[Callable, Callable]:
-    def new(state: IntegratorState) -> Proposal:
-        energy = -state.logdensity + kinetic_energy(state.momentum)
-        return Proposal(state, energy, 0.0, -np.inf)
+    return proposal_generator_from_energy(
+        energy=lambda state: -state.logdensity + kinetic_energy(state.momentum),
+        divergence_threshold=divergence_threshold,
+    )
 
-    def update(initial_energy: float, state: IntegratorState) -> Tuple[Proposal, bool]:
+
+def proposal_generator_from_energy(
+    energy: Callable, divergence_threshold: float
+) -> Tuple[Callable, Callable]:
+    def new(state: StateWithPosition) -> Proposal:
+        return Proposal(state, energy(state), 0.0, -np.inf)
+
+    def update(
+        initial_energy: float, state: StateWithPosition
+    ) -> Tuple[Proposal, bool]:
         """Generate a new proposal from a trajectory state.
 
         The trajectory state records information about the position in the state
@@ -65,7 +90,7 @@ def proposal_generator(
             The new state.
 
         """
-        new_energy = -state.logdensity + kinetic_energy(state.momentum)
+        new_energy = energy(state)
 
         delta_energy = initial_energy - new_energy
         delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)

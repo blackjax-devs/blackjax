@@ -15,15 +15,18 @@
 from typing import Callable, NamedTuple, Optional, Tuple
 
 import jax
-from jax import numpy as jnp
+import numpy as np
 
+from blackjax.mcmc import proposal, trajectory
+from blackjax.mcmc.integrators import IntegratorState
+from blackjax.mcmc.proposal import Proposal
 from blackjax.types import PRNGKey, PyTree
 
-__all__ = ["RMHState", "RMHInfo", "init"]
+__all__ = ["RWState", "RWInfo", "init"]
 
 
-class RMHState(NamedTuple):
-    """State of the RMH chain.
+class RWState(NamedTuple):
+    """State of the RW chain.
 
     position
         Current position of the chain.
@@ -33,11 +36,11 @@ class RMHState(NamedTuple):
     """
 
     position: PyTree
-    log_density: float
+    logdensity: float
 
 
-class RMHInfo(NamedTuple):
-    """Additional information on the RMH chain.
+class RWInfo(NamedTuple):
+    """Additional information on the RW chain.
 
     This additional information can be used for debugging or computing
     diagnostics.
@@ -55,10 +58,10 @@ class RMHInfo(NamedTuple):
 
     acceptance_rate: float
     is_accepted: bool
-    proposal: RMHState
+    proposal: RWState
 
 
-def init(position: PyTree, logdensity_fn: Callable) -> RMHState:
+def init(position: PyTree, logdensity_fn: Callable) -> RWState:
     """Create a chain state from a position.
 
     Parameters
@@ -70,22 +73,67 @@ def init(position: PyTree, logdensity_fn: Callable) -> RMHState:
         from.
 
     """
-    return RMHState(position, logdensity_fn(position))
+    return RWState(position, logdensity_fn(position))
 
 
-# -----------------------------------------------------------------------------
-# Rosenbluth-Metropolis-Hastings Step
-#
-# We keep this separate as the basis of a self-standing implementation of the
-# RMH correction step that can be re-used across the library.
-#
-# (TODO) Separate the RMH step from the proposal.
-# -----------------------------------------------------------------------------
+def correct_weight_for_non_symmetry(proposal_logdensity_fn) -> Callable:
+    """Classical Rosenbluth-Metropolis-Hastings correction when the proposal
+    distribution is non-symmetric.
+    """
+
+    def weight_corrector(
+        new_proposal: Proposal,
+        previous_state: IntegratorState,
+    ) -> Proposal:
+        new_position = new_proposal.state.position
+        previous_position = previous_state.position
+        weight_correction = proposal_logdensity_fn(
+            new_position, previous_position
+        ) - proposal_logdensity_fn(previous_position, new_position)
+
+        return Proposal(
+            new_proposal.state,
+            new_proposal.energy,
+            new_proposal.weight + weight_correction,
+            new_proposal.sum_log_p_accept,
+        )
+        # To code reviewer is keeping sum_log_p_accept correct?
+
+    return weight_corrector
+
+
+def rmh_proposal(
+    logdensity_fn,
+    transition_distribution,
+    energy: Callable,
+    weight_correction,
+    sample_proposal: Callable = proposal.static_binomial_sampling,
+) -> Callable:
+    build_trajectory = trajectory.stochastic_trajectory(
+        transition_distribution, logdensity_fn
+    )
+
+    init_proposal, generate_proposal = proposal.proposal_generator_from_energy(
+        energy=energy, divergence_threshold=np.inf
+    )
+
+    def generate(rng_key, state: RWState) -> Tuple[RWState, bool, float]:
+        key_proposal, key_accept = jax.random.split(rng_key, 2)
+        end_state = build_trajectory(key_proposal, state)
+        previous_proposal = init_proposal(state)
+        new_proposal, _ = generate_proposal(previous_proposal.energy, end_state)
+        corrected_proposal = weight_correction(new_proposal, previous_proposal)
+        sampled_proposal, do_accept, p_accept = sample_proposal(
+            key_accept, previous_proposal, corrected_proposal
+        )
+        return sampled_proposal, do_accept, p_accept
+
+    return generate
 
 
 def rmh(
     logdensity_fn: Callable,
-    proposal_generator: Callable,
+    transition_generator: Callable,
     proposal_logdensity_fn: Optional[Callable] = None,
 ):
     """Build a Rosenbluth-Metropolis-Hastings kernel.
@@ -94,7 +142,7 @@ def rmh(
     ----------
     logdensity_fn
         A function that returns the log-probability at a given position.
-    proposal_generator
+    transition_generator
         A function that generates a candidate transition for the markov chain.
     proposal_logdensity_fn:
         For non-symmetric proposals, a function that returns the log-density
@@ -109,21 +157,18 @@ def rmh(
 
     """
     if proposal_logdensity_fn is None:
-
-        def acceptance_rate(state: RMHState, proposal: RMHState):
-            return proposal.log_density - state.log_density
-
+        weight_correction = lambda new_proposal, previous_proposal: new_proposal
     else:
+        weight_correction = correct_weight_for_non_symmetry(proposal_logdensity_fn)
 
-        def acceptance_rate(state: RMHState, proposal: RMHState):
-            return (
-                proposal.log_density
-                + proposal_logdensity_fn(proposal.position, state.position)  # type: ignore
-                - state.log_density
-                - proposal_logdensity_fn(state.position, proposal.position)  # type: ignore
-            )
+    proposal_generator = rmh_proposal(
+        logdensity_fn,
+        transition_generator,
+        energy=lambda state: -state.logdensity,
+        weight_correction=weight_correction,
+    )
 
-    def kernel(rng_key: PRNGKey, state: RMHState) -> Tuple[RMHState, RMHInfo]:
+    def kernel(rng_key: PRNGKey, state: RWState) -> Tuple[RWState, RWInfo]:
         """Move the chain by one step using the Rosenbluth Metropolis Hastings
         algorithm.
 
@@ -141,22 +186,8 @@ def rmh(
         step.
 
         """
-        key_proposal, key_accept = jax.random.split(rng_key, 2)
-
-        new_position = proposal_generator(rng_key, state.position)
-        new_log_density = logdensity_fn(new_position)
-        new_state = RMHState(new_position, new_log_density)
-
-        delta = acceptance_rate(state, new_state)
-        delta = jnp.where(jnp.isnan(delta), -jnp.inf, delta)
-        p_accept = jnp.clip(jnp.exp(delta), a_max=1.0)
-
-        do_accept = jax.random.bernoulli(key_accept, p_accept)
-        accept_state = (new_state, RMHInfo(p_accept, True, new_state))
-        reject_state = (state, RMHInfo(p_accept, False, new_state))
-
-        return jax.lax.cond(
-            do_accept, lambda _: accept_state, lambda _: reject_state, operand=None
-        )
+        sampled_proposal, do_accept, p_accept = proposal_generator(rng_key, state)
+        new_state = sampled_proposal.state
+        return new_state, RWInfo(p_accept, do_accept, new_state)
 
     return kernel

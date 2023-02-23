@@ -3,7 +3,7 @@ from typing import Callable, Tuple
 import jax
 from jax import numpy as jnp
 
-from blackjax.mcmc.rmh import RMHInfo, RMHState, rmh
+from blackjax.mcmc.rmh import RWInfo, RWState, rmh
 from blackjax.types import Array, PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise
 
@@ -23,8 +23,8 @@ def kernel(random_step):
     """
 
     def one_step(
-        rng_key: PRNGKey, state: RMHState, logdensity_fn: Callable
-    ) -> Tuple[RMHState, RMHInfo]:
+        rng_key: PRNGKey, state: RWState, logdensity_fn: Callable
+    ) -> Tuple[RWState, RWInfo]:
         def proposal_generator(key_proposal, position):
             move_proposal = random_step(key_proposal, position)
             new_position = jax.tree_util.tree_map(jnp.add, position, move_proposal)
