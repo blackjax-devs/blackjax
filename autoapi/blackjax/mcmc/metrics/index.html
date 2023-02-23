@@ -592,6 +592,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -764,22 +771,11 @@ title="Source repository"
 position space in the Euclidean metric. It is defined by a definite positive
 matrix <span class="math notranslate nohighlight">\(M\)</span> with fixed value so that the kinetic energy of the hamiltonian
 dynamic is independent of the position and only depends on the momentum
-<span class="math notranslate nohighlight">\(p\)</span> <a class="reference internal" href="../trajectory/index.html#bet17" id="id1"><span>[Bet17]</span></a>.</p>
+<span class="math notranslate nohighlight">\(p\)</span> <span id="id1">[<a class="reference internal" href="../../../../bib.html#id22" title="Michael Betancourt, Simon Byrne, Sam Livingstone, and Mark Girolami. The geometric foundations of hamiltonian monte carlo. arXiv preprint arXiv:arXiv:1410.5110, 2017.">BBLG17</a>]</span>.</p>
 <p>For a Newtonian hamiltonian dynamic the kinetic energy is given by:</p>
 <div class="math notranslate nohighlight">
 \[K(p) = \frac{1}{2} p^T M^{-1} p\]</div>
-<p>We can also generate a relativistic dynamic <a class="reference internal" href="#lph-17" id="id2"><span>[LPH+17]</span></a>.</p>
-<p class="rubric">References</p>
-<dl class="citation">
-<dt class="label" id="bet17"><span class="brackets"><a class="fn-backref" href="#id1">Bet17</a></span></dt>
-<dd><p>Betancourt, Michael, et al. “The geometric foundations of hamiltonian
-monte carlo.” Bernoulli 23.4A (2017): 2257-2298.</p>
-</dd>
-<dt class="label" id="lph-17"><span class="brackets"><a class="fn-backref" href="#id2">LPH+17</a></span></dt>
-<dd><p>Lu, Xiaoyu, et al. “Relativistic monte carlo.”
-Artificial Intelligence and Statistics. PMLR, 2017.</p>
-</dd>
-</dl>
+<p>We can also generate a relativistic dynamic <span id="id2">[<a class="reference internal" href="../../../../bib.html#id23" title="Xiaoyu Lu, Valerio Perrone, Leonard Hasenclever, Yee Whye Teh, and Sebastian Vollmer. Relativistic monte carlo. In Artificial Intelligence and Statistics, 1236–1245. PMLR, 2017.">LPH+17</a>]</span>.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">#</a></h2>
 <section id="functions">
@@ -791,14 +787,14 @@ Artificial Intelligence and Statistics. PMLR, 2017.</p>
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_euclidean" title="blackjax.mcmc.metrics.gaussian_euclidean"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gaussian_euclidean</span></code></a>(→ Tuple[Callable, ...)</p></td>
-<td><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum.</p></td>
+<td><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum <span id="id3">[<a class="reference internal" href="../../../../bib.html#id33" title="Michael Betancourt. A general metric for riemannian manifold hamiltonian monte carlo. In Geometric Science of Information: First International Conference, GSI 2013, Paris, France, August 28-30, 2013. Proceedings, 327–334. Springer, 2013.">Bet13</a>]</span>.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.metrics.gaussian_euclidean">
 <span class="sig-name descname"><span class="pre">gaussian_euclidean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">EuclideanKineticEnergy</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_euclidean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_euclidean" title="Permalink to this definition">#</a></dt>
-<dd><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum.</p>
+<dd><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum <span id="id4">[<a class="reference internal" href="../../../../bib.html#id33" title="Michael Betancourt. A general metric for riemannian manifold hamiltonian monte carlo. In Geometric Science of Information: First International Conference, GSI 2013, Paris, France, August 28-30, 2013. Proceedings, 327–334. Springer, 2013.">Bet13</a>]</span>.</p>
 <p>The gaussian euclidean metric is a euclidean metric further characterized
 by setting the conditional probability density <span class="math notranslate nohighlight">\(\pi(momentum|position)\)</span>
 to follow a standard gaussian distribution. A Newtonian hamiltonian

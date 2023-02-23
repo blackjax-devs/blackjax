@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -844,16 +851,10 @@ title="Source repository"
 
 
 <div class="viewcode-block" id="progressive_biased_sampling"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.progressive_biased_sampling">[docs]</a><span class="k">def</span> <span class="nf">progressive_biased_sampling</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Baised proposal sampling.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Baised proposal sampling :cite:p:`betancourt2017conceptual`.</span>
 
 <span class="sd">    Unlike uniform sampling, biased sampling favors new proposals. It thus</span>
 <span class="sd">    biases the transition away from the trajectory&#39;s initial state.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [Bet17] Betancourt, Michael.</span>
-<span class="sd">        &quot;A conceptual introduction to Hamiltonian Monte Carlo.&quot;</span>
-<span class="sd">        arXiv preprint arXiv:1701.02434 (2017).</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">p_accept</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_proposal</span><span class="o">.</span><span class="n">weight</span> <span class="o">-</span> <span class="n">proposal</span><span class="o">.</span><span class="n">weight</span><span class="p">),</span> <span class="n">a_max</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -890,14 +891,8 @@ title="Source repository"
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Slice sampling for non-reversible Metropolis-Hasting update.</span>
 
 <span class="sd">    Performs a non-reversible update of a uniform [0, 1] value</span>
-<span class="sd">    for Metropolis-Hastings accept/reject decisions [Nea20]_, in addition</span>
+<span class="sd">    for Metropolis-Hastings accept/reject decisions :cite:p:`neal2020non`, in addition</span>
 <span class="sd">    to the accept/reject step of a current state and new proposal.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [Nea20] Neal, R. M. (2020).</span>
-<span class="sd">        &quot;Non-reversibly updating a uniform [0, 1] value for Metropolis accept/reject decisions.&quot;</span>
-<span class="sd">        arXiv preprint arXiv:2001.11950.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">delta_energy</span> <span class="o">=</span> <span class="n">new_proposal</span><span class="o">.</span><span class="n">weight</span>

@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -762,18 +769,10 @@ title="Source repository"
 <span class="sd">        at each step to compute the Kullback-Leibler divergence between</span>
 <span class="sd">        the approximation and the target log-density.</span>
 <span class="sd">    stl_estimator</span>
-<span class="sd">        Whether to use stick-the-landing (STL) gradient estimator [1] for gradient estimation.</span>
+<span class="sd">        Whether to use stick-the-landing (STL) gradient estimator :cite:p:`roeder2017sticking` for gradient estimation.</span>
 <span class="sd">        The STL estimator has lower gradient variance by removing the score function term</span>
-<span class="sd">        from the gradient. It is suggested by [2] to always keep it in order for better results.</span>
+<span class="sd">        from the gradient. It is suggested by :cite:p:`agrawal2020advances` to always keep it in order for better results.</span>
 
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [1]: Roeder, G., Wu, Y., &amp; Duvenaud, D. K. (2017).</span>
-<span class="sd">        Sticking the landing: Simple, lower-variance gradient estimators for variational inference.</span>
-<span class="sd">        Advances in Neural Information Processing Systems, 30.</span>
-<span class="sd">    .. [2]: Agrawal, A., Sheldon, D. R., &amp; Domke, J. (2020).</span>
-<span class="sd">        Advances in black-box VI: Normalizing flows, importance weighting, and optimization.</span>
-<span class="sd">        Advances in Neural Information Processing Systems, 33.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">parameters</span> <span class="o">=</span> <span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>

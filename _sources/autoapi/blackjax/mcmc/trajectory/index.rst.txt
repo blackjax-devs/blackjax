@@ -7,7 +7,7 @@
 
    Procedures to build trajectories for algorithms in the HMC family.
 
-   To propose a new state, algorithms in the HMC family generally proceed by [Bet17]_:
+   To propose a new state, algorithms in the HMC family generally proceed by :cite:p:`betancourt2017conceptual`:
 
    1. Sampling a trajectory starting from the initial point;
    2. Sampling a new state from this sampled trajectory.
@@ -28,13 +28,6 @@
    this trajectory. In the progressive setting we update the proposal as the
    trajectory is being sampled. While the former is faster, we risk saturating the
    memory by keeping states that will subsequently be discarded.
-
-
-   .. rubric:: References
-
-   .. [Bet17] Betancourt, Michael.
-           "A conceptual introduction to Hamiltonian Monte Carlo."
-           arXiv preprint arXiv:1701.02434 (2017).
 
 
 
@@ -153,7 +146,7 @@ Functions
    Integrate a trajectory and update the proposal recursively in Python
    until the termination criterion is met.
 
-   This is the implementation of Algorithm 6 from [HG14]_ with multinomial sampling.
+   This is the implementation of Algorithm 6 from :cite:p:`hoffman2014no` with multinomial sampling.
    The implemenation here is mostly for validating the progressive implementation
    to make sure the two are equivalent. The recursive implementation should not
    be used for actually sampling as it cannot be jitted and thus likely slow.
@@ -163,11 +156,6 @@ Functions
    :param uturn_check_fn: Determines whether the termination criterion has been met.
    :param divergence_threshold: Value of the difference of energy between two consecutive states above which we say a transition is divergent.
    :param use_robust_uturn_check: Bool to indicate whether to perform additional U turn check between two trajectory.
-
-   .. rubric:: References
-
-   .. [HG14] Hoffman, Matthew D., and Andrew Gelman. "The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo."
-          J. Mach. Learn. Res. 15.1 (2014): 1593-1623.
 
 
 .. py:class:: DynamicExpansionState

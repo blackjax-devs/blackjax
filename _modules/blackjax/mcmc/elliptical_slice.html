@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -758,7 +765,7 @@ title="Source repository"
 
 
 <div class="viewcode-block" id="kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.kernel">[docs]</a><span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span><span class="n">cov_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">mean</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an Elliptical Slice sampling kernel [1]_.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an Elliptical Slice sampling kernel :cite:p:`murray2010elliptical`.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -771,12 +778,6 @@ title="Source repository"
 <span class="sd">    A kernel that takes a rng_key and a Pytree that contains the current state</span>
 <span class="sd">    of the chain and that returns a new state of the chain along with</span>
 <span class="sd">    information about the transition.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [1] Murray, Iain, Ryan Adams, and David MacKay. &quot;Elliptical slice sampling.&quot;</span>
-<span class="sd">            Proceedings of the thirteenth international conference on artificial intelligence</span>
-<span class="sd">            and statistics. JMLR Workshop and Conference Proceedings, 2010.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">ndim</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">cov_matrix</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>

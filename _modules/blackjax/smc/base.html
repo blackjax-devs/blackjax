@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -787,7 +794,7 @@ title="Source repository"
 <span class="sd">        Function that resamples the particles.</span>
 <span class="sd">    num_resampled</span>
 <span class="sd">        The number of particles to resample. This can be used to implement</span>
-<span class="sd">        Waste-Free SMC [Dau2022]_, in which case we resample a number :math:`M&lt;N`</span>
+<span class="sd">        Waste-Free SMC :cite:p:`dau2020waste`, in which case we resample a number :math:`M&lt;N`</span>
 <span class="sd">        of particles, and the update function is in charge of returning</span>
 <span class="sd">        :math:`N` samples.</span>
 
@@ -798,11 +805,6 @@ title="Source repository"
 <span class="sd">    info</span>
 <span class="sd">        An `SMCInfo` object that contains extra information about the SMC</span>
 <span class="sd">        transition.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [Dau2022] Dau, H. D., &amp; Chopin, N. (2022). Waste‐free sequential Monte Carlo.</span>
-<span class="sd">            Journal of the Royal Statistical Society Series B, 84(1), 114-148.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">updating_key</span><span class="p">,</span> <span class="n">resampling_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>

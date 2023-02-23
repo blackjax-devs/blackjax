@@ -591,6 +591,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -928,7 +935,7 @@ title="Source repository"
 <td><p>Create a periodic orbital state from a position.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.kernel" title="blackjax.mcmc.periodic_orbital.kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kernel</span></code></a>([bijection])</p></td>
-<td><p>Build a Periodic Orbital kernel <a class="footnote-reference brackets" href="#id3" id="id1">1</a>.</p></td>
+<td><p>Build a Periodic Orbital kernel <span id="id1">[<a class="reference internal" href="../../../../bib.html#id13" title="Kirill Neklyudov and Max Welling. Orbital mcmc. In International Conference on Artificial Intelligence and Statistics, 5790–5814. PMLR, 2022.">NW22</a>]</span>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.periodic_orbital_proposal" title="blackjax.mcmc.periodic_orbital.periodic_orbital_proposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">periodic_orbital_proposal</span></code></a>(→ Callable)</p></td>
 <td><p>Periodic Orbital algorithm.</p></td>
@@ -1047,7 +1054,7 @@ with a position.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.kernel">
 <span class="sig-name descname"><span class="pre">kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bijection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.kernel" title="Permalink to this definition">#</a></dt>
-<dd><p>Build a Periodic Orbital kernel <a class="footnote-reference brackets" href="#id3" id="id2">1</a>.</p>
+<dd><p>Build a Periodic Orbital kernel <span id="id2">[<a class="reference internal" href="../../../../bib.html#id13" title="Kirill Neklyudov and Max Welling. Orbital mcmc. In International Conference on Artificial Intelligence and Statistics, 5790–5814. PMLR, 2022.">NW22</a>]</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>bijection</strong> – transformation used to build the orbit (given a step size).</p>
@@ -1059,13 +1066,6 @@ with a position.</p></li>
 <li><p><em>information about the transition.</em></p></li>
 </ul>
 </p>
-</dd>
-</dl>
-<p class="rubric">References</p>
-<dl class="footnote brackets">
-<dt class="label" id="id3"><span class="brackets">1</span><span class="fn-backref">(<a href="#id1">1</a>,<a href="#id2">2</a>)</span></dt>
-<dd><p>Kirill Neklyudov and Max Welling “Orbital MCMC.” arXiv preprint
-arXiv:2010.08047 (2021).</p>
 </dd>
 </dl>
 </dd></dl>

@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -741,12 +748,7 @@ title="Source repository"
 <span class="sd">    where :math:`W` is the within-chain variance and :math:`\\hat{V}` is the posterior variance</span>
 <span class="sd">    estimate for the pooled traces. This is the potential scale reduction factor, which</span>
 <span class="sd">    converges to unity when each of the traces is a sample from the target posterior. Values</span>
-<span class="sd">    greater than one indicate that one or more chains have not yet converged [StanRhat]_ [Gelman1992]_.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [StanRhat] https://mc-stan.org/docs/2_27/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction</span>
-<span class="sd">    .. [Gelman1992] Gelman, Andrew, and Donald B. Rubin. (1992) “Inference from Iterative Simulation Using Multiple Sequences.” Statistical Science 7 (4): 457–72.</span>
+<span class="sd">    greater than one indicate that one or more chains have not yet converged :cite:p:`stan_rhat,gelman1992inference`.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="p">(</span>
@@ -801,17 +803,10 @@ title="Source repository"
 <span class="sd">    where :math:`M` is the number of chains, :math:`N` the number of draws,</span>
 <span class="sd">    :math:`\\hat{\\rho}_t` is the estimated _autocorrelation at lag :math:`t`, and</span>
 <span class="sd">    :math:`K` is the last integer for which :math:`\\hat{P}_{K} = \\hat{\\rho}_{2K} +</span>
-<span class="sd">    \\hat{\\rho}_{2K+1}` is still positive [StanEff]_ [Gelman2013]_.</span>
+<span class="sd">    \\hat{\\rho}_{2K+1}` is still positive :cite:p:`stan_ess,gelman1995bayesian`.</span>
 
 <span class="sd">    The current implementation is similar to Stan, which uses Geyer&#39;s initial monotone sequence</span>
-<span class="sd">    criterion [Geyer1992]_ [Geyer2011]_.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [StanEff] https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html</span>
-<span class="sd">    .. [Gelman2013] Gelman, Andrew, J. B. Carlin, Hal S. Stern, David B. Dunson, Aki Vehtari, and Donald B. Rubin. (2013). Bayesian Data Analysis. Third Edition. Chapman; Hall/CRC.</span>
-<span class="sd">    .. [Geyer1992] Geyer, Charles J. (1992). “Practical Markov Chain Monte Carlo.” Statistical Science, 473–83.</span>
-<span class="sd">    .. [Geyer2011] Geyer, Charles J. (2011). “Introduction to Markov Chain Monte Carlo.” In Handbook of Markov Chain Monte Carlo, edited by Steve Brooks, Andrew Gelman, Galin L. Jones, and Xiao-Li Meng, 3–48. Chapman; Hall/CRC.</span>
+<span class="sd">    criterion :cite:p:`geyer1992practical,geyer2011introduction`.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">input_shape</span> <span class="o">=</span> <span class="n">input_array</span><span class="o">.</span><span class="n">shape</span>

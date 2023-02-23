@@ -8,11 +8,7 @@
 .. autoapi-nested-parse::
 
    Progress bar decorators for use with step functions.
-
-   Adapted from Jeremie Coullon's blog post [1]_
-
-   .. [1] "How to add a progress bar to JAX scans and loops"
-           https://www.jeremiecoullon.com/2021/01/29/jax_progress_bar/
+   Adapted from Jeremie Coullon's blog post :cite:p:`progress_bar`.
 
 
 

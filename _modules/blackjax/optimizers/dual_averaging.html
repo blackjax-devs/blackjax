@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -747,22 +754,22 @@ title="Source repository"
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Find the state that minimizes an objective function using a primal-dual</span>
 <span class="sd">    subgradient method.</span>
 
-<span class="sd">    See [1]_ for a detailed explanation of the algorithm and its mathematical</span>
+<span class="sd">    See :cite:p:`nesterov2009primal` for a detailed explanation of the algorithm and its mathematical</span>
 <span class="sd">    properties.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    t0: float &gt;= 0</span>
 <span class="sd">        Free parameter that stabilizes the initial iterations of the algorithm.</span>
-<span class="sd">        Large values may slow down convergence. Introduced in [2]_ with a default</span>
+<span class="sd">        Large values may slow down convergence. Introduced in :cite:p:`hoffman2014no` with a default</span>
 <span class="sd">        value of 10.</span>
 <span class="sd">    gamma</span>
-<span class="sd">        Controls the speed of convergence of the scheme. The authors of [2]_ recommend</span>
+<span class="sd">        Controls the speed of convergence of the scheme. The authors of :cite:p:`hoffman2014no` recommend</span>
 <span class="sd">        a value of 0.05.</span>
 <span class="sd">    kappa: float in ]0.5, 1]</span>
 <span class="sd">        Controls the weights of past steps in the current update. The scheme will</span>
 <span class="sd">        quickly forget earlier step for a small value of `kappa`. Introduced</span>
-<span class="sd">        in [2]_, with a recommended value of .75</span>
+<span class="sd">        in :cite:p:`hoffman2014no`, with a recommended value of .75</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -772,13 +779,6 @@ title="Source repository"
 <span class="sd">        a function that updates the state of the dual averaging scheme.</span>
 <span class="sd">    final</span>
 <span class="sd">        a function that returns the state that minimizes the objective function.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-
-<span class="sd">    .. [1] Nesterov, Yurii. &quot;Primal-dual subgradient methods for convex</span>
-<span class="sd">            problems.&quot; Mathematical programming 120.1 (2009): 221-259.</span>
-<span class="sd">    .. [2] Hoffman, Matthew D., and Andrew Gelman. &quot;The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo.&quot; J. Mach. Learn. Res. 15.1 (2014): 1593-1623.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 

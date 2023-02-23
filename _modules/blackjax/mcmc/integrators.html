@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -740,34 +747,20 @@ title="Source repository"
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EuclideanIntegrator</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The velocity Verlet (or Verlet-Störmer) integrator.</span>
 
-<span class="sd">    The velocity Verlet is a two-stage palindromic integrator [BS18]_ of the form</span>
+<span class="sd">    The velocity Verlet is a two-stage palindromic integrator :cite:p:`bou2018geometric` of the form</span>
 <span class="sd">    (a1, b1, a2, b1, a1) with a1 = 0. It is numerically stable for values of</span>
 <span class="sd">    the step size that range between 0 and 2 (when the mass matrix is the</span>
 <span class="sd">    identity).</span>
 
 <span class="sd">    While the position (a1 = 0.5) and velocity Verlet are the most commonly used</span>
-<span class="sd">    in samplers, it is known in the numerical computation literature that the</span>
-<span class="sd">    value $a1 \approx 0.1932$ leads to a lower integration error</span>
-<span class="sd">    [McL95]_, [Sch10]_. The authors of [BS18]_ show that the</span>
-<span class="sd">    value $a1 \approx 0.21132$ leads to an even higher step acceptance rate, up</span>
-<span class="sd">    to 3 times higher than with the standard position verlet (p.22, Fig.4).</span>
+<span class="sd">    in samplers, it is known in the numerical computation literature that the value</span>
+<span class="sd">    $a1 \approx 0.1932$ leads to a lower integration error :cite:p:`mclachlan1995numerical,schlick2010molecular`. The authors of :cite:p:`bou2018geometric`</span>
+<span class="sd">    show that the value $a1 \approx 0.21132$ leads to an even higher step acceptance</span>
+<span class="sd">    rate, up to 3 times higher than with the standard position verlet (p.22, Fig.4).</span>
 
 <span class="sd">    By choosing the velocity verlet we avoid two computations of the gradient</span>
 <span class="sd">    of the kinetic energy. We are trading accuracy in exchange, and it is not</span>
 <span class="sd">    clear whether this is the right tradeoff.</span>
-
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [BS18] Bou-Rabee, Nawaf, and Jesús Marıa Sanz-Serna. &quot;Geometric</span>
-<span class="sd">            integrators and the Hamiltonian Monte Carlo method.&quot; Acta Numerica 27</span>
-<span class="sd">            (2018): 113-206.</span>
-<span class="sd">    .. [McL95] McLachlan, Robert I. &quot;On the numerical integration of ordinary</span>
-<span class="sd">            differential equations by symmetric composition methods.&quot; SIAM Journal on</span>
-<span class="sd">            Scientific Computing 16.1 (1995): 151-168.</span>
-<span class="sd">    .. [Sch10] Schlick, Tamar. Molecular modeling and simulation: an</span>
-<span class="sd">            interdisciplinary guide: Vol. 21. Springer</span>
-<span class="sd">            Science &amp; Business Media, 2010.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">a1</span> <span class="o">=</span> <span class="mi">0</span>
@@ -811,22 +804,13 @@ title="Source repository"
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">kinetic_energy_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EuclideanIntegrator</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Two-stage palindromic symplectic integrator derived in [BCS14]_</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Two-stage palindromic symplectic integrator derived in :cite:p:`blanes2014numerical`.</span>
 
 <span class="sd">    The integrator is of the form (b1, a1, b2, a1, b1). The choice of the parameters</span>
 <span class="sd">    determine both the bound on the integration error and the stability of the</span>
 <span class="sd">    method with respect to the value of `step_size`. The values used here are</span>
-<span class="sd">    the ones derived in [McL95]_; note that [BCS14]_ is more focused on stability</span>
+<span class="sd">    the ones derived in :cite:p:`mclachlan1995numerical`; note that :cite:p:`blanes2014numerical` is more focused on stability</span>
 <span class="sd">    and derives different values.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [BCS14] Blanes, Sergio, Fernando Casas, and J. M. Sanz-Serna. &quot;Numerical</span>
-<span class="sd">            integrators for the Hybrid Monte Carlo method.&quot; SIAM Journal on Scientific</span>
-<span class="sd">            Computing 36.4 (2014): A1556-A1580.</span>
-<span class="sd">    .. [McL95] McLachlan, Robert I. &quot;On the numerical integration of ordinary</span>
-<span class="sd">            differential equations by symmetric composition methods.&quot; SIAM Journal on</span>
-<span class="sd">            Scientific Computing 16.1 (1995): 151-168.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">b1</span> <span class="o">=</span> <span class="mf">0.1932</span>
@@ -885,19 +869,13 @@ title="Source repository"
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">kinetic_energy_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EuclideanIntegrator</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Three stages palindromic symplectic integrator derived in [BCS14]_</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Three stages palindromic symplectic integrator derived in :cite:p:`mclachlan1995numerical`</span>
 
 <span class="sd">    The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of</span>
 <span class="sd">    the parameters determine both the bound on the integration error and the</span>
 <span class="sd">    stability of the method with respect to the value of `step_size`. The</span>
-<span class="sd">    values used here are the ones derived in [BCS14]_ which guarantees a stability</span>
+<span class="sd">    values used here are the ones derived in :cite:p:`mclachlan1995numerical` which guarantees a stability</span>
 <span class="sd">    interval length approximately equal to 4.67.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [BCS14] Blanes, Sergio, Fernando Casas, and J. M. Sanz-Serna. &quot;Numerical</span>
-<span class="sd">            integrators for the Hybrid Monte Carlo method.&quot; SIAM Journal on Scientific</span>
-<span class="sd">            Computing 36.4 (2014): A1556-A1580.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">b1</span> <span class="o">=</span> <span class="mf">0.11888010966548</span>

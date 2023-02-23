@@ -590,6 +590,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -914,19 +921,19 @@ in this context to be the step size given by the
 <span class="sig-name descname"><span class="pre">dual_averaging</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kappa</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.75</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/optimizers/dual_averaging.html#dual_averaging"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.optimizers.dual_averaging.dual_averaging" title="Permalink to this definition">#</a></dt>
 <dd><p>Find the state that minimizes an objective function using a primal-dual
 subgradient method.</p>
-<p>See <a class="footnote-reference brackets" href="#id5" id="id1">1</a> for a detailed explanation of the algorithm and its mathematical
+<p>See <span id="id1">[<a class="reference internal" href="../../../../bib.html#id15" title="Yurii Nesterov. Primal-dual subgradient methods for convex problems. Mathematical programming, 120(1):221–259, 2009.">Nes09</a>]</span> for a detailed explanation of the algorithm and its mathematical
 properties.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>t0</strong> (<em>float &gt;= 0</em>) – Free parameter that stabilizes the initial iterations of the algorithm.
-Large values may slow down convergence. Introduced in <a class="footnote-reference brackets" href="#id6" id="id2">2</a> with a default
+Large values may slow down convergence. Introduced in <span id="id2">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> with a default
 value of 10.</p></li>
-<li><p><strong>gamma</strong> – Controls the speed of convergence of the scheme. The authors of <a class="footnote-reference brackets" href="#id6" id="id3">2</a> recommend
+<li><p><strong>gamma</strong> – Controls the speed of convergence of the scheme. The authors of <span id="id3">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> recommend
 a value of 0.05.</p></li>
 <li><p><strong>kappa</strong> (<em>float in</em><em> ]</em><em>0.5</em><em>, </em><em>1</em><em>]</em>) – Controls the weights of past steps in the current update. The scheme will
 quickly forget earlier step for a small value of <cite>kappa</cite>. Introduced
-in <a class="footnote-reference brackets" href="#id6" id="id4">2</a>, with a recommended value of .75</p></li>
+in <span id="id4">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span>, with a recommended value of .75</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -936,16 +943,6 @@ in <a class="footnote-reference brackets" href="#id6" id="id4">2</a>, with a rec
 <li><p><em>final</em> – a function that returns the state that minimizes the objective function.</p></li>
 </ul>
 </p>
-</dd>
-</dl>
-<p class="rubric">References</p>
-<dl class="footnote brackets">
-<dt class="label" id="id5"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
-<dd><p>Nesterov, Yurii. “Primal-dual subgradient methods for convex
-problems.” Mathematical programming 120.1 (2009): 221-259.</p>
-</dd>
-<dt class="label" id="id6"><span class="brackets">2</span><span class="fn-backref">(<a href="#id2">1</a>,<a href="#id3">2</a>,<a href="#id4">3</a>)</span></dt>
-<dd><p>Hoffman, Matthew D., and Andrew Gelman. “The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo.” J. Mach. Learn. Res. 15.1 (2014): 1593-1623.</p>
 </dd>
 </dl>
 </dd></dl>

@@ -11,21 +11,14 @@
    position space in the Euclidean metric. It is defined by a definite positive
    matrix :math:`M` with fixed value so that the kinetic energy of the hamiltonian
    dynamic is independent of the position and only depends on the momentum
-   :math:`p` [Bet17]_.
+   :math:`p` :cite:p:`betancourt2017geometric`.
 
    For a Newtonian hamiltonian dynamic the kinetic energy is given by:
 
    .. math::
        K(p) = \frac{1}{2} p^T M^{-1} p
 
-   We can also generate a relativistic dynamic [LPH+17]_.
-
-   .. rubric:: References
-
-   .. [Bet17] Betancourt, Michael, et al. "The geometric foundations of hamiltonian
-           monte carlo." Bernoulli 23.4A (2017): 2257-2298.
-   .. [LPH+17] Lu, Xiaoyu, et al. "Relativistic monte carlo."
-           Artificial Intelligence and Statistics. PMLR, 2017.
+   We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
 
 
 
@@ -44,7 +37,7 @@ Functions
 
 .. py:function:: gaussian_euclidean(inverse_mass_matrix: blackjax.types.Array) -> Tuple[Callable, EuclideanKineticEnergy, Callable]
 
-   Hamiltonian dynamic on euclidean manifold with normally-distributed momentum.
+   Hamiltonian dynamic on euclidean manifold with normally-distributed momentum :cite:p:`betancourt2013general`.
 
    The gaussian euclidean metric is a euclidean metric further characterized
    by setting the conditional probability density :math:`\pi(momentum|position)`

@@ -136,18 +136,13 @@ Functions
 
 .. py:function:: kernel(bijection: Callable = integrators.velocity_verlet)
 
-   Build a Periodic Orbital kernel [1]_.
+   Build a Periodic Orbital kernel :cite:p:`neklyudov2022orbital`.
 
    :param bijection: transformation used to build the orbit (given a step size).
 
    :returns: * *A kernel that takes a rng_key and a Pytree that contains the current state*
              * *of the chain and that returns a new state of the chain along with*
              * *information about the transition.*
-
-   .. rubric:: References
-
-   .. [1] Kirill Neklyudov and Max Welling "Orbital MCMC." arXiv preprint
-           arXiv:2010.08047 (2021).
 
 
 .. py:function:: periodic_orbital_proposal(bijection: Callable, kinetic_energy_fn: Callable, period: int, step_size: float) -> Callable

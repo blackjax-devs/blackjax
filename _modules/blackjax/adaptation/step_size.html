@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -768,7 +775,7 @@ title="Source repository"
 <span class="sd">    the error at time t. We would like to find a procedure that adapts the</span>
 <span class="sd">    value of :math:`\\epsilon` such that :math:`h(x) =\\mathbb{E}\\left[H_t|\\epsilon\\right] = 0`</span>
 
-<span class="sd">    Following [Nes09]_, the authors of [HG14]_ proposed the following update scheme. If</span>
+<span class="sd">    Following :cite:p:`nesterov2009primal`, the authors of :cite:p:`hoffman2014no` proposed the following update scheme. If</span>
 <span class="sd">    we note :math:`x = \\log \\epsilon` we follow:</span>
 
 <span class="sd">    .. math:</span>
@@ -779,21 +786,21 @@ title="Source repository"
 <span class="sd">    :math:`h(\\overline{x}_t)` converges to 0, i.e. the Metropolis acceptance</span>
 <span class="sd">    rate converges to the desired rate.</span>
 
-<span class="sd">    See reference [HG14]_ (section 3.2.1) for a detailed discussion.</span>
+<span class="sd">    See reference :cite:p:`hoffman2014no` (section 3.2.1) for a detailed discussion.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    t0: float &gt;= 0</span>
 <span class="sd">        Free parameter that stabilizes the initial iterations of the algorithm.</span>
-<span class="sd">        Large values may slow down convergence. Introduced in [HG14]_ with a</span>
-<span class="sd">        default value of 10.</span>
+<span class="sd">        Large values may slow down convergence. Introduced in :cite:p:`hoffman2014no` with a default</span>
+<span class="sd">        value of 10.</span>
 <span class="sd">    gamma:</span>
-<span class="sd">        Controls the speed of convergence of the scheme. The authors of</span>
-<span class="sd">        [HG14]_ recommend a value of 0.05.</span>
+<span class="sd">        Controls the speed of convergence of the scheme. The authors of :cite:p:`hoffman2014no` recommend</span>
+<span class="sd">        a value of 0.05.</span>
 <span class="sd">    kappa: float in ]0.5, 1]</span>
 <span class="sd">        Controls the weights of past steps in the current update. The scheme will</span>
-<span class="sd">        quickly forget earlier step for a small value of `kappa`. Introduced in</span>
-<span class="sd">        [HG14]_, with a recommended value of .75</span>
+<span class="sd">        quickly forget earlier step for a small value of `kappa`. Introduced</span>
+<span class="sd">        in :cite:p:`hoffman2014no`, with a recommended value of .75</span>
 <span class="sd">    target:</span>
 <span class="sd">        Target acceptance rate.</span>
 
@@ -803,15 +810,6 @@ title="Source repository"
 <span class="sd">        A function that initializes the state of the dual averaging scheme.</span>
 <span class="sd">    update</span>
 <span class="sd">        A function that updates the state of the dual averaging scheme.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-
-<span class="sd">    .. [Nes09] Nesterov, Yurii. &quot;Primal-dual subgradient methods for convex</span>
-<span class="sd">            problems.&quot; Mathematical programming 120.1 (2009): 221-259.</span>
-<span class="sd">    .. [HG14] Hoffman, Matthew D., and Andrew Gelman. &quot;The No-U-Turn sampler:</span>
-<span class="sd">           adaptively setting path lengths in Hamiltonian Monte Carlo.&quot; Journal</span>
-<span class="sd">           of Machine Learning Research 15.1 (2014): 1593-1623.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">da_init</span><span class="p">,</span> <span class="n">da_update</span><span class="p">,</span> <span class="n">da_final</span> <span class="o">=</span> <span class="n">dual_averaging</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">kappa</span><span class="p">)</span>
@@ -890,7 +888,7 @@ title="Source repository"
 <span class="sd">    value for the step size starting from any value, choosing a good first</span>
 <span class="sd">    value can speed up the convergence. This heuristics doubles and halves the</span>
 <span class="sd">    step size until the acceptance probability of the HMC proposal crosses the</span>
-<span class="sd">    target value [HG14]_.</span>
+<span class="sd">    target value :cite:p:`hoffman2014no`.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -915,12 +913,6 @@ title="Source repository"
 <span class="sd">    float</span>
 <span class="sd">        A reasonable first value for the step size.</span>
 
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [HG14] Hoffman, Matthew D., and Andrew Gelman. &quot;The No-U-Turn sampler:</span>
-<span class="sd">           adaptively setting path lengths in Hamiltonian Monte Carlo.&quot; Journal</span>
-<span class="sd">           of Machine Learning Research 15.1 (2014): 1593-1623.</span>
-
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">fp_limit</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">initial_step_size</span><span class="p">))</span>
 
@@ -932,13 +924,9 @@ title="Source repository"
 
 <span class="sd">        Note</span>
 <span class="sd">        ----</span>
-<span class="sd">        Per JAX&#39;s documentation [1]_ the `jnp.finfo` object is cached so we do not</span>
+<span class="sd">        Per JAX&#39;s documentation :cite:p:`jax_finfo` the `jnp.finfo` object is cached so we do not</span>
 <span class="sd">        occur any performance penalty when calling it repeatedly inside this</span>
 <span class="sd">        function.</span>
-
-<span class="sd">        References</span>
-<span class="sd">        ----------</span>
-<span class="sd">        .. [1] jax.numpy.finfo documentation. https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.finfo.html</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="n">previous_direction</span><span class="p">,</span> <span class="n">step_size</span> <span class="o">=</span> <span class="n">rss_state</span>

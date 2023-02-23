@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -734,7 +741,7 @@ title="Source repository"
     <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.80</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Warmup scheme for sampling procedures based on euclidean manifold HMC.</span>
-<span class="sd">    The schedule and algorithms used match Stan&#39;s [1]_ as closely as possible.</span>
+<span class="sd">    The schedule and algorithms used match Stan&#39;s :cite:p:`stan_hmc_param` as closely as possible.</span>
 
 <span class="sd">    Unlike several other libraries, we separate the warmup and sampling phases</span>
 <span class="sd">    explicitly. This ensure a better modularity; a change in the warmup does</span>
@@ -766,11 +773,6 @@ title="Source repository"
 <span class="sd">    to the matrix. In (3) we compute the mass matrix to use in the kernel and</span>
 <span class="sd">    re-initialize the mass matrix adaptation. The step size is still adapated</span>
 <span class="sd">    in slow adaptation windows, and is not re-initialized between windows.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [1] Stan Reference Manual v2.22</span>
-<span class="sd">            Section 15.2 &quot;HMC Algorithm&quot;</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -938,7 +940,7 @@ title="Source repository"
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the schedule for Stan&#39;s warmup.</span>
 
-<span class="sd">    The schedule below is intended to be as close as possible to Stan&#39;s _[1].</span>
+<span class="sd">    The schedule below is intended to be as close as possible to Stan&#39;s :cite:p:`stan_hmc_param`.</span>
 <span class="sd">    The warmup period is split into three stages:</span>
 
 <span class="sd">    1. An initial fast interval to reach the typical set. Only the step size is</span>
@@ -960,7 +962,7 @@ title="Source repository"
 
 <span class="sd">    The distinction slow/fast comes from the speed at which the algorithms</span>
 <span class="sd">    converge to a stable value; in the common case, estimation of covariance</span>
-<span class="sd">    requires more steps than dual averaging to give an accurate value. See _[1]</span>
+<span class="sd">    requires more steps than dual averaging to give an accurate value. See :cite:p:`stan_hmc_param`</span>
 <span class="sd">    for a more detailed explanation.</span>
 
 <span class="sd">    Fast intervals are given the label 0 and slow intervals the label 1.</span>
@@ -979,11 +981,6 @@ title="Source repository"
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A list of tuples (window_label, is_middle_window_end).</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [1]: Stan Reference Manual v2.22</span>
-<span class="sd">            Section 15.2 &quot;HMC Algorithm&quot;</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">schedule</span> <span class="o">=</span> <span class="p">[]</span>

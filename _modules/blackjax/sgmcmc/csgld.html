@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -689,18 +696,8 @@ title="Source repository"
               <div>
                 
   <h1>Source code for blackjax.sgmcmc.csgld</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Public API for the Contour Stochastic gradient Langevin Dynamics kernel.</span>
+<span></span><span class="sd">&quot;&quot;&quot;Public API for the Contour Stochastic gradient Langevin Dynamics kernel :cite:p:`deng2020contour,deng2022interacting`.</span>
 
-<span class="sd">References</span>
-<span class="sd">----------</span>
-<span class="sd">.. [DLL20] Deng, W., Lin, G., Liang, F. (2020).</span>
-<span class="sd">       A Contour Stochastic Gradient Langevin Dynamics Algorithm</span>
-<span class="sd">       for Simulations of Multi-modal Distributions.</span>
-<span class="sd">       In Neural Information Processing Systems (NeurIPS 2020).</span>
-
-<span class="sd">.. [DLH+22] Deng, W., Liang, S., Hao, B., Lin, G., Liang, F. (2022)</span>
-<span class="sd">       Interacting Contour Stochastic Gradient Langevin Dynamics</span>
-<span class="sd">       In International Conference on Learning Representations (ICLR)</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
@@ -772,7 +769,7 @@ title="Source repository"
         <span class="n">zeta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ContourSGLDState</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Multil-modal sampling via Contour SGLD.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Multil-modal sampling via Contour SGLD :cite:p:`deng2020contour,deng2022interacting`.</span>
 
 <span class="sd">        We are interested in the simulations of :math:`\exp(-U(x) / T)`,</span>
 <span class="sd">        where :math:`U` is an energy function and :math:`T` is the temperature.</span>
@@ -811,16 +808,6 @@ title="Source repository"
 <span class="sd">        temperature</span>
 <span class="sd">            Temperature parameter :math:`T`.</span>
 
-<span class="sd">        References</span>
-<span class="sd">        ----------</span>
-<span class="sd">        .. [DLL20] Deng, W., Lin, G., Liang, F. (2020).</span>
-<span class="sd">                A Contour Stochastic Gradient Langevin Dynamics Algorithm</span>
-<span class="sd">                for Simulations of Multi-modal Distributions.</span>
-<span class="sd">                In Neural Information Processing Systems (NeurIPS 2020).</span>
-
-<span class="sd">        .. [DLH+22] Deng, W., Liang, S., Hao, B., Lin, G., Liang, F. (2022)</span>
-<span class="sd">                Interacting Contour Stochastic Gradient Langevin Dynamics</span>
-<span class="sd">                In International Conference on Learning Representations (ICLR)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">position</span><span class="p">,</span> <span class="n">energy_pdf</span><span class="p">,</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">state</span>

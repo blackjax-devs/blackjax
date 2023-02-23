@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -772,7 +779,7 @@ title="Source repository"
 <span class="sd">    quasi-Newton optimization path, with local covariance estimated using</span>
 <span class="sd">    the inverse Hessian estimates produced by the L-BFGS optimizer.</span>
 
-<span class="sd">    Function implements the algorithm 3 in [1]:</span>
+<span class="sd">    Function implements the algorithm 3 in :cite:p:`zhang2022pathfinder`:</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -804,12 +811,6 @@ title="Source repository"
 <span class="sd">    A PathfinderState with information on the iteration in the optimization path</span>
 <span class="sd">    whose approximate samples yields the highest ELBO, and PathfinderInfo that</span>
 <span class="sd">    contains all the states traversed.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-
-<span class="sd">    .. [1]: Pathfinder: Parallel quasi-newton variational inference,</span>
-<span class="sd">            Lu Zhang et al., arXiv:2108.03782</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">initial_position_flatten</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>

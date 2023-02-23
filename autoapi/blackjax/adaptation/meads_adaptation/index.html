@@ -591,6 +591,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -921,14 +928,14 @@ HMC algorithm.</p>
 <dt class="sig sig-object py" id="blackjax.adaptation.meads_adaptation.base">
 <span class="sig-name descname"><span class="pre">base</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meads_adaptation.html#base"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meads_adaptation.base" title="Permalink to this definition">#</a></dt>
 <dd><p>Maximum-Eigenvalue Adaptation of damping and step size for the generalized
-Hamiltonian Monte Carlo kernel <a class="footnote-reference brackets" href="#id3" id="id1">1</a>.</p>
+Hamiltonian Monte Carlo kernel <span id="id1">[<a class="reference internal" href="../../../../bib.html#id14" title="Matthew D Hoffman and Pavel Sountsov. Tuning-free generalized hamiltonian monte carlo. In International Conference on Artificial Intelligence and Statistics, 7799–7813. PMLR, 2022.">HS22</a>]</span>.</p>
 <p>This algorithm performs a cross-chain adaptation scheme for the generalized
 HMC algorithm that automatically selects values for the generalized HMC’s
 tunable parameters based on statistics collected from a population of many
 chains. It uses heuristics determined by the maximum eigenvalue of the
 covariance and gradient matrices given by the grouped samples of all chains
 with shape.</p>
-<p>This is an implementation of Algorithm 3 of <a class="footnote-reference brackets" href="#id3" id="id2">1</a> using cross-chain
+<p>This is an implementation of Algorithm 3 of <span id="id2">[<a class="reference internal" href="../../../../bib.html#id14" title="Matthew D Hoffman and Pavel Sountsov. Tuning-free generalized hamiltonian monte carlo. In International Conference on Artificial Intelligence and Statistics, 7799–7813. PMLR, 2022.">HS22</a>]</span> using cross-chain
 adaptation instead of parallel ensample chain adaptation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -937,14 +944,6 @@ adaptation instead of parallel ensample chain adaptation.</p>
 <li><p><em>update</em> – Function that moves the warmup one step.</p></li>
 </ul>
 </p>
-</dd>
-</dl>
-<p class="rubric">References</p>
-<dl class="footnote brackets">
-<dt class="label" id="id3"><span class="brackets">1</span><span class="fn-backref">(<a href="#id1">1</a>,<a href="#id2">2</a>)</span></dt>
-<dd><p>Hoffman, M. D., &amp; Sountsov, P. (2022). Tuning-Free Generalized
-Hamiltonian Monte Carlo. In International Conference on Artificial
-Intelligence and Statistics (pp. 7799-7813). PML</p>
 </dd>
 </dl>
 </dd></dl>

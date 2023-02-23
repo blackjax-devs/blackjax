@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -735,7 +742,7 @@ title="Source repository"
 
 <div class="viewcode-block" id="base"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.base">[docs]</a><span class="k">def</span> <span class="nf">base</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum-Eigenvalue Adaptation of damping and step size for the generalized</span>
-<span class="sd">    Hamiltonian Monte Carlo kernel [1]_.</span>
+<span class="sd">    Hamiltonian Monte Carlo kernel :cite:p:`hoffman2022tuning`.</span>
 
 
 <span class="sd">    This algorithm performs a cross-chain adaptation scheme for the generalized</span>
@@ -745,7 +752,7 @@ title="Source repository"
 <span class="sd">    covariance and gradient matrices given by the grouped samples of all chains</span>
 <span class="sd">    with shape.</span>
 
-<span class="sd">    This is an implementation of Algorithm 3 of [1]_ using cross-chain</span>
+<span class="sd">    This is an implementation of Algorithm 3 of :cite:p:`hoffman2022tuning` using cross-chain</span>
 <span class="sd">    adaptation instead of parallel ensample chain adaptation.</span>
 
 <span class="sd">    Returns</span>
@@ -754,12 +761,6 @@ title="Source repository"
 <span class="sd">        Function that initializes the warmup.</span>
 <span class="sd">    update</span>
 <span class="sd">        Function that moves the warmup one step.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [1] Hoffman, M. D., &amp; Sountsov, P. (2022). Tuning-Free Generalized</span>
-<span class="sd">            Hamiltonian Monte Carlo. In International Conference on Artificial</span>
-<span class="sd">            Intelligence and Statistics (pp. 7799-7813). PML</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 

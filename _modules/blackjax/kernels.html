@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -1133,7 +1140,7 @@ title="Source repository"
 
 
 <div class="viewcode-block" id="mgrad_gaussian"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.mgrad_gaussian">[docs]</a><span class="k">class</span> <span class="nc">mgrad_gaussian</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the marginal sampler for latent Gaussian model of [TP18].</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.</span>
 
 <span class="sd">    It uses a first order approximation to the log_likelihood of a model with Gaussian prior.</span>
 <span class="sd">    Interestingly, the only parameter that needs calibrating is the &quot;step size&quot; delta, which can be done very efficiently.</span>
@@ -1169,11 +1176,6 @@ title="Source repository"
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [TP18] Titsias, M.K. and Papaspiliopoulos, O. (2018),</span>
-<span class="sd">        Auxiliary gradient-based sampling algorithms. J. R. Stat. Soc. B, 80: 749-767. https://doi.org/10.1111/rssb.12269</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 

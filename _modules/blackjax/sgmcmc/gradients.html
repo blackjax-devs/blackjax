@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -715,13 +722,13 @@ title="Source repository"
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Builds a simple estimator for the log-density.</span>
 
-<span class="sd">    This estimator first appeared in [RM51]_. The `logprior_fn` function has a</span>
+<span class="sd">    This estimator first appeared in :cite:p:`robbins1951stochastic`. The `logprior_fn` function has a</span>
 <span class="sd">    single argument:  the current position (value of parameters). The</span>
 <span class="sd">    `loglikelihood_fn` takes two arguments: the current position and a batch of</span>
 <span class="sd">    data; if there are several variables (as, for instance, in a supervised</span>
 <span class="sd">    learning contexts), they are passed in a tuple.</span>
 
-<span class="sd">    This algorithm was ported from [CN22]_.</span>
+<span class="sd">    This algorithm was ported from :cite:p:`coullon2022sgmcmcjax`.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -732,14 +739,6 @@ title="Source repository"
 <span class="sd">        The log-probability density function corresponding to the likelihood.</span>
 <span class="sd">    data_size</span>
 <span class="sd">        The number of items in the full dataset.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [RM51] Robbins H. and Monro S. A stochastic approximation method. Annals</span>
-<span class="sd">            of Mathematical Statistics, 22(30):400-407, 1951.</span>
-<span class="sd">    .. [CN22] Coullon, J., &amp; Nemeth, C. (2022). SGMCMCJax: a lightweight JAX</span>
-<span class="sd">            library for stochastic gradient Markov chain Monte Carlo algorithms.</span>
-<span class="sd">            Journal of Open Source Software, 7(72), 4113.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -784,9 +783,9 @@ title="Source repository"
     <span class="n">centering_position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Builds a control variate gradient estimator [Baker2019]_.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Builds a control variate gradient estimator :cite:p:`baker2019control`.</span>
 
-<span class="sd">    This algorithm was ported from [CN22]_.</span>
+<span class="sd">    This algorithm was ported from :cite:p:`coullon2022sgmcmcjax`.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -796,15 +795,6 @@ title="Source repository"
 <span class="sd">        The full dataset.</span>
 <span class="sd">    centering_position</span>
 <span class="sd">        Centering position for the control variates (typically the MAP).</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [Baker2019] Baker, J., Fearnhead, P., Fox, E. B., &amp; Nemeth, C. (2019).</span>
-<span class="sd">            Control variates for stochastic gradient MCMC. Statistics</span>
-<span class="sd">            and Computing, 29(3), 599-615.</span>
-<span class="sd">    .. [CN22] Coullon, J., &amp; Nemeth, C. (2022). SGMCMCJax: a lightweight JAX</span>
-<span class="sd">            library for stochastic gradient Markov chain Monte Carlo algorithms.</span>
-<span class="sd">            Journal of Open Source Software, 7(72), 4113.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">cv_grad_value</span> <span class="o">=</span> <span class="n">logdensity_grad_estimator</span><span class="p">(</span><span class="n">centering_position</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>

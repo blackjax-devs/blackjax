@@ -97,7 +97,7 @@ Functions
 
 .. py:function:: kernel(cov_matrix: blackjax.types.Array, mean: blackjax.types.Array)
 
-   Build an Elliptical Slice sampling kernel [1]_.
+   Build an Elliptical Slice sampling kernel :cite:p:`murray2010elliptical`.
 
    :param cov_matrix: The value of the covariance matrix of the gaussian prior distribution from
                       the posterior we wish to sample.
@@ -105,11 +105,5 @@ Functions
    :returns: * *A kernel that takes a rng_key and a Pytree that contains the current state*
              * *of the chain and that returns a new state of the chain along with*
              * *information about the transition.*
-
-   .. rubric:: References
-
-   .. [1] Murray, Iain, Ryan Adams, and David MacKay. "Elliptical slice sampling."
-           Proceedings of the thirteenth international conference on artificial intelligence
-           and statistics. JMLR Workshop and Conference Proceedings, 2010.
 
 

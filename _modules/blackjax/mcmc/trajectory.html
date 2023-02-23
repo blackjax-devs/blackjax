@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -704,7 +711,7 @@ title="Source repository"
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;Procedures to build trajectories for algorithms in the HMC family.</span>
 
-<span class="sd">To propose a new state, algorithms in the HMC family generally proceed by [Bet17]_:</span>
+<span class="sd">To propose a new state, algorithms in the HMC family generally proceed by :cite:p:`betancourt2017conceptual`:</span>
 
 <span class="sd">1. Sampling a trajectory starting from the initial point;</span>
 <span class="sd">2. Sampling a new state from this sampled trajectory.</span>
@@ -725,13 +732,6 @@ title="Source repository"
 <span class="sd">this trajectory. In the progressive setting we update the proposal as the</span>
 <span class="sd">trajectory is being sampled. While the former is faster, we risk saturating the</span>
 <span class="sd">memory by keeping states that will subsequently be discarded.</span>
-
-
-<span class="sd">References</span>
-<span class="sd">----------</span>
-<span class="sd">.. [Bet17] Betancourt, Michael.</span>
-<span class="sd">        &quot;A conceptual introduction to Hamiltonian Monte Carlo.&quot;</span>
-<span class="sd">        arXiv preprint arXiv:1701.02434 (2017).</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span>
@@ -1001,7 +1001,7 @@ title="Source repository"
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Integrate a trajectory and update the proposal recursively in Python</span>
 <span class="sd">    until the termination criterion is met.</span>
 
-<span class="sd">    This is the implementation of Algorithm 6 from [HG14]_ with multinomial sampling.</span>
+<span class="sd">    This is the implementation of Algorithm 6 from :cite:p:`hoffman2014no` with multinomial sampling.</span>
 <span class="sd">    The implemenation here is mostly for validating the progressive implementation</span>
 <span class="sd">    to make sure the two are equivalent. The recursive implementation should not</span>
 <span class="sd">    be used for actually sampling as it cannot be jitted and thus likely slow.</span>
@@ -1018,11 +1018,6 @@ title="Source repository"
 <span class="sd">        Value of the difference of energy between two consecutive states above which we say a transition is divergent.</span>
 <span class="sd">    use_robust_uturn_check</span>
 <span class="sd">        Bool to indicate whether to perform additional U turn check between two trajectory.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [HG14] Hoffman, Matthew D., and Andrew Gelman. &quot;The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo.&quot;</span>
-<span class="sd">           J. Mach. Learn. Res. 15.1 (2014): 1593-1623.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">generate_proposal</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>

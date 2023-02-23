@@ -591,6 +591,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -778,8 +785,7 @@ title="Source repository"
 <dt class="sig sig-object py" id="blackjax.mcmc.irmh.kernel">
 <span class="sig-name descname"><span class="pre">kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proposal_distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/irmh.html#kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.irmh.kernel" title="Permalink to this definition">#</a></dt>
 <dd><p>Build an Independent Random Walk Rosenbluth-Metropolis-Hastings kernel. This implies
-that the proposal distribution does not depend on the particle being mutated.
-Reference: Algorithm 2 from <a class="reference external" href="https://arxiv.org/pdf/2008.02455.pdf">https://arxiv.org/pdf/2008.02455.pdf</a></p>
+that the proposal distribution does not depend on the particle being mutated <span id="id1">[<a class="reference internal" href="../../../../bib.html#id40" title="Guanyang Wang. Exact convergence analysis of the independent metropolis-hastings algorithms. Bernoulli, 28(3):2012–2033, 2022.">Wan22</a>]</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>proposal_distribution</strong> – A function that, given a PRNGKey, is able to produce a sample in the same

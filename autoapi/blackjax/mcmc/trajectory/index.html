@@ -591,6 +591,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -991,7 +998,7 @@ title="Source repository"
   <section id="module-blackjax.mcmc.trajectory">
 <span id="blackjax-mcmc-trajectory"></span><h1><a class="reference internal" href="#module-blackjax.mcmc.trajectory" title="blackjax.mcmc.trajectory"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a><a class="headerlink" href="#module-blackjax.mcmc.trajectory" title="Permalink to this headline">#</a></h1>
 <p>Procedures to build trajectories for algorithms in the HMC family.</p>
-<p>To propose a new state, algorithms in the HMC family generally proceed by <a class="reference internal" href="#bet17" id="id1"><span>[Bet17]</span></a>:</p>
+<p>To propose a new state, algorithms in the HMC family generally proceed by <span id="id1">[<a class="reference internal" href="../../../../bib.html#id24" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>:</p>
 <ol class="arabic simple">
 <li><p>Sampling a trajectory starting from the initial point;</p></li>
 <li><p>Sampling a new state from this sampled trajectory.</p></li>
@@ -1010,14 +1017,6 @@ static setting we first build the trajectory and then sample a proposal from
 this trajectory. In the progressive setting we update the proposal as the
 trajectory is being sampled. While the former is faster, we risk saturating the
 memory by keeping states that will subsequently be discarded.</p>
-<p class="rubric">References</p>
-<dl class="citation">
-<dt class="label" id="bet17"><span class="brackets"><a class="fn-backref" href="#id1">Bet17</a></span></dt>
-<dd><p>Betancourt, Michael.
-“A conceptual introduction to Hamiltonian Monte Carlo.”
-arXiv preprint arXiv:1701.02434 (2017).</p>
-</dd>
-</dl>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">#</a></h2>
 <section id="classes">
@@ -1168,7 +1167,7 @@ which we say a transition is divergent.</p></li>
 <span class="sig-name descname"><span class="pre">dynamic_recursive_integration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kinetic_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uturn_check_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_robust_uturn_check</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/trajectory.html#dynamic_recursive_integration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.trajectory.dynamic_recursive_integration" title="Permalink to this definition">#</a></dt>
 <dd><p>Integrate a trajectory and update the proposal recursively in Python
 until the termination criterion is met.</p>
-<p>This is the implementation of Algorithm 6 from <a class="reference internal" href="#hg14" id="id2"><span>[HG14]</span></a> with multinomial sampling.
+<p>This is the implementation of Algorithm 6 from <span id="id2">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> with multinomial sampling.
 The implemenation here is mostly for validating the progressive implementation
 to make sure the two are equivalent. The recursive implementation should not
 be used for actually sampling as it cannot be jitted and thus likely slow.</p>
@@ -1181,13 +1180,6 @@ be used for actually sampling as it cannot be jitted and thus likely slow.</p>
 <li><p><strong>divergence_threshold</strong> – Value of the difference of energy between two consecutive states above which we say a transition is divergent.</p></li>
 <li><p><strong>use_robust_uturn_check</strong> – Bool to indicate whether to perform additional U turn check between two trajectory.</p></li>
 </ul>
-</dd>
-</dl>
-<p class="rubric">References</p>
-<dl class="citation">
-<dt class="label" id="hg14"><span class="brackets"><a class="fn-backref" href="#id2">HG14</a></span></dt>
-<dd><p>Hoffman, Matthew D., and Andrew Gelman. “The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo.”
-J. Mach. Learn. Res. 15.1 (2014): 1593-1623.</p>
 </dd>
 </dl>
 </dd></dl>

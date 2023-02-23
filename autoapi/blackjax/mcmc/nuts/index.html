@@ -591,6 +591,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -1021,13 +1028,13 @@ states in the full trajectory.</p>
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.kernel">
 <span class="sig-name descname"><span class="pre">kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num_doublings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.kernel" title="Permalink to this definition">#</a></dt>
 <dd><p>Build an iterative NUTS kernel.</p>
-<p>This algorithm is an iteration on the original NUTS algorithm <a class="reference internal" href="../trajectory/index.html#hg14" id="id1"><span>[HG14]</span></a>
+<p>This algorithm is an iteration on the original NUTS algorithm <span id="id1">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span>
 with two major differences:</p>
 <ul class="simple">
 <li><p>We do not use slice samplig but multinomial sampling for the proposal
-<a class="reference internal" href="../trajectory/index.html#bet17" id="id2"><span>[Bet17]</span></a>;</p></li>
-<li><p>The trajectory expansion is not recursive but iterative <a class="reference internal" href="#ppj19" id="id3"><span>[PPJ19]</span></a>,
-<a class="reference internal" href="#lsl-20" id="id4"><span>[LSL+20]</span></a>.</p></li>
+<span id="id2">[<a class="reference internal" href="../../../../bib.html#id24" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>;</p></li>
+<li><p>The trajectory expansion is not recursive but iterative <span id="id3">[<a class="reference internal" href="../../../../bib.html#id25" title="Du Phan, Neeraj Pradhan, and Martin Jankowiak. Composable effects for flexible and accelerated probabilistic programming in numpyro. arXiv preprint arXiv:1912.11554, 2019.">PPJ19</a>]</span>,
+<span id="id4">[<a class="reference internal" href="../../../../bib.html#id26" title="Junpeng Lao, Christopher Suter, Ian Langmore, Cyril Chimisov, Ashish Saxena, Pavel Sountsov, Dave Moore, Rif A Saurous, Matthew D Hoffman, and Joshua V Dillon. Tfp. mcmc: modern markov chain monte carlo tools built for modern hardware. arXiv preprint arXiv:2002.01184, 2020.">LSL+20</a>]</span>.</p></li>
 </ul>
 <p>The implementation can seem unusual for those familiar with similar
 algorithms. Indeed, we do not conceptualize the trajectory construction as
@@ -1049,29 +1056,6 @@ a transition “divergent”.</p></li>
 doubling the number of steps if the trajectory does not
 turn onto itself.</p></li>
 </ul>
-</dd>
-</dl>
-<p class="rubric">References</p>
-<dl class="citation">
-<dt class="label" id="hg14"><span class="brackets"><a class="fn-backref" href="#id1">HG14</a></span></dt>
-<dd><p>Hoffman, Matthew D., and Andrew Gelman.
-“The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo.”
-J. Mach. Learn. Res. 15.1 (2014): 1593-1623.</p>
-</dd>
-<dt class="label" id="bet17"><span class="brackets"><a class="fn-backref" href="#id2">Bet17</a></span></dt>
-<dd><p>Betancourt, Michael.
-“A conceptual introduction to Hamiltonian Monte Carlo.”
-arXiv preprint arXiv:1701.02434 (2017).</p>
-</dd>
-<dt class="label" id="ppj19"><span class="brackets"><a class="fn-backref" href="#id3">PPJ19</a></span></dt>
-<dd><p>Phan Du, Neeraj Pradhan, and Martin Jankowiak.
-“Composable effects for flexible and accelerated probabilistic programming in NumPyro.”
-arXiv preprint arXiv:1912.11554 (2019).</p>
-</dd>
-<dt class="label" id="lsl-20"><span class="brackets"><a class="fn-backref" href="#id4">LSL+20</a></span></dt>
-<dd><p>Lao, Junpeng, et al.
-“tfp. mcmc: Modern markov chain monte carlo tools built for modern hardware.”
-arXiv preprint arXiv:2002.01184 (2020).</p>
 </dd>
 </dl>
 </dd></dl>

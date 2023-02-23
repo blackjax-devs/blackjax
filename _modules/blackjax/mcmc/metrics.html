@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -708,21 +715,14 @@ title="Source repository"
 <span class="sd">position space in the Euclidean metric. It is defined by a definite positive</span>
 <span class="sd">matrix :math:`M` with fixed value so that the kinetic energy of the hamiltonian</span>
 <span class="sd">dynamic is independent of the position and only depends on the momentum</span>
-<span class="sd">:math:`p` [Bet17]_.</span>
+<span class="sd">:math:`p` :cite:p:`betancourt2017geometric`.</span>
 
 <span class="sd">For a Newtonian hamiltonian dynamic the kinetic energy is given by:</span>
 
 <span class="sd">.. math::</span>
 <span class="sd">    K(p) = \frac{1}{2} p^T M^{-1} p</span>
 
-<span class="sd">We can also generate a relativistic dynamic [LPH+17]_.</span>
-
-<span class="sd">References</span>
-<span class="sd">----------</span>
-<span class="sd">.. [Bet17] Betancourt, Michael, et al. &quot;The geometric foundations of hamiltonian</span>
-<span class="sd">        monte carlo.&quot; Bernoulli 23.4A (2017): 2257-2298.</span>
-<span class="sd">.. [LPH+17] Lu, Xiaoyu, et al. &quot;Relativistic monte carlo.&quot;</span>
-<span class="sd">        Artificial Intelligence and Statistics. PMLR, 2017.</span>
+<span class="sd">We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Tuple</span>
@@ -742,7 +742,7 @@ title="Source repository"
 <div class="viewcode-block" id="gaussian_euclidean"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.gaussian_euclidean">[docs]</a><span class="k">def</span> <span class="nf">gaussian_euclidean</span><span class="p">(</span>
     <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">EuclideanKineticEnergy</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Hamiltonian dynamic on euclidean manifold with normally-distributed momentum.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Hamiltonian dynamic on euclidean manifold with normally-distributed momentum :cite:p:`betancourt2013general`.</span>
 
 <span class="sd">    The gaussian euclidean metric is a euclidean metric further characterized</span>
 <span class="sd">    by setting the conditional probability density :math:`\pi(momentum|position)`</span>
@@ -806,7 +806,7 @@ title="Source repository"
     <span class="k">def</span> <span class="nf">is_turning</span><span class="p">(</span>
         <span class="n">momentum_left</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">momentum_right</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">momentum_sum</span><span class="p">:</span> <span class="n">PyTree</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generalized U-turn criterion.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generalized U-turn criterion :cite:p:`betancourt2013generalizing,nuts_uturn`.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -816,12 +816,6 @@ title="Source repository"
 <span class="sd">            Momentum of the rightmost point of the trajectory.</span>
 <span class="sd">        momentum_sum</span>
 <span class="sd">            Sum of the momenta along the trajectory.</span>
-
-<span class="sd">        References</span>
-<span class="sd">        ----------</span>
-<span class="sd">        .. [Bet13] Betancourt, Michael J. &quot;Generalizing the no-U-turn sampler to Riemannian manifolds.&quot; arXiv preprint arXiv:1304.1920 (2013).</span>
-<span class="sd">        .. [Sta19] &quot;NUTS misses U-turn, runs in cicles until max depth&quot;, Stan Discourse Forum</span>
-<span class="sd">                https://discourse.mc-stan.org/t/nuts-misses-u-turns-runs-in-circles-until-max-treedepth/9727/46</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">m_left</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_left</span><span class="p">)</span>

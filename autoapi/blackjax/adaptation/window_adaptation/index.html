@@ -591,6 +591,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -894,7 +901,7 @@ title="Source repository"
 <dt class="sig sig-object py" id="blackjax.adaptation.window_adaptation.base">
 <span class="sig-name descname"><span class="pre">base</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">is_mass_matrix_diagonal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_acceptance_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/window_adaptation.html#base"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.window_adaptation.base" title="Permalink to this definition">#</a></dt>
 <dd><p>Warmup scheme for sampling procedures based on euclidean manifold HMC.
-The schedule and algorithms used match Stan’s <a class="footnote-reference brackets" href="#id2" id="id1">1</a> as closely as possible.</p>
+The schedule and algorithms used match Stan’s <span id="id1">[<a class="reference internal" href="../../../../bib.html#id5" title="HMC Algorithm Parameters, stan manual. URL: https://mc-stan.org/docs/2_20/reference-manual/hmc-algorithm-parameters.html.">stab</a>]</span> as closely as possible.</p>
 <p>Unlike several other libraries, we separate the warmup and sampling phases
 explicitly. This ensure a better modularity; a change in the warmup does
 not affect the sampling. It also allows users to run their own warmup
@@ -941,13 +948,6 @@ initialize the dual averaging scheme. In (2) we initialize the mass matrix
 to the matrix. In (3) we compute the mass matrix to use in the kernel and
 re-initialize the mass matrix adaptation. The step size is still adapated
 in slow adaptation windows, and is not re-initialized between windows.</p>
-<p class="rubric">References</p>
-<dl class="footnote brackets">
-<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
-<dd><p>Stan Reference Manual v2.22
-Section 15.2 “HMC Algorithm”</p>
-</dd>
-</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -972,7 +972,7 @@ state.</p></li>
 <dt class="sig sig-object py" id="blackjax.adaptation.window_adaptation.schedule">
 <span class="sig-name descname"><span class="pre">schedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_buffer_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_buffer_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">25</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/window_adaptation.html#schedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.window_adaptation.schedule" title="Permalink to this definition">#</a></dt>
 <dd><p>Return the schedule for Stan’s warmup.</p>
-<p>The schedule below is intended to be as close as possible to Stan’s _[1].
+<p>The schedule below is intended to be as close as possible to Stan’s <span id="id2">[<a class="reference internal" href="../../../../bib.html#id5" title="HMC Algorithm Parameters, stan manual. URL: https://mc-stan.org/docs/2_20/reference-manual/hmc-algorithm-parameters.html.">stab</a>]</span>.
 The warmup period is split into three stages:</p>
 <p>1. An initial fast interval to reach the typical set. Only the step size is
 adapted in this window.
@@ -990,7 +990,7 @@ computed mass matrix.</p>
 <span class="pre">`</span></code></p>
 <p>The distinction slow/fast comes from the speed at which the algorithms
 converge to a stable value; in the common case, estimation of covariance
-requires more steps than dual averaging to give an accurate value. See _[1]
+requires more steps than dual averaging to give an accurate value. See <span id="id3">[<a class="reference internal" href="../../../../bib.html#id5" title="HMC Algorithm Parameters, stan manual. URL: https://mc-stan.org/docs/2_20/reference-manual/hmc-algorithm-parameters.html.">stab</a>]</span>
 for a more detailed explanation.</p>
 <p>Fast intervals are given the label 0 and slow intervals the label 1.</p>
 <dl class="field-list simple">
@@ -1006,7 +1006,6 @@ for a more detailed explanation.</p>
 <dd class="field-even"><p>A list of tuples (window_label, is_middle_window_end).</p>
 </dd>
 </dl>
-<p class="rubric">References</p>
 </dd></dl>
 
 </section>

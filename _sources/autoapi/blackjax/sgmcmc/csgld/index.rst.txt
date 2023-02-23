@@ -5,18 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   Public API for the Contour Stochastic gradient Langevin Dynamics kernel.
-
-   .. rubric:: References
-
-   .. [DLL20] Deng, W., Lin, G., Liang, F. (2020).
-          A Contour Stochastic Gradient Langevin Dynamics Algorithm
-          for Simulations of Multi-modal Distributions.
-          In Neural Information Processing Systems (NeurIPS 2020).
-
-   .. [DLH+22] Deng, W., Liang, S., Hao, B., Lin, G., Liang, F. (2022)
-          Interacting Contour Stochastic Gradient Langevin Dynamics
-          In International Conference on Learning Representations (ICLR)
+   Public API for the Contour Stochastic gradient Langevin Dynamics kernel :cite:p:`deng2020contour,deng2022interacting`.
 
 
 

@@ -592,6 +592,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -897,7 +904,7 @@ title="Source repository"
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.progressive_biased_sampling" title="blackjax.mcmc.proposal.progressive_biased_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">progressive_biased_sampling</span></code></a>(rng_key, proposal, ...)</p></td>
-<td><p>Baised proposal sampling.</p></td>
+<td><p>Baised proposal sampling <span id="id1">[<a class="reference internal" href="../../../../bib.html#id24" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.nonreversible_slice_sampling" title="blackjax.mcmc.proposal.nonreversible_slice_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nonreversible_slice_sampling</span></code></a>(slice, proposal, new_proposal)</p></td>
 <td><p>Slice sampling for non-reversible Metropolis-Hasting update.</p></td>
@@ -964,17 +971,9 @@ then the new proposal is accepted with probability 1.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.proposal.progressive_biased_sampling">
 <span class="sig-name descname"><span class="pre">progressive_biased_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#progressive_biased_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.progressive_biased_sampling" title="Permalink to this definition">#</a></dt>
-<dd><p>Baised proposal sampling.</p>
+<dd><p>Baised proposal sampling <span id="id2">[<a class="reference internal" href="../../../../bib.html#id24" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>.</p>
 <p>Unlike uniform sampling, biased sampling favors new proposals. It thus
 biases the transition away from the trajectory’s initial state.</p>
-<p class="rubric">References</p>
-<dl class="citation">
-<dt class="label" id="bet17"><span class="brackets">Bet17</span></dt>
-<dd><p>Betancourt, Michael.
-“A conceptual introduction to Hamiltonian Monte Carlo.”
-arXiv preprint arXiv:1701.02434 (2017).</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -982,16 +981,8 @@ arXiv preprint arXiv:1701.02434 (2017).</p>
 <span class="sig-name descname"><span class="pre">nonreversible_slice_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#nonreversible_slice_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.nonreversible_slice_sampling" title="Permalink to this definition">#</a></dt>
 <dd><p>Slice sampling for non-reversible Metropolis-Hasting update.</p>
 <p>Performs a non-reversible update of a uniform [0, 1] value
-for Metropolis-Hastings accept/reject decisions <a class="reference internal" href="#nea20" id="id1"><span>[Nea20]</span></a>, in addition
+for Metropolis-Hastings accept/reject decisions <span id="id3">[<a class="reference internal" href="../../../../bib.html#id27" title="Radford M Neal. Non-reversibly updating a uniform [0, 1] value for metropolis accept/reject decisions. arXiv preprint arXiv:2001.11950, 2020.">Nea20</a>]</span>, in addition
 to the accept/reject step of a current state and new proposal.</p>
-<p class="rubric">References</p>
-<dl class="citation">
-<dt class="label" id="nea20"><span class="brackets"><a class="fn-backref" href="#id1">Nea20</a></span></dt>
-<dd><p>Neal, R. M. (2020).
-“Non-reversibly updating a uniform [0, 1] value for Metropolis accept/reject decisions.”
-arXiv preprint arXiv:2001.11950.</p>
-</dd>
-</dl>
 </dd></dl>
 
 </section>

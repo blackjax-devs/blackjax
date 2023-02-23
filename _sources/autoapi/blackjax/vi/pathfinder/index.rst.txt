@@ -88,7 +88,7 @@ Functions
    quasi-Newton optimization path, with local covariance estimated using
    the inverse Hessian estimates produced by the L-BFGS optimizer.
 
-   Function implements the algorithm 3 in [1]:
+   Function implements the algorithm 3 in :cite:p:`zhang2022pathfinder`:
 
    :param rng_key: PRPNG key
    :param logdensity_fn: (un-normalized) log densify function of target distribution to take
@@ -107,11 +107,6 @@ Functions
    :returns: * *A PathfinderState with information on the iteration in the optimization path*
              * *whose approximate samples yields the highest ELBO, and PathfinderInfo that*
              * *contains all the states traversed.*
-
-   .. rubric:: References
-
-   .. [1]: Pathfinder: Parallel quasi-newton variational inference,
-           Lu Zhang et al., arXiv:2108.03782
 
 
 .. py:function:: sample(rng_key: blackjax.types.PRNGKey, state: PathfinderState, num_samples: Union[int, Tuple[], Tuple[int]] = ()) -> blackjax.types.PyTree

@@ -592,6 +592,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -812,16 +819,7 @@ contains a chain dimension and a sample dimension.</p></li>
 <p>where <span class="math notranslate nohighlight">\(W\)</span> is the within-chain variance and <span class="math notranslate nohighlight">\(\hat{V}\)</span> is the posterior variance
 estimate for the pooled traces. This is the potential scale reduction factor, which
 converges to unity when each of the traces is a sample from the target posterior. Values
-greater than one indicate that one or more chains have not yet converged <a class="reference internal" href="#stanrhat" id="id1"><span>[StanRhat]</span></a> <a class="reference internal" href="#gelman1992" id="id2"><span>[Gelman1992]</span></a>.</p>
-<p class="rubric">References</p>
-<dl class="citation">
-<dt class="label" id="stanrhat"><span class="brackets"><a class="fn-backref" href="#id1">StanRhat</a></span></dt>
-<dd><p><a class="reference external" href="https://mc-stan.org/docs/2_27/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction">https://mc-stan.org/docs/2_27/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction</a></p>
-</dd>
-<dt class="label" id="gelman1992"><span class="brackets"><a class="fn-backref" href="#id2">Gelman1992</a></span></dt>
-<dd><p>Gelman, Andrew, and Donald B. Rubin. (1992) “Inference from Iterative Simulation Using Multiple Sequences.” Statistical Science 7 (4): 457–72.</p>
-</dd>
-</dl>
+greater than one indicate that one or more chains have not yet converged <span id="id1">[<a class="reference internal" href="../../../bib.html#id3" title="Potential scale reduction, stan manual. URL: https://mc-stan.org/docs/2_27/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction.">stac</a>, <a class="reference internal" href="../../../bib.html#id2" title="Andrew Gelman and Donald B Rubin. Inference from iterative simulation using multiple sequences. Statistical science, pages 457–472, 1992.">GR92</a>]</span>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -850,24 +848,9 @@ contains a chain dimension and a sample dimension.</p></li>
 <p>where <span class="math notranslate nohighlight">\(M\)</span> is the number of chains, <span class="math notranslate nohighlight">\(N\)</span> the number of draws,
 <span class="math notranslate nohighlight">\(\hat{\rho}_t\)</span> is the estimated _autocorrelation at lag <span class="math notranslate nohighlight">\(t\)</span>, and
 <span class="math notranslate nohighlight">\(K\)</span> is the last integer for which <span class="math notranslate nohighlight">\(\hat{P}_{K} = \hat{\rho}_{2K} +
-\hat{\rho}_{2K+1}\)</span> is still positive <a class="reference internal" href="#staneff" id="id3"><span>[StanEff]</span></a> <a class="reference internal" href="#gelman2013" id="id4"><span>[Gelman2013]</span></a>.</p>
+\hat{\rho}_{2K+1}\)</span> is still positive <span id="id2">[<a class="reference internal" href="../../../bib.html#id4" title="Effective sample size, stan manual. URL: https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html.">staa</a>, <a class="reference internal" href="../../../bib.html#id9" title="Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. Bayesian data analysis. Chapman and Hall/CRC, 1995.">GCSR95</a>]</span>.</p>
 <p>The current implementation is similar to Stan, which uses Geyer’s initial monotone sequence
-criterion <a class="reference internal" href="#geyer1992" id="id5"><span>[Geyer1992]</span></a> <a class="reference internal" href="#geyer2011" id="id6"><span>[Geyer2011]</span></a>.</p>
-<p class="rubric">References</p>
-<dl class="citation">
-<dt class="label" id="staneff"><span class="brackets"><a class="fn-backref" href="#id3">StanEff</a></span></dt>
-<dd><p><a class="reference external" href="https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html">https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html</a></p>
-</dd>
-<dt class="label" id="gelman2013"><span class="brackets"><a class="fn-backref" href="#id4">Gelman2013</a></span></dt>
-<dd><p>Gelman, Andrew, J. B. Carlin, Hal S. Stern, David B. Dunson, Aki Vehtari, and Donald B. Rubin. (2013). Bayesian Data Analysis. Third Edition. Chapman; Hall/CRC.</p>
-</dd>
-<dt class="label" id="geyer1992"><span class="brackets"><a class="fn-backref" href="#id5">Geyer1992</a></span></dt>
-<dd><p>Geyer, Charles J. (1992). “Practical Markov Chain Monte Carlo.” Statistical Science, 473–83.</p>
-</dd>
-<dt class="label" id="geyer2011"><span class="brackets"><a class="fn-backref" href="#id6">Geyer2011</a></span></dt>
-<dd><p>Geyer, Charles J. (2011). “Introduction to Markov Chain Monte Carlo.” In Handbook of Markov Chain Monte Carlo, edited by Steve Brooks, Andrew Gelman, Galin L. Jones, and Xiao-Li Meng, 3–48. Chapman; Hall/CRC.</p>
-</dd>
-</dl>
+criterion <span id="id3">[<a class="reference internal" href="../../../bib.html#id10" title="Charles J Geyer. Practical markov chain monte carlo. Statistical science, pages 473–483, 1992.">Gey92</a>, <a class="reference internal" href="../../../bib.html#id11" title="Charles J Geyer. Introduction to markov chain monte carlo. Handbook of Markov Chain Monte Carlo, 20116022:45, 2011.">Gey11</a>]</span>.</p>
 </dd></dl>
 
 </section>

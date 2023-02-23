@@ -86,16 +86,11 @@ Functions
 
 .. py:function:: progressive_biased_sampling(rng_key, proposal, new_proposal)
 
-   Baised proposal sampling.
+   Baised proposal sampling :cite:p:`betancourt2017conceptual`.
 
    Unlike uniform sampling, biased sampling favors new proposals. It thus
    biases the transition away from the trajectory's initial state.
 
-   .. rubric:: References
-
-   .. [Bet17] Betancourt, Michael.
-       "A conceptual introduction to Hamiltonian Monte Carlo."
-       arXiv preprint arXiv:1701.02434 (2017).
 
 
 .. py:function:: nonreversible_slice_sampling(slice, proposal, new_proposal)
@@ -103,13 +98,8 @@ Functions
    Slice sampling for non-reversible Metropolis-Hasting update.
 
    Performs a non-reversible update of a uniform [0, 1] value
-   for Metropolis-Hastings accept/reject decisions [Nea20]_, in addition
+   for Metropolis-Hastings accept/reject decisions :cite:p:`neal2020non`, in addition
    to the accept/reject step of a current state and new proposal.
 
-   .. rubric:: References
-
-   .. [Nea20] Neal, R. M. (2020).
-       "Non-reversibly updating a uniform [0, 1] value for Metropolis accept/reject decisions."
-       arXiv preprint arXiv:2001.11950.
 
 

@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -808,7 +815,7 @@ title="Source repository"
 <div class="viewcode-block" id="kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html#blackjax.mcmc.periodic_orbital.kernel">[docs]</a><span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span>
     <span class="n">bijection</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Periodic Orbital kernel [1]_.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Periodic Orbital kernel :cite:p:`neklyudov2022orbital`.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -821,10 +828,6 @@ title="Source repository"
 <span class="sd">    of the chain and that returns a new state of the chain along with</span>
 <span class="sd">    information about the transition.</span>
 
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [1] Kirill Neklyudov and Max Welling &quot;Orbital MCMC.&quot; arXiv preprint</span>
-<span class="sd">            arXiv:2010.08047 (2021).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span>
@@ -945,17 +948,13 @@ title="Source repository"
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">PeriodicOrbitalState</span><span class="p">,</span> <span class="n">PeriodicOrbitalInfo</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate orbit by applying bijection forwards and backwards on period.</span>
 
-<span class="sd">        As described in algorithm 2 of [1]_, each iteration of the periodic orbital</span>
+<span class="sd">        As described in algorithm 2 of :cite:p:`neklyudov2022orbital`, each iteration of the periodic orbital</span>
 <span class="sd">        MCMC takes a position and its direction, i.e. its step in the orbit, then</span>
 <span class="sd">        it runs the bijection backwards until it reaches the direction 0 and forwards</span>
 <span class="sd">        until it reaches the direction period-1. For each step it calculates its</span>
 <span class="sd">        weight using the target density, the auxilary variable&#39;s density and the</span>
 <span class="sd">        bijection.</span>
 
-<span class="sd">        References</span>
-<span class="sd">        ----------</span>
-<span class="sd">        .. [1] Kirill Neklyudov and Max Welling &quot;Orbital MCMC.&quot; arXiv preprint</span>
-<span class="sd">                arXiv:2010.08047 (2021).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">index_steps</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">period</span><span class="p">)</span> <span class="o">-</span> <span class="n">direction</span>

@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -771,13 +778,13 @@ title="Source repository"
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an iterative NUTS kernel.</span>
 
-<span class="sd">    This algorithm is an iteration on the original NUTS algorithm [HG14]_</span>
+<span class="sd">    This algorithm is an iteration on the original NUTS algorithm :cite:p:`hoffman2014no`</span>
 <span class="sd">    with two major differences:</span>
 
 <span class="sd">    - We do not use slice samplig but multinomial sampling for the proposal</span>
-<span class="sd">      [Bet17]_;</span>
-<span class="sd">    - The trajectory expansion is not recursive but iterative [PPJ19]_,</span>
-<span class="sd">      [LSL+20]_.</span>
+<span class="sd">      :cite:p:`betancourt2017conceptual`;</span>
+<span class="sd">    - The trajectory expansion is not recursive but iterative :cite:p:`phan2019composable`,</span>
+<span class="sd">      :cite:p:`lao2020tfp`.</span>
 
 <span class="sd">    The implementation can seem unusual for those familiar with similar</span>
 <span class="sd">    algorithms. Indeed, we do not conceptualize the trajectory construction as</span>
@@ -802,21 +809,6 @@ title="Source repository"
 <span class="sd">        The maximum number of times we expand the trajectory by</span>
 <span class="sd">        doubling the number of steps if the trajectory does not</span>
 <span class="sd">        turn onto itself.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [HG14] Hoffman, Matthew D., and Andrew Gelman.</span>
-<span class="sd">        &quot;The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo.&quot;</span>
-<span class="sd">        J. Mach. Learn. Res. 15.1 (2014): 1593-1623.</span>
-<span class="sd">    .. [Bet17] Betancourt, Michael.</span>
-<span class="sd">        &quot;A conceptual introduction to Hamiltonian Monte Carlo.&quot;</span>
-<span class="sd">        arXiv preprint arXiv:1701.02434 (2017).</span>
-<span class="sd">    .. [PPJ19] Phan Du, Neeraj Pradhan, and Martin Jankowiak.</span>
-<span class="sd">        &quot;Composable effects for flexible and accelerated probabilistic programming in NumPyro.&quot;</span>
-<span class="sd">        arXiv preprint arXiv:1912.11554 (2019).</span>
-<span class="sd">    .. [LSL+20] Lao, Junpeng, et al.</span>
-<span class="sd">        &quot;tfp. mcmc: Modern markov chain monte carlo tools built for modern hardware.&quot;</span>
-<span class="sd">        arXiv preprint arXiv:2002.01184 (2020).</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 

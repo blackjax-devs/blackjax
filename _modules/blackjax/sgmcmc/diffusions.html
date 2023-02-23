@@ -588,6 +588,13 @@
   </ul>
  </li>
 </ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../bib.html">
+   Bibliography
+  </a>
+ </li>
+</ul>
 
     </div>
 </nav></div>
@@ -715,13 +722,7 @@ title="Source repository"
 <div class="viewcode-block" id="overdamped_langevin"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html#blackjax.sgmcmc.diffusions.overdamped_langevin">[docs]</a><span class="k">def</span> <span class="nf">overdamped_langevin</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Euler solver for overdamped Langevin diffusion.</span>
 
-<span class="sd">    This algorithm was ported from [CN22]_.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [CN22] Coullon, J., &amp; Nemeth, C. (2022). SGMCMCJax: a lightweight JAX</span>
-<span class="sd">            library for stochastic gradient Markov chain Monte Carlo algorithms.</span>
-<span class="sd">            Journal of Open Source Software, 7(72), 4113.</span>
+<span class="sd">    This algorithm was ported from :cite:p:`coullon2022sgmcmcjax`.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -748,18 +749,9 @@ title="Source repository"
 
 
 <div class="viewcode-block" id="sghmc"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html#blackjax.sgmcmc.diffusions.sghmc">[docs]</a><span class="k">def</span> <span class="nf">sghmc</span><span class="p">(</span><span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solver for the diffusion equation of the SGHMC algorithm [CFG14]_.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solver for the diffusion equation of the SGHMC algorithm :cite:p:`chen2014stochastic`.</span>
 
-<span class="sd">    This algorithm was ported from [CN22]_.</span>
-
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [CFG14] Chen, T., Fox, E., &amp; Guestrin, C. (2014, June). Stochastic</span>
-<span class="sd">             gradient hamiltonian monte carlo. In International conference on</span>
-<span class="sd">             machine learning (pp. 1683-1691). PMLR.</span>
-<span class="sd">    .. [CN22] Coullon, J., &amp; Nemeth, C. (2022). SGMCMCJax: a lightweight JAX</span>
-<span class="sd">            library for stochastic gradient Markov chain Monte Carlo algorithms.</span>
-<span class="sd">            Journal of Open Source Software, 7(72), 4113.</span>
+<span class="sd">    This algorithm was ported from :cite:p:`coullon2022sgmcmcjax`.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
