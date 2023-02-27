@@ -1,6 +1,5 @@
 from typing import Any, Iterable, Mapping, Union
 
-import jax._src.prng as prng
 import jax.numpy as jnp
 import numpy as np
 
@@ -14,4 +13,4 @@ PyTree = Union[Array, Iterable[Array], Mapping[Any, Array]]
 # PyTree = Union[Array, Iterable["PyTree"], Mapping[Any, "PyTree"]]
 
 #: JAX PRNGKey
-PRNGKey = prng.PRNGKeyArray
+PRNGKey = jax.random.PRNGKeyArray
