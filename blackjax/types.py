@@ -1,11 +1,7 @@
 from typing import Any, Iterable, Mapping, Union
 
+from chex import Array
 import jax
-import jax.numpy as jnp
-import numpy as np
-
-#: JAX or Numpy array
-Array = Union[np.ndarray, jnp.ndarray]
 
 #: JAX PyTrees
 PyTree = Union[Array, Iterable["PyTree"], Mapping[Any, "PyTree"]]
