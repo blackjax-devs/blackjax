@@ -9,10 +9,6 @@
 Module Contents
 ---------------
 
-.. py:data:: Array
-
-   
-
 .. py:data:: PyTree
 
    
