@@ -44,11 +44,11 @@ import jax.numpy as jnp
 from blackjax.mcmc.integrators import IntegratorState
 from blackjax.mcmc.proposal import (
     Proposal,
+    hmc_energy,
     progressive_biased_sampling,
     progressive_uniform_sampling,
-    proposal_generator, hmc_energy,
+    proposal_generator,
 )
-from blackjax.mcmc.rmh import RWState
 from blackjax.types import PRNGKey, PyTree
 
 
@@ -165,7 +165,9 @@ def dynamic_progressive_integration(
         which we say a transition is divergent.
 
     """
-    _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy), divergence_threshold)
+    _, generate_proposal = proposal_generator(
+        hmc_energy(kinetic_energy), divergence_threshold
+    )
     sample_proposal = progressive_uniform_sampling
 
     def integrate(
@@ -323,7 +325,9 @@ def dynamic_recursive_integration(
         Bool to indicate whether to perform additional U turn check between two trajectory.
 
     """
-    _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy), divergence_threshold)
+    _, generate_proposal = proposal_generator(
+        hmc_energy(kinetic_energy), divergence_threshold
+    )
     sample_proposal = progressive_uniform_sampling
 
     def buildtree_integrate(
@@ -618,6 +622,3 @@ def dynamic_multiplicative_expansion(
         return expansion_state, (is_diverging, is_turning)
 
     return expand
-
-
-

@@ -17,9 +17,7 @@ from typing import Callable, NamedTuple, Optional, Tuple
 import jax
 import numpy as np
 
-from blackjax.mcmc import proposal, trajectory
-from blackjax.mcmc.integrators import IntegratorState
-from blackjax.mcmc.proposal import Proposal
+from blackjax.mcmc import proposal
 from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["RWState", "RWInfo", "init"]
@@ -75,6 +73,7 @@ def init(position: PyTree, logdensity_fn: Callable) -> RWState:
     """
     return RWState(position, logdensity_fn(position))
 
+
 def rmh_proposal(
     logdensity_fn,
     transition_distribution,
@@ -82,7 +81,6 @@ def rmh_proposal(
     generate_proposal,
     sample_proposal: Callable = proposal.static_binomial_sampling,
 ) -> Callable:
-
     def build_trajectory(rng_key, initial_state: RWState) -> RWState:
         position, logdensity = initial_state
         new_position = transition_distribution(rng_key, position)
@@ -127,15 +125,16 @@ def rmh(
 
     """
     if proposal_logdensity_fn is None:
-        init_proposal, generate_proposal = proposal.proposal_generator(lambda state: -state.logdensity, np.inf)
+        init_proposal, generate_proposal = proposal.proposal_generator(
+            lambda state: -state.logdensity, np.inf
+        )
     else:
-        init_proposal, generate_proposal = proposal.asymmetric_proposal_generator(lambda state: -state.logdensity, proposal_logdensity_fn, np.inf)
+        init_proposal, generate_proposal = proposal.asymmetric_proposal_generator(
+            lambda state: -state.logdensity, proposal_logdensity_fn, np.inf
+        )
 
     proposal_generator = rmh_proposal(
-        logdensity_fn,
-        transition_generator,
-        init_proposal,
-        generate_proposal
+        logdensity_fn, transition_generator, init_proposal, generate_proposal
     )
 
     def kernel(rng_key: PRNGKey, state: RWState) -> Tuple[RWState, RWInfo]:

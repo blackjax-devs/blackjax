@@ -107,12 +107,10 @@ def proposal_generator(
 
 
 def asymmetric_proposal_generator(
-    energy: Callable,
-    proposal_logdensity_fn,
-    divergence_threshold: float
+    energy: Callable, proposal_logdensity_fn, divergence_threshold: float
 ) -> Tuple[Callable, Callable]:
-
     new, symmetric_update = proposal_generator(energy, divergence_threshold)
+
     def update(
         initial_energy: float, state: StateWithPosition
     ) -> Tuple[Proposal, bool]:
@@ -123,18 +121,23 @@ def asymmetric_proposal_generator(
         new_position = new_proposal.state.position
         previous_position = state.position
         weight_correction = proposal_logdensity_fn(
-                new_position, previous_position
-            ) - proposal_logdensity_fn(previous_position, new_position)
+            new_position, previous_position
+        ) - proposal_logdensity_fn(previous_position, new_position)
 
-        return Proposal(
+        return (
+            Proposal(
                 new_proposal.state,
                 new_proposal.energy,
                 new_proposal.weight + weight_correction,
                 new_proposal.sum_log_p_accept,
-            ), is_transition_divergent
-            # To code reviewer is keeping sum_log_p_accept correct?
+            ),
+            is_transition_divergent,
+        )
+        # To code reviewer is keeping sum_log_p_accept correct?
 
     return new, update
+
+
 # --------------------------------------------------------------------
 #                        STATIC SAMPLING
 # --------------------------------------------------------------------
@@ -255,4 +258,5 @@ def nonreversible_slice_sampling(slice, proposal, new_proposal):
 def hmc_energy(kinetic_energy):
     def energy(state):
         return -state.logdensity + kinetic_energy(state.momentum)
+
     return energy
