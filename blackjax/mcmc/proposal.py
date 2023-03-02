@@ -57,15 +57,6 @@ class Proposal(NamedTuple):
 
 
 def proposal_generator(
-    kinetic_energy: Callable, divergence_threshold: float
-) -> Tuple[Callable, Callable]:
-    return proposal_generator_from_energy(
-        energy=lambda state: -state.logdensity + kinetic_energy(state.momentum),
-        divergence_threshold=divergence_threshold,
-    )
-
-
-def proposal_generator_from_energy(
     energy: Callable, divergence_threshold: float
 ) -> Tuple[Callable, Callable]:
     def new(state: StateWithPosition) -> Proposal:
@@ -115,6 +106,35 @@ def proposal_generator_from_energy(
     return new, update
 
 
+def asymmetric_proposal_generator(
+    energy: Callable,
+    proposal_logdensity_fn,
+    divergence_threshold: float
+) -> Tuple[Callable, Callable]:
+
+    new, symmetric_update = proposal_generator(energy, divergence_threshold)
+    def update(
+        initial_energy: float, state: StateWithPosition
+    ) -> Tuple[Proposal, bool]:
+        """Generate a new proposal from a trajectory state,
+        correcting for assymetry in the proposal distribution
+        """
+        new_proposal, is_transition_divergent = symmetric_update(initial_energy, state)
+        new_position = new_proposal.state.position
+        previous_position = state.position
+        weight_correction = proposal_logdensity_fn(
+                new_position, previous_position
+            ) - proposal_logdensity_fn(previous_position, new_position)
+
+        return Proposal(
+                new_proposal.state,
+                new_proposal.energy,
+                new_proposal.weight + weight_correction,
+                new_proposal.sum_log_p_accept,
+            ), is_transition_divergent
+            # To code reviewer is keeping sum_log_p_accept correct?
+
+    return new, update
 # --------------------------------------------------------------------
 #                        STATIC SAMPLING
 # --------------------------------------------------------------------
@@ -230,3 +250,9 @@ def nonreversible_slice_sampling(slice, proposal, new_proposal):
         lambda _: (proposal, do_accept, slice),
         operand=None,
     )
+
+
+def hmc_energy(kinetic_energy):
+    def energy(state):
+        return -state.logdensity + kinetic_energy(state.momentum)
+    return energy

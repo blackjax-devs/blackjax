@@ -75,56 +75,26 @@ def init(position: PyTree, logdensity_fn: Callable) -> RWState:
     """
     return RWState(position, logdensity_fn(position))
 
-
-def correct_weight_for_non_symmetry(proposal_logdensity_fn) -> Callable:
-    """Classical Rosenbluth-Metropolis-Hastings correction when the proposal
-    distribution is non-symmetric.
-    """
-
-    def weight_corrector(
-        new_proposal: Proposal,
-        previous_state: IntegratorState,
-    ) -> Proposal:
-        new_position = new_proposal.state.position
-        previous_position = previous_state.position
-        weight_correction = proposal_logdensity_fn(
-            new_position, previous_position
-        ) - proposal_logdensity_fn(previous_position, new_position)
-
-        return Proposal(
-            new_proposal.state,
-            new_proposal.energy,
-            new_proposal.weight + weight_correction,
-            new_proposal.sum_log_p_accept,
-        )
-        # To code reviewer is keeping sum_log_p_accept correct?
-
-    return weight_corrector
-
-
 def rmh_proposal(
     logdensity_fn,
     transition_distribution,
-    energy: Callable,
-    weight_correction,
+    init_proposal,
+    generate_proposal,
     sample_proposal: Callable = proposal.static_binomial_sampling,
 ) -> Callable:
-    build_trajectory = trajectory.stochastic_trajectory(
-        transition_distribution, logdensity_fn
-    )
 
-    init_proposal, generate_proposal = proposal.proposal_generator_from_energy(
-        energy=energy, divergence_threshold=np.inf
-    )
+    def build_trajectory(rng_key, initial_state: RWState) -> RWState:
+        position, logdensity = initial_state
+        new_position = transition_distribution(rng_key, position)
+        return RWState(new_position, logdensity_fn(new_position))
 
     def generate(rng_key, state: RWState) -> Tuple[RWState, bool, float]:
         key_proposal, key_accept = jax.random.split(rng_key, 2)
         end_state = build_trajectory(key_proposal, state)
         previous_proposal = init_proposal(state)
         new_proposal, _ = generate_proposal(previous_proposal.energy, end_state)
-        corrected_proposal = weight_correction(new_proposal, previous_proposal)
         sampled_proposal, do_accept, p_accept = sample_proposal(
-            key_accept, previous_proposal, corrected_proposal
+            key_accept, previous_proposal, new_proposal
         )
         return sampled_proposal, do_accept, p_accept
 
@@ -157,15 +127,15 @@ def rmh(
 
     """
     if proposal_logdensity_fn is None:
-        weight_correction = lambda new_proposal, previous_proposal: new_proposal
+        init_proposal, generate_proposal = proposal.proposal_generator(lambda state: -state.logdensity, np.inf)
     else:
-        weight_correction = correct_weight_for_non_symmetry(proposal_logdensity_fn)
+        init_proposal, generate_proposal = proposal.asymmetric_proposal_generator(lambda state: -state.logdensity, proposal_logdensity_fn, np.inf)
 
     proposal_generator = rmh_proposal(
         logdensity_fn,
         transition_generator,
-        energy=lambda state: -state.logdensity,
-        weight_correction=weight_correction,
+        init_proposal,
+        generate_proposal
     )
 
     def kernel(rng_key: PRNGKey, state: RWState) -> Tuple[RWState, RWInfo]:

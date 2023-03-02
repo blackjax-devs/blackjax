@@ -46,7 +46,7 @@ from blackjax.mcmc.proposal import (
     Proposal,
     progressive_biased_sampling,
     progressive_uniform_sampling,
-    proposal_generator,
+    proposal_generator, hmc_energy,
 )
 from blackjax.mcmc.rmh import RWState
 from blackjax.types import PRNGKey, PyTree
@@ -165,7 +165,7 @@ def dynamic_progressive_integration(
         which we say a transition is divergent.
 
     """
-    _, generate_proposal = proposal_generator(kinetic_energy, divergence_threshold)
+    _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy), divergence_threshold)
     sample_proposal = progressive_uniform_sampling
 
     def integrate(
@@ -323,7 +323,7 @@ def dynamic_recursive_integration(
         Bool to indicate whether to perform additional U turn check between two trajectory.
 
     """
-    _, generate_proposal = proposal_generator(kinetic_energy, divergence_threshold)
+    _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy), divergence_threshold)
     sample_proposal = progressive_uniform_sampling
 
     def buildtree_integrate(
@@ -620,16 +620,4 @@ def dynamic_multiplicative_expansion(
     return expand
 
 
-def stochastic_trajectory(
-    transition_distribution: Callable, logdensity_fn: Callable
-) -> Callable:
-    """Simple trajectory that only depends on stochastic
-    component, a transition distribution conditioned on a current state.
-    """
 
-    def transition(rng_key, initial_state: RWState) -> RWState:
-        position, logdensity = initial_state
-        new_position = transition_distribution(rng_key, position)
-        return RWState(new_position, logdensity_fn(new_position))
-
-    return transition
