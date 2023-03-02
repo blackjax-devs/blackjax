@@ -13,7 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import Callable, NamedTuple, Protocol
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -240,10 +240,3 @@ def nonreversible_slice_sampling(slice, proposal, new_proposal):
         lambda _: (proposal, do_accept, slice),
         operand=None,
     )
-
-
-def hmc_energy(kinetic_energy):
-    def energy(state):
-        return -state.logdensity + kinetic_energy(state.momentum)
-
-    return energy

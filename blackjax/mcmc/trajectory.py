@@ -36,6 +36,8 @@ trajectory is being sampled. While the former is faster, we risk saturating the
 memory by keeping states that will subsequently be discarded.
 
 """
+from __future__ import annotations
+
 from typing import Callable, NamedTuple, Tuple
 
 import jax
@@ -44,7 +46,6 @@ import jax.numpy as jnp
 from blackjax.mcmc.integrators import IntegratorState
 from blackjax.mcmc.proposal import (
     Proposal,
-    hmc_energy,
     progressive_biased_sampling,
     progressive_uniform_sampling,
     proposal_generator,
@@ -622,3 +623,10 @@ def dynamic_multiplicative_expansion(
         return expansion_state, (is_diverging, is_turning)
 
     return expand
+
+
+def hmc_energy(kinetic_energy):
+    def energy(state):
+        return -state.logdensity + kinetic_energy(state.momentum)
+
+    return energy

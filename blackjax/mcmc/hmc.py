@@ -20,7 +20,7 @@ import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.trajectory as trajectory
-from blackjax.mcmc.proposal import hmc_energy
+from blackjax.mcmc.trajectory import hmc_energy
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["HMCState", "HMCInfo", "init", "kernel"]
