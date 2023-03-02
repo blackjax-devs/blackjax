@@ -11,28 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple
+from __future__ import annotations
+
+from typing import Callable, NamedTuple, Protocol
 
 import jax
 import jax.numpy as jnp
 import numpy as np
-from typing_extensions import Protocol
 
-from blackjax.types import PyTree
-
-
-class StateWithPosition(Protocol):
-    """
-    State of a trajectory.
-    """
-
-    @property
-    def position(self) -> PyTree:
-        ...
-
-    @property
-    def logdensity(self) -> PyTree:
-        ...
+TrajectoryState = NamedTuple
 
 
 class Proposal(NamedTuple):
@@ -46,11 +33,11 @@ class Proposal(NamedTuple):
         Weight of the proposal. It is equal to the logarithm of the sum of the canonical
         densities of each state :math:`e^{-H(z)}` along the trajectory.
     sum_log_p_accept:
-        cumulated Metropolis-Hastings acceptance probabilty across entire trajectory.
+        cumulated Metropolis-Hastings acceptance probability across entire trajectory.
 
     """
 
-    state: StateWithPosition
+    state: TrajectoryState
     energy: float
     weight: float
     sum_log_p_accept: float
@@ -58,13 +45,11 @@ class Proposal(NamedTuple):
 
 def proposal_generator(
     energy: Callable, divergence_threshold: float
-) -> Tuple[Callable, Callable]:
-    def new(state: StateWithPosition) -> Proposal:
+) -> tuple[Callable, Callable]:
+    def new(state: TrajectoryState) -> Proposal:
         return Proposal(state, energy(state), 0.0, -np.inf)
 
-    def update(
-        initial_energy: float, state: StateWithPosition
-    ) -> Tuple[Proposal, bool]:
+    def update(initial_energy: float, state: TrajectoryState) -> tuple[Proposal, bool]:
         """Generate a new proposal from a trajectory state.
 
         The trajectory state records information about the position in the state
@@ -107,15 +92,17 @@ def proposal_generator(
 
 
 def asymmetric_proposal_generator(
-    energy: Callable, proposal_logdensity_fn, divergence_threshold: float
-) -> Tuple[Callable, Callable]:
+    energy: Callable,
+    proposal_logdensity_fn,
+    divergence_threshold: float,
+) -> tuple[Callable, Callable]:
     new, symmetric_update = proposal_generator(energy, divergence_threshold)
 
     def update(
-        initial_energy: float, state: StateWithPosition
-    ) -> Tuple[Proposal, bool]:
+        initial_energy: float, state
+    ) -> tuple[Proposal, bool]:
         """Generate a new proposal from a trajectory state,
-        correcting for assymetry in the proposal distribution
+        correcting for asymmetry in the proposal distribution
         """
         new_proposal, is_transition_divergent = symmetric_update(initial_energy, state)
         new_position = new_proposal.state.position

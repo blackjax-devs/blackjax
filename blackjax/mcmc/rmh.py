@@ -124,10 +124,12 @@ def rmh(
     information about the transition.
 
     """
+
+    def energy(state: RWState):
+        return -state.logdensity
+
     if proposal_logdensity_fn is None:
-        init_proposal, generate_proposal = proposal.proposal_generator(
-            lambda state: -state.logdensity, np.inf
-        )
+        init_proposal, generate_proposal = proposal.proposal_generator(energy, np.inf)
     else:
         init_proposal, generate_proposal = proposal.asymmetric_proposal_generator(
             lambda state: -state.logdensity, proposal_logdensity_fn, np.inf
