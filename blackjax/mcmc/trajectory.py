@@ -38,7 +38,7 @@ memory by keeping states that will subsequently be discarded.
 """
 from __future__ import annotations
 
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -72,7 +72,7 @@ def append_to_trajectory(trajectory: Trajectory, state: IntegratorState) -> Traj
 
 def reorder_trajectories(
     direction: int, trajectory: Trajectory, new_trajectory: Trajectory
-) -> Tuple[Trajectory, Trajectory]:
+) -> tuple[Trajectory, Trajectory]:
     """Order the two trajectories depending on the direction."""
     return jax.lax.cond(
         direction > 0,

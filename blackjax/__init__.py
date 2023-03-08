@@ -4,6 +4,7 @@ from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
 from .kernels import (
     adaptive_tempered_smc,
+    additive_step_random_walk,
     csgld,
     elliptical_slice,
     ghmc,
@@ -17,7 +18,6 @@ from .kernels import (
     orbital_hmc,
     pathfinder,
     pathfinder_adaptation,
-    random_walk,
     rmh,
     sghmc,
     sgld,
@@ -35,7 +35,7 @@ __all__ = [
     "mgrad_gaussian",
     "nuts",
     "orbital_hmc",
-    "random_walk",
+    "additive_step_random_walk",
     "rmh",
     "irmh",
     "elliptical_slice",

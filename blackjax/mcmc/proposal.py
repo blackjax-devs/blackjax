@@ -67,60 +67,55 @@ def proposal_generator(
 
         """
         new_energy = energy(state)
-
-        delta_energy = initial_energy - new_energy
-        delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
-        is_transition_divergent = jnp.abs(delta_energy) > divergence_threshold
-
-        # The weight of the new proposal is equal to H0 - H(z_new)
-        weight = delta_energy
-
-        # Acceptance statistic min(e^{H0 - H(z_new)}, 1)
-        sum_log_p_accept = jnp.minimum(delta_energy, 0.0)
-
-        return (
-            Proposal(
-                state,
-                new_energy,
-                weight,
-                sum_log_p_accept,
-            ),
-            is_transition_divergent,
+        return proposal_from_energy_diff(
+            initial_energy, new_energy, divergence_threshold, state
         )
 
     return new, update
 
 
-def asymmetric_proposal_generator(
-    energy: Callable,
-    proposal_logdensity_fn,
+def proposal_from_energy_diff(initial_energy, new_energy, divergence_threshold, state):
+    delta_energy = initial_energy - new_energy
+    delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
+    is_transition_divergent = jnp.abs(delta_energy) > divergence_threshold
+
+    # The weight of the new proposal is equal to H0 - H(z_new)
+    weight = delta_energy
+
+    # Acceptance statistic min(e^{H0 - H(z_new)}, 1)
+    sum_log_p_accept = jnp.minimum(delta_energy, 0.0)
+
+    return (
+        Proposal(
+            state,
+            new_energy,
+            weight,
+            sum_log_p_accept,
+        ),
+        is_transition_divergent,
+    )
+
+
+def transition_aware_proposal_generator(
+    initial_energy_fn: Callable,
+    transition_energy_fn: Callable,
     divergence_threshold: float,
+    proposal_factory=proposal_from_energy_diff,
 ) -> tuple[Callable, Callable]:
-    new, symmetric_update = proposal_generator(energy, divergence_threshold)
+    """
+    A proposal generator that takes into account the transition from one state to the
+    other in order to calculate energies.
+    """
 
-    def update(
-        initial_energy: float, state
-    ) -> tuple[Proposal, bool]:
-        """Generate a new proposal from a trajectory state,
-        correcting for asymmetry in the proposal distribution
-        """
-        new_proposal, is_transition_divergent = symmetric_update(initial_energy, state)
-        new_position = new_proposal.state.position
-        previous_position = state.position
-        weight_correction = proposal_logdensity_fn(
-            new_position, previous_position
-        ) - proposal_logdensity_fn(previous_position, new_position)
+    def new(state: TrajectoryState) -> Proposal:
+        return Proposal(state, initial_energy_fn(state), 0.0, -np.inf)
 
-        return (
-            Proposal(
-                new_proposal.state,
-                new_proposal.energy,
-                new_proposal.weight + weight_correction,
-                new_proposal.sum_log_p_accept,
-            ),
-            is_transition_divergent,
+    def update(prev_state: float, new_state: TrajectoryState) -> tuple[Proposal, bool]:
+        new_energy = transition_energy_fn(prev_state, new_state)
+        prev_energy = transition_energy_fn(new_state, prev_state)
+        return proposal_factory(
+            prev_energy, new_energy, divergence_threshold, new_state
         )
-        # To code reviewer is keeping sum_log_p_accept correct?
 
     return new, update
 

@@ -35,7 +35,7 @@ __all__ = [
     "nuts",
     "ghmc",
     "orbital_hmc",
-    "random_walk",
+    "additive_step_random_walk",
     "rmh",
     "sgld",
     "sghmc",
@@ -959,40 +959,14 @@ def meads_adaptation(
     return AdaptationAlgorithm(run)  # type: ignore[arg-type]
 
 
-class random_walk:
-    """Implements the (basic) user interface for the gaussian random walk kernel
-
-    Examples
-    --------
-
-    A new Gaussian Random Walk kernel can be initialized and used with the following code:
-
-    .. code::
-
-        random_walk = blackjax.random_walk(logdensity_fn, lambda key, position: ...)
-        state = random_walk.init(position)
-        new_state, info = random_walk.step(rng_key, state)
-
-    We can JIT-compile the step function for better performance
-
-    .. code::
-
-        step = jax.jit(random_walk.step)
-        new_state, info = step(rng_key, state)
-
-    Parameters
-    ----------
-    logdensity_fn
-        The log density probability density function from which we wish to sample.
-    random_step:
-        A callable that given a position, generates a movement/jump in the position space.
-    Returns
-    -------
-        A ``MCMCSamplingAlgorithm``.
+class additive_step_random_walk:
+    """Implements the (basic) user interface for the random walk kernel with additive step.
+    This is a one-to-one of blackjax.mcmc.random_walk.additive_step, for simpler removal
+    when issue 492 gets done.
     """
 
-    init = staticmethod(mcmc.rmh.init)
-    kernel = staticmethod(blackjax.mcmc.random_walk.kernel)
+    init = staticmethod(blackjax.mcmc.random_walk.init)
+    kernel = staticmethod(blackjax.mcmc.random_walk.additive_step)
 
     @classmethod
     def normal_random_walk(cls, logdensity_fn: Callable, sigma):
@@ -1024,26 +998,13 @@ class random_walk:
 
 
 class rmh:
-    """Implements the user interface for the Rosenbluth-Metropolis-Hastings
-
-    Parameters
-    ----------
-    logdensity_fn
-        A function that returns the log-probability at a given position.
-    proposal_generator
-        A function that generates a candidate transition for the markov chain.
-    proposal_logdensity_fn:
-        For non-symmetric proposals, a function that returns the log-density
-        to obtain a given proposal knowing the current state. If it is not
-        provided we assume the proposal is symmetric.
-
-    Returns
-    -------
-        A ``MCMCSamplingAlgorithm``.
+    """Implements the (basic) user interface for the random walk kernel with proposal
+    distribution asymmetric correction. This is a one-to-one of
+    blackjax.mcmc.random_walk.rmh, for simpler removal when issue 492 gets done.
     """
 
-    init = staticmethod(mcmc.rmh.init)
-    kernel = staticmethod(blackjax.mcmc.rmh.rmh)
+    init = staticmethod(blackjax.mcmc.random_walk.init)
+    kernel = staticmethod(blackjax.mcmc.random_walk.rmh)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -1063,42 +1024,13 @@ class rmh:
 
 
 class irmh:
-    """Implements the (basic) user interface for the independent RMH.
-
-    Examples
-    --------
-
-    A new kernel can be initialized and used with the following code:
-
-    .. code::
-
-        rmh = blackjax.irmh(logdensity_fn, proposal_distribution)
-        state = rmh.init(position)
-        new_state, info = rmh.step(rng_key, state)
-
-    We can JIT-compile the step function for better performance
-
-    .. code::
-
-        step = jax.jit(rmh.step)
-        new_state, info = step(rng_key, state)
-
-    Parameters
-    ----------
-    logdensity_fn
-        The log density probability density function from which we wish to sample.
-    proposal_distribution
-        A Callable that takes a random number generator and produces a new proposal. The
-        proposal is independent of the sampler's current state.
-
-    Returns
-    -------
-    A ``MCMCSamplingAlgorithm``.
-
+    """Implements the (basic) user interface for the Independent RMH.
+    This is a one-to-one of blackjax.mcmc.random_walk.irmh, for simpler removal
+    when issue 492 gets done.
     """
 
-    init = staticmethod(mcmc.rmh.init)
-    kernel = staticmethod(mcmc.irmh.kernel)
+    init = staticmethod(blackjax.mcmc.random_walk.init)
+    kernel = staticmethod(blackjax.mcmc.random_walk.irmh)
 
     def __new__(  # type: ignore[misc]
         cls,

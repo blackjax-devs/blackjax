@@ -11,6 +11,7 @@ from absl.testing import absltest, parameterized
 
 import blackjax
 import blackjax.diagnostics as diagnostics
+import blackjax.mcmc.random_walk
 
 
 def inference_loop(kernel, num_samples, rng_key, initial_state):
@@ -396,7 +397,7 @@ normal_test_cases = [
         "burnin": 15_000,
     },
     {
-        "algorithm": blackjax.random_walk.normal_random_walk,
+        "algorithm": blackjax.additive_step_random_walk.normal_random_walk,
         "initial_position": 1.0,
         "parameters": {"sigma": jnp.array([1.0])},
         "num_sampling_steps": 20_000,
