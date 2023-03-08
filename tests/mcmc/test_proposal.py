@@ -5,9 +5,14 @@ import chex
 import jax
 import numpy as np
 import pytest
+from absl.testing import parameterized
 from jax import numpy as jnp
 
-from blackjax.mcmc.proposal import Proposal, transition_aware_proposal_generator
+from blackjax.mcmc.proposal import (
+    Proposal,
+    proposal_from_energy_diff,
+    transition_aware_proposal_generator,
+)
 from blackjax.mcmc.random_walk import normal
 
 
@@ -103,5 +108,41 @@ class TestTransitionAwareProposalGenerator(unittest.TestCase):
         assert proposed == new_proposal
 
 
-class TestProposalFromEnergyDiff(unittest.TestCase):
-    pass
+class TestProposalFromEnergyDiff(parameterized.TestCase):
+    @parameterized.parameters(
+        [
+            (5, 10, 2, True),
+            (5, 10, 4, True),
+            (5, 10, 6, False),
+            (5, 10, 5, False),
+            (10, 5, 2, True),
+            (10, 5, 4, True),
+            (10, 5, 6, False),
+            (10, 5, 5, False),
+        ]
+    )
+    def test_divergence_threshold(self, before, after, threshold, is_divergent):
+        state = MagicMock()
+        proposal, divergence = proposal_from_energy_diff(5, 10, threshold, state)
+        assert divergence == is_divergent
+
+    def test_sum_log_paccept(self):
+        state = MagicMock()
+        proposal, _ = proposal_from_energy_diff(5, 10, 0, state)
+        np.testing.assert_allclose(proposal.sum_log_p_accept, -5.0)
+
+        proposal, _ = proposal_from_energy_diff(10, 5, 0, state)
+        np.testing.assert_allclose(proposal.sum_log_p_accept, 0.0)
+
+    def test_delta_energy_is_nan(self):
+        state = MagicMock()
+        proposal, _ = proposal_from_energy_diff(np.nan, np.nan, 0, state)
+        assert np.isneginf(proposal.weight)
+
+    def test_weight(self):
+        state = MagicMock()
+        proposal, _ = proposal_from_energy_diff(5, 10, 0, state)
+
+        assert proposal.state == state
+        np.testing.assert_allclose(proposal.weight, -5)
+        np.testing.assert_allclose(proposal.energy, 10)
