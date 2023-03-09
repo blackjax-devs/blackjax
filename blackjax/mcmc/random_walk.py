@@ -222,16 +222,7 @@ def rmh(
     information about the transition.
 
     """
-
-    if proposal_logdensity_fn is None:
-
-        def transition_energy(prev_state, new_state):
-            return -new_state.logdensity
-
-    else:
-
-        def transition_energy(prev_state, new_state):
-            return -new_state.logdensity - proposal_logdensity_fn(new_state, prev_state)
+    transition_energy = rmh_transition_energy(proposal_logdensity_fn)
 
     init_proposal, generate_proposal = proposal.transition_aware_proposal_generator(
         lambda state: -state.logdensity, transition_energy, np.inf
@@ -264,6 +255,20 @@ def rmh(
         return new_state, RWInfo(p_accept, do_accept, new_state)
 
     return kernel
+
+
+def rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> Callable:
+    if proposal_logdensity_fn is None:
+
+        def transition_energy(prev_state, new_state):
+            return -new_state.logdensity
+
+    else:
+
+        def transition_energy(prev_state, new_state):
+            return -new_state.logdensity - proposal_logdensity_fn(new_state, prev_state)
+
+    return transition_energy
 
 
 def rmh_proposal(

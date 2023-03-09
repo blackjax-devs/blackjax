@@ -6,7 +6,13 @@ import numpy as np
 from absl.testing import absltest
 
 from blackjax.mcmc.proposal import Proposal
-from blackjax.mcmc.random_walk import RWState, additive_step, irmh, rmh_proposal
+from blackjax.mcmc.random_walk import (
+    RWState,
+    additive_step,
+    irmh,
+    rmh_proposal,
+    rmh_transition_energy,
+)
 
 
 class AdditiveStepTest(unittest.TestCase):
@@ -123,6 +129,23 @@ class RMHProposalTest(unittest.TestCase):
         sampled_proposal, do_accept, p_accept = generate(rng_key, prev_state)
 
         np.testing.assert_allclose(sampled_proposal.state.position, jnp.array([10.0]))
+
+
+class RMHTransitionEnergyTest(unittest.TestCase):
+    def test_energy(self):
+        one_state = RWState(None, 50.0)
+        another_state = RWState(None, 30.0)
+
+        def proposal_logdensity(new_state, prev_state):
+            return 100 if new_state == one_state else 200
+
+        energy = rmh_transition_energy(None)
+        np.testing.assert_allclose(energy(one_state, another_state), -30.0)
+        np.testing.assert_allclose(energy(another_state, one_state), -50.0)
+
+        energy = rmh_transition_energy(proposal_logdensity)
+        np.testing.assert_allclose(energy(one_state, another_state), -230)
+        np.testing.assert_allclose(energy(another_state, one_state), -150)
 
 
 if __name__ == "__main__":
