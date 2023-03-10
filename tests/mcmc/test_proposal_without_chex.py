@@ -4,7 +4,11 @@ from unittest.mock import MagicMock
 import numpy as np
 from absl.testing import parameterized
 
-from blackjax.mcmc.proposal import asymmetric_proposal_generator, Proposal, proposal_from_energy_diff
+from blackjax.mcmc.proposal import (
+    Proposal,
+    asymmetric_proposal_generator,
+    proposal_from_energy_diff,
+)
 
 
 class TestAsymmetricProposalGenerator(unittest.TestCase):

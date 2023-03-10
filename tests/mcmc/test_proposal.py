@@ -65,5 +65,3 @@ class TestNormalProposalDistribution(chex.TestCase):
             rtol=1e-2,
             atol=1e-1,
         )
-
-
