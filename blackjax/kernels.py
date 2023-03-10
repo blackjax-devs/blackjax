@@ -960,9 +960,31 @@ def meads_adaptation(
 
 
 class additive_step_random_walk:
-    """Implements the (basic) user interface for the random walk kernel with additive step.
-    This is a one-to-one of blackjax.mcmc.random_walk.additive_step, for simpler removal
-    when issue 492 gets done.
+    """Implements the user interface for the Additive Step RMH
+
+    Examples
+    --------
+
+    A new kernel can be initialized and used with the following code:
+
+    .. code::
+
+        rw = blackjax.additive_step_random_walk(logdensity_fn, random_step)
+        state = rw.init(position)
+        new_state, info = rw.step(rng_key, state)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log density probability density function from which we wish to sample.
+    random_step
+        A Callable that takes a random number generator and the current state and produces a step,
+        which will be added to the current position to obtain a new position. Must be symmetric
+        to maintain detailed balance. This means that P(step|position) = P(-step | position+step)
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
     """
 
     init = staticmethod(blackjax.mcmc.random_walk.init)
@@ -998,9 +1020,40 @@ class additive_step_random_walk:
 
 
 class rmh:
-    """Implements the (basic) user interface for the random walk kernel with proposal
-    distribution asymmetric correction. This is a one-to-one of
-    blackjax.mcmc.random_walk.rmh, for simpler removal when issue 492 gets done.
+    """Implements the user interface for the RMH.
+
+    Examples
+    --------
+
+    A new kernel can be initialized and used with the following code:
+
+    .. code::
+
+        rmh = blackjax.rmh(logdensity_fn, proposal_generator)
+        state = rmh.init(position)
+        new_state, info = rmh.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(rmh.step)
+        new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log density probability density function from which we wish to sample.
+    proposal_generator
+        A Callable that takes a random number generator and the current state and produces a new proposal.
+    proposal_logdensity_fn
+        The logdensity function associated to the proposal_generator. If the generator is non-symmetric,
+         P(x_t|x_t-1) is not equal to P(x_t-1|x_t), then this parameter must be not None in order to apply
+         the Metropolis-Hastings correction for detailed balance.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
     """
 
     init = staticmethod(blackjax.mcmc.random_walk.init)
@@ -1024,9 +1077,38 @@ class rmh:
 
 
 class irmh:
-    """Implements the (basic) user interface for the Independent RMH.
-    This is a one-to-one of blackjax.mcmc.random_walk.irmh, for simpler removal
-    when issue 492 gets done.
+    """Implements the (basic) user interface for the independent RMH.
+
+    Examples
+    --------
+
+    A new kernel can be initialized and used with the following code:
+
+    .. code::
+
+        rmh = blackjax.irmh(logdensity_fn, proposal_distribution)
+        state = rmh.init(position)
+        new_state, info = rmh.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(rmh.step)
+        new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log density probability density function from which we wish to sample.
+    proposal_distribution
+        A Callable that takes a random number generator and produces a new proposal. The
+        proposal is independent of the sampler's current state.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+
     """
 
     init = staticmethod(blackjax.mcmc.random_walk.init)

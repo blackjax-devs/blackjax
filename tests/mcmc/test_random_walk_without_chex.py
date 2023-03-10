@@ -32,13 +32,13 @@ class AdditiveStepTest(unittest.TestCase):
             """
             a logdensity that ges maximized after the step
             """
-            return 0 if all(position > 59.0) else 0.5
+            return 0.0 if all(position > 59.0) else 0.5
 
         step = additive_step(random_step)
 
         new_state, _ = step(
             rng_key,
-            RWState(position=initial_position, logdensity=1),
+            RWState(position=initial_position, logdensity=1.0),
             test_logdensity_accepts,
         )
 
@@ -61,14 +61,14 @@ class IRMHTest(unittest.TestCase):
             """
             a logdensity that gets maximized after the step
             """
-            return 0 if all(position - 10.0 < 1e-10) else 0.5
+            return 0.0 if all(position - 10.0 < 1e-10) else 0.5
 
         step = irmh(proposal_distribution)
 
         for previous_position in [initial_position, other_position]:
             new_state, _ = step(
                 rng_key,
-                RWState(position=previous_position, logdensity=1),
+                RWState(position=previous_position, logdensity=1.0),
                 test_logdensity_accepts,
             )
             np.testing.assert_allclose(new_state.position, jnp.array([10.0]))

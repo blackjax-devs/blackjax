@@ -10,8 +10,8 @@ from jax import numpy as jnp
 
 from blackjax.mcmc.proposal import (
     Proposal,
+    asymmetric_proposal_generator,
     proposal_from_energy_diff,
-    transition_aware_proposal_generator,
 )
 from blackjax.mcmc.random_walk import normal
 
@@ -76,17 +76,11 @@ class TestNormalProposalDistribution(chex.TestCase):
         )
 
 
-class TestTransitionAwareProposalGenerator(unittest.TestCase):
+class TestAsymmetricProposalGenerator(unittest.TestCase):
     def test_new(self):
         state = MagicMock()
-
-        def energy_fn(_state):
-            assert state == _state
-            return 20
-
-        new, _ = transition_aware_proposal_generator(energy_fn, None, None, None)
-
-        assert new(state) == Proposal(state, 20, 0.0, -np.inf)
+        new, _ = asymmetric_proposal_generator(None, None, None)
+        assert new(state) == Proposal(state, 0.0, 0.0, -np.inf)
 
     def test_update(self):
         def transition_energy(prev, next):
@@ -101,8 +95,8 @@ class TestTransitionAwareProposalGenerator(unittest.TestCase):
             assert new_state == 50
             return new_proposal
 
-        _, update = transition_aware_proposal_generator(
-            None, transition_energy, 50, proposal_factory
+        _, update = asymmetric_proposal_generator(
+            transition_energy, 50, proposal_factory
         )
         proposed = update(30, 50)
         assert proposed == new_proposal

@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from __future__ import annotations
-
 from typing import Callable, NamedTuple
 
 import jax
@@ -46,6 +44,21 @@ class Proposal(NamedTuple):
 def proposal_generator(
     energy: Callable, divergence_threshold: float
 ) -> tuple[Callable, Callable]:
+    """
+
+    Parameters
+    ----------
+    energy
+        A callable that computes the energy associated to a given state
+    divergence_threshold
+     max value allowed for the difference in energies not to be considered a divergence
+
+    Returns
+    -------
+    Two callables, to generate an initial proposal when no step has been taken,
+    and to generate proposals after each step.
+    """
+
     def new(state: TrajectoryState) -> Proposal:
         return Proposal(state, energy(state), 0.0, -np.inf)
 
@@ -65,6 +78,10 @@ def proposal_generator(
         state:
             The new state.
 
+        Returns
+        -------
+        A proposal and a flag for divergence
+
         """
         new_energy = energy(state)
         return proposal_from_energy_diff(
@@ -74,7 +91,30 @@ def proposal_generator(
     return new, update
 
 
-def proposal_from_energy_diff(initial_energy, new_energy, divergence_threshold, state):
+def proposal_from_energy_diff(
+    initial_energy: float,
+    new_energy: float,
+    divergence_threshold: float,
+    state: TrajectoryState,
+) -> tuple[Proposal, bool]:
+    """Computes a new proposal from the energy difference between two states.
+    It also verifies whether this difference is a divergence, if the
+    energy diff is above divergence_threshold.
+    Parameters
+    ----------
+    initial_energy
+     the energy from the previous state
+    new_energy
+     the energy at the new state
+    divergence_threshold
+     max value allowed for the difference in energies not to be considered a divergence
+    state
+     the state to propose
+
+    Returns
+    -------
+    A proposal and a flag for divergence
+    """
     delta_energy = initial_energy - new_energy
     delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
     is_transition_divergent = jnp.abs(delta_energy) > divergence_threshold
@@ -96,26 +136,40 @@ def proposal_from_energy_diff(initial_energy, new_energy, divergence_threshold, 
     )
 
 
-def transition_aware_proposal_generator(
-    initial_energy_fn: Callable,
+def asymmetric_proposal_generator(
     transition_energy_fn: Callable,
     divergence_threshold: float,
     proposal_factory=proposal_from_energy_diff,
 ) -> tuple[Callable, Callable]:
-    """
-    A proposal generator that takes into account the transition from one state to the
-    other in order to calculate energies.
+    """A proposal generator that takes into account the transition between
+    two states to compute a new proposal. In particular, both states are
+    used to compute the energies to consider in weighting the proposal,
+    to account for asymmetries.
+     ----------
+    transition_energy_fn
+        A Callable that computes the energy of a associated with a transition
+        from one state to another
+    divergence_threshold
+       A max number to will be used by the proposal_factory to flag a Proposal
+       as a divergence.
+    proposal_factory
+        A callable that builds a proposal from the transitions energies
+
+    Returns
+    -------
+    Two callables, to generate an initial proposal when no step has been taken,
+    and to generate proposals after each step.
     """
 
     def new(state: TrajectoryState) -> Proposal:
-        return Proposal(state, initial_energy_fn(state), 0.0, -np.inf)
+        return Proposal(state, 0.0, 0.0, -np.inf)
 
-    def update(prev_state: float, new_state: TrajectoryState) -> tuple[Proposal, bool]:
-        new_energy = transition_energy_fn(prev_state, new_state)
-        prev_energy = transition_energy_fn(new_state, prev_state)
-        return proposal_factory(
-            prev_energy, new_energy, divergence_threshold, new_state
-        )
+    def update(
+        initial_state: TrajectoryState, state: TrajectoryState
+    ) -> tuple[Proposal, bool]:
+        new_energy = transition_energy_fn(initial_state, state)
+        prev_energy = transition_energy_fn(state, initial_state)
+        return proposal_factory(prev_energy, new_energy, divergence_threshold, state)
 
     return new, update
 

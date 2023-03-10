@@ -36,9 +36,7 @@ trajectory is being sampled. While the former is faster, we risk saturating the
 memory by keeping states that will subsequently be discarded.
 
 """
-from __future__ import annotations
-
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -72,7 +70,7 @@ def append_to_trajectory(trajectory: Trajectory, state: IntegratorState) -> Traj
 
 def reorder_trajectories(
     direction: int, trajectory: Trajectory, new_trajectory: Trajectory
-) -> tuple[Trajectory, Trajectory]:
+) -> Tuple[Trajectory, Trajectory]:
     """Order the two trajectories depending on the direction."""
     return jax.lax.cond(
         direction > 0,

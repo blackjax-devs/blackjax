@@ -23,14 +23,15 @@ Let's note x_{t-1} to the previous position and x_t to the newly sampled one.
 The variants offered are:
 
 1. Proposal distribution as addition of random noice from previous position. This means
-x_t = x_{t-1} + jump
+x_t = x_{t-1} + step. Function: `additive_step`
 
-2. Independent proposal distribution: P(x_t) doesn't depend on x_{t_1}
+2. Independent proposal distribution: P(x_t) doesn't depend on x_{t_1}. Function: `irmh`
 
 3. Proposal distribution using a symmetric function. That means P(x_t|x_{t-1}) = P(x_{t-1}|x_t).
-See 'Metropolis Algorithm' in [1]
+ Function: `rmh` without proposal_logdensity_fn. See 'Metropolis Algorithm' in [1]
 
-4. Asymmetric proposal distribution. See 'Metropolis-Hastings' Algorithm in [1]
+4. Asymmetric proposal distribution. Function: `rmh` with proposal_logdensity_fn.
+ See 'Metropolis-Hastings' Algorithm in [1]
 
 Reference: :cite:p:`gelman2014bayesian` Section 11.2
 
@@ -62,7 +63,16 @@ from blackjax.mcmc import proposal
 from blackjax.types import Array, PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["additive_step", "normal", "metropolis", "irmh", "rmh"]
+__all__ = [
+    "additive_step",
+    "normal",
+    "irmh",
+    "rmh",
+    "RWInfo",
+    "RWState",
+    "rmh_proposal",
+    "rmh_transition_energy",
+]
 
 
 def normal(sigma: Array) -> Callable:
@@ -193,10 +203,6 @@ def irmh(proposal_distribution: Callable) -> Callable:
     return one_step
 
 
-def metropolis(logdensity_fn: Callable, transition_generator: Callable):
-    return rmh(logdensity_fn, transition_generator, proposal_logdensity_fn=None)
-
-
 def rmh(
     logdensity_fn: Callable,
     transition_generator: Callable,
@@ -224,8 +230,8 @@ def rmh(
     """
     transition_energy = rmh_transition_energy(proposal_logdensity_fn)
 
-    init_proposal, generate_proposal = proposal.transition_aware_proposal_generator(
-        lambda state: -state.logdensity, transition_energy, np.inf
+    init_proposal, generate_proposal = proposal.asymmetric_proposal_generator(
+        transition_energy, np.inf
     )
 
     proposal_generator = rmh_proposal(
