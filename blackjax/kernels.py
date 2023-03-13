@@ -973,6 +973,15 @@ class additive_step_random_walk:
         state = rw.init(position)
         new_state, info = rw.step(rng_key, state)
 
+    The specific case of a Gaussian `random_step` is already implemented, either with independent components
+    when `covariance_matrix` is a one dimensional array or with dependent components if a two dimensional array:
+
+    .. code::
+
+        rw_gaussian = blackjax.additive_step_random_walk.normal_random_walk(logdensity_fn, covariance_matrix)
+        state = rw_gaussian.init(position)
+        new_state, info = rw_gaussian.step(rng_key, state)
+
     Parameters
     ----------
     logdensity_fn
@@ -988,7 +997,7 @@ class additive_step_random_walk:
     """
 
     init = staticmethod(blackjax.mcmc.random_walk.init)
-    kernel = staticmethod(blackjax.mcmc.random_walk.additive_step)
+    build_kernel = staticmethod(blackjax.mcmc.random_walk.build_additive_step)
 
     @classmethod
     def normal_random_walk(cls, logdensity_fn: Callable, sigma):
@@ -1008,13 +1017,13 @@ class additive_step_random_walk:
     def __new__(  # type: ignore[misc]
         cls, logdensity_fn: Callable, random_step: Callable
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel(random_step)
+        kernel = cls.build_kernel()
 
         def init_fn(position: PyTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(rng_key, state, logdensity_fn)
+            return kernel(rng_key, random_step, state, logdensity_fn)
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
 
@@ -1057,7 +1066,7 @@ class rmh:
     """
 
     init = staticmethod(blackjax.mcmc.random_walk.init)
-    kernel = staticmethod(blackjax.mcmc.random_walk.rmh)
+    build_kernel = staticmethod(blackjax.mcmc.random_walk.build_rmh)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -1065,13 +1074,19 @@ class rmh:
         proposal_generator: Callable[[PRNGKey, PyTree], PyTree],
         proposal_logdensity_fn: Optional[Callable[[PyTree], PyTree]] = None,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel(logdensity_fn, proposal_generator, proposal_logdensity_fn)
+        kernel = cls.build_kernel()
 
         def init_fn(position: PyTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(rng_key, state)
+            return kernel(
+                rng_key,
+                logdensity_fn,
+                proposal_generator,
+                state,
+                proposal_logdensity_fn,
+            )
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
 
@@ -1112,20 +1127,20 @@ class irmh:
     """
 
     init = staticmethod(blackjax.mcmc.random_walk.init)
-    kernel = staticmethod(blackjax.mcmc.random_walk.irmh)
+    build_kernel = staticmethod(blackjax.mcmc.random_walk.build_irmh)
 
     def __new__(  # type: ignore[misc]
         cls,
         logdensity_fn: Callable,
         proposal_distribution: Callable,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel(proposal_distribution)
+        kernel = cls.build_kernel()
 
         def init_fn(position: PyTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(rng_key, state, logdensity_fn)
+            return kernel(rng_key, proposal_distribution, state, logdensity_fn)
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
 

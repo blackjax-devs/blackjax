@@ -8,10 +8,10 @@ from absl.testing import absltest
 from blackjax.mcmc.proposal import Proposal
 from blackjax.mcmc.random_walk import (
     RWState,
-    additive_step,
-    irmh,
+    build_additive_step,
+    build_irmh,
+    build_rmh_transition_energy,
     rmh_proposal,
-    rmh_transition_energy,
 )
 
 
@@ -34,10 +34,11 @@ class AdditiveStepTest(unittest.TestCase):
             """
             return 0.0 if all(position > 59.0) else 0.5
 
-        step = additive_step(random_step)
+        step = build_additive_step()
 
         new_state, _ = step(
             rng_key,
+            random_step,
             RWState(position=initial_position, logdensity=1.0),
             test_logdensity_accepts,
         )
@@ -63,11 +64,12 @@ class IRMHTest(unittest.TestCase):
             """
             return 0.0 if all(position - 10.0 < 1e-10) else 0.5
 
-        step = irmh(proposal_distribution)
+        step = build_irmh()
 
         for previous_position in [initial_position, other_position]:
             new_state, _ = step(
                 rng_key,
+                proposal_distribution,
                 RWState(position=previous_position, logdensity=1.0),
                 test_logdensity_accepts,
             )
@@ -139,11 +141,11 @@ class RMHTransitionEnergyTest(unittest.TestCase):
         def proposal_logdensity(new_state, prev_state):
             return 100 if new_state == one_state else 200
 
-        energy = rmh_transition_energy(None)
+        energy = build_rmh_transition_energy(None)
         np.testing.assert_allclose(energy(one_state, another_state), -30.0)
         np.testing.assert_allclose(energy(another_state, one_state), -50.0)
 
-        energy = rmh_transition_energy(proposal_logdensity)
+        energy = build_rmh_transition_energy(proposal_logdensity)
         np.testing.assert_allclose(energy(one_state, another_state), -230)
         np.testing.assert_allclose(energy(another_state, one_state), -150)
 

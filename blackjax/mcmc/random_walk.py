@@ -64,14 +64,14 @@ from blackjax.types import Array, PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise
 
 __all__ = [
-    "additive_step",
+    "build_additive_step",
     "normal",
-    "irmh",
-    "rmh",
+    "build_irmh",
+    "build_rmh",
     "RWInfo",
     "RWState",
     "rmh_proposal",
-    "rmh_transition_energy",
+    "build_rmh_transition_energy",
 ]
 
 
@@ -148,7 +148,7 @@ def init(position: PyTree, logdensity_fn: Callable) -> RWState:
     return RWState(position, logdensity_fn(position))
 
 
-def additive_step(random_step: Callable):
+def build_additive_step():
     """Build a Random Walk Rosenbluth-Metropolis-Hastings kernel
 
     Returns
@@ -158,31 +158,25 @@ def additive_step(random_step: Callable):
     information about the transition.
     """
 
-    def one_step(
-        rng_key: PRNGKey, state: RWState, logdensity_fn: Callable
+    def kernel(
+        rng_key: PRNGKey, random_step: Callable, state: RWState, logdensity_fn: Callable
     ) -> Tuple[RWState, RWInfo]:
         def proposal_generator(key_proposal, position):
             move_proposal = random_step(key_proposal, position)
             new_position = jax.tree_util.tree_map(jnp.add, position, move_proposal)
             return new_position
 
-        kernel = rmh(logdensity_fn, proposal_generator)
-        return kernel(rng_key, state)
+        inner_kernel = build_rmh()
+        return inner_kernel(rng_key, logdensity_fn, proposal_generator, state)
 
-    return one_step
+    return kernel
 
 
-def irmh(proposal_distribution: Callable) -> Callable:
+def build_irmh() -> Callable:
     """
     Build an Independent Random Walk Rosenbluth-Metropolis-Hastings kernel. This implies
     that the proposal distribution does not depend on the particle being mutated :cite:p:`wang2022exact`.
 
-    Parameters
-    ----------
-    proposal_distribution
-        A function that, given a PRNGKey, is able to produce a sample in the same
-        domain of the target distribution.
-
     Returns
     -------
     A kernel that takes a rng_key and a Pytree that contains the current state
@@ -191,36 +185,31 @@ def irmh(proposal_distribution: Callable) -> Callable:
 
     """
 
-    def one_step(
-        rng_key: PRNGKey, state: RWState, logdensity_fn: Callable
+    def kernel(
+        rng_key: PRNGKey,
+        proposal_distribution: Callable,
+        state: RWState,
+        logdensity_fn: Callable,
     ) -> Tuple[RWState, RWInfo]:
+        """
+        Parameters
+        ----------
+        proposal_distribution
+            A function that, given a PRNGKey, is able to produce a sample in the same
+            domain of the target distribution.
+        """
+
         def proposal_generator(rng_key: PRNGKey, position: PyTree):
             return proposal_distribution(rng_key)
 
-        kernel = rmh(logdensity_fn, proposal_generator)
-        return kernel(rng_key, state)
+        inner_kernel = build_rmh()
+        return inner_kernel(rng_key, logdensity_fn, proposal_generator, state)
 
-    return one_step
+    return kernel
 
 
-def rmh(
-    logdensity_fn: Callable,
-    transition_generator: Callable,
-    proposal_logdensity_fn: Optional[Callable] = None,
-):
+def build_rmh():
     """Build a Rosenbluth-Metropolis-Hastings kernel.
-
-    Parameters
-    ----------
-    logdensity_fn
-        A function that returns the log-probability at a given position.
-    transition_generator
-        A function that generates a candidate transition for the markov chain.
-    proposal_logdensity_fn:
-        For non-symmetric proposals, a function that returns the log-density
-        to obtain a given proposal knowing the current state. If it is not
-        provided we assume the proposal is symmetric.
-
     Returns
     -------
     A kernel that takes a rng_key and a Pytree that contains the current state
@@ -228,17 +217,14 @@ def rmh(
     information about the transition.
 
     """
-    transition_energy = rmh_transition_energy(proposal_logdensity_fn)
 
-    init_proposal, generate_proposal = proposal.asymmetric_proposal_generator(
-        transition_energy, np.inf
-    )
-
-    proposal_generator = rmh_proposal(
-        logdensity_fn, transition_generator, init_proposal, generate_proposal
-    )
-
-    def kernel(rng_key: PRNGKey, state: RWState) -> Tuple[RWState, RWInfo]:
+    def kernel(
+        rng_key: PRNGKey,
+        logdensity_fn: Callable,
+        transition_generator: Callable,
+        state: RWState,
+        proposal_logdensity_fn: Optional[Callable] = None,
+    ) -> Tuple[RWState, RWInfo]:
         """Move the chain by one step using the Rosenbluth Metropolis Hastings
         algorithm.
 
@@ -247,6 +233,14 @@ def rmh(
         rng_key:
            The pseudo-random number generator key used to generate random
            numbers.
+        logdensity_fn:
+            A function that returns the log-probability at a given position.
+        transition_generator:
+            A function that generates a candidate transition for the markov chain.
+        proposal_logdensity_fn:
+            For non-symmetric proposals, a function that returns the log-density
+            to obtain a given proposal knowing the current state. If it is not
+            provided we assume the proposal is symmetric.
         state:
             The current state of the chain.
 
@@ -256,6 +250,15 @@ def rmh(
         step.
 
         """
+        transition_energy = build_rmh_transition_energy(proposal_logdensity_fn)
+
+        init_proposal, generate_proposal = proposal.asymmetric_proposal_generator(
+            transition_energy, np.inf
+        )
+
+        proposal_generator = rmh_proposal(
+            logdensity_fn, transition_generator, init_proposal, generate_proposal
+        )
         sampled_proposal, do_accept, p_accept = proposal_generator(rng_key, state)
         new_state = sampled_proposal.state
         return new_state, RWInfo(p_accept, do_accept, new_state)
@@ -263,7 +266,7 @@ def rmh(
     return kernel
 
 
-def rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> Callable:
+def build_rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> Callable:
     if proposal_logdensity_fn is None:
 
         def transition_energy(prev_state, new_state):
