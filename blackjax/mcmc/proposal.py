@@ -17,7 +17,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from blackjax.mcmc.integrators import IntegratorState
+TrajectoryState = NamedTuple
 
 
 class Proposal(NamedTuple):
@@ -31,24 +31,38 @@ class Proposal(NamedTuple):
         Weight of the proposal. It is equal to the logarithm of the sum of the canonical
         densities of each state :math:`e^{-H(z)}` along the trajectory.
     sum_log_p_accept:
-        cumulated Metropolis-Hastings acceptance probabilty across entire trajectory.
+        cumulated Metropolis-Hastings acceptance probability across entire trajectory.
 
     """
 
-    state: IntegratorState
+    state: TrajectoryState
     energy: float
     weight: float
     sum_log_p_accept: float
 
 
 def proposal_generator(
-    kinetic_energy: Callable, divergence_threshold: float
+    energy: Callable, divergence_threshold: float
 ) -> Tuple[Callable, Callable]:
-    def new(state: IntegratorState) -> Proposal:
-        energy = -state.logdensity + kinetic_energy(state.momentum)
-        return Proposal(state, energy, 0.0, -np.inf)
+    """
 
-    def update(initial_energy: float, state: IntegratorState) -> Tuple[Proposal, bool]:
+    Parameters
+    ----------
+    energy
+        A callable that computes the energy associated to a given state
+    divergence_threshold
+     max value allowed for the difference in energies not to be considered a divergence
+
+    Returns
+    -------
+    Two callables, to generate an initial proposal when no step has been taken,
+    and to generate proposals after each step.
+    """
+
+    def new(state: TrajectoryState) -> Proposal:
+        return Proposal(state, energy(state), 0.0, -np.inf)
+
+    def update(initial_energy: float, state: TrajectoryState) -> Tuple[Proposal, bool]:
         """Generate a new proposal from a trajectory state.
 
         The trajectory state records information about the position in the state
@@ -64,28 +78,98 @@ def proposal_generator(
         state:
             The new state.
 
+        Returns
+        -------
+        A proposal and a flag for divergence
+
         """
-        new_energy = -state.logdensity + kinetic_energy(state.momentum)
-
-        delta_energy = initial_energy - new_energy
-        delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
-        is_transition_divergent = jnp.abs(delta_energy) > divergence_threshold
-
-        # The weight of the new proposal is equal to H0 - H(z_new)
-        weight = delta_energy
-
-        # Acceptance statistic min(e^{H0 - H(z_new)}, 1)
-        sum_log_p_accept = jnp.minimum(delta_energy, 0.0)
-
-        return (
-            Proposal(
-                state,
-                new_energy,
-                weight,
-                sum_log_p_accept,
-            ),
-            is_transition_divergent,
+        new_energy = energy(state)
+        return proposal_from_energy_diff(
+            initial_energy, new_energy, divergence_threshold, state
         )
+
+    return new, update
+
+
+def proposal_from_energy_diff(
+    initial_energy: float,
+    new_energy: float,
+    divergence_threshold: float,
+    state: TrajectoryState,
+) -> Tuple[Proposal, bool]:
+    """Computes a new proposal from the energy difference between two states.
+    It also verifies whether this difference is a divergence, if the
+    energy diff is above divergence_threshold.
+    Parameters
+    ----------
+    initial_energy
+     the energy from the previous state
+    new_energy
+     the energy at the new state
+    divergence_threshold
+     max value allowed for the difference in energies not to be considered a divergence
+    state
+     the state to propose
+
+    Returns
+    -------
+    A proposal and a flag for divergence
+    """
+    delta_energy = initial_energy - new_energy
+    delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
+    is_transition_divergent = jnp.abs(delta_energy) > divergence_threshold
+
+    # The weight of the new proposal is equal to H0 - H(z_new)
+    weight = delta_energy
+
+    # Acceptance statistic min(e^{H0 - H(z_new)}, 1)
+    sum_log_p_accept = jnp.minimum(delta_energy, 0.0)
+
+    return (
+        Proposal(
+            state,
+            new_energy,
+            weight,
+            sum_log_p_accept,
+        ),
+        is_transition_divergent,
+    )
+
+
+def asymmetric_proposal_generator(
+    transition_energy_fn: Callable,
+    divergence_threshold: float,
+    proposal_factory=proposal_from_energy_diff,
+) -> Tuple[Callable, Callable]:
+    """A proposal generator that takes into account the transition between
+    two states to compute a new proposal. In particular, both states are
+    used to compute the energies to consider in weighting the proposal,
+    to account for asymmetries.
+     ----------
+    transition_energy_fn
+        A Callable that computes the energy of a associated with a transition
+        from one state to another
+    divergence_threshold
+       A max number to will be used by the proposal_factory to flag a Proposal
+       as a divergence.
+    proposal_factory
+        A callable that builds a proposal from the transitions energies
+
+    Returns
+    -------
+    Two callables, to generate an initial proposal when no step has been taken,
+    and to generate proposals after each step.
+    """
+
+    def new(state: TrajectoryState) -> Proposal:
+        return Proposal(state, 0.0, 0.0, -np.inf)
+
+    def update(
+        initial_state: TrajectoryState, state: TrajectoryState
+    ) -> Tuple[Proposal, bool]:
+        new_energy = transition_energy_fn(initial_state, state)
+        prev_energy = transition_energy_fn(state, initial_state)
+        return proposal_factory(prev_energy, new_energy, divergence_threshold, state)
 
     return new, update
 

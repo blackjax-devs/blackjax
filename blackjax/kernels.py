@@ -20,6 +20,7 @@ from optax import GradientTransformation
 
 import blackjax.adaptation as adaptation
 import blackjax.mcmc as mcmc
+import blackjax.mcmc.random_walk
 import blackjax.sgmcmc as sgmcmc
 import blackjax.smc as smc
 import blackjax.vi as vi
@@ -34,6 +35,7 @@ __all__ = [
     "nuts",
     "ghmc",
     "orbital_hmc",
+    "additive_step_random_walk",
     "rmh",
     "sgld",
     "sghmc",
@@ -957,17 +959,86 @@ def meads_adaptation(
     return AdaptationAlgorithm(run)  # type: ignore[arg-type]
 
 
-class rmh:
-    """Implements the (basic) user interface for the gaussian random walk kernel
+class additive_step_random_walk:
+    """Implements the user interface for the Additive Step RMH
 
     Examples
     --------
 
-    A new Gaussian Random Walk kernel can be initialized and used with the following code:
+    A new kernel can be initialized and used with the following code:
 
     .. code::
 
-        rmh = blackjax.rmh(logdensity_fn, sigma)
+        rw = blackjax.additive_step_random_walk(logdensity_fn, random_step)
+        state = rw.init(position)
+        new_state, info = rw.step(rng_key, state)
+
+    The specific case of a Gaussian `random_step` is already implemented, either with independent components
+    when `covariance_matrix` is a one dimensional array or with dependent components if a two dimensional array:
+
+    .. code::
+
+        rw_gaussian = blackjax.additive_step_random_walk.normal_random_walk(logdensity_fn, covariance_matrix)
+        state = rw_gaussian.init(position)
+        new_state, info = rw_gaussian.step(rng_key, state)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log density probability density function from which we wish to sample.
+    random_step
+        A Callable that takes a random number generator and the current state and produces a step,
+        which will be added to the current position to obtain a new position. Must be symmetric
+        to maintain detailed balance. This means that P(step|position) = P(-step | position+step)
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+    """
+
+    init = staticmethod(blackjax.mcmc.random_walk.init)
+    build_kernel = staticmethod(blackjax.mcmc.random_walk.build_additive_step)
+
+    @classmethod
+    def normal_random_walk(cls, logdensity_fn: Callable, sigma):
+        """
+        Parameters
+        ----------
+        logdensity_fn
+            The log density probability density function from which we wish to sample.
+        sigma
+            The value of the covariance matrix of the gaussian proposal distribution.
+        Returns
+        -------
+             A ``MCMCSamplingAlgorithm``.
+        """
+        return cls(logdensity_fn, blackjax.mcmc.random_walk.normal(sigma))
+
+    def __new__(  # type: ignore[misc]
+        cls, logdensity_fn: Callable, random_step: Callable
+    ) -> MCMCSamplingAlgorithm:
+        kernel = cls.build_kernel()
+
+        def init_fn(position: PyTree):
+            return cls.init(position, logdensity_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return kernel(rng_key, random_step, state, logdensity_fn)
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
+
+
+class rmh:
+    """Implements the user interface for the RMH.
+
+    Examples
+    --------
+
+    A new kernel can be initialized and used with the following code:
+
+    .. code::
+
+        rmh = blackjax.rmh(logdensity_fn, proposal_generator)
         state = rmh.init(position)
         new_state, info = rmh.step(rng_key, state)
 
@@ -982,34 +1053,39 @@ class rmh:
     ----------
     logdensity_fn
         The log density probability density function from which we wish to sample.
-    sigma
-        The value of the covariance matrix of the gaussian proposal distribution.
+    proposal_generator
+        A Callable that takes a random number generator and the current state and produces a new proposal.
+    proposal_logdensity_fn
+        The logdensity function associated to the proposal_generator. If the generator is non-symmetric,
+         P(x_t|x_t-1) is not equal to P(x_t-1|x_t), then this parameter must be not None in order to apply
+         the Metropolis-Hastings correction for detailed balance.
 
     Returns
     -------
     A ``MCMCSamplingAlgorithm``.
-
     """
 
-    init = staticmethod(mcmc.rmh.init)
-    kernel = staticmethod(mcmc.rmh.kernel)
+    init = staticmethod(blackjax.mcmc.random_walk.init)
+    build_kernel = staticmethod(blackjax.mcmc.random_walk.build_rmh)
 
     def __new__(  # type: ignore[misc]
         cls,
         logdensity_fn: Callable,
-        sigma: Array,
+        proposal_generator: Callable[[PRNGKey, PyTree], PyTree],
+        proposal_logdensity_fn: Optional[Callable[[PyTree], PyTree]] = None,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel()
+        kernel = cls.build_kernel()
 
         def init_fn(position: PyTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(
+            return kernel(
                 rng_key,
-                state,
                 logdensity_fn,
-                sigma,
+                proposal_generator,
+                state,
+                proposal_logdensity_fn,
             )
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
@@ -1050,21 +1126,21 @@ class irmh:
 
     """
 
-    init = staticmethod(mcmc.rmh.init)
-    kernel = staticmethod(mcmc.irmh.kernel)
+    init = staticmethod(blackjax.mcmc.random_walk.init)
+    build_kernel = staticmethod(blackjax.mcmc.random_walk.build_irmh)
 
     def __new__(  # type: ignore[misc]
         cls,
         logdensity_fn: Callable,
         proposal_distribution: Callable,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel(proposal_distribution)
+        kernel = cls.build_kernel()
 
         def init_fn(position: PyTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(rng_key, state, logdensity_fn)
+            return kernel(rng_key, proposal_distribution, state, logdensity_fn)
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
 

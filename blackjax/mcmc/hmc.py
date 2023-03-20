@@ -20,6 +20,7 @@ import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.trajectory as trajectory
+from blackjax.mcmc.trajectory import hmc_energy
 from blackjax.types import Array, PRNGKey, PyTree
 
 __all__ = ["HMCState", "HMCInfo", "init", "kernel"]
@@ -180,7 +181,7 @@ def hmc_proposal(
     """
     build_trajectory = trajectory.static_integration(integrator)
     init_proposal, generate_proposal = proposal.proposal_generator(
-        kinetic_energy, divergence_threshold
+        hmc_energy(kinetic_energy), divergence_threshold
     )
 
     def generate(
