@@ -1,0 +1,702 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.mcmc.random_walk</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d" />
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/random_walk';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/blackjax.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../_static/blackjax.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html">Sampling algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">Diagnostics</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/step_size/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.step_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.window_adaptation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.diffusions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.elliptical_slice</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/ghmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.ghmc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/hmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.hmc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/integrators/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.integrators</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mala/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.mala</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.marginal_latent_gaussian</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/metrics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.metrics</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/nuts/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.nuts</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.csgld</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.diffusions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.gradients</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sghmc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sgld</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc.adaptive_tempered</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc.base</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/ess/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc.ess</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc.resampling</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc.solver</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc.tempered</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.meanfield_vi</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.pathfinder</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a></li>
+</ul>
+</li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <h1>Source code for blackjax.mcmc.random_walk</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Implements the (basic) user interfaces for Random Walk Rosenbluth-Metropolis-Hastings kernels.</span>
+<span class="sd">Some interfaces are exposed here for convenience and for entry level users, who might be familiar</span>
+<span class="sd">with simpler versions of the algorithms, but in all cases they are particular instantiations</span>
+<span class="sd">of the Random Walk Rosenbluth-Metropolis-Hastings.</span>
+
+<span class="sd">Let&#39;s note x_{t-1} to the previous position and x_t to the newly sampled one.</span>
+
+<span class="sd">The variants offered are:</span>
+
+<span class="sd">1. Proposal distribution as addition of random noice from previous position. This means</span>
+<span class="sd">x_t = x_{t-1} + step. Function: `additive_step`</span>
+
+<span class="sd">2. Independent proposal distribution: P(x_t) doesn&#39;t depend on x_{t_1}. Function: `irmh`</span>
+
+<span class="sd">3. Proposal distribution using a symmetric function. That means P(x_t|x_{t-1}) = P(x_{t-1}|x_t).</span>
+<span class="sd"> Function: `rmh` without proposal_logdensity_fn. See &#39;Metropolis Algorithm&#39; in [1]</span>
+
+<span class="sd">4. Asymmetric proposal distribution. Function: `rmh` with proposal_logdensity_fn.</span>
+<span class="sd"> See &#39;Metropolis-Hastings&#39; Algorithm in [1]</span>
+
+<span class="sd">Reference: :cite:p:`gelman2014bayesian` Section 11.2</span>
+
+<span class="sd">Examples</span>
+<span class="sd">--------</span>
+<span class="sd">    The simplest case is:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        random_walk = blackjax.additive_step_random_walk(logdensity_fn, blackjax.mcmc.random_walk.normal(sigma))</span>
+<span class="sd">        state = random_walk.init(position)</span>
+<span class="sd">        new_state, info = random_walk.step(rng_key, state)</span>
+
+<span class="sd">    In all cases we can JIT-compile the step function for better performance</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        step = jax.jit(random_walk.step)</span>
+<span class="sd">        new_state, info = step(rng_key, state)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
+
+<span class="kn">from</span> <span class="nn">blackjax.mcmc</span> <span class="kn">import</span> <span class="n">proposal</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;build_additive_step&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;normal&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_irmh&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_rmh&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;RWInfo&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;RWState&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rmh_proposal&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_rmh_transition_energy&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="normal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.normal">[docs]</a><span class="k">def</span> <span class="nf">normal</span><span class="p">(</span><span class="n">sigma</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normal Random Walk proposal.</span>
+
+<span class="sd">    Propose a new position such that its distance to the current position is</span>
+<span class="sd">    normally distributed. Suitable for continuous variables.</span>
+
+<span class="sd">    Parameter</span>
+<span class="sd">    ---------</span>
+<span class="sd">    sigma:</span>
+<span class="sd">        vector or matrix that contains the standard deviation of the centered</span>
+<span class="sd">        normal distribution from which we draw the move proposals.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;sigma must be a vector or a matrix.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">propose</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyTree</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">propose</span></div>
+
+
+<div class="viewcode-block" id="RWState"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWState">[docs]</a><span class="k">class</span> <span class="nc">RWState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the RW chain.</span>
+
+<span class="sd">    position</span>
+<span class="sd">        Current position of the chain.</span>
+<span class="sd">    log_density</span>
+<span class="sd">        Current value of the log-density</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="RWState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="RWState.logdensity"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWState.logdensity">[docs]</a>    <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span></div></div>
+
+
+<div class="viewcode-block" id="RWInfo"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo">[docs]</a><span class="k">class</span> <span class="nc">RWInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on the RW chain.</span>
+
+<span class="sd">    This additional information can be used for debugging or computing</span>
+<span class="sd">    diagnostics.</span>
+
+<span class="sd">    acceptance_rate</span>
+<span class="sd">        The acceptance probability of the transition, linked to the energy</span>
+<span class="sd">        difference between the original and the proposed states.</span>
+<span class="sd">    is_accepted</span>
+<span class="sd">        Whether the proposed position was accepted or the original position</span>
+<span class="sd">        was returned.</span>
+<span class="sd">    proposal</span>
+<span class="sd">        The state proposed by the proposal.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="RWInfo.acceptance_rate"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo.acceptance_rate">[docs]</a>    <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span></div>
+<div class="viewcode-block" id="RWInfo.is_accepted"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo.is_accepted">[docs]</a>    <span class="n">is_accepted</span><span class="p">:</span> <span class="nb">bool</span></div>
+<div class="viewcode-block" id="RWInfo.proposal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo.proposal">[docs]</a>    <span class="n">proposal</span><span class="p">:</span> <span class="n">RWState</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RWState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a chain state from a position.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    position: PyTree</span>
+<span class="sd">        The initial position of the chain</span>
+<span class="sd">    logdensity_fn: Callable</span>
+<span class="sd">        Log-probability density function of the distribution we wish to sample</span>
+<span class="sd">        from.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">RWState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">position</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="build_additive_step"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_additive_step">[docs]</a><span class="k">def</span> <span class="nf">build_additive_step</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Random Walk Rosenbluth-Metropolis-Hastings kernel</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A kernel that takes a rng_key and a Pytree that contains the current state</span>
+<span class="sd">    of the chain and that returns a new state of the chain along with</span>
+<span class="sd">    information about the transition.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">random_step</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">RWState</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">RWState</span><span class="p">,</span> <span class="n">RWInfo</span><span class="p">]:</span>
+        <span class="k">def</span> <span class="nf">proposal_generator</span><span class="p">(</span><span class="n">key_proposal</span><span class="p">,</span> <span class="n">position</span><span class="p">):</span>
+            <span class="n">move_proposal</span> <span class="o">=</span> <span class="n">random_step</span><span class="p">(</span><span class="n">key_proposal</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+            <span class="n">new_position</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">move_proposal</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">new_position</span>
+
+        <span class="n">inner_kernel</span> <span class="o">=</span> <span class="n">build_rmh</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">inner_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">proposal_generator</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">kernel</span></div>
+
+
+<div class="viewcode-block" id="build_irmh"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_irmh">[docs]</a><span class="k">def</span> <span class="nf">build_irmh</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build an Independent Random Walk Rosenbluth-Metropolis-Hastings kernel. This implies</span>
+<span class="sd">    that the proposal distribution does not depend on the particle being mutated :cite:p:`wang2022exact`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A kernel that takes a rng_key and a Pytree that contains the current state</span>
+<span class="sd">    of the chain and that returns a new state of the chain along with</span>
+<span class="sd">    information about the transition.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">proposal_distribution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">RWState</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">RWState</span><span class="p">,</span> <span class="n">RWInfo</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        proposal_distribution</span>
+<span class="sd">            A function that, given a PRNGKey, is able to produce a sample in the same</span>
+<span class="sd">            domain of the target distribution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">proposal_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">proposal_distribution</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+
+        <span class="n">inner_kernel</span> <span class="o">=</span> <span class="n">build_rmh</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">inner_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">proposal_generator</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">kernel</span></div>
+
+
+<div class="viewcode-block" id="build_rmh"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_rmh">[docs]</a><span class="k">def</span> <span class="nf">build_rmh</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Rosenbluth-Metropolis-Hastings kernel.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A kernel that takes a rng_key and a Pytree that contains the current state</span>
+<span class="sd">    of the chain and that returns a new state of the chain along with</span>
+<span class="sd">    information about the transition.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">transition_generator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">RWState</span><span class="p">,</span>
+        <span class="n">proposal_logdensity_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">RWState</span><span class="p">,</span> <span class="n">RWInfo</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Move the chain by one step using the Rosenbluth Metropolis Hastings</span>
+<span class="sd">        algorithm.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rng_key:</span>
+<span class="sd">           The pseudo-random number generator key used to generate random</span>
+<span class="sd">           numbers.</span>
+<span class="sd">        logdensity_fn:</span>
+<span class="sd">            A function that returns the log-probability at a given position.</span>
+<span class="sd">        transition_generator:</span>
+<span class="sd">            A function that generates a candidate transition for the markov chain.</span>
+<span class="sd">        proposal_logdensity_fn:</span>
+<span class="sd">            For non-symmetric proposals, a function that returns the log-density</span>
+<span class="sd">            to obtain a given proposal knowing the current state. If it is not</span>
+<span class="sd">            provided we assume the proposal is symmetric.</span>
+<span class="sd">        state:</span>
+<span class="sd">            The current state of the chain.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        The next state of the chain and additional information about the current</span>
+<span class="sd">        step.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">transition_energy</span> <span class="o">=</span> <span class="n">build_rmh_transition_energy</span><span class="p">(</span><span class="n">proposal_logdensity_fn</span><span class="p">)</span>
+
+        <span class="n">init_proposal</span><span class="p">,</span> <span class="n">generate_proposal</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">asymmetric_proposal_generator</span><span class="p">(</span>
+            <span class="n">transition_energy</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="p">)</span>
+
+        <span class="n">proposal_generator</span> <span class="o">=</span> <span class="n">rmh_proposal</span><span class="p">(</span>
+            <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">transition_generator</span><span class="p">,</span> <span class="n">init_proposal</span><span class="p">,</span> <span class="n">generate_proposal</span>
+        <span class="p">)</span>
+        <span class="n">sampled_proposal</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="n">new_state</span> <span class="o">=</span> <span class="n">sampled_proposal</span><span class="o">.</span><span class="n">state</span>
+        <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">RWInfo</span><span class="p">(</span><span class="n">p_accept</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">new_state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">kernel</span></div>
+
+
+<div class="viewcode-block" id="build_rmh_transition_energy"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_rmh_transition_energy">[docs]</a><span class="k">def</span> <span class="nf">build_rmh_transition_energy</span><span class="p">(</span><span class="n">proposal_logdensity_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">proposal_logdensity_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="k">def</span> <span class="nf">transition_energy</span><span class="p">(</span><span class="n">prev_state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">new_state</span><span class="o">.</span><span class="n">logdensity</span>
+
+    <span class="k">else</span><span class="p">:</span>
+
+        <span class="k">def</span> <span class="nf">transition_energy</span><span class="p">(</span><span class="n">prev_state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">new_state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">-</span> <span class="n">proposal_logdensity_fn</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">prev_state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">transition_energy</span></div>
+
+
+<div class="viewcode-block" id="rmh_proposal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.rmh_proposal">[docs]</a><span class="k">def</span> <span class="nf">rmh_proposal</span><span class="p">(</span>
+    <span class="n">logdensity_fn</span><span class="p">,</span>
+    <span class="n">transition_distribution</span><span class="p">,</span>
+    <span class="n">init_proposal</span><span class="p">,</span>
+    <span class="n">generate_proposal</span><span class="p">,</span>
+    <span class="n">sample_proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">static_binomial_sampling</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">build_trajectory</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">:</span> <span class="n">RWState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RWState</span><span class="p">:</span>
+        <span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span> <span class="o">=</span> <span class="n">initial_state</span>
+        <span class="n">new_position</span> <span class="o">=</span> <span class="n">transition_distribution</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RWState</span><span class="p">(</span><span class="n">new_position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">new_position</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">RWState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">RWState</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="n">key_proposal</span><span class="p">,</span> <span class="n">key_accept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">end_state</span> <span class="o">=</span> <span class="n">build_trajectory</span><span class="p">(</span><span class="n">key_proposal</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="n">new_proposal</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">end_state</span><span class="p">)</span>
+        <span class="n">previous_proposal</span> <span class="o">=</span> <span class="n">init_proposal</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="n">sampled_proposal</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span> <span class="o">=</span> <span class="n">sample_proposal</span><span class="p">(</span>
+            <span class="n">key_accept</span><span class="p">,</span> <span class="n">previous_proposal</span><span class="p">,</span> <span class="n">new_proposal</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">sampled_proposal</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span>
+
+    <span class="k">return</span> <span class="n">generate</span></div>
+</pre></div>
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  <!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            <div class="bd-footer-content__inner">
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2023, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div></div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

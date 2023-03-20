@@ -97,50 +97,32 @@ File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/t
 [1;32m     21[0m     [38;5;124m'[39m[38;5;124macquisition[39m[38;5;124m'[39m,
 [1;32m     22[0m ]
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/experimental/bayesopt/acquisition/__init__.py:19[0m
-[1;32m     17[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbayesopt[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition_function[39;00m [38;5;28;01mimport[39;00m AcquisitionFunction
+File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/experimental/bayesopt/acquisition/__init__.py:17[0m
+[1;32m      1[0m [38;5;66;03m# Copyright 2023 The TensorFlow Probability Authors.[39;00m
+[1;32m      2[0m [38;5;66;03m#[39;00m
+[1;32m      3[0m [38;5;66;03m# Licensed under the Apache License, Version 2.0 (the "License");[39;00m
+[0;32m   (...)[0m
+[1;32m     13[0m [38;5;66;03m# limitations under the License.[39;00m
+[1;32m     14[0m [38;5;66;03m# ============================================================================[39;00m
+[1;32m     15[0m [38;5;124;03m"""Acquisition Functions."""[39;00m
+[0;32m---> 17[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbayesopt[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition_function[39;00m [38;5;28;01mimport[39;00m AcquisitionFunction
 [1;32m     18[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbayesopt[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition_function[39;00m [38;5;28;01mimport[39;00m MCMCReducer
-[0;32m---> 19[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbayesopt[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexpected_improvement[39;00m [38;5;28;01mimport[39;00m GaussianProcessExpectedImprovement
-[1;32m     20[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbayesopt[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexpected_improvement[39;00m [38;5;28;01mimport[39;00m ParallelExpectedImprovement
-[1;32m     21[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbayesopt[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexpected_improvement[39;00m [38;5;28;01mimport[39;00m StudentTProcessExpectedImprovement
+[1;32m     19[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbayesopt[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexpected_improvement[39;00m [38;5;28;01mimport[39;00m GaussianProcessExpectedImprovement
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/experimental/bayesopt/acquisition/expected_improvement.py:19[0m
-[1;32m     15[0m [38;5;124;03m"""Expected Improvement."""[39;00m
-[1;32m     17[0m [38;5;28;01mimport[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcompat[39;00m[38;5;21;01m.[39;00m[38;5;21;01mv2[39;00m [38;5;28;01mas[39;00m [38;5;21;01mtf[39;00m
-[0;32m---> 19[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdistributions[39;00m [38;5;28;01mimport[39;00m normal
-[1;32m     20[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdistributions[39;00m [38;5;28;01mimport[39;00m student_t
-[1;32m     21[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbayesopt[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition[39;00m [38;5;28;01mimport[39;00m acquisition_function
-
-File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/distributions/__init__.py:19[0m
-[1;32m     15[0m [38;5;124;03m"""Statistical distributions."""[39;00m
-[1;32m     16[0m [38;5;66;03m# pylint: disable=unused-import,line-too-long,g-importing-member,g-bad-import-order[39;00m
-[1;32m     17[0m 
-[1;32m     18[0m [38;5;66;03m# Distributions:[39;00m
-[0;32m---> 19[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdistributions[39;00m[38;5;21;01m.[39;00m[38;5;21;01mautoregressive[39;00m [38;5;28;01mimport[39;00m Autoregressive
-[1;32m     20[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdistributions[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbatch_broadcast[39;00m [38;5;28;01mimport[39;00m BatchBroadcast
-[1;32m     21[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdistributions[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbatch_concat[39;00m [38;5;28;01mimport[39;00m BatchConcat
-
-File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/distributions/autoregressive.py:21[0m
-[1;32m     17[0m [38;5;28;01mimport[39;00m [38;5;21;01mwarnings[39;00m
+File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/experimental/bayesopt/acquisition/acquisition_function.py:22[0m
 [1;32m     19[0m [38;5;28;01mimport[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcompat[39;00m[38;5;21;01m.[39;00m[38;5;21;01mv2[39;00m [38;5;28;01mas[39;00m [38;5;21;01mtf[39;00m
-[0;32m---> 21[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdistributions[39;00m [38;5;28;01mimport[39;00m distribution
-[1;32m     22[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01minternal[39;00m [38;5;28;01mimport[39;00m assert_util
-[1;32m     23[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01minternal[39;00m [38;5;28;01mimport[39;00m samplers
+[1;32m     21[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01minternal[39;00m [38;5;28;01mimport[39;00m dtype_util
+[0;32m---> 22[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01minternal[39;00m [38;5;28;01mimport[39;00m prefer_static [38;5;28;01mas[39;00m ps
+[1;32m     23[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01minternal[39;00m [38;5;28;01mimport[39;00m tensor_util
+[1;32m     26[0m [38;5;28;01mclass[39;00m [38;5;21;01mAcquisitionFunction[39;00m([38;5;28mobject[39m, metaclass[38;5;241m=[39mabc[38;5;241m.[39mABCMeta):
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/distributions/distribution.py:31[0m
-[1;32m     29[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdistributions[39;00m [38;5;28;01mimport[39;00m kullback_leibler
-[1;32m     30[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01minternal[39;00m [38;5;28;01mimport[39;00m assert_util
-[0;32m---> 31[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01minternal[39;00m [38;5;28;01mimport[39;00m auto_composite_tensor
-[1;32m     32[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01minternal[39;00m [38;5;28;01mimport[39;00m batch_shape_lib
-[1;32m     33[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01minternal[39;00m [38;5;28;01mimport[39;00m distribution_util
+File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/internal/prefer_static.py:30[0m
+[1;32m     28[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mframework[39;00m [38;5;28;01mimport[39;00m ops  [38;5;66;03m# pylint: disable=g-direct-tensorflow-import[39;00m
+[1;32m     29[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mframework[39;00m [38;5;28;01mimport[39;00m tensor_util  [38;5;66;03m# pylint: disable=g-direct-tensorflow-import[39;00m
+[0;32m---> 30[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mops[39;00m [38;5;28;01mimport[39;00m control_flow_case  [38;5;66;03m# pylint: disable=g-direct-tensorflow-import[39;00m
+[1;32m     31[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mutil[39;00m [38;5;28;01mimport[39;00m tf_inspect  [38;5;66;03m# pylint: disable=g-direct-tensorflow-import[39;00m
+[1;32m     33[0m JAX_MODE [38;5;241m=[39m [38;5;28;01mFalse[39;00m
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/internal/auto_composite_tensor.py:27[0m
-[1;32m     25[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mframework[39;00m [38;5;28;01mimport[39;00m composite_tensor
-[1;32m     26[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mframework[39;00m [38;5;28;01mimport[39;00m type_spec
-[0;32m---> 27[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mframework[39;00m [38;5;28;01mimport[39;00m type_spec_registry
-[1;32m     28[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mops[39;00m [38;5;28;01mimport[39;00m resource_variable_ops
-[1;32m     29[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mutil[39;00m [38;5;28;01mimport[39;00m tf_inspect
-
-[0;31mImportError[0m: cannot import name 'type_spec_registry' from 'tensorflow.python.framework' (/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow/python/framework/__init__.py)
-ImportError: cannot import name 'type_spec_registry' from 'tensorflow.python.framework' (/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow/python/framework/__init__.py)
+[0;31mImportError[0m: cannot import name 'control_flow_case' from 'tensorflow.python.ops' (/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow/python/ops/__init__.py)
+ImportError: cannot import name 'control_flow_case' from 'tensorflow.python.ops' (/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow/python/ops/__init__.py)
 
