@@ -11,10 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""
+Partially adapted from:
+
+Title: NumPyro diagnostics
+Type: Source code
+Availability: https://github.com/pyro-ppl/numpyro/blob/master/numpyro/diagnostics.py 
+"""
+
 """MCMC diagnostics."""
+from collections import OrderedDict
+from itertools import product
+
 import jax
 import jax.numpy as jnp
 import numpy as np
+from jax import device_get
+from jax.tree_util import tree_flatten
 from scipy.fftpack import next_fast_len  # type: ignore
 
 from blackjax.types import Array
@@ -207,3 +221,195 @@ def effective_sample_size(
     ess = ess_raw / tau_hat
 
     return ess.squeeze()
+
+
+def split_rhat(input_array: Array, chain_axis: int = 0, sample_axis: int = 1):
+    """
+    Computes split R-hat over chains of samples ``input_array``, where the first dimension
+    of ``input_array`` is chain dimension and the second dimension of ``input_array`` is draw dimension.
+    It is required that ``input_array.shape[1] >= 4``.
+
+    Parameters
+    ----------
+    input_array:
+        An array representing multiple chains of MCMC samples. The array must
+        contain a chain dimension and a sample dimension.
+    chain_axis
+        The axis indicating the multiple chains. Default to 0.
+    sample_axis
+        The axis indicating a single chain of MCMC samples. Default to 1.
+
+    Returns
+    -------
+    split R-hat of ``input_array``
+
+    """
+    assert input_array.ndim >= 2
+    assert input_array.shape[1] >= 4
+
+    N_half = input_array.shape[1] // 2
+    new_input = jnp.concatenate(
+        [input_array[:, :N_half], input_array[:, -N_half:]], axis=0
+    )
+    split_rhat = potential_scale_reduction(
+        new_input, chain_axis=chain_axis, sample_axis=sample_axis
+    )
+    return split_rhat
+
+
+def hpdi(input_array: Array, prob: float = 0.90, axis: int = 0):
+    """
+    Computes "highest posterior density interval" (HPDI) which is the narrowest
+    interval with probability mass ``prob``.
+
+    Parameters
+    ----------
+    input_array:
+        An array representing multiple chains of MCMC samples. The array must
+        contain a chain dimension and a sample dimension.
+    prob:
+        The probability mass of samples within the interval. Defaults to 0.90.
+    axis:
+        The dimension to calculate hpdi
+
+    Returns
+    -------
+    quantiles of ``x`` at ``(1 - prob) / 2`` and ``(1 + prob) / 2``.
+    """
+    input_array = jnp.swapaxes(input_array, axis, 0)
+    sorted_x = jnp.sort(input_array, axis=0)
+    mass = input_array.shape[0]
+    index_length = int(prob * mass)
+    intervals_left = sorted_x[: (mass - index_length)]
+    intervals_right = sorted_x[index_length:]
+    intervals_length = intervals_right - intervals_left
+    index_start = intervals_length.argmin(axis=0)
+    index_end = index_start + index_length
+    hpd_left = jnp.take_along_axis(sorted_x, index_start[None, ...], axis=0)
+    hpd_left = jnp.swapaxes(hpd_left, axis, 0)
+    hpd_right = jnp.take_along_axis(sorted_x, index_end[None, ...], axis=0)
+    hpd_right = jnp.swapaxes(hpd_right, axis, 0)
+    return jnp.concatenate([hpd_left, hpd_right], axis=axis)
+
+
+def summary(
+    samples: Array, prob: float = 0.90, chain_axis: int = 0, sample_axis: int = 1
+):
+    """
+    Returns a summary table displaying diagnostics of ``samples`` from the
+    posterior. The diagnostics displayed are mean, standard deviation, median,
+    the 90% Credibility Interval :func:`~blackjax.diagnostics.hpdi`,
+    :func:`~blackjax.diagnostics.effective_sample_size`, and
+    :func:`~blackjax.diagnostics.split_rhat`.
+
+    Parameters
+    ----------
+    samples:
+        An array representing multiple chains of MCMC samples. The array must
+        contain a chain dimension and a sample dimension.
+    prob:
+        The probability mass of samples within the interval for calculating hpdi.
+        Defaults to 0.90.
+    chain_axis
+        The axis indicating the multiple chains. Default to 0.
+    sample_axis
+        The axis indicating a single chain of MCMC samples. Default to 1.
+
+    Returns
+    -------
+    An OrderedDict summary table containing diagnostics of ``samples`` from the posterior.
+
+    """
+
+    if not isinstance(samples, dict):
+        samples = {f"Param:{i}": v for i, v in enumerate(tree_flatten(samples)[0])}
+
+    summary_dict = {}
+    for name, value in samples.items():
+        value = device_get(value)
+        value_flat = jnp.reshape(value, (-1,) + value.shape[2:])
+        mean = value_flat.mean(axis=0)
+        std = value_flat.std(axis=0, ddof=1)
+        median = jnp.median(value_flat, axis=0)
+        hpd = hpdi(value_flat, prob=prob)
+        n_eff = effective_sample_size(
+            value, chain_axis=chain_axis, sample_axis=sample_axis
+        )
+        r_hat = split_rhat(value, chain_axis=chain_axis, sample_axis=sample_axis)
+        hpd_lower = f"{50 * (1 - prob):.1f}%"
+        hpd_upper = f"{50 * (1 + prob):.1f}%"
+        summary_dict[name] = OrderedDict(
+            [
+                ("mean", mean),
+                ("std", std),
+                ("median", median),
+                (hpd_lower, hpd[0]),
+                (hpd_upper, hpd[1]),
+                ("n_eff", n_eff),
+                ("r_hat", r_hat),
+            ]
+        )
+    return summary_dict
+
+
+def print_summary(
+    samples: Array, prob: float = 0.90, chain_axis: int = 0, sample_axis: int = 10
+):
+    """
+    Prints a summary of diagnostic statistics for the input samples.
+
+    Parameters
+    ----------
+    samples: a collection of input samples with left most dimension is chain
+        dimension and second to left most dimension is draw dimension.
+    prob:
+        The probability mass of samples within the interval for calculating hpdi.
+        Defaults to 0.90.
+    chain_axis
+        The axis indicating the multiple chains. Default to 0.
+    sample_axis
+        The axis indicating a single chain of MCMC samples. Default to 1.
+
+    Returns
+    -------
+        None
+
+    Notes
+    -----
+        Prints the mean, standard deviation, median, the prob Credibility Interval,
+        potential_scale_reduction, and effective_sample_size for each parameter.
+        If group_by_chain is True, prints the statistics for each chain separately.
+    """
+    if not isinstance(samples, dict):
+        samples = {f"Param:{i}": v for i, v in enumerate(tree_flatten(samples)[0])}
+    summary_dict = summary(samples, prob, chain_axis, sample_axis)
+    num_columns = len(
+        summary_dict[list(summary_dict.keys())[0]]
+    )  # number of columns for the first param
+
+    row_names = {
+        k: k + "[" + ",".join(map(lambda x: str(x - 1), v.shape[2:])) + "]"
+        for k, v in samples.items()
+    }
+    max_len = max(max(map(lambda x: len(x), row_names.values())), 10)
+    name_format = "{:>" + str(max_len) + "}"
+    header_format = name_format + " {:>9}" * num_columns
+    columns = [""] + list(list(summary_dict.values())[0].keys())
+
+    print()
+    print(header_format.format(*columns))
+
+    row_format = name_format + " {:>9.2f}" * num_columns
+    for name, stats_dict in summary_dict.items():
+        shape = stats_dict["mean"].shape
+        if len(shape) == 0:
+            print(row_format.format(name, *stats_dict.values()))
+        else:
+            for idx in product(*map(range, shape)):
+                idx_str = "[{}]".format(",".join(map(str, idx)))
+                print(
+                    row_format.format(
+                        name + idx_str, *[v[idx] for v in stats_dict.values()]
+                    )
+                )
+    print()
