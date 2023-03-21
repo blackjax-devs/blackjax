@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """MCMC diagnostics."""
+from collections import OrderedDict
+from itertools import product
+
 import jax
 import jax.numpy as jnp
 import numpy as np
-from scipy.fftpack import next_fast_len  # type: ignore
 from jax import device_get
-from jax.tree_util import tree_map, tree_flatten
-from collections import OrderedDict
-from itertools import product
+from jax.tree_util import tree_flatten
+from scipy.fftpack import next_fast_len  # type: ignore
 
 from blackjax.types import Array
 
@@ -217,8 +218,8 @@ def split_rhat(input_array: Array, chain_axis: int = 0, sample_axis: int = 1):
     """
     Computes split R-hat over chains of samples ``input_array``, where the first dimension
     of ``input_array`` is chain dimension and the second dimension of ``input_array`` is draw dimension.
-    It is required that ``input_array.shape[1] >= 4``.    
-    
+    It is required that ``input_array.shape[1] >= 4``.
+
     Parameters
     ----------
     input_array:
@@ -228,7 +229,7 @@ def split_rhat(input_array: Array, chain_axis: int = 0, sample_axis: int = 1):
         The axis indicating the multiple chains. Default to 0.
     sample_axis
         The axis indicating a single chain of MCMC samples. Default to 1.
-    
+
     Returns
     -------
     split R-hat of ``input_array``
@@ -238,11 +239,16 @@ def split_rhat(input_array: Array, chain_axis: int = 0, sample_axis: int = 1):
     assert input_array.shape[1] >= 4
 
     N_half = input_array.shape[1] // 2
-    new_input = jnp.concatenate([input_array[:, :N_half], input_array[:, -N_half:]], axis=0)
-    split_rhat = potential_scale_reduction(new_input, chain_axis=chain_axis, sample_axis=sample_axis)
+    new_input = jnp.concatenate(
+        [input_array[:, :N_half], input_array[:, -N_half:]], axis=0
+    )
+    split_rhat = potential_scale_reduction(
+        new_input, chain_axis=chain_axis, sample_axis=sample_axis
+    )
     return split_rhat
 
-def hpdi(input_array: Array, prob: int = 0.90, axis: int = 0):
+
+def hpdi(input_array: Array, prob: float = 0.90, axis: int = 0):
     """
     Computes "highest posterior density interval" (HPDI) which is the narrowest
     interval with probability mass ``prob``.
@@ -256,7 +262,7 @@ def hpdi(input_array: Array, prob: int = 0.90, axis: int = 0):
         The probability mass of samples within the interval. Defaults to 0.90.
     axis:
         The dimension to calculate hpdi
-    
+
     Returns
     -------
     quantiles of ``x`` at ``(1 - prob) / 2`` and ``(1 + prob) / 2``.
@@ -276,7 +282,10 @@ def hpdi(input_array: Array, prob: int = 0.90, axis: int = 0):
     hpd_right = jnp.swapaxes(hpd_right, axis, 0)
     return jnp.concatenate([hpd_left, hpd_right], axis=axis)
 
-def summary(samples: Array, prob: int = 0.90, chain_axis: int = 0, sample_axis: int = 1):
+
+def summary(
+    samples: Array, prob: float = 0.90, chain_axis: int = 0, sample_axis: int = 1
+):
     """
     Returns a summary table displaying diagnostics of ``samples`` from the
     posterior. The diagnostics displayed are mean, standard deviation, median,
@@ -304,9 +313,7 @@ def summary(samples: Array, prob: int = 0.90, chain_axis: int = 0, sample_axis: 
     """
 
     if not isinstance(samples, dict):
-        samples = {
-            "Param:{}".format(i): v for i, v in enumerate(tree_flatten(samples)[0])
-        }
+        samples = {f"Param:{i}": v for i, v in enumerate(tree_flatten(samples)[0])}
 
     summary_dict = {}
     for name, value in samples.items():
@@ -316,10 +323,12 @@ def summary(samples: Array, prob: int = 0.90, chain_axis: int = 0, sample_axis: 
         std = value_flat.std(axis=0, ddof=1)
         median = jnp.median(value_flat, axis=0)
         hpd = hpdi(value_flat, prob=prob)
-        n_eff = effective_sample_size(value, chain_axis=chain_axis, sample_axis=sample_axis)
+        n_eff = effective_sample_size(
+            value, chain_axis=chain_axis, sample_axis=sample_axis
+        )
         r_hat = split_rhat(value, chain_axis=chain_axis, sample_axis=sample_axis)
-        hpd_lower = "{:.1f}%".format(50 * (1 - prob))
-        hpd_upper = "{:.1f}%".format(50 * (1 + prob))
+        hpd_lower = f"{50 * (1 - prob):.1f}%"
+        hpd_upper = f"{50 * (1 + prob):.1f}%"
         summary_dict[name] = OrderedDict(
             [
                 ("mean", mean),
@@ -333,7 +342,10 @@ def summary(samples: Array, prob: int = 0.90, chain_axis: int = 0, sample_axis: 
         )
     return summary_dict
 
-def print_summary(samples: Array, prob: int = 0.90, chain_axis: int = 0, sample_axis: int = 10):
+
+def print_summary(
+    samples: Array, prob: float = 0.90, chain_axis: int = 0, sample_axis: int = 10
+):
     """
     Prints a summary of diagnostic statistics for the input samples.
 
@@ -355,16 +367,16 @@ def print_summary(samples: Array, prob: int = 0.90, chain_axis: int = 0, sample_
 
     Notes
     -----
-        Prints the mean, standard deviation, median, the prob Credibility Interval, 
+        Prints the mean, standard deviation, median, the prob Credibility Interval,
         potential_scale_reduction, and effective_sample_size for each parameter.
         If group_by_chain is True, prints the statistics for each chain separately.
     """
     if not isinstance(samples, dict):
-        samples = {
-            "Param:{}".format(i): v for i, v in enumerate(tree_flatten(samples)[0])
-        }
+        samples = {f"Param:{i}": v for i, v in enumerate(tree_flatten(samples)[0])}
     summary_dict = summary(samples, prob, chain_axis, sample_axis)
-    num_columns = len(summary_dict[list(summary_dict.keys())[0]])   # number of columns for the first param
+    num_columns = len(
+        summary_dict[list(summary_dict.keys())[0]]
+    )  # number of columns for the first param
 
     row_names = {
         k: k + "[" + ",".join(map(lambda x: str(x - 1), v.shape[2:])) + "]"
