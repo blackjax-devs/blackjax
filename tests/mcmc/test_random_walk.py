@@ -29,7 +29,7 @@ class AdditiveStepTest(chex.TestCase):
 
         @chex.chexify
         def random_step(key, position):
-            # chex.assert_tree_all_close(position, initial_position)
+            chex.assert_tree_all_close(position, initial_position)
             return jnp.array([10.0])
 
         def test_logdensity_accepts(position):
