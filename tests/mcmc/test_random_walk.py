@@ -66,7 +66,8 @@ class IRMHTest(chex.TestCase):
 
         def test_logdensity_accepts(position):
             """
-            a logdensity that gets maximized after the step
+            a logdensity that gets 0 for the proposal,
+            and 0.5 otherwise
             """
             return jnp.where(position - 10.0 < 1e-10, 0.0, 0.5).sum()
 
@@ -153,6 +154,10 @@ class RMHTransitionEnergyTest(chex.TestCase):
         another_state = RWState(None, 30.0)
 
         def proposal_logdensity(new_state, prev_state):
+            """
+            a logdensity that returns 100 for one_state
+            and 200 otherwise
+            """
             return jnp.where(
                 jnp.abs(new_state.logdensity - 50.0) < 1e-10, 100, 200
             ).sum()
