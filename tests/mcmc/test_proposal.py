@@ -68,25 +68,22 @@ class TestProposalFromEnergyDiff(chex.TestCase):
         ]
     )
     def test_divergence_threshold(self, before, after, threshold, is_divergent):
-        state = None
         proposal, divergence = self.variant(proposal_from_energy_diff)(
-            5, 10, threshold, state
+            5, 10, threshold, None
         )
         assert divergence == is_divergent
 
     @chex.all_variants
     def test_sum_log_paccept(self):
-        state = None
-        proposal, _ = self.variant(proposal_from_energy_diff)(5, 10, 0, state)
+        proposal, _ = self.variant(proposal_from_energy_diff)(5, 10, 0, None)
         np.testing.assert_allclose(proposal.sum_log_p_accept, -5.0)
 
-        proposal, _ = self.variant(proposal_from_energy_diff)(10, 5, 0, state)
+        proposal, _ = self.variant(proposal_from_energy_diff)(10, 5, 0, None)
         np.testing.assert_allclose(proposal.sum_log_p_accept, 0.0)
 
     @chex.all_variants
     def test_delta_energy_is_nan(self):
-        state = None
-        proposal, _ = self.variant(proposal_from_energy_diff)(np.nan, np.nan, 0, state)
+        proposal, _ = self.variant(proposal_from_energy_diff)(np.nan, np.nan, 0, None)
         assert np.isneginf(proposal.weight)
 
     @chex.all_variants
