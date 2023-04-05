@@ -11,6 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""
+Partially adapted from:
+
+Title: NumPyro diagnostics
+Type: Source code
+Availability: https://github.com/pyro-ppl/numpyro/blob/master/numpyro/diagnostics.py 
+"""
+
 """MCMC diagnostics."""
 from collections import OrderedDict
 from itertools import product
