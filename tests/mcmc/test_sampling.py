@@ -332,7 +332,7 @@ class SGMCMCTest(chex.TestCase):
         init_position = 1.0
         data_batch = X_data[:100, :]
         _ = sghmc(rng_key, init_position, data_batch, 1e-3)
-        
+
     def test_linear_regression_sgnht(self):
         rng_key, data_key = jax.random.split(self.key, 2)
 

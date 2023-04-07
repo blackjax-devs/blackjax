@@ -18,7 +18,7 @@ import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.types import PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["SGNHTState", "init" ,"kernel"]
+__all__ = ["SGNHTState", "init", "kernel"]
 
 
 class SGNHTState(NamedTuple):

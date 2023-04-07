@@ -787,6 +787,7 @@ class sgnht:
     A ``MCMCSamplingAlgorithm``.
 
     """
+
     init = staticmethod(sgmcmc.sgnht.init)
     kernel = staticmethod(sgmcmc.sgnht.kernel)
 
@@ -795,7 +796,7 @@ class sgnht:
         grad_estimator: Callable,
     ) -> MCMCSamplingAlgorithm:
         step = cls.kernel()
-        
+
         def init_fn(position: PyTree, rng_key: PRNGKey):
             return cls.init(rng_key, position)
 

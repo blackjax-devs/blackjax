@@ -53,7 +53,7 @@ def overdamped_langevin():
 
 
 def sghmc(alpha: float = 0.01, beta: float = 0):
-    """Euler solver for the diffusion equation of the SGHMC algorithm :cite:p:`chen2014stochastic`, 
+    """Euler solver for the diffusion equation of the SGHMC algorithm :cite:p:`chen2014stochastic`,
     with parameters alpha and beta scaled according to :cite:p:`ma2015complete`.
 
     This algorithm was ported from :cite:p:`coullon2022sgmcmcjax`.
@@ -69,7 +69,9 @@ def sghmc(alpha: float = 0.01, beta: float = 0):
         temperature: float = 1.0,
     ):
         noise = generate_gaussian_noise(rng_key, position)
-        position = jax.tree_util.tree_map(lambda x, p: x + step_size * p, position, momentum)
+        position = jax.tree_util.tree_map(
+            lambda x, p: x + step_size * p, position, momentum
+        )
         momentum = jax.tree_util.tree_map(
             lambda p, g, n: (1.0 - alpha * step_size) * p
             + step_size * g
@@ -101,7 +103,9 @@ def sgnht(alpha: float = 0.01, beta: float = 0):
         temperature: float = 1.0,
     ):
         noise = generate_gaussian_noise(rng_key, position)
-        position = jax.tree_util.tree_map(lambda x, p: x + step_size * p, position, momentum)
+        position = jax.tree_util.tree_map(
+            lambda x, p: x + step_size * p, position, momentum
+        )
         momentum = jax.tree_util.tree_map(
             lambda p, g, n: (1.0 - xi * step_size) * p
             + step_size * g
