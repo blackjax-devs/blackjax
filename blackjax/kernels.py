@@ -41,6 +41,7 @@ __all__ = [
     "sghmc",
     "meanfield_vi",
     "csgld",
+    "sgnht",
     "elliptical_slice",
     "meads_adaptation",
     "tempered_smc",
@@ -728,6 +729,83 @@ class csgld:
                 step_size_stoch,
                 zeta,
                 temperature,
+            )
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+
+
+class sgnht:
+    """Implements the (basic) user interface for the SGNHT kernel.
+
+    The general sgnht kernel (:meth:`blackjax.mcmc.sgnht.kernel`, alias
+    `blackjax.sgnht.kernel`) can be cumbersome to manipulate. Since most users
+    only need to specify the kernel parameters at initialization time, we
+    provide a helper function that specializes the general kernel.
+
+    Example
+    -------
+
+    To initialize a SGNHT kernel one needs to specify a schedule function, which
+    returns a step size at each sampling step, and a gradient estimator
+    function. Here for a constant step size, and `data_size` data samples:
+
+    .. code::
+
+        grad_estimator = blackjax.sgmcmc.gradients.grad_estimator(logprior_fn, loglikelihood_fn, data_size)
+
+    We can now initialize the sgnht kernel and the state.
+
+    .. code::
+
+        sgnht = blackjax.sgnht(grad_estimator)
+        state = sgnht.init(rng_key, position)
+
+    Assuming we have an iterator `batches` that yields batches of data we can
+    perform one step:
+
+    .. code::
+
+        step_size = 1e-3
+        minibatch = next(batches)
+        new_state = sgnht.step(rng_key, state, minibatch, step_size)
+
+    Kernels are not jit-compiled by default so you will need to do it manually:
+
+    .. code::
+
+       step = jax.jit(sgnht.step)
+       new_state = step(rng_key, state, minibatch, step_size)
+
+    Parameters
+    ----------
+    grad_estimator
+       A function that takes a position, a batch of data and returns an estimation
+       of the gradient of the log-density at this position.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+
+    """
+    init = staticmethod(sgmcmc.sgnht.init)
+    kernel = staticmethod(sgmcmc.sgnht.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        grad_estimator: Callable,
+    ) -> MCMCSamplingAlgorithm:
+        step = cls.kernel()
+        
+        def init_fn(position: PyTree, rng_key: PRNGKey):
+            return cls.init(rng_key, position)
+
+        def step_fn(rng_key: PRNGKey, state, minibatch: PyTree, step_size: float):
+            return step(
+                rng_key,
+                state,
+                grad_estimator,
+                minibatch,
+                step_size,
             )
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

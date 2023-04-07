@@ -332,6 +332,46 @@ class SGMCMCTest(chex.TestCase):
         init_position = 1.0
         data_batch = X_data[:100, :]
         _ = sghmc(rng_key, init_position, data_batch, 1e-3)
+        
+    def test_linear_regression_sgnht(self):
+        rng_key, data_key = jax.random.split(self.key, 2)
+
+        data_size = 1000
+        X_data = jax.random.normal(data_key, shape=(data_size, 5))
+
+        grad_fn = blackjax.sgmcmc.grad_estimator(
+            self.logprior_fn, self.loglikelihood_fn, data_size
+        )
+        sgnht = blackjax.sgnht(grad_fn)
+
+        _, rng_key = jax.random.split(rng_key)
+        data_batch = X_data[100:200, :]
+        init_position = 1.0
+        data_batch = X_data[:100, :]
+        init_state = sgnht.init(init_position, self.key)
+        _ = sgnht.step(rng_key, init_state, data_batch, 1e-3)
+
+    def test_linear_regression_sgnhtc_cv(self):
+        rng_key, data_key = jax.random.split(self.key, 2)
+
+        data_size = 1000
+        X_data = jax.random.normal(data_key, shape=(data_size, 5))
+
+        centering_position = 1.0
+        grad_fn = blackjax.sgmcmc.grad_estimator(
+            self.logprior_fn, self.loglikelihood_fn, data_size
+        )
+        cv_grad_fn = blackjax.sgmcmc.gradients.control_variates(
+            grad_fn, centering_position, X_data
+        )
+
+        sgnht = blackjax.sgnht(cv_grad_fn)
+
+        _, rng_key = jax.random.split(rng_key)
+        init_position = 1.0
+        data_batch = X_data[:100, :]
+        init_state = sgnht.init(init_position, self.key)
+        _ = sgnht.step(rng_key, init_state, data_batch, 1e-3)
 
 
 class LatentGaussianTest(chex.TestCase):

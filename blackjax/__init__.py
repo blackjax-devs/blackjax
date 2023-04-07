@@ -21,6 +21,7 @@ from .kernels import (
     rmh,
     sghmc,
     sgld,
+    sgnht,
     tempered_smc,
     window_adaptation,
 )
@@ -42,6 +43,7 @@ __all__ = [
     "ghmc",
     "sgld",  # stochastic gradient mcmc
     "sghmc",
+    "sgnht",
     "csgld",
     "window_adaptation",  # mcmc adaptation
     "meads_adaptation",

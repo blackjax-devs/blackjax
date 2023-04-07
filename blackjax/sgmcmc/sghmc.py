@@ -45,7 +45,7 @@ def kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
             )
             return ((position, momentum), position)
 
-        momentum = generate_gaussian_noise(rng_key, position, 0, jnp.sqrt(step_size))
+        momentum = generate_gaussian_noise(rng_key, position)
         keys = jax.random.split(rng_key, num_integration_steps)
         (position, momentum), _ = jax.lax.scan(body_fn, (position, momentum), keys)
 
