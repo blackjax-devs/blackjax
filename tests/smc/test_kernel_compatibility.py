@@ -39,14 +39,14 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
         )
         kernel(self.key, init(self.initial_particles))
 
-    def test_compatible_rwm(self):
+    def test_compatible_with_rwm(self):
         self.check_compatible(
             blackjax.additive_step_random_walk.build_kernel(),
             blackjax.additive_step_random_walk.init,
             {"random_step": normal(1.0)},
         )
 
-    def test_compatible_rmh(self):
+    def test_compatible_with_rmh(self):
         self.check_compatible(
             blackjax.rmh.build_kernel(),
             blackjax.rmh.init,
@@ -57,7 +57,7 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
             },
         )
 
-    def test_compatible_hmc(self):
+    def test_compatible_with_hmc(self):
         self.check_compatible(
             blackjax.hmc.kernel(),
             blackjax.hmc.init,
@@ -68,7 +68,7 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
             },
         )
 
-    def test_compatible_irmh(self):
+    def test_compatible_with_irmh(self):
         self.check_compatible(
             blackjax.irmh.build_kernel(),
             blackjax.irmh.init,
@@ -78,18 +78,19 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
             },
         )
 
-    def V(self, x):
-        return 5 * jnp.sum(jnp.square(x**2 - 1))
-
-    def prior_log_prob(self, x):
+    @staticmethod
+    def prior_log_prob(x):
         d = x.shape[0]
         return multivariate_normal.logpdf(x, jnp.zeros((d,)), jnp.eye(d))
 
-    def loglikelihood(self, x):
-        return -self.V(x)
+    @staticmethod
+    def loglikelihood(x):
+        return -5 * jnp.sum(jnp.square(x**2 - 1))
 
-    def root_solver(self, fun, _delta0, min_delta, max_delta, eps=1e-4, max_iter=100):
+    @staticmethod
+    def root_solver(fun, _delta0, min_delta, max_delta, eps=1e-4, max_iter=100):
         return 0.8
 
-    def resampling_fn(self, rng_key, weights: jax.Array, num_samples: int):
+    @staticmethod
+    def resampling_fn(rng_key, weights: jax.Array, num_samples: int):
         return jnp.array([0, 1, 2])

@@ -1140,7 +1140,7 @@ class irmh:
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return kernel(rng_key, proposal_distribution, state, logdensity_fn)
+            return kernel(rng_key, state, logdensity_fn, proposal_distribution)
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
 

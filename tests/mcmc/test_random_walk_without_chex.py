@@ -38,9 +38,9 @@ class AdditiveStepTest(unittest.TestCase):
 
         new_state, _ = step(
             rng_key,
-            random_step,
             RWState(position=initial_position, logdensity=1.0),
             test_logdensity_accepts,
+            random_step,
         )
 
         np.testing.assert_allclose(new_state.position, jnp.array([60.0]))
@@ -69,9 +69,9 @@ class IRMHTest(unittest.TestCase):
         for previous_position in [initial_position, other_position]:
             new_state, _ = step(
                 rng_key,
-                proposal_distribution,
                 RWState(position=previous_position, logdensity=1.0),
                 test_logdensity_accepts,
+                proposal_distribution,
             )
             np.testing.assert_allclose(new_state.position, jnp.array([10.0]))
 
