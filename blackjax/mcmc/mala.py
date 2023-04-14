@@ -19,6 +19,7 @@ import jax
 import jax.numpy as jnp
 
 import blackjax.mcmc.diffusions as diffusions
+import blackjax.mcmc.proposal as proposal
 from blackjax.types import PRNGKey, PyTree
 
 __all__ = ["MALAState", "MALAInfo", "init", "kernel"]
@@ -74,8 +75,8 @@ def kernel():
 
     """
 
-    def transition_probability(state, new_state, step_size):
-        """Transition probability to go from `state` to `new_state`"""
+    def transition_energy(state, new_state, step_size):
+        """Transition energy to go from `state` to `new_state`"""
         theta = jax.tree_util.tree_map(
             lambda new_x, x, g: new_x - x - step_size * g,
             new_state.position,
@@ -85,7 +86,12 @@ def kernel():
         theta_dot = jax.tree_util.tree_reduce(
             operator.add, jax.tree_util.tree_map(lambda x: jnp.sum(x * x), theta)
         )
-        return -0.25 * (1.0 / step_size) * theta_dot
+        return -state.logdensity + 0.25 * (1.0 / step_size) * theta_dot
+
+    init_proposal, generate_proposal = proposal.asymmetric_proposal_generator(
+        transition_energy, divergence_threshold=jnp.inf
+    )
+    sample_proposal = proposal.static_binomial_sampling
 
     def one_step(
         rng_key: PRNGKey, state: MALAState, logdensity_fn: Callable, step_size: float
@@ -97,26 +103,15 @@ def kernel():
         key_integrator, key_rmh = jax.random.split(rng_key)
 
         new_state = integrator(key_integrator, state, step_size)
-
-        delta = (
-            new_state.logdensity
-            - state.logdensity
-            + transition_probability(new_state, state, step_size)
-            - transition_probability(state, new_state, step_size)
-        )
-        delta = jnp.where(jnp.isnan(delta), -jnp.inf, delta)
-        p_accept = jnp.clip(jnp.exp(delta), a_max=1)
-
-        do_accept = jax.random.bernoulli(key_rmh, p_accept)
-
         new_state = MALAState(*new_state)
+
+        proposal = init_proposal(state)
+        new_proposal, _ = generate_proposal(state, new_state, step_size=step_size)
+        sampled_proposal, *info = sample_proposal(key_rmh, proposal, new_proposal)
+        do_accept, p_accept = info
+
         info = MALAInfo(p_accept, do_accept)
 
-        return jax.lax.cond(
-            do_accept,
-            lambda _: (new_state, info),
-            lambda _: (state, info),
-            operand=None,
-        )
+        return sampled_proposal.state, info
 
     return one_step
