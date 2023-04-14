@@ -666,9 +666,12 @@ class csgld:
 
     Parameters
     ----------
-    logdensity_estimator_fn
+    logdensity_estimator
         A function that returns an estimation of the model's logdensity given
         a position and a batch of data.
+    gradient_estimator
+        A function that takes a position, a batch of data and returns an estimation
+        of the gradient of the log-density at this position.
     zeta
         Hyperparameter that controls the geometric property of the flattened
         density. If `zeta=0` the function reduces to the SGLD step function.
@@ -698,7 +701,8 @@ class csgld:
 
     def __new__(  # type: ignore[misc]
         cls,
-        logdensity_estimator_fn: Callable,
+        logdensity_estimator: Callable,
+        gradient_estimator: Callable,
         zeta: float = 1,
         temperature: float = 0.01,
         num_partitions: int = 512,
@@ -720,7 +724,8 @@ class csgld:
             return step(
                 rng_key,
                 state,
-                logdensity_estimator_fn,
+                logdensity_estimator,
+                gradient_estimator,
                 minibatch,
                 step_size_diff,
                 step_size_stoch,
