@@ -881,8 +881,10 @@ of the gradient of the log-density at this position.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>logdensity_estimator_fn</strong> – A function that returns an estimation of the model’s logdensity given
+<li><p><strong>logdensity_estimator</strong> – A function that returns an estimation of the model’s logdensity given
 a position and a batch of data.</p></li>
+<li><p><strong>gradient_estimator</strong> – A function that takes a position, a batch of data and returns an estimation
+of the gradient of the log-density at this position.</p></li>
 <li><p><strong>zeta</strong> – Hyperparameter that controls the geometric property of the flattened
 density. If <cite>zeta=0</cite> the function reduces to the SGLD step function.</p></li>
 <li><p><strong>temperature</strong> – Temperature parameter.</p></li>

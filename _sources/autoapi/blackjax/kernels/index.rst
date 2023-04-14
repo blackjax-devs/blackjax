@@ -404,8 +404,10 @@ Functions
 
    Implements the (basic) user interface for the Contour SGLD kernel.
 
-   :param logdensity_estimator_fn: A function that returns an estimation of the model's logdensity given
-                                   a position and a batch of data.
+   :param logdensity_estimator: A function that returns an estimation of the model's logdensity given
+                                a position and a batch of data.
+   :param gradient_estimator: A function that takes a position, a batch of data and returns an estimation
+                              of the gradient of the log-density at this position.
    :param zeta: Hyperparameter that controls the geometric property of the flattened
                 density. If `zeta=0` the function reduces to the SGLD step function.
    :param temperature: Temperature parameter.

@@ -999,9 +999,12 @@ document.write(`
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    logdensity_estimator_fn</span>
+<span class="sd">    logdensity_estimator</span>
 <span class="sd">        A function that returns an estimation of the model&#39;s logdensity given</span>
 <span class="sd">        a position and a batch of data.</span>
+<span class="sd">    gradient_estimator</span>
+<span class="sd">        A function that takes a position, a batch of data and returns an estimation</span>
+<span class="sd">        of the gradient of the log-density at this position.</span>
 <span class="sd">    zeta</span>
 <span class="sd">        Hyperparameter that controls the geometric property of the flattened</span>
 <span class="sd">        density. If `zeta=0` the function reduces to the SGLD step function.</span>
@@ -1031,7 +1034,8 @@ document.write(`
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">logdensity_estimator_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">logdensity_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">gradient_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">zeta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
         <span class="n">num_partitions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
@@ -1053,7 +1057,8 @@ document.write(`
             <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
-                <span class="n">logdensity_estimator_fn</span><span class="p">,</span>
+                <span class="n">logdensity_estimator</span><span class="p">,</span>
+                <span class="n">gradient_estimator</span><span class="p">,</span>
                 <span class="n">minibatch</span><span class="p">,</span>
                 <span class="n">step_size_diff</span><span class="p">,</span>
                 <span class="n">step_size_stoch</span><span class="p">,</span>

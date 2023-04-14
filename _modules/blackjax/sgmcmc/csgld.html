@@ -395,7 +395,8 @@ document.write(`
     <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">ContourSGLDState</span><span class="p">,</span>
-        <span class="n">logdensity_estimator_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">logdensity_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">gradient_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">minibatch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
         <span class="n">step_size_diff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>  <span class="c1"># step size for Langevin diffusion</span>
         <span class="n">step_size_stoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>  <span class="c1"># step size for stochastic approximation</span>
@@ -426,9 +427,12 @@ document.write(`
 <span class="sd">            State of the pseudo-random number generator.</span>
 <span class="sd">        state</span>
 <span class="sd">            Current state of the CSGLD sampler</span>
-<span class="sd">        logdensity_estimator_fn</span>
+<span class="sd">        logdensity_estimator</span>
 <span class="sd">            Function that returns an estimation of the value of the density</span>
 <span class="sd">            function at the current position.</span>
+<span class="sd">        gradient_estimator</span>
+<span class="sd">            A function that takes a position, a batch of data and returns an estimation</span>
+<span class="sd">            of the gradient of the log-density at this position.</span>
 <span class="sd">        minibatch</span>
 <span class="sd">            Minibatch of data.</span>
 <span class="sd">        step_size_diff</span>
@@ -454,7 +458,7 @@ document.write(`
             <span class="o">/</span> <span class="n">energy_gap</span>
         <span class="p">)</span>
 
-        <span class="n">logprob_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">logdensity_estimator_fn</span><span class="p">)(</span><span class="n">position</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">)</span>
+        <span class="n">logprob_grad</span> <span class="o">=</span> <span class="n">gradient_estimator</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">)</span>
         <span class="n">position</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">,</span>
             <span class="n">position</span><span class="p">,</span>
@@ -464,7 +468,7 @@ document.write(`
         <span class="p">)</span>
 
         <span class="c1"># Update the stochastic approximation to the energy histogram</span>
-        <span class="n">neg_logprob</span> <span class="o">=</span> <span class="o">-</span><span class="n">logdensity_estimator_fn</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">)</span>
+        <span class="n">neg_logprob</span> <span class="o">=</span> <span class="o">-</span><span class="n">logdensity_estimator</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">)</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
             <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">max</span><span class="p">(</span>
                 <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="n">neg_logprob</span> <span class="o">-</span> <span class="n">min_energy</span><span class="p">)</span> <span class="o">/</span> <span class="n">energy_gap</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
