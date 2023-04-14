@@ -107,8 +107,9 @@ def kernel():
 
         proposal = init_proposal(state)
         new_proposal, _ = generate_proposal(state, new_state, step_size=step_size)
-        sampled_proposal, *info = sample_proposal(key_rmh, proposal, new_proposal)
-        do_accept, p_accept = info
+        sampled_proposal, do_accept, p_accept = sample_proposal(
+            key_rmh, proposal, new_proposal
+        )
 
         info = MALAInfo(p_accept, do_accept)
 
