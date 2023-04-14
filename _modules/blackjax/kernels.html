@@ -866,7 +866,6 @@ document.write(`
 <span class="sd">    .. code::</span>
 
 <span class="sd">        sgld = blackjax.sgld(grad_fn)</span>
-<span class="sd">        state = sgld.init(position)</span>
 
 <span class="sd">    Assuming we have an iterator `batches` that yields batches of data we can</span>
 <span class="sd">    perform one step:</span>
@@ -875,14 +874,14 @@ document.write(`
 
 <span class="sd">        step_size = 1e-3</span>
 <span class="sd">        minibatch = next(batches)</span>
-<span class="sd">        new_state = sgld.step(rng_key, state, minibatch, step_size)</span>
+<span class="sd">        new_position = sgld.step(rng_key, position, minibatch, step_size)</span>
 
 <span class="sd">    Kernels are not jit-compiled by default so you will need to do it manually:</span>
 
 <span class="sd">    .. code::</span>
 
 <span class="sd">       step = jax.jit(sgld.step)</span>
-<span class="sd">       new_state, info = step(rng_key, state, minibatch, step_size)</span>
+<span class="sd">       new_position, info = step(rng_key, position, minibatch, step_size)</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -942,7 +941,6 @@ document.write(`
 <span class="sd">    .. code::</span>
 
 <span class="sd">        sghmc = blackjax.sghmc(grad_estimator, num_integration_steps)</span>
-<span class="sd">        state = sghmc.init(position)</span>
 
 <span class="sd">    Assuming we have an iterator `batches` that yields batches of data we can</span>
 <span class="sd">    perform one step:</span>
@@ -951,14 +949,14 @@ document.write(`
 
 <span class="sd">        step_size = 1e-3</span>
 <span class="sd">        minibatch = next(batches)</span>
-<span class="sd">        new_state = sghmc.step(rng_key, state, minibatch, step_size)</span>
+<span class="sd">        new_position = sghmc.step(rng_key, position, minibatch, step_size)</span>
 
 <span class="sd">    Kernels are not jit-compiled by default so you will need to do it manually:</span>
 
 <span class="sd">    .. code::</span>
 
 <span class="sd">       step = jax.jit(sghmc.step)</span>
-<span class="sd">       new_state, info = step(rng_key, state, minibatch, step_size)</span>
+<span class="sd">       new_position, info = step(rng_key, position, minibatch, step_size)</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>

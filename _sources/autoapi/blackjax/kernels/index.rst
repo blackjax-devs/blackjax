@@ -320,7 +320,6 @@ Functions
    .. code::
 
        sgld = blackjax.sgld(grad_fn)
-       state = sgld.init(position)
 
    Assuming we have an iterator `batches` that yields batches of data we can
    perform one step:
@@ -329,14 +328,14 @@ Functions
 
        step_size = 1e-3
        minibatch = next(batches)
-       new_state = sgld.step(rng_key, state, minibatch, step_size)
+       new_position = sgld.step(rng_key, position, minibatch, step_size)
 
    Kernels are not jit-compiled by default so you will need to do it manually:
 
    .. code::
 
       step = jax.jit(sgld.step)
-      new_state, info = step(rng_key, state, minibatch, step_size)
+      new_position, info = step(rng_key, position, minibatch, step_size)
 
    :param grad_estimator: A function that takes a position, a batch of data and returns an estimation
                           of the gradient of the log-density at this position.
@@ -372,7 +371,6 @@ Functions
    .. code::
 
        sghmc = blackjax.sghmc(grad_estimator, num_integration_steps)
-       state = sghmc.init(position)
 
    Assuming we have an iterator `batches` that yields batches of data we can
    perform one step:
@@ -381,14 +379,14 @@ Functions
 
        step_size = 1e-3
        minibatch = next(batches)
-       new_state = sghmc.step(rng_key, state, minibatch, step_size)
+       new_position = sghmc.step(rng_key, position, minibatch, step_size)
 
    Kernels are not jit-compiled by default so you will need to do it manually:
 
    .. code::
 
       step = jax.jit(sghmc.step)
-      new_state, info = step(rng_key, state, minibatch, step_size)
+      new_position, info = step(rng_key, position, minibatch, step_size)
 
    :param grad_estimator: A function that takes a position, a batch of data and returns an estimation
                           of the gradient of the log-density at this position.

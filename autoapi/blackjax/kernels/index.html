@@ -795,19 +795,18 @@ function. Here for a constant step size, and <cite>data_size</cite> data samples
 </div>
 <p>We can now initialize the sgld kernel and the state:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sgld</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sgld</span><span class="p">(</span><span class="n">grad_fn</span><span class="p">)</span>
-<span class="n">state</span> <span class="o">=</span> <span class="n">sgld</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Assuming we have an iterator <cite>batches</cite> that yields batches of data we can
 perform one step:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-3</span>
 <span class="n">minibatch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span>
-<span class="n">new_state</span> <span class="o">=</span> <span class="n">sgld</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+<span class="n">new_position</span> <span class="o">=</span> <span class="n">sgld</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Kernels are not jit-compiled by default so you will need to do it manually:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">sgld</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
-<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+<span class="n">new_position</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -843,19 +842,18 @@ function. Here for a constant step size, and <cite>data_size</cite> data samples
 </div>
 <p>We can now initialize the sghmc kernel and the state. Like HMC, SGHMC needs the user to specify a number of integration steps.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sghmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">sghmc</span><span class="p">(</span><span class="n">grad_estimator</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
-<span class="n">state</span> <span class="o">=</span> <span class="n">sghmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Assuming we have an iterator <cite>batches</cite> that yields batches of data we can
 perform one step:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step_size</span> <span class="o">=</span> <span class="mf">1e-3</span>
 <span class="n">minibatch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span>
-<span class="n">new_state</span> <span class="o">=</span> <span class="n">sghmc</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+<span class="n">new_position</span> <span class="o">=</span> <span class="n">sghmc</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Kernels are not jit-compiled by default so you will need to do it manually:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">sghmc</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
-<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+<span class="n">new_position</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
