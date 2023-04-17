@@ -350,6 +350,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.diffusions</span> <span class="k">as</span> <span class="nn">diffusions</span>
+<span class="kn">import</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="k">as</span> <span class="nn">proposal</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MALAState&quot;</span><span class="p">,</span> <span class="s2">&quot;MALAInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;kernel&quot;</span><span class="p">]</span>
@@ -405,8 +406,8 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">transition_probability</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transition probability to go from `state` to `new_state`&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">transition_energy</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transition energy to go from `state` to `new_state`&quot;&quot;&quot;</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
             <span class="k">lambda</span> <span class="n">new_x</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">g</span><span class="p">:</span> <span class="n">new_x</span> <span class="o">-</span> <span class="n">x</span> <span class="o">-</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">g</span><span class="p">,</span>
             <span class="n">new_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
@@ -416,7 +417,12 @@ document.write(`
         <span class="n">theta_dot</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_reduce</span><span class="p">(</span>
             <span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">),</span> <span class="n">theta</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="o">-</span><span class="mf">0.25</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">step_size</span><span class="p">)</span> <span class="o">*</span> <span class="n">theta_dot</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">+</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">step_size</span><span class="p">)</span> <span class="o">*</span> <span class="n">theta_dot</span>
+
+    <span class="n">init_proposal</span><span class="p">,</span> <span class="n">generate_proposal</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">asymmetric_proposal_generator</span><span class="p">(</span>
+        <span class="n">transition_energy</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span>
+    <span class="p">)</span>
+    <span class="n">sample_proposal</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">static_binomial_sampling</span>
 
     <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">MALAState</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span>
@@ -428,27 +434,17 @@ document.write(`
         <span class="n">key_integrator</span><span class="p">,</span> <span class="n">key_rmh</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
 
         <span class="n">new_state</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">key_integrator</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
-
-        <span class="n">delta</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">new_state</span><span class="o">.</span><span class="n">logdensity</span>
-            <span class="o">-</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity</span>
-            <span class="o">+</span> <span class="n">transition_probability</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
-            <span class="o">-</span> <span class="n">transition_probability</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">delta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">delta</span><span class="p">),</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
-        <span class="n">p_accept</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">delta</span><span class="p">),</span> <span class="n">a_max</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-        <span class="n">do_accept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">(</span><span class="n">key_rmh</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">)</span>
-
         <span class="n">new_state</span> <span class="o">=</span> <span class="n">MALAState</span><span class="p">(</span><span class="o">*</span><span class="n">new_state</span><span class="p">)</span>
+
+        <span class="n">proposal</span> <span class="o">=</span> <span class="n">init_proposal</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="n">new_proposal</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="n">step_size</span><span class="p">)</span>
+        <span class="n">sampled_proposal</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span> <span class="o">=</span> <span class="n">sample_proposal</span><span class="p">(</span>
+            <span class="n">key_rmh</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span>
+        <span class="p">)</span>
+
         <span class="n">info</span> <span class="o">=</span> <span class="n">MALAInfo</span><span class="p">(</span><span class="n">p_accept</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
-            <span class="n">do_accept</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">),</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">),</span>
-            <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">sampled_proposal</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span>
 
     <span class="k">return</span> <span class="n">one_step</span></div>
 </pre></div>

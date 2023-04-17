@@ -83,11 +83,11 @@ Attributes
 
 .. py:function:: proposal_generator(energy: Callable, divergence_threshold: float) -> Tuple[Callable, Callable]
 
-   :param energy: A callable that computes the energy associated to a given state
+   :param energy: A function that computes the energy associated to a given state
    :param divergence_threshold: max value allowed for the difference in energies not to be considered a divergence
 
-   :returns: * *Two callables, to generate an initial proposal when no step has been taken,*
-             * *and to generate proposals after each step.*
+   :returns: * *Two functions, one to generate an initial proposal when no step has been taken,*
+             * *another to generate proposals after each step.*
 
 
 .. py:function:: proposal_from_energy_diff(initial_energy: float, new_energy: float, divergence_threshold: float, state: TrajectoryState) -> Tuple[Proposal, bool]
@@ -95,15 +95,15 @@ Attributes
    Computes a new proposal from the energy difference between two states.
    It also verifies whether this difference is a divergence, if the
    energy diff is above divergence_threshold.
-   :param initial_energy: the energy from the previous state
-   :param new_energy: the energy at the new state
+   :param initial_energy: the energy from the initial state
+   :param new_energy: the energy at the proposed state
    :param divergence_threshold: max value allowed for the difference in energies not to be considered a divergence
-   :param state: the state to propose
+   :param state: the proposed state
 
    :rtype: A proposal and a flag for divergence
 
 
-.. py:function:: asymmetric_proposal_generator(transition_energy_fn: Callable, divergence_threshold: float, proposal_factory=proposal_from_energy_diff) -> Tuple[Callable, Callable]
+.. py:function:: asymmetric_proposal_generator(transition_energy_fn: Callable, divergence_threshold: float, proposal_factory: Callable = proposal_from_energy_diff) -> Tuple[Callable, Callable]
 
    A proposal generator that takes into account the transition between
    two states to compute a new proposal. In particular, both states are
@@ -111,16 +111,15 @@ Attributes
    to account for asymmetries.
     ----------
    transition_energy_fn
-       A Callable that computes the energy of a associated with a transition
-       from one state to another
+       A function that computes the energy of a transition from an initial state
+       to a new state, given some optional keyword arguments.
    divergence_threshold
-      A max number to will be used by the proposal_factory to flag a Proposal
-      as a divergence.
+       The maximum value allowed for the difference in energies not to be considered a divergence.
    proposal_factory
-       A callable that builds a proposal from the transitions energies
+       A function that builds a proposal from the transition energies.
 
-   :returns: * *Two callables, to generate an initial proposal when no step has been taken,*
-             * *and to generate proposals after each step.*
+   :returns: * *Two functions, one to generate an initial proposal when no step has been taken,*
+             * *another to generate proposals after each step.*
 
 
 .. py:function:: static_binomial_sampling(rng_key, proposal, new_proposal)

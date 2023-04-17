@@ -346,7 +346,6 @@ document.write(`
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <div class="viewcode-block" id="TrajectoryState"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.TrajectoryState">[docs]</a><span class="n">TrajectoryState</span> <span class="o">=</span> <span class="n">NamedTuple</span></div>
 
@@ -380,18 +379,18 @@ document.write(`
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    energy</span>
-<span class="sd">        A callable that computes the energy associated to a given state</span>
+<span class="sd">        A function that computes the energy associated to a given state</span>
 <span class="sd">    divergence_threshold</span>
-<span class="sd">     max value allowed for the difference in energies not to be considered a divergence</span>
+<span class="sd">        max value allowed for the difference in energies not to be considered a divergence</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    Two callables, to generate an initial proposal when no step has been taken,</span>
-<span class="sd">    and to generate proposals after each step.</span>
+<span class="sd">    Two functions, one to generate an initial proposal when no step has been taken,</span>
+<span class="sd">    another to generate proposals after each step.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">new</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Proposal</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">energy</span><span class="p">(</span><span class="n">state</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Proposal</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">energy</span><span class="p">(</span><span class="n">state</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Proposal</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new proposal from a trajectory state.</span>
@@ -434,13 +433,13 @@ document.write(`
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    initial_energy</span>
-<span class="sd">     the energy from the previous state</span>
+<span class="sd">        the energy from the initial state</span>
 <span class="sd">    new_energy</span>
-<span class="sd">     the energy at the new state</span>
+<span class="sd">        the energy at the proposed state</span>
 <span class="sd">    divergence_threshold</span>
-<span class="sd">     max value allowed for the difference in energies not to be considered a divergence</span>
+<span class="sd">        max value allowed for the difference in energies not to be considered a divergence</span>
 <span class="sd">    state</span>
-<span class="sd">     the state to propose</span>
+<span class="sd">        the proposed state</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -470,7 +469,7 @@ document.write(`
 <div class="viewcode-block" id="asymmetric_proposal_generator"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.asymmetric_proposal_generator">[docs]</a><span class="k">def</span> <span class="nf">asymmetric_proposal_generator</span><span class="p">(</span>
     <span class="n">transition_energy_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">proposal_factory</span><span class="o">=</span><span class="n">proposal_from_energy_diff</span><span class="p">,</span>
+    <span class="n">proposal_factory</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">proposal_from_energy_diff</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A proposal generator that takes into account the transition between</span>
 <span class="sd">    two states to compute a new proposal. In particular, both states are</span>
@@ -478,28 +477,29 @@ document.write(`
 <span class="sd">    to account for asymmetries.</span>
 <span class="sd">     ----------</span>
 <span class="sd">    transition_energy_fn</span>
-<span class="sd">        A Callable that computes the energy of a associated with a transition</span>
-<span class="sd">        from one state to another</span>
+<span class="sd">        A function that computes the energy of a transition from an initial state</span>
+<span class="sd">        to a new state, given some optional keyword arguments.</span>
 <span class="sd">    divergence_threshold</span>
-<span class="sd">       A max number to will be used by the proposal_factory to flag a Proposal</span>
-<span class="sd">       as a divergence.</span>
+<span class="sd">        The maximum value allowed for the difference in energies not to be considered a divergence.</span>
 <span class="sd">    proposal_factory</span>
-<span class="sd">        A callable that builds a proposal from the transitions energies</span>
+<span class="sd">        A function that builds a proposal from the transition energies.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    Two callables, to generate an initial proposal when no step has been taken,</span>
-<span class="sd">    and to generate proposals after each step.</span>
+<span class="sd">    Two functions, one to generate an initial proposal when no step has been taken,</span>
+<span class="sd">    another to generate proposals after each step.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">new</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Proposal</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Proposal</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
-        <span class="n">initial_state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span>
+        <span class="n">initial_state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">energy_params</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Proposal</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
-        <span class="n">new_energy</span> <span class="o">=</span> <span class="n">transition_energy_fn</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        <span class="n">prev_energy</span> <span class="o">=</span> <span class="n">transition_energy_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">)</span>
+        <span class="n">new_energy</span> <span class="o">=</span> <span class="n">transition_energy_fn</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="o">**</span><span class="n">energy_params</span><span class="p">)</span>
+        <span class="n">prev_energy</span> <span class="o">=</span> <span class="n">transition_energy_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="o">**</span><span class="n">energy_params</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">proposal_factory</span><span class="p">(</span><span class="n">prev_energy</span><span class="p">,</span> <span class="n">new_energy</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">new</span><span class="p">,</span> <span class="n">update</span></div>
