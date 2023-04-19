@@ -78,6 +78,18 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
             },
         )
 
+    def test_compatible_with_nuts(self):
+        self.check_compatible(
+            blackjax.nuts.kernel(),
+            blackjax.nuts.init,
+            {"step_size": 1e-10, "inverse_mass_matrix": jnp.eye(2)},
+        )
+
+    def test_compatible_with_mala(self):
+        self.check_compatible(
+            blackjax.mala.kernel(), blackjax.mala.init, {"step_size": 1e-10}
+        )
+
     @staticmethod
     def prior_log_prob(x):
         d = x.shape[0]
