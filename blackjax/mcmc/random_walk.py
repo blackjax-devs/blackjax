@@ -159,7 +159,7 @@ def build_additive_step():
     """
 
     def kernel(
-        rng_key: PRNGKey, random_step: Callable, state: RWState, logdensity_fn: Callable
+        rng_key: PRNGKey, state: RWState, logdensity_fn: Callable, random_step: Callable
     ) -> Tuple[RWState, RWInfo]:
         def proposal_generator(key_proposal, position):
             move_proposal = random_step(key_proposal, position)
@@ -167,7 +167,7 @@ def build_additive_step():
             return new_position
 
         inner_kernel = build_rmh()
-        return inner_kernel(rng_key, logdensity_fn, proposal_generator, state)
+        return inner_kernel(rng_key, state, logdensity_fn, proposal_generator)
 
     return kernel
 
@@ -187,9 +187,9 @@ def build_irmh() -> Callable:
 
     def kernel(
         rng_key: PRNGKey,
-        proposal_distribution: Callable,
         state: RWState,
         logdensity_fn: Callable,
+        proposal_distribution: Callable,
     ) -> Tuple[RWState, RWInfo]:
         """
         Parameters
@@ -203,7 +203,7 @@ def build_irmh() -> Callable:
             return proposal_distribution(rng_key)
 
         inner_kernel = build_rmh()
-        return inner_kernel(rng_key, logdensity_fn, proposal_generator, state)
+        return inner_kernel(rng_key, state, logdensity_fn, proposal_generator)
 
     return kernel
 
@@ -220,9 +220,9 @@ def build_rmh():
 
     def kernel(
         rng_key: PRNGKey,
+        state: RWState,
         logdensity_fn: Callable,
         transition_generator: Callable,
-        state: RWState,
         proposal_logdensity_fn: Optional[Callable] = None,
     ) -> Tuple[RWState, RWInfo]:
         """Move the chain by one step using the Rosenbluth Metropolis Hastings
