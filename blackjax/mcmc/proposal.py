@@ -15,7 +15,6 @@ from typing import Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 TrajectoryState = NamedTuple
 
@@ -49,18 +48,18 @@ def proposal_generator(
     Parameters
     ----------
     energy
-        A callable that computes the energy associated to a given state
+        A function that computes the energy associated to a given state
     divergence_threshold
-     max value allowed for the difference in energies not to be considered a divergence
+        max value allowed for the difference in energies not to be considered a divergence
 
     Returns
     -------
-    Two callables, to generate an initial proposal when no step has been taken,
-    and to generate proposals after each step.
+    Two functions, one to generate an initial proposal when no step has been taken,
+    another to generate proposals after each step.
     """
 
     def new(state: TrajectoryState) -> Proposal:
-        return Proposal(state, energy(state), 0.0, -np.inf)
+        return Proposal(state, energy(state), 0.0, -jnp.inf)
 
     def update(initial_energy: float, state: TrajectoryState) -> Tuple[Proposal, bool]:
         """Generate a new proposal from a trajectory state.
@@ -103,13 +102,13 @@ def proposal_from_energy_diff(
     Parameters
     ----------
     initial_energy
-     the energy from the previous state
+        the energy from the initial state
     new_energy
-     the energy at the new state
+        the energy at the proposed state
     divergence_threshold
-     max value allowed for the difference in energies not to be considered a divergence
+        max value allowed for the difference in energies not to be considered a divergence
     state
-     the state to propose
+        the proposed state
 
     Returns
     -------
@@ -139,7 +138,7 @@ def proposal_from_energy_diff(
 def asymmetric_proposal_generator(
     transition_energy_fn: Callable,
     divergence_threshold: float,
-    proposal_factory=proposal_from_energy_diff,
+    proposal_factory: Callable = proposal_from_energy_diff,
 ) -> Tuple[Callable, Callable]:
     """A proposal generator that takes into account the transition between
     two states to compute a new proposal. In particular, both states are
@@ -147,28 +146,29 @@ def asymmetric_proposal_generator(
     to account for asymmetries.
      ----------
     transition_energy_fn
-        A Callable that computes the energy of a associated with a transition
-        from one state to another
+        A function that computes the energy of a transition from an initial state
+        to a new state, given some optional keyword arguments.
     divergence_threshold
-       A max number to will be used by the proposal_factory to flag a Proposal
-       as a divergence.
+        The maximum value allowed for the difference in energies not to be considered a divergence.
     proposal_factory
-        A callable that builds a proposal from the transitions energies
+        A function that builds a proposal from the transition energies.
 
     Returns
     -------
-    Two callables, to generate an initial proposal when no step has been taken,
-    and to generate proposals after each step.
+    Two functions, one to generate an initial proposal when no step has been taken,
+    another to generate proposals after each step.
     """
 
     def new(state: TrajectoryState) -> Proposal:
-        return Proposal(state, 0.0, 0.0, -np.inf)
+        return Proposal(state, 0.0, 0.0, -jnp.inf)
 
     def update(
-        initial_state: TrajectoryState, state: TrajectoryState
+        initial_state: TrajectoryState,
+        state: TrajectoryState,
+        **energy_params,
     ) -> Tuple[Proposal, bool]:
-        new_energy = transition_energy_fn(initial_state, state)
-        prev_energy = transition_energy_fn(state, initial_state)
+        new_energy = transition_energy_fn(initial_state, state, **energy_params)
+        prev_energy = transition_energy_fn(state, initial_state, **energy_params)
         return proposal_factory(prev_energy, new_energy, divergence_threshold, state)
 
     return new, update

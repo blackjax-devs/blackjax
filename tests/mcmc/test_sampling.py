@@ -249,7 +249,10 @@ class SGMCMCTest(chex.TestCase):
         logdensity_fn = blackjax.sgmcmc.logdensity_estimator(
             self.logprior_fn, self.loglikelihood_fn, data_size
         )
-        csgld = blackjax.csgld(logdensity_fn)
+        grad_fn = blackjax.sgmcmc.grad_estimator(
+            self.logprior_fn, self.loglikelihood_fn, data_size
+        )
+        csgld = blackjax.csgld(logdensity_fn, grad_fn)
 
         _, rng_key = jax.random.split(rng_key)
         data_batch = X_data[:100, :]
