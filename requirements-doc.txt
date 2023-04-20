@@ -11,7 +11,7 @@ jupytext
 myst_nb
 numba
 numpyro
-optax@git+https://github.com/deepmind/optax.git
+optax
 oryx
 pymc
 scikit-learn
