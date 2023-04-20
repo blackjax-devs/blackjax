@@ -144,8 +144,8 @@ class TemperedSMCTest(chex.TestCase):
 
         def body_fn(carry, lmbda):
             rng_key, state = carry
-            _, rng_key = jax.random.split(rng_key)
-            new_state, info = smc_kernel(rng_key, state, lmbda)
+            rng_key, subkey = jax.random.split(rng_key)
+            new_state, info = smc_kernel(subkey, state, lmbda)
             return (rng_key, new_state), (new_state, info)
 
         (_, result), _ = jax.lax.scan(body_fn, (self.key, init_state), lambda_schedule)

@@ -17,13 +17,13 @@ class TestNormalProposalDistribution(chex.TestCase):
         Move samples are generated in the univariate case,
         with std following sigma, and independently of the position.
         """
+        key1, key2 = jax.random.split(self.key)
         proposal = normal(sigma=jnp.array([1.0]))
         samples_from_initial_position = [
-            proposal(key, jnp.array([10.0])) for key in jax.random.split(self.key, 100)
+            proposal(key, jnp.array([10.0])) for key in jax.random.split(key1, 100)
         ]
         samples_from_another_position = [
-            proposal(key, jnp.array([15000.0]))
-            for key in jax.random.split(self.key, 100)
+            proposal(key, jnp.array([15000.0])) for key in jax.random.split(key2, 100)
         ]
 
         for samples in [samples_from_initial_position, samples_from_another_position]:
