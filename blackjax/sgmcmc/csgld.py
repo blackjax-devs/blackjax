@@ -64,7 +64,8 @@ def kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
     def one_step(
         rng_key: PRNGKey,
         state: ContourSGLDState,
-        logdensity_estimator_fn: Callable,
+        logdensity_estimator: Callable,
+        gradient_estimator: Callable,
         minibatch: PyTree,
         step_size_diff: float,  # step size for Langevin diffusion
         step_size_stoch: float = 1e-3,  # step size for stochastic approximation
@@ -95,9 +96,12 @@ def kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
             State of the pseudo-random number generator.
         state
             Current state of the CSGLD sampler
-        logdensity_estimator_fn
+        logdensity_estimator
             Function that returns an estimation of the value of the density
             function at the current position.
+        gradient_estimator
+            A function that takes a position, a batch of data and returns an estimation
+            of the gradient of the log-density at this position.
         minibatch
             Minibatch of data.
         step_size_diff
@@ -123,7 +127,7 @@ def kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
             / energy_gap
         )
 
-        logprob_grad = jax.grad(logdensity_estimator_fn)(position, minibatch)
+        logprob_grad = gradient_estimator(position, minibatch)
         position = integrator(
             rng_key,
             position,
@@ -133,7 +137,7 @@ def kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
         )
 
         # Update the stochastic approximation to the energy histogram
-        neg_logprob = -logdensity_estimator_fn(position, minibatch)
+        neg_logprob = -logdensity_estimator(position, minibatch)
         idx = jax.lax.min(
             jax.lax.max(
                 jax.lax.floor((neg_logprob - min_energy) / energy_gap + 1).astype(
