@@ -35,7 +35,7 @@ dependencies = [
     "jax>=0.3.13",
     "jaxlib>=0.3.10",
     "jaxopt>=0.5.5",
-    "optax@git+https://github.com/deepmind/optax.git",
+    "optax",
     "typing-extensions>=4.4.0",
 ]
 dynamic = ["version"]
