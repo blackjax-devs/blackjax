@@ -244,11 +244,11 @@ def find_reasonable_step_size(
     def update(rss_state: ReasonableStepSizeState) -> Tuple:
         """Perform one step of the step size search."""
         rng_key, direction, _, step_size = rss_state
-        _, rng_key = jax.random.split(rng_key)
+        rng_key, subkey = jax.random.split(rng_key)
 
         step_size = (2.0**direction) * step_size
         kernel = kernel_generator(step_size)
-        _, info = kernel(rng_key, reference_state)
+        _, info = kernel(subkey, reference_state)
 
         new_direction = jnp.where(target_accept < info.acceptance_rate, 1, -1)
         return ReasonableStepSizeState(rng_key, new_direction, direction, step_size)

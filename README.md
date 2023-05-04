@@ -79,8 +79,8 @@ state = nuts.init(initial_position)
 # Iterate
 rng_key = jax.random.PRNGKey(0)
 for _ in range(100):
-    _, rng_key = jax.random.split(rng_key)
-    state, _ = nuts.step(rng_key, state)
+    rng_key, nuts_key = jax.random.split(rng_key)
+    state, _ = nuts.step(nuts_key, state)
 ```
 
 See [the documentation](https://blackjax-devs.github.io/blackjax/index.html) for more examples of how to use the library: how to write inference loops for one or several chains, how to use the Stan warmup, etc.
