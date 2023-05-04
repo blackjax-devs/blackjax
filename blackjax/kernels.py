@@ -1026,7 +1026,7 @@ class additive_step_random_walk:
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return kernel(rng_key, random_step, state, logdensity_fn)
+            return kernel(rng_key, state, logdensity_fn, random_step)
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
 
@@ -1085,9 +1085,9 @@ class rmh:
         def step_fn(rng_key: PRNGKey, state):
             return kernel(
                 rng_key,
+                state,
                 logdensity_fn,
                 proposal_generator,
-                state,
                 proposal_logdensity_fn,
             )
 
@@ -1143,7 +1143,7 @@ class irmh:
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return kernel(rng_key, proposal_distribution, state, logdensity_fn)
+            return kernel(rng_key, state, logdensity_fn, proposal_distribution)
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
 
