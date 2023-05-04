@@ -40,8 +40,8 @@ state = nuts.init(initial_position)
 rng_key = jax.random.PRNGKey(0)
 step = jax.jit(nuts.step)
 for _ in range(1_000):
-   _, rng_key = jax.random.split(rng_key)
-   state, _ = step(rng_key, state)
+   rng_key, nuts_key = jax.random.split(rng_key)
+   state, _ = step(nuts_key, state)
 ```
 
 :::{note}

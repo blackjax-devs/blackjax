@@ -512,15 +512,15 @@ JAX raised an exception while differentiating!
 <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">init</span><span class="p">)</span>
 
 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-    <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+    <span class="n">rng_key</span><span class="p">,</span> <span class="n">nuts_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+    <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">nuts_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(-0.24151024, dtype=float32, weak_type=True), logdensity=Array(-2.9157653, dtype=float32), logdensity_grad=Array(0.14576946, dtype=float32))
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(2.909098, dtype=float32, weak_type=True), logdensity=Array(-3.7348793, dtype=float32), logdensity_grad=Array(-0.11291742, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -535,8 +535,8 @@ JAX raised an exception while differentiating!
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.34 s, sys: 0 ns, total: 3.34 s
-Wall time: 3.34 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.54 s, sys: 1 µs, total: 3.54 s
+Wall time: 3.54 s
 </pre></div>
 </div>
 </div>
@@ -551,8 +551,8 @@ Wall time: 3.34 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 13.1 s, sys: 108 ms, total: 13.2 s
-Wall time: 13.2 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14 s, sys: 108 ms, total: 14.1 s
+Wall time: 14.1 s
 </pre></div>
 </div>
 </div>
