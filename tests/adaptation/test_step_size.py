@@ -24,7 +24,7 @@ class StepSizeTest(chex.TestCase):
 
         inv_mass_matrix = jnp.array([1.0])
 
-        kernel = hmc.kernel()
+        kernel = hmc.build_kernel()
 
         def kernel_generator(step_size: float):
             return functools.partial(

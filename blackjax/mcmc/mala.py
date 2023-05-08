@@ -22,7 +22,7 @@ import blackjax.mcmc.diffusions as diffusions
 import blackjax.mcmc.proposal as proposal
 from blackjax.types import PRNGKey, PyTree
 
-__all__ = ["MALAState", "MALAInfo", "init", "kernel"]
+__all__ = ["MALAState", "MALAInfo", "init", "build_kernel"]
 
 
 class MALAState(NamedTuple):
@@ -64,7 +64,7 @@ def init(position: PyTree, logdensity_fn: Callable) -> MALAState:
     return MALAState(position, logdensity, logdensity_grad)
 
 
-def kernel():
+def build_kernel():
     """Build a MALA kernel.
 
     Returns
@@ -93,7 +93,7 @@ def kernel():
     )
     sample_proposal = proposal.static_binomial_sampling
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey, state: MALAState, logdensity_fn: Callable, step_size: float
     ) -> Tuple[MALAState, MALAInfo]:
         """Generate a new sample with the MALA kernel."""
@@ -115,4 +115,4 @@ def kernel():
 
         return sampled_proposal.state, info
 
-    return one_step
+    return kernel

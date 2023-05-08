@@ -17,14 +17,14 @@ from typing import Callable
 import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.types import PRNGKey, PyTree
 
-__all__ = ["kernel"]
+__all__ = ["build_kernel"]
 
 
-def kernel() -> Callable:
+def build_kernel() -> Callable:
     """Stochastic gradient Langevin Dynamics (SgLD) algorithm."""
     integrator = diffusions.overdamped_langevin()
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         position: PyTree,
         grad_estimator: Callable,
@@ -39,4 +39,4 @@ def kernel() -> Callable:
 
         return new_position
 
-    return one_step
+    return kernel

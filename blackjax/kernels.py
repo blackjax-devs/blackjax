@@ -89,7 +89,7 @@ class adaptive_tempered_smc:
     """
 
     init = staticmethod(smc.tempered.init)
-    kernel = staticmethod(smc.adaptive_tempered.kernel)
+    build_kernel = staticmethod(smc.adaptive_tempered.build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -103,7 +103,7 @@ class adaptive_tempered_smc:
         root_solver: Callable = smc.solver.dichotomy,
         num_mcmc_steps: int = 10,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel(
+        kernel = cls.build_kernel(
             logprior_fn,
             loglikelihood_fn,
             mcmc_step_fn,
@@ -117,7 +117,7 @@ class adaptive_tempered_smc:
             return cls.init(position)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(
+            return kernel(
                 rng_key,
                 state,
                 num_mcmc_steps,
@@ -154,7 +154,7 @@ class tempered_smc:
     """
 
     init = staticmethod(smc.tempered.init)
-    kernel = staticmethod(smc.tempered.kernel)
+    build_kernel = staticmethod(smc.tempered.build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -166,7 +166,7 @@ class tempered_smc:
         resampling_fn: Callable,
         num_mcmc_steps: int = 10,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel(
+        kernel = cls.build_kernel(
             logprior_fn,
             loglikelihood_fn,
             mcmc_step_fn,
@@ -178,7 +178,7 @@ class tempered_smc:
             return cls.init(position)
 
         def step_fn(rng_key: PRNGKey, state, lmbda):
-            return step(
+            return kernel(
                 rng_key,
                 state,
                 num_mcmc_steps,
@@ -197,7 +197,7 @@ class tempered_smc:
 class hmc:
     """Implements the (basic) user interface for the HMC kernel.
 
-    The general hmc kernel (:meth:`blackjax.mcmc.hmc.kernel`, alias `blackjax.hmc.kernel`) can be
+    The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias `blackjax.hmc.build_kernel`) can be
     cumbersome to manipulate. Since most users only need to specify the kernel
     parameters at initialization time, we provide a helper function that
     specializes the general kernel.
@@ -229,7 +229,7 @@ class hmc:
 
        import blackjax.mcmc.integrators as integrators
 
-       kernel = blackjax.hmc.kernel(integrators.mclachlan)
+       kernel = blackjax.hmc.build_kernel(integrators.mclachlan)
        state = blackjax.hmc.init(position, logdensity_fn)
        state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
 
@@ -258,7 +258,7 @@ class hmc:
     """
 
     init = staticmethod(mcmc.hmc.init)
-    kernel = staticmethod(mcmc.hmc.kernel)
+    build_kernel = staticmethod(mcmc.hmc.build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -270,13 +270,13 @@ class hmc:
         divergence_threshold: int = 1000,
         integrator: Callable = mcmc.integrators.velocity_verlet,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel(integrator, divergence_threshold)
+        kernel = cls.build_kernel(integrator, divergence_threshold)
 
         def init_fn(position: PyTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(
+            return kernel(
                 rng_key,
                 state,
                 logdensity_fn,
@@ -291,7 +291,7 @@ class hmc:
 class mala:
     """Implements the (basic) user interface for the MALA kernel.
 
-    The general mala kernel (:meth:`blackjax.mcmc.mala.kernel`, alias `blackjax.mala.kernel`) can be
+    The general mala kernel builder (:meth:`blackjax.mcmc.mala.build_kernel`, alias `blackjax.mala.build_kernel`) can be
     cumbersome to manipulate. Since most users only need to specify the kernel
     parameters at initialization time, we provide a helper function that
     specializes the general kernel.
@@ -321,7 +321,7 @@ class mala:
 
     .. code::
 
-       kernel = blackjax.mala.kernel(logdensity_fn)
+       kernel = blackjax.mala.build_kernel(logdensity_fn)
        state = blackjax.mala.init(position, logdensity_fn)
        state, info = kernel(rng_key, state, logdensity_fn, step_size)
 
@@ -339,20 +339,20 @@ class mala:
     """
 
     init = staticmethod(mcmc.mala.init)
-    kernel = staticmethod(mcmc.mala.kernel)
+    build_kernel = staticmethod(mcmc.mala.build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
         logdensity_fn: Callable,
         step_size: float,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel()
+        kernel = cls.build_kernel()
 
         def init_fn(position: PyTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(rng_key, state, logdensity_fn, step_size)
+            return kernel(rng_key, state, logdensity_fn, step_size)
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
 
@@ -384,7 +384,7 @@ class nuts:
 
        import blackjax.mcmc.integrators as integrators
 
-       kernel = blackjax.nuts.kernel(integrators.yoshida)
+       kernel = blackjax.nuts.build_kernel(integrators.yoshida)
        state = blackjax.nuts.init(position, logdensity_fn)
        state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix)
 
@@ -414,7 +414,7 @@ class nuts:
     """
 
     init = staticmethod(mcmc.hmc.init)
-    kernel = staticmethod(mcmc.nuts.kernel)
+    build_kernel = staticmethod(mcmc.nuts.build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -426,13 +426,13 @@ class nuts:
         divergence_threshold: int = 1000,
         integrator: Callable = mcmc.integrators.velocity_verlet,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel(integrator, divergence_threshold, max_num_doublings)
+        kernel = cls.build_kernel(integrator, divergence_threshold, max_num_doublings)
 
         def init_fn(position: PyTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(
+            return kernel(
                 rng_key,
                 state,
                 logdensity_fn,
@@ -489,7 +489,7 @@ class mgrad_gaussian:
         covariance: Array,
         mean: Optional[Array] = None,
     ) -> MCMCSamplingAlgorithm:
-        init, step = mcmc.marginal_latent_gaussian.init_and_kernel(
+        init, kernel = mcmc.marginal_latent_gaussian.init_and_kernel(
             logdensity_fn, covariance, mean
         )
 
@@ -497,7 +497,7 @@ class mgrad_gaussian:
             return init(position)
 
         def step_fn(rng_key: PRNGKey, state, delta: float):
-            return step(
+            return kernel(
                 rng_key,
                 state,
                 delta,
@@ -514,8 +514,8 @@ class mgrad_gaussian:
 class sgld:
     """Implements the (basic) user interface for the SGLD kernel.
 
-    The general sgld kernel (:meth:`blackjax.mcmc.sgld.kernel`, alias
-    `blackjax.sgld.kernel`) can be cumbersome to manipulate. Since most users
+    The general sgld kernel builder (:meth:`blackjax.mcmc.sgld.build_kernel`, alias
+    `blackjax.sgld.build_kernel`) can be cumbersome to manipulate. Since most users
     only need to specify the kernel parameters at initialization time, we
     provide a helper function that specializes the general kernel.
 
@@ -564,13 +564,13 @@ class sgld:
 
     """
 
-    kernel = staticmethod(sgmcmc.sgld.kernel)
+    build_kernel = staticmethod(sgmcmc.sgld.build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
         grad_estimator: Callable,
     ) -> Callable:
-        step = cls.kernel()
+        kernel = cls.build_kernel()
 
         def step_fn(
             rng_key: PRNGKey,
@@ -579,7 +579,7 @@ class sgld:
             step_size: float,
             temperature: float = 1,
         ):
-            return step(
+            return kernel(
                 rng_key, state, grad_estimator, minibatch, step_size, temperature
             )
 
@@ -589,8 +589,8 @@ class sgld:
 class sghmc:
     """Implements the (basic) user interface for the SGHMC kernel.
 
-    The general sghmc kernel (:meth:`blackjax.mcmc.sghmc.kernel`, alias
-    `blackjax.sghmc.kernel`) can be cumbersome to manipulate. Since most users
+    The general sghmc kernel builder (:meth:`blackjax.mcmc.sghmc.build_kernel`, alias
+    `blackjax.sghmc.build_kernel`) can be cumbersome to manipulate. Since most users
     only need to specify the kernel parameters at initialization time, we
     provide a helper function that specializes the general kernel.
 
@@ -639,17 +639,17 @@ class sghmc:
 
     """
 
-    kernel = staticmethod(sgmcmc.sghmc.kernel)
+    build_kernel = staticmethod(sgmcmc.sghmc.build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
         grad_estimator: Callable,
         num_integration_steps: int = 10,
     ) -> Callable:
-        step = cls.kernel()
+        kernel = cls.build_kernel()
 
         def step_fn(rng_key: PRNGKey, state, minibatch: PyTree, step_size: float):
-            return step(
+            return kernel(
                 rng_key,
                 state,
                 grad_estimator,
@@ -697,7 +697,7 @@ class csgld:
 
     """
     init = staticmethod(sgmcmc.csgld.init)
-    kernel = staticmethod(sgmcmc.csgld.kernel)
+    build_kernel = staticmethod(sgmcmc.csgld.build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -709,7 +709,7 @@ class csgld:
         energy_gap: float = 100,
         min_energy: float = 0,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel(num_partitions, energy_gap, min_energy)
+        kernel = cls.build_kernel(num_partitions, energy_gap, min_energy)
 
         def init_fn(position: PyTree):
             return cls.init(position, num_partitions)
@@ -721,7 +721,7 @@ class csgld:
             step_size_diff: float,
             step_size_stoch: float,
         ):
-            return step(
+            return kernel(
                 rng_key,
                 state,
                 logdensity_estimator,
@@ -799,7 +799,7 @@ def window_adaptation(
 
     """
 
-    mcmc_step = algorithm.kernel()
+    mcmc_kernel = algorithm.build_kernel()
 
     adapt_init, adapt_step, adapt_final = adaptation.window_adaptation.base(
         is_mass_matrix_diagonal,
@@ -810,7 +810,7 @@ def window_adaptation(
         _, rng_key, adaptation_stage = xs
         state, adaptation_state = carry
 
-        new_state, info = mcmc_step(
+        new_state, info = mcmc_kernel(
             rng_key,
             state,
             logdensity_fn,
@@ -907,7 +907,7 @@ def meads_adaptation(
 
     """
 
-    ghmc_step = ghmc.kernel()
+    ghmc_kernel = ghmc.build_kernel()
 
     adapt_init, adapt_update = adaptation.meads_adaptation.base()
 
@@ -918,7 +918,7 @@ def meads_adaptation(
 
         keys = jax.random.split(rng_key, num_chains)
         new_states, info = jax.vmap(
-            ghmc_step, in_axes=(0, 0, None, None, None, None, None)
+            ghmc_kernel, in_axes=(0, 0, None, None, None, None, None)
         )(
             keys,
             states,
@@ -1194,7 +1194,7 @@ class orbital_hmc:
     """
 
     init = staticmethod(mcmc.periodic_orbital.init)
-    kernel = staticmethod(mcmc.periodic_orbital.kernel)
+    build_kernel = staticmethod(mcmc.periodic_orbital.build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -1205,13 +1205,13 @@ class orbital_hmc:
         *,
         bijection: Callable = mcmc.integrators.velocity_verlet,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel(bijection)
+        kernel = cls.build_kernel(bijection)
 
         def init_fn(position: PyTree):
             return cls.init(position, logdensity_fn, period)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(
+            return kernel(
                 rng_key,
                 state,
                 logdensity_fn,
@@ -1257,7 +1257,7 @@ class elliptical_slice:
     """
 
     init = staticmethod(mcmc.elliptical_slice.init)
-    kernel = staticmethod(mcmc.elliptical_slice.kernel)
+    build_kernel = staticmethod(mcmc.elliptical_slice.build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -1266,13 +1266,13 @@ class elliptical_slice:
         mean: Array,
         cov: Array,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel(cov, mean)
+        kernel = cls.build_kernel(cov, mean)
 
         def init_fn(position: PyTree):
             return cls.init(position, loglikelihood_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(
+            return kernel(
                 rng_key,
                 state,
                 loglikelihood_fn,
@@ -1344,7 +1344,7 @@ class ghmc:
     """
 
     init = staticmethod(mcmc.ghmc.init)
-    kernel = staticmethod(mcmc.ghmc.kernel)
+    build_kernel = staticmethod(mcmc.ghmc.build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
@@ -1357,13 +1357,13 @@ class ghmc:
         divergence_threshold: int = 1000,
         noise_gn: Callable = lambda _: 0.0,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel(noise_gn, divergence_threshold)
+        kernel = cls.build_kernel(noise_gn, divergence_threshold)
 
         def init_fn(position: PyTree, rng_key: PRNGKey):
             return cls.init(rng_key, position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return step(
+            return kernel(
                 rng_key,
                 state,
                 logdensity_fn,
@@ -1463,7 +1463,7 @@ def pathfinder_adaptation(
 
     """
 
-    mcmc_step = algorithm.kernel()
+    mcmc_kernel = algorithm.build_kernel()
 
     adapt_init, adapt_update, adapt_final = adaptation.pathfinder_adaptation.base(
         target_acceptance_rate,
@@ -1471,7 +1471,7 @@ def pathfinder_adaptation(
 
     def one_step(carry, rng_key):
         state, adaptation_state = carry
-        new_state, info = mcmc_step(
+        new_state, info = mcmc_kernel(
             rng_key,
             state,
             logdensity_fn,

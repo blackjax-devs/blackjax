@@ -21,14 +21,14 @@ import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.types import PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["kernel"]
+__all__ = ["build_kernel"]
 
 
-def kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
+def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
     """Stochastic gradient Hamiltonian Monte Carlo (SgHMC) algorithm."""
     integrator = diffusions.sghmc(alpha, beta)
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         position: PyTree,
         grad_estimator: Callable,
@@ -51,4 +51,4 @@ def kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
 
         return position
 
-    return one_step
+    return kernel

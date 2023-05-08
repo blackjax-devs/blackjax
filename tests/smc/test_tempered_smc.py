@@ -68,7 +68,7 @@ class TemperedSMCTest(chex.TestCase):
         iterates = []
         results = []  # type: List[TemperedSMCState]
 
-        hmc_kernel = blackjax.hmc.kernel()
+        hmc_kernel = blackjax.hmc.build_kernel()
         hmc_init = blackjax.hmc.init
         hmc_parameters = {
             "step_size": 10e-2,
@@ -123,7 +123,7 @@ class TemperedSMCTest(chex.TestCase):
 
         lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
         hmc_init = blackjax.hmc.init
-        hmc_kernel = blackjax.hmc.kernel()
+        hmc_kernel = blackjax.hmc.build_kernel()
         hmc_parameters = {
             "step_size": 10e-2,
             "inverse_mass_matrix": jnp.eye(2),
@@ -190,7 +190,7 @@ class NormalizingConstantTest(chex.TestCase):
         x_init = jax.random.normal(init_key, shape=(num_particles, num_dim))
 
         hmc_init = blackjax.hmc.init
-        hmc_kernel = blackjax.hmc.kernel()
+        hmc_kernel = blackjax.hmc.build_kernel()
         hmc_parameters = {
             "step_size": 10e-2,
             "inverse_mass_matrix": jnp.eye(num_dim),
