@@ -21,7 +21,7 @@ import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.types import PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["build_kernel"]
+__all__ = ["build_kernel", "sghmc"]
 
 
 def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
@@ -52,3 +52,78 @@ def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
         return position
 
     return kernel
+
+
+class sghmc:
+    """Implements the (basic) user interface for the SGHMC kernel.
+
+    The general sghmc kernel builder (:meth:`blackjax.mcmc.sghmc.build_kernel`, alias
+    `blackjax.sghmc.build_kernel`) can be cumbersome to manipulate. Since most users
+    only need to specify the kernel parameters at initialization time, we
+    provide a helper function that specializes the general kernel.
+
+    Example
+    -------
+
+    To initialize a SGHMC kernel one needs to specify a schedule function, which
+    returns a step size at each sampling step, and a gradient estimator
+    function. Here for a constant step size, and `data_size` data samples:
+
+    .. code::
+
+        grad_estimator = blackjax.sgmcmc.gradients.grad_estimator(logprior_fn, loglikelihood_fn, data_size)
+
+    We can now initialize the sghmc kernel and the state. Like HMC, SGHMC needs the user to specify a number of integration steps.
+
+    .. code::
+
+        sghmc = blackjax.sghmc(grad_estimator, num_integration_steps)
+
+    Assuming we have an iterator `batches` that yields batches of data we can
+    perform one step:
+
+    .. code::
+
+        step_size = 1e-3
+        minibatch = next(batches)
+        new_position = sghmc.step(rng_key, position, minibatch, step_size)
+
+    Kernels are not jit-compiled by default so you will need to do it manually:
+
+    .. code::
+
+       step = jax.jit(sghmc.step)
+       new_position, info = step(rng_key, position, minibatch, step_size)
+
+    Parameters
+    ----------
+    grad_estimator
+       A function that takes a position, a batch of data and returns an estimation
+       of the gradient of the log-density at this position.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+
+    """
+
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        grad_estimator: Callable,
+        num_integration_steps: int = 10,
+    ) -> Callable:
+        kernel = cls.build_kernel()
+
+        def step_fn(rng_key: PRNGKey, state, minibatch: PyTree, step_size: float):
+            return kernel(
+                rng_key,
+                state,
+                grad_estimator,
+                minibatch,
+                step_size,
+                num_integration_steps,
+            )
+
+        return step_fn

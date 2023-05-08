@@ -6,10 +6,11 @@ from typing import Callable, NamedTuple
 import jax
 import jax.numpy as jnp
 
+from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.sgmcmc.diffusions import overdamped_langevin
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["ContourSGLDState", "init", "build_kernel"]
+__all__ = ["ContourSGLDState", "init", "build_kernel", "csgld"]
 
 
 class ContourSGLDState(NamedTuple):
@@ -158,3 +159,78 @@ def build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
         return ContourSGLDState(position, energy_pdf, idx)
 
     return kernel
+
+
+class csgld:
+    r"""Implements the (basic) user interface for the Contour SGLD kernel.
+
+    Parameters
+    ----------
+    logdensity_estimator
+        A function that returns an estimation of the model's logdensity given
+        a position and a batch of data.
+    gradient_estimator
+        A function that takes a position, a batch of data and returns an estimation
+        of the gradient of the log-density at this position.
+    zeta
+        Hyperparameter that controls the geometric property of the flattened
+        density. If `zeta=0` the function reduces to the SGLD step function.
+    temperature
+        Temperature parameter.
+    num_partitions
+        The number of partitions we divide the energy landscape into.
+    energy_gap
+        The difference in energy :math:`\Delta u` between the successive
+        partitions. Can be determined by running e.g. an optimizer to determine
+        the range of energies. `num_partition` * `energy_gap` should match this
+        range.
+    min_energy
+        A rough estimate of the minimum energy in a dataset, which should be
+        strictly smaller than the exact minimum energy! e.g. if the minimum
+        energy of a dataset is 3456, we can set min_energy to be any value
+        smaller than 3456. Set it to 0 is acceptable, but not efficient enough.
+        the closer the gap between min_energy and 3456 is, the better.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+
+    """
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_estimator: Callable,
+        gradient_estimator: Callable,
+        zeta: float = 1,
+        temperature: float = 0.01,
+        num_partitions: int = 512,
+        energy_gap: float = 100,
+        min_energy: float = 0,
+    ) -> MCMCSamplingAlgorithm:
+        kernel = cls.build_kernel(num_partitions, energy_gap, min_energy)
+
+        def init_fn(position: PyTree):
+            return cls.init(position, num_partitions)
+
+        def step_fn(
+            rng_key: PRNGKey,
+            state,
+            minibatch: PyTree,
+            step_size_diff: float,
+            step_size_stoch: float,
+        ):
+            return kernel(
+                rng_key,
+                state,
+                logdensity_estimator,
+                gradient_estimator,
+                minibatch,
+                step_size_diff,
+                step_size_stoch,
+                zeta,
+                temperature,
+            )
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

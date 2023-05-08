@@ -20,10 +20,11 @@ import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.trajectory as trajectory
+from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.mcmc.trajectory import hmc_energy
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["HMCState", "HMCInfo", "init", "build_kernel"]
+__all__ = ["HMCState", "HMCInfo", "init", "build_kernel", "hmc"]
 
 
 class HMCState(NamedTuple):
@@ -142,6 +143,100 @@ def build_kernel(
         return proposal, info
 
     return kernel
+
+
+class hmc:
+    """Implements the (basic) user interface for the HMC kernel.
+
+    The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias `blackjax.hmc.build_kernel`) can be
+    cumbersome to manipulate. Since most users only need to specify the kernel
+    parameters at initialization time, we provide a helper function that
+    specializes the general kernel.
+
+    We also add the general kernel and state generator as an attribute to this class so
+    users only need to pass `blackjax.hmc` to SMC, adaptation, etc. algorithms.
+
+    Examples
+    --------
+
+    A new HMC kernel can be initialized and used with the following code:
+
+    .. code::
+
+        hmc = blackjax.hmc(logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
+        state = hmc.init(position)
+        new_state, info = hmc.step(rng_key, state)
+
+    Kernels are not jit-compiled by default so you will need to do it manually:
+
+    .. code::
+
+       step = jax.jit(hmc.step)
+       new_state, info = step(rng_key, state)
+
+    Should you need to you can always use the base kernel directly:
+
+    .. code::
+
+       import blackjax.mcmc.integrators as integrators
+
+       kernel = blackjax.hmc.build_kernel(integrators.mclachlan)
+       state = blackjax.hmc.init(position, logdensity_fn)
+       state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log-density function we wish to draw samples from.
+    step_size
+        The value to use for the step size in the symplectic integrator.
+    inverse_mass_matrix
+        The value to use for the inverse mass matrix when drawing a value for
+        the momentum and computing the kinetic energy.
+    num_integration_steps
+        The number of steps we take with the symplectic integrator at each
+        sample step before returning a sample.
+    divergence_threshold
+        The absolute value of the difference in energy between two states above
+        which we say that the transition is divergent. The default value is
+        commonly found in other libraries, and yet is arbitrary.
+    integrator
+        (algorithm parameter) The symplectic integrator to use to integrate the trajectory.\
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+    """
+
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: Array,
+        num_integration_steps: int,
+        *,
+        divergence_threshold: int = 1000,
+        integrator: Callable = integrators.velocity_verlet,
+    ) -> MCMCSamplingAlgorithm:
+        kernel = cls.build_kernel(integrator, divergence_threshold)
+
+        def init_fn(position: PyTree):
+            return cls.init(position, logdensity_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return kernel(
+                rng_key,
+                state,
+                logdensity_fn,
+                step_size,
+                inverse_mass_matrix,
+                num_integration_steps,
+            )
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
 
 
 def hmc_proposal(

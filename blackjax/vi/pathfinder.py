@@ -25,7 +25,7 @@ from blackjax.optimizers.lbfgs import (
 )
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["PathfinderState", "approximate", "sample"]
+__all__ = ["PathfinderState", "approximate", "sample", "pathfinder"]
 
 
 class PathfinderState(NamedTuple):
@@ -61,6 +61,11 @@ class PathfinderInfo(NamedTuple):
     """Extra information returned by the Pathfinder algorithm."""
 
     path: PathfinderState
+
+
+class PathFinderAlgorithm(NamedTuple):
+    approximate: Callable
+    sample: Callable
 
 
 def approximate(
@@ -230,3 +235,47 @@ def sample(
         return unravel_fn(phi), logq
     else:
         return jax.vmap(unravel_fn)(phi), logq
+
+
+class pathfinder:
+    """Implements the (basic) user interface for the pathfinder kernel.
+
+    Pathfinder locates normal approximations to the target density along a
+    quasi-Newton optimization path, with local covariance estimated using
+    the inverse Hessian estimates produced by the L-BFGS optimizer.
+    Pathfinder returns draws from the approximation with the lowest estimated
+    Kullback-Leibler (KL) divergence to the true posterior.
+
+    Note: all the heavy processing in performed in the init function, step
+    function is just a drawing a sample from a normal distribution
+
+    Parameters
+    ----------
+    logdensity_fn
+        A function that represents the log-density of the model we want
+        to sample from.
+
+    Returns
+    -------
+    A ``VISamplingAlgorithm``.
+
+    """
+
+    approximate = staticmethod(approximate)
+    sample = staticmethod(sample)
+
+    def __new__(cls, logdensity_fn: Callable) -> PathFinderAlgorithm:  # type: ignore[misc]
+        def approximate_fn(
+            rng_key: PRNGKey,
+            position: PyTree,
+            num_samples: int = 200,
+            **lbfgs_parameters,
+        ):
+            return cls.approximate(
+                rng_key, logdensity_fn, position, num_samples, **lbfgs_parameters
+            )
+
+        def sample_fn(rng_key: PRNGKey, state: PathfinderState, num_samples: int):
+            return cls.sample(rng_key, state, num_samples)
+
+        return PathFinderAlgorithm(approximate_fn, sample_fn)

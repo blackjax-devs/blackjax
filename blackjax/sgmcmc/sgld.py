@@ -17,7 +17,7 @@ from typing import Callable
 import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.types import PRNGKey, PyTree
 
-__all__ = ["build_kernel"]
+__all__ = ["build_kernel", "sgld"]
 
 
 def build_kernel() -> Callable:
@@ -40,3 +40,78 @@ def build_kernel() -> Callable:
         return new_position
 
     return kernel
+
+
+class sgld:
+    """Implements the (basic) user interface for the SGLD kernel.
+
+    The general sgld kernel builder (:meth:`blackjax.mcmc.sgld.build_kernel`, alias
+    `blackjax.sgld.build_kernel`) can be cumbersome to manipulate. Since most users
+    only need to specify the kernel parameters at initialization time, we
+    provide a helper function that specializes the general kernel.
+
+    Example
+    -------
+
+    To initialize a SGLD kernel one needs to specify a schedule function, which
+    returns a step size at each sampling step, and a gradient estimator
+    function. Here for a constant step size, and `data_size` data samples:
+
+    .. code::
+
+        grad_fn = blackjax.sgmcmc.gradients.grad_estimator(logprior_fn, loglikelihood_fn, data_size)
+
+    We can now initialize the sgld kernel and the state:
+
+    .. code::
+
+        sgld = blackjax.sgld(grad_fn)
+
+    Assuming we have an iterator `batches` that yields batches of data we can
+    perform one step:
+
+    .. code::
+
+        step_size = 1e-3
+        minibatch = next(batches)
+        new_position = sgld.step(rng_key, position, minibatch, step_size)
+
+    Kernels are not jit-compiled by default so you will need to do it manually:
+
+    .. code::
+
+       step = jax.jit(sgld.step)
+       new_position, info = step(rng_key, position, minibatch, step_size)
+
+    Parameters
+    ----------
+    grad_estimator
+       A function that takes a position, a batch of data and returns an estimation
+       of the gradient of the log-density at this position.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+
+    """
+
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        grad_estimator: Callable,
+    ) -> Callable:
+        kernel = cls.build_kernel()
+
+        def step_fn(
+            rng_key: PRNGKey,
+            state,
+            minibatch: PyTree,
+            step_size: float,
+            temperature: float = 1,
+        ):
+            return kernel(
+                rng_key, state, grad_estimator, minibatch, step_size, temperature
+            )
+
+        return step_fn
