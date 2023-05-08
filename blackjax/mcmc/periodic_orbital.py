@@ -114,7 +114,7 @@ def init(
     )
 
 
-def kernel(
+def build_kernel(
     bijection: Callable = integrators.velocity_verlet,
 ):
     """Build a Periodic Orbital kernel :cite:p:`neklyudov2022orbital`.
@@ -132,7 +132,7 @@ def kernel(
 
     """
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: PeriodicOrbitalState,
         logdensity_fn: Callable,
@@ -211,7 +211,7 @@ def kernel(
 
         return proposal, info
 
-    return one_step
+    return kernel
 
 
 def periodic_orbital_proposal(

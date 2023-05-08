@@ -23,7 +23,7 @@ import blackjax.mcmc.trajectory as trajectory
 from blackjax.mcmc.trajectory import hmc_energy
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["HMCState", "HMCInfo", "init", "kernel"]
+__all__ = ["HMCState", "HMCInfo", "init", "build_kernel"]
 
 
 class HMCState(NamedTuple):
@@ -83,7 +83,7 @@ def init(position: PyTree, logdensity_fn: Callable):
     return HMCState(position, logdensity, logdensity_grad)
 
 
-def kernel(
+def build_kernel(
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: float = 1000,
 ):
@@ -104,7 +104,7 @@ def kernel(
 
     """
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: HMCState,
         logdensity_fn: Callable,
@@ -141,7 +141,7 @@ def kernel(
 
         return proposal, info
 
-    return one_step
+    return kernel
 
 
 def hmc_proposal(

@@ -67,7 +67,7 @@ In this case the conditional distributions $p(\xx \mid \yy)$ and $p(\yy \mid \xx
 1.  Maintain separate MCMC kernels to update each component of $p(\xx, \yy)$ while holding the other fixed.
 2.  Apply the kernel updates correctly.
 
-The issue with (2) is that each kernel update for a given MCMC `Algorithm` in BlackJAX refers to an algorithm-specific `AlgorithmState`.  For example, `RMHState` is a `typing.NamedTuple` class containing elements `position` and `log_probability`.  In our MWG sampling problem at the beginning of step $t$, `RMHState.log_probability` will consist of $\log p(\xx_{t-1}, \yy_{t-1})$.  After updating $\xx$, it will consist of $\log p(\xx_{t}, \yy_{t-1})$.  This happens automatically when we call `blackjax.mcmc.rmh.kernel()`.  However, after updating $\yy$ (via HMC), we must manually update `RMHState.log_probability` to consist of $\log p(\xx_{t}, \yy_{t})$.
+The issue with (2) is that each kernel update for a given MCMC `Algorithm` in BlackJAX refers to an algorithm-specific `AlgorithmState`.  For example, `RMHState` is a `typing.NamedTuple` class containing elements `position` and `log_probability`.  In our MWG sampling problem at the beginning of step $t$, `RMHState.log_probability` will consist of $\log p(\xx_{t-1}, \yy_{t-1})$.  After updating $\xx$, it will consist of $\log p(\xx_{t}, \yy_{t-1})$.  This happens automatically when we call `blackjax.mcmc.rmh.build_kernel()`.  However, after updating $\yy$ (via HMC), we must manually update `RMHState.log_probability` to consist of $\log p(\xx_{t}, \yy_{t})$.
 
 A general way of performing this manual update is to use the `blackjax.mcmc.algorithm.init()` function of the given component's MCMC algorithm to update the `AlgorithmState`.  This function has arguments `position` and `logdensity_fn`.  For example with the HMC component, after obtaining $\xx_t$ but before drawing $\yy_t$, the `position` would be $\yy_{t-1}$ and the `logdensity_fn` function would be $\log p(\xx_t, \cdot )$.
 
@@ -81,8 +81,8 @@ mwg_init_x = blackjax.mcmc.rmh.init
 mwg_init_y = blackjax.mcmc.hmc.init
 
 # MCMC updaters
-mwg_step_fn_x = blackjax.mcmc.rmh.kernel()
-mwg_step_fn_y = blackjax.mcmc.hmc.kernel()  # default integrator, etc.
+mwg_step_fn_x = blackjax.mcmc.rmh.build_kernel()
+mwg_step_fn_y = blackjax.mcmc.hmc.build_kernel()  # default integrator, etc.
 
 
 def mwg_kernel(rng_key, state, parameters):

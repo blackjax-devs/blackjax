@@ -24,7 +24,7 @@ import blackjax.mcmc.proposal as proposal
 from blackjax.types import PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise, pytree_size
 
-__all__ = ["GHMCState", "init", "kernel"]
+__all__ = ["GHMCState", "init", "build_kernel"]
 
 
 class GHMCState(NamedTuple):
@@ -62,7 +62,7 @@ def init(
     return GHMCState(position, momentum, logdensity, logdensity_grad, slice)
 
 
-def kernel(
+def build_kernel(
     noise_fn: Callable = lambda _: 0.0,
     divergence_threshold: float = 1000,
 ):
@@ -95,7 +95,7 @@ def kernel(
     """
     sample_proposal = proposal.nonreversible_slice_sampling
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: GHMCState,
         logdensity_fn: Callable,
@@ -166,7 +166,7 @@ def kernel(
 
         return state, info
 
-    return one_step
+    return kernel
 
 
 def update_momentum(rng_key, state, alpha):

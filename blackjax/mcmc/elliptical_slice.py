@@ -20,7 +20,7 @@ import jax.numpy as jnp
 from blackjax.types import Array, PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["EllipSliceState", "EllipSliceInfo", "init", "kernel"]
+__all__ = ["EllipSliceState", "EllipSliceInfo", "init", "build_kernel"]
 
 
 class EllipSliceState(NamedTuple):
@@ -66,7 +66,7 @@ def init(position: PyTree, logdensity_fn: Callable):
     return EllipSliceState(position, logdensity)
 
 
-def kernel(cov_matrix: Array, mean: Array):
+def build_kernel(cov_matrix: Array, mean: Array):
     """Build an Elliptical Slice sampling kernel :cite:p:`murray2010elliptical`.
 
     Parameters
@@ -99,7 +99,7 @@ def kernel(cov_matrix: Array, mean: Array):
     def momentum_generator(rng_key, position):
         return generate_gaussian_noise(rng_key, position, mean, cov_matrix_sqrt)
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: EllipSliceState,
         logdensity_fn: Callable,
@@ -109,7 +109,7 @@ def kernel(cov_matrix: Array, mean: Array):
         )
         return proposal_generator(rng_key, state)
 
-    return one_step
+    return kernel
 
 
 def elliptical_proposal(

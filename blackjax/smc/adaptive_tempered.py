@@ -22,10 +22,10 @@ import blackjax.smc.solver as solver
 import blackjax.smc.tempered as tempered
 from blackjax.types import PRNGKey
 
-__all__ = ["kernel"]
+__all__ = ["build_kernel"]
 
 
-def kernel(
+def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     mcmc_step_fn: Callable,
@@ -81,7 +81,7 @@ def kernel(
 
         return delta
 
-    kernel = tempered.kernel(
+    tempered_kernel = tempered.build_kernel(
         logprior_fn,
         loglikelihood_fn,
         mcmc_step_fn,
@@ -89,7 +89,7 @@ def kernel(
         resampling_fn,
     )
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: tempered.TemperedSMCState,
         num_mcmc_steps: int,
@@ -97,6 +97,6 @@ def kernel(
     ) -> Tuple[tempered.TemperedSMCState, base.SMCInfo]:
         delta = compute_delta(state)
         lmbda = delta + state.lmbda
-        return kernel(rng_key, state, num_mcmc_steps, lmbda, mcmc_parameters)
+        return tempered_kernel(rng_key, state, num_mcmc_steps, lmbda, mcmc_parameters)
 
-    return one_step
+    return kernel

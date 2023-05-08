@@ -9,7 +9,7 @@ import jax.numpy as jnp
 from blackjax.sgmcmc.diffusions import overdamped_langevin
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["ContourSGLDState", "init", "kernel"]
+__all__ = ["ContourSGLDState", "init", "build_kernel"]
 
 
 class ContourSGLDState(NamedTuple):
@@ -39,7 +39,7 @@ def init(position: PyTree, num_partitions=512):
     return ContourSGLDState(position, energy_pdf, num_partitions - 1)
 
 
-def kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
+def build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
     r"""
 
     Parameters
@@ -61,7 +61,7 @@ def kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
 
     integrator = overdamped_langevin()
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: ContourSGLDState,
         logdensity_estimator: Callable,
@@ -157,4 +157,4 @@ def kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
 
         return ContourSGLDState(position, energy_pdf, idx)
 
-    return one_step
+    return kernel

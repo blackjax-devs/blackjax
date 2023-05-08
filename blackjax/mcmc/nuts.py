@@ -26,7 +26,7 @@ import blackjax.mcmc.termination as termination
 import blackjax.mcmc.trajectory as trajectory
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["NUTSInfo", "init", "kernel"]
+__all__ = ["NUTSInfo", "init", "build_kernel"]
 
 
 init = hmc.init
@@ -73,7 +73,7 @@ class NUTSInfo(NamedTuple):
     acceptance_rate: float
 
 
-def kernel(
+def build_kernel(
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: int = 1000,
     max_num_doublings: int = 10,
@@ -114,7 +114,7 @@ def kernel(
 
     """
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: hmc.HMCState,
         logdensity_fn: Callable,
@@ -151,7 +151,7 @@ def kernel(
         )
         return proposal, info
 
-    return one_step
+    return kernel
 
 
 def iterative_nuts_proposal(

@@ -20,7 +20,7 @@ import blackjax.smc as smc
 from blackjax.smc.base import SMCState
 from blackjax.types import PRNGKey, PyTree
 
-__all__ = ["TemperedSMCState", "init", "kernel"]
+__all__ = ["TemperedSMCState", "init", "build_kernel"]
 
 
 class TemperedSMCState(NamedTuple):
@@ -44,7 +44,7 @@ def init(particles: PyTree):
     return TemperedSMCState(particles, weights, 0.0)
 
 
-def kernel(
+def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     mcmc_step_fn: Callable,
@@ -88,7 +88,7 @@ def kernel(
 
     """
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: TemperedSMCState,
         num_mcmc_steps: int,
@@ -150,4 +150,4 @@ def kernel(
 
         return tempered_state, info
 
-    return one_step
+    return kernel
