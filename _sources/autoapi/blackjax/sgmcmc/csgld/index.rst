@@ -27,7 +27,7 @@ Functions
 .. autoapisummary::
 
    blackjax.sgmcmc.csgld.init
-   blackjax.sgmcmc.csgld.kernel
+   blackjax.sgmcmc.csgld.build_kernel
 
 
 
@@ -62,7 +62,7 @@ Functions
 .. py:function:: init(position: blackjax.types.PyTree, num_partitions=512)
 
 
-.. py:function:: kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable
+.. py:function:: build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable
 
    :param num_partitions: The number of partitions we divide the energy landscape into.
    :param energy_gap: The difference in energy :math:`\Delta u` between the successive

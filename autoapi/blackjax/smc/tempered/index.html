@@ -340,7 +340,7 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tempered.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tempered.kernel"><code class="docutils literal notranslate"><span class="pre">kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tempered.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -377,7 +377,7 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.tempered.init" title="blackjax.smc.tempered.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(particles)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.tempered.kernel" title="blackjax.smc.tempered.kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kernel</span></code></a>(→ Callable)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.tempered.build_kernel" title="blackjax.smc.tempered.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(→ Callable)</p></td>
 <td><p>Build the base Tempered SMC kernel.</p></td>
 </tr>
 </tbody>
@@ -415,8 +415,8 @@ document.write(`
 <dd></dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="blackjax.smc.tempered.kernel">
-<span class="sig-name descname"><span class="pre">kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprior_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_step_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_init_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resampling_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/tempered.html#kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.tempered.kernel" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.smc.tempered.build_kernel">
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprior_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_step_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_init_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resampling_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/tempered.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.tempered.build_kernel" title="Permalink to this definition">#</a></dt>
 <dd><p>Build the base Tempered SMC kernel.</p>
 <p>Tempered SMC uses tempering to sample from a distribution given by</p>
 <div class="math notranslate nohighlight">
@@ -511,7 +511,7 @@ log-probability density function.</p></li>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tempered.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tempered.kernel"><code class="docutils literal notranslate"><span class="pre">kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tempered.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
 </ul>
 </li>
 </ul>

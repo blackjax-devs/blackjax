@@ -27,7 +27,7 @@ Functions
 .. autoapisummary::
 
    blackjax.mcmc.ghmc.init
-   blackjax.mcmc.ghmc.kernel
+   blackjax.mcmc.ghmc.build_kernel
 
 
 
@@ -76,7 +76,7 @@ Functions
 .. py:function:: init(rng_key: blackjax.types.PRNGKey, position: blackjax.types.PyTree, logdensity_fn: Callable)
 
 
-.. py:function:: kernel(noise_fn: Callable = lambda _: 0.0, divergence_threshold: float = 1000)
+.. py:function:: build_kernel(noise_fn: Callable = lambda _: 0.0, divergence_threshold: float = 1000)
 
    Build a Generalized HMC kernel.
 

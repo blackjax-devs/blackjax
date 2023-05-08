@@ -349,7 +349,7 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.kernel"><code class="docutils literal notranslate"><span class="pre">kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -390,7 +390,7 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.hmc.init" title="blackjax.mcmc.hmc.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(position, logdensity_fn)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.hmc.kernel" title="blackjax.mcmc.hmc.kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kernel</span></code></a>([integrator, divergence_threshold])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.hmc.build_kernel" title="blackjax.mcmc.hmc.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>([integrator, divergence_threshold])</p></td>
 <td><p>Build a HMC kernel.</p></td>
 </tr>
 </tbody>
@@ -490,8 +490,8 @@ momentum.</p>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="blackjax.mcmc.hmc.kernel">
-<span class="sig-name descname"><span class="pre">kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/hmc.html#kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.hmc.kernel" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.mcmc.hmc.build_kernel">
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/hmc.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.hmc.build_kernel" title="Permalink to this definition">#</a></dt>
 <dd><p>Build a HMC kernel.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -583,7 +583,7 @@ momentum.</p>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.kernel"><code class="docutils literal notranslate"><span class="pre">kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
 </ul>
 </li>
 </ul>

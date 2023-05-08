@@ -28,7 +28,7 @@ Functions
 .. autoapisummary::
 
    blackjax.mcmc.periodic_orbital.init
-   blackjax.mcmc.periodic_orbital.kernel
+   blackjax.mcmc.periodic_orbital.build_kernel
    blackjax.mcmc.periodic_orbital.periodic_orbital_proposal
 
 
@@ -134,7 +134,7 @@ Functions
              * *gradient.*
 
 
-.. py:function:: kernel(bijection: Callable = integrators.velocity_verlet)
+.. py:function:: build_kernel(bijection: Callable = integrators.velocity_verlet)
 
    Build a Periodic Orbital kernel :cite:p:`neklyudov2022orbital`.
 

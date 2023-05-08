@@ -69,7 +69,7 @@ Functions
 
       
 
-   .. py:attribute:: kernel
+   .. py:attribute:: build_kernel
 
       
 
@@ -92,7 +92,7 @@ Functions
 
       
 
-   .. py:attribute:: kernel
+   .. py:attribute:: build_kernel
 
       
 
@@ -101,7 +101,7 @@ Functions
 
    Implements the (basic) user interface for the HMC kernel.
 
-   The general hmc kernel (:meth:`blackjax.mcmc.hmc.kernel`, alias `blackjax.hmc.kernel`) can be
+   The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias `blackjax.hmc.build_kernel`) can be
    cumbersome to manipulate. Since most users only need to specify the kernel
    parameters at initialization time, we provide a helper function that
    specializes the general kernel.
@@ -132,7 +132,7 @@ Functions
 
       import blackjax.mcmc.integrators as integrators
 
-      kernel = blackjax.hmc.kernel(integrators.mclachlan)
+      kernel = blackjax.hmc.build_kernel(integrators.mclachlan)
       state = blackjax.hmc.init(position, logdensity_fn)
       state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
 
@@ -153,7 +153,7 @@ Functions
 
       
 
-   .. py:attribute:: kernel
+   .. py:attribute:: build_kernel
 
       
 
@@ -162,7 +162,7 @@ Functions
 
    Implements the (basic) user interface for the MALA kernel.
 
-   The general mala kernel (:meth:`blackjax.mcmc.mala.kernel`, alias `blackjax.mala.kernel`) can be
+   The general mala kernel builder (:meth:`blackjax.mcmc.mala.build_kernel`, alias `blackjax.mala.build_kernel`) can be
    cumbersome to manipulate. Since most users only need to specify the kernel
    parameters at initialization time, we provide a helper function that
    specializes the general kernel.
@@ -191,7 +191,7 @@ Functions
 
    .. code::
 
-      kernel = blackjax.mala.kernel(logdensity_fn)
+      kernel = blackjax.mala.build_kernel(logdensity_fn)
       state = blackjax.mala.init(position, logdensity_fn)
       state, info = kernel(rng_key, state, logdensity_fn, step_size)
 
@@ -204,7 +204,7 @@ Functions
 
       
 
-   .. py:attribute:: kernel
+   .. py:attribute:: build_kernel
 
       
 
@@ -236,7 +236,7 @@ Functions
 
       import blackjax.mcmc.integrators as integrators
 
-      kernel = blackjax.nuts.kernel(integrators.yoshida)
+      kernel = blackjax.nuts.build_kernel(integrators.yoshida)
       state = blackjax.nuts.init(position, logdensity_fn)
       state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix)
 
@@ -257,7 +257,7 @@ Functions
 
       
 
-   .. py:attribute:: kernel
+   .. py:attribute:: build_kernel
 
       
 
@@ -300,8 +300,8 @@ Functions
 
    Implements the (basic) user interface for the SGLD kernel.
 
-   The general sgld kernel (:meth:`blackjax.mcmc.sgld.kernel`, alias
-   `blackjax.sgld.kernel`) can be cumbersome to manipulate. Since most users
+   The general sgld kernel builder (:meth:`blackjax.mcmc.sgld.build_kernel`, alias
+   `blackjax.sgld.build_kernel`) can be cumbersome to manipulate. Since most users
    only need to specify the kernel parameters at initialization time, we
    provide a helper function that specializes the general kernel.
 
@@ -342,7 +342,7 @@ Functions
 
    :rtype: A ``MCMCSamplingAlgorithm``.
 
-   .. py:attribute:: kernel
+   .. py:attribute:: build_kernel
 
       
 
@@ -351,8 +351,8 @@ Functions
 
    Implements the (basic) user interface for the SGHMC kernel.
 
-   The general sghmc kernel (:meth:`blackjax.mcmc.sghmc.kernel`, alias
-   `blackjax.sghmc.kernel`) can be cumbersome to manipulate. Since most users
+   The general sghmc kernel builder (:meth:`blackjax.mcmc.sghmc.build_kernel`, alias
+   `blackjax.sghmc.build_kernel`) can be cumbersome to manipulate. Since most users
    only need to specify the kernel parameters at initialization time, we
    provide a helper function that specializes the general kernel.
 
@@ -393,7 +393,7 @@ Functions
 
    :rtype: A ``MCMCSamplingAlgorithm``.
 
-   .. py:attribute:: kernel
+   .. py:attribute:: build_kernel
 
       
 
@@ -426,7 +426,7 @@ Functions
 
       
 
-   .. py:attribute:: kernel
+   .. py:attribute:: build_kernel
 
       
 
@@ -652,7 +652,7 @@ Functions
 
       
 
-   .. py:attribute:: kernel
+   .. py:attribute:: build_kernel
 
       
 
@@ -687,7 +687,7 @@ Functions
 
       
 
-   .. py:attribute:: kernel
+   .. py:attribute:: build_kernel
 
       
 
@@ -747,7 +747,7 @@ Functions
 
       
 
-   .. py:attribute:: kernel
+   .. py:attribute:: build_kernel
 
       
 

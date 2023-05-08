@@ -352,14 +352,14 @@ document.write(`
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
 <span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;kernel&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;build_kernel&quot;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html#blackjax.sgmcmc.sghmc.kernel">[docs]</a><span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span><span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<div class="viewcode-block" id="build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html#blackjax.sgmcmc.sghmc.build_kernel">[docs]</a><span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span><span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Stochastic gradient Hamiltonian Monte Carlo (SgHMC) algorithm.&quot;&quot;&quot;</span>
     <span class="n">integrator</span> <span class="o">=</span> <span class="n">diffusions</span><span class="o">.</span><span class="n">sghmc</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
         <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
         <span class="n">grad_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
@@ -382,7 +382,7 @@ document.write(`
 
         <span class="k">return</span> <span class="n">position</span>
 
-    <span class="k">return</span> <span class="n">one_step</span></div>
+    <span class="k">return</span> <span class="n">kernel</span></div>
 </pre></div>
 
                 </article>

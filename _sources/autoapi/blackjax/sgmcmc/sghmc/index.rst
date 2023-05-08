@@ -18,11 +18,11 @@ Functions
 
 .. autoapisummary::
 
-   blackjax.sgmcmc.sghmc.kernel
+   blackjax.sgmcmc.sghmc.build_kernel
 
 
 
-.. py:function:: kernel(alpha: float = 0.01, beta: float = 0) -> Callable
+.. py:function:: build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable
 
    Stochastic gradient Hamiltonian Monte Carlo (SgHMC) algorithm.
 

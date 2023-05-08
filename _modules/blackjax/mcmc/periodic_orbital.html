@@ -445,7 +445,7 @@ document.write(`
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html#blackjax.mcmc.periodic_orbital.kernel">[docs]</a><span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span>
+<div class="viewcode-block" id="build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html#blackjax.mcmc.periodic_orbital.build_kernel">[docs]</a><span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span>
     <span class="n">bijection</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Periodic Orbital kernel :cite:p:`neklyudov2022orbital`.</span>
@@ -463,7 +463,7 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">PeriodicOrbitalState</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
@@ -542,7 +542,7 @@ document.write(`
 
         <span class="k">return</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">info</span>
 
-    <span class="k">return</span> <span class="n">one_step</span></div>
+    <span class="k">return</span> <span class="n">kernel</span></div>
 
 
 <div class="viewcode-block" id="periodic_orbital_proposal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html#blackjax.mcmc.periodic_orbital.periodic_orbital_proposal">[docs]</a><span class="k">def</span> <span class="nf">periodic_orbital_proposal</span><span class="p">(</span>

@@ -28,7 +28,7 @@ Functions
 .. autoapisummary::
 
    blackjax.mcmc.hmc.init
-   blackjax.mcmc.hmc.kernel
+   blackjax.mcmc.hmc.build_kernel
 
 
 
@@ -129,7 +129,7 @@ Functions
 .. py:function:: init(position: blackjax.types.PyTree, logdensity_fn: Callable)
 
 
-.. py:function:: kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000)
+.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000)
 
    Build a HMC kernel.
 

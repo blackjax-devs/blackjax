@@ -26,7 +26,7 @@ Functions
 
 .. autoapisummary::
 
-   blackjax.mcmc.nuts.kernel
+   blackjax.mcmc.nuts.build_kernel
 
 
 
@@ -120,7 +120,7 @@ Attributes
       
 
 
-.. py:function:: kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: int = 1000, max_num_doublings: int = 10)
+.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: int = 1000, max_num_doublings: int = 10)
 
    Build an iterative NUTS kernel.
 

@@ -351,7 +351,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
 <span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;EllipSliceState&quot;</span><span class="p">,</span> <span class="s2">&quot;EllipSliceInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;kernel&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;EllipSliceState&quot;</span><span class="p">,</span> <span class="s2">&quot;EllipSliceInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="EllipSliceState"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceState">[docs]</a><span class="k">class</span> <span class="nc">EllipSliceState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -397,7 +397,7 @@ document.write(`
     <span class="k">return</span> <span class="n">EllipSliceState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.kernel">[docs]</a><span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span><span class="n">cov_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">mean</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
+<div class="viewcode-block" id="build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.build_kernel">[docs]</a><span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span><span class="n">cov_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">mean</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an Elliptical Slice sampling kernel :cite:p:`murray2010elliptical`.</span>
 
 <span class="sd">    Parameters</span>
@@ -430,7 +430,7 @@ document.write(`
     <span class="k">def</span> <span class="nf">momentum_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">cov_matrix_sqrt</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">EllipSliceState</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
@@ -440,7 +440,7 @@ document.write(`
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">one_step</span></div>
+    <span class="k">return</span> <span class="n">kernel</span></div>
 
 
 <span class="k">def</span> <span class="nf">elliptical_proposal</span><span class="p">(</span>

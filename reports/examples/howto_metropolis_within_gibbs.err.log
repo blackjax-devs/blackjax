@@ -20,8 +20,8 @@ mwg_init_x = blackjax.mcmc.rmh.init
 mwg_init_y = blackjax.mcmc.hmc.init
 
 # MCMC updaters
-mwg_step_fn_x = blackjax.mcmc.rmh.kernel()
-mwg_step_fn_y = blackjax.mcmc.hmc.kernel()  # default integrator, etc.
+mwg_step_fn_x = blackjax.mcmc.rmh.build_kernel()
+mwg_step_fn_y = blackjax.mcmc.hmc.build_kernel()  # default integrator, etc.
 
 
 def mwg_kernel(rng_key, state, parameters):

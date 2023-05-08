@@ -18,11 +18,11 @@ Functions
 
 .. autoapisummary::
 
-   blackjax.sgmcmc.sgld.kernel
+   blackjax.sgmcmc.sgld.build_kernel
 
 
 
-.. py:function:: kernel() -> Callable
+.. py:function:: build_kernel() -> Callable
 
    Stochastic gradient Langevin Dynamics (SgLD) algorithm.
 

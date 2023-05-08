@@ -28,7 +28,7 @@ Functions
 .. autoapisummary::
 
    blackjax.mcmc.mala.init
-   blackjax.mcmc.mala.kernel
+   blackjax.mcmc.mala.build_kernel
 
 
 
@@ -90,7 +90,7 @@ Functions
 .. py:function:: init(position: blackjax.types.PyTree, logdensity_fn: Callable) -> MALAState
 
 
-.. py:function:: kernel()
+.. py:function:: build_kernel()
 
    Build a MALA kernel.
 

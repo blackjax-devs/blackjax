@@ -420,7 +420,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="adaptive_tempered_smc.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.adaptive_tempered_smc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">tempered</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="adaptive_tempered_smc.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.adaptive_tempered_smc.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">adaptive_tempered</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
+<div class="viewcode-block" id="adaptive_tempered_smc.build_kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.adaptive_tempered_smc.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">adaptive_tempered</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -434,7 +434,7 @@ document.write(`
         <span class="n">root_solver</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">smc</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">dichotomy</span><span class="p">,</span>
         <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span>
             <span class="n">logprior_fn</span><span class="p">,</span>
             <span class="n">loglikelihood_fn</span><span class="p">,</span>
             <span class="n">mcmc_step_fn</span><span class="p">,</span>
@@ -448,7 +448,7 @@ document.write(`
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">num_mcmc_steps</span><span class="p">,</span>
@@ -485,7 +485,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="tempered_smc.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.tempered_smc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">tempered</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="tempered_smc.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.tempered_smc.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">tempered</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
+<div class="viewcode-block" id="tempered_smc.build_kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.tempered_smc.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">smc</span><span class="o">.</span><span class="n">tempered</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -497,7 +497,7 @@ document.write(`
         <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span>
             <span class="n">logprior_fn</span><span class="p">,</span>
             <span class="n">loglikelihood_fn</span><span class="p">,</span>
             <span class="n">mcmc_step_fn</span><span class="p">,</span>
@@ -509,7 +509,7 @@ document.write(`
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">num_mcmc_steps</span><span class="p">,</span>
@@ -528,7 +528,7 @@ document.write(`
 <div class="viewcode-block" id="hmc"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.hmc">[docs]</a><span class="k">class</span> <span class="nc">hmc</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the HMC kernel.</span>
 
-<span class="sd">    The general hmc kernel (:meth:`blackjax.mcmc.hmc.kernel`, alias `blackjax.hmc.kernel`) can be</span>
+<span class="sd">    The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias `blackjax.hmc.build_kernel`) can be</span>
 <span class="sd">    cumbersome to manipulate. Since most users only need to specify the kernel</span>
 <span class="sd">    parameters at initialization time, we provide a helper function that</span>
 <span class="sd">    specializes the general kernel.</span>
@@ -560,7 +560,7 @@ document.write(`
 
 <span class="sd">       import blackjax.mcmc.integrators as integrators</span>
 
-<span class="sd">       kernel = blackjax.hmc.kernel(integrators.mclachlan)</span>
+<span class="sd">       kernel = blackjax.hmc.build_kernel(integrators.mclachlan)</span>
 <span class="sd">       state = blackjax.hmc.init(position, logdensity_fn)</span>
 <span class="sd">       state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)</span>
 
@@ -589,7 +589,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="hmc.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.hmc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="hmc.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.hmc.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
+<div class="viewcode-block" id="hmc.build_kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.hmc.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -601,13 +601,13 @@ document.write(`
         <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
         <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">logdensity_fn</span><span class="p">,</span>
@@ -622,7 +622,7 @@ document.write(`
 <div class="viewcode-block" id="mala"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.mala">[docs]</a><span class="k">class</span> <span class="nc">mala</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the MALA kernel.</span>
 
-<span class="sd">    The general mala kernel (:meth:`blackjax.mcmc.mala.kernel`, alias `blackjax.mala.kernel`) can be</span>
+<span class="sd">    The general mala kernel builder (:meth:`blackjax.mcmc.mala.build_kernel`, alias `blackjax.mala.build_kernel`) can be</span>
 <span class="sd">    cumbersome to manipulate. Since most users only need to specify the kernel</span>
 <span class="sd">    parameters at initialization time, we provide a helper function that</span>
 <span class="sd">    specializes the general kernel.</span>
@@ -652,7 +652,7 @@ document.write(`
 
 <span class="sd">    .. code::</span>
 
-<span class="sd">       kernel = blackjax.mala.kernel(logdensity_fn)</span>
+<span class="sd">       kernel = blackjax.mala.build_kernel(logdensity_fn)</span>
 <span class="sd">       state = blackjax.mala.init(position, logdensity_fn)</span>
 <span class="sd">       state, info = kernel(rng_key, state, logdensity_fn, step_size)</span>
 
@@ -670,20 +670,20 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="mala.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.mala.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mala</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="mala.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.mala.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mala</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
+<div class="viewcode-block" id="mala.build_kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.mala.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mala</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
@@ -715,7 +715,7 @@ document.write(`
 
 <span class="sd">       import blackjax.mcmc.integrators as integrators</span>
 
-<span class="sd">       kernel = blackjax.nuts.kernel(integrators.yoshida)</span>
+<span class="sd">       kernel = blackjax.nuts.build_kernel(integrators.yoshida)</span>
 <span class="sd">       state = blackjax.nuts.init(position, logdensity_fn)</span>
 <span class="sd">       state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix)</span>
 
@@ -745,7 +745,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="nuts.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.nuts.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="nuts.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.nuts.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">nuts</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
+<div class="viewcode-block" id="nuts.build_kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.nuts.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">nuts</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -757,13 +757,13 @@ document.write(`
         <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
         <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">max_num_doublings</span><span class="p">)</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">max_num_doublings</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">logdensity_fn</span><span class="p">,</span>
@@ -820,7 +820,7 @@ document.write(`
         <span class="n">covariance</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
         <span class="n">mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">init</span><span class="p">,</span> <span class="n">step</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">marginal_latent_gaussian</span><span class="o">.</span><span class="n">init_and_kernel</span><span class="p">(</span>
+        <span class="n">init</span><span class="p">,</span> <span class="n">kernel</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">marginal_latent_gaussian</span><span class="o">.</span><span class="n">init_and_kernel</span><span class="p">(</span>
             <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">covariance</span><span class="p">,</span> <span class="n">mean</span>
         <span class="p">)</span>
 
@@ -828,7 +828,7 @@ document.write(`
             <span class="k">return</span> <span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">delta</span><span class="p">,</span>
@@ -845,8 +845,8 @@ document.write(`
 <div class="viewcode-block" id="sgld"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.sgld">[docs]</a><span class="k">class</span> <span class="nc">sgld</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the SGLD kernel.</span>
 
-<span class="sd">    The general sgld kernel (:meth:`blackjax.mcmc.sgld.kernel`, alias</span>
-<span class="sd">    `blackjax.sgld.kernel`) can be cumbersome to manipulate. Since most users</span>
+<span class="sd">    The general sgld kernel builder (:meth:`blackjax.mcmc.sgld.build_kernel`, alias</span>
+<span class="sd">    `blackjax.sgld.build_kernel`) can be cumbersome to manipulate. Since most users</span>
 <span class="sd">    only need to specify the kernel parameters at initialization time, we</span>
 <span class="sd">    provide a helper function that specializes the general kernel.</span>
 
@@ -895,13 +895,13 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="sgld.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.sgld.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">sgld</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
+<div class="viewcode-block" id="sgld.build_kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.sgld.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">sgld</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">grad_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
@@ -910,7 +910,7 @@ document.write(`
             <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
             <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="p">):</span>
-            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">grad_estimator</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">temperature</span>
             <span class="p">)</span>
 
@@ -920,8 +920,8 @@ document.write(`
 <div class="viewcode-block" id="sghmc"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.sghmc">[docs]</a><span class="k">class</span> <span class="nc">sghmc</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the SGHMC kernel.</span>
 
-<span class="sd">    The general sghmc kernel (:meth:`blackjax.mcmc.sghmc.kernel`, alias</span>
-<span class="sd">    `blackjax.sghmc.kernel`) can be cumbersome to manipulate. Since most users</span>
+<span class="sd">    The general sghmc kernel builder (:meth:`blackjax.mcmc.sghmc.build_kernel`, alias</span>
+<span class="sd">    `blackjax.sghmc.build_kernel`) can be cumbersome to manipulate. Since most users</span>
 <span class="sd">    only need to specify the kernel parameters at initialization time, we</span>
 <span class="sd">    provide a helper function that specializes the general kernel.</span>
 
@@ -970,17 +970,17 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="sghmc.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.sghmc.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">sghmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
+<div class="viewcode-block" id="sghmc.build_kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.sghmc.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">sghmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">grad_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">grad_estimator</span><span class="p">,</span>
@@ -1028,7 +1028,7 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 <div class="viewcode-block" id="csgld.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.csgld.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">csgld</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="csgld.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.csgld.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">csgld</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
+<div class="viewcode-block" id="csgld.build_kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.csgld.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sgmcmc</span><span class="o">.</span><span class="n">csgld</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -1040,7 +1040,7 @@ document.write(`
         <span class="n">energy_gap</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
         <span class="n">min_energy</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">num_partitions</span><span class="p">,</span> <span class="n">energy_gap</span><span class="p">,</span> <span class="n">min_energy</span><span class="p">)</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">num_partitions</span><span class="p">,</span> <span class="n">energy_gap</span><span class="p">,</span> <span class="n">min_energy</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">num_partitions</span><span class="p">)</span>
@@ -1052,7 +1052,7 @@ document.write(`
             <span class="n">step_size_diff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
             <span class="n">step_size_stoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="p">):</span>
-            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">logdensity_estimator</span><span class="p">,</span>
@@ -1130,7 +1130,7 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">mcmc_step</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
+    <span class="n">mcmc_kernel</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
 
     <span class="n">adapt_init</span><span class="p">,</span> <span class="n">adapt_step</span><span class="p">,</span> <span class="n">adapt_final</span> <span class="o">=</span> <span class="n">adaptation</span><span class="o">.</span><span class="n">window_adaptation</span><span class="o">.</span><span class="n">base</span><span class="p">(</span>
         <span class="n">is_mass_matrix_diagonal</span><span class="p">,</span>
@@ -1141,7 +1141,7 @@ document.write(`
         <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">adaptation_stage</span> <span class="o">=</span> <span class="n">xs</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
 
-        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mcmc_step</span><span class="p">(</span>
+        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mcmc_kernel</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">,</span>
             <span class="n">state</span><span class="p">,</span>
             <span class="n">logdensity_fn</span><span class="p">,</span>
@@ -1238,7 +1238,7 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">ghmc_step</span> <span class="o">=</span> <span class="n">ghmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
+    <span class="n">ghmc_kernel</span> <span class="o">=</span> <span class="n">ghmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
 
     <span class="n">adapt_init</span><span class="p">,</span> <span class="n">adapt_update</span> <span class="o">=</span> <span class="n">adaptation</span><span class="o">.</span><span class="n">meads_adaptation</span><span class="o">.</span><span class="n">base</span><span class="p">()</span>
 
@@ -1249,7 +1249,7 @@ document.write(`
 
         <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
         <span class="n">new_states</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
-            <span class="n">ghmc_step</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">ghmc_kernel</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="p">)(</span>
             <span class="n">keys</span><span class="p">,</span>
             <span class="n">states</span><span class="p">,</span>
@@ -1525,7 +1525,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="orbital_hmc.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.orbital_hmc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">periodic_orbital</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="orbital_hmc.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.orbital_hmc.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">periodic_orbital</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
+<div class="viewcode-block" id="orbital_hmc.build_kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.orbital_hmc.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">periodic_orbital</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -1536,13 +1536,13 @@ document.write(`
         <span class="o">*</span><span class="p">,</span>
         <span class="n">bijection</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">bijection</span><span class="p">)</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">bijection</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">logdensity_fn</span><span class="p">,</span>
@@ -1588,7 +1588,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="elliptical_slice.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.elliptical_slice.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">elliptical_slice</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="elliptical_slice.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.elliptical_slice.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">elliptical_slice</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
+<div class="viewcode-block" id="elliptical_slice.build_kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.elliptical_slice.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">elliptical_slice</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -1597,13 +1597,13 @@ document.write(`
         <span class="n">mean</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
         <span class="n">cov</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">cov</span><span class="p">,</span> <span class="n">mean</span><span class="p">)</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">cov</span><span class="p">,</span> <span class="n">mean</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">loglikelihood_fn</span><span class="p">,</span>
@@ -1675,7 +1675,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ghmc.init"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.ghmc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">ghmc</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="ghmc.kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.ghmc.kernel">[docs]</a>    <span class="n">kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">ghmc</span><span class="o">.</span><span class="n">kernel</span><span class="p">)</span></div>
+<div class="viewcode-block" id="ghmc.build_kernel"><a class="viewcode-back" href="../../autoapi/blackjax/kernels/index.html#blackjax.kernels.ghmc.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">mcmc</span><span class="o">.</span><span class="n">ghmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -1688,13 +1688,13 @@ document.write(`
         <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
         <span class="n">noise_gn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">step</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">noise_gn</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">noise_gn</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">logdensity_fn</span><span class="p">,</span>
@@ -1794,7 +1794,7 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">mcmc_step</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">kernel</span><span class="p">()</span>
+    <span class="n">mcmc_kernel</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
 
     <span class="n">adapt_init</span><span class="p">,</span> <span class="n">adapt_update</span><span class="p">,</span> <span class="n">adapt_final</span> <span class="o">=</span> <span class="n">adaptation</span><span class="o">.</span><span class="n">pathfinder_adaptation</span><span class="o">.</span><span class="n">base</span><span class="p">(</span>
         <span class="n">target_acceptance_rate</span><span class="p">,</span>
@@ -1802,7 +1802,7 @@ document.write(`
 
     <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
-        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mcmc_step</span><span class="p">(</span>
+        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mcmc_kernel</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">,</span>
             <span class="n">state</span><span class="p">,</span>
             <span class="n">logdensity_fn</span><span class="p">,</span>

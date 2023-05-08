@@ -347,7 +347,7 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.kernel"><code class="docutils literal notranslate"><span class="pre">kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.periodic_orbital_proposal"><code class="docutils literal notranslate"><span class="pre">periodic_orbital_proposal()</span></code></a></li>
 </ul>
 </li>
@@ -389,7 +389,7 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.init" title="blackjax.mcmc.periodic_orbital.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(→ PeriodicOrbitalState)</p></td>
 <td><p>Create a periodic orbital state from a position.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.kernel" title="blackjax.mcmc.periodic_orbital.kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kernel</span></code></a>([bijection])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.build_kernel" title="blackjax.mcmc.periodic_orbital.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>([bijection])</p></td>
 <td><p>Build a Periodic Orbital kernel <span id="id1">[<a class="reference internal" href="../../../../bib.html#id13" title="Kirill Neklyudov and Max Welling. Orbital mcmc. In International Conference on Artificial Intelligence and Statistics, 5790–5814. PMLR, 2022.">NW22</a>]</span>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.periodic_orbital_proposal" title="blackjax.mcmc.periodic_orbital.periodic_orbital_proposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">periodic_orbital_proposal</span></code></a>(→ Callable)</p></td>
@@ -507,8 +507,8 @@ with a position.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.kernel">
-<span class="sig-name descname"><span class="pre">kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bijection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.kernel" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.build_kernel">
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bijection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.build_kernel" title="Permalink to this definition">#</a></dt>
 <dd><p>Build a Periodic Orbital kernel <span id="id2">[<a class="reference internal" href="../../../../bib.html#id13" title="Kirill Neklyudov and Max Welling. Orbital mcmc. In International Conference on Artificial Intelligence and Statistics, 5790–5814. PMLR, 2022.">NW22</a>]</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -622,7 +622,7 @@ the orbit step by step.</p></li>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.kernel"><code class="docutils literal notranslate"><span class="pre">kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.periodic_orbital_proposal"><code class="docutils literal notranslate"><span class="pre">periodic_orbital_proposal()</span></code></a></li>
 </ul>
 </li>

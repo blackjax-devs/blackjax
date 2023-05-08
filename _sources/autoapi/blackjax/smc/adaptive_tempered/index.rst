@@ -13,11 +13,11 @@ Functions
 
 .. autoapisummary::
 
-   blackjax.smc.adaptive_tempered.kernel
+   blackjax.smc.adaptive_tempered.build_kernel
 
 
 
-.. py:function:: kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, target_ess: float, root_solver: Callable = solver.dichotomy) -> Callable
+.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, target_ess: float, root_solver: Callable = solver.dichotomy) -> Callable
 
    Build a Tempered SMC step using an adaptive schedule.
 

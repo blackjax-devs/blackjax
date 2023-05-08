@@ -28,7 +28,7 @@ Functions
 .. autoapisummary::
 
    blackjax.mcmc.elliptical_slice.init
-   blackjax.mcmc.elliptical_slice.kernel
+   blackjax.mcmc.elliptical_slice.build_kernel
 
 
 
@@ -95,7 +95,7 @@ Functions
 .. py:function:: init(position: blackjax.types.PyTree, logdensity_fn: Callable)
 
 
-.. py:function:: kernel(cov_matrix: blackjax.types.Array, mean: blackjax.types.Array)
+.. py:function:: build_kernel(cov_matrix: blackjax.types.Array, mean: blackjax.types.Array)
 
    Build an Elliptical Slice sampling kernel :cite:p:`murray2010elliptical`.
 
