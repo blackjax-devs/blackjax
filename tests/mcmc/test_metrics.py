@@ -3,6 +3,7 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
 from jax import random
+from jax.scipy import linalg
 
 from blackjax.mcmc import metrics
 
@@ -47,13 +48,14 @@ class GaussianEuclideanMetricsTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_gaussian_euclidean_dim_2(self):
         """Test Gaussian Euclidean Function with ndim 2"""
-        inverse_mass_matrix = jnp.asarray([[1 / 9, 0], [0, 1 / 4]], dtype=self.dtype)
+        inverse_mass_matrix = jnp.asarray([[1 / 9, 0.5], [0.5, 1 / 4]], dtype=self.dtype)
         momentum, kinetic_energy, _ = metrics.gaussian_euclidean(inverse_mass_matrix)
 
         arbitrary_position = jnp.asarray([12345, 23456], dtype=self.dtype)
         momentum_val = self.variant(momentum)(self.key, arbitrary_position)
 
-        expected_momentum_val = jnp.asarray([3, 2]) * random.normal(
+        L_inv = linalg.cholesky(linalg.inv(inverse_mass_matrix), lower=True)
+        expected_momentum_val = L_inv @ random.normal(
             self.key, shape=(2,)
         )
 
