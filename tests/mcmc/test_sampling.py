@@ -497,27 +497,27 @@ mcse_test_cases = [
     {
         "algorithm": blackjax.hmc,
         "parameters": {
-            "step_size": .5,
+            "step_size": 0.5,
             "num_integration_steps": 20,
         },
         "is_mass_matrix_diagonal": True,
     },
     {
         "algorithm": blackjax.nuts,
-        "parameters": {"step_size": .5},
+        "parameters": {"step_size": 0.5},
         "is_mass_matrix_diagonal": True,
-    },    
+    },
     {
         "algorithm": blackjax.hmc,
         "parameters": {
-            "step_size": .85,
+            "step_size": 0.85,
             "num_integration_steps": 27,
         },
         "is_mass_matrix_diagonal": False,
     },
     {
         "algorithm": blackjax.nuts,
-        "parameters": {"step_size": .85},
+        "parameters": {"step_size": 0.85},
         "is_mass_matrix_diagonal": False,
     },
 ]
@@ -571,10 +571,10 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             true_loc,
             true_scale,
             true_rho,
-            true_cov
+            true_cov,
         ) = self.generate_multivariate_target(None)
         if is_mass_matrix_diagonal:
-            inverse_mass_matrix = true_scale ** 2
+            inverse_mass_matrix = true_scale**2
         else:
             inverse_mass_matrix = true_cov
         kernel = algorithm(

@@ -90,7 +90,7 @@ def gaussian_euclidean(
         mass_matrix_sqrt = jscipy.linalg.solve_triangular(
             L, identity, lower=True, trans=True
         )
-        # Note that mass_matrix_sqrt is a upper triangular matrix here, with 
+        # Note that mass_matrix_sqrt is a upper triangular matrix here, with
         #   jscipy.linalg.inv(mass_matrix_sqrt @ mass_matrix_sqrt.T) == inverse_mass_matrix
         # An alternative is to compute directly the cholesky factor of the inverse mass matrix
         #   mass_matrix_sqrt = jscipy.linalg.cholesky(jscipy.linalg.inv(inverse_mass_matrix), lower=True)

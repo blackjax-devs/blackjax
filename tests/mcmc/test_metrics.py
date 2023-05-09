@@ -48,16 +48,16 @@ class GaussianEuclideanMetricsTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_gaussian_euclidean_dim_2(self):
         """Test Gaussian Euclidean Function with ndim 2"""
-        inverse_mass_matrix = jnp.asarray([[1 / 9, 0.5], [0.5, 1 / 4]], dtype=self.dtype)
+        inverse_mass_matrix = jnp.asarray(
+            [[1 / 9, 0.5], [0.5, 1 / 4]], dtype=self.dtype
+        )
         momentum, kinetic_energy, _ = metrics.gaussian_euclidean(inverse_mass_matrix)
 
         arbitrary_position = jnp.asarray([12345, 23456], dtype=self.dtype)
         momentum_val = self.variant(momentum)(self.key, arbitrary_position)
 
         L_inv = linalg.cholesky(linalg.inv(inverse_mass_matrix), lower=True)
-        expected_momentum_val = L_inv @ random.normal(
-            self.key, shape=(2,)
-        )
+        expected_momentum_val = L_inv @ random.normal(self.key, shape=(2,))
 
         kinetic_energy_val = self.variant(kinetic_energy)(momentum_val)
         velocity = jnp.dot(inverse_mass_matrix, momentum_val)
