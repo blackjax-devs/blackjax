@@ -497,17 +497,28 @@ mcse_test_cases = [
     {
         "algorithm": blackjax.hmc,
         "parameters": {
-            "step_size": 1.0,
-            "num_integration_steps": 32,
+            "step_size": 0.5,
+            "num_integration_steps": 20,
         },
+        "is_mass_matrix_diagonal": True,
     },
     {
         "algorithm": blackjax.nuts,
-        "parameters": {"step_size": 1.0},
+        "parameters": {"step_size": 0.5},
+        "is_mass_matrix_diagonal": True,
+    },
+    {
+        "algorithm": blackjax.hmc,
+        "parameters": {
+            "step_size": 0.85,
+            "num_integration_steps": 27,
+        },
+        "is_mass_matrix_diagonal": False,
     },
     {
         "algorithm": blackjax.nuts,
-        "parameters": {"step_size": 1.0},
+        "parameters": {"step_size": 0.85},
+        "is_mass_matrix_diagonal": False,
     },
 ]
 
@@ -538,7 +549,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         def logdensity_fn(x):
             return stats.multivariate_normal.logpdf(x, loc, cov).sum()
 
-        return logdensity_fn, loc, scale, rho
+        return logdensity_fn, loc, scale, rho, cov
 
     def mcse_test(self, samples, true_param, p_val=0.01):
         posterior_mean = jnp.mean(samples, axis=[0, 1])
@@ -552,7 +563,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         return scaled_error
 
     @parameterized.parameters(mcse_test_cases)
-    def test_mcse(self, algorithm, parameters):
+    def test_mcse(self, algorithm, parameters, is_mass_matrix_diagonal):
         """Test convergence using Monte Carlo CLT across multiple chains."""
         pos_init_key, sample_key = jax.random.split(self.key)
         (
@@ -560,10 +571,15 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             true_loc,
             true_scale,
             true_rho,
+            true_cov,
         ) = self.generate_multivariate_target(None)
+        if is_mass_matrix_diagonal:
+            inverse_mass_matrix = true_scale**2
+        else:
+            inverse_mass_matrix = true_cov
         kernel = algorithm(
             logdensity_fn,
-            inverse_mass_matrix=true_scale,
+            inverse_mass_matrix=inverse_mass_matrix,
             **parameters,
         )
 
