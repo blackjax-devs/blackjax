@@ -49,6 +49,7 @@ __all__ = [
     "pathfinder",
     "pathfinder_adaptation",
     "mgrad_gaussian",
+    "slice"
 ]
 
 
@@ -1277,6 +1278,58 @@ class elliptical_slice:
                 state,
                 loglikelihood_fn,
             )
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
+
+
+class slice:
+    """Implements the (basic) user interface for the Slice sampling kernel.
+
+    Examples
+    --------
+
+    A slice sampling kernel can be initialized like this:
+
+    .. code::
+
+        slice = blackjax.slice(logdensity_fn, n_doublings)
+        state = slice.init(position)
+        new_state, info = slice.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(slice.step)
+        new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    logdensity_fn: Callable
+        the unnormalized posterior distribution we wish to sample from.
+    n_doublings: int
+        maximal number of slice expansions.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+    """
+
+    init = staticmethod(mcmc.slice.init)
+    kernel = staticmethod(mcmc.slice.kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_fn: Callable,
+        n_doublings: int = 5,
+    ) -> MCMCSamplingAlgorithm:
+        step = cls.kernel(n_doublings)
+
+        def init_fn(position: PyTree):
+            return cls.init(position, logdensity_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return step(rng_key, state, logdensity_fn)
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)
 
