@@ -47,101 +47,6 @@ class MEADSAdaptationState(NamedTuple):
     delta: float
 
 
-def meads_adaptation(
-    logdensity_fn: Callable,
-    num_chains: int,
-) -> AdaptationAlgorithm:
-    """Adapt the parameters of the Generalized HMC algorithm.
-
-    The Generalized HMC algorithm depends on three parameters, each controlling
-    one element of its behaviour: step size controls the integrator's dynamics,
-    alpha controls the persistency of the momentum variable, and delta controls
-    the deterministic transformation of the slice variable used to perform the
-    non-reversible Metropolis-Hastings accept/reject step.
-
-    The step size parameter is chosen to ensure the stability of the velocity
-    verlet integrator, the alpha parameter to make the influence of the current
-    state on future states of the momentum variable to decay exponentially, and
-    the delta parameter to maximize the acceptance of proposal but with good
-    mixing properties for the slice variable. These characteristics are targeted
-    by controlling heuristics based on the maximum eigenvalues of the correlation
-    and gradient matrices of the cross-chain samples, under simpifyng assumptions.
-
-    Good tuning is fundamental for the non-reversible Generalized HMC sampling
-    algorithm to explore the target space efficienty and output uncorrelated, or
-    as uncorrelated as possible, samples from the target space. Furthermore, the
-    single integrator step of the algorithm lends itself for fast sampling
-    on parallel computer architectures.
-
-    Parameters
-    ----------
-    logdensity_fn
-        The log density probability density function from which we wish to sample.
-    num_chains
-        Number of chains used for cross-chain warm-up training.
-
-    Returns
-    -------
-    A function that returns the last cross-chain state, a sampling kernel with the
-    tuned parameter values, and all the warm-up states for diagnostics.
-
-    """
-
-    ghmc_kernel = mcmc.ghmc.build_kernel()
-
-    adapt_init, adapt_update = base()
-
-    batch_init = jax.vmap(lambda r, p: mcmc.ghmc.init(r, p, logdensity_fn))
-
-    def one_step(carry, rng_key):
-        states, adaptation_state = carry
-
-        keys = jax.random.split(rng_key, num_chains)
-        new_states, info = jax.vmap(
-            ghmc_kernel, in_axes=(0, 0, None, None, None, None, None)
-        )(
-            keys,
-            states,
-            logdensity_fn,
-            adaptation_state.step_size,
-            adaptation_state.position_sigma,
-            adaptation_state.alpha,
-            adaptation_state.delta,
-        )
-        new_adaptation_state = adapt_update(
-            adaptation_state, new_states.position, new_states.logdensity_grad
-        )
-
-        return (new_states, new_adaptation_state), AdaptationInfo(
-            new_states,
-            info,
-            new_adaptation_state,
-        )
-
-    def run(rng_key: PRNGKey, positions: PyTree, num_steps: int = 1000):
-        key_init, key_adapt = jax.random.split(rng_key)
-
-        rng_keys = jax.random.split(key_init, num_chains)
-        init_states = batch_init(rng_keys, positions)
-        init_adaptation_state = adapt_init(positions, init_states.logdensity_grad)
-
-        keys = jax.random.split(key_adapt, num_steps)
-        (last_states, last_adaptation_state), info = jax.lax.scan(
-            one_step, (init_states, init_adaptation_state), keys
-        )
-
-        parameters = {
-            "step_size": last_adaptation_state.step_size,
-            "momentum_inverse_scale": last_adaptation_state.position_sigma,
-            "alpha": last_adaptation_state.alpha,
-            "delta": last_adaptation_state.delta,
-        }
-
-        return AdaptationResults(last_states, parameters), info
-
-    return AdaptationAlgorithm(run)  # type: ignore[arg-type]
-
-
 def base():
     """Maximum-Eigenvalue Adaptation of damping and step size for the generalized
     Hamiltonian Monte Carlo kernel :cite:p:`hoffman2022tuning`.
@@ -253,6 +158,101 @@ def base():
         )
 
     return init, update
+
+
+def meads_adaptation(
+    logdensity_fn: Callable,
+    num_chains: int,
+) -> AdaptationAlgorithm:
+    """Adapt the parameters of the Generalized HMC algorithm.
+
+    The Generalized HMC algorithm depends on three parameters, each controlling
+    one element of its behaviour: step size controls the integrator's dynamics,
+    alpha controls the persistency of the momentum variable, and delta controls
+    the deterministic transformation of the slice variable used to perform the
+    non-reversible Metropolis-Hastings accept/reject step.
+
+    The step size parameter is chosen to ensure the stability of the velocity
+    verlet integrator, the alpha parameter to make the influence of the current
+    state on future states of the momentum variable to decay exponentially, and
+    the delta parameter to maximize the acceptance of proposal but with good
+    mixing properties for the slice variable. These characteristics are targeted
+    by controlling heuristics based on the maximum eigenvalues of the correlation
+    and gradient matrices of the cross-chain samples, under simpifyng assumptions.
+
+    Good tuning is fundamental for the non-reversible Generalized HMC sampling
+    algorithm to explore the target space efficienty and output uncorrelated, or
+    as uncorrelated as possible, samples from the target space. Furthermore, the
+    single integrator step of the algorithm lends itself for fast sampling
+    on parallel computer architectures.
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log density probability density function from which we wish to sample.
+    num_chains
+        Number of chains used for cross-chain warm-up training.
+
+    Returns
+    -------
+    A function that returns the last cross-chain state, a sampling kernel with the
+    tuned parameter values, and all the warm-up states for diagnostics.
+
+    """
+
+    ghmc_kernel = mcmc.ghmc.build_kernel()
+
+    adapt_init, adapt_update = base()
+
+    batch_init = jax.vmap(lambda r, p: mcmc.ghmc.init(r, p, logdensity_fn))
+
+    def one_step(carry, rng_key):
+        states, adaptation_state = carry
+
+        keys = jax.random.split(rng_key, num_chains)
+        new_states, info = jax.vmap(
+            ghmc_kernel, in_axes=(0, 0, None, None, None, None, None)
+        )(
+            keys,
+            states,
+            logdensity_fn,
+            adaptation_state.step_size,
+            adaptation_state.position_sigma,
+            adaptation_state.alpha,
+            adaptation_state.delta,
+        )
+        new_adaptation_state = adapt_update(
+            adaptation_state, new_states.position, new_states.logdensity_grad
+        )
+
+        return (new_states, new_adaptation_state), AdaptationInfo(
+            new_states,
+            info,
+            new_adaptation_state,
+        )
+
+    def run(rng_key: PRNGKey, positions: PyTree, num_steps: int = 1000):
+        key_init, key_adapt = jax.random.split(rng_key)
+
+        rng_keys = jax.random.split(key_init, num_chains)
+        init_states = batch_init(rng_keys, positions)
+        init_adaptation_state = adapt_init(positions, init_states.logdensity_grad)
+
+        keys = jax.random.split(key_adapt, num_steps)
+        (last_states, last_adaptation_state), info = jax.lax.scan(
+            one_step, (init_states, init_adaptation_state), keys
+        )
+
+        parameters = {
+            "step_size": last_adaptation_state.step_size,
+            "momentum_inverse_scale": last_adaptation_state.position_sigma,
+            "alpha": last_adaptation_state.alpha,
+            "delta": last_adaptation_state.delta,
+        }
+
+        return AdaptationResults(last_states, parameters), info
+
+    return AdaptationAlgorithm(run)  # type: ignore[arg-type]
 
 
 def maximum_eigenvalue(matrix: PyTree):
