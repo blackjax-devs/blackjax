@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for marginal latent Gaussian sampling."""
-from typing import NamedTuple
+from typing import Callable, NamedTuple, Optional
 
 import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as linalg
 
+from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.types import Array, PRNGKey
 
-__all__ = ["MarginalState", "MarginalInfo", "init_and_kernel"]
+__all__ = ["MarginalState", "MarginalInfo", "init_and_kernel", "mgrad_gaussian"]
 
 
 class MarginalState(NamedTuple):
@@ -133,3 +134,64 @@ def init_and_kernel(logdensity_fn, covariance, mean=None):
         )
 
     return init, step
+
+
+class mgrad_gaussian:
+    """Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.
+
+    It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
+    Interestingly, the only parameter that needs calibrating is the "step size" delta, which can be done very efficiently.
+    Calibrating it to have an acceptance rate of roughly 50% is a good starting point.
+
+    Examples
+    --------
+    A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C) can be initialized and
+    used for a given "step size" delta with the following code:
+
+    .. code::
+
+        mgrad_gaussian = blackjax.mgrad_gaussian(f, C, use_inverse=False, mean=m)
+        state = mgrad_gaussian.init(zeros)  # Starting at the mean of the prior
+        new_state, info = mgrad_gaussian.step(rng_key, state, delta)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(mgrad_gaussian.step)
+        new_state, info = step(rng_key, state, delta)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The logarithm of the likelihood function for the latent Gaussian model.
+    covariance
+        The covariance of the prior Gaussian density.
+    mean: optional
+        Mean of the prior Gaussian density. Default is zero.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+
+    """
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_fn: Callable,
+        covariance: Array,
+        mean: Optional[Array] = None,
+    ) -> MCMCSamplingAlgorithm:
+        init, kernel = init_and_kernel(logdensity_fn, covariance, mean)
+
+        def init_fn(position: Array):
+            return init(position)
+
+        def step_fn(rng_key: PRNGKey, state, delta: float):
+            return kernel(
+                rng_key,
+                state,
+                delta,
+            )
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

@@ -24,9 +24,10 @@ import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.termination as termination
 import blackjax.mcmc.trajectory as trajectory
+from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.types import Array, PRNGKey, PyTree
 
-__all__ = ["NUTSInfo", "init", "build_kernel"]
+__all__ = ["NUTSInfo", "init", "build_kernel", "nuts"]
 
 
 init = hmc.init
@@ -152,6 +153,92 @@ def build_kernel(
         return proposal, info
 
     return kernel
+
+
+class nuts:
+    """Implements the (basic) user interface for the nuts kernel.
+
+    Examples
+    --------
+
+    A new NUTS kernel can be initialized and used with the following code:
+
+    .. code::
+
+        nuts = blackjax.nuts(logdensity_fn, step_size, inverse_mass_matrix)
+        state = nuts.init(position)
+        new_state, info = nuts.step(rng_key, state)
+
+    We can JIT-compile the step function for more speed:
+
+    .. code::
+
+        step = jax.jit(nuts.step)
+        new_state, info = step(rng_key, state)
+
+    You can always use the base kernel should you need to:
+
+    .. code::
+
+       import blackjax.mcmc.integrators as integrators
+
+       kernel = blackjax.nuts.build_kernel(integrators.yoshida)
+       state = blackjax.nuts.init(position, logdensity_fn)
+       state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log-density function we wish to draw samples from.
+    step_size
+        The value to use for the step size in the symplectic integrator.
+    inverse_mass_matrix
+        The value to use for the inverse mass matrix when drawing a value for
+        the momentum and computing the kinetic energy.
+    max_num_doublings
+        The maximum number of times we double the length of the trajectory before
+        returning if no U-turn has been obserbed or no divergence has occured.
+    divergence_threshold
+        The absolute value of the difference in energy between two states above
+        which we say that the transition is divergent. The default value is
+        commonly found in other libraries, and yet is arbitrary.
+    integrator
+        (algorithm parameter) The symplectic integrator to use to integrate the trajectory.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(hmc.init)
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: Array,
+        *,
+        max_num_doublings: int = 10,
+        divergence_threshold: int = 1000,
+        integrator: Callable = integrators.velocity_verlet,
+    ) -> MCMCSamplingAlgorithm:
+        kernel = cls.build_kernel(integrator, divergence_threshold, max_num_doublings)
+
+        def init_fn(position: PyTree):
+            return cls.init(position, logdensity_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return kernel(
+                rng_key,
+                state,
+                logdensity_fn,
+                step_size,
+                inverse_mass_matrix,
+            )
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
 
 
 def iterative_nuts_proposal(
