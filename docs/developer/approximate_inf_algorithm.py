@@ -32,7 +32,7 @@ __all__ = [
 
 
 class ApproxInfState(NamedTuple):
-    """State of the approximate inference algorithm.
+    """State of your approximate inference algorithm.
 
     Give an overview of the variables needed at each step and for sampling.
     """
@@ -41,9 +41,9 @@ class ApproxInfState(NamedTuple):
 
 
 class ApproxInfInfo(NamedTuple):
-    """Additional information on the algorithm transition.
+    """Additional information on your algorithm transition.
 
-    Given an overview of the collected values at each step of the approximation.
+    Give an overview of the collected values at each step of the approximation.
     """
 
     ...
@@ -63,7 +63,7 @@ def step(
     *args,
     **kwargs,
 ) -> Tuple[ApproxInfState, ApproxInfInfo]:
-    """Approximate the target density using the some approximation.
+    """Approximate the target density using your approximation.
 
     Parameters
     ----------
@@ -81,14 +81,14 @@ def step(
 
 
 def sample(rng_key: PRNGKey, state: ApproxInfState, num_samples: int = 1):
-    """Sample from the approximation."""
+    """Sample from your approximation."""
     # the sample should be a PyTree of the same structure as the `position` in the init function
     samples = ...
     return samples
 
 
 class approx_inf_algorithm:
-    """Implements the (basic) user interface for the approximate inference method.
+    """Implements the (basic) user interface for your approximate inference method.
 
     Describe in detail the inner mechanism of the method and its use.
 

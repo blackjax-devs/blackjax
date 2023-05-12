@@ -32,7 +32,7 @@ __all__ = [
 
 
 class SamplingAlgoState(NamedTuple):
-    """State of the sampling algorithm.
+    """State of your sampling algorithm.
 
     Give an overview of the variables needed at each iteration of the model.
     """
@@ -41,7 +41,7 @@ class SamplingAlgoState(NamedTuple):
 
 
 class SamplingAlgoInfo(NamedTuple):
-    """Additional information on the algorithm transition.
+    """Additional information on your algorithm transition.
 
     Given an overview of the collected values at each iteration of the model.
     """
@@ -56,7 +56,7 @@ def init(position: PyTree, logdensity_fn: Callable, *args, **kwargs):
 
 
 def build_kernel(*args, **kwargs):
-    """Build a HMC kernel.
+    """Build a your kernel.
 
     Parameters
     ----------
@@ -92,7 +92,7 @@ def build_kernel(*args, **kwargs):
 
 
 class sampling_algorithm:
-    """Implements the (basic) user interface for the sampling kernel.
+    """Implements the (basic) user interface for your sampling kernel.
 
     Describe in detail the inner mechanism of the algorithm and its use.
 
@@ -148,10 +148,20 @@ def sampling_algorithm_proposal(*args, **kwags) -> Callable:
     -------
     Describe what is returned.
     """
-    ...
+    # as an example, a Metropolis-Hastings step would look like this:
+    init_proposal, generate_proposal = proposal.proposal_generator(...)
+    sample_proposal = proposal.static_binomial_sampling(...)
 
-    def generate(*args, **kwargs):
-        """Generate a new chain state."""
+    def generate(rng_key, state):
+        # propose a new sample
+        proposal_state = ...
+
+        # accept or reject the proposed sample
+        proposal = init_proposal(state)
+        new_proposal, is_diverging = generate_proposal(proposal.energy, proposal_state)
+        sampled_proposal, *info = sample_proposal(rng_key, proposal, new_proposal)
+
+        # build a new state and collect useful information
         sampled_state, info = ...
 
         return sampled_state, info

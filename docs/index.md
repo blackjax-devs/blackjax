@@ -138,5 +138,5 @@ maxdepth: 1
 caption: DEVELOPER DOCUMENTATION
 hidden:
 ---
-Guidelines<developer/principles.md>
+Guidelines<developer/guidelines.md>
 ```
