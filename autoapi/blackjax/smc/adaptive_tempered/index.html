@@ -159,10 +159,9 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../kernels/index.html">Sampling algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../diagnostics/index.html">Diagnostics</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -210,11 +209,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../kernels/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a></li>
 </ul>
 </li>
-</ul>
-<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
 </ul>
 
@@ -330,8 +326,14 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_tempered.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_tempered.adaptive_tempered_smc"><code class="docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_tempered.adaptive_tempered_smc.init"><code class="docutils literal notranslate"><span class="pre">adaptive_tempered_smc.init</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_tempered.adaptive_tempered_smc.build_kernel"><code class="docutils literal notranslate"><span class="pre">adaptive_tempered_smc.build_kernel</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -351,6 +353,16 @@ document.write(`
 <span id="blackjax-smc-adaptive-tempered"></span><h1><a class="reference internal" href="#module-blackjax.smc.adaptive_tempered" title="blackjax.smc.adaptive_tempered"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc.adaptive_tempered</span></code></a><a class="headerlink" href="#module-blackjax.smc.adaptive_tempered" title="Permalink to this heading">#</a></h1>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">#</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.adaptive_tempered.adaptive_tempered_smc" title="blackjax.smc.adaptive_tempered.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
@@ -390,6 +402,41 @@ This is usually more stable when using gradient based solvers.</p></li>
 </p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.smc.adaptive_tempered.adaptive_tempered_smc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">adaptive_tempered_smc</span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/adaptive_tempered.html#adaptive_tempered_smc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.adaptive_tempered.adaptive_tempered_smc" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logprior_fn</strong> – The log-prior function of the model we wish to draw samples from.</p></li>
+<li><p><strong>loglikelihood_fn</strong> – The log-likelihood function of the model we wish to draw samples from.</p></li>
+<li><p><strong>mcmc_step_fn</strong> – The MCMC step function used to update the particles.</p></li>
+<li><p><strong>mcmc_init_fn</strong> – The MCMC init function used to build a MCMC state from a particle position.</p></li>
+<li><p><strong>mcmc_parameters</strong> – The parameters of the MCMC step function.</p></li>
+<li><p><strong>resampling_fn</strong> – The function used to resample the particles.</p></li>
+<li><p><strong>target_ess</strong> – The number of effective sample size to aim for at each step.</p></li>
+<li><p><strong>root_solver</strong> – The solver used to adaptively compute the temperature given a target number
+of effective samples.</p></li>
+<li><p><strong>num_mcmc_steps</strong> – The number of times the MCMC kernel is applied to the particles per step.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.smc.adaptive_tempered.adaptive_tempered_smc.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/adaptive_tempered.html#adaptive_tempered_smc.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.adaptive_tempered.adaptive_tempered_smc.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.smc.adaptive_tempered.adaptive_tempered_smc.build_kernel">
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/adaptive_tempered.html#adaptive_tempered_smc.build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.adaptive_tempered.adaptive_tempered_smc.build_kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </section>
@@ -445,8 +492,14 @@ This is usually more stable when using gradient based solvers.</p></li>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_tempered.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_tempered.adaptive_tempered_smc"><code class="docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_tempered.adaptive_tempered_smc.init"><code class="docutils literal notranslate"><span class="pre">adaptive_tempered_smc.init</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_tempered.adaptive_tempered_smc.build_kernel"><code class="docutils literal notranslate"><span class="pre">adaptive_tempered_smc.build_kernel</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

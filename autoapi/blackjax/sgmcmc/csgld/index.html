@@ -160,10 +160,9 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../kernels/index.html">Sampling algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../diagnostics/index.html">Diagnostics</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -211,11 +210,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../kernels/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a></li>
 </ul>
 </li>
-</ul>
-<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
 </ul>
 
@@ -341,6 +337,11 @@ document.write(`
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.csgld.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.csgld.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.csgld.csgld"><code class="docutils literal notranslate"><span class="pre">csgld</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.csgld.csgld.init"><code class="docutils literal notranslate"><span class="pre">csgld.init</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.csgld.csgld.build_kernel"><code class="docutils literal notranslate"><span class="pre">csgld.build_kernel</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -367,6 +368,9 @@ document.write(`
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgmcmc.csgld.ContourSGLDState" title="blackjax.sgmcmc.csgld.ContourSGLDState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ContourSGLDState</span></code></a></p></td>
 <td><p>State of the Contour SgLD algorithm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.sgmcmc.csgld.csgld" title="blackjax.sgmcmc.csgld.csgld"><code class="xref py py-obj docutils literal notranslate"><span class="pre">csgld</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the Contour SGLD kernel.</p></td>
 </tr>
 </tbody>
 </table>
@@ -446,6 +450,48 @@ the closer the gap between min_energy and 3456 is, the better.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.sgmcmc.csgld.csgld">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">csgld</span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/csgld.html#csgld"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.csgld.csgld" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the Contour SGLD kernel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_estimator</strong> – A function that returns an estimation of the model’s logdensity given
+a position and a batch of data.</p></li>
+<li><p><strong>gradient_estimator</strong> – A function that takes a position, a batch of data and returns an estimation
+of the gradient of the log-density at this position.</p></li>
+<li><p><strong>zeta</strong> – Hyperparameter that controls the geometric property of the flattened
+density. If <cite>zeta=0</cite> the function reduces to the SGLD step function.</p></li>
+<li><p><strong>temperature</strong> – Temperature parameter.</p></li>
+<li><p><strong>num_partitions</strong> – The number of partitions we divide the energy landscape into.</p></li>
+<li><p><strong>energy_gap</strong> – The difference in energy <span class="math notranslate nohighlight">\(\Delta u\)</span> between the successive
+partitions. Can be determined by running e.g. an optimizer to determine
+the range of energies. <cite>num_partition</cite> * <cite>energy_gap</cite> should match this
+range.</p></li>
+<li><p><strong>min_energy</strong> – A rough estimate of the minimum energy in a dataset, which should be
+strictly smaller than the exact minimum energy! e.g. if the minimum
+energy of a dataset is 3456, we can set min_energy to be any value
+smaller than 3456. Set it to 0 is acceptable, but not efficient enough.
+the closer the gap between min_energy and 3456 is, the better.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.sgmcmc.csgld.csgld.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/csgld.html#csgld.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.csgld.csgld.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.sgmcmc.csgld.csgld.build_kernel">
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/csgld.html#csgld.build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.csgld.csgld.build_kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
 </section>
 </section>
@@ -509,6 +555,11 @@ the closer the gap between min_energy and 3456 is, the better.</p></li>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.csgld.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.csgld.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.csgld.csgld"><code class="docutils literal notranslate"><span class="pre">csgld</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.csgld.csgld.init"><code class="docutils literal notranslate"><span class="pre">csgld.init</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.csgld.csgld.build_kernel"><code class="docutils literal notranslate"><span class="pre">csgld.build_kernel</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

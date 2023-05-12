@@ -14,6 +14,7 @@ Classes
 
    blackjax.vi.meanfield_vi.MFVIState
    blackjax.vi.meanfield_vi.MFVIInfo
+   blackjax.vi.meanfield_vi.meanfield_vi
 
 
 
@@ -77,6 +78,30 @@ Functions
 .. py:function:: sample(rng_key: blackjax.types.PRNGKey, state: MFVIState, num_samples: int = 1)
 
    Sample from the mean-field approximation.
+
+
+.. py:class:: meanfield_vi
+
+   High-level implementation of Mean-Field Variational Inference.
+
+   :param logdensity_fn: A function that represents the log-density function associated with
+                         the distribution we want to sample from.
+   :param optimizer: Optax optimizer to use to optimize the ELBO.
+   :param num_samples: Number of samples to take at each step to optimize the ELBO.
+
+   :rtype: A ``VIAlgorithm``.
+
+   .. py:attribute:: init
+
+      
+
+   .. py:attribute:: step
+
+      
+
+   .. py:attribute:: sample
+
+      
 
 
 .. py:function:: generate_meanfield_logdensity(mu, rho)

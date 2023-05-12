@@ -156,10 +156,9 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html">Sampling algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">Diagnostics</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -207,11 +206,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a></li>
 </ul>
 </li>
-</ul>
-<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
 </ul>
 
@@ -352,10 +348,11 @@ document.write(`
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.integrators</span> <span class="k">as</span> <span class="nn">integrators</span>
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.metrics</span> <span class="k">as</span> <span class="nn">metrics</span>
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="k">as</span> <span class="nn">proposal</span>
+<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
 <span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span><span class="p">,</span> <span class="n">pytree_size</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;GHMCState&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;GHMCState&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;ghmc&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="GHMCState"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState">[docs]</a><span class="k">class</span> <span class="nc">GHMCState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -498,6 +495,101 @@ document.write(`
         <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">info</span>
 
     <span class="k">return</span> <span class="n">kernel</span></div>
+
+
+<div class="viewcode-block" id="ghmc"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.ghmc">[docs]</a><span class="k">class</span> <span class="nc">ghmc</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Generalized HMC kernel.</span>
+
+<span class="sd">    The Generalized HMC kernel performs a similar procedure to the standard HMC</span>
+<span class="sd">    kernel with the difference of a persistent momentum variable and a non-reversible</span>
+<span class="sd">    Metropolis-Hastings step instead of the standard Metropolis-Hastings acceptance</span>
+<span class="sd">    step.</span>
+
+<span class="sd">    This means that the sampling of the momentum variable depends on the previous</span>
+<span class="sd">    momentum, the rate of persistence depends on the alpha parameter, and that the</span>
+<span class="sd">    Metropolis-Hastings accept/reject step is done through slice sampling with a</span>
+<span class="sd">    non-reversible slice variable also dependent on the previous slice, the determinisitc</span>
+<span class="sd">    transformation is defined by the delta parameter.</span>
+
+<span class="sd">    The Generalized HMC does not have a trajectory length parameter, it always performs</span>
+<span class="sd">    one iteration of the velocity verlet integrator with a given step size, making</span>
+<span class="sd">    the algorithm a good candiate for running many chains in parallel.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    A new Generalized HMC kernel can be initialized and used with the following code:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        ghmc_kernel = blackjax.ghmc(logdensity_fn, step_size, alpha, delta)</span>
+<span class="sd">        state = ghmc_kernel.init(rng_key, position)</span>
+<span class="sd">        new_state, info = ghmc_kernel.step(rng_key, state)</span>
+
+<span class="sd">    We can JIT-compile the step function for better performance</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        step = jax.jit(ghmc_kernel.step)</span>
+<span class="sd">        new_state, info = step(rng_key, state)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        The log-density function we wish to draw samples from.</span>
+<span class="sd">    step_size</span>
+<span class="sd">        A PyTree of the same structure as the target PyTree (position) with the</span>
+<span class="sd">        values used for as a step size for each dimension of the target space in</span>
+<span class="sd">        the velocity verlet integrator.</span>
+<span class="sd">    alpha</span>
+<span class="sd">        The value defining the persistence of the momentum variable.</span>
+<span class="sd">    delta</span>
+<span class="sd">        The value defining the deterministic translation of the slice variable.</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        The absolute value of the difference in energy between two states above</span>
+<span class="sd">        which we say that the transition is divergent. The default value is</span>
+<span class="sd">        commonly found in other libraries, and yet is arbitrary.</span>
+<span class="sd">    noise_gn</span>
+<span class="sd">        A function that takes as input the slice variable and outputs a random</span>
+<span class="sd">        variable used as a noise correction of the persistent slice update.</span>
+<span class="sd">        The parameter defaults to a random variable with a single atom at 0.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ghmc.init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.ghmc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="ghmc.build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.ghmc.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_kernel</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">momentum_inverse_scale</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">noise_gn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">noise_gn</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">logdensity_fn</span><span class="p">,</span>
+                <span class="n">step_size</span><span class="p">,</span>
+                <span class="n">momentum_inverse_scale</span><span class="p">,</span>
+                <span class="n">alpha</span><span class="p">,</span>
+                <span class="n">delta</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 
 
 <span class="k">def</span> <span class="nf">update_momentum</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>

@@ -24,7 +24,6 @@ Submodules
    :maxdepth: 1
 
    diagnostics/index.rst
-   kernels/index.rst
 
 
 Package Contents
@@ -35,23 +34,23 @@ Classes
 
 .. autoapisummary::
 
-   blackjax.adaptive_tempered_smc
-   blackjax.additive_step_random_walk
-   blackjax.csgld
    blackjax.elliptical_slice
    blackjax.ghmc
    blackjax.hmc
-   blackjax.irmh
    blackjax.mala
-   blackjax.meanfield_vi
    blackjax.mgrad_gaussian
    blackjax.nuts
    blackjax.orbital_hmc
-   blackjax.pathfinder
+   blackjax.additive_step_random_walk
+   blackjax.irmh
    blackjax.rmh
+   blackjax.csgld
    blackjax.sghmc
    blackjax.sgld
+   blackjax.adaptive_tempered_smc
    blackjax.tempered_smc
+   blackjax.meanfield_vi
+   blackjax.pathfinder
 
 
 
@@ -60,11 +59,11 @@ Functions
 
 .. autoapisummary::
 
-   blackjax.ess
-   blackjax.rhat
    blackjax.meads_adaptation
    blackjax.pathfinder_adaptation
    blackjax.window_adaptation
+   blackjax.ess
+   blackjax.rhat
 
 
 

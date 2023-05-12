@@ -156,10 +156,9 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html">Sampling algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">Diagnostics</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -207,11 +206,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a></li>
 </ul>
 </li>
-</ul>
-<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
 </ul>
 
@@ -342,7 +338,7 @@ document.write(`
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -351,9 +347,10 @@ document.write(`
 <span class="kn">import</span> <span class="nn">blackjax.smc.ess</span> <span class="k">as</span> <span class="nn">ess</span>
 <span class="kn">import</span> <span class="nn">blackjax.smc.solver</span> <span class="k">as</span> <span class="nn">solver</span>
 <span class="kn">import</span> <span class="nn">blackjax.smc.tempered</span> <span class="k">as</span> <span class="nn">tempered</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;build_kernel&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;adaptive_tempered_smc&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html#blackjax.smc.adaptive_tempered.build_kernel">[docs]</a><span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span>
@@ -431,6 +428,76 @@ document.write(`
         <span class="k">return</span> <span class="n">tempered_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">num_mcmc_steps</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">,</span> <span class="n">mcmc_parameters</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">kernel</span></div>
+
+
+<div class="viewcode-block" id="adaptive_tempered_smc"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html#blackjax.smc.adaptive_tempered.adaptive_tempered_smc">[docs]</a><span class="k">class</span> <span class="nc">adaptive_tempered_smc</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logprior_fn</span>
+<span class="sd">        The log-prior function of the model we wish to draw samples from.</span>
+<span class="sd">    loglikelihood_fn</span>
+<span class="sd">        The log-likelihood function of the model we wish to draw samples from.</span>
+<span class="sd">    mcmc_step_fn</span>
+<span class="sd">        The MCMC step function used to update the particles.</span>
+<span class="sd">    mcmc_init_fn</span>
+<span class="sd">        The MCMC init function used to build a MCMC state from a particle position.</span>
+<span class="sd">    mcmc_parameters</span>
+<span class="sd">        The parameters of the MCMC step function.</span>
+<span class="sd">    resampling_fn</span>
+<span class="sd">        The function used to resample the particles.</span>
+<span class="sd">    target_ess</span>
+<span class="sd">        The number of effective sample size to aim for at each step.</span>
+<span class="sd">    root_solver</span>
+<span class="sd">        The solver used to adaptively compute the temperature given a target number</span>
+<span class="sd">        of effective samples.</span>
+<span class="sd">    num_mcmc_steps</span>
+<span class="sd">        The number of times the MCMC kernel is applied to the particles per step.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="adaptive_tempered_smc.init"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html#blackjax.smc.adaptive_tempered.adaptive_tempered_smc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">tempered</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="adaptive_tempered_smc.build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html#blackjax.smc.adaptive_tempered.adaptive_tempered_smc.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_kernel</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">logprior_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">loglikelihood_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">mcmc_step_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
+        <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">target_ess</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">root_solver</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">dichotomy</span><span class="p">,</span>
+        <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span>
+            <span class="n">logprior_fn</span><span class="p">,</span>
+            <span class="n">loglikelihood_fn</span><span class="p">,</span>
+            <span class="n">mcmc_step_fn</span><span class="p">,</span>
+            <span class="n">mcmc_init_fn</span><span class="p">,</span>
+            <span class="n">resampling_fn</span><span class="p">,</span>
+            <span class="n">target_ess</span><span class="p">,</span>
+            <span class="n">root_solver</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">num_mcmc_steps</span><span class="p">,</span>
+                <span class="n">mcmc_parameters</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 </pre></div>
 
                 </article>

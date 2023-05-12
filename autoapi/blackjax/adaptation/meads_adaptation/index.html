@@ -159,10 +159,9 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../kernels/index.html">Sampling algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../diagnostics/index.html">Diagnostics</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -210,11 +209,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../kernels/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a></li>
 </ul>
 </li>
-</ul>
-<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
 </ul>
 
@@ -341,6 +337,7 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meads_adaptation.base"><code class="docutils literal notranslate"><span class="pre">base()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meads_adaptation.meads_adaptation"><code class="docutils literal notranslate"><span class="pre">meads_adaptation()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meads_adaptation.maximum_eigenvalue"><code class="docutils literal notranslate"><span class="pre">maximum_eigenvalue()</span></code></a></li>
 </ul>
 </li>
@@ -378,7 +375,10 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.meads_adaptation.base" title="blackjax.adaptation.meads_adaptation.base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base</span></code></a>()</p></td>
 <td><p>Maximum-Eigenvalue Adaptation of damping and step size for the generalized</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.meads_adaptation.maximum_eigenvalue" title="blackjax.adaptation.meads_adaptation.maximum_eigenvalue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">maximum_eigenvalue</span></code></a>(matrix)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.meads_adaptation.meads_adaptation" title="blackjax.adaptation.meads_adaptation.meads_adaptation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">meads_adaptation</span></code></a>(→ blackjax.base.AdaptationAlgorithm)</p></td>
+<td><p>Adapt the parameters of the Generalized HMC algorithm.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.meads_adaptation.maximum_eigenvalue" title="blackjax.adaptation.meads_adaptation.maximum_eigenvalue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">maximum_eigenvalue</span></code></a>(matrix)</p></td>
 <td><p>Estimate the largest eigenvalues of a matrix.</p></td>
 </tr>
 </tbody>
@@ -444,6 +444,44 @@ adaptation instead of parallel ensample chain adaptation.</p>
 <dd class="field-odd"><p><ul class="simple">
 <li><p><em>init</em> – Function that initializes the warmup.</p></li>
 <li><p><em>update</em> – Function that moves the warmup one step.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.meads_adaptation.meads_adaptation">
+<span class="sig-name descname"><span class="pre">meads_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_chains</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../base/index.html#blackjax.base.AdaptationAlgorithm" title="blackjax.base.AdaptationAlgorithm"><span class="pre">blackjax.base.AdaptationAlgorithm</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meads_adaptation.html#meads_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meads_adaptation.meads_adaptation" title="Permalink to this definition">#</a></dt>
+<dd><p>Adapt the parameters of the Generalized HMC algorithm.</p>
+<p>The Generalized HMC algorithm depends on three parameters, each controlling
+one element of its behaviour: step size controls the integrator’s dynamics,
+alpha controls the persistency of the momentum variable, and delta controls
+the deterministic transformation of the slice variable used to perform the
+non-reversible Metropolis-Hastings accept/reject step.</p>
+<p>The step size parameter is chosen to ensure the stability of the velocity
+verlet integrator, the alpha parameter to make the influence of the current
+state on future states of the momentum variable to decay exponentially, and
+the delta parameter to maximize the acceptance of proposal but with good
+mixing properties for the slice variable. These characteristics are targeted
+by controlling heuristics based on the maximum eigenvalues of the correlation
+and gradient matrices of the cross-chain samples, under simpifyng assumptions.</p>
+<p>Good tuning is fundamental for the non-reversible Generalized HMC sampling
+algorithm to explore the target space efficienty and output uncorrelated, or
+as uncorrelated as possible, samples from the target space. Furthermore, the
+single integrator step of the algorithm lends itself for fast sampling
+on parallel computer architectures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – The log density probability density function from which we wish to sample.</p></li>
+<li><p><strong>num_chains</strong> – Number of chains used for cross-chain warm-up training.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A function that returns the last cross-chain state, a sampling kernel with the</em></p></li>
+<li><p><em>tuned parameter values, and all the warm-up states for diagnostics.</em></p></li>
 </ul>
 </p>
 </dd>
@@ -536,6 +574,7 @@ for every batch.</p>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meads_adaptation.base"><code class="docutils literal notranslate"><span class="pre">base()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meads_adaptation.meads_adaptation"><code class="docutils literal notranslate"><span class="pre">meads_adaptation()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meads_adaptation.maximum_eigenvalue"><code class="docutils literal notranslate"><span class="pre">maximum_eigenvalue()</span></code></a></li>
 </ul>
 </li>

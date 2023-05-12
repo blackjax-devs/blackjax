@@ -27,6 +27,7 @@ Functions
 .. autoapisummary::
 
    blackjax.adaptation.pathfinder_adaptation.base
+   blackjax.adaptation.pathfinder_adaptation.pathfinder_adaptation
 
 
 
@@ -68,5 +69,21 @@ Functions
    :returns: * *init* -- Function that initializes the warmup.
              * *update* -- Function that moves the warmup one step.
              * *final* -- Function that returns the step size and mass matrix given a warmup state.
+
+
+.. py:function:: pathfinder_adaptation(algorithm: Union[blackjax.mcmc.hmc.hmc, blackjax.mcmc.nuts.nuts], logdensity_fn: Callable, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+
+   Adapt the value of the inverse mass matrix and step size parameters of
+   algorithms in the HMC fmaily.
+
+   :param algorithm: The algorithm whose parameters are being tuned.
+   :param logdensity_fn: The log density probability density function from which we wish to sample.
+   :param initial_step_size: The initial step size used in the algorithm.
+   :param target_acceptance_rate: The acceptance rate that we target during step size adaptation.
+   :param \*\*extra_parameters: The extra parameters to pass to the algorithm, e.g. the number of
+                                integration steps for HMC.
+
+   :returns: * *A function that returns the last chain state and a sampling kernel with the*
+             * *tuned parameter values from an initial state.*
 
 

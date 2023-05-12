@@ -18,6 +18,7 @@ Classes
 .. autoapisummary::
 
    blackjax.mcmc.nuts.NUTSInfo
+   blackjax.mcmc.nuts.nuts
 
 
 
@@ -150,5 +151,58 @@ Attributes
    :param max_num_doublings: The maximum number of times we expand the trajectory by
                              doubling the number of steps if the trajectory does not
                              turn onto itself.
+
+
+.. py:class:: nuts
+
+   Implements the (basic) user interface for the nuts kernel.
+
+   .. rubric:: Examples
+
+   A new NUTS kernel can be initialized and used with the following code:
+
+   .. code::
+
+       nuts = blackjax.nuts(logdensity_fn, step_size, inverse_mass_matrix)
+       state = nuts.init(position)
+       new_state, info = nuts.step(rng_key, state)
+
+   We can JIT-compile the step function for more speed:
+
+   .. code::
+
+       step = jax.jit(nuts.step)
+       new_state, info = step(rng_key, state)
+
+   You can always use the base kernel should you need to:
+
+   .. code::
+
+      import blackjax.mcmc.integrators as integrators
+
+      kernel = blackjax.nuts.build_kernel(integrators.yoshida)
+      state = blackjax.nuts.init(position, logdensity_fn)
+      state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix)
+
+   :param logdensity_fn: The log-density function we wish to draw samples from.
+   :param step_size: The value to use for the step size in the symplectic integrator.
+   :param inverse_mass_matrix: The value to use for the inverse mass matrix when drawing a value for
+                               the momentum and computing the kinetic energy.
+   :param max_num_doublings: The maximum number of times we double the length of the trajectory before
+                             returning if no U-turn has been obserbed or no divergence has occured.
+   :param divergence_threshold: The absolute value of the difference in energy between two states above
+                                which we say that the transition is divergent. The default value is
+                                commonly found in other libraries, and yet is arbitrary.
+   :param integrator: (algorithm parameter) The symplectic integrator to use to integrate the trajectory.
+
+   :rtype: A ``MCMCSamplingAlgorithm``.
+
+   .. py:attribute:: init
+
+      
+
+   .. py:attribute:: build_kernel
+
+      
 
 

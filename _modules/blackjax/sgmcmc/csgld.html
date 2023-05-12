@@ -156,10 +156,9 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html">Sampling algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">Diagnostics</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -207,11 +206,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a></li>
 </ul>
 </li>
-</ul>
-<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
 </ul>
 
@@ -337,10 +333,11 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
+<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.sgmcmc.diffusions</span> <span class="kn">import</span> <span class="n">overdamped_langevin</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ContourSGLDState&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ContourSGLDState&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;csgld&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="ContourSGLDState"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.ContourSGLDState">[docs]</a><span class="k">class</span> <span class="nc">ContourSGLDState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -489,6 +486,81 @@ document.write(`
         <span class="k">return</span> <span class="n">ContourSGLDState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">energy_pdf</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">kernel</span></div>
+
+
+<div class="viewcode-block" id="csgld"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.csgld">[docs]</a><span class="k">class</span> <span class="nc">csgld</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Contour SGLD kernel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_estimator</span>
+<span class="sd">        A function that returns an estimation of the model&#39;s logdensity given</span>
+<span class="sd">        a position and a batch of data.</span>
+<span class="sd">    gradient_estimator</span>
+<span class="sd">        A function that takes a position, a batch of data and returns an estimation</span>
+<span class="sd">        of the gradient of the log-density at this position.</span>
+<span class="sd">    zeta</span>
+<span class="sd">        Hyperparameter that controls the geometric property of the flattened</span>
+<span class="sd">        density. If `zeta=0` the function reduces to the SGLD step function.</span>
+<span class="sd">    temperature</span>
+<span class="sd">        Temperature parameter.</span>
+<span class="sd">    num_partitions</span>
+<span class="sd">        The number of partitions we divide the energy landscape into.</span>
+<span class="sd">    energy_gap</span>
+<span class="sd">        The difference in energy :math:`\Delta u` between the successive</span>
+<span class="sd">        partitions. Can be determined by running e.g. an optimizer to determine</span>
+<span class="sd">        the range of energies. `num_partition` * `energy_gap` should match this</span>
+<span class="sd">        range.</span>
+<span class="sd">    min_energy</span>
+<span class="sd">        A rough estimate of the minimum energy in a dataset, which should be</span>
+<span class="sd">        strictly smaller than the exact minimum energy! e.g. if the minimum</span>
+<span class="sd">        energy of a dataset is 3456, we can set min_energy to be any value</span>
+<span class="sd">        smaller than 3456. Set it to 0 is acceptable, but not efficient enough.</span>
+<span class="sd">        the closer the gap between min_energy and 3456 is, the better.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="csgld.init"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.csgld.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="csgld.build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.csgld.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_kernel</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">logdensity_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">gradient_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">zeta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+        <span class="n">num_partitions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+        <span class="n">energy_gap</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">min_energy</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">num_partitions</span><span class="p">,</span> <span class="n">energy_gap</span><span class="p">,</span> <span class="n">min_energy</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">num_partitions</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">minibatch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+            <span class="n">step_size_diff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="n">step_size_stoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">logdensity_estimator</span><span class="p">,</span>
+                <span class="n">gradient_estimator</span><span class="p">,</span>
+                <span class="n">minibatch</span><span class="p">,</span>
+                <span class="n">step_size_diff</span><span class="p">,</span>
+                <span class="n">step_size_stoch</span><span class="p">,</span>
+                <span class="n">zeta</span><span class="p">,</span>
+                <span class="n">temperature</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 </pre></div>
 
                 </article>

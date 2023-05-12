@@ -159,10 +159,9 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../kernels/index.html">Sampling algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../diagnostics/index.html">Diagnostics</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -210,11 +209,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../kernels/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a></li>
 </ul>
 </li>
-</ul>
-<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
 </ul>
 
@@ -339,6 +335,7 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.pathfinder_adaptation.base"><code class="docutils literal notranslate"><span class="pre">base()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.pathfinder_adaptation.pathfinder_adaptation"><code class="docutils literal notranslate"><span class="pre">pathfinder_adaptation()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -375,6 +372,9 @@ document.write(`
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.pathfinder_adaptation.base" title="blackjax.adaptation.pathfinder_adaptation.base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base</span></code></a>([target_acceptance_rate])</p></td>
 <td><p>Warmup scheme for sampling procedures based on euclidean manifold HMC.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.pathfinder_adaptation.pathfinder_adaptation" title="blackjax.adaptation.pathfinder_adaptation.pathfinder_adaptation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathfinder_adaptation</span></code></a>(→ blackjax.base.AdaptationAlgorithm)</p></td>
+<td><p>Adapt the value of the inverse mass matrix and step size parameters of</p></td>
 </tr>
 </tbody>
 </table>
@@ -418,6 +418,32 @@ the mcmc algorithm reaches a given target acceptance rate.</p>
 <li><p><em>init</em> – Function that initializes the warmup.</p></li>
 <li><p><em>update</em> – Function that moves the warmup one step.</p></li>
 <li><p><em>final</em> – Function that returns the step size and mass matrix given a warmup state.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.pathfinder_adaptation.pathfinder_adaptation">
+<span class="sig-name descname"><span class="pre">pathfinder_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../mcmc/hmc/index.html#blackjax.mcmc.hmc.hmc" title="blackjax.mcmc.hmc.hmc"><span class="pre">blackjax.mcmc.hmc.hmc</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../../mcmc/nuts/index.html#blackjax.mcmc.nuts.nuts" title="blackjax.mcmc.nuts.nuts"><span class="pre">blackjax.mcmc.nuts.nuts</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_acceptance_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_parameters</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../base/index.html#blackjax.base.AdaptationAlgorithm" title="blackjax.base.AdaptationAlgorithm"><span class="pre">blackjax.base.AdaptationAlgorithm</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/pathfinder_adaptation.html#pathfinder_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.pathfinder_adaptation.pathfinder_adaptation" title="Permalink to this definition">#</a></dt>
+<dd><p>Adapt the value of the inverse mass matrix and step size parameters of
+algorithms in the HMC fmaily.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>algorithm</strong> – The algorithm whose parameters are being tuned.</p></li>
+<li><p><strong>logdensity_fn</strong> – The log density probability density function from which we wish to sample.</p></li>
+<li><p><strong>initial_step_size</strong> – The initial step size used in the algorithm.</p></li>
+<li><p><strong>target_acceptance_rate</strong> – The acceptance rate that we target during step size adaptation.</p></li>
+<li><p><strong>**extra_parameters</strong> – The extra parameters to pass to the algorithm, e.g. the number of
+integration steps for HMC.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A function that returns the last chain state and a sampling kernel with the</em></p></li>
+<li><p><em>tuned parameter values from an initial state.</em></p></li>
 </ul>
 </p>
 </dd>
@@ -486,6 +512,7 @@ the mcmc algorithm reaches a given target acceptance rate.</p>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.pathfinder_adaptation.base"><code class="docutils literal notranslate"><span class="pre">base()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.pathfinder_adaptation.pathfinder_adaptation"><code class="docutils literal notranslate"><span class="pre">pathfinder_adaptation()</span></code></a></li>
 </ul>
 </li>
 </ul>

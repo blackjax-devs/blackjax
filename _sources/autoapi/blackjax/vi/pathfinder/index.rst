@@ -13,6 +13,7 @@ Classes
 .. autoapisummary::
 
    blackjax.vi.pathfinder.PathfinderState
+   blackjax.vi.pathfinder.pathfinder
 
 
 
@@ -118,5 +119,32 @@ Functions
    :param num_samples: Number of samples to draw
 
    :rtype: Samples drawn from the approximate Pathfinder distribution
+
+
+.. py:class:: pathfinder
+
+   Implements the (basic) user interface for the pathfinder kernel.
+
+   Pathfinder locates normal approximations to the target density along a
+   quasi-Newton optimization path, with local covariance estimated using
+   the inverse Hessian estimates produced by the L-BFGS optimizer.
+   Pathfinder returns draws from the approximation with the lowest estimated
+   Kullback-Leibler (KL) divergence to the true posterior.
+
+   Note: all the heavy processing in performed in the init function, step
+   function is just a drawing a sample from a normal distribution
+
+   :param logdensity_fn: A function that represents the log-density of the model we want
+                         to sample from.
+
+   :rtype: A ``VISamplingAlgorithm``.
+
+   .. py:attribute:: approximate
+
+      
+
+   .. py:attribute:: sample
+
+      
 
 

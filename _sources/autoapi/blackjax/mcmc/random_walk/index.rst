@@ -56,6 +56,9 @@ Classes
 
    blackjax.mcmc.random_walk.RWState
    blackjax.mcmc.random_walk.RWInfo
+   blackjax.mcmc.random_walk.additive_step_random_walk
+   blackjax.mcmc.random_walk.irmh
+   blackjax.mcmc.random_walk.rmh
 
 
 
@@ -155,6 +158,54 @@ Functions
              * *information about the transition.*
 
 
+.. py:class:: additive_step_random_walk
+
+   Implements the user interface for the Additive Step RMH
+
+   .. rubric:: Examples
+
+   A new kernel can be initialized and used with the following code:
+
+   .. code::
+
+       rw = blackjax.additive_step_random_walk(logdensity_fn, random_step)
+       state = rw.init(position)
+       new_state, info = rw.step(rng_key, state)
+
+   The specific case of a Gaussian `random_step` is already implemented, either with independent components
+   when `covariance_matrix` is a one dimensional array or with dependent components if a two dimensional array:
+
+   .. code::
+
+       rw_gaussian = blackjax.additive_step_random_walk.normal_random_walk(logdensity_fn, covariance_matrix)
+       state = rw_gaussian.init(position)
+       new_state, info = rw_gaussian.step(rng_key, state)
+
+   :param logdensity_fn: The log density probability density function from which we wish to sample.
+   :param random_step: A Callable that takes a random number generator and the current state and produces a step,
+                       which will be added to the current position to obtain a new position. Must be symmetric
+                       to maintain detailed balance. This means that P(step|position) = P(-step | position+step)
+
+   :rtype: A ``MCMCSamplingAlgorithm``.
+
+   .. py:attribute:: init
+
+      
+
+   .. py:attribute:: build_kernel
+
+      
+
+   .. py:method:: normal_random_walk(logdensity_fn: Callable, sigma)
+      :classmethod:
+
+      :param logdensity_fn: The log density probability density function from which we wish to sample.
+      :param sigma: The value of the covariance matrix of the gaussian proposal distribution.
+
+      :rtype: A ``MCMCSamplingAlgorithm``.
+
+
+
 .. py:function:: build_irmh() -> Callable
 
    Build an Independent Random Walk Rosenbluth-Metropolis-Hastings kernel. This implies
@@ -165,12 +216,87 @@ Functions
              * *information about the transition.*
 
 
+.. py:class:: irmh
+
+   Implements the (basic) user interface for the independent RMH.
+
+   .. rubric:: Examples
+
+   A new kernel can be initialized and used with the following code:
+
+   .. code::
+
+       rmh = blackjax.irmh(logdensity_fn, proposal_distribution)
+       state = rmh.init(position)
+       new_state, info = rmh.step(rng_key, state)
+
+   We can JIT-compile the step function for better performance
+
+   .. code::
+
+       step = jax.jit(rmh.step)
+       new_state, info = step(rng_key, state)
+
+   :param logdensity_fn: The log density probability density function from which we wish to sample.
+   :param proposal_distribution: A Callable that takes a random number generator and produces a new proposal. The
+                                 proposal is independent of the sampler's current state.
+
+   :rtype: A ``MCMCSamplingAlgorithm``.
+
+   .. py:attribute:: init
+
+      
+
+   .. py:attribute:: build_kernel
+
+      
+
+
 .. py:function:: build_rmh()
 
    Build a Rosenbluth-Metropolis-Hastings kernel.
    :returns: * *A kernel that takes a rng_key and a Pytree that contains the current state*
              * *of the chain and that returns a new state of the chain along with*
              * *information about the transition.*
+
+
+.. py:class:: rmh
+
+   Implements the user interface for the RMH.
+
+   .. rubric:: Examples
+
+   A new kernel can be initialized and used with the following code:
+
+   .. code::
+
+       rmh = blackjax.rmh(logdensity_fn, proposal_generator)
+       state = rmh.init(position)
+       new_state, info = rmh.step(rng_key, state)
+
+   We can JIT-compile the step function for better performance
+
+   .. code::
+
+       step = jax.jit(rmh.step)
+       new_state, info = step(rng_key, state)
+
+   :param logdensity_fn: The log density probability density function from which we wish to sample.
+   :param proposal_generator: A Callable that takes a random number generator and the current state and produces a new proposal.
+   :param proposal_logdensity_fn:
+                                  The logdensity function associated to the proposal_generator. If the generator is non-symmetric,
+                                   P(x_t|x_t-1) is not equal to P(x_t-1|x_t), then this parameter must be not None in order to apply
+                                   the Metropolis-Hastings correction for detailed balance.
+
+   :rtype: A ``MCMCSamplingAlgorithm``.
+
+   .. py:attribute:: init
+
+      
+
+   .. py:attribute:: build_kernel
+
+      
 
 
 .. py:function:: build_rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> Callable

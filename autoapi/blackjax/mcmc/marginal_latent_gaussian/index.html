@@ -159,10 +159,9 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../kernels/index.html">Sampling algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../diagnostics/index.html">Diagnostics</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -210,11 +209,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../kernels/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a></li>
 </ul>
 </li>
-</ul>
-<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
 </ul>
 
@@ -347,6 +343,7 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.init_and_kernel"><code class="docutils literal notranslate"><span class="pre">init_and_kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian"><code class="docutils literal notranslate"><span class="pre">mgrad_gaussian</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -376,6 +373,9 @@ document.write(`
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.marginal_latent_gaussian.MarginalInfo" title="blackjax.mcmc.marginal_latent_gaussian.MarginalInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MarginalInfo</span></code></a></p></td>
 <td><p>Additional information on the RMH chain.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian" title="blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mgrad_gaussian</span></code></a></p></td>
+<td><p>Implements the marginal sampler for latent Gaussian model of <span id="id1">[<a class="reference internal" href="../../../../bib.html#id12" title="Michalis K Titsias and Omiros Papaspiliopoulos. Auxiliary gradient-based sampling algorithms. Journal of the Royal Statistical Society. Series B (Statistical Methodology), 80(4):749–767, 2018.">TP18</a>]</span>.</p></td>
 </tr>
 </tbody>
 </table>
@@ -481,6 +481,40 @@ was returned.</p>
 </dl>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mgrad_gaussian</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/marginal_latent_gaussian.html#mgrad_gaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the marginal sampler for latent Gaussian model of <span id="id2">[<a class="reference internal" href="../../../../bib.html#id12" title="Michalis K Titsias and Omiros Papaspiliopoulos. Auxiliary gradient-based sampling algorithms. Journal of the Royal Statistical Society. Series B (Statistical Methodology), 80(4):749–767, 2018.">TP18</a>]</span>.</p>
+<p>It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
+Interestingly, the only parameter that needs calibrating is the “step size” delta, which can be done very efficiently.
+Calibrating it to have an acceptance rate of roughly 50% is a good starting point.</p>
+<p class="rubric">Examples</p>
+<p>A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C) can be initialized and
+used for a given “step size” delta with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mgrad_gaussian</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mgrad_gaussian</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">use_inverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">m</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">mgrad_gaussian</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">zeros</span><span class="p">)</span>  <span class="c1"># Starting at the mean of the prior</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mgrad_gaussian</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can JIT-compile the step function for better performance</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">mgrad_gaussian</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – The logarithm of the likelihood function for the latent Gaussian model.</p></li>
+<li><p><strong>covariance</strong> – The covariance of the prior Gaussian density.</p></li>
+<li><p><strong>mean</strong> (<em>optional</em>) – Mean of the prior Gaussian density. Default is zero.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 </section>
@@ -551,6 +585,7 @@ was returned.</p>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.init_and_kernel"><code class="docutils literal notranslate"><span class="pre">init_and_kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian"><code class="docutils literal notranslate"><span class="pre">mgrad_gaussian</span></code></a></li>
 </ul>
 </li>
 </ul>

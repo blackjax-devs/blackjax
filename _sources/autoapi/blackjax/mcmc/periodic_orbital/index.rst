@@ -18,7 +18,7 @@ Classes
 .. autoapisummary::
 
    blackjax.mcmc.periodic_orbital.PeriodicOrbitalState
-   blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo
+   blackjax.mcmc.periodic_orbital.orbital_hmc
 
 
 
@@ -29,7 +29,6 @@ Functions
 
    blackjax.mcmc.periodic_orbital.init
    blackjax.mcmc.periodic_orbital.build_kernel
-   blackjax.mcmc.periodic_orbital.periodic_orbital_proposal
 
 
 
@@ -84,39 +83,6 @@ Functions
       
 
 
-.. py:class:: PeriodicOrbitalInfo
-
-
-
-   Additional information on the states in the orbit.
-
-   This additional information can be used for debugging or computing
-   diagnostics.
-
-   momentum
-       the momentum that was sampled and used to integrate the trajectory.
-   weights_mean
-       mean of the the unnormalized weights of the orbit, ideally close
-       to the (unknown) constant of proportionally missing from the target.
-   weights_variance
-       variance of the unnormalized weights of the orbit, ideally close to 0.
-
-   .. py:attribute:: momentums
-      :type: blackjax.types.PyTree
-
-      
-
-   .. py:attribute:: weights_mean
-      :type: float
-
-      
-
-   .. py:attribute:: weights_variance
-      :type: float
-
-      
-
-
 .. py:function:: init(position: blackjax.types.PyTree, logdensity_fn: Callable, period: int) -> PeriodicOrbitalState
 
    Create a periodic orbital state from a position.
@@ -145,21 +111,47 @@ Functions
              * *information about the transition.*
 
 
-.. py:function:: periodic_orbital_proposal(bijection: Callable, kinetic_energy_fn: Callable, period: int, step_size: float) -> Callable
+.. py:class:: orbital_hmc
 
-   Periodic Orbital algorithm.
+   Implements the (basic) user interface for the Periodic orbital MCMC kernel.
 
-   The algorithm builds and orbit and computes the weights for each of its steps
-   by applying a bijection `period` times, both forwards and backwards depending
-   on the direction of the initial state.
+   Each iteration of the periodic orbital MCMC outputs ``period`` weighted samples from
+   a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable
+   with precision matrix ``inverse_mass_matrix``, evaluated using the ``bijection`` as an
+   integrator with discretization parameter ``step_size``.
 
-   :param bijection: continuous, differentialble and bijective transformation used to build
-                     the orbit step by step.
-   :param kinetic_energy_fn: function that computes the kinetic energy.
-   :param period: total steps used to build the orbit.
-   :param step_size: size between each step of the orbit.
+   .. rubric:: Examples
 
-   :returns: * *A kernel that generates a new periodic orbital state and information*
-             * *about the transition.*
+   A new Periodic orbital MCMC kernel can be initialized and used with the following code:
+
+   .. code::
+
+       per_orbit = blackjax.orbital_hmc(logdensity_fn, step_size, inverse_mass_matrix, period)
+       state = per_orbit.init(position)
+       new_state, info = per_orbit.step(rng_key, state)
+
+   We can JIT-compile the step function for better performance
+
+   .. code::
+
+       step = jax.jit(per_orbit.step)
+       new_state, info = step(rng_key, state)
+
+   :param logdensity_fn: The logarithm of the probability density function we wish to draw samples from.
+   :param step_size: The value to use for the step size in for the symplectic integrator to buid the orbit.
+   :param inverse_mass_matrix: The value to use for the inverse mass matrix when drawing a value for
+                               the momentum and computing the kinetic energy.
+   :param period: The number of steps used to build the orbit.
+   :param bijection: (algorithm parameter) The symplectic integrator to use to build the orbit.
+
+   :rtype: A ``MCMCSamplingAlgorithm``.
+
+   .. py:attribute:: init
+
+      
+
+   .. py:attribute:: build_kernel
+
+      
 
 

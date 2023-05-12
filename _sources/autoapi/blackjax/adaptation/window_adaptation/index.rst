@@ -27,7 +27,8 @@ Functions
 .. autoapisummary::
 
    blackjax.adaptation.window_adaptation.base
-   blackjax.adaptation.window_adaptation.schedule
+   blackjax.adaptation.window_adaptation.window_adaptation
+   blackjax.adaptation.window_adaptation.build_schedule
 
 
 
@@ -102,7 +103,35 @@ Functions
                state.
 
 
-.. py:function:: schedule(num_steps: int, initial_buffer_size: int = 75, final_buffer_size: int = 50, first_window_size: int = 25) -> List[Tuple[int, bool]]
+.. py:function:: window_adaptation(algorithm: Union[blackjax.mcmc.hmc.hmc, blackjax.mcmc.nuts.nuts], logdensity_fn: Callable, is_mass_matrix_diagonal: bool = True, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, progress_bar: bool = False, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+
+   Adapt the value of the inverse mass matrix and step size parameters of
+   algorithms in the HMC fmaily.
+
+   Algorithms in the HMC family on a euclidean manifold depend on the value of
+   at least two parameters: the step size, related to the trajectory
+   integrator, and the mass matrix, linked to the euclidean metric.
+
+   Good tuning is very important, especially for algorithms like NUTS which can
+   be extremely inefficient with the wrong parameter values. This function
+   provides a general-purpose algorithm to tune the values of these parameters.
+   Originally based on Stan's window adaptation, the algorithm has evolved to
+   improve performance and quality.
+
+   :param algorithm: The algorithm whose parameters are being tuned.
+   :param logdensity_fn: The log density probability density function from which we wish to
+                         sample.
+   :param is_mass_matrix_diagonal: Whether we should adapt a diagonal mass matrix.
+   :param initial_step_size: The initial step size used in the algorithm.
+   :param target_acceptance_rate: The acceptance rate that we target during step size adaptation.
+   :param progress_bar: Whether we should display a progress bar.
+   :param \*\*extra_parameters: The extra parameters to pass to the algorithm, e.g. the number of
+                                integration steps for HMC.
+
+   :rtype: A function that runs the adaptation and returns an `AdaptationResult` object.
+
+
+.. py:function:: build_schedule(num_steps: int, initial_buffer_size: int = 75, final_buffer_size: int = 50, first_window_size: int = 25) -> List[Tuple[int, bool]]
 
    Return the schedule for Stan's warmup.
 

@@ -129,17 +129,8 @@ The Sampling Book <https://blackjax-devs.github.io/sampling-book>
 ---
 hidden:
 caption: API
-maxdepth: 3
+maxdepth: 2
 ---
-Sampling algorithms <autoapi/blackjax/kernels/index>
-Diagnostics <autoapi/blackjax/diagnostics/index>
 API Reference<autoapi/blackjax/index>
-```
-
-```{toctree}
----
-maxdepth: 1
-hidden:
----
 Bibliography<bib.rst>
 ```

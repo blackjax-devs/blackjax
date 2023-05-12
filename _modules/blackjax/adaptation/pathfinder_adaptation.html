@@ -156,10 +156,9 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html">Sampling algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">Diagnostics</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -207,11 +206,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a></li>
 </ul>
 </li>
-</ul>
-<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
 </ul>
 
@@ -343,18 +339,23 @@ document.write(`
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;Implementation of the Pathinder warmup for the HMC family of sampling algorithms.&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
+<span class="kn">import</span> <span class="nn">blackjax.mcmc</span> <span class="k">as</span> <span class="nn">mcmc</span>
+<span class="kn">import</span> <span class="nn">blackjax.vi</span> <span class="k">as</span> <span class="nn">vi</span>
+<span class="kn">from</span> <span class="nn">blackjax.adaptation.base</span> <span class="kn">import</span> <span class="n">AdaptationInfo</span><span class="p">,</span> <span class="n">AdaptationResults</span>
 <span class="kn">from</span> <span class="nn">blackjax.adaptation.step_size</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">DualAveragingAdaptationState</span><span class="p">,</span>
     <span class="n">dual_averaging_adaptation</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">AdaptationAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.optimizers.lbfgs</span> <span class="kn">import</span> <span class="n">lbfgs_inverse_hessian_formula_1</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PathfinderAdaptationState&quot;</span><span class="p">,</span> <span class="s2">&quot;base&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PathfinderAdaptationState&quot;</span><span class="p">,</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="s2">&quot;pathfinder_adaptation&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="PathfinderAdaptationState"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html#blackjax.adaptation.pathfinder_adaptation.PathfinderAdaptationState">[docs]</a><span class="k">class</span> <span class="nc">PathfinderAdaptationState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -461,6 +462,97 @@ document.write(`
         <span class="k">return</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span>
 
     <span class="k">return</span> <span class="n">init</span><span class="p">,</span> <span class="n">update</span><span class="p">,</span> <span class="n">final</span></div>
+
+
+<div class="viewcode-block" id="pathfinder_adaptation"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html#blackjax.adaptation.pathfinder_adaptation.pathfinder_adaptation">[docs]</a><span class="k">def</span> <span class="nf">pathfinder_adaptation</span><span class="p">(</span>
+    <span class="n">algorithm</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">mcmc</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">hmc</span><span class="p">,</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">nuts</span><span class="o">.</span><span class="n">nuts</span><span class="p">],</span>
+    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.80</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdaptationAlgorithm</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adapt the value of the inverse mass matrix and step size parameters of</span>
+<span class="sd">    algorithms in the HMC fmaily.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    algorithm</span>
+<span class="sd">        The algorithm whose parameters are being tuned.</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        The log density probability density function from which we wish to sample.</span>
+<span class="sd">    initial_step_size</span>
+<span class="sd">        The initial step size used in the algorithm.</span>
+<span class="sd">    target_acceptance_rate</span>
+<span class="sd">        The acceptance rate that we target during step size adaptation.</span>
+<span class="sd">    **extra_parameters</span>
+<span class="sd">        The extra parameters to pass to the algorithm, e.g. the number of</span>
+<span class="sd">        integration steps for HMC.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A function that returns the last chain state and a sampling kernel with the</span>
+<span class="sd">    tuned parameter values from an initial state.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mcmc_kernel</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
+
+    <span class="n">adapt_init</span><span class="p">,</span> <span class="n">adapt_update</span><span class="p">,</span> <span class="n">adapt_final</span> <span class="o">=</span> <span class="n">base</span><span class="p">(</span>
+        <span class="n">target_acceptance_rate</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mcmc_kernel</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">,</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">logdensity_fn</span><span class="p">,</span>
+            <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+            <span class="n">adaptation_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_update</span><span class="p">(</span>
+            <span class="n">adaptation_state</span><span class="p">,</span> <span class="n">new_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
+            <span class="n">AdaptationInfo</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">400</span><span class="p">):</span>
+        <span class="n">init_key</span><span class="p">,</span> <span class="n">sample_key</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="n">pathfinder_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">approximate</span><span class="p">(</span>
+            <span class="n">init_key</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">position</span>
+        <span class="p">)</span>
+        <span class="n">init_warmup_state</span> <span class="o">=</span> <span class="n">adapt_init</span><span class="p">(</span>
+            <span class="n">pathfinder_state</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span>
+            <span class="n">pathfinder_state</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span>
+            <span class="n">pathfinder_state</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span>
+            <span class="n">initial_step_size</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">init_position</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">vi</span><span class="o">.</span><span class="n">pathfinder</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">sample_key</span><span class="p">,</span> <span class="n">pathfinder_state</span><span class="p">)</span>
+        <span class="n">init_state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">init_position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
+        <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+            <span class="n">one_step</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">init_warmup_state</span><span class="p">),</span>
+            <span class="n">keys</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">last_chain_state</span><span class="p">,</span> <span class="n">last_warmup_state</span> <span class="o">=</span> <span class="n">last_state</span>
+
+        <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">adapt_final</span><span class="p">(</span><span class="n">last_warmup_state</span><span class="p">)</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="n">step_size</span><span class="p">,</span>
+            <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">:</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">last_chain_state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">info</span>
+
+    <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span></div>
 </pre></div>
 
                 </article>

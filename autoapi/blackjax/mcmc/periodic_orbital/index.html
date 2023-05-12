@@ -159,10 +159,9 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../kernels/index.html">Sampling algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../diagnostics/index.html">Diagnostics</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -210,11 +209,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../kernels/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a></li>
 </ul>
 </li>
-</ul>
-<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
 </ul>
 
@@ -340,15 +336,13 @@ document.write(`
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState.logdensities_grad"><code class="docutils literal notranslate"><span class="pre">PeriodicOrbitalState.logdensities_grad</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo"><code class="docutils literal notranslate"><span class="pre">PeriodicOrbitalInfo</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo.momentums"><code class="docutils literal notranslate"><span class="pre">PeriodicOrbitalInfo.momentums</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo.weights_mean"><code class="docutils literal notranslate"><span class="pre">PeriodicOrbitalInfo.weights_mean</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo.weights_variance"><code class="docutils literal notranslate"><span class="pre">PeriodicOrbitalInfo.weights_variance</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.periodic_orbital_proposal"><code class="docutils literal notranslate"><span class="pre">periodic_orbital_proposal()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.orbital_hmc"><code class="docutils literal notranslate"><span class="pre">orbital_hmc</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.orbital_hmc.init"><code class="docutils literal notranslate"><span class="pre">orbital_hmc.init</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.orbital_hmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">orbital_hmc.build_kernel</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -376,8 +370,8 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState" title="blackjax.mcmc.periodic_orbital.PeriodicOrbitalState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PeriodicOrbitalState</span></code></a></p></td>
 <td><p>State of the periodic orbital algorithm.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo" title="blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PeriodicOrbitalInfo</span></code></a></p></td>
-<td><p>Additional information on the states in the orbit.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.orbital_hmc" title="blackjax.mcmc.periodic_orbital.orbital_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">orbital_hmc</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel.</p></td>
 </tr>
 </tbody>
 </table>
@@ -391,9 +385,6 @@ document.write(`
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.build_kernel" title="blackjax.mcmc.periodic_orbital.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>([bijection])</p></td>
 <td><p>Build a Periodic Orbital kernel <span id="id1">[<a class="reference internal" href="../../../../bib.html#id13" title="Kirill Neklyudov and Max Welling. Orbital mcmc. In International Conference on Artificial Intelligence and Statistics, 5790–5814. PMLR, 2022.">NW22</a>]</span>.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.periodic_orbital_proposal" title="blackjax.mcmc.periodic_orbital.periodic_orbital_proposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">periodic_orbital_proposal</span></code></a>(→ Callable)</p></td>
-<td><p>Periodic Orbital algorithm.</p></td>
 </tr>
 </tbody>
 </table>
@@ -447,38 +438,6 @@ function for each point in the orbit.</p>
 
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PeriodicOrbitalInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#PeriodicOrbitalInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo" title="Permalink to this definition">#</a></dt>
-<dd><p>Additional information on the states in the orbit.</p>
-<p>This additional information can be used for debugging or computing
-diagnostics.</p>
-<dl class="simple">
-<dt>momentum</dt><dd><p>the momentum that was sampled and used to integrate the trajectory.</p>
-</dd>
-<dt>weights_mean</dt><dd><p>mean of the the unnormalized weights of the orbit, ideally close
-to the (unknown) constant of proportionally missing from the target.</p>
-</dd>
-<dt>weights_variance</dt><dd><p>variance of the unnormalized weights of the orbit, ideally close to 0.</p>
-</dd>
-</dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo.momentums">
-<span class="sig-name descname"><span class="pre">momentums</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.PyTree</span></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#PeriodicOrbitalInfo.momentums"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo.momentums" title="Permalink to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo.weights_mean">
-<span class="sig-name descname"><span class="pre">weights_mean</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#PeriodicOrbitalInfo.weights_mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo.weights_mean" title="Permalink to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo.weights_variance">
-<span class="sig-name descname"><span class="pre">weights_variance</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#PeriodicOrbitalInfo.weights_variance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo.weights_variance" title="Permalink to this definition">#</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.init">
 <span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PyTree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState" title="blackjax.mcmc.periodic_orbital.PeriodicOrbitalState"><span class="pre">PeriodicOrbitalState</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.init" title="Permalink to this definition">#</a></dt>
@@ -525,31 +484,51 @@ with a position.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.periodic_orbital_proposal">
-<span class="sig-name descname"><span class="pre">periodic_orbital_proposal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bijection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kinetic_energy_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#periodic_orbital_proposal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.periodic_orbital_proposal" title="Permalink to this definition">#</a></dt>
-<dd><p>Periodic Orbital algorithm.</p>
-<p>The algorithm builds and orbit and computes the weights for each of its steps
-by applying a bijection <cite>period</cite> times, both forwards and backwards depending
-on the direction of the initial state.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.orbital_hmc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">orbital_hmc</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#orbital_hmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.orbital_hmc" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel.</p>
+<p>Each iteration of the periodic orbital MCMC outputs <code class="docutils literal notranslate"><span class="pre">period</span></code> weighted samples from
+a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable
+with precision matrix <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code>, evaluated using the <code class="docutils literal notranslate"><span class="pre">bijection</span></code> as an
+integrator with discretization parameter <code class="docutils literal notranslate"><span class="pre">step_size</span></code>.</p>
+<p class="rubric">Examples</p>
+<p>A new Periodic orbital MCMC kernel can be initialized and used with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">per_orbit</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">orbital_hmc</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">per_orbit</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">per_orbit</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can JIT-compile the step function for better performance</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">per_orbit</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>bijection</strong> – continuous, differentialble and bijective transformation used to build
-the orbit step by step.</p></li>
-<li><p><strong>kinetic_energy_fn</strong> – function that computes the kinetic energy.</p></li>
-<li><p><strong>period</strong> – total steps used to build the orbit.</p></li>
-<li><p><strong>step_size</strong> – size between each step of the orbit.</p></li>
+<li><p><strong>logdensity_fn</strong> – The logarithm of the probability density function we wish to draw samples from.</p></li>
+<li><p><strong>step_size</strong> – The value to use for the step size in for the symplectic integrator to buid the orbit.</p></li>
+<li><p><strong>inverse_mass_matrix</strong> – The value to use for the inverse mass matrix when drawing a value for
+the momentum and computing the kinetic energy.</p></li>
+<li><p><strong>period</strong> – The number of steps used to build the orbit.</p></li>
+<li><p><strong>bijection</strong> – (algorithm parameter) The symplectic integrator to use to build the orbit.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><em>A kernel that generates a new periodic orbital state and information</em></p></li>
-<li><p><em>about the transition.</em></p></li>
-</ul>
-</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.orbital_hmc.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#orbital_hmc.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.orbital_hmc.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.orbital_hmc.build_kernel">
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#orbital_hmc.build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.orbital_hmc.build_kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </section>
@@ -615,15 +594,13 @@ the orbit step by step.</p></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState.logdensities_grad"><code class="docutils literal notranslate"><span class="pre">PeriodicOrbitalState.logdensities_grad</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo"><code class="docutils literal notranslate"><span class="pre">PeriodicOrbitalInfo</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo.momentums"><code class="docutils literal notranslate"><span class="pre">PeriodicOrbitalInfo.momentums</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo.weights_mean"><code class="docutils literal notranslate"><span class="pre">PeriodicOrbitalInfo.weights_mean</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalInfo.weights_variance"><code class="docutils literal notranslate"><span class="pre">PeriodicOrbitalInfo.weights_variance</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.periodic_orbital_proposal"><code class="docutils literal notranslate"><span class="pre">periodic_orbital_proposal()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.orbital_hmc"><code class="docutils literal notranslate"><span class="pre">orbital_hmc</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.orbital_hmc.init"><code class="docutils literal notranslate"><span class="pre">orbital_hmc.init</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.periodic_orbital.orbital_hmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">orbital_hmc.build_kernel</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

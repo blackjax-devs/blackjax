@@ -51,7 +51,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/vi/pathfinder/index';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
-    <link rel="next" title="Bibliography" href="../../../../bib.html" />
+    <link rel="next" title="blackjax.diagnostics" href="../../diagnostics/index.html" />
     <link rel="prev" title="blackjax.vi.meanfield_vi" href="../meanfield_vi/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -159,10 +159,9 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../kernels/index.html">Sampling algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../diagnostics/index.html">Diagnostics</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -210,11 +209,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../kernels/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a></li>
 </ul>
 </li>
-</ul>
-<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
 </ul>
 
@@ -343,6 +339,11 @@ document.write(`
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.pathfinder.approximate"><code class="docutils literal notranslate"><span class="pre">approximate()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.pathfinder.sample"><code class="docutils literal notranslate"><span class="pre">sample()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.pathfinder.pathfinder"><code class="docutils literal notranslate"><span class="pre">pathfinder</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.pathfinder.pathfinder.approximate"><code class="docutils literal notranslate"><span class="pre">pathfinder.approximate</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.pathfinder.pathfinder.sample"><code class="docutils literal notranslate"><span class="pre">pathfinder.sample</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -368,6 +369,9 @@ document.write(`
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.vi.pathfinder.PathfinderState" title="blackjax.vi.pathfinder.PathfinderState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PathfinderState</span></code></a></p></td>
 <td><p>State of the Pathfinder algorithm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.vi.pathfinder.pathfinder" title="blackjax.vi.pathfinder.pathfinder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathfinder</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the pathfinder kernel.</p></td>
 </tr>
 </tbody>
 </table>
@@ -491,6 +495,38 @@ algorithm</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.vi.pathfinder.pathfinder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pathfinder</span></span><a class="reference internal" href="../../../../_modules/blackjax/vi/pathfinder.html#pathfinder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.vi.pathfinder.pathfinder" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the pathfinder kernel.</p>
+<p>Pathfinder locates normal approximations to the target density along a
+quasi-Newton optimization path, with local covariance estimated using
+the inverse Hessian estimates produced by the L-BFGS optimizer.
+Pathfinder returns draws from the approximation with the lowest estimated
+Kullback-Leibler (KL) divergence to the true posterior.</p>
+<p>Note: all the heavy processing in performed in the init function, step
+function is just a drawing a sample from a normal distribution</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>logdensity_fn</strong> – A function that represents the log-density of the model we want
+to sample from.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">VISamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.vi.pathfinder.pathfinder.approximate">
+<span class="sig-name descname"><span class="pre">approximate</span></span><a class="reference internal" href="../../../../_modules/blackjax/vi/pathfinder.html#pathfinder.approximate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.vi.pathfinder.pathfinder.approximate" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.vi.pathfinder.pathfinder.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><a class="reference internal" href="../../../../_modules/blackjax/vi/pathfinder.html#pathfinder.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.vi.pathfinder.pathfinder.sample" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
 </section>
 </section>
@@ -517,11 +553,11 @@ algorithm</p></li>
       </div>
     </a>
     <a class="right-next"
-       href="../../../../bib.html"
+       href="../../diagnostics/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Bibliography</p>
+        <p class="prev-next-title"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -557,6 +593,11 @@ algorithm</p></li>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.pathfinder.approximate"><code class="docutils literal notranslate"><span class="pre">approximate()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.pathfinder.sample"><code class="docutils literal notranslate"><span class="pre">sample()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.pathfinder.pathfinder"><code class="docutils literal notranslate"><span class="pre">pathfinder</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.pathfinder.pathfinder.approximate"><code class="docutils literal notranslate"><span class="pre">pathfinder.approximate</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.pathfinder.pathfinder.sample"><code class="docutils literal notranslate"><span class="pre">pathfinder.sample</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

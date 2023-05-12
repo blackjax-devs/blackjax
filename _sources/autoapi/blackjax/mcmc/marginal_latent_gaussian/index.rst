@@ -19,6 +19,7 @@ Classes
 
    blackjax.mcmc.marginal_latent_gaussian.MarginalState
    blackjax.mcmc.marginal_latent_gaussian.MarginalInfo
+   blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian
 
 
 
@@ -117,5 +118,39 @@ Functions
              * *of the chain and that returns a new state of the chain along with*
              * *information about the transition.*
              * *An init function.*
+
+
+.. py:class:: mgrad_gaussian
+
+   Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.
+
+   It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
+   Interestingly, the only parameter that needs calibrating is the "step size" delta, which can be done very efficiently.
+   Calibrating it to have an acceptance rate of roughly 50% is a good starting point.
+
+   .. rubric:: Examples
+
+   A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C) can be initialized and
+   used for a given "step size" delta with the following code:
+
+   .. code::
+
+       mgrad_gaussian = blackjax.mgrad_gaussian(f, C, use_inverse=False, mean=m)
+       state = mgrad_gaussian.init(zeros)  # Starting at the mean of the prior
+       new_state, info = mgrad_gaussian.step(rng_key, state, delta)
+
+   We can JIT-compile the step function for better performance
+
+   .. code::
+
+       step = jax.jit(mgrad_gaussian.step)
+       new_state, info = step(rng_key, state, delta)
+
+   :param logdensity_fn: The logarithm of the likelihood function for the latent Gaussian model.
+   :param covariance: The covariance of the prior Gaussian density.
+   :param mean: Mean of the prior Gaussian density. Default is zero.
+   :type mean: optional
+
+   :rtype: A ``MCMCSamplingAlgorithm``.
 
 

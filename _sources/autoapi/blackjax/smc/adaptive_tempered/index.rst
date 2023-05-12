@@ -7,6 +7,14 @@
 Module Contents
 ---------------
 
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   blackjax.smc.adaptive_tempered.adaptive_tempered_smc
+
+
 
 Functions
 ~~~~~~~~~
@@ -45,5 +53,31 @@ Functions
    :returns: * *A callable that takes a rng_key and a TemperedSMCState that contains the current state*
              * *of the chain and that returns a new state of the chain along with*
              * *information about the transition.*
+
+
+.. py:class:: adaptive_tempered_smc
+
+   Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
+
+   :param logprior_fn: The log-prior function of the model we wish to draw samples from.
+   :param loglikelihood_fn: The log-likelihood function of the model we wish to draw samples from.
+   :param mcmc_step_fn: The MCMC step function used to update the particles.
+   :param mcmc_init_fn: The MCMC init function used to build a MCMC state from a particle position.
+   :param mcmc_parameters: The parameters of the MCMC step function.
+   :param resampling_fn: The function used to resample the particles.
+   :param target_ess: The number of effective sample size to aim for at each step.
+   :param root_solver: The solver used to adaptively compute the temperature given a target number
+                       of effective samples.
+   :param num_mcmc_steps: The number of times the MCMC kernel is applied to the particles per step.
+
+   :rtype: A ``MCMCSamplingAlgorithm``.
+
+   .. py:attribute:: init
+
+      
+
+   .. py:attribute:: build_kernel
+
+      
 
 

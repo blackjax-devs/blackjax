@@ -156,10 +156,9 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html">Sampling algorithms</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">Diagnostics</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -207,11 +206,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/kernels/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.kernels</span></code></a></li>
 </ul>
 </li>
-</ul>
-<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
 </ul>
 
@@ -356,7 +352,7 @@ document.write(`
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PathfinderState&quot;</span><span class="p">,</span> <span class="s2">&quot;approximate&quot;</span><span class="p">,</span> <span class="s2">&quot;sample&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PathfinderState&quot;</span><span class="p">,</span> <span class="s2">&quot;approximate&quot;</span><span class="p">,</span> <span class="s2">&quot;sample&quot;</span><span class="p">,</span> <span class="s2">&quot;pathfinder&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="PathfinderState"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.PathfinderState">[docs]</a><span class="k">class</span> <span class="nc">PathfinderState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -392,6 +388,11 @@ document.write(`
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extra information returned by the Pathfinder algorithm.&quot;&quot;&quot;</span>
 
     <span class="n">path</span><span class="p">:</span> <span class="n">PathfinderState</span>
+
+
+<span class="k">class</span> <span class="nc">PathFinderAlgorithm</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">approximate</span><span class="p">:</span> <span class="n">Callable</span>
+    <span class="n">sample</span><span class="p">:</span> <span class="n">Callable</span>
 
 
 <div class="viewcode-block" id="approximate"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.approximate">[docs]</a><span class="k">def</span> <span class="nf">approximate</span><span class="p">(</span>
@@ -561,6 +562,50 @@ document.write(`
         <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="n">logq</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">unravel_fn</span><span class="p">)(</span><span class="n">phi</span><span class="p">),</span> <span class="n">logq</span></div>
+
+
+<div class="viewcode-block" id="pathfinder"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.pathfinder">[docs]</a><span class="k">class</span> <span class="nc">pathfinder</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the pathfinder kernel.</span>
+
+<span class="sd">    Pathfinder locates normal approximations to the target density along a</span>
+<span class="sd">    quasi-Newton optimization path, with local covariance estimated using</span>
+<span class="sd">    the inverse Hessian estimates produced by the L-BFGS optimizer.</span>
+<span class="sd">    Pathfinder returns draws from the approximation with the lowest estimated</span>
+<span class="sd">    Kullback-Leibler (KL) divergence to the true posterior.</span>
+
+<span class="sd">    Note: all the heavy processing in performed in the init function, step</span>
+<span class="sd">    function is just a drawing a sample from a normal distribution</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        A function that represents the log-density of the model we want</span>
+<span class="sd">        to sample from.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``VISamplingAlgorithm``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="pathfinder.approximate"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.pathfinder.approximate">[docs]</a>    <span class="n">approximate</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">approximate</span><span class="p">)</span></div>
+<div class="viewcode-block" id="pathfinder.sample"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.pathfinder.sample">[docs]</a>    <span class="n">sample</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PathFinderAlgorithm</span><span class="p">:</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="k">def</span> <span class="nf">approximate_fn</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+            <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+            <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">lbfgs_parameters</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">approximate</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">lbfgs_parameters</span>
+            <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">sample_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">PathfinderState</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">PathFinderAlgorithm</span><span class="p">(</span><span class="n">approximate_fn</span><span class="p">,</span> <span class="n">sample_fn</span><span class="p">)</span></div>
 </pre></div>
 
                 </article>
