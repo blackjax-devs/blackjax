@@ -6,7 +6,7 @@ import jax.numpy as jnp
 from jax import jit, lax
 from jax.flatten_util import ravel_pytree
 from jax.random import normal
-from jax.tree_util import tree_leaves
+from jax.tree_util import tree_leaves, tree_map, tree_structure, tree_unflatten
 
 from blackjax.types import Array, PRNGKey, PyTree
 
@@ -85,3 +85,78 @@ def generate_gaussian_noise(
 def pytree_size(pytree: PyTree) -> int:
     """Return the dimension of the flatten PyTree."""
     return sum(jnp.size(value) for value in tree_leaves(pytree))
+
+
+def unflatten_array(array: Array, position: PyTree) -> PyTree:
+    """Builds a PyTree from a 1 or 2 dimensional Array.
+
+    Various algorithms in BlackJAX take as input a 1 or 2 dimensional array which somehow
+    affects the sampling or approximation of a PyTree. For instance, in HMC a 1 or 2
+    dimensional inverse mass matrix is used when simulating Hamilonian dynamics on
+    PyTree position and momentum variables. It is usually unclear how the elements of the
+    array interact with the PyTree. This function demonstrates how all algorithms map an
+    array to a PyTree of equivalent dimension.
+
+    Parameters
+    ----------
+    array:
+        1 `(ndim,)` or 2 `(ndim, ndim)` dimensional array.
+    position:
+        PyTree which individual dimensions add up to `ndim`.
+
+    Returns
+    -------
+    PyTree (1 dimensional array) or nested PyTree (2 dimensional array) mapping each individual
+    element of the array to elements or interaction of elements in the PyTree.
+    """
+    flat_position, unravel_fn = ravel_pytree(position)
+    (dim_position,) = flat_position.shape
+    shape_array = array.shape
+
+    dtype = jnp.result_type(array.dtype, flat_position.dtype)
+    array = array.astype(dtype)
+    position = tree_map(lambda p: jnp.atleast_1d(p).astype(dtype), position)
+    ndim = jnp.ndim(array)
+
+    if ndim <= 1:
+        if dim_position != shape_array[0]:
+            raise ValueError(
+                "The array has the wrong shape:"
+                f" expected {(dim_position,)}, got {shape_array}."
+            )
+
+        return unravel_fn(array)
+
+    elif ndim == 2:
+        if (dim_position, dim_position) != shape_array:
+            raise ValueError(
+                "The array has the wrong shape:"
+                f" expected {(dim_position, dim_position)}, got {shape_array}."
+            )
+
+        first_unravel = [unravel_fn(value) for value in array]
+        leaves = tree_leaves(position)
+        pydef = tree_structure(position)
+        indx = 0
+        unravel_leaves = []
+        shapes = [jnp.atleast_1d(leaf).shape for leaf in leaves]
+        for leaf in leaves:
+            sh = leaf.shape
+            (dim,) = jnp.ravel(leaf, order="C").shape
+            shape = [jnp.array(sh + s) for s in shapes]
+            shape = tree_unflatten(pydef, shape)
+            unravel_leaf = tree_map(
+                lambda s, *l: jnp.vstack(l).reshape(s),
+                shape,
+                *first_unravel[indx : (indx + dim)],
+            )
+            indx += dim
+            unravel_leaves.append(unravel_leaf)
+        unravel_array = tree_unflatten(pydef, unravel_leaves)
+        return unravel_array
+
+    else:
+        raise ValueError(
+            "The array has the wrong number of dimensions:"
+            f" expected 1 or 2, got {ndim}."
+        )
