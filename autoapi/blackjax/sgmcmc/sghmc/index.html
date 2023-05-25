@@ -192,6 +192,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../gradients/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.gradients</span></code></a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sghmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../sgld/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sgld</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sgnht/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sgnht</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../smc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -382,7 +383,7 @@ document.write(`
 <dt class="sig sig-object py" id="blackjax.sgmcmc.sghmc.sghmc">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sghmc</span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/sghmc.html#sghmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.sghmc.sghmc" title="Permalink to this definition">#</a></dt>
 <dd><p>Implements the (basic) user interface for the SGHMC kernel.</p>
-<p>The general sghmc kernel builder (<code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.sghmc.build_kernel()</span></code>, alias
+<p>The general sghmc kernel builder (<a class="reference internal" href="#blackjax.sgmcmc.sghmc.build_kernel" title="blackjax.sgmcmc.sghmc.build_kernel"><code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sghmc.build_kernel()</span></code></a>, alias
 <cite>blackjax.sghmc.build_kernel</cite>) can be cumbersome to manipulate. Since most users
 only need to specify the kernel parameters at initialization time, we
 provide a helper function that specializes the general kernel.</p>
@@ -415,7 +416,7 @@ perform one step:</p>
 of the gradient of the log-density at this position.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
+<dd class="field-even"><p>A step function.</p>
 </dd>
 </dl>
 <dl class="py attribute">

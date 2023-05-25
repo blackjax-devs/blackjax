@@ -189,6 +189,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.gradients</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sghmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sgld</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sgnht</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -342,7 +343,6 @@ document.write(`
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
 <span class="kn">import</span> <span class="nn">blackjax.sgmcmc.diffusions</span> <span class="k">as</span> <span class="nn">diffusions</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
@@ -372,7 +372,7 @@ document.write(`
             <span class="p">)</span>
             <span class="k">return</span> <span class="p">((</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">),</span> <span class="n">position</span><span class="p">)</span>
 
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">step_size</span><span class="p">))</span>
+        <span class="n">momentum</span> <span class="o">=</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
         <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
         <span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">body_fn</span><span class="p">,</span> <span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">),</span> <span class="n">keys</span><span class="p">)</span>
 
@@ -384,7 +384,7 @@ document.write(`
 <div class="viewcode-block" id="sghmc"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html#blackjax.sgmcmc.sghmc.sghmc">[docs]</a><span class="k">class</span> <span class="nc">sghmc</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the SGHMC kernel.</span>
 
-<span class="sd">    The general sghmc kernel builder (:meth:`blackjax.mcmc.sghmc.build_kernel`, alias</span>
+<span class="sd">    The general sghmc kernel builder (:meth:`blackjax.sgmcmc.sghmc.build_kernel`, alias</span>
 <span class="sd">    `blackjax.sghmc.build_kernel`) can be cumbersome to manipulate. Since most users</span>
 <span class="sd">    only need to specify the kernel parameters at initialization time, we</span>
 <span class="sd">    provide a helper function that specializes the general kernel.</span>
@@ -430,7 +430,7 @@ document.write(`
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
+<span class="sd">    A step function.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 

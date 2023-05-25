@@ -47,6 +47,7 @@ Classes
    blackjax.csgld
    blackjax.sghmc
    blackjax.sgld
+   blackjax.sgnht
    blackjax.adaptive_tempered_smc
    blackjax.tempered_smc
    blackjax.meanfield_vi
@@ -64,6 +65,7 @@ Functions
    blackjax.window_adaptation
    blackjax.ess
    blackjax.rhat
+
 
 
 

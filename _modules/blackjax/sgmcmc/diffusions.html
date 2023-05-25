@@ -189,6 +189,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.gradients</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sghmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sgld</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sgnht</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -339,13 +340,15 @@ document.write(`
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;Solvers for Langevin diffusions.&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
-<span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span>
+<span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span><span class="p">,</span> <span class="n">pytree_size</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;overdamped_langevin&quot;</span><span class="p">,</span> <span class="s2">&quot;sghmc&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;overdamped_langevin&quot;</span><span class="p">,</span> <span class="s2">&quot;sghmc&quot;</span><span class="p">,</span> <span class="s2">&quot;sgnht&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="overdamped_langevin"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html#blackjax.sgmcmc.diffusions.overdamped_langevin">[docs]</a><span class="k">def</span> <span class="nf">overdamped_langevin</span><span class="p">():</span>
@@ -378,7 +381,8 @@ document.write(`
 
 
 <div class="viewcode-block" id="sghmc"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html#blackjax.sgmcmc.diffusions.sghmc">[docs]</a><span class="k">def</span> <span class="nf">sghmc</span><span class="p">(</span><span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solver for the diffusion equation of the SGHMC algorithm :cite:p:`chen2014stochastic`.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Euler solver for the diffusion equation of the SGHMC algorithm :cite:p:`chen2014stochastic`,</span>
+<span class="sd">    with parameters alpha and beta scaled according to :cite:p:`ma2015complete`.</span>
 
 <span class="sd">    This algorithm was ported from :cite:p:`coullon2022sgmcmcjax`.</span>
 
@@ -393,17 +397,57 @@ document.write(`
         <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="n">noise</span> <span class="o">=</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
-        <span class="n">position</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">p</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">)</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">p</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span>
+        <span class="p">)</span>
         <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">p</span>
+            <span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">step_size</span><span class="p">)</span> <span class="o">*</span> <span class="n">p</span>
             <span class="o">+</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">g</span>
-            <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">-</span> <span class="n">beta</span><span class="p">)</span> <span class="o">*</span> <span class="n">temperature</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span>
+            <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">step_size</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">-</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">beta</span><span class="p">)</span> <span class="o">*</span> <span class="n">temperature</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span>
             <span class="n">momentum</span><span class="p">,</span>
             <span class="n">logdensity_grad</span><span class="p">,</span>
             <span class="n">noise</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span>
+
+    <span class="k">return</span> <span class="n">one_step</span></div>
+
+
+<div class="viewcode-block" id="sgnht"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html#blackjax.sgmcmc.diffusions.sgnht">[docs]</a><span class="k">def</span> <span class="nf">sgnht</span><span class="p">(</span><span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Euler solver for the diffusion equation of the SGNHT algorithm :cite:p:`ding2014bayesian`.</span>
+
+<span class="sd">    This algorithm was ported from :cite:p:`coullon2022sgmcmcjax`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+        <span class="n">momentum</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+        <span class="n">xi</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+        <span class="n">position</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">p</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span>
+        <span class="p">)</span>
+        <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">xi</span> <span class="o">*</span> <span class="n">step_size</span><span class="p">)</span> <span class="o">*</span> <span class="n">p</span>
+            <span class="o">+</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">g</span>
+            <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">step_size</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">-</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">beta</span><span class="p">)</span> <span class="o">*</span> <span class="n">temperature</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span>
+            <span class="n">momentum</span><span class="p">,</span>
+            <span class="n">logdensity_grad</span><span class="p">,</span>
+            <span class="n">noise</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">momentum_dot</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_reduce</span><span class="p">(</span>
+            <span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">),</span> <span class="n">momentum</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
+        <span class="n">xi</span> <span class="o">=</span> <span class="n">xi</span> <span class="o">+</span> <span class="n">step_size</span> <span class="o">*</span> <span class="p">(</span><span class="n">momentum_dot</span> <span class="o">/</span> <span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">xi</span>
 
     <span class="k">return</span> <span class="n">one_step</span></div>
 </pre></div>

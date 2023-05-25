@@ -39,7 +39,7 @@ Functions
 
    Implements the (basic) user interface for the SGHMC kernel.
 
-   The general sghmc kernel builder (:meth:`blackjax.mcmc.sghmc.build_kernel`, alias
+   The general sghmc kernel builder (:meth:`blackjax.sgmcmc.sghmc.build_kernel`, alias
    `blackjax.sghmc.build_kernel`) can be cumbersome to manipulate. Since most users
    only need to specify the kernel parameters at initialization time, we
    provide a helper function that specializes the general kernel.
@@ -79,7 +79,7 @@ Functions
    :param grad_estimator: A function that takes a position, a batch of data and returns an estimation
                           of the gradient of the log-density at this position.
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A step function.
 
    .. py:attribute:: build_kernel
 

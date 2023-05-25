@@ -15,6 +15,7 @@ Submodules
    gradients/index.rst
    sghmc/index.rst
    sgld/index.rst
+   sgnht/index.rst
 
 
 Package Contents

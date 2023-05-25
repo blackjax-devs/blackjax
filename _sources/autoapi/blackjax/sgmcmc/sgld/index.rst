@@ -39,7 +39,7 @@ Functions
 
    Implements the (basic) user interface for the SGLD kernel.
 
-   The general sgld kernel builder (:meth:`blackjax.mcmc.sgld.build_kernel`, alias
+   The general sgld kernel builder (:meth:`blackjax.sgmcmc.sgld.build_kernel`, alias
    `blackjax.sgld.build_kernel`) can be cumbersome to manipulate. Since most users
    only need to specify the kernel parameters at initialization time, we
    provide a helper function that specializes the general kernel.
@@ -79,7 +79,7 @@ Functions
    :param grad_estimator: A function that takes a position, a batch of data and returns an estimation
                           of the gradient of the log-density at this position.
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A step function.
 
    .. py:attribute:: build_kernel
 

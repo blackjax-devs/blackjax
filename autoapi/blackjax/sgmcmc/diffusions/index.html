@@ -192,6 +192,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../gradients/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.gradients</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../sghmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sghmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../sgld/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sgld</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sgnht/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sgnht</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../smc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -329,6 +330,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.diffusions.overdamped_langevin"><code class="docutils literal notranslate"><span class="pre">overdamped_langevin()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.diffusions.sghmc"><code class="docutils literal notranslate"><span class="pre">sghmc()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.diffusions.sgnht"><code class="docutils literal notranslate"><span class="pre">sgnht()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -357,7 +359,10 @@ document.write(`
 <td><p>Euler solver for overdamped Langevin diffusion.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.sgmcmc.diffusions.sghmc" title="blackjax.sgmcmc.diffusions.sghmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sghmc</span></code></a>([alpha, beta])</p></td>
-<td><p>Solver for the diffusion equation of the SGHMC algorithm <span id="id1">[<a class="reference internal" href="../../../../bib.html#id29" title="Tianqi Chen, Emily Fox, and Carlos Guestrin. Stochastic gradient hamiltonian monte carlo. In International conference on machine learning, 1683–1691. PMLR, 2014.">CFG14</a>]</span>.</p></td>
+<td><p>Euler solver for the diffusion equation of the SGHMC algorithm <span id="id1">[<a class="reference internal" href="../../../../bib.html#id29" title="Tianqi Chen, Emily Fox, and Carlos Guestrin. Stochastic gradient hamiltonian monte carlo. In International conference on machine learning, 1683–1691. PMLR, 2014.">CFG14</a>]</span>,</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgmcmc.diffusions.sgnht" title="blackjax.sgmcmc.diffusions.sgnht"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgnht</span></code></a>([alpha, beta])</p></td>
+<td><p>Euler solver for the diffusion equation of the SGNHT algorithm <span id="id2">[<a class="reference internal" href="../../../../bib.html#id42" title="Nan Ding, Youhan Fang, Ryan Babbush, Changyou Chen, Robert D Skeel, and Hartmut Neven. Bayesian sampling using stochastic gradient thermostats. Advances in neural information processing systems, 2014.">DFB+14</a>]</span>.</p></td>
 </tr>
 </tbody>
 </table>
@@ -365,14 +370,22 @@ document.write(`
 <dt class="sig sig-object py" id="blackjax.sgmcmc.diffusions.overdamped_langevin">
 <span class="sig-name descname"><span class="pre">overdamped_langevin</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/diffusions.html#overdamped_langevin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.diffusions.overdamped_langevin" title="Permalink to this definition">#</a></dt>
 <dd><p>Euler solver for overdamped Langevin diffusion.</p>
-<p>This algorithm was ported from <span id="id2">[<a class="reference internal" href="../../../../bib.html#id28" title="Jeremie Coullon and Christopher Nemeth. Sgmcmcjax: a lightweight jax library for stochastic gradient markov chain monte carlo algorithms. Journal of Open Source Software, 7(72):4113, 2022.">CN22</a>]</span>.</p>
+<p>This algorithm was ported from <span id="id3">[<a class="reference internal" href="../../../../bib.html#id28" title="Jeremie Coullon and Christopher Nemeth. Sgmcmcjax: a lightweight jax library for stochastic gradient markov chain monte carlo algorithms. Journal of Open Source Software, 7(72):4113, 2022.">CN22</a>]</span>.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.sgmcmc.diffusions.sghmc">
 <span class="sig-name descname"><span class="pre">sghmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/diffusions.html#sghmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.diffusions.sghmc" title="Permalink to this definition">#</a></dt>
-<dd><p>Solver for the diffusion equation of the SGHMC algorithm <span id="id3">[<a class="reference internal" href="../../../../bib.html#id29" title="Tianqi Chen, Emily Fox, and Carlos Guestrin. Stochastic gradient hamiltonian monte carlo. In International conference on machine learning, 1683–1691. PMLR, 2014.">CFG14</a>]</span>.</p>
-<p>This algorithm was ported from <span id="id4">[<a class="reference internal" href="../../../../bib.html#id28" title="Jeremie Coullon and Christopher Nemeth. Sgmcmcjax: a lightweight jax library for stochastic gradient markov chain monte carlo algorithms. Journal of Open Source Software, 7(72):4113, 2022.">CN22</a>]</span>.</p>
+<dd><p>Euler solver for the diffusion equation of the SGHMC algorithm <span id="id4">[<a class="reference internal" href="../../../../bib.html#id29" title="Tianqi Chen, Emily Fox, and Carlos Guestrin. Stochastic gradient hamiltonian monte carlo. In International conference on machine learning, 1683–1691. PMLR, 2014.">CFG14</a>]</span>,
+with parameters alpha and beta scaled according to <span id="id5">[<a class="reference internal" href="../../../../bib.html#id43" title="Yi-An Ma, Tianqi Chen, and Emily Fox. A complete recipe for stochastic gradient mcmc. Advances in neural information processing systems, 2015.">MCF15</a>]</span>.</p>
+<p>This algorithm was ported from <span id="id6">[<a class="reference internal" href="../../../../bib.html#id28" title="Jeremie Coullon and Christopher Nemeth. Sgmcmcjax: a lightweight jax library for stochastic gradient markov chain monte carlo algorithms. Journal of Open Source Software, 7(72):4113, 2022.">CN22</a>]</span>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.sgmcmc.diffusions.sgnht">
+<span class="sig-name descname"><span class="pre">sgnht</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/diffusions.html#sgnht"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.diffusions.sgnht" title="Permalink to this definition">#</a></dt>
+<dd><p>Euler solver for the diffusion equation of the SGNHT algorithm <span id="id7">[<a class="reference internal" href="../../../../bib.html#id42" title="Nan Ding, Youhan Fang, Ryan Babbush, Changyou Chen, Robert D Skeel, and Hartmut Neven. Bayesian sampling using stochastic gradient thermostats. Advances in neural information processing systems, 2014.">DFB+14</a>]</span>.</p>
+<p>This algorithm was ported from <span id="id8">[<a class="reference internal" href="../../../../bib.html#id28" title="Jeremie Coullon and Christopher Nemeth. Sgmcmcjax: a lightweight jax library for stochastic gradient markov chain monte carlo algorithms. Journal of Open Source Software, 7(72):4113, 2022.">CN22</a>]</span>.</p>
 </dd></dl>
 
 </section>
@@ -431,6 +444,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.diffusions.overdamped_langevin"><code class="docutils literal notranslate"><span class="pre">overdamped_langevin()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.diffusions.sghmc"><code class="docutils literal notranslate"><span class="pre">sghmc()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.diffusions.sgnht"><code class="docutils literal notranslate"><span class="pre">sgnht()</span></code></a></li>
 </ul>
 </li>
 </ul>
