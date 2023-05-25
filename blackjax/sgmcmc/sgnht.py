@@ -49,7 +49,7 @@ def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
     """Stochastic gradient Nosé-Hoover Thermostat (SGNHT) algorithm."""
     integrator = diffusions.sgnht(alpha, beta)
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: SGNHTState,
         grad_estimator: Callable,
@@ -64,7 +64,7 @@ def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
         )
         return SGNHTState(position, momentum, xi)
 
-    return one_step
+    return kernel
 
 
 class sgnht:
@@ -128,13 +128,13 @@ class sgnht:
         cls,
         grad_estimator: Callable,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.build_kernel()
+        kernel = cls.build_kernel()
 
         def init_fn(position: PyTree, rng_key: PRNGKey):
             return cls.init(rng_key, position)
 
         def step_fn(rng_key: PRNGKey, state, minibatch: PyTree, step_size: float):
-            return step(
+            return kernel(
                 rng_key,
                 state,
                 grad_estimator,
