@@ -15,10 +15,11 @@
 from typing import Callable, NamedTuple
 
 import blackjax.sgmcmc.diffusions as diffusions
+from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.types import PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["SGNHTState", "init", "kernel"]
+__all__ = ["SGNHTState", "init", "build_kernel", "sgnht"]
 
 
 class SGNHTState(NamedTuple):
@@ -44,7 +45,7 @@ def init(rng_key: PRNGKey, position: PyTree, alpha: float = 0.01):
     return SGNHTState(position, momentum, alpha)
 
 
-def kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
+def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
     """Stochastic gradient Nosé-Hoover Thermostat (SGNHT) algorithm."""
     integrator = diffusions.sgnht(alpha, beta)
 
@@ -64,3 +65,81 @@ def kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
         return SGNHTState(position, momentum, xi)
 
     return one_step
+
+
+class sgnht:
+    """Implements the (basic) user interface for the SGNHT kernel.
+
+    The general sgnht kernel (:meth:`blackjax.sgmcmc.sgnht.build_kernel`, alias
+    `blackjax.sgnht.build_kernel`) can be cumbersome to manipulate. Since most users
+    only need to specify the kernel parameters at initialization time, we
+    provide a helper function that specializes the general kernel.
+
+    Example
+    -------
+
+    To initialize a SGNHT kernel one needs to specify a schedule function, which
+    returns a step size at each sampling step, and a gradient estimator
+    function. Here for a constant step size, and `data_size` data samples:
+
+    .. code::
+
+        grad_estimator = blackjax.sgmcmc.gradients.grad_estimator(logprior_fn, loglikelihood_fn, data_size)
+
+    We can now initialize the sgnht kernel and the state.
+
+    .. code::
+
+        sgnht = blackjax.sgnht(grad_estimator)
+        state = sgnht.init(rng_key, position)
+
+    Assuming we have an iterator `batches` that yields batches of data we can
+    perform one step:
+
+    .. code::
+
+        step_size = 1e-3
+        minibatch = next(batches)
+        new_state = sgnht.step(rng_key, state, minibatch, step_size)
+
+    Kernels are not jit-compiled by default so you will need to do it manually:
+
+    .. code::
+
+       step = jax.jit(sgnht.step)
+       new_state = step(rng_key, state, minibatch, step_size)
+
+    Parameters
+    ----------
+    grad_estimator
+       A function that takes a position, a batch of data and returns an estimation
+       of the gradient of the log-density at this position.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        grad_estimator: Callable,
+    ) -> MCMCSamplingAlgorithm:
+        step = cls.build_kernel()
+
+        def init_fn(position: PyTree, rng_key: PRNGKey):
+            return cls.init(rng_key, position)
+
+        def step_fn(rng_key: PRNGKey, state, minibatch: PyTree, step_size: float):
+            return step(
+                rng_key,
+                state,
+                grad_estimator,
+                minibatch,
+                step_size,
+            )
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

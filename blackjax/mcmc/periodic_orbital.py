@@ -19,7 +19,10 @@ import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
+from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.types import Array, PRNGKey, PyTree
+
+__all__ = ["PeriodicOrbitalState", "init", "build_kernel", "orbital_hmc"]
 
 
 class PeriodicOrbitalState(NamedTuple):
@@ -114,7 +117,7 @@ def init(
     )
 
 
-def kernel(
+def build_kernel(
     bijection: Callable = integrators.velocity_verlet,
 ):
     """Build a Periodic Orbital kernel :cite:p:`neklyudov2022orbital`.
@@ -132,7 +135,7 @@ def kernel(
 
     """
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: PeriodicOrbitalState,
         logdensity_fn: Callable,
@@ -211,7 +214,82 @@ def kernel(
 
         return proposal, info
 
-    return one_step
+    return kernel
+
+
+class orbital_hmc:
+    """Implements the (basic) user interface for the Periodic orbital MCMC kernel.
+
+    Each iteration of the periodic orbital MCMC outputs ``period`` weighted samples from
+    a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable
+    with precision matrix ``inverse_mass_matrix``, evaluated using the ``bijection`` as an
+    integrator with discretization parameter ``step_size``.
+
+    Examples
+    --------
+
+    A new Periodic orbital MCMC kernel can be initialized and used with the following code:
+
+    .. code::
+
+        per_orbit = blackjax.orbital_hmc(logdensity_fn, step_size, inverse_mass_matrix, period)
+        state = per_orbit.init(position)
+        new_state, info = per_orbit.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(per_orbit.step)
+        new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The logarithm of the probability density function we wish to draw samples from.
+    step_size
+        The value to use for the step size in for the symplectic integrator to buid the orbit.
+    inverse_mass_matrix
+        The value to use for the inverse mass matrix when drawing a value for
+        the momentum and computing the kinetic energy.
+    period
+        The number of steps used to build the orbit.
+    bijection
+        (algorithm parameter) The symplectic integrator to use to build the orbit.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+    """
+
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: Array,  # assume momentum is always Gaussian
+        period: int,
+        *,
+        bijection: Callable = integrators.velocity_verlet,
+    ) -> MCMCSamplingAlgorithm:
+        kernel = cls.build_kernel(bijection)
+
+        def init_fn(position: PyTree):
+            return cls.init(position, logdensity_fn, period)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return kernel(
+                rng_key,
+                state,
+                logdensity_fn,
+                step_size,
+                inverse_mass_matrix,
+                period,
+            )
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)
 
 
 def periodic_orbital_proposal(

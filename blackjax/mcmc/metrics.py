@@ -83,11 +83,18 @@ def gaussian_euclidean(
         matmul = jnp.multiply
 
     elif ndim == 2:
-        tril_inv = jscipy.linalg.cholesky(inverse_mass_matrix)
+        # inverse mass matrix can be factored into L*L.T. We want the cholesky
+        # factor (inverse of L.T) of the mass matrix.
+        L = jscipy.linalg.cholesky(inverse_mass_matrix, lower=True)
         identity = jnp.identity(shape[0])
         mass_matrix_sqrt = jscipy.linalg.solve_triangular(
-            tril_inv, identity, lower=True
+            L, identity, lower=True, trans=True
         )
+        # Note that mass_matrix_sqrt is a upper triangular matrix here, with
+        #   jscipy.linalg.inv(mass_matrix_sqrt @ mass_matrix_sqrt.T) == inverse_mass_matrix
+        # An alternative is to compute directly the cholesky factor of the inverse mass matrix
+        #   mass_matrix_sqrt = jscipy.linalg.cholesky(jscipy.linalg.inv(inverse_mass_matrix), lower=True)
+        # which the result would instead be a lower triangular matrix.
         matmul = jnp.matmul
 
     else:

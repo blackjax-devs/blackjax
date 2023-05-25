@@ -11,16 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, Dict, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
 
 import blackjax.smc as smc
+from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.smc.base import SMCState
 from blackjax.types import PRNGKey, PyTree
 
-__all__ = ["TemperedSMCState", "init", "kernel"]
+__all__ = ["TemperedSMCState", "init", "build_kernel"]
 
 
 class TemperedSMCState(NamedTuple):
@@ -44,7 +45,7 @@ def init(particles: PyTree):
     return TemperedSMCState(particles, weights, 0.0)
 
 
-def kernel(
+def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     mcmc_step_fn: Callable,
@@ -88,7 +89,7 @@ def kernel(
 
     """
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: TemperedSMCState,
         num_mcmc_steps: int,
@@ -150,4 +151,66 @@ def kernel(
 
         return tempered_state, info
 
-    return one_step
+    return kernel
+
+
+class tempered_smc:
+    """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
+
+    Parameters
+    ----------
+    logprior_fn
+        The log-prior function of the model we wish to draw samples from.
+    loglikelihood_fn
+        The log-likelihood function of the model we wish to draw samples from.
+    mcmc_step_fn
+        The MCMC step function used to update the particles.
+    mcmc_init_fn
+        The MCMC init function used to build a MCMC state from a particle position.
+    mcmc_parameters
+        The parameters of the MCMC step function.
+    resampling_fn
+        The function used to resample the particles.
+    num_mcmc_steps
+        The number of times the MCMC kernel is applied to the particles per step.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logprior_fn: Callable,
+        loglikelihood_fn: Callable,
+        mcmc_step_fn: Callable,
+        mcmc_init_fn: Callable,
+        mcmc_parameters: Dict,
+        resampling_fn: Callable,
+        num_mcmc_steps: int = 10,
+    ) -> MCMCSamplingAlgorithm:
+        kernel = cls.build_kernel(
+            logprior_fn,
+            loglikelihood_fn,
+            mcmc_step_fn,
+            mcmc_init_fn,
+            resampling_fn,
+        )
+
+        def init_fn(position: PyTree):
+            return cls.init(position)
+
+        def step_fn(rng_key: PRNGKey, state, lmbda):
+            return kernel(
+                rng_key,
+                state,
+                num_mcmc_steps,
+                lmbda,
+                mcmc_parameters,
+            )
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

@@ -24,6 +24,6 @@ from blackjax.adaptation import window_adaptation
     ],
 )
 def test_adaptation_schedule(num_steps, expected_schedule):
-    adaptation_schedule = window_adaptation.schedule(num_steps)
+    adaptation_schedule = window_adaptation.build_schedule(num_steps)
     assert num_steps == len(adaptation_schedule)
     assert np.array_equal(adaptation_schedule, expected_schedule)

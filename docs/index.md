@@ -40,8 +40,8 @@ state = nuts.init(initial_position)
 rng_key = jax.random.PRNGKey(0)
 step = jax.jit(nuts.step)
 for _ in range(1_000):
-   _, rng_key = jax.random.split(rng_key)
-   state, _ = step(rng_key, state)
+   rng_key, nuts_key = jax.random.split(rng_key)
+   state, _ = step(nuts_key, state)
 ```
 
 :::{note}
@@ -129,17 +129,8 @@ The Sampling Book <https://blackjax-devs.github.io/sampling-book>
 ---
 hidden:
 caption: API
-maxdepth: 3
+maxdepth: 2
 ---
-Sampling algorithms <autoapi/blackjax/kernels/index>
-Diagnostics <autoapi/blackjax/diagnostics/index>
 API Reference<autoapi/blackjax/index>
-```
-
-```{toctree}
----
-maxdepth: 1
-hidden:
----
 Bibliography<bib.rst>
 ```

@@ -51,7 +51,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
-        python-version: 3.7
+        python-version: 3.8
     - name: Give PyPI some time to update the index
       run: sleep 240
     - name: Attempt install from PyPI

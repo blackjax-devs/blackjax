@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Tuple
+from typing import Callable, Dict, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -20,12 +20,13 @@ import blackjax.smc.base as base
 import blackjax.smc.ess as ess
 import blackjax.smc.solver as solver
 import blackjax.smc.tempered as tempered
-from blackjax.types import PRNGKey
+from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.types import PRNGKey, PyTree
 
-__all__ = ["kernel"]
+__all__ = ["build_kernel", "adaptive_tempered_smc"]
 
 
-def kernel(
+def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     mcmc_step_fn: Callable,
@@ -81,7 +82,7 @@ def kernel(
 
         return delta
 
-    kernel = tempered.kernel(
+    tempered_kernel = tempered.build_kernel(
         logprior_fn,
         loglikelihood_fn,
         mcmc_step_fn,
@@ -89,7 +90,7 @@ def kernel(
         resampling_fn,
     )
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: tempered.TemperedSMCState,
         num_mcmc_steps: int,
@@ -97,6 +98,76 @@ def kernel(
     ) -> Tuple[tempered.TemperedSMCState, base.SMCInfo]:
         delta = compute_delta(state)
         lmbda = delta + state.lmbda
-        return kernel(rng_key, state, num_mcmc_steps, lmbda, mcmc_parameters)
+        return tempered_kernel(rng_key, state, num_mcmc_steps, lmbda, mcmc_parameters)
 
-    return one_step
+    return kernel
+
+
+class adaptive_tempered_smc:
+    """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
+
+    Parameters
+    ----------
+    logprior_fn
+        The log-prior function of the model we wish to draw samples from.
+    loglikelihood_fn
+        The log-likelihood function of the model we wish to draw samples from.
+    mcmc_step_fn
+        The MCMC step function used to update the particles.
+    mcmc_init_fn
+        The MCMC init function used to build a MCMC state from a particle position.
+    mcmc_parameters
+        The parameters of the MCMC step function.
+    resampling_fn
+        The function used to resample the particles.
+    target_ess
+        The number of effective sample size to aim for at each step.
+    root_solver
+        The solver used to adaptively compute the temperature given a target number
+        of effective samples.
+    num_mcmc_steps
+        The number of times the MCMC kernel is applied to the particles per step.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(tempered.init)
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logprior_fn: Callable,
+        loglikelihood_fn: Callable,
+        mcmc_step_fn: Callable,
+        mcmc_init_fn: Callable,
+        mcmc_parameters: Dict,
+        resampling_fn: Callable,
+        target_ess: float,
+        root_solver: Callable = solver.dichotomy,
+        num_mcmc_steps: int = 10,
+    ) -> MCMCSamplingAlgorithm:
+        kernel = cls.build_kernel(
+            logprior_fn,
+            loglikelihood_fn,
+            mcmc_step_fn,
+            mcmc_init_fn,
+            resampling_fn,
+            target_ess,
+            root_solver,
+        )
+
+        def init_fn(position: PyTree):
+            return cls.init(position)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return kernel(
+                rng_key,
+                state,
+                num_mcmc_steps,
+                mcmc_parameters,
+            )
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)

@@ -19,9 +19,11 @@ import jax
 import jax.numpy as jnp
 
 import blackjax.mcmc.diffusions as diffusions
+import blackjax.mcmc.proposal as proposal
+from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.types import PRNGKey, PyTree
 
-__all__ = ["MALAState", "MALAInfo", "init", "kernel"]
+__all__ = ["MALAState", "MALAInfo", "init", "build_kernel", "mala"]
 
 
 class MALAState(NamedTuple):
@@ -63,7 +65,7 @@ def init(position: PyTree, logdensity_fn: Callable) -> MALAState:
     return MALAState(position, logdensity, logdensity_grad)
 
 
-def kernel():
+def build_kernel():
     """Build a MALA kernel.
 
     Returns
@@ -74,8 +76,8 @@ def kernel():
 
     """
 
-    def transition_probability(state, new_state, step_size):
-        """Transition probability to go from `state` to `new_state`"""
+    def transition_energy(state, new_state, step_size):
+        """Transition energy to go from `state` to `new_state`"""
         theta = jax.tree_util.tree_map(
             lambda new_x, x, g: new_x - x - step_size * g,
             new_state.position,
@@ -85,9 +87,14 @@ def kernel():
         theta_dot = jax.tree_util.tree_reduce(
             operator.add, jax.tree_util.tree_map(lambda x: jnp.sum(x * x), theta)
         )
-        return -0.25 * (1.0 / step_size) * theta_dot
+        return -state.logdensity + 0.25 * (1.0 / step_size) * theta_dot
 
-    def one_step(
+    init_proposal, generate_proposal = proposal.asymmetric_proposal_generator(
+        transition_energy, divergence_threshold=jnp.inf
+    )
+    sample_proposal = proposal.static_binomial_sampling
+
+    def kernel(
         rng_key: PRNGKey, state: MALAState, logdensity_fn: Callable, step_size: float
     ) -> Tuple[MALAState, MALAInfo]:
         """Generate a new sample with the MALA kernel."""
@@ -97,26 +104,85 @@ def kernel():
         key_integrator, key_rmh = jax.random.split(rng_key)
 
         new_state = integrator(key_integrator, state, step_size)
-
-        delta = (
-            new_state.logdensity
-            - state.logdensity
-            + transition_probability(new_state, state, step_size)
-            - transition_probability(state, new_state, step_size)
-        )
-        delta = jnp.where(jnp.isnan(delta), -jnp.inf, delta)
-        p_accept = jnp.clip(jnp.exp(delta), a_max=1)
-
-        do_accept = jax.random.bernoulli(key_rmh, p_accept)
-
         new_state = MALAState(*new_state)
+
+        proposal = init_proposal(state)
+        new_proposal, _ = generate_proposal(state, new_state, step_size=step_size)
+        sampled_proposal, do_accept, p_accept = sample_proposal(
+            key_rmh, proposal, new_proposal
+        )
+
         info = MALAInfo(p_accept, do_accept)
 
-        return jax.lax.cond(
-            do_accept,
-            lambda _: (new_state, info),
-            lambda _: (state, info),
-            operand=None,
-        )
+        return sampled_proposal.state, info
 
-    return one_step
+    return kernel
+
+
+class mala:
+    """Implements the (basic) user interface for the MALA kernel.
+
+    The general mala kernel builder (:meth:`blackjax.mcmc.mala.build_kernel`, alias `blackjax.mala.build_kernel`) can be
+    cumbersome to manipulate. Since most users only need to specify the kernel
+    parameters at initialization time, we provide a helper function that
+    specializes the general kernel.
+
+    We also add the general kernel and state generator as an attribute to this class so
+    users only need to pass `blackjax.mala` to SMC, adaptation, etc. algorithms.
+
+    Examples
+    --------
+
+    A new MALA kernel can be initialized and used with the following code:
+
+    .. code::
+
+        mala = blackjax.mala(logdensity_fn, step_size)
+        state = mala.init(position)
+        new_state, info = mala.step(rng_key, state)
+
+    Kernels are not jit-compiled by default so you will need to do it manually:
+
+    .. code::
+
+       step = jax.jit(mala.step)
+       new_state, info = step(rng_key, state)
+
+    Should you need to you can always use the base kernel directly:
+
+    .. code::
+
+       kernel = blackjax.mala.build_kernel(logdensity_fn)
+       state = blackjax.mala.init(position, logdensity_fn)
+       state, info = kernel(rng_key, state, logdensity_fn, step_size)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log-density function we wish to draw samples from.
+    step_size
+        The value to use for the step size in the symplectic integrator.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_fn: Callable,
+        step_size: float,
+    ) -> MCMCSamplingAlgorithm:
+        kernel = cls.build_kernel()
+
+        def init_fn(position: PyTree):
+            return cls.init(position, logdensity_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return kernel(rng_key, state, logdensity_fn, step_size)
+
+        return MCMCSamplingAlgorithm(init_fn, step_fn)

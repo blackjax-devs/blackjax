@@ -20,7 +20,7 @@ import jax.numpy as jnp
 from blackjax.types import PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise, pytree_size
 
-__all__ = ["overdamped_langevin", "sghmc"]
+__all__ = ["overdamped_langevin", "sghmc", "sgnht"]
 
 
 def overdamped_langevin():
