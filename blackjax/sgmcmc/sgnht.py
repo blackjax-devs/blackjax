@@ -15,9 +15,9 @@
 from typing import Callable, NamedTuple
 
 import blackjax.sgmcmc.diffusions as diffusions
+from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.types import PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise
-from blackjax.base import MCMCSamplingAlgorithm
 
 __all__ = ["SGNHTState", "init", "build_kernel", "sgnht"]
 
@@ -128,7 +128,7 @@ class sgnht:
         cls,
         grad_estimator: Callable,
     ) -> MCMCSamplingAlgorithm:
-        step = cls.kernel()
+        step = cls.build_kernel()
 
         def init_fn(position: PyTree, rng_key: PRNGKey):
             return cls.init(rng_key, position)

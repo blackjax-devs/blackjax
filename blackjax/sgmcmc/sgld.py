@@ -91,7 +91,7 @@ class sgld:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A step function.
 
     """
 

@@ -15,7 +15,6 @@
 from typing import Callable
 
 import jax
-import jax.numpy as jnp
 
 import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.types import PRNGKey, PyTree
@@ -103,7 +102,7 @@ class sghmc:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A step function.
 
     """
 
