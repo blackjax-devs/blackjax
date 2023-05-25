@@ -143,4 +143,3 @@ class sgnht:
             )
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
-
