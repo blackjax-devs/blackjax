@@ -17,6 +17,7 @@ from .optimizers import dual_averaging, lbfgs
 from .sgmcmc.csgld import csgld
 from .sgmcmc.sghmc import sghmc
 from .sgmcmc.sgld import sgld
+from .sgmcmc.sgnht import sgnht
 from .smc.adaptive_tempered import adaptive_tempered_smc
 from .smc.tempered import tempered_smc
 from .vi.meanfield_vi import meanfield_vi
@@ -38,6 +39,7 @@ __all__ = [
     "ghmc",
     "sgld",  # stochastic gradient mcmc
     "sghmc",
+    "sgnht",
     "csgld",
     "window_adaptation",  # mcmc adaptation
     "meads_adaptation",
