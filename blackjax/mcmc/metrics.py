@@ -27,16 +27,17 @@ For a Newtonian hamiltonian dynamic the kinetic energy is given by:
 We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
 
 """
-from typing import Callable, Tuple
+from typing import Callable, Optional, Tuple
 
 import jax.numpy as jnp
 import jax.scipy as jscipy
 from jax.flatten_util import ravel_pytree
+from jax.scipy import stats as sp_stats
 
 from blackjax.types import Array, PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["gaussian_euclidean"]
+__all__ = ["gaussian_euclidean", "gaussian_riemannian"]
 
 EuclideanKineticEnergy = Callable[[PyTree], float]
 
@@ -44,7 +45,8 @@ EuclideanKineticEnergy = Callable[[PyTree], float]
 def gaussian_euclidean(
     inverse_mass_matrix: Array,
 ) -> Tuple[Callable, EuclideanKineticEnergy, Callable]:
-    r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum :cite:p:`betancourt2013general`.
+    r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum
+    :cite:p:`betancourt2013general`.
 
     The gaussian euclidean metric is a euclidean metric further characterized
     by setting the conditional probability density :math:`\pi(momentum|position)`
@@ -106,7 +108,8 @@ def gaussian_euclidean(
     def momentum_generator(rng_key: PRNGKey, position: PyTree) -> PyTree:
         return generate_gaussian_noise(rng_key, position, sigma=mass_matrix_sqrt)
 
-    def kinetic_energy(momentum: PyTree) -> float:
+    def kinetic_energy(momentum: PyTree, position: Optional[PyTree] = None) -> float:
+        del position
         momentum, _ = ravel_pytree(momentum)
         velocity = matmul(inverse_mass_matrix, momentum)
         kinetic_energy_val = 0.5 * jnp.dot(velocity, momentum)
@@ -139,5 +142,55 @@ def gaussian_euclidean(
         turning_at_left = jnp.dot(velocity_left, rho) <= 0
         turning_at_right = jnp.dot(velocity_right, rho) <= 0
         return turning_at_left | turning_at_right
+
+    return momentum_generator, kinetic_energy, is_turning
+
+
+def gaussian_riemannian(
+    mass_matrix_fn: Callable,
+) -> Tuple[Callable, Callable, Callable]:
+    def momentum_generator(rng_key: PRNGKey, position: PyTree) -> PyTree:
+        mass_matrix = mass_matrix_fn(position)
+        ndim = jnp.ndim(mass_matrix)
+        if ndim == 1:
+            mass_matrix_sqrt = jnp.sqrt(mass_matrix)
+        elif ndim == 2:
+            mass_matrix_sqrt = jscipy.linalg.cholesky(mass_matrix, lower=True)
+        else:
+            raise ValueError(
+                "The mass matrix has the wrong number of dimensions:"
+                f" expected 1 or 2, got {jnp.ndim(mass_matrix)}."
+            )
+
+        return generate_gaussian_noise(rng_key, position, sigma=mass_matrix_sqrt)
+
+    def kinetic_energy(momentum: PyTree, position: Optional[PyTree] = None) -> float:
+        if position is None:
+            raise ValueError(
+                "A Reinmannian kinetic energy function must be called with the "
+                "position specified; make sure to use a Reinmannian-capable "
+                "integrator like `implicit_midpoint`."
+            )
+
+        momentum, _ = ravel_pytree(momentum)
+        mass_matrix = mass_matrix_fn(position)
+        ndim = jnp.ndim(mass_matrix)
+        if ndim == 1:
+            return -jnp.sum(sp_stats.norm.logpdf(momentum, 0.0, jnp.sqrt(mass_matrix)))
+        elif ndim == 2:
+            return -sp_stats.multivariate_normal.logpdf(
+                momentum, jnp.zeros_like(momentum), mass_matrix
+            )
+        else:
+            raise ValueError(
+                "The mass matrix has the wrong number of dimensions:"
+                f" expected 1 or 2, got {jnp.ndim(mass_matrix)}."
+            )
+
+    def is_turning(
+        momentum_left: PyTree, momentum_right: PyTree, momentum_sum: PyTree
+    ) -> bool:
+        del momentum_left, momentum_right, momentum_sum
+        raise NotImplementedError
 
     return momentum_generator, kinetic_energy, is_turning

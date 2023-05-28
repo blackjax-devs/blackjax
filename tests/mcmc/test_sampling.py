@@ -406,6 +406,11 @@ class LatentGaussianTest(chex.TestCase):
         )
 
 
+def rmhmc_static_mass_matrix_fn(position):
+    del position
+    return jnp.array([1.0])
+
+
 normal_test_cases = [
     {
         "algorithm": blackjax.hmc,
@@ -483,6 +488,16 @@ normal_test_cases = [
         "num_sampling_steps": 6000,
         "burnin": 1_000,
     },
+    {
+        "algorithm": blackjax.rmhmc,
+        "initial_position": jnp.array(3.0),
+        "parameters": {
+            "step_size": 1.0,
+            "num_integration_steps": 30,
+        },
+        "num_sampling_steps": 6000,
+        "burnin": 1_000,
+    },
 ]
 
 
@@ -509,6 +524,9 @@ class UnivariateNormalTest(chex.TestCase):
 
         if algorithm == blackjax.rmh:
             parameters["proposal_generator"] = rmh_proposal_distribution
+
+        if algorithm == blackjax.rmhmc:
+            parameters["mass_matrix"] = rmhmc_static_mass_matrix_fn
 
         algo = algorithm(self.normal_logprob, **parameters)
         rng_key = self.key

@@ -14,7 +14,8 @@ def HarmonicOscillator(inv_mass_matrix, k=1.0, m=1.0):
     def neg_potential_energy(q):
         return -jnp.sum(0.5 * k * jnp.square(q["x"]))
 
-    def kinetic_energy(p):
+    def kinetic_energy(p, position=None):
+        del position
         v = jnp.multiply(inv_mass_matrix, p["x"])
         return jnp.sum(0.5 * jnp.dot(v, p["x"]))
 
@@ -27,7 +28,8 @@ def FreeFall(inv_mass_matrix, g=1.0):
     def neg_potential_energy(q):
         return -jnp.sum(g * q["x"])
 
-    def kinetic_energy(p):
+    def kinetic_energy(p, position=None):
+        del position
         v = jnp.multiply(inv_mass_matrix, p["x"])
         return jnp.sum(0.5 * jnp.dot(v, p["x"]))
 
@@ -40,7 +42,8 @@ def PlanetaryMotion(inv_mass_matrix):
     def neg_potential_energy(q):
         return 1.0 / jnp.power(q["x"] ** 2 + q["y"] ** 2, 0.5)
 
-    def kinetic_energy(p):
+    def kinetic_energy(p, position=None):
+        del position
         z = jnp.stack([p["x"], p["y"]], axis=-1)
         return 0.5 * jnp.dot(inv_mass_matrix, z**2)
 
@@ -51,6 +54,10 @@ algorithms = {
     "velocity_verlet": {"algorithm": integrators.velocity_verlet, "precision": 1e-4},
     "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-5},
     "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-6},
+    "implicit_midpoint": {
+        "algorithm": integrators.implicit_midpoint,
+        "precision": 1e-4,
+    },
 }
 
 
@@ -101,7 +108,7 @@ class IntegratorTest(chex.TestCase):
     @parameterized.parameters(
         itertools.product(
             ["free_fall", "harmonic_oscillator", "planetary_motion"],
-            ["velocity_verlet", "mclachlan", "yoshida"],
+            ["velocity_verlet", "mclachlan", "yoshida", "implicit_midpoint"],
         )
     )
     def test_integrator(self, example_name, integrator_name):

@@ -7,12 +7,14 @@ from . import (
     nuts,
     periodic_orbital,
     random_walk,
+    rmhmc,
 )
 
 __all__ = [
     "elliptical_slice",
     "ghmc",
     "hmc",
+    "rmhmc",
     "mala",
     "nuts",
     "periodic_orbital",

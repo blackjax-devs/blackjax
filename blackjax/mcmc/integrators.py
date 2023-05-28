@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Tuple
 
 import jax
+import jax.numpy as jnp
+from jax.flatten_util import ravel_pytree
 
 from blackjax.mcmc.metrics import EuclideanKineticEnergy
 from blackjax.types import PyTree
 
-__all__ = ["mclachlan", "velocity_verlet", "yoshida"]
+__all__ = ["mclachlan", "velocity_verlet", "yoshida", "implicit_midpoint"]
 
 
 class IntegratorState(NamedTuple):
@@ -246,3 +248,117 @@ def yoshida(
         return IntegratorState(position, momentum, logdensity, logdensity_grad)
 
     return one_step
+
+
+def implicit_midpoint(
+    logdensity_fn: Callable,
+    kinetic_energy_fn: Callable,
+    *,
+    convergence_tol: float = 1e-6,
+    divergence_tol: float = 1e10,
+    max_iters: int = 100,
+    norm_fn: Callable[[PyTree], float] = lambda x: jnp.max(jnp.abs(x)),
+) -> EuclideanIntegrator:
+    """The implicit midpoint integrator with support for non-stationary kinetic energy
+
+    This is an integrator based on :cite:t:`brofos2021evaluating`, which provides
+    support for kinetic energies that depend on position. This integrator requires that
+    the kinetic energy function takes two arguments: position and momentum.
+    """
+    # TODO: The return type of this method isn't actually "Euclidean" even though it has
+    # the same signature!
+
+    logdensity_and_grad_fn = jax.value_and_grad(logdensity_fn)
+    kinetic_energy_grad_fn = jax.grad(
+        lambda q, p: kinetic_energy_fn(p, position=q), argnums=(0, 1)
+    )
+
+    def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
+        position, momentum, _, _ = state
+
+        def _update(
+            q: PyTree,
+            p: PyTree,
+            dUdq: PyTree,
+            initial: Tuple[PyTree, PyTree] = (position, momentum),
+        ) -> Tuple[PyTree, PyTree]:
+            dTdq, dHdp = kinetic_energy_grad_fn(q, p)
+            dHdq = jax.tree_util.tree_map(jnp.subtract, dTdq, dUdq)
+
+            # Take a step from the _initial coordinates_ using the gradients of the
+            # Hamiltonian evaluated at the current guess for the midpoint
+            q = jax.tree_util.tree_map(
+                lambda q_, d_: q_ + 0.5 * step_size * d_, initial[0], dHdp
+            )
+            p = jax.tree_util.tree_map(
+                lambda p_, d_: p_ - 0.5 * step_size * d_, initial[1], dHdq
+            )
+            return q, p
+
+        # Solve for the midpoint numerically
+        def _step(args: Tuple[PyTree, PyTree]) -> Tuple[PyTree, PyTree]:
+            q, p = args
+            _, dLdq = logdensity_and_grad_fn(q)
+            return _update(q, p, dLdq), dLdq
+
+        (q, p), dLdq, info = _solve_fixed_point(
+            _step,
+            (position, momentum),
+            convergence_tol=convergence_tol,
+            divergence_tol=divergence_tol,
+            max_iters=max_iters,
+            norm_fn=norm_fn,
+        )
+        del info  # TODO: Track the returned info
+
+        # Take an explicit update as recommended by Brofos & Lederman
+        _, dLdq = logdensity_and_grad_fn(q)
+        q, p = _update(q, p, dLdq, initial=(q, p))
+
+        return IntegratorState(q, p, *logdensity_and_grad_fn(q))
+
+    return one_step
+
+
+class FixedPointSolverInfo(NamedTuple):
+    success: bool
+    norm: float
+    iters: int
+
+
+def _solve_fixed_point(
+    func: Callable,
+    x0: PyTree,
+    convergence_tol: float = 1e-6,
+    divergence_tol: float = 1e10,
+    max_iters: int = 100,
+    norm_fn: Callable[[PyTree], float] = lambda x: jnp.max(jnp.abs(x)),
+) -> Tuple[PyTree, PyTree, FixedPointSolverInfo]:
+    """Solve for x = func(x) using a fixed point iteration"""
+
+    def compute_norm(x: PyTree, xp: PyTree) -> float:
+        return norm_fn(ravel_pytree(jax.tree_util.tree_map(jnp.subtract, x, xp))[0])
+
+    def cond_fn(args: Tuple[int, PyTree, PyTree, float]) -> bool:
+        n, _, _, norm = args
+        return (
+            (n < max_iters)
+            & jnp.isfinite(norm)
+            & (norm < divergence_tol)
+            & (norm > convergence_tol)
+        )
+
+    def body_fn(
+        args: Tuple[int, PyTree, PyTree, float]
+    ) -> Tuple[int, PyTree, PyTree, float]:
+        n, x, _, _ = args
+        xn, aux = func(x)
+        norm = compute_norm(xn, x)
+        return n + 1, xn, aux, norm
+
+    x, aux = func(x0)
+    iters, x, aux, norm = jax.lax.while_loop(
+        cond_fn, body_fn, (0, x, aux, compute_norm(x, x0))
+    )
+    success = jnp.isfinite(norm) & (norm <= convergence_tol)
+    return x, aux, FixedPointSolverInfo(success, norm, iters)
