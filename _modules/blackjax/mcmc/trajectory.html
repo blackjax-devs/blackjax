@@ -443,19 +443,14 @@ document.write(`
     <span class="k">def</span> <span class="nf">integrate</span><span class="p">(</span>
         <span class="n">initial_state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">num_integration_steps</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IntegratorState</span><span class="p">:</span>
-        <span class="n">directed_step_size</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+        <span class="n">directed_step_size</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
             <span class="k">lambda</span> <span class="n">step_size</span><span class="p">:</span> <span class="n">direction</span> <span class="o">*</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">step_size</span>
         <span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
-            <span class="n">state</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">directed_step_size</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">state</span>
+        <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">integrator</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">directed_step_size</span><span class="p">)</span>
 
-        <span class="n">last_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-            <span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_integration_steps</span><span class="p">)</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">last_state</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">fori_loop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">,</span> <span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">integrate</span></div>
 
