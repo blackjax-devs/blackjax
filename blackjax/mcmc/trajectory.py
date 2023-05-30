@@ -115,19 +115,14 @@ def static_integration(
     def integrate(
         initial_state: IntegratorState, step_size, num_integration_steps
     ) -> IntegratorState:
-        directed_step_size = jax.tree_map(
+        directed_step_size = jax.tree_util.tree_map(
             lambda step_size: direction * step_size, step_size
         )
 
-        def one_step(state, _):
-            state = integrator(state, directed_step_size)
-            return state, state
+        def one_step(_, state):
+            return integrator(state, directed_step_size)
 
-        last_state, _ = jax.lax.scan(
-            one_step, initial_state, jnp.arange(num_integration_steps)
-        )
-
-        return last_state
+        return jax.lax.fori_loop(0, num_integration_steps, one_step, initial_state)
 
     return integrate
 
