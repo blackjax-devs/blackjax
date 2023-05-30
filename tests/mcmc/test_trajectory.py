@@ -259,6 +259,39 @@ class TrajectoryTest(chex.TestCase):
         assert expansion_state.step == expected_doublings
         assert is_turning == should_turn
 
+    def test_static_integration_variable_num_steps(self):
+        rng_key = jax.random.PRNGKey(0)
+
+        logdensity_fn = jax.scipy.stats.norm.logpdf
+        position = 1.0
+        inverse_mass_matrix = jnp.array([1.0])
+
+        (
+            momentum_generator,
+            kinetic_energy_fn,
+            _,
+        ) = metrics.gaussian_euclidean(inverse_mass_matrix)
+        initial_state = integrators.new_integrator_state(
+            logdensity_fn, position, momentum_generator(rng_key, position)
+        )
+
+        integrator = integrators.velocity_verlet(logdensity_fn, kinetic_energy_fn)
+        static_integration = trajectory.static_integration(integrator)
+
+        # When not jitted, the number of steps is static and this integration is
+        # performed using a scan
+        scan_state = static_integration(initial_state, 0.1, 10)
+
+        # When jitted, the number of steps is no longer static - make sure that
+        # we still get the same result
+        fori_state = jax.jit(static_integration)(initial_state, 0.1, 10)
+
+        jax.tree_util.tree_map(
+            functools.partial(np.testing.assert_allclose, rtol=1e-5),
+            fori_state,
+            scan_state,
+        )
+
 
 if __name__ == "__main__":
     absltest.main()
