@@ -188,9 +188,32 @@ def gaussian_riemannian(
             )
 
     def is_turning(
-        momentum_left: PyTree, momentum_right: PyTree, momentum_sum: PyTree
+        momentum_left: PyTree,
+        momentum_right: PyTree,
+        momentum_sum: PyTree,
+        position_left: Optional[PyTree] = None,
+        position_right: Optional[PyTree] = None,
     ) -> bool:
-        del momentum_left, momentum_right, momentum_sum
-        raise NotImplementedError
+        if position_left is None or position_right is None:
+            raise ValueError(
+                "A Reinmannian turning criterion function must be called with "
+                "the position specified; make sure to use a Reinmannian-capable "
+                "integrator like `implicit_midpoint`."
+            )
+
+        m_left, _ = ravel_pytree(momentum_left)
+        m_right, _ = ravel_pytree(momentum_right)
+        m_sum, _ = ravel_pytree(momentum_sum)
+
+        mass_matrix_left = mass_matrix_fn(position_left)
+        mass_matrix_right = mass_matrix_fn(position_right)
+        velocity_left = jnp.linalg.solve(mass_matrix_left, m_left)
+        velocity_right = jnp.linalg.solve(mass_matrix_right, m_right)
+
+        # rho = m_sum
+        rho = m_sum - (m_right + m_left) / 2
+        turning_at_left = jnp.dot(velocity_left, rho) <= 0
+        turning_at_right = jnp.dot(velocity_right, rho) <= 0
+        return turning_at_left | turning_at_right
 
     return momentum_generator, kinetic_energy, is_turning
