@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Stochastic gradient Nosé-Hoover Thermostat kernel."""
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Union
 
 import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.base import MCMCSamplingAlgorithm
@@ -40,9 +40,9 @@ class SGNHTState(NamedTuple):
     xi: float
 
 
-def init(rng_key: PRNGKey, position: PyTree, alpha: float = 0.01):
+def init(position: PyTree, rng_key: PRNGKey, xi: float) -> SGNHTState:
     momentum = generate_gaussian_noise(rng_key, position)
-    return SGNHTState(position, momentum, alpha)
+    return SGNHTState(position, momentum, xi)
 
 
 def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
@@ -127,19 +127,25 @@ class sgnht:
     def __new__(  # type: ignore[misc]
         cls,
         grad_estimator: Callable,
+        alpha: float = 0.01,
+        beta: float = 0.0,
     ) -> MCMCSamplingAlgorithm:
-        kernel = cls.build_kernel()
+        kernel = cls.build_kernel(alpha, beta)
 
-        def init_fn(position: PyTree, rng_key: PRNGKey):
-            return cls.init(rng_key, position)
+        def init_fn(
+            position: PyTree, rng_key: PRNGKey, init_xi: Union[None, float] = None
+        ):
+            return cls.init(position, rng_key, init_xi or alpha)
 
-        def step_fn(rng_key: PRNGKey, state, minibatch: PyTree, step_size: float):
+        def step_fn(
+            rng_key: PRNGKey,
+            state,
+            minibatch: PyTree,
+            step_size: float,
+            temperature: float = 1,
+        ):
             return kernel(
-                rng_key,
-                state,
-                grad_estimator,
-                minibatch,
-                step_size,
+                rng_key, state, grad_estimator, minibatch, step_size, temperature
             )
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

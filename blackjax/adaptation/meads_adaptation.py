@@ -204,7 +204,7 @@ def meads_adaptation(
 
     adapt_init, adapt_update = base()
 
-    batch_init = jax.vmap(lambda r, p: mcmc.ghmc.init(r, p, logdensity_fn))
+    batch_init = jax.vmap(lambda p, r: mcmc.ghmc.init(p, r, logdensity_fn))
 
     def one_step(carry, rng_key):
         states, adaptation_state = carry
@@ -235,7 +235,7 @@ def meads_adaptation(
         key_init, key_adapt = jax.random.split(rng_key)
 
         rng_keys = jax.random.split(key_init, num_chains)
-        init_states = batch_init(rng_keys, positions)
+        init_states = batch_init(positions, rng_keys)
         init_adaptation_state = adapt_init(positions, init_states.logdensity_grad)
 
         keys = jax.random.split(key_adapt, num_steps)

@@ -50,10 +50,10 @@ class GHMCState(NamedTuple):
 
 
 def init(
-    rng_key: PRNGKey,
     position: PyTree,
+    rng_key: PRNGKey,
     logdensity_fn: Callable,
-):
+) -> GHMCState:
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
 
     key_mometum, key_slice = jax.random.split(rng_key)
@@ -249,7 +249,7 @@ class ghmc:
         kernel = cls.build_kernel(noise_gn, divergence_threshold)
 
         def init_fn(position: PyTree, rng_key: PRNGKey):
-            return cls.init(rng_key, position, logdensity_fn)
+            return cls.init(position, rng_key, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
             return kernel(
