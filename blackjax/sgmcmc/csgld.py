@@ -228,12 +228,12 @@ class csgld:
 
         def step_fn(
             rng_key: PRNGKey,
-            state,
+            state: ContourSGLDState,
             minibatch: PyTree,
             step_size_diff: float,
             step_size_stoch: float,
             temperature: float = 1.0,
-        ):
+        ) -> ContourSGLDState:
             return kernel(
                 rng_key,
                 state,

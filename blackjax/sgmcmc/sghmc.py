@@ -132,7 +132,7 @@ class sghmc:
             minibatch: PyTree,
             step_size: float,
             temperature: float = 1,
-        ):
+        ) -> PyTree:
             return kernel(
                 rng_key,
                 state,
