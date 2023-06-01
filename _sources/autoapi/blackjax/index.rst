@@ -52,6 +52,7 @@ Classes
    blackjax.tempered_smc
    blackjax.meanfield_vi
    blackjax.pathfinder
+   blackjax.svgd
 
 
 
@@ -65,6 +66,7 @@ Functions
    blackjax.window_adaptation
    blackjax.ess
    blackjax.rhat
+
 
 
 

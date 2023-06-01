@@ -12,5 +12,6 @@ Submodules
 
    meanfield_vi/index.rst
    pathfinder/index.rst
+   svgd/index.rst
 
 
