@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
-from typing import Callable, NamedTuple, Tuple
+from typing import Any, Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
-from blackjax.mcmc.metrics import EuclideanKineticEnergy
+from blackjax.mcmc.metrics import KineticEnergy
 from blackjax.types import PyTree
 
 __all__ = ["mclachlan", "velocity_verlet", "yoshida", "implicit_midpoint"]
@@ -37,7 +37,7 @@ class IntegratorState(NamedTuple):
     logdensity_grad: PyTree
 
 
-EuclideanIntegrator = Callable[[IntegratorState, float], IntegratorState]
+Integrator = Callable[[IntegratorState, float], IntegratorState]
 
 
 def new_integrator_state(logdensity_fn, position, momentum):
@@ -47,20 +47,22 @@ def new_integrator_state(logdensity_fn, position, momentum):
 
 def velocity_verlet(
     logdensity_fn: Callable,
-    kinetic_energy_fn: EuclideanKineticEnergy,
-) -> EuclideanIntegrator:
-    """The velocity Verlet (or Verlet-Störmer) integrator.
+    kinetic_energy_fn: KineticEnergy,
+) -> Integrator:
+    r"""The velocity Verlet (or Verlet-Störmer) integrator.
 
-    The velocity Verlet is a two-stage palindromic integrator :cite:p:`bou2018geometric` of the form
-    (a1, b1, a2, b1, a1) with a1 = 0. It is numerically stable for values of
+    The velocity Verlet is a two-stage palindromic integrator :cite:p:`bou2018geometric`
+    of the form (a1, b1, a2, b1, a1) with a1 = 0. It is numerically stable for values of
     the step size that range between 0 and 2 (when the mass matrix is the
     identity).
 
     While the position (a1 = 0.5) and velocity Verlet are the most commonly used
     in samplers, it is known in the numerical computation literature that the value
-    $a1 \approx 0.1932$ leads to a lower integration error :cite:p:`mclachlan1995numerical,schlick2010molecular`. The authors of :cite:p:`bou2018geometric`
-    show that the value $a1 \approx 0.21132$ leads to an even higher step acceptance
-    rate, up to 3 times higher than with the standard position verlet (p.22, Fig.4).
+    $a1 \approx 0.1932$ leads to a lower integration error
+    :cite:p:`mclachlan1995numerical,schlick2010molecular`. The authors of
+    :cite:p:`bou2018geometric` show that the value $a1 \approx 0.21132$ leads to an
+    even higher step acceptance rate, up to 3 times higher than with the standard
+    position verlet (p.22, Fig.4).
 
     By choosing the velocity verlet we avoid two computations of the gradient
     of the kinetic energy. We are trading accuracy in exchange, and it is not
@@ -106,15 +108,17 @@ def velocity_verlet(
 
 def mclachlan(
     logdensity_fn: Callable,
-    kinetic_energy_fn: Callable,
-) -> EuclideanIntegrator:
-    """Two-stage palindromic symplectic integrator derived in :cite:p:`blanes2014numerical`.
+    kinetic_energy_fn: KineticEnergy,
+) -> Integrator:
+    """Two-stage palindromic symplectic integrator derived in
+    :cite:p:`blanes2014numerical`.
 
     The integrator is of the form (b1, a1, b2, a1, b1). The choice of the parameters
     determine both the bound on the integration error and the stability of the
     method with respect to the value of `step_size`. The values used here are
-    the ones derived in :cite:p:`mclachlan1995numerical`; note that :cite:p:`blanes2014numerical` is more focused on stability
-    and derives different values.
+    the ones derived in :cite:p:`mclachlan1995numerical`; note that
+    :cite:p:`blanes2014numerical` is more focused on stability and derives different
+    values.
 
     """
     b1 = 0.1932
@@ -171,15 +175,16 @@ def mclachlan(
 
 def yoshida(
     logdensity_fn: Callable,
-    kinetic_energy_fn: Callable,
-) -> EuclideanIntegrator:
-    """Three stages palindromic symplectic integrator derived in :cite:p:`mclachlan1995numerical`
+    kinetic_energy_fn: KineticEnergy,
+) -> Integrator:
+    """Three stages palindromic symplectic integrator derived in
+    :cite:p:`mclachlan1995numerical`
 
     The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of
     the parameters determine both the bound on the integration error and the
     stability of the method with respect to the value of `step_size`. The
-    values used here are the ones derived in :cite:p:`mclachlan1995numerical` which guarantees a stability
-    interval length approximately equal to 4.67.
+    values used here are the ones derived in :cite:p:`mclachlan1995numerical` which
+    guarantees a stability interval length approximately equal to 4.67.
 
     """
     b1 = 0.11888010966548
@@ -250,24 +255,73 @@ def yoshida(
     return one_step
 
 
-def implicit_midpoint(
-    logdensity_fn: Callable,
-    kinetic_energy_fn: Callable,
+FixedPointSolver = Callable[
+    [Callable[[PyTree], Tuple[PyTree, PyTree]], PyTree], Tuple[PyTree, PyTree, Any]
+]
+
+
+class FixedPointIterationInfo(NamedTuple):
+    success: bool
+    norm: float
+    iters: int
+
+
+def solve_fixed_point_iteration(
+    func: Callable[[PyTree], Tuple[PyTree, PyTree]],
+    x0: PyTree,
     *,
     convergence_tol: float = 1e-6,
     divergence_tol: float = 1e10,
     max_iters: int = 100,
     norm_fn: Callable[[PyTree], float] = lambda x: jnp.max(jnp.abs(x)),
-) -> EuclideanIntegrator:
+) -> Tuple[PyTree, PyTree, FixedPointIterationInfo]:
+    """Solve for x = func(x) using a fixed point iteration"""
+
+    def compute_norm(x: PyTree, xp: PyTree) -> float:
+        return norm_fn(ravel_pytree(jax.tree_util.tree_map(jnp.subtract, x, xp))[0])
+
+    def cond_fn(args: Tuple[int, PyTree, PyTree, float]) -> bool:
+        n, _, _, norm = args
+        return (
+            (n < max_iters)
+            & jnp.isfinite(norm)
+            & (norm < divergence_tol)
+            & (norm > convergence_tol)
+        )
+
+    def body_fn(
+        args: Tuple[int, PyTree, PyTree, float]
+    ) -> Tuple[int, PyTree, PyTree, float]:
+        n, x, _, _ = args
+        xn, aux = func(x)
+        norm = compute_norm(xn, x)
+        return n + 1, xn, aux, norm
+
+    x, aux = func(x0)
+    iters, x, aux, norm = jax.lax.while_loop(
+        cond_fn, body_fn, (0, x, aux, compute_norm(x, x0))
+    )
+    success = jnp.isfinite(norm) & (norm <= convergence_tol)
+    return x, aux, FixedPointIterationInfo(success, norm, iters)
+
+
+def implicit_midpoint(
+    logdensity_fn: Callable,
+    kinetic_energy_fn: KineticEnergy,
+    *,
+    solver: FixedPointSolver = solve_fixed_point_iteration,
+    **solver_kwargs: Any,
+) -> Integrator:
     """The implicit midpoint integrator with support for non-stationary kinetic energy
 
     This is an integrator based on :cite:t:`brofos2021evaluating`, which provides
     support for kinetic energies that depend on position. This integrator requires that
     the kinetic energy function takes two arguments: position and momentum.
-    """
-    # TODO: The return type of this method isn't actually "Euclidean" even though it has
-    # the same signature!
 
+    The ``solver`` parameter allows overloading of the fixed point solver. By default, a
+    simple fixed point iteration is used, but more advanced solvers could be implemented
+    in the future.
+    """
     logdensity_and_grad_fn = jax.value_and_grad(logdensity_fn)
     kinetic_energy_grad_fn = jax.grad(
         lambda q, p: kinetic_energy_fn(p, position=q), argnums=(0, 1)
@@ -296,19 +350,12 @@ def implicit_midpoint(
             return q, p
 
         # Solve for the midpoint numerically
-        def _step(args: Tuple[PyTree, PyTree]) -> Tuple[PyTree, PyTree]:
+        def _step(args: PyTree) -> Tuple[PyTree, PyTree]:
             q, p = args
             _, dLdq = logdensity_and_grad_fn(q)
             return _update(q, p, dLdq), dLdq
 
-        (q, p), dLdq, info = _solve_fixed_point(
-            _step,
-            (position, momentum),
-            convergence_tol=convergence_tol,
-            divergence_tol=divergence_tol,
-            max_iters=max_iters,
-            norm_fn=norm_fn,
-        )
+        (q, p), dLdq, info = solver(_step, (position, momentum), **solver_kwargs)
         del info  # TODO: Track the returned info
 
         # Take an explicit update as recommended by Brofos & Lederman
@@ -318,47 +365,3 @@ def implicit_midpoint(
         return IntegratorState(q, p, *logdensity_and_grad_fn(q))
 
     return one_step
-
-
-class FixedPointSolverInfo(NamedTuple):
-    success: bool
-    norm: float
-    iters: int
-
-
-def _solve_fixed_point(
-    func: Callable,
-    x0: PyTree,
-    convergence_tol: float = 1e-6,
-    divergence_tol: float = 1e10,
-    max_iters: int = 100,
-    norm_fn: Callable[[PyTree], float] = lambda x: jnp.max(jnp.abs(x)),
-) -> Tuple[PyTree, PyTree, FixedPointSolverInfo]:
-    """Solve for x = func(x) using a fixed point iteration"""
-
-    def compute_norm(x: PyTree, xp: PyTree) -> float:
-        return norm_fn(ravel_pytree(jax.tree_util.tree_map(jnp.subtract, x, xp))[0])
-
-    def cond_fn(args: Tuple[int, PyTree, PyTree, float]) -> bool:
-        n, _, _, norm = args
-        return (
-            (n < max_iters)
-            & jnp.isfinite(norm)
-            & (norm < divergence_tol)
-            & (norm > convergence_tol)
-        )
-
-    def body_fn(
-        args: Tuple[int, PyTree, PyTree, float]
-    ) -> Tuple[int, PyTree, PyTree, float]:
-        n, x, _, _ = args
-        xn, aux = func(x)
-        norm = compute_norm(xn, x)
-        return n + 1, xn, aux, norm
-
-    x, aux = func(x0)
-    iters, x, aux, norm = jax.lax.while_loop(
-        cond_fn, body_fn, (0, x, aux, compute_norm(x, x0))
-    )
-    success = jnp.isfinite(norm) & (norm <= convergence_tol)
-    return x, aux, FixedPointSolverInfo(success, norm, iters)

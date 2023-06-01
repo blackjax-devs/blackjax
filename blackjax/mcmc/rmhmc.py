@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Tuple
-
-import jax
+from typing import Callable, Union
 
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
@@ -26,70 +24,45 @@ __all__ = ["init", "build_kernel", "rmhmc"]
 
 
 init = hmc.init
-
-
-def build_kernel(
-    integrator: Callable = integrators.implicit_midpoint,
-    divergence_threshold: float = 1000,
-):
-    """Build a HMC kernel.
-
-    Parameters
-    ----------
-    integrator
-        The symplectic integrator to use to integrate the Hamiltonian dynamics.
-    divergence_threshold
-        Value of the difference in energy above which we consider that the transition is divergent.
-
-    Returns
-    -------
-    A kernel that takes a rng_key and a Pytree that contains the current state
-    of the chain and that returns a new state of the chain along with
-    information about the transition.
-
-    """
-
-    def kernel(
-        rng_key: PRNGKey,
-        state: hmc.HMCState,
-        logdensity_fn: Callable,
-        step_size: float,
-        mass_matrix_fn: Callable,
-        num_integration_steps: int,
-    ) -> Tuple[hmc.HMCState, hmc.HMCInfo]:
-        """Generate a new sample with the HMC kernel."""
-
-        momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_riemannian(
-            mass_matrix_fn
-        )
-        symplectic_integrator = integrator(logdensity_fn, kinetic_energy_fn)
-        proposal_generator = hmc.hmc_proposal(
-            symplectic_integrator,
-            kinetic_energy_fn,
-            step_size,
-            num_integration_steps,
-            divergence_threshold,
-        )
-
-        key_momentum, key_integrator = jax.random.split(rng_key, 2)
-
-        position, logdensity, logdensity_grad = state
-        momentum = momentum_generator(key_momentum, position)
-
-        integrator_state = integrators.IntegratorState(
-            position, momentum, logdensity, logdensity_grad
-        )
-        proposal, info = proposal_generator(key_integrator, integrator_state)
-        proposal = hmc.HMCState(
-            proposal.position, proposal.logdensity, proposal.logdensity_grad
-        )
-
-        return proposal, info
-
-    return kernel
+build_kernel = hmc.build_kernel
 
 
 class rmhmc:
+    """A Riemannian Manifold Hamiltonian Monte Carlo kernel
+
+    Of note, this kernel is simply an alias of the ``hmc`` kernel with a
+    different choice of default integrator (``implicit_midpoint`` instead of
+    ``velocity_verlet``) since RMHMC is typically used for Hamiltonian systems
+    that are not separable.
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log-density function we wish to draw samples from.
+    step_size
+        The value to use for the step size in the symplectic integrator.
+    mass_matrix
+        A function which computes the mass matrix (not inverse) at a given
+        position when drawing a value for the momentum and computing the kinetic
+        energy. In practice, this argument will be passed to the
+        ``metrics.default_metric`` function so it supports all the options
+        discussed there.
+    num_integration_steps
+        The number of steps we take with the symplectic integrator at each
+        sample step before returning a sample.
+    divergence_threshold
+        The absolute value of the difference in energy between two states above
+        which we say that the transition is divergent. The default value is
+        commonly found in other libraries, and yet is arbitrary.
+    integrator
+        (algorithm parameter) The symplectic integrator to use to integrate the
+        trajectory.
+
+    Returns
+    -------
+    A ``MCMCSamplingAlgorithm``.
+    """
+
     init = staticmethod(init)
     build_kernel = staticmethod(build_kernel)
 
@@ -97,7 +70,7 @@ class rmhmc:
         cls,
         logdensity_fn: Callable,
         step_size: float,
-        mass_matrix: Callable,
+        mass_matrix: Union[metrics.Metric, Callable],
         num_integration_steps: int,
         *,
         divergence_threshold: int = 1000,

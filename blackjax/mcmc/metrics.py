@@ -22,12 +22,13 @@ dynamic is independent of the position and only depends on the momentum
 For a Newtonian hamiltonian dynamic the kinetic energy is given by:
 
 .. math::
+
     K(p) = \frac{1}{2} p^T M^{-1} p
 
 We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
 
 """
-from typing import Callable, Optional, Tuple
+from typing import Callable, NamedTuple, Optional, Protocol, Union
 
 import jax.numpy as jnp
 import jax.scipy as jscipy
@@ -37,14 +38,62 @@ from jax.scipy import stats as sp_stats
 from blackjax.types import Array, PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["gaussian_euclidean", "gaussian_riemannian"]
+__all__ = ["default_metric", "gaussian_euclidean", "gaussian_riemannian"]
 
-EuclideanKineticEnergy = Callable[[PyTree], float]
+
+class KineticEnergy(Protocol):
+    def __call__(self, momentum: PyTree, position: Optional[PyTree] = None) -> float:
+        ...
+
+
+class CheckTurning(Protocol):
+    def __call__(
+        self,
+        momentum_left: PyTree,
+        momentum_right: PyTree,
+        momentum_sum: PyTree,
+        position_left: Optional[PyTree] = None,
+        position_right: Optional[PyTree] = None,
+    ) -> bool:
+        ...
+
+
+class Metric(NamedTuple):
+    sample_momentum: Callable[[PRNGKey, PyTree], PyTree]
+    kinetic_energy: KineticEnergy
+    check_turning: CheckTurning
+
+
+MetricTypes = Union[Metric, Array, Callable[[PyTree], Array]]
+
+
+def default_metric(metric: MetricTypes) -> Metric:
+    """Convert an input metric into a ``Metric`` object following sensible default rules
+
+    The metric can be specified in three different ways:
+
+    - A ``Metric`` object that implements the full interface
+    - An ``Array`` which is assumed to specify the inverse mass matrix of a static
+      metric
+    - A function that takes a coordinate position and returns the mass matrix at that
+      location
+    """
+    if isinstance(metric, Metric):
+        return metric
+
+    # If the argument is a callable, we assume that it returns the mass matrix
+    # at the given position and return the corresponding Riemannian metric.
+    if callable(metric):
+        return gaussian_riemannian(metric)
+
+    # If we make it here then the argument should be an array, and we'll assume
+    # that it specifies a static inverse mass matrix.
+    return gaussian_euclidean(metric)
 
 
 def gaussian_euclidean(
     inverse_mass_matrix: Array,
-) -> Tuple[Callable, EuclideanKineticEnergy, Callable]:
+) -> Metric:
     r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum
     :cite:p:`betancourt2013general`.
 
@@ -93,16 +142,19 @@ def gaussian_euclidean(
             L, identity, lower=True, trans=True
         )
         # Note that mass_matrix_sqrt is a upper triangular matrix here, with
-        #   jscipy.linalg.inv(mass_matrix_sqrt @ mass_matrix_sqrt.T) == inverse_mass_matrix
-        # An alternative is to compute directly the cholesky factor of the inverse mass matrix
-        #   mass_matrix_sqrt = jscipy.linalg.cholesky(jscipy.linalg.inv(inverse_mass_matrix), lower=True)
+        #   jscipy.linalg.inv(mass_matrix_sqrt @ mass_matrix_sqrt.T)
+        #   == inverse_mass_matrix
+        # An alternative is to compute directly the cholesky factor of the inverse mass
+        # matrix
+        #   mass_matrix_sqrt = jscipy.linalg.cholesky(
+        #       jscipy.linalg.inv(inverse_mass_matrix), lower=True)
         # which the result would instead be a lower triangular matrix.
         matmul = jnp.matmul
 
     else:
         raise ValueError(
             "The mass matrix has the wrong number of dimensions:"
-            f" expected 1 or 2, got {jnp.ndim(inverse_mass_matrix)}."  # type: ignore[arg-type]
+            f" expected 1 or 2, got {ndim}."
         )
 
     def momentum_generator(rng_key: PRNGKey, position: PyTree) -> PyTree:
@@ -116,7 +168,11 @@ def gaussian_euclidean(
         return kinetic_energy_val
 
     def is_turning(
-        momentum_left: PyTree, momentum_right: PyTree, momentum_sum: PyTree
+        momentum_left: PyTree,
+        momentum_right: PyTree,
+        momentum_sum: PyTree,
+        position_left: Optional[PyTree] = None,
+        position_right: Optional[PyTree] = None,
     ) -> bool:
         """Generalized U-turn criterion :cite:p:`betancourt2013generalizing,nuts_uturn`.
 
@@ -130,6 +186,8 @@ def gaussian_euclidean(
             Sum of the momenta along the trajectory.
 
         """
+        del position_left, position_right
+
         m_left, _ = ravel_pytree(momentum_left)
         m_right, _ = ravel_pytree(momentum_right)
         m_sum, _ = ravel_pytree(momentum_sum)
@@ -143,12 +201,12 @@ def gaussian_euclidean(
         turning_at_right = jnp.dot(velocity_right, rho) <= 0
         return turning_at_left | turning_at_right
 
-    return momentum_generator, kinetic_energy, is_turning
+    return Metric(momentum_generator, kinetic_energy, is_turning)
 
 
 def gaussian_riemannian(
     mass_matrix_fn: Callable,
-) -> Tuple[Callable, Callable, Callable]:
+) -> Metric:
     def momentum_generator(rng_key: PRNGKey, position: PyTree) -> PyTree:
         mass_matrix = mass_matrix_fn(position)
         ndim = jnp.ndim(mass_matrix)
@@ -194,26 +252,29 @@ def gaussian_riemannian(
         position_left: Optional[PyTree] = None,
         position_right: Optional[PyTree] = None,
     ) -> bool:
-        if position_left is None or position_right is None:
-            raise ValueError(
-                "A Reinmannian turning criterion function must be called with "
-                "the position specified; make sure to use a Reinmannian-capable "
-                "integrator like `implicit_midpoint`."
-            )
+        del momentum_left, momentum_right, momentum_sum, position_left, position_right
+        raise NotImplementedError(
+            "NUTS sampling is not yet implemented for Riemannian manifolds"
+        )
 
-        m_left, _ = ravel_pytree(momentum_left)
-        m_right, _ = ravel_pytree(momentum_right)
-        m_sum, _ = ravel_pytree(momentum_sum)
+        # Here's a possible implementation of this function, but the NUTS
+        # proposal will require some refactoring to work properly, since we need
+        # to be able to access the coordinates at the left and right endpoints
+        # to compute the mass matrix at those points.
 
-        mass_matrix_left = mass_matrix_fn(position_left)
-        mass_matrix_right = mass_matrix_fn(position_right)
-        velocity_left = jnp.linalg.solve(mass_matrix_left, m_left)
-        velocity_right = jnp.linalg.solve(mass_matrix_right, m_right)
+        # m_left, _ = ravel_pytree(momentum_left)
+        # m_right, _ = ravel_pytree(momentum_right)
+        # m_sum, _ = ravel_pytree(momentum_sum)
 
-        # rho = m_sum
-        rho = m_sum - (m_right + m_left) / 2
-        turning_at_left = jnp.dot(velocity_left, rho) <= 0
-        turning_at_right = jnp.dot(velocity_right, rho) <= 0
-        return turning_at_left | turning_at_right
+        # mass_matrix_left = mass_matrix_fn(position_left)
+        # mass_matrix_right = mass_matrix_fn(position_right)
+        # velocity_left = jnp.linalg.solve(mass_matrix_left, m_left)
+        # velocity_right = jnp.linalg.solve(mass_matrix_right, m_right)
 
-    return momentum_generator, kinetic_energy, is_turning
+        # # rho = m_sum
+        # rho = m_sum - (m_right + m_left) / 2
+        # turning_at_left = jnp.dot(velocity_left, rho) <= 0
+        # turning_at_right = jnp.dot(velocity_right, rho) <= 0
+        # return turning_at_left | turning_at_right
+
+    return Metric(momentum_generator, kinetic_energy, is_turning)
