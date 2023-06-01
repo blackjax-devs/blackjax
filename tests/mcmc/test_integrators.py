@@ -3,7 +3,9 @@ import itertools
 import chex
 import jax
 import jax.numpy as jnp
+import numpy as np
 from absl.testing import absltest, parameterized
+from scipy.special import ellipj
 
 import blackjax.mcmc.integrators as integrators
 
@@ -143,6 +145,45 @@ class IntegratorTest(chex.TestCase):
             final_state.momentum
         )
         self.assertAlmostEqual(energy, new_energy, delta=integrator["precision"])
+
+    @chex.all_variants(with_pmap=False)
+    def test_non_separable(self):
+        """Test the integration of a non-separable Hamiltonian with a known
+        closed-form solution, as defined in https://arxiv.org/abs/1609.02212.
+        """
+
+        def neg_potential(q):
+            return -0.5 * (q**2 + 1)
+
+        def kinetic_energy(p, position=None):
+            return 0.5 * p**2 * (1 + position**2)
+
+        step = self.variant(
+            integrators.implicit_midpoint(neg_potential, kinetic_energy)
+        )
+        step_size = 1e-3
+        q = jnp.array(-1.0)
+        p = jnp.array(0.0)
+        initial_state = integrators.IntegratorState(
+            q, p, neg_potential(q), jax.grad(neg_potential)(q)
+        )
+
+        def scan_body(state, _):
+            state = step(state, step_size)
+            return state, state
+
+        _, traj = jax.lax.scan(
+            scan_body,
+            initial_state,
+            xs=None,
+            length=10_000,
+        )
+
+        # The closed-form solution is computed as follows:
+        t = step_size * np.arange(len(traj.position))
+        expected = q * ellipj(t * np.sqrt(1 + q**2), q**2 / (1 + q**2))[1]
+
+        chex.assert_tree_all_close(traj.position, expected, atol=step_size)
 
 
 if __name__ == "__main__":
