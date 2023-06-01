@@ -172,7 +172,7 @@ class IntegratorTest(chex.TestCase):
             state = step(state, step_size)
             return state, state
 
-        _, traj = jax.lax.scan(
+        final_state, traj = jax.lax.scan(
             scan_body,
             initial_state,
             xs=None,
@@ -183,7 +183,16 @@ class IntegratorTest(chex.TestCase):
         t = step_size * np.arange(len(traj.position))
         expected = q * ellipj(t * np.sqrt(1 + q**2), q**2 / (1 + q**2))[1]
 
+        # Check that the trajectory matches the closed-form solution to
+        # acceptable precision
         chex.assert_tree_all_close(traj.position, expected, atol=step_size)
+
+        # And check the conservation of energy
+        energy = -neg_potential(q) + kinetic_energy(p, position=q)
+        new_energy = -neg_potential(final_state.position) + kinetic_energy(
+            final_state.momentum, position=final_state.position
+        )
+        self.assertAlmostEqual(energy, new_energy, delta=1e-4)
 
 
 if __name__ == "__main__":
