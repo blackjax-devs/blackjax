@@ -22,6 +22,7 @@ from .smc.adaptive_tempered import adaptive_tempered_smc
 from .smc.tempered import tempered_smc
 from .vi.meanfield_vi import meanfield_vi
 from .vi.pathfinder import pathfinder
+from .vi.svgd import svgd
 
 __all__ = [
     "__version__",
@@ -48,6 +49,7 @@ __all__ = [
     "tempered_smc",
     "meanfield_vi",  # variational inference
     "pathfinder",
+    "svgd",
     "ess",  # diagnostics
     "rhat",
 ]
