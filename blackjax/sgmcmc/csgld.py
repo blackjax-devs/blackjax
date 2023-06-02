@@ -19,7 +19,7 @@ from typing import Callable, NamedTuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.sgmcmc.diffusions import overdamped_langevin
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -206,7 +206,7 @@ class csgld:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
     init = staticmethod(init)
@@ -220,7 +220,7 @@ class csgld:
         num_partitions: int = 512,
         energy_gap: float = 100,
         min_energy: float = 0,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(num_partitions, energy_gap, min_energy)
 
         def init_fn(position: ArrayLikeTree):
@@ -246,4 +246,4 @@ class csgld:
                 temperature,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

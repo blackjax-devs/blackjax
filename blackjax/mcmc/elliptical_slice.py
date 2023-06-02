@@ -17,7 +17,7 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
@@ -149,7 +149,7 @@ class elliptical_slice:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
     """
 
     init = staticmethod(init)
@@ -161,7 +161,7 @@ class elliptical_slice:
         *,
         mean: Array,
         cov: Array,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(cov, mean)
 
         def init_fn(position: ArrayLikeTree):
@@ -174,7 +174,7 @@ class elliptical_slice:
                 loglikelihood_fn,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def elliptical_proposal(

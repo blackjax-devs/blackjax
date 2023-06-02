@@ -17,7 +17,7 @@ import jax
 import jax.numpy as jnp
 
 import blackjax.smc as smc
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.smc.base import SMCState
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -178,7 +178,7 @@ class tempered_smc:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -194,7 +194,7 @@ class tempered_smc:
         mcmc_parameters: Dict,
         resampling_fn: Callable,
         num_mcmc_steps: int = 10,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(
             logprior_fn,
             loglikelihood_fn,
@@ -215,4 +215,4 @@ class tempered_smc:
                 mcmc_parameters,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

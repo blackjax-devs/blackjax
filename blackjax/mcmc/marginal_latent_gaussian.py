@@ -18,7 +18,7 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as linalg
 
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.types import Array, PRNGKey
 
 __all__ = ["MarginalState", "MarginalInfo", "init_and_kernel", "mgrad_gaussian"]
@@ -173,7 +173,7 @@ class mgrad_gaussian:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -182,7 +182,7 @@ class mgrad_gaussian:
         logdensity_fn: Callable,
         covariance: Array,
         mean: Optional[Array] = None,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         init, kernel = init_and_kernel(logdensity_fn, covariance, mean)
 
         def init_fn(position: Array):
@@ -195,4 +195,4 @@ class mgrad_gaussian:
                 delta,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

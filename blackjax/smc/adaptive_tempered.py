@@ -20,7 +20,7 @@ import blackjax.smc.base as base
 import blackjax.smc.ess as ess
 import blackjax.smc.solver as solver
 import blackjax.smc.tempered as tempered
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, PRNGKey
 
 __all__ = ["build_kernel", "adaptive_tempered_smc"]
@@ -130,7 +130,7 @@ class adaptive_tempered_smc:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -148,7 +148,7 @@ class adaptive_tempered_smc:
         target_ess: float,
         root_solver: Callable = solver.dichotomy,
         num_mcmc_steps: int = 10,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(
             logprior_fn,
             loglikelihood_fn,
@@ -170,4 +170,4 @@ class adaptive_tempered_smc:
                 mcmc_parameters,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
