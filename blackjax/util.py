@@ -6,7 +6,7 @@ import jax.numpy as jnp
 from jax import jit, lax
 from jax.flatten_util import ravel_pytree
 from jax.random import normal
-from jax.tree_util import tree_leaves, tree_map, tree_structure, tree_unflatten
+from jax.tree_util import tree_leaves
 
 from blackjax.types import Array, PRNGKey, PyTree
 
@@ -98,7 +98,7 @@ def index_pytree(input_pytree: PyTree) -> PyTree:
     array to a PyTree of equivalent dimension.
 
     The function returns the index of a 1 dimensional array corresponding to each element of
-    the PyTree. This way the user can tell which element in the PyTree corresponds to which 
+    the PyTree. This way the user can tell which element in the PyTree corresponds to which
     column (and row) of a 1 dimensional (or 2 dimensional) array.
 
     Parameters
