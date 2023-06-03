@@ -75,7 +75,10 @@ def sghmc(alpha: float = 0.01, beta: float = 0):
         momentum = jax.tree_util.tree_map(
             lambda p, g, n: (1.0 - alpha * step_size) * p
             + step_size * g
-            + jnp.sqrt(step_size * temperature * (2 * alpha - step_size * temperature * beta)) * n,
+            + jnp.sqrt(
+                step_size * temperature * (2 * alpha - step_size * temperature * beta)
+            )
+            * n,
             momentum,
             logdensity_grad,
             noise,
@@ -109,7 +112,10 @@ def sgnht(alpha: float = 0.01, beta: float = 0):
         momentum = jax.tree_util.tree_map(
             lambda p, g, n: (1.0 - xi * step_size) * p
             + step_size * g
-            + jnp.sqrt(step_size * temperature * (2 * alpha - step_size * temperature * beta)) * n,
+            + jnp.sqrt(
+                step_size * temperature * (2 * alpha - step_size * temperature * beta)
+            )
+            * n,
             momentum,
             logdensity_grad,
             noise,

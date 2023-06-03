@@ -289,7 +289,7 @@ class SGMCMCTest(chex.TestCase):
         )
 
         sgld = blackjax.sgld(cv_grad_fn)
-        
+
         init_position = 1.0
         init_position = sgld.init(init_position)
         data_batch = X_data[:100, :]
