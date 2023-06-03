@@ -270,6 +270,7 @@ class SGMCMCTest(chex.TestCase):
 
         data_batch = X_data[:100, :]
         init_position = 1.0
+        init_position = sgld.init(init_position)
         _ = sgld.step(rng_key, init_position, data_batch, 1e-3)
 
     def test_linear_regression_sgld_cv(self):
@@ -288,8 +289,9 @@ class SGMCMCTest(chex.TestCase):
         )
 
         sgld = blackjax.sgld(cv_grad_fn)
-
+        
         init_position = 1.0
+        init_position = sgld.init(init_position)
         data_batch = X_data[:100, :]
         _ = sgld.step(rng_key, init_position, data_batch, 1e-3)
 
@@ -306,6 +308,7 @@ class SGMCMCTest(chex.TestCase):
 
         data_batch = X_data[100:200, :]
         init_position = 1.0
+        init_position = sghmc.init(init_position)
         data_batch = X_data[:100, :]
         _ = sghmc.step(rng_key, init_position, data_batch, 1e-3)
 
@@ -326,6 +329,7 @@ class SGMCMCTest(chex.TestCase):
         sghmc = blackjax.sghmc(cv_grad_fn, 10)
 
         init_position = 1.0
+        init_position = sghmc.init(init_position)
         data_batch = X_data[:100, :]
         _ = sghmc.step(rng_key, init_position, data_batch, 1e-3)
 
