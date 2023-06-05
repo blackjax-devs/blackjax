@@ -330,6 +330,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.linear_map"><code class="docutils literal notranslate"><span class="pre">linear_map()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.generate_gaussian_noise"><code class="docutils literal notranslate"><span class="pre">generate_gaussian_noise()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.pytree_size"><code class="docutils literal notranslate"><span class="pre">pytree_size()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.index_pytree"><code class="docutils literal notranslate"><span class="pre">index_pytree()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -362,6 +363,9 @@ document.write(`
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.util.pytree_size" title="blackjax.util.pytree_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pytree_size</span></code></a>(→ int)</p></td>
 <td><p>Return the dimension of the flatten PyTree.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.util.index_pytree" title="blackjax.util.index_pytree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">index_pytree</span></code></a>(→ blackjax.types.PyTree)</p></td>
+<td><p>Builds a PyTree with elements indicating its corresponding index on a flat array.</p></td>
 </tr>
 </tbody>
 </table>
@@ -418,6 +422,29 @@ more details.</p></li>
 <dd><p>Return the dimension of the flatten PyTree.</p>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.util.index_pytree">
+<span class="sig-name descname"><span class="pre">index_pytree</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_pytree</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PyTree</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.PyTree</span></span></span><a class="reference internal" href="../../../_modules/blackjax/util.html#index_pytree"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.util.index_pytree" title="Permalink to this definition">#</a></dt>
+<dd><p>Builds a PyTree with elements indicating its corresponding index on a flat array.</p>
+<p>Various algorithms in BlackJAX take as input a 1 or 2 dimensional array which somehow
+affects the sampling or approximation of a PyTree. For instance, in HMC a 1 or 2
+dimensional inverse mass matrix is used when simulating Hamilonian dynamics on
+PyTree position and momentum variables. It is usually unclear how the elements of the
+array interact with the PyTree. This function demonstrates how all algorithms map an
+array to a PyTree of equivalent dimension.</p>
+<p>The function returns the index of a 1 dimensional array corresponding to each element of
+the PyTree. This way the user can tell which element in the PyTree corresponds to which
+column (and row) of a 1 dimensional (or 2 dimensional) array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input_pytree</strong> – Example PyTree.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>PyTree mapping each individual element of an arange array to elements in the PyTree.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 </section>
@@ -457,6 +484,7 @@ more details.</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.linear_map"><code class="docutils literal notranslate"><span class="pre">linear_map()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.generate_gaussian_noise"><code class="docutils literal notranslate"><span class="pre">generate_gaussian_noise()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.pytree_size"><code class="docutils literal notranslate"><span class="pre">pytree_size()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.index_pytree"><code class="docutils literal notranslate"><span class="pre">index_pytree()</span></code></a></li>
 </ul>
 </li>
 </ul>

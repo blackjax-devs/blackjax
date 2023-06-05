@@ -414,6 +414,35 @@ document.write(`
 <div class="viewcode-block" id="pytree_size"><a class="viewcode-back" href="../../autoapi/blackjax/util/index.html#blackjax.util.pytree_size">[docs]</a><span class="k">def</span> <span class="nf">pytree_size</span><span class="p">(</span><span class="n">pytree</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the dimension of the flatten PyTree.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">tree_leaves</span><span class="p">(</span><span class="n">pytree</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="index_pytree"><a class="viewcode-back" href="../../autoapi/blackjax/util/index.html#blackjax.util.index_pytree">[docs]</a><span class="k">def</span> <span class="nf">index_pytree</span><span class="p">(</span><span class="n">input_pytree</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyTree</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Builds a PyTree with elements indicating its corresponding index on a flat array.</span>
+
+<span class="sd">    Various algorithms in BlackJAX take as input a 1 or 2 dimensional array which somehow</span>
+<span class="sd">    affects the sampling or approximation of a PyTree. For instance, in HMC a 1 or 2</span>
+<span class="sd">    dimensional inverse mass matrix is used when simulating Hamilonian dynamics on</span>
+<span class="sd">    PyTree position and momentum variables. It is usually unclear how the elements of the</span>
+<span class="sd">    array interact with the PyTree. This function demonstrates how all algorithms map an</span>
+<span class="sd">    array to a PyTree of equivalent dimension.</span>
+
+<span class="sd">    The function returns the index of a 1 dimensional array corresponding to each element of</span>
+<span class="sd">    the PyTree. This way the user can tell which element in the PyTree corresponds to which</span>
+<span class="sd">    column (and row) of a 1 dimensional (or 2 dimensional) array.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_pytree:</span>
+<span class="sd">        Example PyTree.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    PyTree mapping each individual element of an arange array to elements in the PyTree.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">flat_input</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">input_pytree</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">dim_input</span><span class="p">,)</span> <span class="o">=</span> <span class="n">flat_input</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">array</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">dim_input</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">flat_input</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">array</span><span class="p">)</span></div>
 </pre></div>
 
                 </article>
