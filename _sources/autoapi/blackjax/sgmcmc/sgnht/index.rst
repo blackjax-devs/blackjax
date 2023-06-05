@@ -58,7 +58,7 @@ Functions
       
 
 
-.. py:function:: init(rng_key: blackjax.types.PRNGKey, position: blackjax.types.PyTree, alpha: float = 0.01)
+.. py:function:: init(position: blackjax.types.PyTree, rng_key: blackjax.types.PRNGKey, xi: float) -> SGNHTState
 
 
 .. py:function:: build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable

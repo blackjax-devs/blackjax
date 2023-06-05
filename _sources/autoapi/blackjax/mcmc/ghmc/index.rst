@@ -74,7 +74,7 @@ Functions
       
 
 
-.. py:function:: init(rng_key: blackjax.types.PRNGKey, position: blackjax.types.PyTree, logdensity_fn: Callable)
+.. py:function:: init(position: blackjax.types.PyTree, rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable) -> GHMCState
 
 
 .. py:function:: build_kernel(noise_fn: Callable = lambda _: 0.0, divergence_threshold: float = 1000)

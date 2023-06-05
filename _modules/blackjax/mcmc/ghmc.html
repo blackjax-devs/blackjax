@@ -379,10 +379,10 @@ document.write(`
 
 
 <div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
     <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-<span class="p">):</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GHMCState</span><span class="p">:</span>
     <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
 
     <span class="n">key_mometum</span><span class="p">,</span> <span class="n">key_slice</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
@@ -578,7 +578,7 @@ document.write(`
         <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">noise_gn</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>

@@ -330,8 +330,10 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.sgld.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.sgld.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.sgld.sgld"><code class="docutils literal notranslate"><span class="pre">sgld</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.sgld.sgld.init"><code class="docutils literal notranslate"><span class="pre">sgld.init</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.sgld.sgld.build_kernel"><code class="docutils literal notranslate"><span class="pre">sgld.build_kernel</span></code></a></li>
 </ul>
 </li>
@@ -369,11 +371,19 @@ document.write(`
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgmcmc.sgld.build_kernel" title="blackjax.sgmcmc.sgld.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(→ Callable)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgmcmc.sgld.init" title="blackjax.sgmcmc.sgld.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(→ blackjax.types.PyTree)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.sgmcmc.sgld.build_kernel" title="blackjax.sgmcmc.sgld.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(→ Callable)</p></td>
 <td><p>Stochastic gradient Langevin Dynamics (SgLD) algorithm.</p></td>
 </tr>
 </tbody>
 </table>
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.sgmcmc.sgld.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PyTree</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.PyTree</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/sgld.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.sgld.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.sgmcmc.sgld.build_kernel">
 <span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/sgld.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.sgld.build_kernel" title="Permalink to this definition">#</a></dt>
@@ -417,9 +427,14 @@ perform one step:</p>
 of the gradient of the log-density at this position.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>A step function.</p>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code>.</p>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.sgmcmc.sgld.sgld.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/sgld.html#sgld.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.sgld.sgld.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.sgmcmc.sgld.sgld.build_kernel">
 <span class="sig-name descname"><span class="pre">build_kernel</span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/sgld.html#sgld.build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.sgld.sgld.build_kernel" title="Permalink to this definition">#</a></dt>
@@ -482,8 +497,10 @@ of the gradient of the log-density at this position.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.sgld.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.sgld.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.sgld.sgld"><code class="docutils literal notranslate"><span class="pre">sgld</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.sgld.sgld.init"><code class="docutils literal notranslate"><span class="pre">sgld.init</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.sgmcmc.sgld.sgld.build_kernel"><code class="docutils literal notranslate"><span class="pre">sgld.build_kernel</span></code></a></li>
 </ul>
 </li>

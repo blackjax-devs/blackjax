@@ -404,7 +404,10 @@ document.write(`
         <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
             <span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">step_size</span><span class="p">)</span> <span class="o">*</span> <span class="n">p</span>
             <span class="o">+</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">g</span>
-            <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">step_size</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">-</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">beta</span><span class="p">)</span> <span class="o">*</span> <span class="n">temperature</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span>
+            <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="n">step_size</span> <span class="o">*</span> <span class="n">temperature</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">-</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">temperature</span> <span class="o">*</span> <span class="n">beta</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">*</span> <span class="n">n</span><span class="p">,</span>
             <span class="n">momentum</span><span class="p">,</span>
             <span class="n">logdensity_grad</span><span class="p">,</span>
             <span class="n">noise</span><span class="p">,</span>
@@ -438,7 +441,10 @@ document.write(`
         <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
             <span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">xi</span> <span class="o">*</span> <span class="n">step_size</span><span class="p">)</span> <span class="o">*</span> <span class="n">p</span>
             <span class="o">+</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">g</span>
-            <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">step_size</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">-</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">beta</span><span class="p">)</span> <span class="o">*</span> <span class="n">temperature</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span>
+            <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="n">step_size</span> <span class="o">*</span> <span class="n">temperature</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">-</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">temperature</span> <span class="o">*</span> <span class="n">beta</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">*</span> <span class="n">n</span><span class="p">,</span>
             <span class="n">momentum</span><span class="p">,</span>
             <span class="n">logdensity_grad</span><span class="p">,</span>
             <span class="n">noise</span><span class="p">,</span>
@@ -447,7 +453,7 @@ document.write(`
             <span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">),</span> <span class="n">momentum</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
-        <span class="n">xi</span> <span class="o">=</span> <span class="n">xi</span> <span class="o">+</span> <span class="n">step_size</span> <span class="o">*</span> <span class="p">(</span><span class="n">momentum_dot</span> <span class="o">/</span> <span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">xi</span> <span class="o">=</span> <span class="n">xi</span> <span class="o">+</span> <span class="n">step_size</span> <span class="o">*</span> <span class="p">(</span><span class="n">momentum_dot</span> <span class="o">/</span> <span class="n">d</span> <span class="o">-</span> <span class="n">temperature</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">xi</span>
 
     <span class="k">return</span> <span class="n">one_step</span></div>

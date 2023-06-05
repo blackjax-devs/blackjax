@@ -341,7 +341,7 @@ document.write(`
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;Public API for the Stochastic gradient Nosé-Hoover Thermostat kernel.&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">blackjax.sgmcmc.diffusions</span> <span class="k">as</span> <span class="nn">diffusions</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
@@ -369,9 +369,9 @@ document.write(`
 <div class="viewcode-block" id="SGNHTState.xi"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html#blackjax.sgmcmc.sgnht.SGNHTState.xi">[docs]</a>    <span class="n">xi</span><span class="p">:</span> <span class="nb">float</span></div></div>
 
 
-<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html#blackjax.sgmcmc.sgnht.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">):</span>
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html#blackjax.sgmcmc.sgnht.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">xi</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SGNHTState</span><span class="p">:</span>
     <span class="n">momentum</span> <span class="o">=</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">SGNHTState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">SGNHTState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">xi</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html#blackjax.sgmcmc.sgnht.build_kernel">[docs]</a><span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span><span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
@@ -456,19 +456,25 @@ document.write(`
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">grad_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span>
+            <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">init_xi</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">init_xi</span> <span class="ow">or</span> <span class="n">alpha</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+            <span class="n">state</span><span class="p">:</span> <span class="n">SGNHTState</span><span class="p">,</span>
+            <span class="n">minibatch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+            <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SGNHTState</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
-                <span class="n">rng_key</span><span class="p">,</span>
-                <span class="n">state</span><span class="p">,</span>
-                <span class="n">grad_estimator</span><span class="p">,</span>
-                <span class="n">minibatch</span><span class="p">,</span>
-                <span class="n">step_size</span><span class="p">,</span>
+                <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">grad_estimator</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">temperature</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>

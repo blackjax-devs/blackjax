@@ -382,7 +382,7 @@ document.write(`
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.ghmc.init" title="blackjax.mcmc.ghmc.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(rng_key, position, logdensity_fn)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.ghmc.init" title="blackjax.mcmc.ghmc.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(→ GHMCState)</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.ghmc.build_kernel" title="blackjax.mcmc.ghmc.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>([noise_fn, divergence_threshold])</p></td>
@@ -431,7 +431,7 @@ logdensity.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.ghmc.init">
-<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PyTree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/ghmc.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.ghmc.init" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PyTree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.mcmc.ghmc.GHMCState" title="blackjax.mcmc.ghmc.GHMCState"><span class="pre">GHMCState</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/ghmc.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.ghmc.init" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
