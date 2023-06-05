@@ -85,3 +85,32 @@ def generate_gaussian_noise(
 def pytree_size(pytree: PyTree) -> int:
     """Return the dimension of the flatten PyTree."""
     return sum(jnp.size(value) for value in tree_leaves(pytree))
+
+
+def index_pytree(input_pytree: PyTree) -> PyTree:
+    """Builds a PyTree with elements indicating its corresponding index on a flat array.
+
+    Various algorithms in BlackJAX take as input a 1 or 2 dimensional array which somehow
+    affects the sampling or approximation of a PyTree. For instance, in HMC a 1 or 2
+    dimensional inverse mass matrix is used when simulating Hamilonian dynamics on
+    PyTree position and momentum variables. It is usually unclear how the elements of the
+    array interact with the PyTree. This function demonstrates how all algorithms map an
+    array to a PyTree of equivalent dimension.
+
+    The function returns the index of a 1 dimensional array corresponding to each element of
+    the PyTree. This way the user can tell which element in the PyTree corresponds to which
+    column (and row) of a 1 dimensional (or 2 dimensional) array.
+
+    Parameters
+    ----------
+    input_pytree:
+        Example PyTree.
+
+    Returns
+    -------
+    PyTree mapping each individual element of an arange array to elements in the PyTree.
+    """
+    flat_input, unravel_fn = ravel_pytree(input_pytree)
+    (dim_input,) = flat_input.shape
+    array = jnp.arange(dim_input, dtype=flat_input.dtype)
+    return unravel_fn(array)
