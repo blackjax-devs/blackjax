@@ -1,3 +1,16 @@
+# Copyright 2020- The Blackjax Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """Public API for the Contour Stochastic gradient Langevin Dynamics kernel :cite:p:`deng2020contour,deng2022interacting`.
 
 """
@@ -33,7 +46,7 @@ class ContourSGLDState(NamedTuple):
     energy_idx: int
 
 
-def init(position: PyTree, num_partitions=512):
+def init(position: PyTree, num_partitions=512) -> ContourSGLDState:
     energy_pdf = (
         jnp.arange(num_partitions, 0, -1) / jnp.arange(num_partitions, 0, -1).sum()
     )
@@ -204,7 +217,6 @@ class csgld:
         logdensity_estimator: Callable,
         gradient_estimator: Callable,
         zeta: float = 1,
-        temperature: float = 0.01,
         num_partitions: int = 512,
         energy_gap: float = 100,
         min_energy: float = 0,
@@ -216,11 +228,12 @@ class csgld:
 
         def step_fn(
             rng_key: PRNGKey,
-            state,
+            state: ContourSGLDState,
             minibatch: PyTree,
             step_size_diff: float,
             step_size_stoch: float,
-        ):
+            temperature: float = 1.0,
+        ) -> ContourSGLDState:
             return kernel(
                 rng_key,
                 state,

@@ -15,9 +15,14 @@
 from typing import Callable
 
 import blackjax.sgmcmc.diffusions as diffusions
+from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.types import PRNGKey, PyTree
 
-__all__ = ["build_kernel", "sgld"]
+__all__ = ["init", "build_kernel", "sgld"]
+
+
+def init(position: PyTree) -> PyTree:
+    return position
 
 
 def build_kernel() -> Callable:
@@ -91,27 +96,31 @@ class sgld:
 
     Returns
     -------
-    A step function.
+    A ``MCMCSamplingAlgorithm``.
 
     """
 
+    init = staticmethod(init)
     build_kernel = staticmethod(build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
         grad_estimator: Callable,
-    ) -> Callable:
+    ) -> MCMCSamplingAlgorithm:
         kernel = cls.build_kernel()
+
+        def init_fn(position: PyTree):
+            return cls.init(position)
 
         def step_fn(
             rng_key: PRNGKey,
-            state,
+            state: PyTree,
             minibatch: PyTree,
             step_size: float,
             temperature: float = 1,
-        ):
+        ) -> PyTree:
             return kernel(
                 rng_key, state, grad_estimator, minibatch, step_size, temperature
             )
 
-        return step_fn
+        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

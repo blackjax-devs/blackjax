@@ -270,7 +270,8 @@ class SGMCMCTest(chex.TestCase):
 
         data_batch = X_data[:100, :]
         init_position = 1.0
-        _ = sgld(rng_key, init_position, data_batch, 1e-3)
+        init_position = sgld.init(init_position)
+        _ = sgld.step(rng_key, init_position, data_batch, 1e-3)
 
     def test_linear_regression_sgld_cv(self):
         rng_key, data_key = jax.random.split(self.key, 2)
@@ -290,8 +291,9 @@ class SGMCMCTest(chex.TestCase):
         sgld = blackjax.sgld(cv_grad_fn)
 
         init_position = 1.0
+        init_position = sgld.init(init_position)
         data_batch = X_data[:100, :]
-        _ = sgld(rng_key, init_position, data_batch, 1e-3)
+        _ = sgld.step(rng_key, init_position, data_batch, 1e-3)
 
     def test_linear_regression_sghmc(self):
         rng_key, data_key = jax.random.split(self.key, 2)
@@ -306,8 +308,9 @@ class SGMCMCTest(chex.TestCase):
 
         data_batch = X_data[100:200, :]
         init_position = 1.0
+        init_position = sghmc.init(init_position)
         data_batch = X_data[:100, :]
-        _ = sghmc(rng_key, init_position, data_batch, 1e-3)
+        _ = sghmc.step(rng_key, init_position, data_batch, 1e-3)
 
     def test_linear_regression_sghmc_cv(self):
         rng_key, data_key = jax.random.split(self.key, 2)
@@ -326,8 +329,9 @@ class SGMCMCTest(chex.TestCase):
         sghmc = blackjax.sghmc(cv_grad_fn, 10)
 
         init_position = 1.0
+        init_position = sghmc.init(init_position)
         data_batch = X_data[:100, :]
-        _ = sghmc(rng_key, init_position, data_batch, 1e-3)
+        _ = sghmc.step(rng_key, init_position, data_batch, 1e-3)
 
     def test_linear_regression_sgnht(self):
         rng_key, data_key = jax.random.split(self.key, 2)

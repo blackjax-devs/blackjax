@@ -17,10 +17,15 @@ from typing import Callable
 import jax
 
 import blackjax.sgmcmc.diffusions as diffusions
+from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.types import PRNGKey, PyTree
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["build_kernel", "sghmc"]
+__all__ = ["init", "build_kernel", "sghmc"]
+
+
+def init(position: PyTree) -> PyTree:
+    return position
 
 
 def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
@@ -102,20 +107,32 @@ class sghmc:
 
     Returns
     -------
-    A step function.
+    A ``MCMCSamplingAlgorithm``.
 
     """
 
+    init = staticmethod(init)
     build_kernel = staticmethod(build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
         grad_estimator: Callable,
         num_integration_steps: int = 10,
-    ) -> Callable:
-        kernel = cls.build_kernel()
+        alpha: float = 0.01,
+        beta: float = 0,
+    ) -> MCMCSamplingAlgorithm:
+        kernel = cls.build_kernel(alpha, beta)
 
-        def step_fn(rng_key: PRNGKey, state, minibatch: PyTree, step_size: float):
+        def init_fn(position: PyTree):
+            return cls.init(position)
+
+        def step_fn(
+            rng_key: PRNGKey,
+            state: PyTree,
+            minibatch: PyTree,
+            step_size: float,
+            temperature: float = 1,
+        ) -> PyTree:
             return kernel(
                 rng_key,
                 state,
@@ -123,6 +140,7 @@ class sghmc:
                 minibatch,
                 step_size,
                 num_integration_steps,
+                temperature,
             )
 
-        return step_fn
+        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
