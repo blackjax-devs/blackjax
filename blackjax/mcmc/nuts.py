@@ -25,7 +25,7 @@ import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.termination as termination
 import blackjax.mcmc.trajectory as trajectory
 from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["NUTSInfo", "init", "build_kernel", "nuts"]
 
@@ -63,7 +63,7 @@ class NUTSInfo(NamedTuple):
 
     """
 
-    momentum: PyTree
+    momentum: ArrayTree
     is_divergent: bool
     is_turning: bool
     energy: float
@@ -226,7 +226,7 @@ class nuts:
     ) -> MCMCSamplingAlgorithm:
         kernel = cls.build_kernel(integrator, divergence_threshold, max_num_doublings)
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):

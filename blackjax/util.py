@@ -8,7 +8,7 @@ from jax.flatten_util import ravel_pytree
 from jax.random import normal
 from jax.tree_util import tree_leaves
 
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 
 @partial(jit, static_argnames=("precision",), inline=True)
@@ -56,10 +56,10 @@ def linear_map(diag_or_dense_a, b, *, precision="highest"):
 # Refactor this function to not use ravel_pytree might be more performant.
 def generate_gaussian_noise(
     rng_key: PRNGKey,
-    position: PyTree,
+    position: ArrayLikeTree,
     mu: Union[float, Array] = 0.0,
     sigma: Union[float, Array] = 1.0,
-) -> PyTree:
+) -> ArrayTree:
     """Generate N(mu, sigma) noise with output structure that match a given PyTree.
 
     Parameters
@@ -82,12 +82,12 @@ def generate_gaussian_noise(
     return unravel_fn(mu + linear_map(sigma, sample))
 
 
-def pytree_size(pytree: PyTree) -> int:
+def pytree_size(pytree: ArrayLikeTree) -> int:
     """Return the dimension of the flatten PyTree."""
     return sum(jnp.size(value) for value in tree_leaves(pytree))
 
 
-def index_pytree(input_pytree: PyTree) -> PyTree:
+def index_pytree(input_pytree: ArrayLikeTree) -> ArrayTree:
     """Builds a PyTree with elements indicating its corresponding index on a flat array.
 
     Various algorithms in BlackJAX take as input a 1 or 2 dimensional array which somehow

@@ -18,14 +18,14 @@ import jax
 import jax.numpy as jnp
 import jax.scipy as jsp
 
-from blackjax.types import PyTree
+from blackjax.types import Array, ArrayLikeTree
 
 
-def ess(log_weights: jnp.ndarray) -> float:
+def ess(log_weights: Array) -> float:
     return jnp.exp(log_ess(log_weights))
 
 
-def log_ess(log_weights: jnp.ndarray) -> float:
+def log_ess(log_weights: Array) -> float:
     """Compute the effective sample size.
 
     Parameters
@@ -46,7 +46,7 @@ def log_ess(log_weights: jnp.ndarray) -> float:
 
 def ess_solver(
     logdensity_fn: Callable,
-    particles: PyTree,
+    particles: ArrayLikeTree,
     target_ess: float,
     max_delta: float,
     root_solver: Callable,

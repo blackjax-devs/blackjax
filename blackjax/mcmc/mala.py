@@ -21,7 +21,7 @@ import jax.numpy as jnp
 import blackjax.mcmc.diffusions as diffusions
 import blackjax.mcmc.proposal as proposal
 from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["MALAState", "MALAInfo", "init", "build_kernel", "mala"]
 
@@ -36,9 +36,9 @@ class MALAState(NamedTuple):
 
     """
 
-    position: PyTree
+    position: ArrayTree
     logdensity: float
-    logdensity_grad: PyTree
+    logdensity_grad: ArrayTree
 
 
 class MALAInfo(NamedTuple):
@@ -59,7 +59,7 @@ class MALAInfo(NamedTuple):
     is_accepted: bool
 
 
-def init(position: PyTree, logdensity_fn: Callable) -> MALAState:
+def init(position: ArrayLikeTree, logdensity_fn: Callable) -> MALAState:
     grad_fn = jax.value_and_grad(logdensity_fn)
     logdensity, logdensity_grad = grad_fn(position)
     return MALAState(position, logdensity, logdensity_grad)
@@ -179,7 +179,7 @@ class mala:
     ) -> MCMCSamplingAlgorithm:
         kernel = cls.build_kernel()
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):

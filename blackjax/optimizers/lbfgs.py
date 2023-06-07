@@ -22,7 +22,7 @@ from jax.flatten_util import ravel_pytree
 from jaxopt._src.lbfgs import LbfgsState
 from jaxopt.base import OptStep
 
-from blackjax.types import Array, PyTree
+from blackjax.types import Array, ArrayLikeTree
 
 __all__ = [
     "LBFGSHistory",
@@ -64,7 +64,7 @@ class LBFGSHistory(NamedTuple):
 
 def minimize_lbfgs(
     fun: Callable,
-    x0: PyTree,
+    x0: ArrayLikeTree,
     maxiter: int = 30,
     maxcor: float = 10,
     gtol: float = 1e-08,

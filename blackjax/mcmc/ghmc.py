@@ -22,7 +22,7 @@ import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
 from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise, pytree_size
 
 __all__ = ["GHMCState", "init", "build_kernel", "ghmc"]
@@ -42,15 +42,15 @@ class GHMCState(NamedTuple):
 
     """
 
-    position: PyTree
-    momentum: PyTree
+    position: ArrayTree
+    momentum: ArrayTree
     logdensity: float
-    logdensity_grad: PyTree
+    logdensity_grad: ArrayTree
     slice: float
 
 
 def init(
-    position: PyTree,
+    position: ArrayLikeTree,
     rng_key: PRNGKey,
     logdensity_fn: Callable,
 ) -> GHMCState:
@@ -101,7 +101,7 @@ def build_kernel(
         state: GHMCState,
         logdensity_fn: Callable,
         step_size: float,
-        momentum_inverse_scale: PyTree,
+        momentum_inverse_scale: ArrayLikeTree,
         alpha: float,
         delta: float,
     ) -> Tuple[GHMCState, hmc.HMCInfo]:
@@ -168,6 +168,30 @@ def build_kernel(
         return state, info
 
     return kernel
+
+
+def update_momentum(rng_key, state, alpha):
+    """Persistent update of the momentum variable.
+
+    Performs a persistent update of the momentum, taking as input the previous
+    momentum, a random number generating key and the parameter alpha. Outputs
+    an updated momentum that is a mixture of the previous momentum a new sample
+    from a Gaussian density (dependent on alpha). The weights of the mixture of
+    these two components are a function of alpha.
+
+    """
+    position, momentum, *_ = state
+
+    m_size = pytree_size(momentum)
+    momentum_generator, *_ = metrics.gaussian_euclidean(1 / alpha * jnp.ones((m_size,)))
+    momentum = jax.tree_map(
+        lambda prev_momentum, shifted_momentum: prev_momentum * jnp.sqrt(1.0 - alpha)
+        + shifted_momentum,
+        momentum,
+        momentum_generator(rng_key, position),
+    )
+
+    return momentum
 
 
 class ghmc:
@@ -239,7 +263,7 @@ class ghmc:
         cls,
         logdensity_fn: Callable,
         step_size: float,
-        momentum_inverse_scale: PyTree,
+        momentum_inverse_scale: ArrayLikeTree,
         alpha: float,
         delta: float,
         *,
@@ -248,7 +272,7 @@ class ghmc:
     ) -> MCMCSamplingAlgorithm:
         kernel = cls.build_kernel(noise_gn, divergence_threshold)
 
-        def init_fn(position: PyTree, rng_key: PRNGKey):
+        def init_fn(position: ArrayLikeTree, rng_key: PRNGKey):
             return cls.init(position, rng_key, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
@@ -263,27 +287,3 @@ class ghmc:
             )
 
         return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
-
-
-def update_momentum(rng_key, state, alpha):
-    """Persistent update of the momentum variable.
-
-    Performs a persistent update of the momentum, taking as input the previous
-    momentum, a random number generating key and the parameter alpha. Outputs
-    an updated momentum that is a mixture of the previous momentum a new sample
-    from a Gaussian density (dependent on alpha). The weights of the mixture of
-    these two components are a function of alpha.
-
-    """
-    position, momentum, *_ = state
-
-    m_size = pytree_size(momentum)
-    momentum_generator, *_ = metrics.gaussian_euclidean(1 / alpha * jnp.ones((m_size,)))
-    momentum = jax.tree_map(
-        lambda prev_momentum, shifted_momentum: prev_momentum * jnp.sqrt(1.0 - alpha)
-        + shifted_momentum,
-        momentum,
-        momentum_generator(rng_key, position),
-    )
-
-    return momentum

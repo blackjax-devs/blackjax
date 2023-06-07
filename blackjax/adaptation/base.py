@@ -13,11 +13,11 @@
 # limitations under the License.
 from typing import NamedTuple
 
-from blackjax.types import PyTree
+from blackjax.types import ArrayTree
 
 
 class AdaptationResults(NamedTuple):
-    state: PyTree
+    state: ArrayTree
     parameters: dict
 
 

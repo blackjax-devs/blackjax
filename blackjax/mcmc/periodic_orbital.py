@@ -20,7 +20,7 @@ import jax.numpy as jnp
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["PeriodicOrbitalState", "init", "build_kernel", "orbital_hmc"]
 
@@ -48,11 +48,11 @@ class PeriodicOrbitalState(NamedTuple):
         function for each point in the orbit.
     """
 
-    positions: PyTree
+    positions: ArrayTree
     weights: Array
     directions: Array
     logdensities: Array
-    logdensities_grad: PyTree
+    logdensities_grad: ArrayTree
 
 
 class PeriodicOrbitalInfo(NamedTuple):
@@ -70,13 +70,13 @@ class PeriodicOrbitalInfo(NamedTuple):
         variance of the unnormalized weights of the orbit, ideally close to 0.
     """
 
-    momentums: PyTree
+    momentums: ArrayTree
     weights_mean: float
     weights_variance: float
 
 
 def init(
-    position: PyTree, logdensity_fn: Callable, period: int
+    position: ArrayLikeTree, logdensity_fn: Callable, period: int
 ) -> PeriodicOrbitalState:
     """Create a periodic orbital state from a position.
 
@@ -276,7 +276,7 @@ class orbital_hmc:
     ) -> MCMCSamplingAlgorithm:
         kernel = cls.build_kernel(bijection)
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position, logdensity_fn, period)
 
         def step_fn(rng_key: PRNGKey, state):

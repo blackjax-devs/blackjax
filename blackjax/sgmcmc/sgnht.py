@@ -16,7 +16,7 @@ from typing import Callable, NamedTuple, Union
 
 import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = ["SGNHTState", "init", "build_kernel", "sgnht"]
@@ -35,12 +35,12 @@ class SGNHTState(NamedTuple):
         Scalar thermostat controlling kinetic energy.
 
     """
-    position: PyTree
-    momentum: PyTree
+    position: ArrayTree
+    momentum: ArrayTree
     xi: float
 
 
-def init(position: PyTree, rng_key: PRNGKey, xi: float) -> SGNHTState:
+def init(position: ArrayLikeTree, rng_key: PRNGKey, xi: float) -> SGNHTState:
     momentum = generate_gaussian_noise(rng_key, position)
     return SGNHTState(position, momentum, xi)
 
@@ -53,10 +53,10 @@ def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
         rng_key: PRNGKey,
         state: SGNHTState,
         grad_estimator: Callable,
-        minibatch: PyTree,
+        minibatch: ArrayLikeTree,
         step_size: float,
         temperature: float = 1.0,
-    ) -> PyTree:
+    ) -> ArrayTree:
         position, momentum, xi = state
         logdensity_grad = grad_estimator(position, minibatch)
         position, momentum, xi = integrator(
@@ -133,14 +133,16 @@ class sgnht:
         kernel = cls.build_kernel(alpha, beta)
 
         def init_fn(
-            position: PyTree, rng_key: PRNGKey, init_xi: Union[None, float] = None
+            position: ArrayLikeTree,
+            rng_key: PRNGKey,
+            init_xi: Union[None, float] = None,
         ):
             return cls.init(position, rng_key, init_xi or alpha)
 
         def step_fn(
             rng_key: PRNGKey,
             state: SGNHTState,
-            minibatch: PyTree,
+            minibatch: ArrayLikeTree,
             step_size: float,
             temperature: float = 1,
         ) -> SGNHTState:
