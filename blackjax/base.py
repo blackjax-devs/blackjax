@@ -14,9 +14,9 @@ from typing import Callable, NamedTuple, Tuple
 
 from typing_extensions import Protocol
 
-from .types import PRNGKey, PyTree
+from .types import ArrayLikeTree, PRNGKey
 
-Position = PyTree
+Position = ArrayLikeTree
 State = NamedTuple
 Info = NamedTuple
 
@@ -139,7 +139,7 @@ class VIAlgorithm(NamedTuple):
 class RunFn(Protocol):
     """A `Callable` used to run the adaptation procedure."""
 
-    def __call__(self, rng_key: PRNGKey, position: PyTree):
+    def __call__(self, rng_key: PRNGKey, position: ArrayLikeTree):
         """Run the compiled algorithm."""
 
 
