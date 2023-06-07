@@ -32,9 +32,9 @@ classifiers = [
 ]
 dependencies = [
     "fastprogress>=0.2.0",
-    "jax>=0.3.13",
-    "jaxlib>=0.3.10",
-    "jaxopt>=0.5.5",
+    "jax>=0.4.10",
+    "jaxlib>=0.4.10",
+    "jaxopt>=0.7",
     "optax",
     "typing-extensions>=4.4.0",
 ]
