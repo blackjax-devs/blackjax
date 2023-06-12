@@ -346,16 +346,16 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayTree</span>
 <span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;overdamped_langevin&quot;</span><span class="p">]</span>
 
 
 <span class="k">class</span> <span class="nc">DiffusionState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-    <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span>
     <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">PyTree</span>
+    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayTree</span>
 
 
 <div class="viewcode-block" id="overdamped_langevin"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/diffusions/index.html#blackjax.mcmc.diffusions.overdamped_langevin">[docs]</a><span class="k">def</span> <span class="nf">overdamped_langevin</span><span class="p">(</span><span class="n">logdensity_grad_fn</span><span class="p">):</span>

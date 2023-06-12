@@ -31,6 +31,7 @@ Functions
 
 
 
+
    State of the Pathfinder algorithm.
 
    Pathfinder locates normal approximations to the target density along a
@@ -56,12 +57,12 @@ Functions
       
 
    .. py:attribute:: position
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
    .. py:attribute:: grad_position
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -81,7 +82,7 @@ Functions
       
 
 
-.. py:function:: approximate(rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable, initial_position: blackjax.types.PyTree, num_samples: int = 200, *, maxiter=30, maxcor=10, maxls=1000, gtol=1e-08, ftol=1e-05) -> Tuple[PathfinderState, PathfinderInfo]
+.. py:function:: approximate(rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable, initial_position: blackjax.types.ArrayLikeTree, num_samples: int = 200, *, maxiter=30, maxcor=10, maxls=1000, gtol=1e-08, ftol=1e-05) -> Tuple[PathfinderState, PathfinderInfo]
 
    Pathfinder variational inference algorithm.
 
@@ -110,7 +111,7 @@ Functions
              * *contains all the states traversed.*
 
 
-.. py:function:: sample(rng_key: blackjax.types.PRNGKey, state: PathfinderState, num_samples: Union[int, Tuple[], Tuple[int]] = ()) -> blackjax.types.PyTree
+.. py:function:: sample(rng_key: blackjax.types.PRNGKey, state: PathfinderState, num_samples: Union[int, Tuple[], Tuple[int]] = ()) -> blackjax.types.ArrayTree
 
    Draw from the Pathfinder approximation of the target distribution.
 
@@ -122,6 +123,7 @@ Functions
 
 
 .. py:class:: pathfinder
+
 
    Implements the (basic) user interface for the pathfinder kernel.
 

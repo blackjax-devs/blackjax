@@ -41,6 +41,6 @@ Functions
    :type max_iter: int
 
    :returns: **delta** -- The root of `fun`
-   :rtype: jnp.ndarray, shape (,)
+   :rtype: Array, shape (,)
 
 

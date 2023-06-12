@@ -29,6 +29,7 @@ Functions
 
 
 
+
    .. py:attribute:: momentum
       :type: blackjax.types.Array
 

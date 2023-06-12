@@ -345,14 +345,14 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 
 <div class="viewcode-block" id="SMCState"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState">[docs]</a><span class="k">class</span> <span class="nc">SMCState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the SMC sampler&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="SMCState.particles"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState.particles">[docs]</a>    <span class="n">particles</span><span class="p">:</span> <span class="n">PyTree</span></div>
-<div class="viewcode-block" id="SMCState.weights"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState.weights">[docs]</a>    <span class="n">weights</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span></div></div>
+<div class="viewcode-block" id="SMCState.particles"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState.particles">[docs]</a>    <span class="n">particles</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+<div class="viewcode-block" id="SMCState.weights"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState.weights">[docs]</a>    <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span></div></div>
 
 
 <div class="viewcode-block" id="SMCInfo"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo">[docs]</a><span class="k">class</span> <span class="nc">SMCInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -360,7 +360,7 @@ document.write(`
 
 <span class="sd">    proposals: PyTree</span>
 <span class="sd">        The particles that were proposed by the MCMC pass.</span>
-<span class="sd">    ancestors: jnp.ndarray</span>
+<span class="sd">    ancestors: Array</span>
 <span class="sd">        The index of the particles proposed by the MCMC pass that were selected</span>
 <span class="sd">        by the resampling step.</span>
 <span class="sd">    log_likelihood_increment: float</span>
@@ -368,12 +368,14 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="SMCInfo.ancestors"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.ancestors">[docs]</a>    <span class="n">ancestors</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span></div>
+<div class="viewcode-block" id="SMCInfo.ancestors"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.ancestors">[docs]</a>    <span class="n">ancestors</span><span class="p">:</span> <span class="n">Array</span></div>
 <div class="viewcode-block" id="SMCInfo.log_likelihood_increment"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.log_likelihood_increment">[docs]</a>    <span class="n">log_likelihood_increment</span><span class="p">:</span> <span class="nb">float</span></div>
 <div class="viewcode-block" id="SMCInfo.update_info"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.update_info">[docs]</a>    <span class="n">update_info</span><span class="p">:</span> <span class="n">NamedTuple</span></div></div>
 
 
-<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">particles</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">particles</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">):</span>
+    <span class="c1"># Infer the number of particles from the size of the leading dimension of</span>
+    <span class="c1"># the first leaf of the inputted PyTree.</span>
     <span class="n">num_particles</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">particles</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">weights</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_particles</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_particles</span>
     <span class="k">return</span> <span class="n">SMCState</span><span class="p">(</span><span class="n">particles</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span></div>

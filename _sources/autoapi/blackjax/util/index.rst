@@ -51,7 +51,7 @@ Functions
    :rtype: The result vector of the matrix multiplication.
 
 
-.. py:function:: generate_gaussian_noise(rng_key: blackjax.types.PRNGKey, position: blackjax.types.PyTree, mu: Union[float, blackjax.types.Array] = 0.0, sigma: Union[float, blackjax.types.Array] = 1.0) -> blackjax.types.PyTree
+.. py:function:: generate_gaussian_noise(rng_key: blackjax.types.PRNGKey, position: blackjax.types.ArrayLikeTree, mu: Union[float, blackjax.types.Array] = 0.0, sigma: Union[float, blackjax.types.Array] = 1.0) -> blackjax.types.ArrayTree
 
    Generate N(mu, sigma) noise with output structure that match a given PyTree.
 
@@ -63,12 +63,12 @@ Functions
    :rtype: Gaussian noise following N(mu, sigma) that match the structure of position.
 
 
-.. py:function:: pytree_size(pytree: blackjax.types.PyTree) -> int
+.. py:function:: pytree_size(pytree: blackjax.types.ArrayLikeTree) -> int
 
    Return the dimension of the flatten PyTree.
 
 
-.. py:function:: index_pytree(input_pytree: blackjax.types.PyTree) -> blackjax.types.PyTree
+.. py:function:: index_pytree(input_pytree: blackjax.types.ArrayLikeTree) -> blackjax.types.ArrayTree
 
    Builds a PyTree with elements indicating its corresponding index on a flat array.
 

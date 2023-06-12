@@ -50,6 +50,7 @@ Attributes
 
 
 
+
    A `Callable` used to initialize the kernel state.
 
    Sampling algorithms often need to carry over some informations between
@@ -63,6 +64,7 @@ Attributes
 
 
 .. py:class:: UpdateFn
+
 
 
 
@@ -81,6 +83,7 @@ Attributes
 
 
 .. py:class:: MCMCSamplingAlgorithm
+
 
 
 
@@ -121,6 +124,7 @@ Attributes
 
 
 
+
    A pair of functions that represents a Variational Inference algorithm.
 
    Blackjax variational inference algorithms are implemented as a pair of pure
@@ -157,10 +161,12 @@ Attributes
 
 
 
+
    A `Callable` used to run the adaptation procedure.
 
 
 .. py:class:: AdaptationAlgorithm
+
 
 
 

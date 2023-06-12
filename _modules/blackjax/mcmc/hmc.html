@@ -351,7 +351,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.trajectory</span> <span class="k">as</span> <span class="nn">trajectory</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.mcmc.trajectory</span> <span class="kn">import</span> <span class="n">hmc_energy</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;HMCState&quot;</span><span class="p">,</span> <span class="s2">&quot;HMCInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;hmc&quot;</span><span class="p">]</span>
 
@@ -365,9 +365,9 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="HMCState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="HMCState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 <div class="viewcode-block" id="HMCState.logdensity"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState.logdensity">[docs]</a>    <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span></div>
-<div class="viewcode-block" id="HMCState.logdensity_grad"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState.logdensity_grad">[docs]</a>    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">PyTree</span></div></div>
+<div class="viewcode-block" id="HMCState.logdensity_grad"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState.logdensity_grad">[docs]</a>    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayTree</span></div></div>
 
 
 <div class="viewcode-block" id="HMCInfo"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo">[docs]</a><span class="k">class</span> <span class="nc">HMCInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -399,7 +399,7 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="HMCInfo.momentum"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo.momentum">[docs]</a>    <span class="n">momentum</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="HMCInfo.momentum"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo.momentum">[docs]</a>    <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 <div class="viewcode-block" id="HMCInfo.acceptance_rate"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo.acceptance_rate">[docs]</a>    <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span></div>
 <div class="viewcode-block" id="HMCInfo.is_accepted"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo.is_accepted">[docs]</a>    <span class="n">is_accepted</span><span class="p">:</span> <span class="nb">bool</span></div>
 <div class="viewcode-block" id="HMCInfo.is_divergent"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo.is_divergent">[docs]</a>    <span class="n">is_divergent</span><span class="p">:</span> <span class="nb">bool</span></div>
@@ -408,7 +408,7 @@ document.write(`
 <div class="viewcode-block" id="HMCInfo.num_integration_steps"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCInfo.num_integration_steps">[docs]</a>    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span></div></div>
 
 
-<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
     <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">HMCState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">)</span></div>
 
@@ -552,7 +552,7 @@ document.write(`
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
         <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
@@ -571,7 +571,7 @@ document.write(`
 <span class="k">def</span> <span class="nf">hmc_proposal</span><span class="p">(</span>
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">kinetic_energy</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">step_size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">PyTree</span><span class="p">],</span>
+    <span class="n">step_size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">],</span>
     <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>

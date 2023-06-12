@@ -23,7 +23,7 @@ Functions
 
 
 
-.. py:function:: potential_scale_reduction(input_array: blackjax.types.Array, chain_axis: int = 0, sample_axis: int = 1)
+.. py:function:: potential_scale_reduction(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
 
    Gelman and Rubin (1992)'s potential scale reduction for computing multiple MCMC chain convergence.
 
@@ -46,7 +46,7 @@ Functions
    greater than one indicate that one or more chains have not yet converged :cite:p:`stan_rhat,gelman1992inference`.
 
 
-.. py:function:: effective_sample_size(input_array: blackjax.types.Array, chain_axis: int = 0, sample_axis: int = 1)
+.. py:function:: effective_sample_size(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
 
    Compute estimate of the effective sample size (ess).
 

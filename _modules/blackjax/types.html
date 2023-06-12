@@ -327,13 +327,48 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <h1>Source code for blackjax.types</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Union</span>
+<span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">from</span> <span class="nn">chex</span> <span class="kn">import</span> <span class="n">Array</span>
+<span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">Array</span>
+<span class="kn">from</span> <span class="nn">jax.typing</span> <span class="kn">import</span> <span class="n">ArrayLike</span>
 
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Following the current best practice (https://jax.readthedocs.io/en/latest/jax.typing.html)</span>
+<span class="sd">We use:</span>
+<span class="sd">- `ArrayLike` and `ArrayLikeTree` to annotate function input,</span>
+<span class="sd">- `Array` and `ArrayTree` to annotate function output.</span>
+
+<span class="sd">Leaves of a Pytree definition in the library are in principle annotated as</span>
+<span class="sd">`Array`, as they are mostly internal representation. For example:</span>
+<span class="sd">```</span>
+<span class="sd">class WelfordAlgorithmState(NamedTuple):</span>
+<span class="sd">    mean: Array</span>
+<span class="sd">    ...</span>
+<span class="sd">```</span>
+
+<span class="sd">[TODO] Improve scalar-like typing (e.g. `logdensity`, `acceptance_rate`).</span>
+<span class="sd">While they are `Array` (as in most cases they should be output of a Jax</span>
+<span class="sd">function), we annotate them as `float` to empathizes they should be scalar</span>
+<span class="sd">(until we introduce shape annotation).</span>
+<span class="sd">&quot;&quot;&quot;</span>
 <span class="c1">#: JAX PyTrees</span>
-<div class="viewcode-block" id="PyTree"><a class="viewcode-back" href="../../autoapi/blackjax/types/index.html#blackjax.types.PyTree">[docs]</a><span class="n">PyTree</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="s2">&quot;PyTree&quot;</span><span class="p">],</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;PyTree&quot;</span><span class="p">]]</span></div>
+<div class="viewcode-block" id="ArrayTree"><a class="viewcode-back" href="../../autoapi/blackjax/types/index.html#blackjax.types.ArrayTree">[docs]</a><span class="n">ArrayTree</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="s2">&quot;ArrayTree&quot;</span><span class="p">],</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;ArrayTree&quot;</span><span class="p">]]</span></div>
+<div class="viewcode-block" id="ArrayLikeTree"><a class="viewcode-back" href="../../autoapi/blackjax/types/index.html#blackjax.types.ArrayLikeTree">[docs]</a><span class="n">ArrayLikeTree</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span>
+    <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="s2">&quot;ArrayLikeTree&quot;</span><span class="p">],</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;ArrayLikeTree&quot;</span><span class="p">]</span>
+<span class="p">]</span></div>
 
 <span class="c1">#: JAX PRNGKey</span>
 <div class="viewcode-block" id="PRNGKey"><a class="viewcode-back" href="../../autoapi/blackjax/types/index.html#blackjax.types.PRNGKey">[docs]</a><span class="n">PRNGKey</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKeyArray</span></div>

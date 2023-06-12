@@ -352,7 +352,7 @@ document.write(`
     <span class="n">bfgs_sample</span><span class="p">,</span>
     <span class="n">lbfgs_inverse_hessian_factors</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PathfinderState&quot;</span><span class="p">,</span> <span class="s2">&quot;approximate&quot;</span><span class="p">,</span> <span class="s2">&quot;sample&quot;</span><span class="p">,</span> <span class="s2">&quot;pathfinder&quot;</span><span class="p">]</span>
 
@@ -379,8 +379,8 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="PathfinderState.elbo"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.PathfinderState.elbo">[docs]</a>    <span class="n">elbo</span><span class="p">:</span> <span class="n">Array</span></div>
-<div class="viewcode-block" id="PathfinderState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.PathfinderState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span></div>
-<div class="viewcode-block" id="PathfinderState.grad_position"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.PathfinderState.grad_position">[docs]</a>    <span class="n">grad_position</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="PathfinderState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.PathfinderState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+<div class="viewcode-block" id="PathfinderState.grad_position"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.PathfinderState.grad_position">[docs]</a>    <span class="n">grad_position</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 <div class="viewcode-block" id="PathfinderState.alpha"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.PathfinderState.alpha">[docs]</a>    <span class="n">alpha</span><span class="p">:</span> <span class="n">Array</span></div>
 <div class="viewcode-block" id="PathfinderState.beta"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.PathfinderState.beta">[docs]</a>    <span class="n">beta</span><span class="p">:</span> <span class="n">Array</span></div>
 <div class="viewcode-block" id="PathfinderState.gamma"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.PathfinderState.gamma">[docs]</a>    <span class="n">gamma</span><span class="p">:</span> <span class="n">Array</span></div></div>
@@ -400,7 +400,7 @@ document.write(`
 <div class="viewcode-block" id="approximate"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.approximate">[docs]</a><span class="k">def</span> <span class="nf">approximate</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">initial_position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+    <span class="n">initial_position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
     <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>  <span class="c1"># lgbfs parameters</span>
     <span class="n">maxiter</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
@@ -530,7 +530,7 @@ document.write(`
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">PathfinderState</span><span class="p">,</span>
     <span class="n">num_samples</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[()],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(),</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyTree</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw from the Pathfinder approximation of the target distribution.</span>
 
 <span class="sd">    Parameters</span>
@@ -596,7 +596,7 @@ document.write(`
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PathFinderAlgorithm</span><span class="p">:</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="k">def</span> <span class="nf">approximate_fn</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
-            <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+            <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
             <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
             <span class="o">**</span><span class="n">lbfgs_parameters</span><span class="p">,</span>
         <span class="p">):</span>

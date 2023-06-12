@@ -351,7 +351,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">jaxopt._src.lbfgs</span> <span class="kn">import</span> <span class="n">LbfgsState</span>
 <span class="kn">from</span> <span class="nn">jaxopt.base</span> <span class="kn">import</span> <span class="n">OptStep</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;LBFGSHistory&quot;</span><span class="p">,</span>
@@ -393,7 +393,7 @@ document.write(`
 
 <div class="viewcode-block" id="minimize_lbfgs"><a class="viewcode-back" href="../../../autoapi/blackjax/optimizers/lbfgs/index.html#blackjax.optimizers.lbfgs.minimize_lbfgs">[docs]</a><span class="k">def</span> <span class="nf">minimize_lbfgs</span><span class="p">(</span>
     <span class="n">fun</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">x0</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+    <span class="n">x0</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
     <span class="n">maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
     <span class="n">maxcor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">gtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-08</span><span class="p">,</span>

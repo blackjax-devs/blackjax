@@ -350,7 +350,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.diffusions</span> <span class="k">as</span> <span class="nn">diffusions</span>
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="k">as</span> <span class="nn">proposal</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MALAState&quot;</span><span class="p">,</span> <span class="s2">&quot;MALAInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;mala&quot;</span><span class="p">]</span>
 
@@ -365,9 +365,9 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="MALAState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.MALAState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="MALAState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.MALAState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 <div class="viewcode-block" id="MALAState.logdensity"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.MALAState.logdensity">[docs]</a>    <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span></div>
-<div class="viewcode-block" id="MALAState.logdensity_grad"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.MALAState.logdensity_grad">[docs]</a>    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">PyTree</span></div></div>
+<div class="viewcode-block" id="MALAState.logdensity_grad"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.MALAState.logdensity_grad">[docs]</a>    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayTree</span></div></div>
 
 
 <div class="viewcode-block" id="MALAInfo"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.MALAInfo">[docs]</a><span class="k">class</span> <span class="nc">MALAInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -388,7 +388,7 @@ document.write(`
 <div class="viewcode-block" id="MALAInfo.is_accepted"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.MALAInfo.is_accepted">[docs]</a>    <span class="n">is_accepted</span><span class="p">:</span> <span class="nb">bool</span></div></div>
 
 
-<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MALAState</span><span class="p">:</span>
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MALAState</span><span class="p">:</span>
     <span class="n">grad_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
     <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">grad_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">MALAState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">)</span></div>
@@ -508,7 +508,7 @@ document.write(`
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
         <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
 
-        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>

@@ -24,10 +24,10 @@ Functions
 
 
 
-.. py:function:: ess(log_weights: jax.numpy.ndarray) -> float
+.. py:function:: ess(log_weights: blackjax.types.Array) -> float
 
 
-.. py:function:: log_ess(log_weights: jax.numpy.ndarray) -> float
+.. py:function:: log_ess(log_weights: blackjax.types.Array) -> float
 
    Compute the effective sample size.
 
@@ -38,7 +38,7 @@ Functions
    :rtype: float
 
 
-.. py:function:: ess_solver(logdensity_fn: Callable, particles: blackjax.types.PyTree, target_ess: float, max_delta: float, root_solver: Callable)
+.. py:function:: ess_solver(logdensity_fn: Callable, particles: blackjax.types.ArrayLikeTree, target_ess: float, max_delta: float, root_solver: Callable)
 
    Build a Tempered SMC step.
 

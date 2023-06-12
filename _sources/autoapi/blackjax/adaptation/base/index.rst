@@ -22,8 +22,9 @@ Classes
 
 
 
+
    .. py:attribute:: state
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -34,6 +35,7 @@ Classes
 
 
 .. py:class:: AdaptationInfo
+
 
 
 

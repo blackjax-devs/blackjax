@@ -47,6 +47,7 @@ Attributes
 
 
 
+
    Proposal for the next chain step.
 
    state:

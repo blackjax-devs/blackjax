@@ -33,13 +33,14 @@ Functions
 
 
 
+
    .. py:attribute:: mu
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
    .. py:attribute:: rho
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -50,6 +51,7 @@ Functions
 
 
 .. py:class:: MFVIInfo
+
 
 
 
@@ -81,6 +83,7 @@ Functions
 
 
 .. py:class:: meanfield_vi
+
 
    High-level implementation of Mean-Field Variational Inference.
 

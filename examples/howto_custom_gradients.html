@@ -407,7 +407,7 @@ $$</p>
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Reverse-mode differentiation does not work for lax.while_loop or lax.fori_loop. Try using lax.scan instead.
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Reverse-mode differentiation does not work for lax.while_loop or lax.fori_loop with dynamic start/stop values. Try using lax.scan, or using fori_loop with static start/stop.
 </pre></div>
 </div>
 </div>

@@ -40,6 +40,7 @@ Functions
 
 
 
+
    State carried through the Welford algorithm.
 
    mean
@@ -69,6 +70,7 @@ Functions
 
 
 .. py:class:: MassMatrixAdaptationState
+
 
 
 

@@ -455,7 +455,7 @@ Large values may slow down convergence. Introduced in <span id="id4">[<a class="
 value of 10.</p></li>
 <li><p><strong>gamma</strong> – Controls the speed of convergence of the scheme. The authors of <span id="id5">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> recommend
 a value of 0.05.</p></li>
-<li><p><strong>kappa</strong> (<em>float in</em><em> ]</em><em>0.5</em><em>, </em><em>1</em><em>]</em>) – Controls the weights of past steps in the current update. The scheme will
+<li><p><strong>kappa</strong> (<em>float in</em><em> [</em><em>0.5</em><em>, </em><em>1</em><em>]</em>) – Controls the weights of past steps in the current update. The scheme will
 quickly forget earlier step for a small value of <cite>kappa</cite>. Introduced
 in <span id="id6">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span>, with a recommended value of .75</p></li>
 <li><p><strong>target</strong> – Target acceptance rate.</p></li>

@@ -350,7 +350,7 @@ document.write(`
 
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.sgmcmc.diffusions</span> <span class="kn">import</span> <span class="n">overdamped_langevin</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ContourSGLDState&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;csgld&quot;</span><span class="p">]</span>
 
@@ -370,12 +370,12 @@ document.write(`
 <span class="sd">        Index `i` such that the current position belongs to :math:`S_i`.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-<div class="viewcode-block" id="ContourSGLDState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.ContourSGLDState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="ContourSGLDState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.ContourSGLDState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 <div class="viewcode-block" id="ContourSGLDState.energy_pdf"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.ContourSGLDState.energy_pdf">[docs]</a>    <span class="n">energy_pdf</span><span class="p">:</span> <span class="n">Array</span></div>
 <div class="viewcode-block" id="ContourSGLDState.energy_idx"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.ContourSGLDState.energy_idx">[docs]</a>    <span class="n">energy_idx</span><span class="p">:</span> <span class="nb">int</span></div></div>
 
 
-<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">num_partitions</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ContourSGLDState</span><span class="p">:</span>
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">num_partitions</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ContourSGLDState</span><span class="p">:</span>
     <span class="n">energy_pdf</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_partitions</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_partitions</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
     <span class="p">)</span>
@@ -409,7 +409,7 @@ document.write(`
         <span class="n">state</span><span class="p">:</span> <span class="n">ContourSGLDState</span><span class="p">,</span>
         <span class="n">logdensity_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">gradient_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">minibatch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+        <span class="n">minibatch</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
         <span class="n">step_size_diff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>  <span class="c1"># step size for Langevin diffusion</span>
         <span class="n">step_size_stoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>  <span class="c1"># step size for stochastic approximation</span>
         <span class="n">zeta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -552,13 +552,13 @@ document.write(`
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
         <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">num_partitions</span><span class="p">,</span> <span class="n">energy_gap</span><span class="p">,</span> <span class="n">min_energy</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">num_partitions</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
             <span class="n">state</span><span class="p">:</span> <span class="n">ContourSGLDState</span><span class="p">,</span>
-            <span class="n">minibatch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+            <span class="n">minibatch</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
             <span class="n">step_size_diff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
             <span class="n">step_size_stoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
             <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>

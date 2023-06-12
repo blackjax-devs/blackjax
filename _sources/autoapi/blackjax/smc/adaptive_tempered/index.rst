@@ -57,6 +57,7 @@ Functions
 
 .. py:class:: adaptive_tempered_smc
 
+
    Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
 
    :param logprior_fn: The log-prior function of the model we wish to draw samples from.

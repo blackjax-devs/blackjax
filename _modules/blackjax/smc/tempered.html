@@ -348,7 +348,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">blackjax.smc</span> <span class="k">as</span> <span class="nn">smc</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.smc.base</span> <span class="kn">import</span> <span class="n">SMCState</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;TemperedSMCState&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">]</span>
 
@@ -363,12 +363,14 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="TemperedSMCState.particles"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState.particles">[docs]</a>    <span class="n">particles</span><span class="p">:</span> <span class="n">PyTree</span></div>
-<div class="viewcode-block" id="TemperedSMCState.weights"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState.weights">[docs]</a>    <span class="n">weights</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span></div>
+<div class="viewcode-block" id="TemperedSMCState.particles"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState.particles">[docs]</a>    <span class="n">particles</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+<div class="viewcode-block" id="TemperedSMCState.weights"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState.weights">[docs]</a>    <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span></div>
 <div class="viewcode-block" id="TemperedSMCState.lmbda"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState.lmbda">[docs]</a>    <span class="n">lmbda</span><span class="p">:</span> <span class="nb">float</span></div></div>
 
 
-<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">particles</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">particles</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">):</span>
+    <span class="c1"># Infer the number of particles from the size of the leading dimension of</span>
+    <span class="c1"># the first leaf of the inputted PyTree.</span>
     <span class="n">num_particles</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">particles</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">weights</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_particles</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_particles</span>
     <span class="k">return</span> <span class="n">TemperedSMCState</span><span class="p">(</span><span class="n">particles</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span></div>
@@ -446,10 +448,10 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">delta</span> <span class="o">=</span> <span class="n">lmbda</span> <span class="o">-</span> <span class="n">state</span><span class="o">.</span><span class="n">lmbda</span>
 
-        <span class="k">def</span> <span class="nf">log_weights_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">log_weights_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">loglikelihood_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">tempered_logposterior_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">tempered_logposterior_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
             <span class="n">logprior</span> <span class="o">=</span> <span class="n">logprior_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
             <span class="n">tempered_loglikelihood</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">lmbda</span> <span class="o">*</span> <span class="n">loglikelihood_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">logprior</span> <span class="o">+</span> <span class="n">tempered_loglikelihood</span>
@@ -530,7 +532,7 @@ document.write(`
             <span class="n">resampling_fn</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">):</span>

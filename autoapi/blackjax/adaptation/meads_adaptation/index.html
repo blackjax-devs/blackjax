@@ -380,7 +380,7 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.meads_adaptation.meads_adaptation" title="blackjax.adaptation.meads_adaptation.meads_adaptation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">meads_adaptation</span></code></a>(→ blackjax.base.AdaptationAlgorithm)</p></td>
 <td><p>Adapt the parameters of the Generalized HMC algorithm.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.meads_adaptation.maximum_eigenvalue" title="blackjax.adaptation.meads_adaptation.maximum_eigenvalue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">maximum_eigenvalue</span></code></a>(matrix)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.meads_adaptation.maximum_eigenvalue" title="blackjax.adaptation.meads_adaptation.maximum_eigenvalue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">maximum_eigenvalue</span></code></a>(→ blackjax.types.Array)</p></td>
 <td><p>Estimate the largest eigenvalues of a matrix.</p></td>
 </tr>
 </tbody>
@@ -413,7 +413,7 @@ HMC algorithm.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.adaptation.meads_adaptation.MEADSAdaptationState.position_sigma">
-<span class="sig-name descname"><span class="pre">position_sigma</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.PyTree</span></em><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meads_adaptation.html#MEADSAdaptationState.position_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.position_sigma" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">position_sigma</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.ArrayTree</span></em><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meads_adaptation.html#MEADSAdaptationState.position_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.position_sigma" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -492,7 +492,7 @@ on parallel computer architectures.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.adaptation.meads_adaptation.maximum_eigenvalue">
-<span class="sig-name descname"><span class="pre">maximum_eigenvalue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PyTree</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meads_adaptation.html#maximum_eigenvalue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meads_adaptation.maximum_eigenvalue" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">maximum_eigenvalue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meads_adaptation.html#maximum_eigenvalue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meads_adaptation.maximum_eigenvalue" title="Permalink to this definition">#</a></dt>
 <dd><p>Estimate the largest eigenvalues of a matrix.</p>
 <p>We calculate an unbiased estimate of the ratio between the sum of the
 squared eigenvalues and the sum of the eigenvalues from the input

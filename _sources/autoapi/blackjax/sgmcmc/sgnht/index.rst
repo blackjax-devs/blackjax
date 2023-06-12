@@ -36,6 +36,7 @@ Functions
 
 
 
+
    State of the SGNHT algorithm.
 
    :param position: Current position in the sample space.
@@ -43,12 +44,12 @@ Functions
    :param xi: Scalar thermostat controlling kinetic energy.
 
    .. py:attribute:: position
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
    .. py:attribute:: momentum
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -58,7 +59,7 @@ Functions
       
 
 
-.. py:function:: init(position: blackjax.types.PyTree, rng_key: blackjax.types.PRNGKey, xi: float) -> SGNHTState
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, rng_key: blackjax.types.PRNGKey, xi: float) -> SGNHTState
 
 
 .. py:function:: build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable
@@ -67,6 +68,7 @@ Functions
 
 
 .. py:class:: sgnht
+
 
    Implements the (basic) user interface for the SGNHT kernel.
 

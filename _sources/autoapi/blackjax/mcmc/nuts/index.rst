@@ -47,6 +47,7 @@ Attributes
 
 
 
+
    Additional information on the NUTS transition.
 
    This additional information can be used for debugging or computing
@@ -76,7 +77,7 @@ Attributes
 
 
    .. py:attribute:: momentum
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -154,6 +155,7 @@ Attributes
 
 
 .. py:class:: nuts
+
 
    Implements the (basic) user interface for the nuts kernel.
 

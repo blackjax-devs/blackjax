@@ -347,7 +347,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
@@ -369,8 +369,8 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="EllipSliceState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span></div>
-<div class="viewcode-block" id="EllipSliceState.logdensity"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceState.logdensity">[docs]</a>    <span class="n">logdensity</span><span class="p">:</span> <span class="n">PyTree</span></div></div>
+<div class="viewcode-block" id="EllipSliceState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+<div class="viewcode-block" id="EllipSliceState.logdensity"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceState.logdensity">[docs]</a>    <span class="n">logdensity</span><span class="p">:</span> <span class="n">ArrayTree</span></div></div>
 
 
 <div class="viewcode-block" id="EllipSliceInfo"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceInfo">[docs]</a><span class="k">class</span> <span class="nc">EllipSliceInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -392,12 +392,12 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="EllipSliceInfo.momentum"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceInfo.momentum">[docs]</a>    <span class="n">momentum</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="EllipSliceInfo.momentum"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceInfo.momentum">[docs]</a>    <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 <div class="viewcode-block" id="EllipSliceInfo.theta"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceInfo.theta">[docs]</a>    <span class="n">theta</span><span class="p">:</span> <span class="nb">float</span></div>
 <div class="viewcode-block" id="EllipSliceInfo.subiter"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceInfo.subiter">[docs]</a>    <span class="n">subiter</span><span class="p">:</span> <span class="nb">int</span></div></div>
 
 
-<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
     <span class="n">logdensity</span> <span class="o">=</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">EllipSliceState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">)</span></div>
 
@@ -493,7 +493,7 @@ document.write(`
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
         <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">cov</span><span class="p">,</span> <span class="n">mean</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>

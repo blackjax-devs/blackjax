@@ -348,7 +348,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">optax</span> <span class="kn">import</span> <span class="n">GradientTransformation</span><span class="p">,</span> <span class="n">OptState</span>
 
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">VIAlgorithm</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;MFVIState&quot;</span><span class="p">,</span>
@@ -361,8 +361,8 @@ document.write(`
 
 
 <div class="viewcode-block" id="MFVIState"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.MFVIState">[docs]</a><span class="k">class</span> <span class="nc">MFVIState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<div class="viewcode-block" id="MFVIState.mu"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.MFVIState.mu">[docs]</a>    <span class="n">mu</span><span class="p">:</span> <span class="n">PyTree</span></div>
-<div class="viewcode-block" id="MFVIState.rho"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.MFVIState.rho">[docs]</a>    <span class="n">rho</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="MFVIState.mu"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.MFVIState.mu">[docs]</a>    <span class="n">mu</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+<div class="viewcode-block" id="MFVIState.rho"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.MFVIState.rho">[docs]</a>    <span class="n">rho</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 <div class="viewcode-block" id="MFVIState.opt_state"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.MFVIState.opt_state">[docs]</a>    <span class="n">opt_state</span><span class="p">:</span> <span class="n">OptState</span></div></div>
 
 
@@ -371,7 +371,7 @@ document.write(`
 
 
 <span class="k">def</span> <span class="nf">init</span><span class="p">(</span>
-    <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
     <span class="n">optimizer</span><span class="p">:</span> <span class="n">GradientTransformation</span><span class="p">,</span>
     <span class="o">*</span><span class="n">optimizer_args</span><span class="p">,</span>
     <span class="o">**</span><span class="n">optimizer_kwargs</span><span class="p">,</span>
@@ -467,7 +467,7 @@ document.write(`
         <span class="n">optimizer</span><span class="p">:</span> <span class="n">GradientTransformation</span><span class="p">,</span>
         <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="p">):</span>  <span class="c1"># type: ignore[misc]</span>
-        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">MFVIState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">MFVIState</span><span class="p">,</span> <span class="n">MFVIInfo</span><span class="p">]:</span>

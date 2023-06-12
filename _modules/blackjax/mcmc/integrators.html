@@ -346,7 +346,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax</span>
 
 <span class="kn">from</span> <span class="nn">blackjax.mcmc.metrics</span> <span class="kn">import</span> <span class="n">EuclideanKineticEnergy</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayTree</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;mclachlan&quot;</span><span class="p">,</span> <span class="s2">&quot;velocity_verlet&quot;</span><span class="p">,</span> <span class="s2">&quot;yoshida&quot;</span><span class="p">]</span>
 
@@ -358,10 +358,10 @@ document.write(`
 <span class="sd">    to speedup computations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span>
-    <span class="n">momentum</span><span class="p">:</span> <span class="n">PyTree</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span>
+    <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayTree</span>
     <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">PyTree</span>
+    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayTree</span>
 
 
 <span class="n">EuclideanIntegrator</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">IntegratorState</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">IntegratorState</span><span class="p">]</span>

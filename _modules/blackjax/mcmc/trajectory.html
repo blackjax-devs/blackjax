@@ -377,13 +377,13 @@ document.write(`
     <span class="n">progressive_uniform_sampling</span><span class="p">,</span>
     <span class="n">proposal_generator</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 
 <div class="viewcode-block" id="Trajectory"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory">[docs]</a><span class="k">class</span> <span class="nc">Trajectory</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <div class="viewcode-block" id="Trajectory.leftmost_state"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory.leftmost_state">[docs]</a>    <span class="n">leftmost_state</span><span class="p">:</span> <span class="n">IntegratorState</span></div>
 <div class="viewcode-block" id="Trajectory.rightmost_state"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory.rightmost_state">[docs]</a>    <span class="n">rightmost_state</span><span class="p">:</span> <span class="n">IntegratorState</span></div>
-<div class="viewcode-block" id="Trajectory.momentum_sum"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory.momentum_sum">[docs]</a>    <span class="n">momentum_sum</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="Trajectory.momentum_sum"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory.momentum_sum">[docs]</a>    <span class="n">momentum_sum</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 <div class="viewcode-block" id="Trajectory.num_states"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory.num_states">[docs]</a>    <span class="n">num_states</span><span class="p">:</span> <span class="nb">int</span></div></div>
 
 

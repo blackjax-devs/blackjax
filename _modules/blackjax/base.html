@@ -343,9 +343,9 @@ document.write(`
 
 <span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">Protocol</span>
 
-<span class="kn">from</span> <span class="nn">.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">.types</span> <span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
-<div class="viewcode-block" id="Position"><a class="viewcode-back" href="../../autoapi/blackjax/base/index.html#blackjax.base.Position">[docs]</a><span class="n">Position</span> <span class="o">=</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="Position"><a class="viewcode-back" href="../../autoapi/blackjax/base/index.html#blackjax.base.Position">[docs]</a><span class="n">Position</span> <span class="o">=</span> <span class="n">ArrayLikeTree</span></div>
 <div class="viewcode-block" id="State"><a class="viewcode-back" href="../../autoapi/blackjax/base/index.html#blackjax.base.State">[docs]</a><span class="n">State</span> <span class="o">=</span> <span class="n">NamedTuple</span></div>
 <div class="viewcode-block" id="Info"><a class="viewcode-back" href="../../autoapi/blackjax/base/index.html#blackjax.base.Info">[docs]</a><span class="n">Info</span> <span class="o">=</span> <span class="n">NamedTuple</span></div>
 
@@ -468,7 +468,7 @@ document.write(`
 <div class="viewcode-block" id="RunFn"><a class="viewcode-back" href="../../autoapi/blackjax/base/index.html#blackjax.base.RunFn">[docs]</a><span class="k">class</span> <span class="nc">RunFn</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A `Callable` used to run the adaptation procedure.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Run the compiled algorithm.&quot;&quot;&quot;</span></div>
 
 

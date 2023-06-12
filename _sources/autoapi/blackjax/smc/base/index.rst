@@ -31,15 +31,16 @@ Functions
 
 
 
+
    State of the SMC sampler
 
    .. py:attribute:: particles
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
    .. py:attribute:: weights
-      :type: jax.Array
+      :type: blackjax.types.Array
 
       
 
@@ -48,11 +49,12 @@ Functions
 
 
 
+
    Additional information on the tempered SMC step.
 
    proposals: PyTree
        The particles that were proposed by the MCMC pass.
-   ancestors: jnp.ndarray
+   ancestors: Array
        The index of the particles proposed by the MCMC pass that were selected
        by the resampling step.
    log_likelihood_increment: float
@@ -60,7 +62,7 @@ Functions
 
 
    .. py:attribute:: ancestors
-      :type: jax.numpy.ndarray
+      :type: blackjax.types.Array
 
       
 
@@ -75,7 +77,7 @@ Functions
       
 
 
-.. py:function:: init(particles: blackjax.types.PyTree)
+.. py:function:: init(particles: blackjax.types.ArrayLikeTree)
 
 
 .. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SMCState, update_fn: Callable, weigh_fn: Callable, resample_fn: Callable, num_resampled: Optional[int] = None) -> Tuple[SMCState, SMCInfo]

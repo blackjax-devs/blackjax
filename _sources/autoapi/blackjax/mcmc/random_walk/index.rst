@@ -95,6 +95,7 @@ Functions
 
 
 
+
    State of the RW chain.
 
    position
@@ -104,7 +105,7 @@ Functions
 
 
    .. py:attribute:: position
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -115,6 +116,7 @@ Functions
 
 
 .. py:class:: RWInfo
+
 
 
 
@@ -159,6 +161,7 @@ Functions
 
 
 .. py:class:: additive_step_random_walk
+
 
    Implements the user interface for the Additive Step RMH
 
@@ -218,6 +221,7 @@ Functions
 
 .. py:class:: irmh
 
+
    Implements the (basic) user interface for the independent RMH.
 
    .. rubric:: Examples
@@ -261,6 +265,7 @@ Functions
 
 
 .. py:class:: rmh
+
 
    Implements the user interface for the RMH.
 

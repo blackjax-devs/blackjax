@@ -37,6 +37,7 @@ Functions
 
 
 
+
    State of the Elliptical Slice sampling algorithm.
 
    position
@@ -46,17 +47,18 @@ Functions
 
 
    .. py:attribute:: position
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
    .. py:attribute:: logdensity
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
 
 .. py:class:: EllipSliceInfo
+
 
 
 
@@ -78,7 +80,7 @@ Functions
 
 
    .. py:attribute:: momentum
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -93,7 +95,7 @@ Functions
       
 
 
-.. py:function:: init(position: blackjax.types.PyTree, logdensity_fn: Callable)
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable)
 
 
 .. py:function:: build_kernel(cov_matrix: blackjax.types.Array, mean: blackjax.types.Array)
@@ -109,6 +111,7 @@ Functions
 
 
 .. py:class:: elliptical_slice
+
 
    Implements the (basic) user interface for the Elliptical Slice sampling kernel.
 

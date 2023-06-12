@@ -352,7 +352,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLike</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;WelfordAlgorithmState&quot;</span><span class="p">,</span>
@@ -440,7 +440,7 @@ document.write(`
         <span class="k">return</span> <span class="n">MassMatrixAdaptationState</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">wc_state</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
-        <span class="n">mm_state</span><span class="p">:</span> <span class="n">MassMatrixAdaptationState</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Array</span>
+        <span class="n">mm_state</span><span class="p">:</span> <span class="n">MassMatrixAdaptationState</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLike</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MassMatrixAdaptationState</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the algorithm&#39;s state.</span>
 
@@ -532,14 +532,16 @@ document.write(`
             <span class="n">m2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_dims</span><span class="p">,</span> <span class="n">n_dims</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">WelfordAlgorithmState</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">sample_size</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">wa_state</span><span class="p">:</span> <span class="n">WelfordAlgorithmState</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WelfordAlgorithmState</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+        <span class="n">wa_state</span><span class="p">:</span> <span class="n">WelfordAlgorithmState</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">ArrayLike</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WelfordAlgorithmState</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the M2 matrix using the new value.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        state:</span>
+<span class="sd">        wa_state:</span>
 <span class="sd">            The current state of the Welford Algorithm</span>
-<span class="sd">        position: Array, shape (1,)</span>
+<span class="sd">        value: Array, shape (1,)</span>
 <span class="sd">            The new sample (typically position of the chain) used to update m2</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>

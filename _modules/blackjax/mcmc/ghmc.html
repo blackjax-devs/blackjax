@@ -351,7 +351,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.metrics</span> <span class="k">as</span> <span class="nn">metrics</span>
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="k">as</span> <span class="nn">proposal</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span><span class="p">,</span> <span class="n">pytree_size</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;GHMCState&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;ghmc&quot;</span><span class="p">]</span>
@@ -371,15 +371,15 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="GHMCState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span></div>
-<div class="viewcode-block" id="GHMCState.momentum"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.momentum">[docs]</a>    <span class="n">momentum</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="GHMCState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+<div class="viewcode-block" id="GHMCState.momentum"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.momentum">[docs]</a>    <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 <div class="viewcode-block" id="GHMCState.logdensity"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.logdensity">[docs]</a>    <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span></div>
-<div class="viewcode-block" id="GHMCState.logdensity_grad"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.logdensity_grad">[docs]</a>    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="GHMCState.logdensity_grad"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.logdensity_grad">[docs]</a>    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 <div class="viewcode-block" id="GHMCState.slice"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.slice">[docs]</a>    <span class="nb">slice</span><span class="p">:</span> <span class="nb">float</span></div></div>
 
 
 <div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span>
-    <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GHMCState</span><span class="p">:</span>
@@ -430,7 +430,7 @@ document.write(`
         <span class="n">state</span><span class="p">:</span> <span class="n">GHMCState</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">momentum_inverse_scale</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+        <span class="n">momentum_inverse_scale</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
         <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">GHMCState</span><span class="p">,</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCInfo</span><span class="p">]:</span>
@@ -497,6 +497,30 @@ document.write(`
         <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">info</span>
 
     <span class="k">return</span> <span class="n">kernel</span></div>
+
+
+<span class="k">def</span> <span class="nf">update_momentum</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persistent update of the momentum variable.</span>
+
+<span class="sd">    Performs a persistent update of the momentum, taking as input the previous</span>
+<span class="sd">    momentum, a random number generating key and the parameter alpha. Outputs</span>
+<span class="sd">    an updated momentum that is a mixture of the previous momentum a new sample</span>
+<span class="sd">    from a Gaussian density (dependent on alpha). The weights of the mixture of</span>
+<span class="sd">    these two components are a function of alpha.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">state</span>
+
+    <span class="n">m_size</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
+    <span class="n">momentum_generator</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">gaussian_euclidean</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">m_size</span><span class="p">,)))</span>
+    <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">prev_momentum</span><span class="p">,</span> <span class="n">shifted_momentum</span><span class="p">:</span> <span class="n">prev_momentum</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span>
+        <span class="o">+</span> <span class="n">shifted_momentum</span><span class="p">,</span>
+        <span class="n">momentum</span><span class="p">,</span>
+        <span class="n">momentum_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">momentum</span>
 
 
 <div class="viewcode-block" id="ghmc"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.ghmc">[docs]</a><span class="k">class</span> <span class="nc">ghmc</span><span class="p">:</span>
@@ -568,7 +592,7 @@ document.write(`
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">momentum_inverse_scale</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+        <span class="n">momentum_inverse_scale</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
         <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -577,7 +601,7 @@ document.write(`
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
         <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">noise_gn</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
@@ -592,30 +616,6 @@ document.write(`
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
-
-
-<span class="k">def</span> <span class="nf">update_momentum</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persistent update of the momentum variable.</span>
-
-<span class="sd">    Performs a persistent update of the momentum, taking as input the previous</span>
-<span class="sd">    momentum, a random number generating key and the parameter alpha. Outputs</span>
-<span class="sd">    an updated momentum that is a mixture of the previous momentum a new sample</span>
-<span class="sd">    from a Gaussian density (dependent on alpha). The weights of the mixture of</span>
-<span class="sd">    these two components are a function of alpha.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">state</span>
-
-    <span class="n">m_size</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
-    <span class="n">momentum_generator</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">gaussian_euclidean</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">m_size</span><span class="p">,)))</span>
-    <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-        <span class="k">lambda</span> <span class="n">prev_momentum</span><span class="p">,</span> <span class="n">shifted_momentum</span><span class="p">:</span> <span class="n">prev_momentum</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span>
-        <span class="o">+</span> <span class="n">shifted_momentum</span><span class="p">,</span>
-        <span class="n">momentum</span><span class="p">,</span>
-        <span class="n">momentum_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">),</span>
-    <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">momentum</span>
 </pre></div>
 
                 </article>

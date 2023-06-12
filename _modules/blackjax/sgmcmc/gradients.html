@@ -345,7 +345,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span>
 
 
 <div class="viewcode-block" id="logdensity_estimator"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html#blackjax.sgmcmc.gradients.logdensity_estimator">[docs]</a><span class="k">def</span> <span class="nf">logdensity_estimator</span><span class="p">(</span>
@@ -373,7 +373,9 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">logdensity_estimator_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyTree</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">logdensity_estimator_fn</span><span class="p">(</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">:</span> <span class="n">ArrayLikeTree</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an approximation of the log-posterior density.</span>
 
 <span class="sd">        Parameters</span>
@@ -411,8 +413,8 @@ document.write(`
 
 <div class="viewcode-block" id="control_variates"><a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html#blackjax.sgmcmc.gradients.control_variates">[docs]</a><span class="k">def</span> <span class="nf">control_variates</span><span class="p">(</span>
     <span class="n">logdensity_grad_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">centering_position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
-    <span class="n">data</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+    <span class="n">centering_position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Builds a control variate gradient estimator :cite:p:`baker2019control`.</span>
 
@@ -430,7 +432,9 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">cv_grad_value</span> <span class="o">=</span> <span class="n">logdensity_grad_estimator</span><span class="p">(</span><span class="n">centering_position</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">cv_grad_estimator_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyTree</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">cv_grad_estimator_fn</span><span class="p">(</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">:</span> <span class="n">ArrayLikeTree</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an approximation of the log-posterior density.</span>
 
 <span class="sd">        Parameters</span>

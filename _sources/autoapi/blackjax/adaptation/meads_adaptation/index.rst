@@ -31,6 +31,7 @@ Functions
 
 
 
+
    State of the MEADS adaptation scheme.
 
    step_size
@@ -56,7 +57,7 @@ Functions
       
 
    .. py:attribute:: position_sigma
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -122,7 +123,7 @@ Functions
              * *tuned parameter values, and all the warm-up states for diagnostics.*
 
 
-.. py:function:: maximum_eigenvalue(matrix: blackjax.types.PyTree)
+.. py:function:: maximum_eigenvalue(matrix: blackjax.types.ArrayLikeTree) -> blackjax.types.Array
 
    Estimate the largest eigenvalues of a matrix.
 

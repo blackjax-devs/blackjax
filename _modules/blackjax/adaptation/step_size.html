@@ -348,6 +348,7 @@ document.write(`
 
 <span class="kn">from</span> <span class="nn">blackjax.mcmc.hmc</span> <span class="kn">import</span> <span class="n">HMCState</span>
 <span class="kn">from</span> <span class="nn">blackjax.optimizers.dual_averaging</span> <span class="kn">import</span> <span class="n">dual_averaging</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;DualAveragingAdaptationState&quot;</span><span class="p">,</span>
@@ -359,7 +360,6 @@ document.write(`
 <span class="c1"># -------------------------------------------------------------------</span>
 <span class="c1">#                        DUAL AVERAGING</span>
 <span class="c1"># -------------------------------------------------------------------</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span>
 
 
 <div class="viewcode-block" id="DualAveragingAdaptationState"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/step_size/index.html#blackjax.adaptation.step_size.DualAveragingAdaptationState">[docs]</a><span class="k">class</span> <span class="nc">DualAveragingAdaptationState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -428,7 +428,7 @@ document.write(`
 <span class="sd">    gamma:</span>
 <span class="sd">        Controls the speed of convergence of the scheme. The authors of :cite:p:`hoffman2014no` recommend</span>
 <span class="sd">        a value of 0.05.</span>
-<span class="sd">    kappa: float in ]0.5, 1]</span>
+<span class="sd">    kappa: float in [0.5, 1]</span>
 <span class="sd">        Controls the weights of past steps in the current update. The scheme will</span>
 <span class="sd">        quickly forget earlier step for a small value of `kappa`. Introduced</span>
 <span class="sd">        in :cite:p:`hoffman2014no`, with a recommended value of .75</span>
@@ -460,10 +460,10 @@ document.write(`
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        p_accept: float in [0, 1]</span>
-<span class="sd">            The current metropolis acceptance rate.</span>
-<span class="sd">        state:</span>
+<span class="sd">        da_state:</span>
 <span class="sd">            The current state of the dual averaging algorithm.</span>
+<span class="sd">        acceptance_rate: float in [0, 1]</span>
+<span class="sd">            The current metropolis acceptance rate.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -570,7 +570,7 @@ document.write(`
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">is_step_size_not_extreme</span> <span class="o">&amp;</span> <span class="n">has_acceptance_rate_not_crossed_threshold</span>
 
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">rss_state</span><span class="p">:</span> <span class="n">ReasonableStepSizeState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">rss_state</span><span class="p">:</span> <span class="n">ReasonableStepSizeState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReasonableStepSizeState</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform one step of the step size search.&quot;&quot;&quot;</span>
         <span class="n">rng_key</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">step_size</span> <span class="o">=</span> <span class="n">rss_state</span>
         <span class="n">rng_key</span><span class="p">,</span> <span class="n">subkey</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>

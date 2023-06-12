@@ -36,6 +36,7 @@ Functions
 
 
 
+
    State of the Generalized HMC algorithm.
 
    The Generalized HMC algorithm is persistent on its momentum, hence
@@ -49,12 +50,12 @@ Functions
 
 
    .. py:attribute:: position
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
    .. py:attribute:: momentum
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -64,7 +65,7 @@ Functions
       
 
    .. py:attribute:: logdensity_grad
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -74,7 +75,7 @@ Functions
       
 
 
-.. py:function:: init(position: blackjax.types.PyTree, rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable) -> GHMCState
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable) -> GHMCState
 
 
 .. py:function:: build_kernel(noise_fn: Callable = lambda _: 0.0, divergence_threshold: float = 1000)
@@ -101,6 +102,7 @@ Functions
 
 
 .. py:class:: ghmc
+
 
    Implements the (basic) user interface for the Generalized HMC kernel.
 

@@ -40,6 +40,7 @@ Functions
 
 .. py:class:: svgd
 
+
    Implements the (basic) user interface for the svgd algorithm.
 
    :param grad_logdensity_fn: gradient, or an estimate, of the target log density function to samples approximately from

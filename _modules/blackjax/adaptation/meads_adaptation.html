@@ -348,7 +348,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">blackjax.mcmc</span> <span class="k">as</span> <span class="nn">mcmc</span>
 <span class="kn">from</span> <span class="nn">blackjax.adaptation.base</span> <span class="kn">import</span> <span class="n">AdaptationInfo</span><span class="p">,</span> <span class="n">AdaptationResults</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">AdaptationAlgorithm</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MEADSAdaptationState&quot;</span><span class="p">,</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="s2">&quot;maximum_eigenvalue&quot;</span><span class="p">,</span> <span class="s2">&quot;meads_adaptation&quot;</span><span class="p">]</span>
 
@@ -371,7 +371,7 @@ document.write(`
 
 <div class="viewcode-block" id="MEADSAdaptationState.current_iteration"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.current_iteration">[docs]</a>    <span class="n">current_iteration</span><span class="p">:</span> <span class="nb">int</span></div>
 <div class="viewcode-block" id="MEADSAdaptationState.step_size"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.step_size">[docs]</a>    <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span></div>
-<div class="viewcode-block" id="MEADSAdaptationState.position_sigma"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.position_sigma">[docs]</a>    <span class="n">position_sigma</span><span class="p">:</span> <span class="n">PyTree</span></div>
+<div class="viewcode-block" id="MEADSAdaptationState.position_sigma"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.position_sigma">[docs]</a>    <span class="n">position_sigma</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 <div class="viewcode-block" id="MEADSAdaptationState.alpha"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.alpha">[docs]</a>    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span></div>
 <div class="viewcode-block" id="MEADSAdaptationState.delta"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.delta">[docs]</a>    <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span></div></div>
 
@@ -401,7 +401,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">compute_parameters</span><span class="p">(</span>
-        <span class="n">positions</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">current_iteration</span><span class="p">:</span> <span class="nb">int</span>
+        <span class="n">positions</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">current_iteration</span><span class="p">:</span> <span class="nb">int</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute values for the parameters based on statistics collected from</span>
 <span class="sd">        multiple chains.</span>
@@ -446,15 +446,17 @@ document.write(`
         <span class="n">delta</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">/</span> <span class="mi">2</span>
         <span class="k">return</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">sd_position</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">delta</span>
 
-    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">positions</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span>
+        <span class="n">positions</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MEADSAdaptationState</span><span class="p">:</span>
         <span class="n">parameters</span> <span class="o">=</span> <span class="n">compute_parameters</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">MEADSAdaptationState</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">*</span><span class="n">parameters</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
         <span class="n">adaptation_state</span><span class="p">:</span> <span class="n">MEADSAdaptationState</span><span class="p">,</span>
-        <span class="n">positions</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
-        <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
-    <span class="p">):</span>
+        <span class="n">positions</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MEADSAdaptationState</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the adaptation state and parameter values.</span>
 
 <span class="sd">        We find new optimal values for the parameters of the generalized HMC</span>
@@ -560,7 +562,7 @@ document.write(`
             <span class="n">new_adaptation_state</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">positions</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">positions</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">):</span>
         <span class="n">key_init</span><span class="p">,</span> <span class="n">key_adapt</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
 
         <span class="n">rng_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key_init</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
@@ -584,7 +586,7 @@ document.write(`
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 
 
-<div class="viewcode-block" id="maximum_eigenvalue"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.maximum_eigenvalue">[docs]</a><span class="k">def</span> <span class="nf">maximum_eigenvalue</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">):</span>
+<div class="viewcode-block" id="maximum_eigenvalue"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.maximum_eigenvalue">[docs]</a><span class="k">def</span> <span class="nf">maximum_eigenvalue</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Estimate the largest eigenvalues of a matrix.</span>
 
 <span class="sd">    We calculate an unbiased estimate of the ratio between the sum of the</span>

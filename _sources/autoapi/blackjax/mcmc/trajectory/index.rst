@@ -65,6 +65,7 @@ Functions
 
 
 
+
    .. py:attribute:: leftmost_state
       :type: blackjax.mcmc.integrators.IntegratorState
 
@@ -76,7 +77,7 @@ Functions
       
 
    .. py:attribute:: momentum_sum
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -105,6 +106,7 @@ Functions
 
 
 .. py:class:: DynamicIntegrationState
+
 
 
 
@@ -160,6 +162,7 @@ Functions
 
 
 .. py:class:: DynamicExpansionState
+
 
 
 

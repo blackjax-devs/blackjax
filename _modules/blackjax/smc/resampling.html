@@ -347,7 +347,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 
 <span class="k">def</span> <span class="nf">_resampling_func</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">additional_params</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
@@ -358,16 +358,16 @@ document.write(`
 
 <span class="s2">    Parameters</span>
 <span class="s2">    ----------</span>
-<span class="s2">    key: jnp.ndarray</span>
+<span class="s2">    key: Array</span>
 <span class="s2">        PRNGKey to use in resampling</span>
-<span class="s2">    weights: jnp.ndarray</span>
+<span class="s2">    weights: Array</span>
 <span class="s2">        Weights to resample</span>
 <span class="s2">    num_samples: int</span>
 <span class="s2">        Number of particles to sample</span>
 
 <span class="s2">    Returns</span>
 <span class="s2">    -------</span>
-<span class="s2">    idx: jnp.ndarray</span>
+<span class="s2">    idx: Array</span>
 <span class="s2">        Array of size `num_samples` to use for resampling</span>
 <span class="s2">    &quot;&quot;&quot;</span>
 
@@ -376,12 +376,12 @@ document.write(`
 
 
 <span class="nd">@partial</span><span class="p">(</span><span class="n">_resampling_func</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Systematic&quot;</span><span class="p">)</span>
-<div class="viewcode-block" id="systematic"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.systematic">[docs]</a><span class="k">def</span> <span class="nf">systematic</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<div class="viewcode-block" id="systematic"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.systematic">[docs]</a><span class="k">def</span> <span class="nf">systematic</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">_systematic_or_stratified</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></div>
 
 
 <span class="nd">@partial</span><span class="p">(</span><span class="n">_resampling_func</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Stratified&quot;</span><span class="p">)</span>
-<div class="viewcode-block" id="stratified"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.stratified">[docs]</a><span class="k">def</span> <span class="nf">stratified</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<div class="viewcode-block" id="stratified"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.stratified">[docs]</a><span class="k">def</span> <span class="nf">stratified</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">_systematic_or_stratified</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></div>
 
 
@@ -393,7 +393,7 @@ document.write(`
 <span class="s2">    and should only be used for illustration purposes,</span>
 <span class="s2">    or if your algorithm *REALLY* needs independent samples.&quot;&quot;&quot;</span><span class="p">,</span>
 <span class="p">)</span>
-<div class="viewcode-block" id="multinomial"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.multinomial">[docs]</a><span class="k">def</span> <span class="nf">multinomial</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="multinomial"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.multinomial">[docs]</a><span class="k">def</span> <span class="nf">multinomial</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
     <span class="c1"># In practice we don&#39;t have to sort the generated uniforms, but searchsorted</span>
     <span class="c1"># works faster and is more stable if both inputs are sorted, so we use the</span>
     <span class="c1"># _sorted_uniforms from N. Chopin, but still use searchsorted instead of his</span>
@@ -418,7 +418,7 @@ document.write(`
 <span class="s2">    compatible. The main difference with Nicolas Chopin&#39;s code lies in the</span>
 <span class="s2">    introduction of N+1 in the array as a &#39;sink state&#39; for unused indices.&quot;&quot;&quot;</span><span class="p">,</span>
 <span class="p">)</span>
-<div class="viewcode-block" id="residual"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.residual">[docs]</a><span class="k">def</span> <span class="nf">residual</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<div class="viewcode-block" id="residual"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.residual">[docs]</a><span class="k">def</span> <span class="nf">residual</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
     <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
     <span class="n">N</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">N_sample_weights</span> <span class="o">=</span> <span class="n">num_samples</span> <span class="o">*</span> <span class="n">weights</span>
@@ -451,8 +451,8 @@ document.write(`
 
 
 <span class="k">def</span> <span class="nf">_systematic_or_stratified</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">is_systematic</span><span class="p">:</span> <span class="nb">bool</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">is_systematic</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">is_systematic</span><span class="p">:</span>
         <span class="n">u</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="p">())</span>
@@ -464,7 +464,7 @@ document.write(`
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_sorted_uniforms</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">_sorted_uniforms</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
     <span class="c1"># Credit goes to Nicolas Chopin</span>
     <span class="n">us</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,))</span>
     <span class="n">z</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">us</span><span class="p">))</span>

@@ -37,6 +37,7 @@ Functions
 
 
 
+
    State of the HMC algorithm.
 
    The HMC algorithm takes one position of the chain and returns another
@@ -45,7 +46,7 @@ Functions
 
 
    .. py:attribute:: position
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -55,12 +56,13 @@ Functions
       
 
    .. py:attribute:: logdensity_grad
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
 
 .. py:class:: HMCInfo
+
 
 
 
@@ -92,7 +94,7 @@ Functions
 
 
    .. py:attribute:: momentum
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -127,7 +129,7 @@ Functions
       
 
 
-.. py:function:: init(position: blackjax.types.PyTree, logdensity_fn: Callable)
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable)
 
 
 .. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000)
@@ -143,6 +145,7 @@ Functions
 
 
 .. py:class:: hmc
+
 
    Implements the (basic) user interface for the HMC kernel.
 

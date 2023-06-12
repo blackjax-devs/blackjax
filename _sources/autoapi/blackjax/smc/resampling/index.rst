@@ -25,15 +25,15 @@ Functions
 
 
 
-.. py:function:: systematic(rng_key: blackjax.types.PRNGKey, weights: jax.Array, num_samples: int) -> jax.Array
+.. py:function:: systematic(rng_key: blackjax.types.PRNGKey, weights: blackjax.types.Array, num_samples: int) -> blackjax.types.Array
 
 
-.. py:function:: stratified(rng_key: blackjax.types.PRNGKey, weights: jax.Array, num_samples: int) -> jax.Array
+.. py:function:: stratified(rng_key: blackjax.types.PRNGKey, weights: blackjax.types.Array, num_samples: int) -> blackjax.types.Array
 
 
-.. py:function:: multinomial(rng_key: blackjax.types.PRNGKey, weights: jax.Array, num_samples: int) -> jax.numpy.ndarray
+.. py:function:: multinomial(rng_key: blackjax.types.PRNGKey, weights: blackjax.types.Array, num_samples: int) -> blackjax.types.Array
 
 
-.. py:function:: residual(rng_key: blackjax.types.PRNGKey, weights: jax.Array, num_samples: int) -> jax.Array
+.. py:function:: residual(rng_key: blackjax.types.PRNGKey, weights: blackjax.types.Array, num_samples: int) -> blackjax.types.Array
 
 

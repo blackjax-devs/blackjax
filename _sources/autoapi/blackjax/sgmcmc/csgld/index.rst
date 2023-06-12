@@ -36,6 +36,7 @@ Functions
 
 
 
+
    State of the Contour SgLD algorithm.
 
    :param position: Current position in the sample space.
@@ -45,7 +46,7 @@ Functions
    :param energy_idx: Index `i` such that the current position belongs to :math:`S_i`.
 
    .. py:attribute:: position
-      :type: blackjax.types.PyTree
+      :type: blackjax.types.ArrayTree
 
       
 
@@ -60,7 +61,7 @@ Functions
       
 
 
-.. py:function:: init(position: blackjax.types.PyTree, num_partitions=512) -> ContourSGLDState
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, num_partitions=512) -> ContourSGLDState
 
 
 .. py:function:: build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable
@@ -78,6 +79,7 @@ Functions
 
 
 .. py:class:: csgld
+
 
    Implements the (basic) user interface for the Contour SGLD kernel.
 

@@ -31,7 +31,7 @@ Functions
 
 
 
-.. py:function:: init(position: blackjax.types.PyTree) -> blackjax.types.PyTree
+.. py:function:: init(position: blackjax.types.ArrayLikeTree) -> blackjax.types.ArrayLikeTree
 
 
 .. py:function:: build_kernel() -> Callable
@@ -40,6 +40,7 @@ Functions
 
 
 .. py:class:: sgld
+
 
    Implements the (basic) user interface for the SGLD kernel.
 

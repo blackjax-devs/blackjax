@@ -35,6 +35,7 @@ Functions
 
 
 
+
    .. py:attribute:: ss_state
       :type: blackjax.adaptation.step_size.DualAveragingAdaptationState
 

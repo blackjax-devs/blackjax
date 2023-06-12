@@ -36,6 +36,7 @@ Functions
 
 
 
+
    State of the RMH chain.
 
    x
@@ -76,6 +77,7 @@ Functions
 
 
 .. py:class:: MarginalInfo
+
 
 
 
@@ -121,6 +123,7 @@ Functions
 
 
 .. py:class:: mgrad_gaussian
+
 
    Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.
 

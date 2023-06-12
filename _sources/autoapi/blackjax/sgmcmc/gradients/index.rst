@@ -42,7 +42,7 @@ Functions
    Build a simple estimator for the gradient of the log-density.
 
 
-.. py:function:: control_variates(logdensity_grad_estimator: Callable, centering_position: blackjax.types.PyTree, data: blackjax.types.PyTree) -> Callable
+.. py:function:: control_variates(logdensity_grad_estimator: Callable, centering_position: blackjax.types.ArrayLikeTree, data: blackjax.types.ArrayLikeTree) -> Callable
 
    Builds a control variate gradient estimator :cite:p:`baker2019control`.
 

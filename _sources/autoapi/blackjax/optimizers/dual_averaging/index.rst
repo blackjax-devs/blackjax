@@ -29,6 +29,7 @@ Functions
 
 
 
+
    State carried through the dual averaging procedure.
 
    log_x

@@ -31,7 +31,7 @@ Functions
 
 
 
-.. py:function:: init(position: blackjax.types.PyTree) -> blackjax.types.PyTree
+.. py:function:: init(position: blackjax.types.ArrayLikeTree) -> blackjax.types.ArrayLikeTree
 
 
 .. py:function:: build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable
@@ -40,6 +40,7 @@ Functions
 
 
 .. py:class:: sghmc
+
 
    Implements the (basic) user interface for the SGHMC kernel.
 

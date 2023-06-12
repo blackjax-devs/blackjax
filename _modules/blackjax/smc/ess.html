@@ -347,14 +347,14 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.scipy</span> <span class="k">as</span> <span class="nn">jsp</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span>
 
 
-<div class="viewcode-block" id="ess"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/ess/index.html#blackjax.smc.ess.ess">[docs]</a><span class="k">def</span> <span class="nf">ess</span><span class="p">(</span><span class="n">log_weights</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<div class="viewcode-block" id="ess"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/ess/index.html#blackjax.smc.ess.ess">[docs]</a><span class="k">def</span> <span class="nf">ess</span><span class="p">(</span><span class="n">log_weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_ess</span><span class="p">(</span><span class="n">log_weights</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="log_ess"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/ess/index.html#blackjax.smc.ess.log_ess">[docs]</a><span class="k">def</span> <span class="nf">log_ess</span><span class="p">(</span><span class="n">log_weights</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<div class="viewcode-block" id="log_ess"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/ess/index.html#blackjax.smc.ess.log_ess">[docs]</a><span class="k">def</span> <span class="nf">log_ess</span><span class="p">(</span><span class="n">log_weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the effective sample size.</span>
 
 <span class="sd">    Parameters</span>
@@ -375,7 +375,7 @@ document.write(`
 
 <div class="viewcode-block" id="ess_solver"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/ess/index.html#blackjax.smc.ess.ess_solver">[docs]</a><span class="k">def</span> <span class="nf">ess_solver</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">particles</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+    <span class="n">particles</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
     <span class="n">target_ess</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">max_delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">root_solver</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>

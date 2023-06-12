@@ -337,7 +337,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">jax.random</span> <span class="kn">import</span> <span class="n">normal</span>
 <span class="kn">from</span> <span class="nn">jax.tree_util</span> <span class="kn">import</span> <span class="n">tree_leaves</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">PyTree</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 
 <span class="nd">@partial</span><span class="p">(</span><span class="n">jit</span><span class="p">,</span> <span class="n">static_argnames</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;precision&quot;</span><span class="p">,),</span> <span class="n">inline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -385,10 +385,10 @@ document.write(`
 <span class="c1"># Refactor this function to not use ravel_pytree might be more performant.</span>
 <div class="viewcode-block" id="generate_gaussian_noise"><a class="viewcode-back" href="../../autoapi/blackjax/util/index.html#blackjax.util.generate_gaussian_noise">[docs]</a><span class="k">def</span> <span class="nf">generate_gaussian_noise</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
-    <span class="n">position</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">,</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
     <span class="n">mu</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">sigma</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyTree</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate N(mu, sigma) noise with output structure that match a given PyTree.</span>
 
 <span class="sd">    Parameters</span>
@@ -411,12 +411,12 @@ document.write(`
     <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">mu</span> <span class="o">+</span> <span class="n">linear_map</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">sample</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="pytree_size"><a class="viewcode-back" href="../../autoapi/blackjax/util/index.html#blackjax.util.pytree_size">[docs]</a><span class="k">def</span> <span class="nf">pytree_size</span><span class="p">(</span><span class="n">pytree</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<div class="viewcode-block" id="pytree_size"><a class="viewcode-back" href="../../autoapi/blackjax/util/index.html#blackjax.util.pytree_size">[docs]</a><span class="k">def</span> <span class="nf">pytree_size</span><span class="p">(</span><span class="n">pytree</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the dimension of the flatten PyTree.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">tree_leaves</span><span class="p">(</span><span class="n">pytree</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="index_pytree"><a class="viewcode-back" href="../../autoapi/blackjax/util/index.html#blackjax.util.index_pytree">[docs]</a><span class="k">def</span> <span class="nf">index_pytree</span><span class="p">(</span><span class="n">input_pytree</span><span class="p">:</span> <span class="n">PyTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyTree</span><span class="p">:</span>
+<div class="viewcode-block" id="index_pytree"><a class="viewcode-back" href="../../autoapi/blackjax/util/index.html#blackjax.util.index_pytree">[docs]</a><span class="k">def</span> <span class="nf">index_pytree</span><span class="p">(</span><span class="n">input_pytree</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Builds a PyTree with elements indicating its corresponding index on a flat array.</span>
 
 <span class="sd">    Various algorithms in BlackJAX take as input a 1 or 2 dimensional array which somehow</span>

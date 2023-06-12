@@ -394,12 +394,12 @@ document.write(`
 <dd><p>State of the SMC sampler</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.smc.base.SMCState.particles">
-<span class="sig-name descname"><span class="pre">particles</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.PyTree</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCState.particles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCState.particles" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">particles</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.ArrayTree</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCState.particles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCState.particles" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.smc.base.SMCState.weights">
-<span class="sig-name descname"><span class="pre">weights</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://jax.readthedocs.io/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">jax.Array</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCState.weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCState.weights" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">weights</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCState.weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCState.weights" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -411,7 +411,7 @@ document.write(`
 <dl class="simple">
 <dt>proposals: PyTree</dt><dd><p>The particles that were proposed by the MCMC pass.</p>
 </dd>
-<dt>ancestors: jnp.ndarray</dt><dd><p>The index of the particles proposed by the MCMC pass that were selected
+<dt>ancestors: Array</dt><dd><p>The index of the particles proposed by the MCMC pass that were selected
 by the resampling step.</p>
 </dd>
 <dt>log_likelihood_increment: float</dt><dd><p>The log-likelihood increment due to the current step of the SMC algorithm.</p>
@@ -419,7 +419,7 @@ by the resampling step.</p>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.smc.base.SMCInfo.ancestors">
-<span class="sig-name descname"><span class="pre">ancestors</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">jax.numpy.ndarray</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCInfo.ancestors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCInfo.ancestors" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">ancestors</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCInfo.ancestors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCInfo.ancestors" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -436,7 +436,7 @@ by the resampling step.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.smc.base.init">
-<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">particles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PyTree</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.init" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">particles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.init" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
