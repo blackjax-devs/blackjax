@@ -38,7 +38,7 @@ def dichotomy(fun, _delta0, min_delta, max_delta, eps=1e-4, max_iter=100):
 
     Returns
     -------
-    delta: jnp.ndarray, shape (,)
+    delta: Array, shape (,)
         The root of `fun`
 
     """

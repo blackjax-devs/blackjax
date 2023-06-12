@@ -33,12 +33,12 @@ import jax.numpy as jnp
 import jax.scipy as jscipy
 from jax.flatten_util import ravel_pytree
 
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = ["gaussian_euclidean"]
 
-EuclideanKineticEnergy = Callable[[PyTree], float]
+EuclideanKineticEnergy = Callable[[ArrayLikeTree], float]
 
 
 def gaussian_euclidean(
@@ -103,17 +103,19 @@ def gaussian_euclidean(
             f" expected 1 or 2, got {jnp.ndim(inverse_mass_matrix)}."  # type: ignore[arg-type]
         )
 
-    def momentum_generator(rng_key: PRNGKey, position: PyTree) -> PyTree:
+    def momentum_generator(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayTree:
         return generate_gaussian_noise(rng_key, position, sigma=mass_matrix_sqrt)
 
-    def kinetic_energy(momentum: PyTree) -> float:
+    def kinetic_energy(momentum: ArrayLikeTree) -> float:
         momentum, _ = ravel_pytree(momentum)
         velocity = matmul(inverse_mass_matrix, momentum)
         kinetic_energy_val = 0.5 * jnp.dot(velocity, momentum)
         return kinetic_energy_val
 
     def is_turning(
-        momentum_left: PyTree, momentum_right: PyTree, momentum_sum: PyTree
+        momentum_left: ArrayLikeTree,
+        momentum_right: ArrayLikeTree,
+        momentum_sum: ArrayLikeTree,
     ) -> bool:
         """Generalized U-turn criterion :cite:p:`betancourt2013generalizing,nuts_uturn`.
 

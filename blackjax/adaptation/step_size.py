@@ -19,6 +19,7 @@ import jax.numpy as jnp
 
 from blackjax.mcmc.hmc import HMCState
 from blackjax.optimizers.dual_averaging import dual_averaging
+from blackjax.types import PRNGKey
 
 __all__ = [
     "DualAveragingAdaptationState",
@@ -30,7 +31,6 @@ __all__ = [
 # -------------------------------------------------------------------
 #                        DUAL AVERAGING
 # -------------------------------------------------------------------
-from blackjax.types import PRNGKey
 
 
 class DualAveragingAdaptationState(NamedTuple):
@@ -99,7 +99,7 @@ def dual_averaging_adaptation(
     gamma:
         Controls the speed of convergence of the scheme. The authors of :cite:p:`hoffman2014no` recommend
         a value of 0.05.
-    kappa: float in ]0.5, 1]
+    kappa: float in [0.5, 1]
         Controls the weights of past steps in the current update. The scheme will
         quickly forget earlier step for a small value of `kappa`. Introduced
         in :cite:p:`hoffman2014no`, with a recommended value of .75
@@ -131,10 +131,10 @@ def dual_averaging_adaptation(
 
         Parameters
         ----------
-        p_accept: float in [0, 1]
-            The current metropolis acceptance rate.
-        state:
+        da_state:
             The current state of the dual averaging algorithm.
+        acceptance_rate: float in [0, 1]
+            The current metropolis acceptance rate.
 
         Returns
         -------
@@ -241,7 +241,7 @@ def find_reasonable_step_size(
         )
         return is_step_size_not_extreme & has_acceptance_rate_not_crossed_threshold
 
-    def update(rss_state: ReasonableStepSizeState) -> Tuple:
+    def update(rss_state: ReasonableStepSizeState) -> ReasonableStepSizeState:
         """Perform one step of the step size search."""
         rng_key, direction, _, step_size = rss_state
         rng_key, subkey = jax.random.split(rng_key)

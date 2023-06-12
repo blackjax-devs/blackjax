@@ -16,7 +16,7 @@ from typing import Callable
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import PyTree
+from blackjax.types import ArrayLikeTree, ArrayTree
 
 
 def logdensity_estimator(
@@ -44,7 +44,9 @@ def logdensity_estimator(
 
     """
 
-    def logdensity_estimator_fn(position: PyTree, minibatch: PyTree) -> PyTree:
+    def logdensity_estimator_fn(
+        position: ArrayLikeTree, minibatch: ArrayLikeTree
+    ) -> ArrayTree:
         """Return an approximation of the log-posterior density.
 
         Parameters
@@ -82,8 +84,8 @@ def grad_estimator(
 
 def control_variates(
     logdensity_grad_estimator: Callable,
-    centering_position: PyTree,
-    data: PyTree,
+    centering_position: ArrayLikeTree,
+    data: ArrayLikeTree,
 ) -> Callable:
     """Builds a control variate gradient estimator :cite:p:`baker2019control`.
 
@@ -101,7 +103,9 @@ def control_variates(
     """
     cv_grad_value = logdensity_grad_estimator(centering_position, data)
 
-    def cv_grad_estimator_fn(position: PyTree, minibatch: PyTree) -> PyTree:
+    def cv_grad_estimator_fn(
+        position: ArrayLikeTree, minibatch: ArrayLikeTree
+    ) -> ArrayTree:
         """Return an approximation of the log-posterior density.
 
         Parameters

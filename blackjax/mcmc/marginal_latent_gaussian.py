@@ -24,6 +24,7 @@ from blackjax.types import Array, PRNGKey
 __all__ = ["MarginalState", "MarginalInfo", "init_and_kernel", "mgrad_gaussian"]
 
 
+# [TODO](https://github.com/blackjax-devs/blackjax/issues/237)
 class MarginalState(NamedTuple):
     """State of the RMH chain.
 

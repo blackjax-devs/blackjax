@@ -21,7 +21,7 @@ import blackjax.smc.ess as ess
 import blackjax.smc.solver as solver
 import blackjax.smc.tempered as tempered
 from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import ArrayLikeTree, PRNGKey
 
 __all__ = ["build_kernel", "adaptive_tempered_smc"]
 
@@ -159,7 +159,7 @@ class adaptive_tempered_smc:
             root_solver,
         )
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position)
 
         def step_fn(rng_key: PRNGKey, state):

@@ -22,7 +22,7 @@ import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.trajectory as trajectory
 from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.mcmc.trajectory import hmc_energy
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["HMCState", "HMCInfo", "init", "build_kernel", "hmc"]
 
@@ -36,9 +36,9 @@ class HMCState(NamedTuple):
 
     """
 
-    position: PyTree
+    position: ArrayTree
     logdensity: float
-    logdensity_grad: PyTree
+    logdensity_grad: ArrayTree
 
 
 class HMCInfo(NamedTuple):
@@ -70,7 +70,7 @@ class HMCInfo(NamedTuple):
 
     """
 
-    momentum: PyTree
+    momentum: ArrayTree
     acceptance_rate: float
     is_accepted: bool
     is_divergent: bool
@@ -79,7 +79,7 @@ class HMCInfo(NamedTuple):
     num_integration_steps: int
 
 
-def init(position: PyTree, logdensity_fn: Callable):
+def init(position: ArrayLikeTree, logdensity_fn: Callable):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return HMCState(position, logdensity, logdensity_grad)
 
@@ -223,7 +223,7 @@ class hmc:
     ) -> MCMCSamplingAlgorithm:
         kernel = cls.build_kernel(integrator, divergence_threshold)
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
@@ -242,7 +242,7 @@ class hmc:
 def hmc_proposal(
     integrator: Callable,
     kinetic_energy: Callable,
-    step_size: Union[float, PyTree],
+    step_size: Union[float, ArrayLikeTree],
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,
     *,

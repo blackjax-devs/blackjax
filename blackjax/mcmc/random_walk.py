@@ -61,7 +61,7 @@ from jax import numpy as jnp
 
 from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.mcmc import proposal
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = [
@@ -95,7 +95,7 @@ def normal(sigma: Array) -> Callable:
     if jnp.ndim(sigma) > 2:
         raise ValueError("sigma must be a vector or a matrix.")
 
-    def propose(rng_key: PRNGKey, position: PyTree) -> PyTree:
+    def propose(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayTree:
         return generate_gaussian_noise(rng_key, position, sigma=sigma)
 
     return propose
@@ -111,7 +111,7 @@ class RWState(NamedTuple):
 
     """
 
-    position: PyTree
+    position: ArrayTree
     logdensity: float
 
 
@@ -137,7 +137,7 @@ class RWInfo(NamedTuple):
     proposal: RWState
 
 
-def init(position: PyTree, logdensity_fn: Callable) -> RWState:
+def init(position: ArrayLikeTree, logdensity_fn: Callable) -> RWState:
     """Create a chain state from a position.
 
     Parameters
@@ -236,7 +236,7 @@ class additive_step_random_walk:
     ) -> MCMCSamplingAlgorithm:
         kernel = cls.build_kernel()
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
@@ -272,7 +272,8 @@ def build_irmh() -> Callable:
             domain of the target distribution.
         """
 
-        def proposal_generator(rng_key: PRNGKey, position: PyTree):
+        def proposal_generator(rng_key: PRNGKey, position: ArrayTree):
+            del position
             return proposal_distribution(rng_key)
 
         inner_kernel = build_rmh()
@@ -326,7 +327,7 @@ class irmh:
     ) -> MCMCSamplingAlgorithm:
         kernel = cls.build_kernel()
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
@@ -436,12 +437,12 @@ class rmh:
     def __new__(  # type: ignore[misc]
         cls,
         logdensity_fn: Callable,
-        proposal_generator: Callable[[PRNGKey, PyTree], PyTree],
-        proposal_logdensity_fn: Optional[Callable[[PyTree], PyTree]] = None,
+        proposal_generator: Callable[[PRNGKey, ArrayLikeTree], ArrayTree],
+        proposal_logdensity_fn: Optional[Callable[[ArrayLikeTree], ArrayTree]] = None,
     ) -> MCMCSamplingAlgorithm:
         kernel = cls.build_kernel()
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):

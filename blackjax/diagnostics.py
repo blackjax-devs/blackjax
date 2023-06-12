@@ -17,14 +17,14 @@ import jax.numpy as jnp
 import numpy as np
 from scipy.fftpack import next_fast_len  # type: ignore
 
-from blackjax.types import Array
+from blackjax.types import Array, ArrayLike
 
 __all__ = ["potential_scale_reduction", "effective_sample_size"]
 
 
 def potential_scale_reduction(
-    input_array: Array, chain_axis: int = 0, sample_axis: int = 1
-):
+    input_array: ArrayLike, chain_axis: int = 0, sample_axis: int = 1
+) -> Array:
     """Gelman and Rubin (1992)'s potential scale reduction for computing multiple MCMC chain convergence.
 
     Parameters
@@ -76,8 +76,8 @@ def potential_scale_reduction(
 
 
 def effective_sample_size(
-    input_array: Array, chain_axis: int = 0, sample_axis: int = 1
-):
+    input_array: ArrayLike, chain_axis: int = 0, sample_axis: int = 1
+) -> Array:
     """Compute estimate of the effective sample size (ess).
 
     Parameters

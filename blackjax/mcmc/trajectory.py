@@ -48,13 +48,13 @@ from blackjax.mcmc.proposal import (
     progressive_uniform_sampling,
     proposal_generator,
 )
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import ArrayTree, PRNGKey
 
 
 class Trajectory(NamedTuple):
     leftmost_state: IntegratorState
     rightmost_state: IntegratorState
-    momentum_sum: PyTree
+    momentum_sum: ArrayTree
     num_states: int
 
 

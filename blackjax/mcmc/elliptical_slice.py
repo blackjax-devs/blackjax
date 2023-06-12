@@ -18,7 +18,7 @@ import jax
 import jax.numpy as jnp
 
 from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = [
@@ -40,8 +40,8 @@ class EllipSliceState(NamedTuple):
 
     """
 
-    position: PyTree
-    logdensity: PyTree
+    position: ArrayTree
+    logdensity: ArrayTree
 
 
 class EllipSliceInfo(NamedTuple):
@@ -63,12 +63,12 @@ class EllipSliceInfo(NamedTuple):
 
     """
 
-    momentum: PyTree
+    momentum: ArrayTree
     theta: float
     subiter: int
 
 
-def init(position: PyTree, logdensity_fn: Callable):
+def init(position: ArrayLikeTree, logdensity_fn: Callable):
     logdensity = logdensity_fn(position)
     return EllipSliceState(position, logdensity)
 
@@ -164,7 +164,7 @@ class elliptical_slice:
     ) -> MCMCSamplingAlgorithm:
         kernel = cls.build_kernel(cov, mean)
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position, loglikelihood_fn)
 
         def step_fn(rng_key: PRNGKey, state):

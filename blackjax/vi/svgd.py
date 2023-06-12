@@ -7,19 +7,19 @@ import optax
 from jax.flatten_util import ravel_pytree
 
 from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import PyTree
+from blackjax.types import ArrayLikeTree, ArrayTree
 
 __all__ = ["svgd", "rbf_kernel", "update_median_heuristic"]
 
 
 class SVGDState(NamedTuple):
-    particles: PyTree
-    kernel_parameters: Dict[str, PyTree]
+    particles: ArrayTree
+    kernel_parameters: Dict[str, ArrayTree]
     opt_state: Any
 
 
 def init(
-    initial_particles: PyTree,
+    initial_particles: ArrayLikeTree,
     kernel_parameters: Dict[str, Any],
     optimizer: optax.GradientTransformation,
 ) -> SVGDState:
@@ -155,7 +155,7 @@ class svgd:
         kernel_ = cls.build_kernel(optimizer)
 
         def init_fn(
-            initial_position: PyTree,
+            initial_position: ArrayLikeTree,
             kernel_parameters: Dict[str, Any] = {"length_scale": 1.0},
         ):
             return cls.init(initial_position, kernel_parameters, optimizer)

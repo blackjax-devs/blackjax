@@ -18,13 +18,13 @@ import jax
 
 import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = ["init", "build_kernel", "sghmc"]
 
 
-def init(position: PyTree) -> PyTree:
+def init(position: ArrayLikeTree) -> ArrayLikeTree:
     return position
 
 
@@ -34,13 +34,13 @@ def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
 
     def kernel(
         rng_key: PRNGKey,
-        position: PyTree,
+        position: ArrayLikeTree,
         grad_estimator: Callable,
-        minibatch: PyTree,
+        minibatch: ArrayLikeTree,
         step_size: float,
         num_integration_steps: int,
         temperature: float = 1.0,
-    ) -> PyTree:
+    ) -> ArrayTree:
         def body_fn(state, rng_key):
             position, momentum = state
             logdensity_grad = grad_estimator(position, minibatch)
@@ -123,16 +123,16 @@ class sghmc:
     ) -> MCMCSamplingAlgorithm:
         kernel = cls.build_kernel(alpha, beta)
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position)
 
         def step_fn(
             rng_key: PRNGKey,
-            state: PyTree,
-            minibatch: PyTree,
+            state: ArrayLikeTree,
+            minibatch: ArrayLikeTree,
             step_size: float,
             temperature: float = 1,
-        ) -> PyTree:
+        ) -> ArrayTree:
             return kernel(
                 rng_key,
                 state,

@@ -21,7 +21,7 @@ import jax.numpy as jnp
 
 from blackjax.base import MCMCSamplingAlgorithm
 from blackjax.sgmcmc.diffusions import overdamped_langevin
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["ContourSGLDState", "init", "build_kernel", "csgld"]
 
@@ -41,12 +41,12 @@ class ContourSGLDState(NamedTuple):
         Index `i` such that the current position belongs to :math:`S_i`.
 
     """
-    position: PyTree
+    position: ArrayTree
     energy_pdf: Array
     energy_idx: int
 
 
-def init(position: PyTree, num_partitions=512) -> ContourSGLDState:
+def init(position: ArrayLikeTree, num_partitions=512) -> ContourSGLDState:
     energy_pdf = (
         jnp.arange(num_partitions, 0, -1) / jnp.arange(num_partitions, 0, -1).sum()
     )
@@ -80,7 +80,7 @@ def build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
         state: ContourSGLDState,
         logdensity_estimator: Callable,
         gradient_estimator: Callable,
-        minibatch: PyTree,
+        minibatch: ArrayLikeTree,
         step_size_diff: float,  # step size for Langevin diffusion
         step_size_stoch: float = 1e-3,  # step size for stochastic approximation
         zeta: float = 1,
@@ -223,13 +223,13 @@ class csgld:
     ) -> MCMCSamplingAlgorithm:
         kernel = cls.build_kernel(num_partitions, energy_gap, min_energy)
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position, num_partitions)
 
         def step_fn(
             rng_key: PRNGKey,
             state: ContourSGLDState,
-            minibatch: PyTree,
+            minibatch: ArrayLikeTree,
             step_size_diff: float,
             step_size_stoch: float,
             temperature: float = 1.0,

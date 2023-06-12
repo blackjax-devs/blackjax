@@ -23,7 +23,7 @@ from typing import Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import Array
+from blackjax.types import Array, ArrayLike
 
 __all__ = [
     "WelfordAlgorithmState",
@@ -111,7 +111,7 @@ def mass_matrix_adaptation(
         return MassMatrixAdaptationState(inverse_mass_matrix, wc_state)
 
     def update(
-        mm_state: MassMatrixAdaptationState, position: Array
+        mm_state: MassMatrixAdaptationState, position: ArrayLike
     ) -> MassMatrixAdaptationState:
         """Update the algorithm's state.
 
@@ -203,14 +203,16 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
             m2 = jnp.zeros((n_dims, n_dims))
         return WelfordAlgorithmState(mean, m2, sample_size)
 
-    def update(wa_state: WelfordAlgorithmState, value: Array) -> WelfordAlgorithmState:
+    def update(
+        wa_state: WelfordAlgorithmState, value: ArrayLike
+    ) -> WelfordAlgorithmState:
         """Update the M2 matrix using the new value.
 
         Parameters
         ----------
-        state:
+        wa_state:
             The current state of the Welford Algorithm
-        position: Array, shape (1,)
+        value: Array, shape (1,)
             The new sample (typically position of the chain) used to update m2
 
         """

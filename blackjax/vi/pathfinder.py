@@ -23,7 +23,7 @@ from blackjax.optimizers.lbfgs import (
     bfgs_sample,
     lbfgs_inverse_hessian_factors,
 )
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["PathfinderState", "approximate", "sample", "pathfinder"]
 
@@ -50,8 +50,8 @@ class PathfinderState(NamedTuple):
     """
 
     elbo: Array
-    position: PyTree
-    grad_position: PyTree
+    position: ArrayTree
+    grad_position: ArrayTree
     alpha: Array
     beta: Array
     gamma: Array
@@ -71,7 +71,7 @@ class PathFinderAlgorithm(NamedTuple):
 def approximate(
     rng_key: PRNGKey,
     logdensity_fn: Callable,
-    initial_position: PyTree,
+    initial_position: ArrayLikeTree,
     num_samples: int = 200,
     *,  # lgbfs parameters
     maxiter=30,
@@ -201,7 +201,7 @@ def sample(
     rng_key: PRNGKey,
     state: PathfinderState,
     num_samples: Union[int, Tuple[()], Tuple[int]] = (),
-) -> PyTree:
+) -> ArrayTree:
     """Draw from the Pathfinder approximation of the target distribution.
 
     Parameters
@@ -267,7 +267,7 @@ class pathfinder:
     def __new__(cls, logdensity_fn: Callable) -> PathFinderAlgorithm:  # type: ignore[misc]
         def approximate_fn(
             rng_key: PRNGKey,
-            position: PyTree,
+            position: ArrayLikeTree,
             num_samples: int = 200,
             **lbfgs_parameters,
         ):

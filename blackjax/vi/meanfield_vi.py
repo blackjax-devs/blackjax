@@ -19,7 +19,7 @@ import jax.scipy as jsp
 from optax import GradientTransformation, OptState
 
 from blackjax.base import VIAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
     "MFVIState",
@@ -32,8 +32,8 @@ __all__ = [
 
 
 class MFVIState(NamedTuple):
-    mu: PyTree
-    rho: PyTree
+    mu: ArrayTree
+    rho: ArrayTree
     opt_state: OptState
 
 
@@ -42,7 +42,7 @@ class MFVIInfo(NamedTuple):
 
 
 def init(
-    position: PyTree,
+    position: ArrayLikeTree,
     optimizer: GradientTransformation,
     *optimizer_args,
     **optimizer_kwargs,
@@ -138,7 +138,7 @@ class meanfield_vi:
         optimizer: GradientTransformation,
         num_samples: int = 100,
     ):  # type: ignore[misc]
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position, optimizer)
 
         def step_fn(rng_key: PRNGKey, state: MFVIState) -> Tuple[MFVIState, MFVIInfo]:
