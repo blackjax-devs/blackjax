@@ -20,7 +20,7 @@ import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.trajectory as trajectory
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.trajectory import hmc_energy
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -205,7 +205,7 @@ class hmc:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
     """
 
     init = staticmethod(init)
@@ -220,7 +220,7 @@ class hmc:
         *,
         divergence_threshold: int = 1000,
         integrator: Callable = integrators.velocity_verlet,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(integrator, divergence_threshold)
 
         def init_fn(position: ArrayLikeTree):
@@ -236,7 +236,7 @@ class hmc:
                 num_integration_steps,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def hmc_proposal(

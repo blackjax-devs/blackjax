@@ -21,7 +21,7 @@ import blackjax.mcmc.hmc as hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise, pytree_size
 
@@ -253,7 +253,7 @@ class ghmc:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
     """
 
     init = staticmethod(init)
@@ -269,7 +269,7 @@ class ghmc:
         *,
         divergence_threshold: int = 1000,
         noise_gn: Callable = lambda _: 0.0,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(noise_gn, divergence_threshold)
 
         def init_fn(position: ArrayLikeTree, rng_key: PRNGKey):
@@ -286,4 +286,4 @@ class ghmc:
                 delta,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

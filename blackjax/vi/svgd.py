@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import optax
 from jax.flatten_util import ravel_pytree
 
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree
 
 __all__ = ["svgd", "rbf_kernel", "update_median_heuristic"]
@@ -139,7 +139,7 @@ class svgd:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
     """
 
     init = staticmethod(init)
@@ -164,4 +164,4 @@ class svgd:
             state = kernel_(state, grad_logdensity_fn, kernel, **grad_params)
             return update_kernel_parameters(state)
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

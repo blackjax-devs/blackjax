@@ -85,7 +85,7 @@ class UpdateFn(Protocol):
         """
 
 
-class MCMCSamplingAlgorithm(NamedTuple):
+class SamplingAlgorithm(NamedTuple):
     """A pair of functions that represents a MCMC sampling algorithm.
 
     Blackjax sampling algorithms are implemented as a pair of pure functions: a

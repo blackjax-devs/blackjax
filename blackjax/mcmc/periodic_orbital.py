@@ -19,7 +19,7 @@ import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["PeriodicOrbitalState", "init", "build_kernel", "orbital_hmc"]
@@ -259,7 +259,7 @@ class orbital_hmc:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
     """
 
     init = staticmethod(init)
@@ -273,7 +273,7 @@ class orbital_hmc:
         period: int,
         *,
         bijection: Callable = integrators.velocity_verlet,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(bijection)
 
         def init_fn(position: ArrayLikeTree):
@@ -289,7 +289,7 @@ class orbital_hmc:
                 period,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def periodic_orbital_proposal(

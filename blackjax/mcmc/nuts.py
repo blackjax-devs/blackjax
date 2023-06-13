@@ -24,7 +24,7 @@ import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.termination as termination
 import blackjax.mcmc.trajectory as trajectory
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["NUTSInfo", "init", "build_kernel", "nuts"]
@@ -207,7 +207,7 @@ class nuts:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -223,7 +223,7 @@ class nuts:
         max_num_doublings: int = 10,
         divergence_threshold: int = 1000,
         integrator: Callable = integrators.velocity_verlet,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(integrator, divergence_threshold, max_num_doublings)
 
         def init_fn(position: ArrayLikeTree):
@@ -238,7 +238,7 @@ class nuts:
                 inverse_mass_matrix,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def iterative_nuts_proposal(

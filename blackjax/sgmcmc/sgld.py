@@ -15,7 +15,7 @@
 from typing import Callable
 
 import blackjax.sgmcmc.diffusions as diffusions
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["init", "build_kernel", "sgld"]
@@ -96,7 +96,7 @@ class sgld:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -106,7 +106,7 @@ class sgld:
     def __new__(  # type: ignore[misc]
         cls,
         grad_estimator: Callable,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel()
 
         def init_fn(position: ArrayLikeTree):
@@ -123,4 +123,4 @@ class sgld:
                 rng_key, state, grad_estimator, minibatch, step_size, temperature
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

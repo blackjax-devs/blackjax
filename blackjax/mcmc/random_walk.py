@@ -59,7 +59,7 @@ import jax
 import numpy as np
 from jax import numpy as jnp
 
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc import proposal
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
@@ -210,7 +210,7 @@ class additive_step_random_walk:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
     """
 
     init = staticmethod(init)
@@ -227,13 +227,13 @@ class additive_step_random_walk:
             The value of the covariance matrix of the gaussian proposal distribution.
         Returns
         -------
-             A ``MCMCSamplingAlgorithm``.
+             A ``SamplingAlgorithm``.
         """
         return cls(logdensity_fn, normal(sigma))
 
     def __new__(  # type: ignore[misc]
         cls, logdensity_fn: Callable, random_step: Callable
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel()
 
         def init_fn(position: ArrayLikeTree):
@@ -242,7 +242,7 @@ class additive_step_random_walk:
         def step_fn(rng_key: PRNGKey, state):
             return kernel(rng_key, state, logdensity_fn, random_step)
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def build_irmh() -> Callable:
@@ -313,7 +313,7 @@ class irmh:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -324,7 +324,7 @@ class irmh:
         cls,
         logdensity_fn: Callable,
         proposal_distribution: Callable,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel()
 
         def init_fn(position: ArrayLikeTree):
@@ -333,7 +333,7 @@ class irmh:
         def step_fn(rng_key: PRNGKey, state):
             return kernel(rng_key, state, logdensity_fn, proposal_distribution)
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def build_rmh():
@@ -428,7 +428,7 @@ class rmh:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
     """
 
     init = staticmethod(init)
@@ -439,7 +439,7 @@ class rmh:
         logdensity_fn: Callable,
         proposal_generator: Callable[[PRNGKey, ArrayLikeTree], ArrayTree],
         proposal_logdensity_fn: Optional[Callable[[ArrayLikeTree], ArrayTree]] = None,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel()
 
         def init_fn(position: ArrayLikeTree):
@@ -454,7 +454,7 @@ class rmh:
                 proposal_logdensity_fn,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def build_rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> Callable:

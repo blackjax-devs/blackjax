@@ -17,7 +17,7 @@ from typing import Callable
 import jax
 
 import blackjax.sgmcmc.diffusions as diffusions
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
@@ -107,7 +107,7 @@ class sghmc:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -120,7 +120,7 @@ class sghmc:
         num_integration_steps: int = 10,
         alpha: float = 0.01,
         beta: float = 0,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(alpha, beta)
 
         def init_fn(position: ArrayLikeTree):
@@ -143,4 +143,4 @@ class sghmc:
                 temperature,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

@@ -20,7 +20,7 @@ import jax.numpy as jnp
 
 import blackjax.mcmc.diffusions as diffusions
 import blackjax.mcmc.proposal as proposal
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["MALAState", "MALAInfo", "init", "build_kernel", "mala"]
@@ -165,7 +165,7 @@ class mala:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -176,7 +176,7 @@ class mala:
         cls,
         logdensity_fn: Callable,
         step_size: float,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel()
 
         def init_fn(position: ArrayLikeTree):
@@ -185,4 +185,4 @@ class mala:
         def step_fn(rng_key: PRNGKey, state):
             return kernel(rng_key, state, logdensity_fn, step_size)
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
