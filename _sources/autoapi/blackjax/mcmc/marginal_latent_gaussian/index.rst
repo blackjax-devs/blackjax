@@ -154,6 +154,6 @@ Functions
    :param mean: Mean of the prior Gaussian density. Default is zero.
    :type mean: optional
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A ``SamplingAlgorithm``.
 
 

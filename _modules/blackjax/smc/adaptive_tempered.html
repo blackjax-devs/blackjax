@@ -349,7 +349,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">blackjax.smc.ess</span> <span class="k">as</span> <span class="nn">ess</span>
 <span class="kn">import</span> <span class="nn">blackjax.smc.solver</span> <span class="k">as</span> <span class="nn">solver</span>
 <span class="kn">import</span> <span class="nn">blackjax.smc.tempered</span> <span class="k">as</span> <span class="nn">tempered</span>
-<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
+<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;adaptive_tempered_smc&quot;</span><span class="p">]</span>
@@ -459,7 +459,7 @@ document.write(`
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -477,7 +477,7 @@ document.write(`
         <span class="n">target_ess</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">root_solver</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">dichotomy</span><span class="p">,</span>
         <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
         <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span>
             <span class="n">logprior_fn</span><span class="p">,</span>
             <span class="n">loglikelihood_fn</span><span class="p">,</span>
@@ -499,7 +499,7 @@ document.write(`
                 <span class="n">mcmc_parameters</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 </pre></div>
 
                 </article>

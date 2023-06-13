@@ -195,7 +195,7 @@ Functions
                                 commonly found in other libraries, and yet is arbitrary.
    :param integrator: (algorithm parameter) The symplectic integrator to use to integrate the trajectory.
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A ``SamplingAlgorithm``.
 
    .. py:attribute:: init
 

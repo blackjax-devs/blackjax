@@ -335,7 +335,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">optax</span>
 <span class="kn">from</span> <span class="nn">jax.flatten_util</span> <span class="kn">import</span> <span class="n">ravel_pytree</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
+<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;svgd&quot;</span><span class="p">,</span> <span class="s2">&quot;rbf_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;update_median_heuristic&quot;</span><span class="p">]</span>
@@ -468,7 +468,7 @@ document.write(`
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="svgd.init"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/svgd/index.html#blackjax.vi.svgd.svgd.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init</span><span class="p">)</span></div>
@@ -493,7 +493,7 @@ document.write(`
             <span class="n">state</span> <span class="o">=</span> <span class="n">kernel_</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">grad_logdensity_fn</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="o">**</span><span class="n">grad_params</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">update_kernel_parameters</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 </pre></div>
 
                 </article>

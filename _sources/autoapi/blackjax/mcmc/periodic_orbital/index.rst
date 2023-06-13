@@ -146,7 +146,7 @@ Functions
    :param period: The number of steps used to build the orbit.
    :param bijection: (algorithm parameter) The symplectic integrator to use to build the orbit.
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A ``SamplingAlgorithm``.
 
    .. py:attribute:: init
 

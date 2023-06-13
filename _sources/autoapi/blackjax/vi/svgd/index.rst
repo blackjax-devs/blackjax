@@ -48,7 +48,7 @@ Functions
    :param kernel: positive semi definite kernel
    :param update_kernel_parameters: function that updates the kernel parameters given the current state of the particles
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A ``SamplingAlgorithm``.
 
    .. py:attribute:: init
 

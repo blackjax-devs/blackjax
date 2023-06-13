@@ -101,7 +101,7 @@ Functions
                       smaller than 3456. Set it to 0 is acceptable, but not efficient enough.
                       the closer the gap between min_energy and 3456 is, the better.
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A ``SamplingAlgorithm``.
 
    .. py:attribute:: init
 

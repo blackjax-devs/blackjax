@@ -189,7 +189,7 @@ Functions
                        which will be added to the current position to obtain a new position. Must be symmetric
                        to maintain detailed balance. This means that P(step|position) = P(-step | position+step)
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A ``SamplingAlgorithm``.
 
    .. py:attribute:: init
 
@@ -205,7 +205,7 @@ Functions
       :param logdensity_fn: The log density probability density function from which we wish to sample.
       :param sigma: The value of the covariance matrix of the gaussian proposal distribution.
 
-      :rtype: A ``MCMCSamplingAlgorithm``.
+      :rtype: A ``SamplingAlgorithm``.
 
 
 
@@ -245,7 +245,7 @@ Functions
    :param proposal_distribution: A Callable that takes a random number generator and produces a new proposal. The
                                  proposal is independent of the sampler's current state.
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A ``SamplingAlgorithm``.
 
    .. py:attribute:: init
 
@@ -293,7 +293,7 @@ Functions
                                    P(x_t|x_t-1) is not equal to P(x_t-1|x_t), then this parameter must be not None in order to apply
                                    the Metropolis-Hastings correction for detailed balance.
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A ``SamplingAlgorithm``.
 
    .. py:attribute:: init
 

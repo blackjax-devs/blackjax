@@ -151,7 +151,7 @@ Functions
                     variable used as a noise correction of the persistent slice update.
                     The parameter defaults to a random variable with a single atom at 0.
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A ``SamplingAlgorithm``.
 
    .. py:attribute:: init
 

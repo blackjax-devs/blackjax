@@ -353,7 +353,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="k">as</span> <span class="nn">proposal</span>
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.termination</span> <span class="k">as</span> <span class="nn">termination</span>
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.trajectory</span> <span class="k">as</span> <span class="nn">trajectory</span>
-<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
+<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;NUTSInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;nuts&quot;</span><span class="p">]</span>
@@ -536,7 +536,7 @@ document.write(`
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -552,7 +552,7 @@ document.write(`
         <span class="n">max_num_doublings</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
         <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
         <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
         <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">max_num_doublings</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">):</span>
@@ -567,7 +567,7 @@ document.write(`
                 <span class="n">inverse_mass_matrix</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">iterative_nuts_proposal</span><span class="p">(</span>

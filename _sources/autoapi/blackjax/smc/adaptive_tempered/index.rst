@@ -71,7 +71,7 @@ Functions
                        of effective samples.
    :param num_mcmc_steps: The number of times the MCMC kernel is applied to the particles per step.
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A ``SamplingAlgorithm``.
 
    .. py:attribute:: init
 

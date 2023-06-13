@@ -347,7 +347,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.scipy.linalg</span> <span class="k">as</span> <span class="nn">linalg</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">MCMCSamplingAlgorithm</span>
+<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MarginalState&quot;</span><span class="p">,</span> <span class="s2">&quot;MarginalInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init_and_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;mgrad_gaussian&quot;</span><span class="p">]</span>
@@ -502,7 +502,7 @@ document.write(`
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A ``MCMCSamplingAlgorithm``.</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -511,7 +511,7 @@ document.write(`
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">covariance</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
         <span class="n">mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
         <span class="n">init</span><span class="p">,</span> <span class="n">kernel</span> <span class="o">=</span> <span class="n">init_and_kernel</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">covariance</span><span class="p">,</span> <span class="n">mean</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
@@ -524,7 +524,7 @@ document.write(`
                 <span class="n">delta</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">MCMCSamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 </pre></div>
 
                 </article>

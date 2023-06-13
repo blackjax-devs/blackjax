@@ -333,9 +333,9 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.Info"><code class="docutils literal notranslate"><span class="pre">Info</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.InitFn"><code class="docutils literal notranslate"><span class="pre">InitFn</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.UpdateFn"><code class="docutils literal notranslate"><span class="pre">UpdateFn</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.MCMCSamplingAlgorithm"><code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.MCMCSamplingAlgorithm.init"><code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm.init</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.MCMCSamplingAlgorithm.step"><code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm.step</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.SamplingAlgorithm"><code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.SamplingAlgorithm.init"><code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm.init</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.SamplingAlgorithm.step"><code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm.step</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.VIAlgorithm"><code class="docutils literal notranslate"><span class="pre">VIAlgorithm</span></code></a><ul class="nav section-nav flex-column">
@@ -378,7 +378,7 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.base.UpdateFn" title="blackjax.base.UpdateFn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UpdateFn</span></code></a></p></td>
 <td><p>A transition kernel used as the <cite>update</cite> of a <cite>SamplingAlgorithms</cite>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.base.MCMCSamplingAlgorithm" title="blackjax.base.MCMCSamplingAlgorithm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.base.SamplingAlgorithm" title="blackjax.base.SamplingAlgorithm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code></a></p></td>
 <td><p>A pair of functions that represents a MCMC sampling algorithm.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.base.VIAlgorithm" title="blackjax.base.VIAlgorithm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VIAlgorithm</span></code></a></p></td>
@@ -450,8 +450,8 @@ information about the transition.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="blackjax.base.MCMCSamplingAlgorithm">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MCMCSamplingAlgorithm</span></span><a class="reference internal" href="../../../_modules/blackjax/base.html#MCMCSamplingAlgorithm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.base.MCMCSamplingAlgorithm" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.base.SamplingAlgorithm">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SamplingAlgorithm</span></span><a class="reference internal" href="../../../_modules/blackjax/base.html#SamplingAlgorithm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.base.SamplingAlgorithm" title="Permalink to this definition">#</a></dt>
 <dd><p>A pair of functions that represents a MCMC sampling algorithm.</p>
 <p>Blackjax sampling algorithms are implemented as a pair of pure functions: a
 kernel, that takes a new samples starting from the current state, and an
@@ -471,13 +471,13 @@ transition.</p>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.base.MCMCSamplingAlgorithm.init">
-<span class="sig-name descname"><span class="pre">init</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#blackjax.base.InitFn" title="blackjax.base.InitFn"><span class="pre">InitFn</span></a></em><a class="reference internal" href="../../../_modules/blackjax/base.html#MCMCSamplingAlgorithm.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.base.MCMCSamplingAlgorithm.init" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.base.SamplingAlgorithm.init">
+<span class="sig-name descname"><span class="pre">init</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#blackjax.base.InitFn" title="blackjax.base.InitFn"><span class="pre">InitFn</span></a></em><a class="reference internal" href="../../../_modules/blackjax/base.html#SamplingAlgorithm.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.base.SamplingAlgorithm.init" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.base.MCMCSamplingAlgorithm.step">
-<span class="sig-name descname"><span class="pre">step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#blackjax.base.UpdateFn" title="blackjax.base.UpdateFn"><span class="pre">UpdateFn</span></a></em><a class="reference internal" href="../../../_modules/blackjax/base.html#MCMCSamplingAlgorithm.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.base.MCMCSamplingAlgorithm.step" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.base.SamplingAlgorithm.step">
+<span class="sig-name descname"><span class="pre">step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#blackjax.base.UpdateFn" title="blackjax.base.UpdateFn"><span class="pre">UpdateFn</span></a></em><a class="reference internal" href="../../../_modules/blackjax/base.html#SamplingAlgorithm.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.base.SamplingAlgorithm.step" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -575,9 +575,9 @@ by <cite>approximate</cite>.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.Info"><code class="docutils literal notranslate"><span class="pre">Info</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.InitFn"><code class="docutils literal notranslate"><span class="pre">InitFn</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.UpdateFn"><code class="docutils literal notranslate"><span class="pre">UpdateFn</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.MCMCSamplingAlgorithm"><code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.MCMCSamplingAlgorithm.init"><code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm.init</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.MCMCSamplingAlgorithm.step"><code class="docutils literal notranslate"><span class="pre">MCMCSamplingAlgorithm.step</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.SamplingAlgorithm"><code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.SamplingAlgorithm.init"><code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm.init</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.SamplingAlgorithm.step"><code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm.step</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.base.VIAlgorithm"><code class="docutils literal notranslate"><span class="pre">VIAlgorithm</span></code></a><ul class="nav section-nav flex-column">

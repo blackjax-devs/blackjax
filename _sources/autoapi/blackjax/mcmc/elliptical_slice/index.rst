@@ -135,7 +135,7 @@ Functions
    :param loglikelihood_fn: Only the log likelihood function from the posterior distributon we wish to sample.
    :param cov_matrix: The value of the covariance matrix of the gaussian prior distribution from the posterior we wish to sample.
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A ``SamplingAlgorithm``.
 
    .. py:attribute:: init
 

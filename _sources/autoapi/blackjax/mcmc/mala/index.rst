@@ -143,7 +143,7 @@ Functions
    :param logdensity_fn: The log-density function we wish to draw samples from.
    :param step_size: The value to use for the step size in the symplectic integrator.
 
-   :rtype: A ``MCMCSamplingAlgorithm``.
+   :rtype: A ``SamplingAlgorithm``.
 
    .. py:attribute:: init
 

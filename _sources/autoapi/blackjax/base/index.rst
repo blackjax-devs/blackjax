@@ -16,7 +16,7 @@ Classes
 
    blackjax.base.InitFn
    blackjax.base.UpdateFn
-   blackjax.base.MCMCSamplingAlgorithm
+   blackjax.base.SamplingAlgorithm
    blackjax.base.VIAlgorithm
    blackjax.base.RunFn
    blackjax.base.AdaptationAlgorithm
@@ -82,7 +82,7 @@ Attributes
 
 
 
-.. py:class:: MCMCSamplingAlgorithm
+.. py:class:: SamplingAlgorithm
 
 
 
