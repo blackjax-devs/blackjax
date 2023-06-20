@@ -57,8 +57,8 @@ import jax.numpy as jnp
 def model():
     mu = yield tfd.Normal(0.0, 10.0, name="avg_effect")
     log_tau = yield tfd.Normal(5.0, 1.0, name="avg_stddev")
-    theta_prime = yield tfd.Sample(tfd.Normal(0, 1), 
-                                   num_schools, 
+    theta_prime = yield tfd.Sample(tfd.Normal(0, 1),
+                                   num_schools,
                                    name="school_effects_standard")
     yhat = mu + jnp.exp(log_tau) * theta_prime
     yield tfd.Normal(yhat, treatment_stddevs, name="treatment_effects")
