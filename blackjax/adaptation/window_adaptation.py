@@ -362,7 +362,7 @@ def build_schedule(
     initial_buffer_size: int = 75,
     final_buffer_size: int = 50,
     first_window_size: int = 25,
-) -> List[tuple[int, bool]]:
+) -> list[tuple[int, bool]]:
     """Return the schedule for Stan's warmup.
 
     The schedule below is intended to be as close as possible to Stan's :cite:p:`stan_hmc_param`.
