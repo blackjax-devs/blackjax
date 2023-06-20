@@ -18,20 +18,27 @@ Some interfaces are exposed here for convenience and for entry level users, who 
 with simpler versions of the algorithms, but in all cases they are particular instantiations
 of the Random Walk Rosenbluth-Metropolis-Hastings.
 
-Let's note x_{t-1} to the previous position and x_t to the newly sampled one.
+Let's note $x_{t-1}$ to the previous position and $x_t$ to the newly sampled one.
 
 The variants offered are:
 
 1. Proposal distribution as addition of random noice from previous position. This means
-x_t = x_{t-1} + step. Function: `additive_step`
+   $x_t = x_{t-1} + step$.
 
-2. Independent proposal distribution: P(x_t) doesn't depend on x_{t_1}. Function: `irmh`
+    Function: `additive_step`
 
-3. Proposal distribution using a symmetric function. That means P(x_t|x_{t-1}) = P(x_{t-1}|x_t).
- Function: `rmh` without proposal_logdensity_fn. See 'Metropolis Algorithm' in [1]
+2. Independent proposal distribution: $P(x_t)$ doesn't depend on $x_{t_1}$.
 
-4. Asymmetric proposal distribution. Function: `rmh` with proposal_logdensity_fn.
- See 'Metropolis-Hastings' Algorithm in [1]
+    Function: `irmh`
+
+3. Proposal distribution using a symmetric function. That means $P(x_t|x_{t-1}) = P(x_{t-1}|x_t)$.
+   See 'Metropolis Algorithm' in [1].
+
+    Function: `rmh` without proposal_logdensity_fn.
+
+4. Asymmetric proposal distribution. See 'Metropolis-Hastings' Algorithm in [1].
+
+    Function: `rmh` with proposal_logdensity_fn.
 
 Reference: :cite:p:`gelman2014bayesian` Section 11.2
 
@@ -225,6 +232,7 @@ class additive_step_random_walk:
             The log density probability density function from which we wish to sample.
         sigma
             The value of the covariance matrix of the gaussian proposal distribution.
+
         Returns
         -------
              A ``SamplingAlgorithm``.
@@ -265,6 +273,7 @@ def build_irmh() -> Callable:
         proposal_distribution: Callable,
     ) -> Tuple[RWState, RWInfo]:
         """
+
         Parameters
         ----------
         proposal_distribution
@@ -338,6 +347,7 @@ class irmh:
 
 def build_rmh():
     """Build a Rosenbluth-Metropolis-Hastings kernel.
+
     Returns
     -------
     A kernel that takes a rng_key and a Pytree that contains the current state
