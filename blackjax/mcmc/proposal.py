@@ -143,8 +143,8 @@ def asymmetric_proposal_generator(
     proposal_factory: Callable = proposal_from_energy_diff,
 ) -> Tuple[Callable, Callable]:
     """A proposal generator that takes into account the transition between
-    two states to compute a new proposal. 
-    
+    two states to compute a new proposal.
+
     In particular, both states are used to compute the energies to consider in weighting the proposal,
     to account for asymmetries.
 
