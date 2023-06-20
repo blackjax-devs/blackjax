@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Elliptical Slice sampling Kernel"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -110,7 +110,7 @@ def build_kernel(cov_matrix: Array, mean: Array):
         rng_key: PRNGKey,
         state: EllipSliceState,
         logdensity_fn: Callable,
-    ) -> Tuple[EllipSliceState, EllipSliceInfo]:
+    ) -> tuple[EllipSliceState, EllipSliceInfo]:
         proposal_generator = elliptical_proposal(
             logdensity_fn, momentum_generator, mean
         )
@@ -205,7 +205,7 @@ def elliptical_proposal(
 
     def generate(
         rng_key: PRNGKey, state: EllipSliceState
-    ) -> Tuple[EllipSliceState, EllipSliceInfo]:
+    ) -> tuple[EllipSliceState, EllipSliceInfo]:
         position, logdensity = state
         key_momentum, key_uniform, key_theta = jax.random.split(rng_key, 3)
         # step 1: sample momentum

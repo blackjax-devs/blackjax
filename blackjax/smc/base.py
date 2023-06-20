@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Optional, Tuple
+from typing import Callable, NamedTuple, Optional
 
 import jax
 import jax.numpy as jnp
@@ -59,7 +59,7 @@ def step(
     weigh_fn: Callable,
     resample_fn: Callable,
     num_resampled: Optional[int] = None,
-) -> Tuple[SMCState, SMCInfo]:
+) -> tuple[SMCState, SMCInfo]:
     """General SMC sampling step.
 
     `update_fn` here corresponds to the Markov kernel $M_{t+1}$, and `weigh_fn`

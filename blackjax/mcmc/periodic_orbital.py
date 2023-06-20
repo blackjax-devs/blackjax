@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for Periodic Orbital Kernel"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -142,7 +142,7 @@ def build_kernel(
         step_size: float,
         inverse_mass_matrix: Array,
         period: int,
-    ) -> Tuple[PeriodicOrbitalState, PeriodicOrbitalInfo]:
+    ) -> tuple[PeriodicOrbitalState, PeriodicOrbitalInfo]:
         """Generate a new orbit with the Periodic Orbital kernel.
 
         Choose a step from the orbit with probability proportional to its weights.
@@ -325,7 +325,7 @@ def periodic_orbital_proposal(
 
     def generate(
         direction: int, init_state: integrators.IntegratorState
-    ) -> Tuple[PeriodicOrbitalState, PeriodicOrbitalInfo]:
+    ) -> tuple[PeriodicOrbitalState, PeriodicOrbitalInfo]:
         """Generate orbit by applying bijection forwards and backwards on period.
 
         As described in algorithm 2 of :cite:p:`neklyudov2022orbital`, each iteration of the periodic orbital

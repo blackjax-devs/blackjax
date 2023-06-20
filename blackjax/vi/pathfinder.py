@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -79,7 +79,7 @@ def approximate(
     maxls=1000,
     gtol=1e-08,
     ftol=1e-05,
-) -> Tuple[PathfinderState, PathfinderInfo]:
+) -> tuple[PathfinderState, PathfinderInfo]:
     """Pathfinder variational inference algorithm.
 
     Pathfinder locates normal approximations to the target density along a
@@ -200,7 +200,7 @@ def approximate(
 def sample(
     rng_key: PRNGKey,
     state: PathfinderState,
-    num_samples: Union[int, Tuple[()], Tuple[int]] = (),
+    num_samples: Union[int, tuple[()], tuple[int]] = (),
 ) -> ArrayTree:
     """Draw from the Pathfinder approximation of the target distribution.
 

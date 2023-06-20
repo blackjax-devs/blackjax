@@ -1,5 +1,5 @@
 import functools
-from typing import Any, Callable, Dict, NamedTuple
+from typing import Any, Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -14,13 +14,13 @@ __all__ = ["svgd", "rbf_kernel", "update_median_heuristic"]
 
 class SVGDState(NamedTuple):
     particles: ArrayTree
-    kernel_parameters: Dict[str, ArrayTree]
+    kernel_parameters: dict[str, ArrayTree]
     opt_state: Any
 
 
 def init(
     initial_particles: ArrayLikeTree,
-    kernel_parameters: Dict[str, Any],
+    kernel_parameters: dict[str, Any],
     optimizer: optax.GradientTransformation,
 ) -> SVGDState:
     """
@@ -156,7 +156,7 @@ class svgd:
 
         def init_fn(
             initial_position: ArrayLikeTree,
-            kernel_parameters: Dict[str, Any] = {"length_scale": 1.0},
+            kernel_parameters: dict[str, Any] = {"length_scale": 1.0},
         ):
             return cls.init(initial_position, kernel_parameters, optimizer)
 

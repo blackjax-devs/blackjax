@@ -27,7 +27,7 @@ For a Newtonian hamiltonian dynamic the kinetic energy is given by:
 We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
 
 """
-from typing import Callable, Tuple
+from typing import Callable
 
 import jax.numpy as jnp
 import jax.scipy as jscipy
@@ -43,7 +43,7 @@ EuclideanKineticEnergy = Callable[[ArrayLikeTree], float]
 
 def gaussian_euclidean(
     inverse_mass_matrix: Array,
-) -> Tuple[Callable, EuclideanKineticEnergy, Callable]:
+) -> tuple[Callable, EuclideanKineticEnergy, Callable]:
     r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum :cite:p:`betancourt2013general`.
 
     The gaussian euclidean metric is a euclidean metric further characterized

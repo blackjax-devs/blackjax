@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Step size adaptation"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -64,7 +64,7 @@ class DualAveragingAdaptationState(NamedTuple):
 
 def dual_averaging_adaptation(
     target: float, t0: int = 10, gamma: float = 0.05, kappa: float = 0.75
-) -> Tuple[Callable, Callable, Callable]:
+) -> tuple[Callable, Callable, Callable]:
     """Tune the step size in order to achieve a desired target acceptance rate.
 
     Let us note :math:`\\epsilon` the current step size, :math:`\\alpha_t` the

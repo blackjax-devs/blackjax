@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Callable, List, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -45,7 +45,7 @@ class WindowAdaptationState(NamedTuple):
 def base(
     is_mass_matrix_diagonal: bool,
     target_acceptance_rate: float = 0.80,
-) -> Tuple[Callable, Callable, Callable]:
+) -> tuple[Callable, Callable, Callable]:
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
     The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
 
@@ -191,7 +191,7 @@ def base(
 
     def update(
         adaptation_state: WindowAdaptationState,
-        adaptation_stage: Tuple,
+        adaptation_stage: tuple,
         position: ArrayLikeTree,
         acceptance_rate: float,
     ) -> WindowAdaptationState:
@@ -233,7 +233,7 @@ def base(
 
         return warmup_state
 
-    def final(warmup_state: WindowAdaptationState) -> Tuple[float, Array]:
+    def final(warmup_state: WindowAdaptationState) -> tuple[float, Array]:
         """Return the final values for the step size and mass matrix."""
         step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.imm_state.inverse_mass_matrix
@@ -362,7 +362,7 @@ def build_schedule(
     initial_buffer_size: int = 75,
     final_buffer_size: int = 50,
     first_window_size: int = 25,
-) -> List[Tuple[int, bool]]:
+) -> List[tuple[int, bool]]:
     """Return the schedule for Stan's warmup.
 
     The schedule below is intended to be as close as possible to Stan's :cite:p:`stan_hmc_param`.

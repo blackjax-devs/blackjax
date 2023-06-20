@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Generalized (Non-reversible w/ persistent momentum) HMC Kernel"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -104,7 +104,7 @@ def build_kernel(
         momentum_inverse_scale: ArrayLikeTree,
         alpha: float,
         delta: float,
-    ) -> Tuple[GHMCState, hmc.HMCInfo]:
+    ) -> tuple[GHMCState, hmc.HMCInfo]:
         """Generate new sample with the Generalized HMC kernel.
 
         Parameters

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Pathinder warmup for the HMC family of sampling algorithms."""
-from typing import Callable, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -128,7 +128,7 @@ def base(
             new_ss_state, new_step_size, adaptation_state.inverse_mass_matrix
         )
 
-    def final(warmup_state: PathfinderAdaptationState) -> Tuple[float, Array]:
+    def final(warmup_state: PathfinderAdaptationState) -> tuple[float, Array]:
         """Return the final values for the step size and inverse mass matrix."""
         step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.inverse_mass_matrix
