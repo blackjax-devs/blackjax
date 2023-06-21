@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the NUTS Kernel"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -121,7 +121,7 @@ def build_kernel(
         logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
-    ) -> Tuple[hmc.HMCState, NUTSInfo]:
+    ) -> tuple[hmc.HMCState, NUTSInfo]:
         """Generate a new sample with the NUTS kernel."""
 
         (

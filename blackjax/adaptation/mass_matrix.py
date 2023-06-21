@@ -18,7 +18,7 @@ The Stan Manual :cite:p:`stan_hmc_param` is a very good reference on automatic t
 parameters used in Hamiltonian Monte Carlo.
 
 """
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -68,7 +68,7 @@ class MassMatrixAdaptationState(NamedTuple):
 
 def mass_matrix_adaptation(
     is_diagonal_matrix: bool = True,
-) -> Tuple[Callable, Callable, Callable]:
+) -> tuple[Callable, Callable, Callable]:
     """Adapts the values in the mass matrix by computing the covariance
     between parameters.
 
@@ -156,7 +156,7 @@ def mass_matrix_adaptation(
     return init, update, final
 
 
-def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Callable]:
+def welford_algorithm(is_diagonal_matrix: bool) -> tuple[Callable, Callable, Callable]:
     r"""Welford's online estimator of covariance.
 
     It is possible to compute the variance of a population of values in an
@@ -231,7 +231,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
 
     def final(
         wa_state: WelfordAlgorithmState,
-    ) -> Tuple[Array, int, Array]:
+    ) -> tuple[Array, int, Array]:
         mean, m2, sample_size = wa_state
         covariance = m2 / (sample_size - 1)
         return covariance, sample_size, mean

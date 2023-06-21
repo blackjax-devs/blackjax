@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Dict, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -97,7 +97,7 @@ def build_kernel(
         num_mcmc_steps: int,
         lmbda: float,
         mcmc_parameters: dict,
-    ) -> Tuple[TemperedSMCState, smc.base.SMCInfo]:
+    ) -> tuple[TemperedSMCState, smc.base.SMCInfo]:
         """Move the particles one step using the Tempered SMC algorithm.
 
         Parameters
@@ -191,7 +191,7 @@ class tempered_smc:
         loglikelihood_fn: Callable,
         mcmc_step_fn: Callable,
         mcmc_init_fn: Callable,
-        mcmc_parameters: Dict,
+        mcmc_parameters: dict,
         resampling_fn: Callable,
         num_mcmc_steps: int = 10,
     ) -> SamplingAlgorithm:

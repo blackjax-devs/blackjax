@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -42,7 +42,7 @@ class Proposal(NamedTuple):
 
 def proposal_generator(
     energy: Callable, divergence_threshold: float
-) -> Tuple[Callable, Callable]:
+) -> tuple[Callable, Callable]:
     """
 
     Parameters
@@ -61,7 +61,7 @@ def proposal_generator(
     def new(state: TrajectoryState) -> Proposal:
         return Proposal(state, energy(state), 0.0, -jnp.inf)
 
-    def update(initial_energy: float, state: TrajectoryState) -> Tuple[Proposal, bool]:
+    def update(initial_energy: float, state: TrajectoryState) -> tuple[Proposal, bool]:
         """Generate a new proposal from a trajectory state.
 
         The trajectory state records information about the position in the state
@@ -95,7 +95,7 @@ def proposal_from_energy_diff(
     new_energy: float,
     divergence_threshold: float,
     state: TrajectoryState,
-) -> Tuple[Proposal, bool]:
+) -> tuple[Proposal, bool]:
     """Computes a new proposal from the energy difference between two states.
 
     It also verifies whether this difference is a divergence, if the
@@ -141,7 +141,7 @@ def asymmetric_proposal_generator(
     transition_energy_fn: Callable,
     divergence_threshold: float,
     proposal_factory: Callable = proposal_from_energy_diff,
-) -> Tuple[Callable, Callable]:
+) -> tuple[Callable, Callable]:
     """A proposal generator that takes into account the transition between
     two states to compute a new proposal.
 
@@ -171,7 +171,7 @@ def asymmetric_proposal_generator(
         initial_state: TrajectoryState,
         state: TrajectoryState,
         **energy_params,
-    ) -> Tuple[Proposal, bool]:
+    ) -> tuple[Proposal, bool]:
         new_energy = transition_energy_fn(initial_state, state, **energy_params)
         prev_energy = transition_energy_fn(state, initial_state, **energy_params)
         return proposal_factory(prev_energy, new_energy, divergence_threshold, state)

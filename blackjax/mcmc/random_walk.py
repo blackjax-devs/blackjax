@@ -60,7 +60,7 @@ Examples
         new_state, info = step(rng_key, state)
 
 """
-from typing import Callable, NamedTuple, Optional, Tuple
+from typing import Callable, NamedTuple, Optional
 
 import jax
 import numpy as np
@@ -171,7 +171,7 @@ def build_additive_step():
 
     def kernel(
         rng_key: PRNGKey, state: RWState, logdensity_fn: Callable, random_step: Callable
-    ) -> Tuple[RWState, RWInfo]:
+    ) -> tuple[RWState, RWInfo]:
         def proposal_generator(key_proposal, position):
             move_proposal = random_step(key_proposal, position)
             new_position = jax.tree_util.tree_map(jnp.add, position, move_proposal)
@@ -271,7 +271,7 @@ def build_irmh() -> Callable:
         state: RWState,
         logdensity_fn: Callable,
         proposal_distribution: Callable,
-    ) -> Tuple[RWState, RWInfo]:
+    ) -> tuple[RWState, RWInfo]:
         """
 
         Parameters
@@ -362,7 +362,7 @@ def build_rmh():
         logdensity_fn: Callable,
         transition_generator: Callable,
         proposal_logdensity_fn: Optional[Callable] = None,
-    ) -> Tuple[RWState, RWInfo]:
+    ) -> tuple[RWState, RWInfo]:
         """Move the chain by one step using the Rosenbluth Metropolis Hastings
         algorithm.
 
@@ -493,7 +493,7 @@ def rmh_proposal(
         new_position = transition_distribution(rng_key, position)
         return RWState(new_position, logdensity_fn(new_position))
 
-    def generate(rng_key, state: RWState) -> Tuple[RWState, bool, float]:
+    def generate(rng_key, state: RWState) -> tuple[RWState, bool, float]:
         key_proposal, key_accept = jax.random.split(rng_key, 2)
         end_state = build_trajectory(key_proposal, state)
         new_proposal, _ = generate_proposal(state, end_state)

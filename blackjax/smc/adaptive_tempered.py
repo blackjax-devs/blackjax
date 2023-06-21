@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Dict, Tuple
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
@@ -95,7 +95,7 @@ def build_kernel(
         state: tempered.TemperedSMCState,
         num_mcmc_steps: int,
         mcmc_parameters: dict,
-    ) -> Tuple[tempered.TemperedSMCState, base.SMCInfo]:
+    ) -> tuple[tempered.TemperedSMCState, base.SMCInfo]:
         delta = compute_delta(state)
         lmbda = delta + state.lmbda
         return tempered_kernel(rng_key, state, num_mcmc_steps, lmbda, mcmc_parameters)
@@ -143,7 +143,7 @@ class adaptive_tempered_smc:
         loglikelihood_fn: Callable,
         mcmc_step_fn: Callable,
         mcmc_init_fn: Callable,
-        mcmc_parameters: Dict,
+        mcmc_parameters: dict,
         resampling_fn: Callable,
         target_ess: float,
         root_solver: Callable = solver.dichotomy,

@@ -13,7 +13,7 @@
 # limitations under the License.
 """Public API for Metropolis Adjusted Langevin kernels."""
 import operator
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -96,7 +96,7 @@ def build_kernel():
 
     def kernel(
         rng_key: PRNGKey, state: MALAState, logdensity_fn: Callable, step_size: float
-    ) -> Tuple[MALAState, MALAInfo]:
+    ) -> tuple[MALAState, MALAInfo]:
         """Generate a new sample with the MALA kernel."""
         grad_fn = jax.value_and_grad(logdensity_fn)
         integrator = diffusions.overdamped_langevin(grad_fn)

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the HMC Kernel"""
-from typing import Callable, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Union
 
 import jax
 
@@ -112,7 +112,7 @@ def build_kernel(
         step_size: float,
         inverse_mass_matrix: Array,
         num_integration_steps: int,
-    ) -> Tuple[HMCState, HMCInfo]:
+    ) -> tuple[HMCState, HMCInfo]:
         """Generate a new sample with the HMC kernel."""
 
         momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
@@ -281,7 +281,7 @@ def hmc_proposal(
 
     def generate(
         rng_key, state: integrators.IntegratorState
-    ) -> Tuple[integrators.IntegratorState, HMCInfo]:
+    ) -> tuple[integrators.IntegratorState, HMCInfo]:
         """Generate a new chain state."""
         end_state = build_trajectory(state, step_size, num_integration_steps)
         end_state = flip_momentum(end_state)

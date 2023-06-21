@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -70,7 +70,7 @@ def minimize_lbfgs(
     gtol: float = 1e-08,
     ftol: float = 1e-05,
     maxls: int = 1000,
-) -> Tuple[OptStep, LBFGSHistory]:
+) -> tuple[OptStep, LBFGSHistory]:
     """
     Minimize a function using L-BFGS
 
@@ -152,7 +152,7 @@ def _minimize_lbfgs(
     gtol: float,
     ftol: float,
     maxls: int,
-) -> Tuple[OptStep, LBFGSHistory]:
+) -> tuple[OptStep, LBFGSHistory]:
     def lbfgs_one_step(carry, i):
         (params, state), previous_history = carry
 
