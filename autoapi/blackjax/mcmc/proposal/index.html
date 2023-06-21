@@ -483,16 +483,20 @@ densities of each state <span class="math notranslate nohighlight">\(e^{-H(z)}\)
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.proposal.proposal_from_energy_diff">
 <span class="sig-name descname"><span class="pre">proposal_from_energy_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TrajectoryState</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#proposal_from_energy_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.proposal_from_energy_diff" title="Permalink to this definition">#</a></dt>
-<dd><p>Computes a new proposal from the energy difference between two states.
-It also verifies whether this difference is a divergence, if the
-energy diff is above divergence_threshold.
-:param initial_energy: the energy from the initial state
-:param new_energy: the energy at the proposed state
-:param divergence_threshold: max value allowed for the difference in energies not to be considered a divergence
-:param state: the proposed state</p>
+<dd><p>Computes a new proposal from the energy difference between two states.</p>
+<p>It also verifies whether this difference is a divergence, if the
+energy diff is above divergence_threshold.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A proposal and a flag for divergence</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>initial_energy</strong> – the energy from the initial state</p></li>
+<li><p><strong>new_energy</strong> – the energy at the proposed state</p></li>
+<li><p><strong>divergence_threshold</strong> – max value allowed for the difference in energies not to be considered a divergence</p></li>
+<li><p><strong>state</strong> – the proposed state</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A proposal and a flag for divergence</p>
 </dd>
 </dl>
 </dd></dl>
@@ -501,23 +505,20 @@ energy diff is above divergence_threshold.
 <dt class="sig sig-object py" id="blackjax.mcmc.proposal.asymmetric_proposal_generator">
 <span class="sig-name descname"><span class="pre">asymmetric_proposal_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transition_energy_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal_factory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">proposal_from_energy_diff</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#asymmetric_proposal_generator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.asymmetric_proposal_generator" title="Permalink to this definition">#</a></dt>
 <dd><p>A proposal generator that takes into account the transition between
-two states to compute a new proposal. In particular, both states are
-used to compute the energies to consider in weighting the proposal,
+two states to compute a new proposal.</p>
+<p>In particular, both states are used to compute the energies to consider in weighting the proposal,
 to account for asymmetries.</p>
-<blockquote>
-<div></div></blockquote>
-<dl class="simple">
-<dt>transition_energy_fn</dt><dd><p>A function that computes the energy of a transition from an initial state
-to a new state, given some optional keyword arguments.</p>
-</dd>
-<dt>divergence_threshold</dt><dd><p>The maximum value allowed for the difference in energies not to be considered a divergence.</p>
-</dd>
-<dt>proposal_factory</dt><dd><p>A function that builds a proposal from the transition energies.</p>
-</dd>
-</dl>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><ul class="simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>transition_energy_fn</strong> – A function that computes the energy of a transition from an initial state
+to a new state, given some optional keyword arguments.</p></li>
+<li><p><strong>divergence_threshold</strong> – The maximum value allowed for the difference in energies not to be considered a divergence.</p></li>
+<li><p><strong>proposal_factory</strong> – A function that builds a proposal from the transition energies.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
 <li><p><em>Two functions, one to generate an initial proposal when no step has been taken,</em></p></li>
 <li><p><em>another to generate proposals after each step.</em></p></li>
 </ul>

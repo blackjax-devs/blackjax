@@ -48,6 +48,7 @@ Functions
    U_x
        Auxiliary attributes
    U_grad_x
+       Gradient of the auxiliary attributes
 
 
    .. py:attribute:: position

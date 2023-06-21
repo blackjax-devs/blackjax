@@ -426,8 +426,10 @@ document.write(`
     <span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Proposal</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes a new proposal from the energy difference between two states.</span>
+
 <span class="sd">    It also verifies whether this difference is a divergence, if the</span>
 <span class="sd">    energy diff is above divergence_threshold.</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    initial_energy</span>
@@ -470,10 +472,13 @@ document.write(`
     <span class="n">proposal_factory</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">proposal_from_energy_diff</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A proposal generator that takes into account the transition between</span>
-<span class="sd">    two states to compute a new proposal. In particular, both states are</span>
-<span class="sd">    used to compute the energies to consider in weighting the proposal,</span>
+<span class="sd">    two states to compute a new proposal.</span>
+
+<span class="sd">    In particular, both states are used to compute the energies to consider in weighting the proposal,</span>
 <span class="sd">    to account for asymmetries.</span>
-<span class="sd">     ----------</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
 <span class="sd">    transition_energy_fn</span>
 <span class="sd">        A function that computes the energy of a transition from an initial state</span>
 <span class="sd">        to a new state, given some optional keyword arguments.</span>

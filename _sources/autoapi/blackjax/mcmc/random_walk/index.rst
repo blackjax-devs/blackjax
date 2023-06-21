@@ -10,20 +10,27 @@
    with simpler versions of the algorithms, but in all cases they are particular instantiations
    of the Random Walk Rosenbluth-Metropolis-Hastings.
 
-   Let's note x_{t-1} to the previous position and x_t to the newly sampled one.
+   Let's note $x_{t-1}$ to the previous position and $x_t$ to the newly sampled one.
 
    The variants offered are:
 
    1. Proposal distribution as addition of random noice from previous position. This means
-   x_t = x_{t-1} + step. Function: `additive_step`
+      $x_t = x_{t-1} + step$.
 
-   2. Independent proposal distribution: P(x_t) doesn't depend on x_{t_1}. Function: `irmh`
+       Function: `additive_step`
 
-   3. Proposal distribution using a symmetric function. That means P(x_t|x_{t-1}) = P(x_{t-1}|x_t).
-    Function: `rmh` without proposal_logdensity_fn. See 'Metropolis Algorithm' in [1]
+   2. Independent proposal distribution: $P(x_t)$ doesn't depend on $x_{t_1}$.
 
-   4. Asymmetric proposal distribution. Function: `rmh` with proposal_logdensity_fn.
-    See 'Metropolis-Hastings' Algorithm in [1]
+       Function: `irmh`
+
+   3. Proposal distribution using a symmetric function. That means $P(x_t|x_{t-1}) = P(x_{t-1}|x_t)$.
+      See 'Metropolis Algorithm' in [1].
+
+       Function: `rmh` without proposal_logdensity_fn.
+
+   4. Asymmetric proposal distribution. See 'Metropolis-Hastings' Algorithm in [1].
+
+       Function: `rmh` with proposal_logdensity_fn.
 
    Reference: :cite:p:`gelman2014bayesian` Section 11.2
 
@@ -259,6 +266,7 @@ Functions
 .. py:function:: build_rmh()
 
    Build a Rosenbluth-Metropolis-Hastings kernel.
+
    :returns: * *A kernel that takes a rng_key and a Pytree that contains the current state*
              * *of the chain and that returns a new state of the chain along with*
              * *information about the transition.*

@@ -347,20 +347,27 @@ document.write(`
 <span class="sd">with simpler versions of the algorithms, but in all cases they are particular instantiations</span>
 <span class="sd">of the Random Walk Rosenbluth-Metropolis-Hastings.</span>
 
-<span class="sd">Let&#39;s note x_{t-1} to the previous position and x_t to the newly sampled one.</span>
+<span class="sd">Let&#39;s note $x_{t-1}$ to the previous position and $x_t$ to the newly sampled one.</span>
 
 <span class="sd">The variants offered are:</span>
 
 <span class="sd">1. Proposal distribution as addition of random noice from previous position. This means</span>
-<span class="sd">x_t = x_{t-1} + step. Function: `additive_step`</span>
+<span class="sd">   $x_t = x_{t-1} + step$.</span>
 
-<span class="sd">2. Independent proposal distribution: P(x_t) doesn&#39;t depend on x_{t_1}. Function: `irmh`</span>
+<span class="sd">    Function: `additive_step`</span>
 
-<span class="sd">3. Proposal distribution using a symmetric function. That means P(x_t|x_{t-1}) = P(x_{t-1}|x_t).</span>
-<span class="sd"> Function: `rmh` without proposal_logdensity_fn. See &#39;Metropolis Algorithm&#39; in [1]</span>
+<span class="sd">2. Independent proposal distribution: $P(x_t)$ doesn&#39;t depend on $x_{t_1}$.</span>
 
-<span class="sd">4. Asymmetric proposal distribution. Function: `rmh` with proposal_logdensity_fn.</span>
-<span class="sd"> See &#39;Metropolis-Hastings&#39; Algorithm in [1]</span>
+<span class="sd">    Function: `irmh`</span>
+
+<span class="sd">3. Proposal distribution using a symmetric function. That means $P(x_t|x_{t-1}) = P(x_{t-1}|x_t)$.</span>
+<span class="sd">   See &#39;Metropolis Algorithm&#39; in [1].</span>
+
+<span class="sd">    Function: `rmh` without proposal_logdensity_fn.</span>
+
+<span class="sd">4. Asymmetric proposal distribution. See &#39;Metropolis-Hastings&#39; Algorithm in [1].</span>
+
+<span class="sd">    Function: `rmh` with proposal_logdensity_fn.</span>
 
 <span class="sd">Reference: :cite:p:`gelman2014bayesian` Section 11.2</span>
 
@@ -554,6 +561,7 @@ document.write(`
 <span class="sd">            The log density probability density function from which we wish to sample.</span>
 <span class="sd">        sigma</span>
 <span class="sd">            The value of the covariance matrix of the gaussian proposal distribution.</span>
+
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">             A ``SamplingAlgorithm``.</span>
@@ -594,6 +602,7 @@ document.write(`
         <span class="n">proposal_distribution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">RWState</span><span class="p">,</span> <span class="n">RWInfo</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        proposal_distribution</span>
@@ -667,6 +676,7 @@ document.write(`
 
 <div class="viewcode-block" id="build_rmh"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_rmh">[docs]</a><span class="k">def</span> <span class="nf">build_rmh</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Rosenbluth-Metropolis-Hastings kernel.</span>
+
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A kernel that takes a rng_key and a Pytree that contains the current state</span>
