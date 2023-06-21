@@ -92,7 +92,7 @@ Functions
    Append a state to the (right of the) trajectory to form a new trajectory.
 
 
-.. py:function:: reorder_trajectories(direction: int, trajectory: Trajectory, new_trajectory: Trajectory) -> Tuple[Trajectory, Trajectory]
+.. py:function:: reorder_trajectories(direction: int, trajectory: Trajectory, new_trajectory: Trajectory) -> tuple[Trajectory, Trajectory]
 
    Order the two trajectories depending on the direction.
 

@@ -61,7 +61,7 @@ Functions
       
 
 
-.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: MFVIState, logdensity_fn: Callable, optimizer: optax.GradientTransformation, num_samples: int = 5, stl_estimator: bool = True) -> Tuple[MFVIState, MFVIInfo]
+.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: MFVIState, logdensity_fn: Callable, optimizer: optax.GradientTransformation, num_samples: int = 5, stl_estimator: bool = True) -> tuple[MFVIState, MFVIInfo]
 
    Approximate the target density using the mean-field approximation.
 

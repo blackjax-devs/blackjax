@@ -58,7 +58,7 @@ Functions
       
 
 
-.. py:function:: base(is_mass_matrix_diagonal: bool, target_acceptance_rate: float = 0.8) -> Tuple[Callable, Callable, Callable]
+.. py:function:: base(is_mass_matrix_diagonal: bool, target_acceptance_rate: float = 0.8) -> tuple[Callable, Callable, Callable]
 
    Warmup scheme for sampling procedures based on euclidean manifold HMC.
    The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
@@ -132,7 +132,7 @@ Functions
    :rtype: A function that runs the adaptation and returns an `AdaptationResult` object.
 
 
-.. py:function:: build_schedule(num_steps: int, initial_buffer_size: int = 75, final_buffer_size: int = 50, first_window_size: int = 25) -> List[Tuple[int, bool]]
+.. py:function:: build_schedule(num_steps: int, initial_buffer_size: int = 75, final_buffer_size: int = 50, first_window_size: int = 25) -> list[tuple[int, bool]]
 
    Return the schedule for Stan's warmup.
 

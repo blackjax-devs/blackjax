@@ -35,7 +35,7 @@ Functions
 
 
 
-.. py:function:: gaussian_euclidean(inverse_mass_matrix: blackjax.types.Array) -> Tuple[Callable, EuclideanKineticEnergy, Callable]
+.. py:function:: gaussian_euclidean(inverse_mass_matrix: blackjax.types.Array) -> tuple[Callable, EuclideanKineticEnergy, Callable]
 
    Hamiltonian dynamic on euclidean manifold with normally-distributed momentum :cite:p:`betancourt2013general`.
 

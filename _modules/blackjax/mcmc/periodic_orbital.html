@@ -341,7 +341,7 @@ document.write(`
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;Public API for Periodic Orbital Kernel&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -471,7 +471,7 @@ document.write(`
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
         <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">PeriodicOrbitalState</span><span class="p">,</span> <span class="n">PeriodicOrbitalInfo</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PeriodicOrbitalState</span><span class="p">,</span> <span class="n">PeriodicOrbitalInfo</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new orbit with the Periodic Orbital kernel.</span>
 
 <span class="sd">        Choose a step from the orbit with probability proportional to its weights.</span>
@@ -654,7 +654,7 @@ document.write(`
 
     <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span>
         <span class="n">direction</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">init_state</span><span class="p">:</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">PeriodicOrbitalState</span><span class="p">,</span> <span class="n">PeriodicOrbitalInfo</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PeriodicOrbitalState</span><span class="p">,</span> <span class="n">PeriodicOrbitalInfo</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate orbit by applying bijection forwards and backwards on period.</span>
 
 <span class="sd">        As described in algorithm 2 of :cite:p:`neklyudov2022orbital`, each iteration of the periodic orbital</span>

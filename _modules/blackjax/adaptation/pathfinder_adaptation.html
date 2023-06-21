@@ -341,7 +341,7 @@ document.write(`
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;Implementation of the Pathinder warmup for the HMC family of sampling algorithms.&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -457,7 +457,7 @@ document.write(`
             <span class="n">new_ss_state</span><span class="p">,</span> <span class="n">new_step_size</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">final</span><span class="p">(</span><span class="n">warmup_state</span><span class="p">:</span> <span class="n">PathfinderAdaptationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">final</span><span class="p">(</span><span class="n">warmup_state</span><span class="p">:</span> <span class="n">PathfinderAdaptationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the final values for the step size and inverse mass matrix.&quot;&quot;&quot;</span>
         <span class="n">step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">ss_state</span><span class="o">.</span><span class="n">log_step_size_avg</span><span class="p">)</span>
         <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">warmup_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span>

@@ -82,7 +82,7 @@ Functions
       
 
 
-.. py:function:: dual_averaging_adaptation(target: float, t0: int = 10, gamma: float = 0.05, kappa: float = 0.75) -> Tuple[Callable, Callable, Callable]
+.. py:function:: dual_averaging_adaptation(target: float, t0: int = 10, gamma: float = 0.05, kappa: float = 0.75) -> tuple[Callable, Callable, Callable]
 
    Tune the step size in order to achieve a desired target acceptance rate.
 

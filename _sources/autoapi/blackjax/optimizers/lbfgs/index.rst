@@ -76,7 +76,7 @@ Functions
       
 
 
-.. py:function:: minimize_lbfgs(fun: Callable, x0: blackjax.types.ArrayLikeTree, maxiter: int = 30, maxcor: float = 10, gtol: float = 1e-08, ftol: float = 1e-05, maxls: int = 1000) -> Tuple[jaxopt.base.OptStep, LBFGSHistory]
+.. py:function:: minimize_lbfgs(fun: Callable, x0: blackjax.types.ArrayLikeTree, maxiter: int = 30, maxcor: float = 10, gtol: float = 1e-08, ftol: float = 1e-05, maxls: int = 1000) -> tuple[jaxopt.base.OptStep, LBFGSHistory]
 
    Minimize a function using L-BFGS
 

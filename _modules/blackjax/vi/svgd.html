@@ -328,7 +328,7 @@ document.write(`
                   
   <h1>Source code for blackjax.vi.svgd</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">functools</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">NamedTuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -343,13 +343,13 @@ document.write(`
 
 <span class="k">class</span> <span class="nc">SVGDState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
     <span class="n">particles</span><span class="p">:</span> <span class="n">ArrayTree</span>
-    <span class="n">kernel_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]</span>
+    <span class="n">kernel_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]</span>
     <span class="n">opt_state</span><span class="p">:</span> <span class="n">Any</span>
 
 
 <span class="k">def</span> <span class="nf">init</span><span class="p">(</span>
     <span class="n">initial_particles</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-    <span class="n">kernel_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">kernel_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">optimizer</span><span class="p">:</span> <span class="n">optax</span><span class="o">.</span><span class="n">GradientTransformation</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SVGDState</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -485,7 +485,7 @@ document.write(`
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span>
             <span class="n">initial_position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-            <span class="n">kernel_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;length_scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
+            <span class="n">kernel_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;length_scale&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span>
         <span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">initial_position</span><span class="p">,</span> <span class="n">kernel_parameters</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 

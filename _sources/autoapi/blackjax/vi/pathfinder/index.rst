@@ -82,7 +82,7 @@ Functions
       
 
 
-.. py:function:: approximate(rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable, initial_position: blackjax.types.ArrayLikeTree, num_samples: int = 200, *, maxiter=30, maxcor=10, maxls=1000, gtol=1e-08, ftol=1e-05) -> Tuple[PathfinderState, PathfinderInfo]
+.. py:function:: approximate(rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable, initial_position: blackjax.types.ArrayLikeTree, num_samples: int = 200, *, maxiter=30, maxcor=10, maxls=1000, gtol=1e-08, ftol=1e-05) -> tuple[PathfinderState, PathfinderInfo]
 
    Pathfinder variational inference algorithm.
 
@@ -111,7 +111,7 @@ Functions
              * *contains all the states traversed.*
 
 
-.. py:function:: sample(rng_key: blackjax.types.PRNGKey, state: PathfinderState, num_samples: Union[int, Tuple[], Tuple[int]] = ()) -> blackjax.types.ArrayTree
+.. py:function:: sample(rng_key: blackjax.types.PRNGKey, state: PathfinderState, num_samples: Union[int, tuple[], tuple[int]] = ()) -> blackjax.types.ArrayTree
 
    Draw from the Pathfinder approximation of the target distribution.
 

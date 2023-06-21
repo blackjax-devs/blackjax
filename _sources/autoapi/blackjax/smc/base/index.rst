@@ -80,7 +80,7 @@ Functions
 .. py:function:: init(particles: blackjax.types.ArrayLikeTree)
 
 
-.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SMCState, update_fn: Callable, weigh_fn: Callable, resample_fn: Callable, num_resampled: Optional[int] = None) -> Tuple[SMCState, SMCInfo]
+.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SMCState, update_fn: Callable, weigh_fn: Callable, resample_fn: Callable, num_resampled: Optional[int] = None) -> tuple[SMCState, SMCInfo]
 
    General SMC sampling step.
 

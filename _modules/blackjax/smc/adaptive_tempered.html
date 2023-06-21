@@ -340,7 +340,7 @@ document.write(`
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -424,7 +424,7 @@ document.write(`
         <span class="n">state</span><span class="p">:</span> <span class="n">tempered</span><span class="o">.</span><span class="n">TemperedSMCState</span><span class="p">,</span>
         <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">tempered</span><span class="o">.</span><span class="n">TemperedSMCState</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">SMCInfo</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">tempered</span><span class="o">.</span><span class="n">TemperedSMCState</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">SMCInfo</span><span class="p">]:</span>
         <span class="n">delta</span> <span class="o">=</span> <span class="n">compute_delta</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
         <span class="n">lmbda</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">+</span> <span class="n">state</span><span class="o">.</span><span class="n">lmbda</span>
         <span class="k">return</span> <span class="n">tempered_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">num_mcmc_steps</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">,</span> <span class="n">mcmc_parameters</span><span class="p">)</span>
@@ -472,7 +472,7 @@ document.write(`
         <span class="n">loglikelihood_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">mcmc_step_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
+        <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
         <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">target_ess</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">root_solver</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">dichotomy</span><span class="p">,</span>

@@ -340,7 +340,7 @@ document.write(`
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -408,7 +408,7 @@ document.write(`
     <span class="n">maxls</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
     <span class="n">gtol</span><span class="o">=</span><span class="mf">1e-08</span><span class="p">,</span>
     <span class="n">ftol</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">PathfinderState</span><span class="p">,</span> <span class="n">PathfinderInfo</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PathfinderState</span><span class="p">,</span> <span class="n">PathfinderInfo</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Pathfinder variational inference algorithm.</span>
 
 <span class="sd">    Pathfinder locates normal approximations to the target density along a</span>
@@ -529,7 +529,7 @@ document.write(`
 <div class="viewcode-block" id="sample"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.sample">[docs]</a><span class="k">def</span> <span class="nf">sample</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">PathfinderState</span><span class="p">,</span>
-    <span class="n">num_samples</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[()],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(),</span>
+    <span class="n">num_samples</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[()],</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw from the Pathfinder approximation of the target distribution.</span>
 

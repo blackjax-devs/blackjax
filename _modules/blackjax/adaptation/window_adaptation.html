@@ -341,7 +341,7 @@ document.write(`
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;Implementation of the Stan warmup for the HMC family of sampling algorithms.&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -374,7 +374,7 @@ document.write(`
 <div class="viewcode-block" id="base"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html#blackjax.adaptation.window_adaptation.base">[docs]</a><span class="k">def</span> <span class="nf">base</span><span class="p">(</span>
     <span class="n">is_mass_matrix_diagonal</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.80</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Warmup scheme for sampling procedures based on euclidean manifold HMC.</span>
 <span class="sd">    The schedule and algorithms used match Stan&#39;s :cite:p:`stan_hmc_param` as closely as possible.</span>
 
@@ -520,7 +520,7 @@ document.write(`
 
     <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
         <span class="n">adaptation_state</span><span class="p">:</span> <span class="n">WindowAdaptationState</span><span class="p">,</span>
-        <span class="n">adaptation_stage</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">,</span>
+        <span class="n">adaptation_stage</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
         <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
         <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WindowAdaptationState</span><span class="p">:</span>
@@ -562,7 +562,7 @@ document.write(`
 
         <span class="k">return</span> <span class="n">warmup_state</span>
 
-    <span class="k">def</span> <span class="nf">final</span><span class="p">(</span><span class="n">warmup_state</span><span class="p">:</span> <span class="n">WindowAdaptationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">final</span><span class="p">(</span><span class="n">warmup_state</span><span class="p">:</span> <span class="n">WindowAdaptationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the final values for the step size and mass matrix.&quot;&quot;&quot;</span>
         <span class="n">step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">ss_state</span><span class="o">.</span><span class="n">log_step_size_avg</span><span class="p">)</span>
         <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">warmup_state</span><span class="o">.</span><span class="n">imm_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span>
@@ -691,7 +691,7 @@ document.write(`
     <span class="n">initial_buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">75</span><span class="p">,</span>
     <span class="n">final_buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
     <span class="n">first_window_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the schedule for Stan&#39;s warmup.</span>
 
 <span class="sd">    The schedule below is intended to be as close as possible to Stan&#39;s :cite:p:`stan_hmc_param`.</span>

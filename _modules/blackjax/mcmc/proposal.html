@@ -340,7 +340,7 @@ document.write(`
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -371,7 +371,7 @@ document.write(`
 
 <div class="viewcode-block" id="proposal_generator"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.proposal_generator">[docs]</a><span class="k">def</span> <span class="nf">proposal_generator</span><span class="p">(</span>
     <span class="n">energy</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Parameters</span>
@@ -390,7 +390,7 @@ document.write(`
     <span class="k">def</span> <span class="nf">new</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Proposal</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">energy</span><span class="p">(</span><span class="n">state</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Proposal</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Proposal</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new proposal from a trajectory state.</span>
 
 <span class="sd">        The trajectory state records information about the position in the state</span>
@@ -424,7 +424,7 @@ document.write(`
     <span class="n">new_energy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Proposal</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Proposal</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes a new proposal from the energy difference between two states.</span>
 
 <span class="sd">    It also verifies whether this difference is a divergence, if the</span>
@@ -470,7 +470,7 @@ document.write(`
     <span class="n">transition_energy_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">proposal_factory</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">proposal_from_energy_diff</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A proposal generator that takes into account the transition between</span>
 <span class="sd">    two states to compute a new proposal.</span>
 
@@ -500,7 +500,7 @@ document.write(`
         <span class="n">initial_state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">,</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">,</span>
         <span class="o">**</span><span class="n">energy_params</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Proposal</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Proposal</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
         <span class="n">new_energy</span> <span class="o">=</span> <span class="n">transition_energy_fn</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="o">**</span><span class="n">energy_params</span><span class="p">)</span>
         <span class="n">prev_energy</span> <span class="o">=</span> <span class="n">transition_energy_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="o">**</span><span class="n">energy_params</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">proposal_factory</span><span class="p">(</span><span class="n">prev_energy</span><span class="p">,</span> <span class="n">new_energy</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
