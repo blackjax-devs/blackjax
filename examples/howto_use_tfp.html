@@ -379,38 +379,30 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">tensorflow_probability.substrates</span> <span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">tfp</span>
 <span class="n">tfd</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">distributions</span>
+<span class="n">jdc</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">JointDistributionCoroutineAutoBatched</span>
 
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
+<span class="nd">@jdc</span>
+<span class="k">def</span> <span class="nf">model</span><span class="p">():</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;avg_effect&quot;</span><span class="p">)</span>
+    <span class="n">log_tau</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;avg_stddev&quot;</span><span class="p">)</span>
+    <span class="n">theta_prime</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                                   <span class="n">num_schools</span><span class="p">,</span>
+                                   <span class="n">name</span><span class="o">=</span><span class="s2">&quot;school_effects_standard&quot;</span><span class="p">)</span>
+    <span class="n">yhat</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_tau</span><span class="p">)</span> <span class="o">*</span> <span class="n">theta_prime</span>
+    <span class="k">yield</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">yhat</span><span class="p">,</span> <span class="n">treatment_stddevs</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;treatment_effects&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>We need to translate the model into a log-probability density function that will be used by Blackjax to perform inference.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Condition on the observed</span>
+<span class="n">pinned_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">experimental_pin</span><span class="p">(</span><span class="n">treatment_effects</span><span class="o">=</span><span class="n">treatment_effects</span><span class="p">)</span>
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">JointDistributionSequential</span><span class="p">(</span>
-    <span class="p">[</span>
-        <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;avg_effect&quot;</span><span class="p">),</span>  <span class="c1"># `mu` above</span>
-        <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;avg_stddev&quot;</span><span class="p">),</span>  <span class="c1"># `log(tau)` above</span>
-        <span class="n">tfd</span><span class="o">.</span><span class="n">Independent</span><span class="p">(</span>
-            <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
-                <span class="n">loc</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_schools</span><span class="p">),</span>
-                <span class="n">scale</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_schools</span><span class="p">),</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;school_effects_standard&quot;</span><span class="p">,</span>
-            <span class="p">),</span>  <span class="c1"># `theta_prime`</span>
-            <span class="n">reinterpreted_batch_ndims</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="k">lambda</span> <span class="n">school_effects_standard</span><span class="p">,</span> <span class="n">avg_stddev</span><span class="p">,</span> <span class="n">avg_effect</span><span class="p">:</span> <span class="p">(</span>
-            <span class="n">tfd</span><span class="o">.</span><span class="n">Independent</span><span class="p">(</span>
-                <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
-                    <span class="n">loc</span><span class="o">=</span><span class="p">(</span>
-                        <span class="n">avg_effect</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
-                        <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">avg_stddev</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
-                        <span class="o">*</span> <span class="n">school_effects_standard</span>
-                    <span class="p">),</span>  <span class="c1"># `theta` above</span>
-                    <span class="n">scale</span><span class="o">=</span><span class="n">treatment_stddevs</span><span class="p">,</span>
-                <span class="p">),</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;treatment_effects&quot;</span><span class="p">,</span>  <span class="c1"># `y` above</span>
-                <span class="n">reinterpreted_batch_ndims</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="p">),</span>
-    <span class="p">]</span>
-<span class="p">)</span>
+<span class="n">logdensity_fn</span> <span class="o">=</span> <span class="n">pinned_model</span><span class="o">.</span><span class="n">unnormalized_log_prob</span>
 </pre></div>
 </div>
 </div>
@@ -420,22 +412,6 @@ document.write(`
 </div>
 </div>
 </div>
-<p>We need to translate the model into a log-probability density function that will be used by Blackjax to perform inference.</p>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">target_logdensity_fn</span><span class="p">(</span><span class="n">avg_effect</span><span class="p">,</span> <span class="n">avg_stddev</span><span class="p">,</span> <span class="n">school_effects_standard</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unnormalized target density as a function of states.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">avg_effect</span><span class="p">,</span> <span class="n">avg_stddev</span><span class="p">,</span> <span class="n">school_effects_standard</span><span class="p">,</span> <span class="n">treatment_effects</span><span class="p">)</span>
-    <span class="p">)</span>
-
-
-<span class="n">logdensity_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">target_logdensity_fn</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<p>We can now initialize the</p>
 <p>Let us first run the window adaptation to find a good value for the step size and for the inverse mass matrix. As in the original example we will run the HMC integrator 3 times at each step.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -491,7 +467,7 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Array([10.000816 , 12.275808 ,  5.402026 , ..., -4.6742063,  2.9311733,
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Array([10.000816 , 12.275808 ,  5.402025 , ..., -4.6742063,  2.9311733,
         4.6128426], dtype=float32)
 </pre></div>
 </div>
@@ -556,7 +532,7 @@ document.write(`
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/fd4b22b4ae48cd60e972a9295b6821a8a9d22ac3cd51e75484ab2c905b2f9c35.png" src="../_images/fd4b22b4ae48cd60e972a9295b6821a8a9d22ac3cd51e75484ab2c905b2f9c35.png" />
+<img alt="../_images/5c3c9e410f7a66bf53516201b6d62d78354fb8528c85f0cbf677ddd0d930a877.png" src="../_images/5c3c9e410f7a66bf53516201b6d62d78354fb8528c85f0cbf677ddd0d930a877.png" />
 </div>
 </div>
 </section>

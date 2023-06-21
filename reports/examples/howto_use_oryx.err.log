@@ -1,17 +1,17 @@
 Traceback (most recent call last):
-  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+  File "/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
     executenb(
-  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/nbclient/client.py", line 1305, in execute
+  File "/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/nbclient/client.py", line 1305, in execute
     return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
-  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/jupyter_core/utils/__init__.py", line 166, in wrapped
+  File "/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/jupyter_core/utils/__init__.py", line 166, in wrapped
     return loop.run_until_complete(inner)
-  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/asyncio/base_events.py", line 647, in run_until_complete
+  File "/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/asyncio/base_events.py", line 647, in run_until_complete
     return future.result()
-  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/nbclient/client.py", line 705, in async_execute
+  File "/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/nbclient/client.py", line 705, in async_execute
     await self.async_execute_cell(
-  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/nbclient/client.py", line 1058, in async_execute_cell
+  File "/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/nbclient/client.py", line 1058, in async_execute_cell
     await self._check_raise_for_error(cell, cell_index, exec_reply)
-  File "/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/nbclient/client.py", line 914, in _check_raise_for_error
+  File "/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/nbclient/client.py", line 914, in _check_raise_for_error
     raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
 nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
 ------------------
@@ -51,7 +51,7 @@ Cell [0;32mIn[3], line 2[0m
 [1;32m      5[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01msubstrates[39;00m [38;5;28;01mimport[39;00m jax [38;5;28;01mas[39;00m tfp
 [1;32m      6[0m tfd [38;5;241m=[39m tfp[38;5;241m.[39mdistributions
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/oryx/__init__.py:16[0m
+File [0;32m/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/oryx/__init__.py:16[0m
 [1;32m      1[0m [38;5;66;03m# Copyright 2020 The TensorFlow Probability Authors.[39;00m
 [1;32m      2[0m [38;5;66;03m#[39;00m
 [1;32m      3[0m [38;5;66;03m# Licensed under the Apache License, Version 2.0 (the "License");[39;00m
@@ -63,14 +63,14 @@ File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/o
 [1;32m     17[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m [38;5;28;01mimport[39;00m core
 [1;32m     18[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m [38;5;28;01mimport[39;00m distributions
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/oryx/bijectors/__init__.py:18[0m
+File [0;32m/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/oryx/bijectors/__init__.py:18[0m
 [1;32m     15[0m [38;5;124;03m"""Module for probability bijectors and related functions."""[39;00m
 [1;32m     16[0m [38;5;28;01mimport[39;00m [38;5;21;01minspect[39;00m
 [0;32m---> 18[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m[38;5;21;01m.[39;00m[38;5;21;01msubstrates[39;00m [38;5;28;01mimport[39;00m jax [38;5;28;01mas[39;00m tfp
 [1;32m     19[0m [38;5;28;01mfrom[39;00m [38;5;21;01moryx[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbijectors[39;00m [38;5;28;01mimport[39;00m bijector_extensions
 [1;32m     21[0m tfb [38;5;241m=[39m tfp[38;5;241m.[39mbijectors
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/experimental/__init__.py:31[0m
+File [0;32m/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/tensorflow_probability/python/experimental/__init__.py:31[0m
 [1;32m     15[0m [38;5;124;03m"""TensorFlow Probability API-unstable package.[39;00m
 [1;32m     16[0m 
 [1;32m     17[0m [38;5;124;03mThis package contains potentially useful code which is under active development[39;00m
@@ -82,7 +82,7 @@ File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/t
 [1;32m     32[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m [38;5;28;01mimport[39;00m bijectors
 [1;32m     33[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m [38;5;28;01mimport[39;00m distribute
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/experimental/bayesopt/__init__.py:17[0m
+File [0;32m/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/tensorflow_probability/python/experimental/bayesopt/__init__.py:17[0m
 [1;32m      1[0m [38;5;66;03m# Copyright 2023 The TensorFlow Probability Authors.[39;00m
 [1;32m      2[0m [38;5;66;03m#[39;00m
 [1;32m      3[0m [38;5;66;03m# Licensed under the Apache License, Version 2.0 (the "License");[39;00m
@@ -96,7 +96,7 @@ File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/t
 [1;32m     21[0m     [38;5;124m'[39m[38;5;124macquisition[39m[38;5;124m'[39m,
 [1;32m     22[0m ]
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/experimental/bayesopt/acquisition/__init__.py:17[0m
+File [0;32m/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/tensorflow_probability/python/experimental/bayesopt/acquisition/__init__.py:17[0m
 [1;32m      1[0m [38;5;66;03m# Copyright 2023 The TensorFlow Probability Authors.[39;00m
 [1;32m      2[0m [38;5;66;03m#[39;00m
 [1;32m      3[0m [38;5;66;03m# Licensed under the Apache License, Version 2.0 (the "License");[39;00m
@@ -108,19 +108,19 @@ File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/t
 [1;32m     18[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbayesopt[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition_function[39;00m [38;5;28;01mimport[39;00m MCMCReducer
 [1;32m     19[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexperimental[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbayesopt[39;00m[38;5;21;01m.[39;00m[38;5;21;01macquisition[39;00m[38;5;21;01m.[39;00m[38;5;21;01mexpected_improvement[39;00m [38;5;28;01mimport[39;00m GaussianProcessExpectedImprovement
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/experimental/bayesopt/acquisition/acquisition_function.py:22[0m
+File [0;32m/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/tensorflow_probability/python/experimental/bayesopt/acquisition/acquisition_function.py:22[0m
 [1;32m     19[0m [38;5;28;01mimport[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mcompat[39;00m[38;5;21;01m.[39;00m[38;5;21;01mv2[39;00m [38;5;28;01mas[39;00m [38;5;21;01mtf[39;00m
 [1;32m     21[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01minternal[39;00m [38;5;28;01mimport[39;00m dtype_util
 [0;32m---> 22[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01minternal[39;00m [38;5;28;01mimport[39;00m prefer_static [38;5;28;01mas[39;00m ps
 [1;32m     23[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow_probability[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01minternal[39;00m [38;5;28;01mimport[39;00m tensor_util
 [1;32m     26[0m [38;5;28;01mclass[39;00m [38;5;21;01mAcquisitionFunction[39;00m([38;5;28mobject[39m, metaclass[38;5;241m=[39mabc[38;5;241m.[39mABCMeta):
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow_probability/python/internal/prefer_static.py:30[0m
+File [0;32m/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/tensorflow_probability/python/internal/prefer_static.py:30[0m
 [1;32m     28[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mframework[39;00m [38;5;28;01mimport[39;00m ops  [38;5;66;03m# pylint: disable=g-direct-tensorflow-import[39;00m
 [1;32m     29[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mframework[39;00m [38;5;28;01mimport[39;00m tensor_util  [38;5;66;03m# pylint: disable=g-direct-tensorflow-import[39;00m
 [0;32m---> 30[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mops[39;00m [38;5;28;01mimport[39;00m control_flow_case  [38;5;66;03m# pylint: disable=g-direct-tensorflow-import[39;00m
 [1;32m     31[0m [38;5;28;01mfrom[39;00m [38;5;21;01mtensorflow[39;00m[38;5;21;01m.[39;00m[38;5;21;01mpython[39;00m[38;5;21;01m.[39;00m[38;5;21;01mutil[39;00m [38;5;28;01mimport[39;00m tf_inspect  [38;5;66;03m# pylint: disable=g-direct-tensorflow-import[39;00m
 [1;32m     33[0m JAX_MODE [38;5;241m=[39m [38;5;28;01mFalse[39;00m
 
-[0;31mImportError[0m: cannot import name 'control_flow_case' from 'tensorflow.python.ops' (/opt/hostedtoolcache/Python/3.9.16/x64/lib/python3.9/site-packages/tensorflow/python/ops/__init__.py)
+[0;31mImportError[0m: cannot import name 'control_flow_case' from 'tensorflow.python.ops' (/opt/hostedtoolcache/Python/3.9.17/x64/lib/python3.9/site-packages/tensorflow/python/ops/__init__.py)
 
