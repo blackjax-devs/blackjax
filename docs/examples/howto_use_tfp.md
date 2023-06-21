@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.0
+    jupytext_version: 1.14.5
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -49,56 +49,28 @@ We implement the non-centered version of the hierarchical model:
 ```{code-cell} python
 from tensorflow_probability.substrates import jax as tfp
 tfd = tfp.distributions
+jdc = tfd.JointDistributionCoroutineAutoBatched
 
 import jax.numpy as jnp
 
-
-model = tfd.JointDistributionSequential(
-    [
-        tfd.Normal(loc=0.0, scale=10.0, name="avg_effect"),  # `mu` above
-        tfd.Normal(loc=5.0, scale=1.0, name="avg_stddev"),  # `log(tau)` above
-        tfd.Independent(
-            tfd.Normal(
-                loc=jnp.zeros(num_schools),
-                scale=jnp.ones(num_schools),
-                name="school_effects_standard",
-            ),  # `theta_prime`
-            reinterpreted_batch_ndims=1,
-        ),
-        lambda school_effects_standard, avg_stddev, avg_effect: (
-            tfd.Independent(
-                tfd.Normal(
-                    loc=(
-                        avg_effect[..., jnp.newaxis]
-                        + jnp.exp(avg_stddev[..., jnp.newaxis])
-                        * school_effects_standard
-                    ),  # `theta` above
-                    scale=treatment_stddevs,
-                ),
-                name="treatment_effects",  # `y` above
-                reinterpreted_batch_ndims=1,
-            )
-        ),
-    ]
-)
+@jdc
+def model():
+    mu = yield tfd.Normal(0.0, 10.0, name="avg_effect")
+    log_tau = yield tfd.Normal(5.0, 1.0, name="avg_stddev")
+    theta_prime = yield tfd.Sample(tfd.Normal(0, 1),
+                                   num_schools,
+                                   name="school_effects_standard")
+    yhat = mu + jnp.exp(log_tau) * theta_prime
+    yield tfd.Normal(yhat, treatment_stddevs, name="treatment_effects")
 ```
 
 We need to translate the model into a log-probability density function that will be used by Blackjax to perform inference.
 
 ```{code-cell} python
-def target_logdensity_fn(avg_effect, avg_stddev, school_effects_standard):
-    """Unnormalized target density as a function of states."""
-    return model.log_prob(
-        (avg_effect, avg_stddev, school_effects_standard, treatment_effects)
-    )
+# Condition on the observed
+pinned_model = model.experimental_pin(treatment_effects=treatment_effects)
 
-
-logdensity_fn = lambda x: target_logdensity_fn(**x)
-```
-
-We can now initialize the
-
-```{code-cell} python
+logdensity_fn = pinned_model.unnormalized_log_prob
 ```
 
 Let us first run the window adaptation to find a good value for the step size and for the inverse mass matrix. As in the original example we will run the HMC integrator 3 times at each step.
@@ -167,7 +139,7 @@ school_effects_samples = (
 And now let us plot the correponding chains and distributions:
 
 ```{code-cell} python
-:tags: [hide-input,remove-stderr]
+:tags: [hide-input, remove-stderr]
 
 import seaborn as sns
 from matplotlib import pyplot as plt
