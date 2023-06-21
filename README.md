@@ -128,22 +128,7 @@ passing parameters.
 
 ## Contributions
 
-### What contributions?
-
-We value the following contributions:
-- Bug fixes
-- Documentation
-- High-level sampling algorithms from any family of algorithms: random walk,
-  hamiltonian monte carlo, sequential monte carlo, variational inference,
-  inference compilation, etc.
-- New building blocks, e.g. new metrics for HMC, integrators, etc.
-
-### How to contribute?
-
-1. Run `pip install -r requirements.txt` to install all the dev
-   dependencies.
-2. Run `pre-commit run --all-files` and `make test` before pushing on the repo; CI should pass if
-   these pass locally.
+Please follow our [short guide](https://github.com/blackjax-devs/blackjax/blob/main/CONTRIBUTING.md).
 
 ## Citing Blackjax
 

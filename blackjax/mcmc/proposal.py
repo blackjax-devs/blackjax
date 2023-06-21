@@ -97,8 +97,10 @@ def proposal_from_energy_diff(
     state: TrajectoryState,
 ) -> tuple[Proposal, bool]:
     """Computes a new proposal from the energy difference between two states.
+
     It also verifies whether this difference is a divergence, if the
     energy diff is above divergence_threshold.
+
     Parameters
     ----------
     initial_energy
@@ -141,10 +143,13 @@ def asymmetric_proposal_generator(
     proposal_factory: Callable = proposal_from_energy_diff,
 ) -> tuple[Callable, Callable]:
     """A proposal generator that takes into account the transition between
-    two states to compute a new proposal. In particular, both states are
-    used to compute the energies to consider in weighting the proposal,
+    two states to compute a new proposal.
+
+    In particular, both states are used to compute the energies to consider in weighting the proposal,
     to account for asymmetries.
-     ----------
+
+    Parameters
+    ----------
     transition_energy_fn
         A function that computes the energy of a transition from an initial state
         to a new state, given some optional keyword arguments.
