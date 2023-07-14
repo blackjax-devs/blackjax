@@ -91,7 +91,7 @@ def build_normal_rmh_kernel(rng_key, state, logdensity_fn, sigma):
         transition_generator=blackjax.mcmc.random_walk.normal(sigma)
     )
     return kernel
-    
+
 mwg_step_fn_x = build_normal_rmh_kernel
 mwg_step_fn_y = blackjax.hmc.build_kernel()  # default integrator, etc.
 
