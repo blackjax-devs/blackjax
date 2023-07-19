@@ -128,7 +128,7 @@ class IntegratorTest(chex.TestCase):
         )
 
         # We make sure that the particle moved from its initial position.
-        chex.assert_tree_all_close(final_state.position, example["q_final"], atol=1e-2)
+        chex.assert_trees_all_close(final_state.position, example["q_final"], atol=1e-2)
 
         # We now check the conservation of energy, the property that matters the most in HMC.
         energy = -neg_potential(q) + kinetic_energy(p)
