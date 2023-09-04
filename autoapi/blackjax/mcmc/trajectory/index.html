@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.mcmc.trajectory</title>
   
@@ -401,6 +401,10 @@ memory by keeping states that will subsequently be discarded.</p>
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.Trajectory" title="blackjax.mcmc.trajectory.Trajectory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Trajectory</span></code></a></p></td>
 <td><p></p></td>
@@ -417,6 +421,10 @@ memory by keeping states that will subsequently be discarded.</p>
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.append_to_trajectory" title="blackjax.mcmc.trajectory.append_to_trajectory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">append_to_trajectory</span></code></a>(→ Trajectory)</p></td>
 <td><p>Append a state to the (right of the) trajectory to form a new trajectory.</p></td>
@@ -523,7 +531,7 @@ memory by keeping states that will subsequently be discarded.</p>
 <dd><p>Integrate a trajectory and update the proposal sequentially in one direction
 until the termination criterion is met.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>integrator</strong> – The symplectic integrator used to integrate the hamiltonian trajectory.</p></li>
 <li><p><strong>kinetic_energy</strong> – Function to compute the current value of the kinetic energy.</p></li>
@@ -546,7 +554,7 @@ The implemenation here is mostly for validating the progressive implementation
 to make sure the two are equivalent. The recursive implementation should not
 be used for actually sampling as it cannot be jitted and thus likely slow.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>integrator</strong> – The symplectic integrator used to integrate the hamiltonian trajectory.</p></li>
 <li><p><strong>kinetic_energy</strong> – Function to compute the current value of the kinetic energy.</p></li>
@@ -595,7 +603,7 @@ until the termination criterion is met.</p>
 4. Else if the trajectory is performing a U-turn, return current proposal;
 5. Else update proposal, <cite>num_steps = num_steps ** rate</cite> and repeat from (1).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>trajectory_integrator</strong> – A function that runs the symplectic integrators and returns a new proposal
 and the integrated trajectory.</p></li>

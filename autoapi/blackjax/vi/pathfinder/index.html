@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.vi.pathfinder</title>
   
@@ -368,6 +368,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.vi.pathfinder.PathfinderState" title="blackjax.vi.pathfinder.PathfinderState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PathfinderState</span></code></a></p></td>
 <td><p>State of the Pathfinder algorithm.</p></td>
@@ -381,6 +385,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.vi.pathfinder.approximate" title="blackjax.vi.pathfinder.approximate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">approximate</span></code></a>(→ tuple[PathfinderState, PathfinderInfo])</p></td>
 <td><p>Pathfinder variational inference algorithm.</p></td>
@@ -451,7 +459,7 @@ quasi-Newton optimization path, with local covariance estimated using
 the inverse Hessian estimates produced by the L-BFGS optimizer.</p>
 <p>Function implements the algorithm 3 in <span id="id1">[<a class="reference internal" href="../../../../bib.html#id35" title="Lu Zhang, Bob Carpenter, Andrew Gelman, and Aki Vehtari. Pathfinder: parallel quasi-newton variational inference. Journal of Machine Learning Research, 23(306):1–49, 2022.">ZCGV22</a>]</span>:</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rng_key</strong> – PRPNG key</p></li>
 <li><p><strong>logdensity_fn</strong> – (un-normalized) log densify function of target distribution to take
@@ -468,7 +476,7 @@ ftol</cite></p></li>
 algorithm</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>A PathfinderState with information on the iteration in the optimization path</em></p></li>
 <li><p><em>whose approximate samples yields the highest ELBO, and PathfinderInfo that</em></p></li>
@@ -484,14 +492,14 @@ algorithm</p></li>
 <span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key:</span> <span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state:</span> <span class="pre">PathfinderState</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples:</span> <span class="pre">Union[int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuple[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuple[int]]</span> <span class="pre">=</span> <span class="pre">()</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.ArrayTree</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/vi/pathfinder.html#sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.vi.pathfinder.sample" title="Permalink to this definition">#</a></dt>
 <dd><p>Draw from the Pathfinder approximation of the target distribution.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rng_key</strong> – PRNG key</p></li>
 <li><p><strong>state</strong> – PathfinderState containing information for sampling</p></li>
 <li><p><strong>num_samples</strong> – Number of samples to draw</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>Samples drawn from the approximate Pathfinder distribution</p>
 </dd>
 </dl>
@@ -509,11 +517,11 @@ Kullback-Leibler (KL) divergence to the true posterior.</p>
 <p>Note: all the heavy processing in performed in the init function, step
 function is just a drawing a sample from a normal distribution</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>logdensity_fn</strong> – A function that represents the log-density of the model we want
 to sample from.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">VISamplingAlgorithm</span></code>.</p>
 </dd>
 </dl>

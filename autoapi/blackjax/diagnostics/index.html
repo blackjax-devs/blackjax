@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.diagnostics</title>
   
@@ -355,6 +355,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.diagnostics.potential_scale_reduction" title="blackjax.diagnostics.potential_scale_reduction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">potential_scale_reduction</span></code></a>(→ blackjax.types.Array)</p></td>
 <td><p>Gelman and Rubin (1992)'s potential scale reduction for computing multiple MCMC chain convergence.</p></td>
@@ -369,7 +373,7 @@ document.write(`
 <span class="sig-name descname"><span class="pre">potential_scale_reduction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_array</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chain_axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#potential_scale_reduction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.potential_scale_reduction" title="Permalink to this definition">#</a></dt>
 <dd><p>Gelman and Rubin (1992)’s potential scale reduction for computing multiple MCMC chain convergence.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>input_array</strong> – An array representing multiple chains of MCMC samples. The array must
 contains a chain dimension and a sample dimension.</p></li>
@@ -377,7 +381,7 @@ contains a chain dimension and a sample dimension.</p></li>
 <li><p><strong>sample_axis</strong> – The axis indicating a single chain of MCMC samples. Default to 1.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>NDArray of the resulting statistics (r-hat), with the chain and sample dimensions squeezed.</p>
 </dd>
 </dl>
@@ -396,7 +400,7 @@ greater than one indicate that one or more chains have not yet converged <span i
 <span class="sig-name descname"><span class="pre">effective_sample_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_array</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chain_axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#effective_sample_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.effective_sample_size" title="Permalink to this definition">#</a></dt>
 <dd><p>Compute estimate of the effective sample size (ess).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>input_array</strong> – An array representing multiple chains of MCMC samples. The array must
 contains a chain dimension and a sample dimension.</p></li>
@@ -404,7 +408,7 @@ contains a chain dimension and a sample dimension.</p></li>
 <li><p><strong>sample_axis</strong> – The axis indicating a single chain of MCMC samples. Default to 1.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>NDArray of the resulting statistics (ess), with the chain and sample dimensions squeezed.</p>
 </dd>
 </dl>

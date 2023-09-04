@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.vi.svgd</title>
   
@@ -359,6 +359,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.vi.svgd.svgd" title="blackjax.vi.svgd.svgd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">svgd</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the svgd algorithm.</p></td>
@@ -369,6 +373,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.vi.svgd.rbf_kernel" title="blackjax.vi.svgd.rbf_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rbf_kernel</span></code></a>(x, y[, length_scale])</p></td>
 <td><p></p></td>
@@ -397,7 +405,7 @@ This strategy is called the median heuristic.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">svgd</span></span><a class="reference internal" href="../../../../_modules/blackjax/vi/svgd.html#svgd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.vi.svgd.svgd" title="Permalink to this definition">#</a></dt>
 <dd><p>Implements the (basic) user interface for the svgd algorithm.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>grad_logdensity_fn</strong> – gradient, or an estimate, of the target log density function to samples approximately from</p></li>
 <li><p><strong>optimizer</strong> – Optax compatible optimizer, which conforms to the <cite>optax.GradientTransformation</cite> protocol</p></li>
@@ -405,7 +413,7 @@ This strategy is called the median heuristic.</p>
 <li><p><strong>update_kernel_parameters</strong> – function that updates the kernel parameters given the current state of the particles</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
 </dd>
 </dl>

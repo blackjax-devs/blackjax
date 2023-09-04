@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.adaptation.step_size</title>
   
@@ -364,6 +364,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.step_size.DualAveragingAdaptationState" title="blackjax.adaptation.step_size.DualAveragingAdaptationState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DualAveragingAdaptationState</span></code></a></p></td>
 <td><p>State carried through the dual averaging procedure.</p></td>
@@ -374,6 +378,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.step_size.dual_averaging_adaptation" title="blackjax.adaptation.step_size.dual_averaging_adaptation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dual_averaging_adaptation</span></code></a>(→ tuple[Callable, Callable, ...)</p></td>
 <td><p>Tune the step size in order to achieve a desired target acceptance rate.</p></td>
@@ -448,7 +456,7 @@ we note <span class="math notranslate nohighlight">\(x = \log \epsilon\)</span> 
 rate converges to the desired rate.</p>
 <p>See reference <span id="id3">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> (section 3.2.1) for a detailed discussion.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>t0</strong> (<em>float &gt;= 0</em>) – Free parameter that stabilizes the initial iterations of the algorithm.
 Large values may slow down convergence. Introduced in <span id="id4">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> with a default
@@ -461,7 +469,7 @@ in <span id="id6">[<a class="reference internal" href="../../../../bib.html#id16
 <li><p><strong>target</strong> – Target acceptance rate.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>init</em> – A function that initializes the state of the dual averaging scheme.</p></li>
 <li><p><em>update</em> – A function that updates the state of the dual averaging scheme.</p></li>
@@ -481,7 +489,7 @@ value can speed up the convergence. This heuristics doubles and halves the
 step size until the acceptance probability of the HMC proposal crosses the
 target value <span id="id7">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rng_key</strong> – Key used by JAX’s random number generator.</p></li>
 <li><p><strong>kernel_generator</strong> – A function that takes a step size as an input and returns the corresponding
@@ -494,10 +502,10 @@ never advances the chain.</p></li>
 estimate that we have found a “reasonable” first step size.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A reasonable first value for the step size.</p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a></p>
 </dd>
 </dl>

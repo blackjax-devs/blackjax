@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.mcmc.elliptical_slice</title>
   
@@ -371,6 +371,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.elliptical_slice.EllipSliceState" title="blackjax.mcmc.elliptical_slice.EllipSliceState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EllipSliceState</span></code></a></p></td>
 <td><p>State of the Elliptical Slice sampling algorithm.</p></td>
@@ -387,6 +391,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.elliptical_slice.init" title="blackjax.mcmc.elliptical_slice.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(position, logdensity_fn)</p></td>
 <td><p></p></td>
@@ -463,11 +471,11 @@ new value is likely to be to the previous value.</p>
 <span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/elliptical_slice.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.elliptical_slice.build_kernel" title="Permalink to this definition">#</a></dt>
 <dd><p>Build an Elliptical Slice sampling kernel <span id="id2">[<a class="reference internal" href="../../../../bib.html#id17" title="Iain Murray, Ryan Adams, and David MacKay. Elliptical slice sampling. In Proceedings of the thirteenth international conference on artificial intelligence and statistics, 541–548. JMLR Workshop and Conference Proceedings, 2010.">MAM10</a>]</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>cov_matrix</strong> – The value of the covariance matrix of the gaussian prior distribution from
 the posterior we wish to sample.</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>A kernel that takes a rng_key and a Pytree that contains the current state</em></p></li>
 <li><p><em>of the chain and that returns a new state of the chain along with</em></p></li>
@@ -495,13 +503,13 @@ the posterior we wish to sample.</p>
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>loglikelihood_fn</strong> – Only the log likelihood function from the posterior distributon we wish to sample.</p></li>
 <li><p><strong>cov_matrix</strong> – The value of the covariance matrix of the gaussian prior distribution from the posterior we wish to sample.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
 </dd>
 </dl>

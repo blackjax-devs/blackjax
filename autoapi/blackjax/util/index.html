@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.util</title>
   
@@ -354,6 +354,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.util.linear_map" title="blackjax.util.linear_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">linear_map</span></code></a>(diag_or_dense_a, b, *[, precision])</p></td>
 <td><p>Perform a linear map of the form y = Ax.</p></td>
@@ -383,7 +387,7 @@ precision. This is more useful for numerical algorithms and will be the
 default for jax.numpy in the future:
 <a class="github reference external" href="https://github.com/google/jax/pull/7859">google/jax#7859</a></p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>diag_or_dense_a</strong> – A diagonal (1d vector) or dense matrix (2d square matrix).</p></li>
 <li><p><strong>b</strong> – A vector.</p></li>
@@ -391,7 +395,7 @@ default for jax.numpy in the future:
 more details.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>The result vector of the matrix multiplication.</p>
 </dd>
 </dl>
@@ -402,7 +406,7 @@ more details.</p></li>
 <span class="sig-name descname"><span class="pre">generate_gaussian_noise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.ArrayTree</span></span></span><a class="reference internal" href="../../../_modules/blackjax/util.html#generate_gaussian_noise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.util.generate_gaussian_noise" title="Permalink to this definition">#</a></dt>
 <dd><p>Generate N(mu, sigma) noise with output structure that match a given PyTree.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rng_key</strong> – The pseudo-random number generator key used to generate random numbers.</p></li>
 <li><p><strong>position</strong> – PyTree that the structure the output should to match.</p></li>
@@ -410,7 +414,7 @@ more details.</p></li>
 <li><p><strong>sigma</strong> – The standard deviation of the Gaussian distribution.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>Gaussian noise following N(mu, sigma) that match the structure of position.</p>
 </dd>
 </dl>
@@ -436,10 +440,10 @@ array to a PyTree of equivalent dimension.</p>
 the PyTree. This way the user can tell which element in the PyTree corresponds to which
 column (and row) of a 1 dimensional (or 2 dimensional) array.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>input_pytree</strong> – Example PyTree.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>PyTree mapping each individual element of an arange array to elements in the PyTree.</p>
 </dd>
 </dl>

@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.mcmc.marginal_latent_gaussian</title>
   
@@ -369,6 +369,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.marginal_latent_gaussian.MarginalState" title="blackjax.mcmc.marginal_latent_gaussian.MarginalState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MarginalState</span></code></a></p></td>
 <td><p>State of the RMH chain.</p></td>
@@ -385,6 +389,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.marginal_latent_gaussian.init_and_kernel" title="blackjax.mcmc.marginal_latent_gaussian.init_and_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_and_kernel</span></code></a>(logdensity_fn, covariance[, mean])</p></td>
 <td><p>Build the marginal version of the auxiliary gradient-based sampler</p></td>
@@ -472,7 +480,7 @@ was returned.</p>
 <span class="sig-name descname"><span class="pre">init_and_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/marginal_latent_gaussian.html#init_and_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.marginal_latent_gaussian.init_and_kernel" title="Permalink to this definition">#</a></dt>
 <dd><p>Build the marginal version of the auxiliary gradient-based sampler</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p><ul class="simple">
 <li><p><em>A kernel that takes a rng_key and a Pytree that contains the current state</em></p></li>
 <li><p><em>of the chain and that returns a new state of the chain along with</em></p></li>
@@ -505,14 +513,14 @@ used for a given “step size” delta with the following code:</p>
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>logdensity_fn</strong> – The logarithm of the likelihood function for the latent Gaussian model.</p></li>
 <li><p><strong>covariance</strong> – The covariance of the prior Gaussian density.</p></li>
 <li><p><strong>mean</strong> (<em>optional</em>) – Mean of the prior Gaussian density. Default is zero.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
 </dd>
 </dl>

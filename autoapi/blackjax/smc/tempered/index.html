@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.smc.tempered</title>
   
@@ -361,6 +361,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.tempered.TemperedSMCState" title="blackjax.smc.tempered.TemperedSMCState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TemperedSMCState</span></code></a></p></td>
 <td><p>Current state for the tempered SMC algorithm.</p></td>
@@ -371,6 +375,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.tempered.init" title="blackjax.smc.tempered.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(particles)</p></td>
 <td><p></p></td>
@@ -424,7 +432,7 @@ and for which the density is easy to compute, and <span class="math notranslate 
 unnormalized likelihood term for which <span class="math notranslate nohighlight">\(V(x)\)</span> is easy to compute
 pointwise.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>logprior_fn</strong> – A function that computes the log density of the prior distribution</p></li>
 <li><p><strong>loglikelihood_fn</strong> – A function that returns the probability at a given
@@ -436,7 +444,7 @@ log-probability density function.</p></li>
 <li><p><strong>num_mcmc_iterations</strong> – Number of iterations in the MCMC chain.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>A callable that takes a rng_key and a TemperedSMCState that contains the current state</em></p></li>
 <li><p><em>of the chain and that returns a new state of the chain along with</em></p></li>

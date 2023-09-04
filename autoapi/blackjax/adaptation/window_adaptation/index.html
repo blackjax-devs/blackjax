@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.adaptation.window_adaptation</title>
   
@@ -363,6 +363,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.window_adaptation.WindowAdaptationState" title="blackjax.adaptation.window_adaptation.WindowAdaptationState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WindowAdaptationState</span></code></a></p></td>
 <td><p></p></td>
@@ -373,6 +377,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.window_adaptation.base" title="blackjax.adaptation.window_adaptation.base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base</span></code></a>(→ tuple[Callable, Callable, Callable])</p></td>
 <td><p>Warmup scheme for sampling procedures based on euclidean manifold HMC.</p></td>
@@ -431,6 +439,14 @@ the step size is re-initialized to a “reasonable” value.
 3. A last fast adaptation window where only the step size is adapted.</p>
 <p>Schematically:</p>
 <table class="table">
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 5%" />
+<col style="width: 10%" />
+<col style="width: 20%" />
+<col style="width: 40%" />
+<col style="width: 10%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p>fast</p></td>
 <td><p>s</p></td>
@@ -454,14 +470,14 @@ to the matrix. In (3) we compute the mass matrix to use in the kernel and
 re-initialize the mass matrix adaptation. The step size is still adapated
 in slow adaptation windows, and is not re-initialized between windows.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>is_mass_matrix_diagonal</strong> – Create and adapt a diagonal mass matrix if True, a dense matrix
 otherwise.</p></li>
 <li><p><strong>target_acceptance_rate</strong> – The target acceptance rate for the step size adaptation.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>init</em> – Function that initializes the warmup.</p></li>
 <li><p><em>update</em> – Function that moves the warmup one step.</p></li>
@@ -487,7 +503,7 @@ provides a general-purpose algorithm to tune the values of these parameters.
 Originally based on Stan’s window adaptation, the algorithm has evolved to
 improve performance and quality.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>algorithm</strong> – The algorithm whose parameters are being tuned.</p></li>
 <li><p><strong>logdensity_fn</strong> – The log density probability density function from which we wish to
@@ -500,7 +516,7 @@ sample.</p></li>
 integration steps for HMC.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A function that runs the adaptation and returns an <cite>AdaptationResult</cite> object.</p>
 </dd>
 </dl>
@@ -532,7 +548,7 @@ requires more steps than dual averaging to give an accurate value. See <span id=
 for a more detailed explanation.</p>
 <p>Fast intervals are given the label 0 and slow intervals the label 1.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>num_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – The number of warmup steps to perform.</p></li>
 <li><p><strong>initial_buffer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – The width of the initial fast adaptation interval.</p></li>
@@ -540,7 +556,7 @@ for a more detailed explanation.</p>
 <li><p><strong>final_buffer_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – The width of the final fast adaptation interval.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A list of tuples (window_label, is_middle_window_end).</p>
 </dd>
 </dl>

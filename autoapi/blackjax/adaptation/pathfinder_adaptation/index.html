@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.adaptation.pathfinder_adaptation</title>
   
@@ -361,6 +361,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.pathfinder_adaptation.PathfinderAdaptationState" title="blackjax.adaptation.pathfinder_adaptation.PathfinderAdaptationState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PathfinderAdaptationState</span></code></a></p></td>
 <td><p></p></td>
@@ -371,6 +375,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.pathfinder_adaptation.base" title="blackjax.adaptation.pathfinder_adaptation.base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base</span></code></a>([target_acceptance_rate])</p></td>
 <td><p>Warmup scheme for sampling procedures based on euclidean manifold HMC.</p></td>
@@ -412,10 +420,10 @@ point for the markov chain that is supposedly closer to the typical set.
 adapt the value of the step size using an optimization algorithm so that
 the mcmc algorithm reaches a given target acceptance rate.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>target_acceptance_rate</strong> – The target acceptance rate for the step size adaptation.</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>init</em> – Function that initializes the warmup.</p></li>
 <li><p><em>update</em> – Function that moves the warmup one step.</p></li>
@@ -432,7 +440,7 @@ the mcmc algorithm reaches a given target acceptance rate.</p>
 <dd><p>Adapt the value of the inverse mass matrix and step size parameters of
 algorithms in the HMC fmaily.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>algorithm</strong> – The algorithm whose parameters are being tuned.</p></li>
 <li><p><strong>logdensity_fn</strong> – The log density probability density function from which we wish to sample.</p></li>
@@ -442,7 +450,7 @@ algorithms in the HMC fmaily.</p>
 integration steps for HMC.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>A function that returns the last chain state and a sampling kernel with the</em></p></li>
 <li><p><em>tuned parameter values from an initial state.</em></p></li>

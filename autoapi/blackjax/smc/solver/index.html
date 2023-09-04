@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.smc.solver</title>
   
@@ -354,6 +354,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.solver.dichotomy" title="blackjax.smc.solver.dichotomy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dichotomy</span></code></a>(fun, _delta0, min_delta, max_delta[, eps, ...])</p></td>
 <td><p>Solves for delta by dichotomy.</p></td>
@@ -367,7 +371,7 @@ document.write(`
 <p>If max_delta is such that fun(max_delta) &gt; 0, then we assume that max_delta
 can be used as an increment in the tempering.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fun</strong> (<em>Callable</em>) – The decreasing function to solve, we must have fun(min_delta) &gt; 0, fun(max_delta) &lt; 0</p></li>
 <li><p><strong>min_delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Starting point of the interval search</p></li>
@@ -376,10 +380,10 @@ can be used as an increment in the tempering.</p>
 <li><p><strong>max_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – Maximum of iterations in the dichotomy search</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p><strong>delta</strong> – The root of <cite>fun</cite></p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>Array, shape (,)</p>
 </dd>
 </dl>

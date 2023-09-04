@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.vi.meanfield_vi</title>
   
@@ -371,6 +371,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.vi.meanfield_vi.MFVIState" title="blackjax.vi.meanfield_vi.MFVIState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MFVIState</span></code></a></p></td>
 <td><p></p></td>
@@ -387,6 +391,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.vi.meanfield_vi.step" title="blackjax.vi.meanfield_vi.step"><code class="xref py py-obj docutils literal notranslate"><span class="pre">step</span></code></a>(→ tuple[MFVIState, MFVIInfo])</p></td>
 <td><p>Approximate the target density using the mean-field approximation.</p></td>
@@ -434,7 +442,7 @@ document.write(`
 <span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.vi.meanfield_vi.MFVIState" title="blackjax.vi.meanfield_vi.MFVIState"><span class="pre">MFVIState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">optax.GradientTransformation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stl_estimator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#blackjax.vi.meanfield_vi.MFVIState" title="blackjax.vi.meanfield_vi.MFVIState"><span class="pre">MFVIState</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#blackjax.vi.meanfield_vi.MFVIInfo" title="blackjax.vi.meanfield_vi.MFVIInfo"><span class="pre">MFVIInfo</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/vi/meanfield_vi.html#step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.vi.meanfield_vi.step" title="Permalink to this definition">#</a></dt>
 <dd><p>Approximate the target density using the mean-field approximation.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rng_key</strong> – Key for JAX’s pseudo-random number generator.</p></li>
 <li><p><strong>init_state</strong> – Initial state of the mean-field approximation.</p></li>
@@ -462,7 +470,7 @@ from the gradient. It is suggested by <span id="id2">[<a class="reference intern
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">meanfield_vi</span></span><a class="reference internal" href="../../../../_modules/blackjax/vi/meanfield_vi.html#meanfield_vi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.vi.meanfield_vi.meanfield_vi" title="Permalink to this definition">#</a></dt>
 <dd><p>High-level implementation of Mean-Field Variational Inference.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>logdensity_fn</strong> – A function that represents the log-density function associated with
 the distribution we want to sample from.</p></li>
@@ -470,7 +478,7 @@ the distribution we want to sample from.</p></li>
 <li><p><strong>num_samples</strong> – Number of samples to take at each step to optimize the ELBO.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">VIAlgorithm</span></code>.</p>
 </dd>
 </dl>

@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.sgmcmc.sgld</title>
   
@@ -360,6 +360,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgmcmc.sgld.sgld" title="blackjax.sgmcmc.sgld.sgld"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgld</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the SGLD kernel.</p></td>
@@ -370,6 +374,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgmcmc.sgld.init" title="blackjax.sgmcmc.sgld.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(→ blackjax.types.ArrayLikeTree)</p></td>
 <td><p></p></td>
@@ -422,11 +430,11 @@ perform one step:</p>
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>grad_estimator</strong> – A function that takes a position, a batch of data and returns an estimation
 of the gradient of the log-density at this position.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
 </dd>
 </dl>

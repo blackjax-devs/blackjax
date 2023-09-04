@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.sgmcmc.csgld</title>
   
@@ -367,6 +367,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgmcmc.csgld.ContourSGLDState" title="blackjax.sgmcmc.csgld.ContourSGLDState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ContourSGLDState</span></code></a></p></td>
 <td><p>State of the Contour SgLD algorithm.</p></td>
@@ -380,13 +384,17 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgmcmc.csgld.init" title="blackjax.sgmcmc.csgld.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(→ ContourSGLDState)</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.sgmcmc.csgld.build_kernel" title="blackjax.sgmcmc.csgld.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(→ Callable)</p></td>
 <td><p><dl class="field-list simple">
-<dt class="field-odd">param num_partitions<span class="colon">:</span></dt>
+<dt class="field-odd">param num_partitions</dt>
 <dd class="field-odd"><p>The number of partitions we divide the energy landscape into.</p>
 </dd>
 </dl>
@@ -399,7 +407,7 @@ document.write(`
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ContourSGLDState</span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/csgld.html#ContourSGLDState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.csgld.ContourSGLDState" title="Permalink to this definition">#</a></dt>
 <dd><p>State of the Contour SgLD algorithm.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>position</strong> – Current position in the sample space.</p></li>
 <li><p><strong>energy_pdf</strong> – Vector with <cite>m</cite> non-negative values that sum to 1. The <cite>i</cite>-th value
@@ -435,7 +443,7 @@ of the vector is equal to <span class="math notranslate nohighlight">\(\int_{S_1
 <dt class="sig sig-object py" id="blackjax.sgmcmc.csgld.build_kernel">
 <span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_partitions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">energy_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_energy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/csgld.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.csgld.build_kernel" title="Permalink to this definition">#</a></dt>
 <dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>num_partitions</strong> – The number of partitions we divide the energy landscape into.</p></li>
 <li><p><strong>energy_gap</strong> – The difference in energy <span class="math notranslate nohighlight">\(\Delta u\)</span> between the successive
@@ -457,7 +465,7 @@ the closer the gap between min_energy and 3456 is, the better.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">csgld</span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/csgld.html#csgld"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.csgld.csgld" title="Permalink to this definition">#</a></dt>
 <dd><p>Implements the (basic) user interface for the Contour SGLD kernel.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>logdensity_estimator</strong> – A function that returns an estimation of the model’s logdensity given
 a position and a batch of data.</p></li>
@@ -478,7 +486,7 @@ smaller than 3456. Set it to 0 is acceptable, but not efficient enough.
 the closer the gap between min_energy and 3456 is, the better.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
 </dd>
 </dl>

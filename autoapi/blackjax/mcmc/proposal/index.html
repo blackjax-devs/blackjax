@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.mcmc.proposal</title>
   
@@ -369,6 +369,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Proposal</span></code></a></p></td>
 <td><p>Proposal for the next chain step.</p></td>
@@ -379,10 +383,14 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.proposal_generator" title="blackjax.mcmc.proposal.proposal_generator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">proposal_generator</span></code></a>(→ tuple[Callable, Callable])</p></td>
 <td><p><dl class="field-list simple">
-<dt class="field-odd">param energy<span class="colon">:</span></dt>
+<dt class="field-odd">param energy</dt>
 <dd class="field-odd"><p>A function that computes the energy associated to a given state</p>
 </dd>
 </dl>
@@ -412,6 +420,10 @@ document.write(`
 <section id="attributes">
 <h3>Attributes<a class="headerlink" href="#attributes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.TrajectoryState" title="blackjax.mcmc.proposal.TrajectoryState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TrajectoryState</span></code></a></p></td>
 <td><p></p></td>
@@ -464,13 +476,13 @@ densities of each state <span class="math notranslate nohighlight">\(e^{-H(z)}\)
 <dt class="sig sig-object py" id="blackjax.mcmc.proposal.proposal_generator">
 <span class="sig-name descname"><span class="pre">proposal_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#proposal_generator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.proposal_generator" title="Permalink to this definition">#</a></dt>
 <dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>energy</strong> – A function that computes the energy associated to a given state</p></li>
 <li><p><strong>divergence_threshold</strong> – max value allowed for the difference in energies not to be considered a divergence</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>Two functions, one to generate an initial proposal when no step has been taken,</em></p></li>
 <li><p><em>another to generate proposals after each step.</em></p></li>
@@ -487,7 +499,7 @@ densities of each state <span class="math notranslate nohighlight">\(e^{-H(z)}\)
 <p>It also verifies whether this difference is a divergence, if the
 energy diff is above divergence_threshold.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>initial_energy</strong> – the energy from the initial state</p></li>
 <li><p><strong>new_energy</strong> – the energy at the proposed state</p></li>
@@ -495,7 +507,7 @@ energy diff is above divergence_threshold.</p>
 <li><p><strong>state</strong> – the proposed state</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A proposal and a flag for divergence</p>
 </dd>
 </dl>
@@ -509,7 +521,7 @@ two states to compute a new proposal.</p>
 <p>In particular, both states are used to compute the energies to consider in weighting the proposal,
 to account for asymmetries.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>transition_energy_fn</strong> – A function that computes the energy of a transition from an initial state
 to a new state, given some optional keyword arguments.</p></li>
@@ -517,7 +529,7 @@ to a new state, given some optional keyword arguments.</p></li>
 <li><p><strong>proposal_factory</strong> – A function that builds a proposal from the transition energies.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>Two functions, one to generate an initial proposal when no step has been taken,</em></p></li>
 <li><p><em>another to generate proposals after each step.</em></p></li>

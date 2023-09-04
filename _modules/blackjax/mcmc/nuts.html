@@ -406,7 +406,6 @@ document.write(`
 <div class="viewcode-block" id="build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.build_kernel">[docs]</a><span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span>
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
-    <span class="n">max_num_doublings</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an iterative NUTS kernel.</span>
 
@@ -437,10 +436,6 @@ document.write(`
 <span class="sd">    divergence_threshold</span>
 <span class="sd">        The absolute difference in energy above which we consider</span>
 <span class="sd">        a transition &quot;divergent&quot;.</span>
-<span class="sd">    max_num_doublings</span>
-<span class="sd">        The maximum number of times we expand the trajectory by</span>
-<span class="sd">        doubling the number of steps if the trajectory does not</span>
-<span class="sd">        turn onto itself.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -450,6 +445,7 @@ document.write(`
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">max_num_doublings</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">hmc</span><span class="o">.</span><span class="n">HMCState</span><span class="p">,</span> <span class="n">NUTSInfo</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new sample with the NUTS kernel.&quot;&quot;&quot;</span>
 
@@ -553,7 +549,7 @@ document.write(`
         <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
         <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">max_num_doublings</span><span class="p">)</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
@@ -565,6 +561,7 @@ document.write(`
                 <span class="n">logdensity_fn</span><span class="p">,</span>
                 <span class="n">step_size</span><span class="p">,</span>
                 <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+                <span class="n">max_num_doublings</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>

@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.sgmcmc.sgnht</title>
   
@@ -366,6 +366,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgmcmc.sgnht.SGNHTState" title="blackjax.sgmcmc.sgnht.SGNHTState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SGNHTState</span></code></a></p></td>
 <td><p>State of the SGNHT algorithm.</p></td>
@@ -379,6 +383,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgmcmc.sgnht.init" title="blackjax.sgmcmc.sgnht.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(→ SGNHTState)</p></td>
 <td><p></p></td>
@@ -393,7 +401,7 @@ document.write(`
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SGNHTState</span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/sgnht.html#SGNHTState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.sgnht.SGNHTState" title="Permalink to this definition">#</a></dt>
 <dd><p>State of the SGNHT algorithm.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>position</strong> – Current position in the sample space.</p></li>
 <li><p><strong>momentum</strong> – Current momentum in the sample space.</p></li>
@@ -462,11 +470,11 @@ perform one step:</p>
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>grad_estimator</strong> – A function that takes a position, a batch of data and returns an estimation
 of the gradient of the log-density at this position.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
 </dd>
 </dl>

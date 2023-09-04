@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.optimizers.dual_averaging</title>
   
@@ -360,6 +360,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.optimizers.dual_averaging.DualAveragingState" title="blackjax.optimizers.dual_averaging.DualAveragingState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DualAveragingState</span></code></a></p></td>
 <td><p>State carried through the dual averaging procedure.</p></td>
@@ -370,6 +374,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.optimizers.dual_averaging.dual_averaging" title="blackjax.optimizers.dual_averaging.dual_averaging"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dual_averaging</span></code></a>(→ tuple[Callable, Callable, Callable])</p></td>
 <td><p>Find the state that minimizes an objective function using a primal-dual</p></td>
@@ -433,7 +441,7 @@ subgradient method.</p>
 <p>See <span id="id1">[<a class="reference internal" href="../../../../bib.html#id15" title="Yurii Nesterov. Primal-dual subgradient methods for convex problems. Mathematical programming, 120(1):221–259, 2009.">Nes09</a>]</span> for a detailed explanation of the algorithm and its mathematical
 properties.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>t0</strong> (<em>float &gt;= 0</em>) – Free parameter that stabilizes the initial iterations of the algorithm.
 Large values may slow down convergence. Introduced in <span id="id2">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> with a default
@@ -445,7 +453,7 @@ quickly forget earlier step for a small value of <cite>kappa</cite>. Introduced
 in <span id="id4">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span>, with a recommended value of .75</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>init</em> – A function that initializes the state of the dual averaging scheme.</p></li>
 <li><p><em>update</em> – a function that updates the state of the dual averaging scheme.</p></li>

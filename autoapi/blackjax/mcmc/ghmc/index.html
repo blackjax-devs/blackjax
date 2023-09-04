@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.mcmc.ghmc</title>
   
@@ -368,6 +368,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.ghmc.GHMCState" title="blackjax.mcmc.ghmc.GHMCState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GHMCState</span></code></a></p></td>
 <td><p>State of the Generalized HMC algorithm.</p></td>
@@ -381,6 +385,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.ghmc.init" title="blackjax.mcmc.ghmc.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(→ GHMCState)</p></td>
 <td><p></p></td>
@@ -446,7 +454,7 @@ on the previous momentum and slice variables, and a Metropolis-Hastings step
 performed (equivalently) as slice sampling; the standard HMC’s implementation can
 be re-used to perform Generalized HMC sampling.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>noise_fn</strong> – A function that takes as input the slice variable and outputs a random
 variable used as a noise correction of the persistent slice update.
@@ -455,7 +463,7 @@ The parameter defaults to a random variable with a single atom at 0.</p></li>
 transition is divergent.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>A kernel that takes a rng_key, a Pytree that contains the current state</em></p></li>
 <li><p><em>of the chain, and free parameters of the sampling mechanism; and that</em></p></li>
@@ -495,7 +503,7 @@ the algorithm a good candiate for running many chains in parallel.</p>
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>logdensity_fn</strong> – The log-density function we wish to draw samples from.</p></li>
 <li><p><strong>step_size</strong> – A PyTree of the same structure as the target PyTree (position) with the
@@ -511,7 +519,7 @@ variable used as a noise correction of the persistent slice update.
 The parameter defaults to a random variable with a single atom at 0.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
 </dd>
 </dl>

@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.mcmc.nuts</title>
   
@@ -373,6 +373,10 @@ document.write(`
 <section id="classes">
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.nuts.NUTSInfo" title="blackjax.mcmc.nuts.NUTSInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NUTSInfo</span></code></a></p></td>
 <td><p>Additional information on the NUTS transition.</p></td>
@@ -386,8 +390,12 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.nuts.build_kernel" title="blackjax.mcmc.nuts.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>([integrator, divergence_threshold, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.nuts.build_kernel" title="blackjax.mcmc.nuts.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>([integrator, divergence_threshold])</p></td>
 <td><p>Build an iterative NUTS kernel.</p></td>
 </tr>
 </tbody>
@@ -396,6 +404,10 @@ document.write(`
 <section id="attributes">
 <h3>Attributes<a class="headerlink" href="#attributes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.nuts.init" title="blackjax.mcmc.nuts.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a></p></td>
 <td><p></p></td>
@@ -485,7 +497,7 @@ states in the full trajectory.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.build_kernel">
-<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num_doublings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.build_kernel" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.build_kernel" title="Permalink to this definition">#</a></dt>
 <dd><p>Build an iterative NUTS kernel.</p>
 <p>This algorithm is an iteration on the original NUTS algorithm <span id="id1">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span>
 with two major differences:</p>
@@ -506,14 +518,11 @@ that doubles at every step. From this trajectory we continuously sample a
 proposal. When the trajectory turns on itself or when we have reached the
 maximum trajectory length we return the current proposal.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>integrator</strong> – The simplectic integrator used to build trajectories.</p></li>
 <li><p><strong>divergence_threshold</strong> – The absolute difference in energy above which we consider
 a transition “divergent”.</p></li>
-<li><p><strong>max_num_doublings</strong> – The maximum number of times we expand the trajectory by
-doubling the number of steps if the trajectory does not
-turn onto itself.</p></li>
 </ul>
 </dd>
 </dl>
@@ -544,7 +553,7 @@ turn onto itself.</p></li>
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>logdensity_fn</strong> – The log-density function we wish to draw samples from.</p></li>
 <li><p><strong>step_size</strong> – The value to use for the step size in the symplectic integrator.</p></li>
@@ -558,7 +567,7 @@ commonly found in other libraries, and yet is arbitrary.</p></li>
 <li><p><strong>integrator</strong> – (algorithm parameter) The symplectic integrator to use to integrate the trajectory.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
 </dd>
 </dl>

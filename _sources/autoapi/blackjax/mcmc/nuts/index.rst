@@ -122,7 +122,7 @@ Attributes
       
 
 
-.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: int = 1000, max_num_doublings: int = 10)
+.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: int = 1000)
 
    Build an iterative NUTS kernel.
 
@@ -149,9 +149,6 @@ Attributes
    :param integrator: The simplectic integrator used to build trajectories.
    :param divergence_threshold: The absolute difference in energy above which we consider
                                 a transition "divergent".
-   :param max_num_doublings: The maximum number of times we expand the trajectory by
-                             doubling the number of steps if the trajectory does not
-                             turn onto itself.
 
 
 .. py:class:: nuts

@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>blackjax.sgmcmc.gradients</title>
   
@@ -354,6 +354,10 @@ document.write(`
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgmcmc.gradients.logdensity_estimator" title="blackjax.sgmcmc.gradients.logdensity_estimator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logdensity_estimator</span></code></a>(→ Callable)</p></td>
 <td><p>Builds a simple estimator for the log-density.</p></td>
@@ -377,7 +381,7 @@ data; if there are several variables (as, for instance, in a supervised
 learning contexts), they are passed in a tuple.</p>
 <p>This algorithm was ported from <span id="id3">[<a class="reference internal" href="../../../../bib.html#id28" title="Jeremie Coullon and Christopher Nemeth. Sgmcmcjax: a lightweight jax library for stochastic gradient markov chain monte carlo algorithms. Journal of Open Source Software, 7(72):4113, 2022.">CN22</a>]</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>logprior_fn</strong> – The log-probability density function corresponding to the prior
 distribution.</p></li>
@@ -400,7 +404,7 @@ distribution.</p></li>
 <dd><p>Builds a control variate gradient estimator <span id="id4">[<a class="reference internal" href="../../../../bib.html#id31" title="Jack Baker, Paul Fearnhead, Emily B Fox, and Christopher Nemeth. Control variates for stochastic gradient mcmc. Statistics and Computing, 29:599–615, 2019.">BFFN19</a>]</span>.</p>
 <p>This algorithm was ported from <span id="id5">[<a class="reference internal" href="../../../../bib.html#id28" title="Jeremie Coullon and Christopher Nemeth. Sgmcmcjax: a lightweight jax library for stochastic gradient markov chain monte carlo algorithms. Journal of Open Source Software, 7(72):4113, 2022.">CN22</a>]</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>logdensity_grad_estimator</strong> – A function that approximates the target’s gradient function.</p></li>
 <li><p><strong>data</strong> – The full dataset.</p></li>
