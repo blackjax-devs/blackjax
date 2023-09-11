@@ -12,15 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Elliptical Slice sampling Kernel"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.base import SamplingAlgorithm
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["EllipSliceState", "EllipSliceInfo", "init", "kernel"]
+__all__ = [
+    "EllipSliceState",
+    "EllipSliceInfo",
+    "init",
+    "build_kernel",
+    "elliptical_slice",
+]
 
 
 class EllipSliceState(NamedTuple):
@@ -33,8 +40,8 @@ class EllipSliceState(NamedTuple):
 
     """
 
-    position: PyTree
-    logdensity: PyTree
+    position: ArrayTree
+    logdensity: ArrayTree
 
 
 class EllipSliceInfo(NamedTuple):
@@ -56,17 +63,17 @@ class EllipSliceInfo(NamedTuple):
 
     """
 
-    momentum: PyTree
+    momentum: ArrayTree
     theta: float
     subiter: int
 
 
-def init(position: PyTree, logdensity_fn: Callable):
+def init(position: ArrayLikeTree, logdensity_fn: Callable):
     logdensity = logdensity_fn(position)
     return EllipSliceState(position, logdensity)
 
 
-def kernel(cov_matrix: Array, mean: Array):
+def build_kernel(cov_matrix: Array, mean: Array):
     """Build an Elliptical Slice sampling kernel :cite:p:`murray2010elliptical`.
 
     Parameters
@@ -99,17 +106,75 @@ def kernel(cov_matrix: Array, mean: Array):
     def momentum_generator(rng_key, position):
         return generate_gaussian_noise(rng_key, position, mean, cov_matrix_sqrt)
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: EllipSliceState,
         logdensity_fn: Callable,
-    ) -> Tuple[EllipSliceState, EllipSliceInfo]:
+    ) -> tuple[EllipSliceState, EllipSliceInfo]:
         proposal_generator = elliptical_proposal(
             logdensity_fn, momentum_generator, mean
         )
         return proposal_generator(rng_key, state)
 
-    return one_step
+    return kernel
+
+
+class elliptical_slice:
+    """Implements the (basic) user interface for the Elliptical Slice sampling kernel.
+
+    Examples
+    --------
+
+    A new Elliptical Slice sampling kernel can be initialized and used with the following code:
+
+    .. code::
+
+        ellip_slice = blackjax.elliptical_slice(loglikelihood_fn, cov_matrix)
+        state = ellip_slice.init(position)
+        new_state, info = ellip_slice.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(ellip_slice.step)
+        new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    loglikelihood_fn
+        Only the log likelihood function from the posterior distributon we wish to sample.
+    cov_matrix
+        The value of the covariance matrix of the gaussian prior distribution from the posterior we wish to sample.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+    """
+
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        loglikelihood_fn: Callable,
+        *,
+        mean: Array,
+        cov: Array,
+    ) -> SamplingAlgorithm:
+        kernel = cls.build_kernel(cov, mean)
+
+        def init_fn(position: ArrayLikeTree):
+            return cls.init(position, loglikelihood_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return kernel(
+                rng_key,
+                state,
+                loglikelihood_fn,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def elliptical_proposal(
@@ -140,7 +205,7 @@ def elliptical_proposal(
 
     def generate(
         rng_key: PRNGKey, state: EllipSliceState
-    ) -> Tuple[EllipSliceState, EllipSliceInfo]:
+    ) -> tuple[EllipSliceState, EllipSliceInfo]:
         position, logdensity = state
         key_momentum, key_uniform, key_theta = jax.random.split(rng_key, 3)
         # step 1: sample momentum

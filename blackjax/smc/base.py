@@ -11,19 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Optional, Tuple
+from typing import Callable, NamedTuple, Optional
 
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 
 class SMCState(NamedTuple):
     """State of the SMC sampler"""
 
-    particles: PyTree
-    weights: jax.Array
+    particles: ArrayTree
+    weights: Array
 
 
 class SMCInfo(NamedTuple):
@@ -31,7 +31,7 @@ class SMCInfo(NamedTuple):
 
     proposals: PyTree
         The particles that were proposed by the MCMC pass.
-    ancestors: jnp.ndarray
+    ancestors: Array
         The index of the particles proposed by the MCMC pass that were selected
         by the resampling step.
     log_likelihood_increment: float
@@ -39,12 +39,14 @@ class SMCInfo(NamedTuple):
 
     """
 
-    ancestors: jnp.ndarray
+    ancestors: Array
     log_likelihood_increment: float
     update_info: NamedTuple
 
 
-def init(particles: PyTree):
+def init(particles: ArrayLikeTree):
+    # Infer the number of particles from the size of the leading dimension of
+    # the first leaf of the inputted PyTree.
     num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
     weights = jnp.ones(num_particles) / num_particles
     return SMCState(particles, weights)
@@ -57,7 +59,7 @@ def step(
     weigh_fn: Callable,
     resample_fn: Callable,
     num_resampled: Optional[int] = None,
-) -> Tuple[SMCState, SMCInfo]:
+) -> tuple[SMCState, SMCInfo]:
     """General SMC sampling step.
 
     `update_fn` here corresponds to the Markov kernel $M_{t+1}$, and `weigh_fn`

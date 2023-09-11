@@ -11,16 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 
 import blackjax.smc as smc
+from blackjax.base import SamplingAlgorithm
 from blackjax.smc.base import SMCState
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["TemperedSMCState", "init", "kernel"]
+__all__ = ["TemperedSMCState", "init", "build_kernel"]
 
 
 class TemperedSMCState(NamedTuple):
@@ -33,18 +34,20 @@ class TemperedSMCState(NamedTuple):
 
     """
 
-    particles: PyTree
-    weights: jax.Array
+    particles: ArrayTree
+    weights: Array
     lmbda: float
 
 
-def init(particles: PyTree):
+def init(particles: ArrayLikeTree):
+    # Infer the number of particles from the size of the leading dimension of
+    # the first leaf of the inputted PyTree.
     num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
     weights = jnp.ones(num_particles) / num_particles
     return TemperedSMCState(particles, weights, 0.0)
 
 
-def kernel(
+def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     mcmc_step_fn: Callable,
@@ -88,13 +91,13 @@ def kernel(
 
     """
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: TemperedSMCState,
         num_mcmc_steps: int,
         lmbda: float,
         mcmc_parameters: dict,
-    ) -> Tuple[TemperedSMCState, smc.base.SMCInfo]:
+    ) -> tuple[TemperedSMCState, smc.base.SMCInfo]:
         """Move the particles one step using the Tempered SMC algorithm.
 
         Parameters
@@ -116,10 +119,10 @@ def kernel(
         """
         delta = lmbda - state.lmbda
 
-        def log_weights_fn(position: PyTree) -> float:
+        def log_weights_fn(position: ArrayLikeTree) -> float:
             return delta * loglikelihood_fn(position)
 
-        def tempered_logposterior_fn(position: PyTree) -> float:
+        def tempered_logposterior_fn(position: ArrayLikeTree) -> float:
             logprior = logprior_fn(position)
             tempered_loglikelihood = state.lmbda * loglikelihood_fn(position)
             return logprior + tempered_loglikelihood
@@ -150,4 +153,66 @@ def kernel(
 
         return tempered_state, info
 
-    return one_step
+    return kernel
+
+
+class tempered_smc:
+    """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
+
+    Parameters
+    ----------
+    logprior_fn
+        The log-prior function of the model we wish to draw samples from.
+    loglikelihood_fn
+        The log-likelihood function of the model we wish to draw samples from.
+    mcmc_step_fn
+        The MCMC step function used to update the particles.
+    mcmc_init_fn
+        The MCMC init function used to build a MCMC state from a particle position.
+    mcmc_parameters
+        The parameters of the MCMC step function.
+    resampling_fn
+        The function used to resample the particles.
+    num_mcmc_steps
+        The number of times the MCMC kernel is applied to the particles per step.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logprior_fn: Callable,
+        loglikelihood_fn: Callable,
+        mcmc_step_fn: Callable,
+        mcmc_init_fn: Callable,
+        mcmc_parameters: dict,
+        resampling_fn: Callable,
+        num_mcmc_steps: int = 10,
+    ) -> SamplingAlgorithm:
+        kernel = cls.build_kernel(
+            logprior_fn,
+            loglikelihood_fn,
+            mcmc_step_fn,
+            mcmc_init_fn,
+            resampling_fn,
+        )
+
+        def init_fn(position: ArrayLikeTree):
+            return cls.init(position)
+
+        def step_fn(rng_key: PRNGKey, state, lmbda):
+            return kernel(
+                rng_key,
+                state,
+                num_mcmc_steps,
+                lmbda,
+                mcmc_parameters,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -22,7 +22,7 @@ from jax.flatten_util import ravel_pytree
 from jaxopt._src.lbfgs import LbfgsState
 from jaxopt.base import OptStep
 
-from blackjax.types import Array, PyTree
+from blackjax.types import Array, ArrayLikeTree
 
 __all__ = [
     "LBFGSHistory",
@@ -64,13 +64,13 @@ class LBFGSHistory(NamedTuple):
 
 def minimize_lbfgs(
     fun: Callable,
-    x0: PyTree,
+    x0: ArrayLikeTree,
     maxiter: int = 30,
     maxcor: float = 10,
     gtol: float = 1e-08,
     ftol: float = 1e-05,
     maxls: int = 1000,
-) -> Tuple[OptStep, LBFGSHistory]:
+) -> tuple[OptStep, LBFGSHistory]:
     """
     Minimize a function using L-BFGS
 
@@ -152,7 +152,7 @@ def _minimize_lbfgs(
     gtol: float,
     ftol: float,
     maxls: int,
-) -> Tuple[OptStep, LBFGSHistory]:
+) -> tuple[OptStep, LBFGSHistory]:
     def lbfgs_one_step(carry, i):
         (params, state), previous_history = carry
 

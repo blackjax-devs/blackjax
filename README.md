@@ -79,8 +79,8 @@ state = nuts.init(initial_position)
 # Iterate
 rng_key = jax.random.PRNGKey(0)
 for _ in range(100):
-    _, rng_key = jax.random.split(rng_key)
-    state, _ = nuts.step(rng_key, state)
+    rng_key, nuts_key = jax.random.split(rng_key)
+    state, _ = nuts.step(nuts_key, state)
 ```
 
 See [the documentation](https://blackjax-devs.github.io/blackjax/index.html) for more examples of how to use the library: how to write inference loops for one or several chains, how to use the Stan warmup, etc.
@@ -128,22 +128,7 @@ passing parameters.
 
 ## Contributions
 
-### What contributions?
-
-We value the following contributions:
-- Bug fixes
-- Documentation
-- High-level sampling algorithms from any family of algorithms: random walk,
-  hamiltonian monte carlo, sequential monte carlo, variational inference,
-  inference compilation, etc.
-- New building blocks, e.g. new metrics for HMC, integrators, etc.
-
-### How to contribute?
-
-1. Run `pip install -r requirements.txt` to install all the dev
-   dependencies.
-2. Run `pre-commit run --all-files` and `make test` before pushing on the repo; CI should pass if
-   these pass locally.
+Please follow our [short guide](https://github.com/blackjax-devs/blackjax/blob/main/CONTRIBUTING.md).
 
 ## Citing Blackjax
 

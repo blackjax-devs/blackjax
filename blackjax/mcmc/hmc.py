@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the HMC Kernel"""
-from typing import Callable, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Union
 
 import jax
 
@@ -20,10 +20,11 @@ import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.trajectory as trajectory
+from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.trajectory import hmc_energy
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["HMCState", "HMCInfo", "init", "kernel"]
+__all__ = ["HMCState", "HMCInfo", "init", "build_kernel", "hmc"]
 
 
 class HMCState(NamedTuple):
@@ -35,9 +36,9 @@ class HMCState(NamedTuple):
 
     """
 
-    position: PyTree
+    position: ArrayTree
     logdensity: float
-    logdensity_grad: PyTree
+    logdensity_grad: ArrayTree
 
 
 class HMCInfo(NamedTuple):
@@ -69,7 +70,7 @@ class HMCInfo(NamedTuple):
 
     """
 
-    momentum: PyTree
+    momentum: ArrayTree
     acceptance_rate: float
     is_accepted: bool
     is_divergent: bool
@@ -78,12 +79,12 @@ class HMCInfo(NamedTuple):
     num_integration_steps: int
 
 
-def init(position: PyTree, logdensity_fn: Callable):
+def init(position: ArrayLikeTree, logdensity_fn: Callable):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return HMCState(position, logdensity, logdensity_grad)
 
 
-def kernel(
+def build_kernel(
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: float = 1000,
 ):
@@ -104,14 +105,14 @@ def kernel(
 
     """
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: HMCState,
         logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
         num_integration_steps: int,
-    ) -> Tuple[HMCState, HMCInfo]:
+    ) -> tuple[HMCState, HMCInfo]:
         """Generate a new sample with the HMC kernel."""
 
         momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
@@ -141,13 +142,107 @@ def kernel(
 
         return proposal, info
 
-    return one_step
+    return kernel
+
+
+class hmc:
+    """Implements the (basic) user interface for the HMC kernel.
+
+    The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias `blackjax.hmc.build_kernel`) can be
+    cumbersome to manipulate. Since most users only need to specify the kernel
+    parameters at initialization time, we provide a helper function that
+    specializes the general kernel.
+
+    We also add the general kernel and state generator as an attribute to this class so
+    users only need to pass `blackjax.hmc` to SMC, adaptation, etc. algorithms.
+
+    Examples
+    --------
+
+    A new HMC kernel can be initialized and used with the following code:
+
+    .. code::
+
+        hmc = blackjax.hmc(logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
+        state = hmc.init(position)
+        new_state, info = hmc.step(rng_key, state)
+
+    Kernels are not jit-compiled by default so you will need to do it manually:
+
+    .. code::
+
+       step = jax.jit(hmc.step)
+       new_state, info = step(rng_key, state)
+
+    Should you need to you can always use the base kernel directly:
+
+    .. code::
+
+       import blackjax.mcmc.integrators as integrators
+
+       kernel = blackjax.hmc.build_kernel(integrators.mclachlan)
+       state = blackjax.hmc.init(position, logdensity_fn)
+       state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log-density function we wish to draw samples from.
+    step_size
+        The value to use for the step size in the symplectic integrator.
+    inverse_mass_matrix
+        The value to use for the inverse mass matrix when drawing a value for
+        the momentum and computing the kinetic energy.
+    num_integration_steps
+        The number of steps we take with the symplectic integrator at each
+        sample step before returning a sample.
+    divergence_threshold
+        The absolute value of the difference in energy between two states above
+        which we say that the transition is divergent. The default value is
+        commonly found in other libraries, and yet is arbitrary.
+    integrator
+        (algorithm parameter) The symplectic integrator to use to integrate the trajectory.\
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+    """
+
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: Array,
+        num_integration_steps: int,
+        *,
+        divergence_threshold: int = 1000,
+        integrator: Callable = integrators.velocity_verlet,
+    ) -> SamplingAlgorithm:
+        kernel = cls.build_kernel(integrator, divergence_threshold)
+
+        def init_fn(position: ArrayLikeTree):
+            return cls.init(position, logdensity_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return kernel(
+                rng_key,
+                state,
+                logdensity_fn,
+                step_size,
+                inverse_mass_matrix,
+                num_integration_steps,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def hmc_proposal(
     integrator: Callable,
     kinetic_energy: Callable,
-    step_size: Union[float, PyTree],
+    step_size: Union[float, ArrayLikeTree],
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,
     *,
@@ -186,7 +281,7 @@ def hmc_proposal(
 
     def generate(
         rng_key, state: integrators.IntegratorState
-    ) -> Tuple[integrators.IntegratorState, HMCInfo]:
+    ) -> tuple[integrators.IntegratorState, HMCInfo]:
         """Generate a new chain state."""
         end_state = build_trajectory(state, step_size, num_integration_steps)
         end_state = flip_momentum(end_state)

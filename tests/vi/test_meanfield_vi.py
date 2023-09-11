@@ -37,8 +37,8 @@ class MFVITest(chex.TestCase):
 
         rng_key = self.key
         for _ in range(num_steps):
-            rng_key, _ = jax.random.split(rng_key)
-            state, _ = jax.jit(mfvi.step)(rng_key, state)
+            rng_key, subkey = jax.random.split(rng_key)
+            state, _ = jax.jit(mfvi.step)(subkey, state)
 
         loc_1, loc_2 = state.mu["x_1"], state.mu["x_2"]
         scale = jax.tree_map(jnp.exp, state.rho)

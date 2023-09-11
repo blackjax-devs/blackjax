@@ -1,3 +1,16 @@
+# Copyright 2020- The Blackjax Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """Public API for the Contour Stochastic gradient Langevin Dynamics kernel :cite:p:`deng2020contour,deng2022interacting`.
 
 """
@@ -6,10 +19,11 @@ from typing import Callable, NamedTuple
 import jax
 import jax.numpy as jnp
 
+from blackjax.base import SamplingAlgorithm
 from blackjax.sgmcmc.diffusions import overdamped_langevin
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["ContourSGLDState", "init", "kernel"]
+__all__ = ["ContourSGLDState", "init", "build_kernel", "csgld"]
 
 
 class ContourSGLDState(NamedTuple):
@@ -27,19 +41,19 @@ class ContourSGLDState(NamedTuple):
         Index `i` such that the current position belongs to :math:`S_i`.
 
     """
-    position: PyTree
+    position: ArrayTree
     energy_pdf: Array
     energy_idx: int
 
 
-def init(position: PyTree, num_partitions=512):
+def init(position: ArrayLikeTree, num_partitions=512) -> ContourSGLDState:
     energy_pdf = (
         jnp.arange(num_partitions, 0, -1) / jnp.arange(num_partitions, 0, -1).sum()
     )
     return ContourSGLDState(position, energy_pdf, num_partitions - 1)
 
 
-def kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
+def build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
     r"""
 
     Parameters
@@ -61,12 +75,12 @@ def kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
 
     integrator = overdamped_langevin()
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: ContourSGLDState,
         logdensity_estimator: Callable,
         gradient_estimator: Callable,
-        minibatch: PyTree,
+        minibatch: ArrayLikeTree,
         step_size_diff: float,  # step size for Langevin diffusion
         step_size_stoch: float = 1e-3,  # step size for stochastic approximation
         zeta: float = 1,
@@ -157,4 +171,79 @@ def kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
 
         return ContourSGLDState(position, energy_pdf, idx)
 
-    return one_step
+    return kernel
+
+
+class csgld:
+    r"""Implements the (basic) user interface for the Contour SGLD kernel.
+
+    Parameters
+    ----------
+    logdensity_estimator
+        A function that returns an estimation of the model's logdensity given
+        a position and a batch of data.
+    gradient_estimator
+        A function that takes a position, a batch of data and returns an estimation
+        of the gradient of the log-density at this position.
+    zeta
+        Hyperparameter that controls the geometric property of the flattened
+        density. If `zeta=0` the function reduces to the SGLD step function.
+    temperature
+        Temperature parameter.
+    num_partitions
+        The number of partitions we divide the energy landscape into.
+    energy_gap
+        The difference in energy :math:`\Delta u` between the successive
+        partitions. Can be determined by running e.g. an optimizer to determine
+        the range of energies. `num_partition` * `energy_gap` should match this
+        range.
+    min_energy
+        A rough estimate of the minimum energy in a dataset, which should be
+        strictly smaller than the exact minimum energy! e.g. if the minimum
+        energy of a dataset is 3456, we can set min_energy to be any value
+        smaller than 3456. Set it to 0 is acceptable, but not efficient enough.
+        the closer the gap between min_energy and 3456 is, the better.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    """
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_estimator: Callable,
+        gradient_estimator: Callable,
+        zeta: float = 1,
+        num_partitions: int = 512,
+        energy_gap: float = 100,
+        min_energy: float = 0,
+    ) -> SamplingAlgorithm:
+        kernel = cls.build_kernel(num_partitions, energy_gap, min_energy)
+
+        def init_fn(position: ArrayLikeTree):
+            return cls.init(position, num_partitions)
+
+        def step_fn(
+            rng_key: PRNGKey,
+            state: ContourSGLDState,
+            minibatch: ArrayLikeTree,
+            step_size_diff: float,
+            step_size_stoch: float,
+            temperature: float = 1.0,
+        ) -> ContourSGLDState:
+            return kernel(
+                rng_key,
+                state,
+                logdensity_estimator,
+                gradient_estimator,
+                minibatch,
+                step_size_diff,
+                step_size_stoch,
+                zeta,
+                temperature,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

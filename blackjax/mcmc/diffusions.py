@@ -17,16 +17,16 @@ from typing import NamedTuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import PyTree
+from blackjax.types import ArrayTree
 from blackjax.util import generate_gaussian_noise
 
 __all__ = ["overdamped_langevin"]
 
 
 class DiffusionState(NamedTuple):
-    position: PyTree
+    position: ArrayTree
     logdensity: float
-    logdensity_grad: PyTree
+    logdensity_grad: ArrayTree
 
 
 def overdamped_langevin(logdensity_grad_fn):

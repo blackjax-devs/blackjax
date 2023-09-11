@@ -18,7 +18,7 @@ from typing import Callable
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import PRNGKey
+from blackjax.types import Array, PRNGKey
 
 
 def _resampling_func(func, name, desc="", additional_params="") -> Callable:
@@ -29,16 +29,16 @@ def _resampling_func(func, name, desc="", additional_params="") -> Callable:
 
     Parameters
     ----------
-    key: jnp.ndarray
+    key: Array
         PRNGKey to use in resampling
-    weights: jnp.ndarray
+    weights: Array
         Weights to resample
     num_samples: int
         Number of particles to sample
 
     Returns
     -------
-    idx: jnp.ndarray
+    idx: Array
         Array of size `num_samples` to use for resampling
     """
 
@@ -47,12 +47,12 @@ def _resampling_func(func, name, desc="", additional_params="") -> Callable:
 
 
 @partial(_resampling_func, name="Systematic")
-def systematic(rng_key: PRNGKey, weights: jax.Array, num_samples: int) -> jax.Array:
+def systematic(rng_key: PRNGKey, weights: Array, num_samples: int) -> Array:
     return _systematic_or_stratified(rng_key, weights, num_samples, True)
 
 
 @partial(_resampling_func, name="Stratified")
-def stratified(rng_key: PRNGKey, weights: jax.Array, num_samples: int) -> jax.Array:
+def stratified(rng_key: PRNGKey, weights: Array, num_samples: int) -> Array:
     return _systematic_or_stratified(rng_key, weights, num_samples, False)
 
 
@@ -64,7 +64,7 @@ def stratified(rng_key: PRNGKey, weights: jax.Array, num_samples: int) -> jax.Ar
     and should only be used for illustration purposes,
     or if your algorithm *REALLY* needs independent samples.""",
 )
-def multinomial(rng_key: PRNGKey, weights: jax.Array, num_samples: int) -> jnp.ndarray:
+def multinomial(rng_key: PRNGKey, weights: Array, num_samples: int) -> Array:
     # In practice we don't have to sort the generated uniforms, but searchsorted
     # works faster and is more stable if both inputs are sorted, so we use the
     # _sorted_uniforms from N. Chopin, but still use searchsorted instead of his
@@ -89,7 +89,7 @@ def multinomial(rng_key: PRNGKey, weights: jax.Array, num_samples: int) -> jnp.n
     compatible. The main difference with Nicolas Chopin's code lies in the
     introduction of N+1 in the array as a 'sink state' for unused indices.""",
 )
-def residual(rng_key: PRNGKey, weights: jax.Array, num_samples: int) -> jax.Array:
+def residual(rng_key: PRNGKey, weights: Array, num_samples: int) -> Array:
     key1, key2 = jax.random.split(rng_key)
     N = weights.shape[0]
     N_sample_weights = num_samples * weights
@@ -122,8 +122,8 @@ def residual(rng_key: PRNGKey, weights: jax.Array, num_samples: int) -> jax.Arra
 
 
 def _systematic_or_stratified(
-    rng_key: PRNGKey, weights: jax.Array, num_samples: int, is_systematic: bool
-) -> jax.Array:
+    rng_key: PRNGKey, weights: Array, num_samples: int, is_systematic: bool
+) -> Array:
     n = weights.shape[0]
     if is_systematic:
         u = jax.random.uniform(rng_key, ())
@@ -135,7 +135,7 @@ def _systematic_or_stratified(
     return jnp.clip(idx, 0, n - 1)
 
 
-def _sorted_uniforms(rng_key: PRNGKey, n) -> jax.Array:
+def _sorted_uniforms(rng_key: PRNGKey, n) -> Array:
     # Credit goes to Nicolas Chopin
     us = jax.random.uniform(rng_key, (n + 1,))
     z = jnp.cumsum(-jnp.log(us))

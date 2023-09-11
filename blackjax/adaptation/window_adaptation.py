@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Callable, List, NamedTuple, Tuple
+from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
 
+import blackjax.mcmc as mcmc
+from blackjax.adaptation.base import AdaptationInfo, AdaptationResults
 from blackjax.adaptation.mass_matrix import (
     MassMatrixAdaptationState,
     mass_matrix_adaptation,
@@ -25,10 +27,12 @@ from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
     dual_averaging_adaptation,
 )
-from blackjax.types import Array, PyTree
+from blackjax.base import AdaptationAlgorithm
+from blackjax.progress_bar import progress_bar_scan
+from blackjax.types import Array, ArrayLikeTree, PRNGKey
 from blackjax.util import pytree_size
 
-__all__ = ["WindowAdaptationState", "base", "schedule"]
+__all__ = ["WindowAdaptationState", "base", "build_schedule", "window_adaptation"]
 
 
 class WindowAdaptationState(NamedTuple):
@@ -41,7 +45,7 @@ class WindowAdaptationState(NamedTuple):
 def base(
     is_mass_matrix_diagonal: bool,
     target_acceptance_rate: float = 0.80,
-) -> Tuple[Callable, Callable, Callable]:
+) -> tuple[Callable, Callable, Callable]:
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
     The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
 
@@ -98,7 +102,9 @@ def base(
     mm_init, mm_update, mm_final = mass_matrix_adaptation(is_mass_matrix_diagonal)
     da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
 
-    def init(position: PyTree, initial_step_size: float) -> Tuple:
+    def init(
+        position: ArrayLikeTree, initial_step_size: float
+    ) -> WindowAdaptationState:
         """Initialze the adaptation state and parameter values.
 
         Unlike the original Stan window adaptation we do not use the
@@ -119,7 +125,7 @@ def base(
         )
 
     def fast_update(
-        position: PyTree,
+        position: ArrayLikeTree,
         acceptance_rate: float,
         warmup_state: WindowAdaptationState,
     ) -> WindowAdaptationState:
@@ -130,6 +136,8 @@ def base(
         compared to the covariance estimation with Welford's algorithm
 
         """
+        del position
+
         new_ss_state = da_update(warmup_state.ss_state, acceptance_rate)
         new_step_size = jnp.exp(new_ss_state.log_step_size)
 
@@ -141,7 +149,7 @@ def base(
         )
 
     def slow_update(
-        position: PyTree,
+        position: ArrayLikeTree,
         acceptance_rate: float,
         warmup_state: WindowAdaptationState,
     ) -> WindowAdaptationState:
@@ -183,8 +191,8 @@ def base(
 
     def update(
         adaptation_state: WindowAdaptationState,
-        adaptation_stage: Tuple,
-        position: PyTree,
+        adaptation_stage: tuple,
+        position: ArrayLikeTree,
         acceptance_rate: float,
     ) -> WindowAdaptationState:
         """Update the adaptation state and parameter values.
@@ -225,7 +233,7 @@ def base(
 
         return warmup_state
 
-    def final(warmup_state: WindowAdaptationState) -> Tuple[float, Array]:
+    def final(warmup_state: WindowAdaptationState) -> tuple[float, Array]:
         """Return the final values for the step size and mass matrix."""
         step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.imm_state.inverse_mass_matrix
@@ -234,12 +242,127 @@ def base(
     return init, update, final
 
 
-def schedule(
+def window_adaptation(
+    algorithm: Union[mcmc.hmc.hmc, mcmc.nuts.nuts],
+    logdensity_fn: Callable,
+    is_mass_matrix_diagonal: bool = True,
+    initial_step_size: float = 1.0,
+    target_acceptance_rate: float = 0.80,
+    progress_bar: bool = False,
+    **extra_parameters,
+) -> AdaptationAlgorithm:
+    """Adapt the value of the inverse mass matrix and step size parameters of
+    algorithms in the HMC fmaily.
+
+    Algorithms in the HMC family on a euclidean manifold depend on the value of
+    at least two parameters: the step size, related to the trajectory
+    integrator, and the mass matrix, linked to the euclidean metric.
+
+    Good tuning is very important, especially for algorithms like NUTS which can
+    be extremely inefficient with the wrong parameter values. This function
+    provides a general-purpose algorithm to tune the values of these parameters.
+    Originally based on Stan's window adaptation, the algorithm has evolved to
+    improve performance and quality.
+
+    Parameters
+    ----------
+    algorithm
+        The algorithm whose parameters are being tuned.
+    logdensity_fn
+        The log density probability density function from which we wish to
+        sample.
+    is_mass_matrix_diagonal
+        Whether we should adapt a diagonal mass matrix.
+    initial_step_size
+        The initial step size used in the algorithm.
+    target_acceptance_rate
+        The acceptance rate that we target during step size adaptation.
+    progress_bar
+        Whether we should display a progress bar.
+    **extra_parameters
+        The extra parameters to pass to the algorithm, e.g. the number of
+        integration steps for HMC.
+
+    Returns
+    -------
+    A function that runs the adaptation and returns an `AdaptationResult` object.
+
+    """
+
+    mcmc_kernel = algorithm.build_kernel()
+
+    adapt_init, adapt_step, adapt_final = base(
+        is_mass_matrix_diagonal,
+        target_acceptance_rate=target_acceptance_rate,
+    )
+
+    def one_step(carry, xs):
+        _, rng_key, adaptation_stage = xs
+        state, adaptation_state = carry
+
+        new_state, info = mcmc_kernel(
+            rng_key,
+            state,
+            logdensity_fn,
+            adaptation_state.step_size,
+            adaptation_state.inverse_mass_matrix,
+            **extra_parameters,
+        )
+        new_adaptation_state = adapt_step(
+            adaptation_state,
+            adaptation_stage,
+            new_state.position,
+            info.acceptance_rate,
+        )
+
+        return (
+            (new_state, new_adaptation_state),
+            AdaptationInfo(new_state, info, new_adaptation_state),
+        )
+
+    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
+        init_state = algorithm.init(position, logdensity_fn)
+        init_adaptation_state = adapt_init(position, initial_step_size)
+
+        if progress_bar:
+            print("Running window adaptation")
+            one_step_ = jax.jit(progress_bar_scan(num_steps)(one_step))
+        else:
+            one_step_ = jax.jit(one_step)
+
+        keys = jax.random.split(rng_key, num_steps)
+        schedule = build_schedule(num_steps)
+        last_state, info = jax.lax.scan(
+            one_step_,
+            (init_state, init_adaptation_state),
+            (jnp.arange(num_steps), keys, schedule),
+        )
+        last_chain_state, last_warmup_state, *_ = last_state
+
+        step_size, inverse_mass_matrix = adapt_final(last_warmup_state)
+        parameters = {
+            "step_size": step_size,
+            "inverse_mass_matrix": inverse_mass_matrix,
+            **extra_parameters,
+        }
+
+        return (
+            AdaptationResults(
+                last_chain_state,
+                parameters,
+            ),
+            info,
+        )
+
+    return AdaptationAlgorithm(run)
+
+
+def build_schedule(
     num_steps: int,
     initial_buffer_size: int = 75,
     final_buffer_size: int = 50,
     first_window_size: int = 25,
-) -> List[Tuple[int, bool]]:
+) -> list[tuple[int, bool]]:
     """Return the schedule for Stan's warmup.
 
     The schedule below is intended to be as close as possible to Stan's :cite:p:`stan_hmc_param`.

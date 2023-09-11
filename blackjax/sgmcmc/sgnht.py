@@ -11,65 +11,74 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Public API for the Stochastic gradient Hamiltonian Monte Carlo kernel."""
-from typing import Callable
-
-import jax
+"""Public API for the Stochastic gradient Nosé-Hoover Thermostat kernel."""
+from typing import Callable, NamedTuple, Union
 
 import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["init", "build_kernel", "sghmc"]
+__all__ = ["SGNHTState", "init", "build_kernel", "sgnht"]
 
 
-def init(position: ArrayLikeTree) -> ArrayLikeTree:
-    return position
+class SGNHTState(NamedTuple):
+    r"""State of the SGNHT algorithm.
+
+    Parameters
+    ----------
+    position
+        Current position in the sample space.
+    momentum
+        Current momentum in the sample space.
+    xi
+        Scalar thermostat controlling kinetic energy.
+
+    """
+    position: ArrayTree
+    momentum: ArrayTree
+    xi: float
+
+
+def init(position: ArrayLikeTree, rng_key: PRNGKey, xi: float) -> SGNHTState:
+    momentum = generate_gaussian_noise(rng_key, position)
+    return SGNHTState(position, momentum, xi)
 
 
 def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
-    """Stochastic gradient Hamiltonian Monte Carlo (SgHMC) algorithm."""
-    integrator = diffusions.sghmc(alpha, beta)
+    """Stochastic gradient Nosé-Hoover Thermostat (SGNHT) algorithm."""
+    integrator = diffusions.sgnht(alpha, beta)
 
     def kernel(
         rng_key: PRNGKey,
-        position: ArrayLikeTree,
+        state: SGNHTState,
         grad_estimator: Callable,
         minibatch: ArrayLikeTree,
         step_size: float,
-        num_integration_steps: int,
         temperature: float = 1.0,
     ) -> ArrayTree:
-        def body_fn(state, rng_key):
-            position, momentum = state
-            logdensity_grad = grad_estimator(position, minibatch)
-            position, momentum = integrator(
-                rng_key, position, momentum, logdensity_grad, step_size, temperature
-            )
-            return ((position, momentum), position)
-
-        momentum = generate_gaussian_noise(rng_key, position)
-        keys = jax.random.split(rng_key, num_integration_steps)
-        (position, momentum), _ = jax.lax.scan(body_fn, (position, momentum), keys)
-
-        return position
+        position, momentum, xi = state
+        logdensity_grad = grad_estimator(position, minibatch)
+        position, momentum, xi = integrator(
+            rng_key, position, momentum, xi, logdensity_grad, step_size, temperature
+        )
+        return SGNHTState(position, momentum, xi)
 
     return kernel
 
 
-class sghmc:
-    """Implements the (basic) user interface for the SGHMC kernel.
+class sgnht:
+    """Implements the (basic) user interface for the SGNHT kernel.
 
-    The general sghmc kernel builder (:meth:`blackjax.sgmcmc.sghmc.build_kernel`, alias
-    `blackjax.sghmc.build_kernel`) can be cumbersome to manipulate. Since most users
+    The general sgnht kernel (:meth:`blackjax.sgmcmc.sgnht.build_kernel`, alias
+    `blackjax.sgnht.build_kernel`) can be cumbersome to manipulate. Since most users
     only need to specify the kernel parameters at initialization time, we
     provide a helper function that specializes the general kernel.
 
     Example
     -------
 
-    To initialize a SGHMC kernel one needs to specify a schedule function, which
+    To initialize a SGNHT kernel one needs to specify a schedule function, which
     returns a step size at each sampling step, and a gradient estimator
     function. Here for a constant step size, and `data_size` data samples:
 
@@ -77,11 +86,12 @@ class sghmc:
 
         grad_estimator = blackjax.sgmcmc.gradients.grad_estimator(logprior_fn, loglikelihood_fn, data_size)
 
-    We can now initialize the sghmc kernel and the state. Like HMC, SGHMC needs the user to specify a number of integration steps.
+    We can now initialize the sgnht kernel and the state.
 
     .. code::
 
-        sghmc = blackjax.sghmc(grad_estimator, num_integration_steps)
+        sgnht = blackjax.sgnht(grad_estimator)
+        state = sgnht.init(rng_key, position)
 
     Assuming we have an iterator `batches` that yields batches of data we can
     perform one step:
@@ -90,14 +100,14 @@ class sghmc:
 
         step_size = 1e-3
         minibatch = next(batches)
-        new_position = sghmc.step(rng_key, position, minibatch, step_size)
+        new_state = sgnht.step(rng_key, state, minibatch, step_size)
 
     Kernels are not jit-compiled by default so you will need to do it manually:
 
     .. code::
 
-       step = jax.jit(sghmc.step)
-       new_position, info = step(rng_key, position, minibatch, step_size)
+       step = jax.jit(sgnht.step)
+       new_state = step(rng_key, state, minibatch, step_size)
 
     Parameters
     ----------
@@ -117,30 +127,27 @@ class sghmc:
     def __new__(  # type: ignore[misc]
         cls,
         grad_estimator: Callable,
-        num_integration_steps: int = 10,
         alpha: float = 0.01,
-        beta: float = 0,
+        beta: float = 0.0,
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(alpha, beta)
 
-        def init_fn(position: ArrayLikeTree):
-            return cls.init(position)
+        def init_fn(
+            position: ArrayLikeTree,
+            rng_key: PRNGKey,
+            init_xi: Union[None, float] = None,
+        ):
+            return cls.init(position, rng_key, init_xi or alpha)
 
         def step_fn(
             rng_key: PRNGKey,
-            state: ArrayLikeTree,
+            state: SGNHTState,
             minibatch: ArrayLikeTree,
             step_size: float,
             temperature: float = 1,
-        ) -> ArrayTree:
+        ) -> SGNHTState:
             return kernel(
-                rng_key,
-                state,
-                grad_estimator,
-                minibatch,
-                step_size,
-                num_integration_steps,
-                temperature,
+                rng_key, state, grad_estimator, minibatch, step_size, temperature
             )
 
         return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for Periodic Orbital Kernel"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.base import SamplingAlgorithm
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+
+__all__ = ["PeriodicOrbitalState", "init", "build_kernel", "orbital_hmc"]
 
 
 class PeriodicOrbitalState(NamedTuple):
@@ -45,11 +48,11 @@ class PeriodicOrbitalState(NamedTuple):
         function for each point in the orbit.
     """
 
-    positions: PyTree
+    positions: ArrayTree
     weights: Array
     directions: Array
     logdensities: Array
-    logdensities_grad: PyTree
+    logdensities_grad: ArrayTree
 
 
 class PeriodicOrbitalInfo(NamedTuple):
@@ -67,13 +70,13 @@ class PeriodicOrbitalInfo(NamedTuple):
         variance of the unnormalized weights of the orbit, ideally close to 0.
     """
 
-    momentums: PyTree
+    momentums: ArrayTree
     weights_mean: float
     weights_variance: float
 
 
 def init(
-    position: PyTree, logdensity_fn: Callable, period: int
+    position: ArrayLikeTree, logdensity_fn: Callable, period: int
 ) -> PeriodicOrbitalState:
     """Create a periodic orbital state from a position.
 
@@ -114,7 +117,7 @@ def init(
     )
 
 
-def kernel(
+def build_kernel(
     bijection: Callable = integrators.velocity_verlet,
 ):
     """Build a Periodic Orbital kernel :cite:p:`neklyudov2022orbital`.
@@ -132,14 +135,14 @@ def kernel(
 
     """
 
-    def one_step(
+    def kernel(
         rng_key: PRNGKey,
         state: PeriodicOrbitalState,
         logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
         period: int,
-    ) -> Tuple[PeriodicOrbitalState, PeriodicOrbitalInfo]:
+    ) -> tuple[PeriodicOrbitalState, PeriodicOrbitalInfo]:
         """Generate a new orbit with the Periodic Orbital kernel.
 
         Choose a step from the orbit with probability proportional to its weights.
@@ -211,7 +214,82 @@ def kernel(
 
         return proposal, info
 
-    return one_step
+    return kernel
+
+
+class orbital_hmc:
+    """Implements the (basic) user interface for the Periodic orbital MCMC kernel.
+
+    Each iteration of the periodic orbital MCMC outputs ``period`` weighted samples from
+    a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable
+    with precision matrix ``inverse_mass_matrix``, evaluated using the ``bijection`` as an
+    integrator with discretization parameter ``step_size``.
+
+    Examples
+    --------
+
+    A new Periodic orbital MCMC kernel can be initialized and used with the following code:
+
+    .. code::
+
+        per_orbit = blackjax.orbital_hmc(logdensity_fn, step_size, inverse_mass_matrix, period)
+        state = per_orbit.init(position)
+        new_state, info = per_orbit.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(per_orbit.step)
+        new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The logarithm of the probability density function we wish to draw samples from.
+    step_size
+        The value to use for the step size in for the symplectic integrator to buid the orbit.
+    inverse_mass_matrix
+        The value to use for the inverse mass matrix when drawing a value for
+        the momentum and computing the kinetic energy.
+    period
+        The number of steps used to build the orbit.
+    bijection
+        (algorithm parameter) The symplectic integrator to use to build the orbit.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+    """
+
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: Array,  # assume momentum is always Gaussian
+        period: int,
+        *,
+        bijection: Callable = integrators.velocity_verlet,
+    ) -> SamplingAlgorithm:
+        kernel = cls.build_kernel(bijection)
+
+        def init_fn(position: ArrayLikeTree):
+            return cls.init(position, logdensity_fn, period)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return kernel(
+                rng_key,
+                state,
+                logdensity_fn,
+                step_size,
+                inverse_mass_matrix,
+                period,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def periodic_orbital_proposal(
@@ -247,7 +325,7 @@ def periodic_orbital_proposal(
 
     def generate(
         direction: int, init_state: integrators.IntegratorState
-    ) -> Tuple[PeriodicOrbitalState, PeriodicOrbitalInfo]:
+    ) -> tuple[PeriodicOrbitalState, PeriodicOrbitalInfo]:
         """Generate orbit by applying bijection forwards and backwards on period.
 
         As described in algorithm 2 of :cite:p:`neklyudov2022orbital`, each iteration of the periodic orbital

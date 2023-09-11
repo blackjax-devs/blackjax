@@ -51,10 +51,10 @@ class GaussianTest(chex.TestCase):
                 np.zeros((D,)), C, obs, R
             )
 
-        chex.assert_tree_all_close(
+        chex.assert_trees_all_close(
             np.mean(states.position, 0), expected_mean, atol=1e-1, rtol=1e-2
         )
-        chex.assert_tree_all_close(
+        chex.assert_trees_all_close(
             np.cov(states.position, rowvar=False), expected_cov, atol=1e-1, rtol=1e-1
         )
 

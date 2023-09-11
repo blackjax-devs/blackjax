@@ -11,21 +11,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 import jax.scipy as jsp
 from optax import GradientTransformation, OptState
 
-from blackjax.types import PRNGKey, PyTree
+from blackjax.base import VIAlgorithm
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["MFVIState", "MFVIInfo", "sample", "generate_meanfield_logdensity", "step"]
+__all__ = [
+    "MFVIState",
+    "MFVIInfo",
+    "sample",
+    "generate_meanfield_logdensity",
+    "step",
+    "meanfield_vi",
+]
 
 
 class MFVIState(NamedTuple):
-    mu: PyTree
-    rho: PyTree
+    mu: ArrayTree
+    rho: ArrayTree
     opt_state: OptState
 
 
@@ -34,7 +42,7 @@ class MFVIInfo(NamedTuple):
 
 
 def init(
-    position: PyTree,
+    position: ArrayLikeTree,
     optimizer: GradientTransformation,
     *optimizer_args,
     **optimizer_kwargs,
@@ -53,7 +61,7 @@ def step(
     optimizer: GradientTransformation,
     num_samples: int = 5,
     stl_estimator: bool = True,
-) -> Tuple[MFVIState, MFVIInfo]:
+) -> tuple[MFVIState, MFVIInfo]:
     """Approximate the target density using the mean-field approximation.
 
     Parameters
@@ -99,6 +107,47 @@ def step(
 def sample(rng_key: PRNGKey, state: MFVIState, num_samples: int = 1):
     """Sample from the mean-field approximation."""
     return _sample(rng_key, state.mu, state.rho, num_samples)
+
+
+class meanfield_vi:
+    """High-level implementation of Mean-Field Variational Inference.
+
+    Parameters
+    ----------
+    logdensity_fn
+        A function that represents the log-density function associated with
+        the distribution we want to sample from.
+    optimizer
+        Optax optimizer to use to optimize the ELBO.
+    num_samples
+        Number of samples to take at each step to optimize the ELBO.
+
+    Returns
+    -------
+    A ``VIAlgorithm``.
+
+    """
+
+    init = staticmethod(init)
+    step = staticmethod(step)
+    sample = staticmethod(sample)
+
+    def __new__(
+        cls,
+        logdensity_fn: Callable,
+        optimizer: GradientTransformation,
+        num_samples: int = 100,
+    ):  # type: ignore[misc]
+        def init_fn(position: ArrayLikeTree):
+            return cls.init(position, optimizer)
+
+        def step_fn(rng_key: PRNGKey, state: MFVIState) -> tuple[MFVIState, MFVIInfo]:
+            return cls.step(rng_key, state, logdensity_fn, optimizer, num_samples)
+
+        def sample_fn(rng_key: PRNGKey, state: MFVIState, num_samples: int):
+            return cls.sample(rng_key, state, num_samples)
+
+        return VIAlgorithm(init_fn, step_fn, sample_fn)
 
 
 def _sample(rng_key, mu, rho, num_samples):

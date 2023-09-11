@@ -18,20 +18,27 @@ Some interfaces are exposed here for convenience and for entry level users, who 
 with simpler versions of the algorithms, but in all cases they are particular instantiations
 of the Random Walk Rosenbluth-Metropolis-Hastings.
 
-Let's note x_{t-1} to the previous position and x_t to the newly sampled one.
+Let's note $x_{t-1}$ to the previous position and $x_t$ to the newly sampled one.
 
 The variants offered are:
 
 1. Proposal distribution as addition of random noice from previous position. This means
-x_t = x_{t-1} + step. Function: `additive_step`
+   $x_t = x_{t-1} + step$.
 
-2. Independent proposal distribution: P(x_t) doesn't depend on x_{t_1}. Function: `irmh`
+    Function: `additive_step`
 
-3. Proposal distribution using a symmetric function. That means P(x_t|x_{t-1}) = P(x_{t-1}|x_t).
- Function: `rmh` without proposal_logdensity_fn. See 'Metropolis Algorithm' in [1]
+2. Independent proposal distribution: $P(x_t)$ doesn't depend on $x_{t_1}$.
 
-4. Asymmetric proposal distribution. Function: `rmh` with proposal_logdensity_fn.
- See 'Metropolis-Hastings' Algorithm in [1]
+    Function: `irmh`
+
+3. Proposal distribution using a symmetric function. That means $P(x_t|x_{t-1}) = P(x_{t-1}|x_t)$.
+   See 'Metropolis Algorithm' in [1].
+
+    Function: `rmh` without proposal_logdensity_fn.
+
+4. Asymmetric proposal distribution. See 'Metropolis-Hastings' Algorithm in [1].
+
+    Function: `rmh` with proposal_logdensity_fn.
 
 Reference: :cite:p:`gelman2014bayesian` Section 11.2
 
@@ -53,14 +60,15 @@ Examples
         new_state, info = step(rng_key, state)
 
 """
-from typing import Callable, NamedTuple, Optional, Tuple
+from typing import Callable, NamedTuple, Optional
 
 import jax
 import numpy as np
 from jax import numpy as jnp
 
+from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc import proposal
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = [
@@ -72,6 +80,9 @@ __all__ = [
     "RWState",
     "rmh_proposal",
     "build_rmh_transition_energy",
+    "additive_step_random_walk",
+    "irmh",
+    "rmh",
 ]
 
 
@@ -91,7 +102,7 @@ def normal(sigma: Array) -> Callable:
     if jnp.ndim(sigma) > 2:
         raise ValueError("sigma must be a vector or a matrix.")
 
-    def propose(rng_key: PRNGKey, position: PyTree) -> PyTree:
+    def propose(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayTree:
         return generate_gaussian_noise(rng_key, position, sigma=sigma)
 
     return propose
@@ -107,7 +118,7 @@ class RWState(NamedTuple):
 
     """
 
-    position: PyTree
+    position: ArrayTree
     logdensity: float
 
 
@@ -133,7 +144,7 @@ class RWInfo(NamedTuple):
     proposal: RWState
 
 
-def init(position: PyTree, logdensity_fn: Callable) -> RWState:
+def init(position: ArrayLikeTree, logdensity_fn: Callable) -> RWState:
     """Create a chain state from a position.
 
     Parameters
@@ -160,7 +171,7 @@ def build_additive_step():
 
     def kernel(
         rng_key: PRNGKey, state: RWState, logdensity_fn: Callable, random_step: Callable
-    ) -> Tuple[RWState, RWInfo]:
+    ) -> tuple[RWState, RWInfo]:
         def proposal_generator(key_proposal, position):
             move_proposal = random_step(key_proposal, position)
             new_position = jax.tree_util.tree_map(jnp.add, position, move_proposal)
@@ -170,6 +181,76 @@ def build_additive_step():
         return inner_kernel(rng_key, state, logdensity_fn, proposal_generator)
 
     return kernel
+
+
+class additive_step_random_walk:
+    """Implements the user interface for the Additive Step RMH
+
+    Examples
+    --------
+
+    A new kernel can be initialized and used with the following code:
+
+    .. code::
+
+        rw = blackjax.additive_step_random_walk(logdensity_fn, random_step)
+        state = rw.init(position)
+        new_state, info = rw.step(rng_key, state)
+
+    The specific case of a Gaussian `random_step` is already implemented, either with independent components
+    when `covariance_matrix` is a one dimensional array or with dependent components if a two dimensional array:
+
+    .. code::
+
+        rw_gaussian = blackjax.additive_step_random_walk.normal_random_walk(logdensity_fn, covariance_matrix)
+        state = rw_gaussian.init(position)
+        new_state, info = rw_gaussian.step(rng_key, state)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log density probability density function from which we wish to sample.
+    random_step
+        A Callable that takes a random number generator and the current state and produces a step,
+        which will be added to the current position to obtain a new position. Must be symmetric
+        to maintain detailed balance. This means that P(step|position) = P(-step | position+step)
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+    """
+
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_additive_step)
+
+    @classmethod
+    def normal_random_walk(cls, logdensity_fn: Callable, sigma):
+        """
+        Parameters
+        ----------
+        logdensity_fn
+            The log density probability density function from which we wish to sample.
+        sigma
+            The value of the covariance matrix of the gaussian proposal distribution.
+
+        Returns
+        -------
+             A ``SamplingAlgorithm``.
+        """
+        return cls(logdensity_fn, normal(sigma))
+
+    def __new__(  # type: ignore[misc]
+        cls, logdensity_fn: Callable, random_step: Callable
+    ) -> SamplingAlgorithm:
+        kernel = cls.build_kernel()
+
+        def init_fn(position: ArrayLikeTree):
+            return cls.init(position, logdensity_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return kernel(rng_key, state, logdensity_fn, random_step)
+
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def build_irmh() -> Callable:
@@ -190,8 +271,9 @@ def build_irmh() -> Callable:
         state: RWState,
         logdensity_fn: Callable,
         proposal_distribution: Callable,
-    ) -> Tuple[RWState, RWInfo]:
+    ) -> tuple[RWState, RWInfo]:
         """
+
         Parameters
         ----------
         proposal_distribution
@@ -199,7 +281,8 @@ def build_irmh() -> Callable:
             domain of the target distribution.
         """
 
-        def proposal_generator(rng_key: PRNGKey, position: PyTree):
+        def proposal_generator(rng_key: PRNGKey, position: ArrayTree):
+            del position
             return proposal_distribution(rng_key)
 
         inner_kernel = build_rmh()
@@ -208,8 +291,63 @@ def build_irmh() -> Callable:
     return kernel
 
 
+class irmh:
+    """Implements the (basic) user interface for the independent RMH.
+
+    Examples
+    --------
+
+    A new kernel can be initialized and used with the following code:
+
+    .. code::
+
+        rmh = blackjax.irmh(logdensity_fn, proposal_distribution)
+        state = rmh.init(position)
+        new_state, info = rmh.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(rmh.step)
+        new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log density probability density function from which we wish to sample.
+    proposal_distribution
+        A Callable that takes a random number generator and produces a new proposal. The
+        proposal is independent of the sampler's current state.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+
+    """
+
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_irmh)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_fn: Callable,
+        proposal_distribution: Callable,
+    ) -> SamplingAlgorithm:
+        kernel = cls.build_kernel()
+
+        def init_fn(position: ArrayLikeTree):
+            return cls.init(position, logdensity_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return kernel(rng_key, state, logdensity_fn, proposal_distribution)
+
+        return SamplingAlgorithm(init_fn, step_fn)
+
+
 def build_rmh():
     """Build a Rosenbluth-Metropolis-Hastings kernel.
+
     Returns
     -------
     A kernel that takes a rng_key and a Pytree that contains the current state
@@ -224,7 +362,7 @@ def build_rmh():
         logdensity_fn: Callable,
         transition_generator: Callable,
         proposal_logdensity_fn: Optional[Callable] = None,
-    ) -> Tuple[RWState, RWInfo]:
+    ) -> tuple[RWState, RWInfo]:
         """Move the chain by one step using the Rosenbluth Metropolis Hastings
         algorithm.
 
@@ -266,6 +404,69 @@ def build_rmh():
     return kernel
 
 
+class rmh:
+    """Implements the user interface for the RMH.
+
+    Examples
+    --------
+
+    A new kernel can be initialized and used with the following code:
+
+    .. code::
+
+        rmh = blackjax.rmh(logdensity_fn, proposal_generator)
+        state = rmh.init(position)
+        new_state, info = rmh.step(rng_key, state)
+
+    We can JIT-compile the step function for better performance
+
+    .. code::
+
+        step = jax.jit(rmh.step)
+        new_state, info = step(rng_key, state)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log density probability density function from which we wish to sample.
+    proposal_generator
+        A Callable that takes a random number generator and the current state and produces a new proposal.
+    proposal_logdensity_fn
+        The logdensity function associated to the proposal_generator. If the generator is non-symmetric,
+         P(x_t|x_t-1) is not equal to P(x_t-1|x_t), then this parameter must be not None in order to apply
+         the Metropolis-Hastings correction for detailed balance.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+    """
+
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_rmh)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_fn: Callable,
+        proposal_generator: Callable[[PRNGKey, ArrayLikeTree], ArrayTree],
+        proposal_logdensity_fn: Optional[Callable[[ArrayLikeTree], ArrayTree]] = None,
+    ) -> SamplingAlgorithm:
+        kernel = cls.build_kernel()
+
+        def init_fn(position: ArrayLikeTree):
+            return cls.init(position, logdensity_fn)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return kernel(
+                rng_key,
+                state,
+                logdensity_fn,
+                proposal_generator,
+                proposal_logdensity_fn,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)
+
+
 def build_rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> Callable:
     if proposal_logdensity_fn is None:
 
@@ -292,7 +493,7 @@ def rmh_proposal(
         new_position = transition_distribution(rng_key, position)
         return RWState(new_position, logdensity_fn(new_position))
 
-    def generate(rng_key, state: RWState) -> Tuple[RWState, bool, float]:
+    def generate(rng_key, state: RWState) -> tuple[RWState, bool, float]:
         key_proposal, key_accept = jax.random.split(rng_key, 2)
         end_state = build_trajectory(key_proposal, state)
         new_proposal, _ = generate_proposal(state, end_state)

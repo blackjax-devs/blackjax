@@ -142,8 +142,8 @@ rng_key = jax.random.PRNGKey(0)
 state, info = nuts.step(rng_key, init)
 
 for _ in range(10):
-    _, rng_key = jax.random.split(rng_key)
-    state, _ = nuts.step(rng_key, state)
+    rng_key, nuts_key = jax.random.split(rng_key)
+    state, _ = nuts.step(nuts_key, state)
 
 print(state)
 ```

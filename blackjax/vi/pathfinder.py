@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -23,9 +23,9 @@ from blackjax.optimizers.lbfgs import (
     bfgs_sample,
     lbfgs_inverse_hessian_factors,
 )
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["PathfinderState", "approximate", "sample"]
+__all__ = ["PathfinderState", "approximate", "sample", "pathfinder"]
 
 
 class PathfinderState(NamedTuple):
@@ -50,8 +50,8 @@ class PathfinderState(NamedTuple):
     """
 
     elbo: Array
-    position: PyTree
-    grad_position: PyTree
+    position: ArrayTree
+    grad_position: ArrayTree
     alpha: Array
     beta: Array
     gamma: Array
@@ -63,10 +63,15 @@ class PathfinderInfo(NamedTuple):
     path: PathfinderState
 
 
+class PathFinderAlgorithm(NamedTuple):
+    approximate: Callable
+    sample: Callable
+
+
 def approximate(
     rng_key: PRNGKey,
     logdensity_fn: Callable,
-    initial_position: PyTree,
+    initial_position: ArrayLikeTree,
     num_samples: int = 200,
     *,  # lgbfs parameters
     maxiter=30,
@@ -74,7 +79,7 @@ def approximate(
     maxls=1000,
     gtol=1e-08,
     ftol=1e-05,
-) -> Tuple[PathfinderState, PathfinderInfo]:
+) -> tuple[PathfinderState, PathfinderInfo]:
     """Pathfinder variational inference algorithm.
 
     Pathfinder locates normal approximations to the target density along a
@@ -195,8 +200,8 @@ def approximate(
 def sample(
     rng_key: PRNGKey,
     state: PathfinderState,
-    num_samples: Union[int, Tuple[()], Tuple[int]] = (),
-) -> PyTree:
+    num_samples: Union[int, tuple[()], tuple[int]] = (),
+) -> ArrayTree:
     """Draw from the Pathfinder approximation of the target distribution.
 
     Parameters
@@ -230,3 +235,47 @@ def sample(
         return unravel_fn(phi), logq
     else:
         return jax.vmap(unravel_fn)(phi), logq
+
+
+class pathfinder:
+    """Implements the (basic) user interface for the pathfinder kernel.
+
+    Pathfinder locates normal approximations to the target density along a
+    quasi-Newton optimization path, with local covariance estimated using
+    the inverse Hessian estimates produced by the L-BFGS optimizer.
+    Pathfinder returns draws from the approximation with the lowest estimated
+    Kullback-Leibler (KL) divergence to the true posterior.
+
+    Note: all the heavy processing in performed in the init function, step
+    function is just a drawing a sample from a normal distribution
+
+    Parameters
+    ----------
+    logdensity_fn
+        A function that represents the log-density of the model we want
+        to sample from.
+
+    Returns
+    -------
+    A ``VISamplingAlgorithm``.
+
+    """
+
+    approximate = staticmethod(approximate)
+    sample = staticmethod(sample)
+
+    def __new__(cls, logdensity_fn: Callable) -> PathFinderAlgorithm:  # type: ignore[misc]
+        def approximate_fn(
+            rng_key: PRNGKey,
+            position: ArrayLikeTree,
+            num_samples: int = 200,
+            **lbfgs_parameters,
+        ):
+            return cls.approximate(
+                rng_key, logdensity_fn, position, num_samples, **lbfgs_parameters
+            )
+
+        def sample_fn(rng_key: PRNGKey, state: PathfinderState, num_samples: int):
+            return cls.sample(rng_key, state, num_samples)
+
+        return PathFinderAlgorithm(approximate_fn, sample_fn)

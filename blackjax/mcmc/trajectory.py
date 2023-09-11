@@ -36,7 +36,7 @@ trajectory is being sampled. While the former is faster, we risk saturating the
 memory by keeping states that will subsequently be discarded.
 
 """
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -48,13 +48,13 @@ from blackjax.mcmc.proposal import (
     progressive_uniform_sampling,
     proposal_generator,
 )
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import ArrayTree, PRNGKey
 
 
 class Trajectory(NamedTuple):
     leftmost_state: IntegratorState
     rightmost_state: IntegratorState
-    momentum_sum: PyTree
+    momentum_sum: ArrayTree
     num_states: int
 
 
@@ -70,7 +70,7 @@ def append_to_trajectory(trajectory: Trajectory, state: IntegratorState) -> Traj
 
 def reorder_trajectories(
     direction: int, trajectory: Trajectory, new_trajectory: Trajectory
-) -> Tuple[Trajectory, Trajectory]:
+) -> tuple[Trajectory, Trajectory]:
     """Order the two trajectories depending on the direction."""
     return jax.lax.cond(
         direction > 0,
@@ -115,19 +115,14 @@ def static_integration(
     def integrate(
         initial_state: IntegratorState, step_size, num_integration_steps
     ) -> IntegratorState:
-        directed_step_size = jax.tree_map(
+        directed_step_size = jax.tree_util.tree_map(
             lambda step_size: direction * step_size, step_size
         )
 
-        def one_step(state, _):
-            state = integrator(state, directed_step_size)
-            return state, state
+        def one_step(_, state):
+            return integrator(state, directed_step_size)
 
-        last_state, _ = jax.lax.scan(
-            one_step, initial_state, jnp.arange(num_integration_steps)
-        )
-
-        return last_state
+        return jax.lax.fori_loop(0, num_integration_steps, one_step, initial_state)
 
     return integrate
 

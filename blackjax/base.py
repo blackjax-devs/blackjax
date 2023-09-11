@@ -10,13 +10,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 from typing_extensions import Protocol
 
-from .types import PRNGKey, PyTree
+from .types import ArrayLikeTree, PRNGKey
 
-Position = PyTree
+Position = ArrayLikeTree
 State = NamedTuple
 Info = NamedTuple
 
@@ -64,7 +64,7 @@ class UpdateFn(Protocol):
 
     """
 
-    def __call__(self, rng_key: PRNGKey, state: State) -> Tuple[State, Info]:
+    def __call__(self, rng_key: PRNGKey, state: State) -> tuple[State, Info]:
         """Update the current state using the sampling algorithm.
 
         Parameters
@@ -85,7 +85,7 @@ class UpdateFn(Protocol):
         """
 
 
-class MCMCSamplingAlgorithm(NamedTuple):
+class SamplingAlgorithm(NamedTuple):
     """A pair of functions that represents a MCMC sampling algorithm.
 
     Blackjax sampling algorithms are implemented as a pair of pure functions: a
@@ -139,7 +139,7 @@ class VIAlgorithm(NamedTuple):
 class RunFn(Protocol):
     """A `Callable` used to run the adaptation procedure."""
 
-    def __call__(self, rng_key: PRNGKey, position: PyTree):
+    def __call__(self, rng_key: PRNGKey, position: ArrayLikeTree):
         """Run the compiled algorithm."""
 
 

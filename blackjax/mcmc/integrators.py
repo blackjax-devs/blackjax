@@ -17,7 +17,7 @@ from typing import Callable, NamedTuple
 import jax
 
 from blackjax.mcmc.metrics import EuclideanKineticEnergy
-from blackjax.types import PyTree
+from blackjax.types import ArrayTree
 
 __all__ = ["mclachlan", "velocity_verlet", "yoshida"]
 
@@ -29,10 +29,10 @@ class IntegratorState(NamedTuple):
     to speedup computations.
     """
 
-    position: PyTree
-    momentum: PyTree
+    position: ArrayTree
+    momentum: ArrayTree
     logdensity: float
-    logdensity_grad: PyTree
+    logdensity_grad: ArrayTree
 
 
 EuclideanIntegrator = Callable[[IntegratorState, float], IntegratorState]

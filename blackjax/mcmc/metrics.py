@@ -27,23 +27,23 @@ For a Newtonian hamiltonian dynamic the kinetic energy is given by:
 We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
 
 """
-from typing import Callable, Tuple
+from typing import Callable
 
 import jax.numpy as jnp
 import jax.scipy as jscipy
 from jax.flatten_util import ravel_pytree
 
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = ["gaussian_euclidean"]
 
-EuclideanKineticEnergy = Callable[[PyTree], float]
+EuclideanKineticEnergy = Callable[[ArrayLikeTree], float]
 
 
 def gaussian_euclidean(
     inverse_mass_matrix: Array,
-) -> Tuple[Callable, EuclideanKineticEnergy, Callable]:
+) -> tuple[Callable, EuclideanKineticEnergy, Callable]:
     r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum :cite:p:`betancourt2013general`.
 
     The gaussian euclidean metric is a euclidean metric further characterized
@@ -83,11 +83,18 @@ def gaussian_euclidean(
         matmul = jnp.multiply
 
     elif ndim == 2:
-        tril_inv = jscipy.linalg.cholesky(inverse_mass_matrix)
+        # inverse mass matrix can be factored into L*L.T. We want the cholesky
+        # factor (inverse of L.T) of the mass matrix.
+        L = jscipy.linalg.cholesky(inverse_mass_matrix, lower=True)
         identity = jnp.identity(shape[0])
         mass_matrix_sqrt = jscipy.linalg.solve_triangular(
-            tril_inv, identity, lower=True
+            L, identity, lower=True, trans=True
         )
+        # Note that mass_matrix_sqrt is a upper triangular matrix here, with
+        #   jscipy.linalg.inv(mass_matrix_sqrt @ mass_matrix_sqrt.T) == inverse_mass_matrix
+        # An alternative is to compute directly the cholesky factor of the inverse mass matrix
+        #   mass_matrix_sqrt = jscipy.linalg.cholesky(jscipy.linalg.inv(inverse_mass_matrix), lower=True)
+        # which the result would instead be a lower triangular matrix.
         matmul = jnp.matmul
 
     else:
@@ -96,17 +103,19 @@ def gaussian_euclidean(
             f" expected 1 or 2, got {jnp.ndim(inverse_mass_matrix)}."  # type: ignore[arg-type]
         )
 
-    def momentum_generator(rng_key: PRNGKey, position: PyTree) -> PyTree:
+    def momentum_generator(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayTree:
         return generate_gaussian_noise(rng_key, position, sigma=mass_matrix_sqrt)
 
-    def kinetic_energy(momentum: PyTree) -> float:
+    def kinetic_energy(momentum: ArrayLikeTree) -> float:
         momentum, _ = ravel_pytree(momentum)
         velocity = matmul(inverse_mass_matrix, momentum)
         kinetic_energy_val = 0.5 * jnp.dot(velocity, momentum)
         return kinetic_energy_val
 
     def is_turning(
-        momentum_left: PyTree, momentum_right: PyTree, momentum_sum: PyTree
+        momentum_left: ArrayLikeTree,
+        momentum_right: ArrayLikeTree,
+        momentum_sum: ArrayLikeTree,
     ) -> bool:
         """Generalized U-turn criterion :cite:p:`betancourt2013generalizing,nuts_uturn`.
 
