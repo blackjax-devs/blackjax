@@ -4,8 +4,8 @@ aesara>=2.8.8
 arviz
 flax
 ipython
-jax
-jaxlib
+jax>=0.4.16
+jaxlib>=0.4.16
 jaxopt
 jupytext
 myst_nb
