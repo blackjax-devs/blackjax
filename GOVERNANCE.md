@@ -1,22 +1,22 @@
 # Blackjax Governance Document
 
 ## The Project
-BlackJAX (or Blackjax, we use it interchangeably) is an open-source Bayesian inference library in the JAX scientific computation ecosystem. 
-Blackjax is designed to prioritize new Bayesian Inference algorithm development, with focus on modularity and ease of use to low level function, 
-while also being fast and compatible with multi hardwares thanks to JAX. 
+BlackJAX (or Blackjax, we use it interchangeably) is an open-source Bayesian inference library in the JAX scientific computation ecosystem.
+Blackjax is designed to prioritize new Bayesian Inference algorithm development, with focus on modularity and ease of use to low level function,
+while also being fast and compatible with multi hardwares thanks to JAX.
 
-The Blackjax project was created by [Rémi Louf](https://github.com/rlouf) as a 
-[Single-Maintainer Houseplant project](https://github.com/OpenTechStrategies/open-source-archetypes/blob/main/arch-houseplant.ltx) 
-following the BDFL model of governance. We have since moved to the governance model of 
-[Specialty Library](https://github.com/OpenTechStrategies/open-source-archetypes/blob/main/arch-specialty-library.ltx) and benefited from a community 
+The Blackjax project was created by [Rémi Louf](https://github.com/rlouf) as a
+[Single-Maintainer Houseplant project](https://github.com/OpenTechStrategies/open-source-archetypes/blob/main/arch-houseplant.ltx)
+following the BDFL model of governance. We have since moved to the governance model of
+[Specialty Library](https://github.com/OpenTechStrategies/open-source-archetypes/blob/main/arch-specialty-library.ltx) and benefited from a community
 of contributors. This document outlines the governance structure for the current status.
 
 ## Roles
 * Contributors: Anyone who contributes to the BlackJAX project is considered a contributor. This includes submitting code, filing issues, reviewing pull requests, and participating in discussions. They are listed under:
-   * https://github.com/blackjax-devs/blackjax/graphs/contributors 
+   * https://github.com/blackjax-devs/blackjax/graphs/contributors
    * https://github.com/blackjax-devs/sampling-book/graphs/contributors
 * Core contributors: Core contributors are contributors who have made significant contributions to the BlackJAX project, for example large modules or functionality.
-* Blackjax gardeners: Gardeners are core contributors who are responsible for maintaining the project and making decisions about its future direction. Blackjax gardeners have the ability to merge pull requests into the BlackJAX repository. 
+* Blackjax gardeners: Gardeners are core contributors who are responsible for maintaining the project and making decisions about its future direction. Blackjax gardeners have the ability to merge pull requests into the BlackJAX repository.
    * Currently [junpenglao@](https://github.com/junpenglao) and [albcab@](https://github.com/albcab) are gardeners of Blackjax.
 
 
