@@ -42,4 +42,4 @@ ArrayLikeTree = Union[
 ]
 
 #: JAX PRNGKey
-PRNGKey = jax.random.Array
+PRNGKey = Array
