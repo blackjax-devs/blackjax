@@ -38,7 +38,7 @@ def inference_loop(kernel, num_samples, rng_key, initial_state):
 
 
 def run_regression(algorithm, **parameters):
-    key = jax.random.PRNGKey(0)
+    key = jax.random.key(0)
     rng_key, init_key0, init_key1 = jax.random.split(key, 3)
     x_data = jax.random.normal(init_key0, shape=(100_000, 1))
     y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)

@@ -22,7 +22,7 @@ class TrajectoryTest(chex.TestCase):
     def test_dynamic_progressive_integration_divergence(
         self, step_size, should_diverge
     ):
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
 
         logdensity_fn = jax.scipy.stats.norm.logpdf
 
@@ -74,7 +74,7 @@ class TrajectoryTest(chex.TestCase):
         assert is_diverging.item() is should_diverge
 
     def test_dynamic_progressive_equal_recursive(self):
-        rng_key = jax.random.PRNGKey(23132)
+        rng_key = jax.random.key(23132)
 
         def logdensity_fn(x):
             return -((1.0 - x[0]) ** 2) - 1.5 * (x[1] - x[0] ** 2) ** 2
@@ -202,7 +202,7 @@ class TrajectoryTest(chex.TestCase):
     def test_dynamic_progressive_expansion(
         self, step_size, should_diverge, should_turn, expected_doublings
     ):
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
 
         def logdensity_fn(x):
             return -0.5 * x**2
@@ -260,7 +260,7 @@ class TrajectoryTest(chex.TestCase):
         assert is_turning == should_turn
 
     def test_static_integration_variable_num_steps(self):
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
 
         logdensity_fn = jax.scipy.stats.norm.logpdf
         position = 1.0

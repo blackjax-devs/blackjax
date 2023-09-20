@@ -29,7 +29,7 @@ class CompilationTest(chex.TestCase):
 
         chex.clear_trace_counter()
 
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
         state = blackjax.hmc.init(1.0, logdensity_fn)
 
         kernel = blackjax.hmc(
@@ -58,7 +58,7 @@ class CompilationTest(chex.TestCase):
 
         chex.clear_trace_counter()
 
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
         state = blackjax.nuts.init(1.0, logdensity_fn)
 
         kernel = blackjax.nuts(
@@ -83,7 +83,7 @@ class CompilationTest(chex.TestCase):
 
         chex.clear_trace_counter()
 
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
 
         warmup = blackjax.window_adaptation(
             algorithm=blackjax.hmc,
@@ -111,7 +111,7 @@ class CompilationTest(chex.TestCase):
 
         chex.clear_trace_counter()
 
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
 
         warmup = blackjax.window_adaptation(
             algorithm=blackjax.nuts,

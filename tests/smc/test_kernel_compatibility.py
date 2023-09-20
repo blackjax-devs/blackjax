@@ -17,7 +17,7 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(42)
+        self.key = jax.random.key(42)
         self.initial_particles = jax.random.multivariate_normal(
             self.key, jnp.zeros(2), jnp.eye(2), (3,)
         )

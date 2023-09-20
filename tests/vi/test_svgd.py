@@ -32,7 +32,7 @@ def svgd_training_loop(
 class SvgdTest(chex.TestCase):
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(1)
+        self.key = jax.random.key(1)
 
     def test_recover_posterior(self):
         # TODO improve testing
