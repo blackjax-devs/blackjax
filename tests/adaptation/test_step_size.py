@@ -16,7 +16,7 @@ class StepSizeTest(chex.TestCase):
         def logdensity_fn(x):
             return -jnp.sum(0.5 * x)
 
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
         run_key0, run_key1 = jax.random.split(rng_key, 2)
 
         init_position = jnp.array([3.0])

@@ -50,7 +50,7 @@ class DiagnosticsTest(chex.TestCase):
         itertools.product(test_cases, [1, 2, 10], [(), (3,), (5, 7)])
     )
     def test_rhat_ess(self, case, num_chains, event_shape):
-        rng_key = jax.random.PRNGKey(self.test_seed)
+        rng_key = jax.random.key(self.test_seed)
         sample_shape = list(event_shape)
         if case["chain_axis"] < case["sample_axis"]:
             sample_shape = insert_list(sample_shape, case["chain_axis"], num_chains)

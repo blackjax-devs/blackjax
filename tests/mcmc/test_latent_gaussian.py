@@ -14,7 +14,7 @@ class GaussianTest(chex.TestCase):
     def test_gaussian(self, seed, mean):
         n_samples = 500_000
 
-        key = jax.random.PRNGKey(seed)
+        key = jax.random.key(seed)
         key1, key2, key3, key4, key5 = jax.random.split(key, 5)
 
         D = 5

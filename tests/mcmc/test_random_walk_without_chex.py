@@ -21,7 +21,7 @@ class AdditiveStepTest(unittest.TestCase):
         Since the density == 1, the proposal is accepted.
         The random step may depend on the previous position
         """
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
         initial_position = jnp.array([50.0])
 
         def random_step(key, position):
@@ -51,7 +51,7 @@ class AdditiveStepTest(unittest.TestCase):
 class IRMHTest(unittest.TestCase):
     def test_proposal_is_independent_of_position(self):
         """New position does not depend on previous"""
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
         initial_position = jnp.array([50.0])
         other_position = jnp.array([15000.0])
 
@@ -99,7 +99,7 @@ class RMHProposalTest(unittest.TestCase):
         and given that the sampling rule rejects,
         the prev_state is proposed again
         """
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
 
         prev_state = RWState(jnp.array([30.0]), 15.0)
 
@@ -118,7 +118,7 @@ class RMHProposalTest(unittest.TestCase):
         np.testing.assert_allclose(sampled_proposal.state.position, jnp.array([30.0]))
 
     def test_generate_accept(self):
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
         prev_state = RWState(jnp.array([30.0]), 15.0)
 
         generate = rmh_proposal(

@@ -41,7 +41,7 @@ class ResamplingTest(chex.TestCase):
         x = jnp.array(np.random.randn(N), dtype="float32")
         w = w / w.sum()
 
-        resampling_keys = jax.random.split(jax.random.PRNGKey(42), batch_size)
+        resampling_keys = jax.random.split(jax.random.key(42), batch_size)
 
         resampling_idx = jax.vmap(
             self.variant(resampling_methods[method_name], static_argnums=(2,)),

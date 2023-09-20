@@ -71,7 +71,7 @@ class LinearRegressionTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(19)
+        self.key = jax.random.key(19)
 
     def regression_logprob(self, log_scale, coefs, preds, x):
         """Linear regression"""
@@ -229,7 +229,7 @@ class SGMCMCTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(19)
+        self.key = jax.random.key(19)
 
     def logprior_fn(self, position):
         return -0.5 * jnp.dot(position, position) * 0.01
@@ -379,7 +379,7 @@ class LatentGaussianTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(19)
+        self.key = jax.random.key(19)
         self.C = 2.0 * np.eye(1)
         self.delta = 5.0
         self.sampling_steps = 25_000
@@ -494,7 +494,7 @@ class UnivariateNormalTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(12)
+        self.key = jax.random.key(12)
 
     def normal_logprob(self, x):
         return stats.norm.logpdf(x, loc=1.0, scale=2.0)
@@ -572,7 +572,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(20220203)
+        self.key = jax.random.key(20220203)
 
     def generate_multivariate_target(self, rng=None):
         """Genrate a Multivariate Normal distribution as target."""
