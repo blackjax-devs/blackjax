@@ -12,7 +12,6 @@
 # limitations under the License.
 from typing import Any, Iterable, Mapping, Union
 
-import jax
 from jax import Array
 from jax.typing import ArrayLike
 
