@@ -35,6 +35,7 @@ function), we annotate them as `float` to empathizes they should be scalar
 (until we introduce shape annotation).
 """
 #: JAX PyTrees
+Array = jax.Array
 ArrayTree = Union[jax.Array, Iterable["ArrayTree"], Mapping[Any, "ArrayTree"]]
 ArrayLikeTree = Union[
     ArrayLike, Iterable["ArrayLikeTree"], Mapping[Any, "ArrayLikeTree"]
