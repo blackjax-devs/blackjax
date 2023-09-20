@@ -13,7 +13,6 @@
 from typing import Any, Iterable, Mapping, Union
 
 import jax
-from jax import Array
 from jax.typing import ArrayLike
 
 """
@@ -36,10 +35,10 @@ function), we annotate them as `float` to empathizes they should be scalar
 (until we introduce shape annotation).
 """
 #: JAX PyTrees
-ArrayTree = Union[Array, Iterable["ArrayTree"], Mapping[Any, "ArrayTree"]]
+ArrayTree = Union[jax.Array, Iterable["ArrayTree"], Mapping[Any, "ArrayTree"]]
 ArrayLikeTree = Union[
     ArrayLike, Iterable["ArrayLikeTree"], Mapping[Any, "ArrayLikeTree"]
 ]
 
 #: JAX PRNGKey
-PRNGKey = jax.random.PRNGKeyArray
+PRNGKey = jax.Array

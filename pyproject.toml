@@ -31,11 +31,11 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
 dependencies = [
-    "fastprogress>=0.2.0",
-    "jax>=0.3.13",
-    "jaxlib>=0.3.10",
-    "jaxopt>=0.5.5",
-    "optax",
+    "fastprogress>=1.0.0",
+    "jax>=0.4.16",
+    "jaxlib>=0.4.16",
+    "jaxopt>=0.8",
+    "optax>=0.1.7",
     "typing-extensions>=4.4.0",
 ]
 dynamic = ["version"]
