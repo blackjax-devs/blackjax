@@ -67,7 +67,7 @@ import jax
 
 from numpyro.infer.util import initialize_model
 
-rng_key = jax.random.PRNGKey(0)
+rng_key = jax.random.key(0)
 init_params, potential_fn_gen, *_ = initialize_model(
     rng_key,
     eight_schools_noncentered,

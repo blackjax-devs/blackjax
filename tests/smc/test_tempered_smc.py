@@ -37,7 +37,7 @@ class TemperedSMCTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(42)
+        self.key = jax.random.key(42)
 
     def logdensity_fn(self, log_scale, coefs, preds, x):
         """Linear regression"""
@@ -174,7 +174,7 @@ class NormalizingConstantTest(chex.TestCase):
         num_particles = 200
         num_dim = 2
 
-        rng_key = jax.random.PRNGKey(2356)
+        rng_key = jax.random.key(2356)
         rng_key, cov_key = jax.random.split(rng_key, 2)
         chol_cov = jax.random.uniform(cov_key, shape=(num_dim, num_dim))
         iu = np.triu_indices(num_dim, 1)

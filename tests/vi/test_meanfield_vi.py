@@ -11,7 +11,7 @@ import blackjax
 class MFVITest(chex.TestCase):
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(42)
+        self.key = jax.random.key(42)
 
     def test_recover_posterior(self):
         ground_truth = [

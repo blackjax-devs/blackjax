@@ -14,7 +14,7 @@ from blackjax.optimizers.lbfgs import bfgs_sample
 class PathfinderTest(chex.TestCase):
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(1)
+        self.key = jax.random.key(1)
 
     @chex.all_variants(without_device=False, with_pmap=False)
     @parameterized.parameters(

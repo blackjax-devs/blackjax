@@ -97,7 +97,7 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
 
 ```{code-cell} python
 %%time
-rng_key = jax.random.PRNGKey(0)
+rng_key = jax.random.key(0)
 states = inference_loop(rng_key, hmc_kernel, initial_state, 10_000)
 
 loc_samples = states.position["loc"].block_until_ready()
@@ -136,7 +136,7 @@ initial_state
 
 ```{code-cell} python
 %%time
-rng_key = jax.random.PRNGKey(0)
+rng_key = jax.random.key(0)
 states = inference_loop(rng_key, nuts.step, initial_state, 4_000)
 
 loc_samples = states.position["loc"].block_until_ready()

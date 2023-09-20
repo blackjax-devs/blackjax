@@ -109,7 +109,7 @@ from oryx.core.ppl import joint_sample
 
 
 bnn = mlp([50, 50], num_classes)
-initial_weights = joint_sample(bnn)(jax.random.PRNGKey(0), jnp.ones(num_features))
+initial_weights = joint_sample(bnn)(jax.random.key(0), jnp.ones(num_features))
 
 print(initial_weights.keys())
 ```
@@ -136,7 +136,7 @@ We can now run the window adaptation to get good values for the parameters of th
 %%time
 import blackjax
 
-rng_key = jax.random.PRNGKey(0)
+rng_key = jax.random.key(0)
 adapt = blackjax.window_adaptation(blackjax.nuts, logdensity_fn)
 (last_state, parameters), _ = adapt.run(rng_key, initial_weights, 100)
 kernel = blackjax.nuts(logdensity_fn, **parameters).step
@@ -173,7 +173,7 @@ posterior_weights = states.position
 
 output_logits = jax.vmap(
     lambda weights: jax.vmap(lambda x: intervene(bnn, **weights)(
-        jax.random.PRNGKey(0), x)
+        jax.random.key(0), x)
     )(features)
 )(posterior_weights)
 

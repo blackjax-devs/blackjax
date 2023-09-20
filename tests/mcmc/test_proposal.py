@@ -10,7 +10,7 @@ from blackjax.mcmc.random_walk import normal
 class TestNormalProposalDistribution(chex.TestCase):
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(20220611)
+        self.key = jax.random.key(20220611)
 
     def test_normal_univariate(self):
         """
