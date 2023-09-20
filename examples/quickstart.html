@@ -19,12 +19,12 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=927b94d3fcb96560df09" rel="stylesheet" />
-<link href="../_static/styles/bootstrap.css?digest=927b94d3fcb96560df09" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=927b94d3fcb96560df09" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=ac02cc09edc035673794" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=ac02cc09edc035673794" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=ac02cc09edc035673794" rel="stylesheet" />
 
   
-  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=927b94d3fcb96560df09" rel="stylesheet" />
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=ac02cc09edc035673794" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
@@ -37,9 +37,9 @@
     <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=927b94d3fcb96560df09" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=927b94d3fcb96560df09" />
-  <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=927b94d3fcb96560df09"></script>
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=ac02cc09edc035673794" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794" />
+  <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=ac02cc09edc035673794"></script>
 
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
@@ -431,10 +431,12 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1695211657.699052    2993 tfrt_cpu_pjrt_client.cc:349] TfrtCpuClient created.
+No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-32116.592, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1140.0876, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(59395.305, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-33628.906, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1157.3187, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(62419.938, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -482,8 +484,8 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.6 s, sys: 354 µs, total: 1.6 s
-Wall time: 1.59 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.12 s, sys: 16 ms, total: 3.13 s
+Wall time: 3.13 s
 </pre></div>
 </div>
 </div>
@@ -511,7 +513,7 @@ Wall time: 1.59 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/1310e1c5563da27b58b711b55666cdaab1fad89f86c962c4a4f2e41cf4525aac.png" src="../_images/1310e1c5563da27b58b711b55666cdaab1fad89f86c962c4a4f2e41cf4525aac.png" />
+<img alt="../_images/b19617111e4d2d71cceb4b70062625eeb9832c095497d2f6d49b3a0002bf7bd7.png" src="../_images/b19617111e4d2d71cceb4b70062625eeb9832c095497d2f6d49b3a0002bf7bd7.png" />
 </div>
 </div>
 </section>
@@ -538,7 +540,7 @@ Wall time: 1.59 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-32116.592, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1140.0876, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(59395.305, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-33628.906, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1157.3187, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(62419.938, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -555,8 +557,8 @@ Wall time: 1.59 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.89 s, sys: 19.9 ms, total: 6.91 s
-Wall time: 6.9 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.7 s, sys: 8.2 ms, total: 14.7 s
+Wall time: 14.7 s
 </pre></div>
 </div>
 </div>
@@ -584,7 +586,7 @@ Wall time: 6.9 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/524b818ecd67cbc46157824b62b3a45e8db2061ee02ff5a955176cf2783f13b9.png" src="../_images/524b818ecd67cbc46157824b62b3a45e8db2061ee02ff5a955176cf2783f13b9.png" />
+<img alt="../_images/32549f8ae0f8ef38dc9081734778be006d03ab804c76079eecf49aee356f5a2a.png" src="../_images/32549f8ae0f8ef38dc9081734778be006d03ab804c76079eecf49aee356f5a2a.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -601,8 +603,8 @@ Wall time: 6.9 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.1 s, sys: 16 ms, total: 2.11 s
-Wall time: 2.1 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.56 s, sys: 16.1 ms, total: 2.57 s
+Wall time: 2.56 s
 </pre></div>
 </div>
 </div>
@@ -621,8 +623,8 @@ Wall time: 2.1 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.7 s, sys: 4.07 ms, total: 1.7 s
-Wall time: 1.69 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.04 s, sys: 20.2 ms, total: 2.06 s
+Wall time: 2.04 s
 </pre></div>
 </div>
 </div>
@@ -650,7 +652,7 @@ Wall time: 1.69 s
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0, 0.5, &#39;scale&#39;)
 </pre></div>
 </div>
-<img alt="../_images/792ac72c0de24e6dc9704bbf7ccabf046354fcf22f37b75faf47e924830b5638.png" src="../_images/792ac72c0de24e6dc9704bbf7ccabf046354fcf22f37b75faf47e924830b5638.png" />
+<img alt="../_images/976d00ba9dd5637ef026c066c3a504924e4c175b96136ca21139c33e82179db0.png" src="../_images/976d00ba9dd5637ef026c066c3a504924e4c175b96136ca21139c33e82179db0.png" />
 </div>
 </div>
 </section>
@@ -760,8 +762,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../_static/scripts/bootstrap.js?digest=927b94d3fcb96560df09"></script>
-<script src="../_static/scripts/pydata-sphinx-theme.js?digest=927b94d3fcb96560df09"></script>
+  <script src="../_static/scripts/bootstrap.js?digest=ac02cc09edc035673794"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794"></script>
 
   <footer class="bd-footer">
   </footer>

@@ -19,12 +19,12 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=927b94d3fcb96560df09" rel="stylesheet" />
-<link href="../_static/styles/bootstrap.css?digest=927b94d3fcb96560df09" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=927b94d3fcb96560df09" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=ac02cc09edc035673794" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=ac02cc09edc035673794" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=ac02cc09edc035673794" rel="stylesheet" />
 
   
-  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=927b94d3fcb96560df09" rel="stylesheet" />
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=ac02cc09edc035673794" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
@@ -37,9 +37,9 @@
     <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=927b94d3fcb96560df09" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=927b94d3fcb96560df09" />
-  <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=927b94d3fcb96560df09"></script>
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=ac02cc09edc035673794" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794" />
+  <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=ac02cc09edc035673794"></script>
 
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
@@ -398,7 +398,94 @@ document.write(`
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">AttributeError</span><span class="g g-Whitespace">                            </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">line</span> <span class="mi">4</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">from</span> <span class="nn">pymc.sampling_jax</span> <span class="kn">import</span> <span class="n">get_jaxified_logp</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="n">rvs</span> <span class="o">=</span> <span class="p">[</span><span class="n">rv</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">rv</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">value_vars</span><span class="p">]</span>
+<span class="ne">----&gt; </span><span class="mi">4</span> <span class="n">logdensity_fn</span> <span class="o">=</span> <span class="n">get_jaxified_logp</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/pymc/sampling/jax.py:145,</span> in <span class="ni">get_jaxified_logp</span><span class="nt">(model, negative_logp)</span>
+<span class="g g-Whitespace">    </span><span class="mi">143</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">negative_logp</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">144</span>     <span class="n">model_logp</span> <span class="o">=</span> <span class="o">-</span><span class="n">model_logp</span>
+<span class="ne">--&gt; </span><span class="mi">145</span> <span class="n">logp_fn</span> <span class="o">=</span> <span class="n">get_jaxified_graph</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">value_vars</span><span class="p">,</span> <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">model_logp</span><span class="p">])</span>
+<span class="g g-Whitespace">    </span><span class="mi">147</span> <span class="k">def</span> <span class="nf">logp_fn_wrap</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="g g-Whitespace">    </span><span class="mi">148</span>     <span class="k">return</span> <span class="n">logp_fn</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/pymc/sampling/jax.py:138,</span> in <span class="ni">get_jaxified_graph</span><span class="nt">(inputs, outputs)</span>
+<span class="g g-Whitespace">    </span><span class="mi">135</span> <span class="n">mode</span><span class="o">.</span><span class="n">JAX</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">rewrite</span><span class="p">(</span><span class="n">fgraph</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">137</span> <span class="c1"># We now jaxify the optimized fgraph</span>
+<span class="ne">--&gt; </span><span class="mi">138</span> <span class="k">return</span> <span class="n">jax_funcify</span><span class="p">(</span><span class="n">fgraph</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/functools.py:888,</span> in <span class="ni">singledispatch.&lt;locals&gt;.wrapper</span><span class="nt">(*args, **kw)</span>
+<span class="g g-Whitespace">    </span><span class="mi">884</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">885</span>     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">funcname</span><span class="si">}</span><span class="s1"> requires at least &#39;</span>
+<span class="g g-Whitespace">    </span><span class="mi">886</span>                     <span class="s1">&#39;1 positional argument&#39;</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">888</span> <span class="k">return</span> <span class="n">dispatch</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/pytensor/link/jax/dispatch/basic.py:51,</span> in <span class="ni">jax_funcify_FunctionGraph</span><span class="nt">(fgraph, node, fgraph_name, **kwargs)</span>
+<span class="g g-Whitespace">     </span><span class="mi">44</span> <span class="nd">@jax_funcify</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">FunctionGraph</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">45</span> <span class="k">def</span> <span class="nf">jax_funcify_FunctionGraph</span><span class="p">(</span>
+<span class="g g-Whitespace">     </span><span class="mi">46</span>     <span class="n">fgraph</span><span class="p">,</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">49</span>     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="g g-Whitespace">     </span><span class="mi">50</span> <span class="p">):</span>
+<span class="ne">---&gt; </span><span class="mi">51</span>     <span class="k">return</span> <span class="n">fgraph_to_python</span><span class="p">(</span>
+<span class="g g-Whitespace">     </span><span class="mi">52</span>         <span class="n">fgraph</span><span class="p">,</span>
+<span class="g g-Whitespace">     </span><span class="mi">53</span>         <span class="n">jax_funcify</span><span class="p">,</span>
+<span class="g g-Whitespace">     </span><span class="mi">54</span>         <span class="n">type_conversion_fn</span><span class="o">=</span><span class="n">jax_typify</span><span class="p">,</span>
+<span class="g g-Whitespace">     </span><span class="mi">55</span>         <span class="n">fgraph_name</span><span class="o">=</span><span class="n">fgraph_name</span><span class="p">,</span>
+<span class="g g-Whitespace">     </span><span class="mi">56</span>         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="g g-Whitespace">     </span><span class="mi">57</span>     <span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/pytensor/link/utils.py:738,</span> in <span class="ni">fgraph_to_python</span><span class="nt">(fgraph, op_conversion_fn, type_conversion_fn, order, storage_map, fgraph_name, global_env, local_env, get_name_for_object, squeeze_output, **kwargs)</span>
+<span class="g g-Whitespace">    </span><span class="mi">736</span> <span class="n">body_assigns</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="g g-Whitespace">    </span><span class="mi">737</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">order</span><span class="p">:</span>
+<span class="ne">--&gt; </span><span class="mi">738</span>     <span class="n">compiled_func</span> <span class="o">=</span> <span class="n">op_conversion_fn</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">739</span>         <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">node</span><span class="o">=</span><span class="n">node</span><span class="p">,</span> <span class="n">storage_map</span><span class="o">=</span><span class="n">storage_map</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+<span class="g g-Whitespace">    </span><span class="mi">740</span>     <span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">742</span>     <span class="c1"># Create a local alias with a unique name</span>
+<span class="g g-Whitespace">    </span><span class="mi">743</span>     <span class="n">local_compiled_func_name</span> <span class="o">=</span> <span class="n">unique_name</span><span class="p">(</span><span class="n">compiled_func</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/functools.py:888,</span> in <span class="ni">singledispatch.&lt;locals&gt;.wrapper</span><span class="nt">(*args, **kw)</span>
+<span class="g g-Whitespace">    </span><span class="mi">884</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">885</span>     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">funcname</span><span class="si">}</span><span class="s1"> requires at least &#39;</span>
+<span class="g g-Whitespace">    </span><span class="mi">886</span>                     <span class="s1">&#39;1 positional argument&#39;</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">888</span> <span class="k">return</span> <span class="n">dispatch</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/pytensor/link/jax/dispatch/elemwise.py:12,</span> in <span class="ni">jax_funcify_Elemwise</span><span class="nt">(op, node, **kwargs)</span>
+<span class="g g-Whitespace">      </span><span class="mi">9</span> <span class="nd">@jax_funcify</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Elemwise</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">10</span> <span class="k">def</span> <span class="nf">jax_funcify_Elemwise</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="g g-Whitespace">     </span><span class="mi">11</span>     <span class="n">scalar_op</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">scalar_op</span>
+<span class="ne">---&gt; </span><span class="mi">12</span>     <span class="n">base_fn</span> <span class="o">=</span> <span class="n">jax_funcify</span><span class="p">(</span><span class="n">scalar_op</span><span class="p">,</span> <span class="n">node</span><span class="o">=</span><span class="n">node</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">14</span>     <span class="k">def</span> <span class="nf">elemwise_fn</span><span class="p">(</span><span class="o">*</span><span class="n">inputs</span><span class="p">):</span>
+<span class="g g-Whitespace">     </span><span class="mi">15</span>         <span class="c1"># ScalarVariables in JAX are passed as int/float.</span>
+<span class="g g-Whitespace">     </span><span class="mi">16</span>         <span class="c1"># We wrap them in arrays just for the broadcast check</span>
+<span class="g g-Whitespace">     </span><span class="mi">17</span>         <span class="n">Elemwise</span><span class="o">.</span><span class="n">_check_runtime_broadcast</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)))</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/functools.py:888,</span> in <span class="ni">singledispatch.&lt;locals&gt;.wrapper</span><span class="nt">(*args, **kw)</span>
+<span class="g g-Whitespace">    </span><span class="mi">884</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">885</span>     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">funcname</span><span class="si">}</span><span class="s1"> requires at least &#39;</span>
+<span class="g g-Whitespace">    </span><span class="mi">886</span>                     <span class="s1">&#39;1 positional argument&#39;</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">888</span> <span class="k">return</span> <span class="n">dispatch</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/pytensor/link/jax/dispatch/scalar.py:85,</span> in <span class="ni">jax_funcify_ScalarOp</span><span class="nt">(op, node, **kwargs)</span>
+<span class="g g-Whitespace">     </span><span class="mi">78</span>     <span class="n">jnp_func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">jnp</span><span class="p">,</span> <span class="n">func_name</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">80</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="s2">&quot;nfunc_variadic&quot;</span><span class="p">):</span>
+<span class="g g-Whitespace">     </span><span class="mi">81</span>     <span class="c1"># These are special cases that handle invalid arities due to the broken</span>
+<span class="g g-Whitespace">     </span><span class="mi">82</span>     <span class="c1"># PyTensor `Op` type contract (e.g. binary `Op`s that also function as</span>
+<span class="g g-Whitespace">     </span><span class="mi">83</span>     <span class="c1"># their own variadic counterparts--even when those counterparts already</span>
+<span class="g g-Whitespace">     </span><span class="mi">84</span>     <span class="c1"># exist as independent `Op`s).</span>
+<span class="ne">---&gt; </span><span class="mi">85</span>     <span class="n">jax_variadic_func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">jnp</span><span class="p">,</span> <span class="n">op</span><span class="o">.</span><span class="n">nfunc_variadic</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">87</span>     <span class="k">def</span> <span class="nf">elemwise</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="g g-Whitespace">     </span><span class="mi">88</span>         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">op</span><span class="o">.</span><span class="n">nfunc_spec</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/deprecations.py:53,</span> in <span class="ni">deprecation_getattr.&lt;locals&gt;.getattr</span><span class="nt">(name)</span>
+<span class="g g-Whitespace">     </span><span class="mi">51</span>   <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">52</span>   <span class="k">return</span> <span class="n">fn</span>
+<span class="ne">---&gt; </span><span class="mi">53</span> <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;module </span><span class="si">{</span><span class="n">module</span><span class="si">!r}</span><span class="s2"> has no attribute </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="ne">AttributeError</span>: module &#39;jax.numpy&#39; has no attribute &#39;product&#39;
 </pre></div>
 </div>
 </div>
@@ -531,8 +618,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../_static/scripts/bootstrap.js?digest=927b94d3fcb96560df09"></script>
-<script src="../_static/scripts/pydata-sphinx-theme.js?digest=927b94d3fcb96560df09"></script>
+  <script src="../_static/scripts/bootstrap.js?digest=ac02cc09edc035673794"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794"></script>
 
   <footer class="bd-footer">
   </footer>

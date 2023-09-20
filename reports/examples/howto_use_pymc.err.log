@@ -1,0 +1,117 @@
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/nbclient/client.py", line 1305, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jupyter_core/utils/__init__.py", line 166, in wrapped
+    return loop.run_until_complete(inner)
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/asyncio/base_events.py", line 647, in run_until_complete
+    return future.result()
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/nbclient/client.py", line 705, in async_execute
+    await self.async_execute_cell(
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/nbclient/client.py", line 1058, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/nbclient/client.py", line 914, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+from pymc.sampling_jax import get_jaxified_logp
+
+rvs = [rv.name for rv in model.value_vars]
+logdensity_fn = get_jaxified_logp(model)
+------------------
+
+----- stderr -----
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+------------------
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mAttributeError[0m                            Traceback (most recent call last)
+Cell [0;32mIn[3], line 4[0m
+[1;32m      1[0m [38;5;28;01mfrom[39;00m [38;5;21;01mpymc[39;00m[38;5;21;01m.[39;00m[38;5;21;01msampling_jax[39;00m [38;5;28;01mimport[39;00m get_jaxified_logp
+[1;32m      3[0m rvs [38;5;241m=[39m [rv[38;5;241m.[39mname [38;5;28;01mfor[39;00m rv [38;5;129;01min[39;00m model[38;5;241m.[39mvalue_vars]
+[0;32m----> 4[0m logdensity_fn [38;5;241m=[39m [43mget_jaxified_logp[49m[43m([49m[43mmodel[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/pymc/sampling/jax.py:145[0m, in [0;36mget_jaxified_logp[0;34m(model, negative_logp)[0m
+[1;32m    143[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m negative_logp:
+[1;32m    144[0m     model_logp [38;5;241m=[39m [38;5;241m-[39mmodel_logp
+[0;32m--> 145[0m logp_fn [38;5;241m=[39m [43mget_jaxified_graph[49m[43m([49m[43minputs[49m[38;5;241;43m=[39;49m[43mmodel[49m[38;5;241;43m.[39;49m[43mvalue_vars[49m[43m,[49m[43m [49m[43moutputs[49m[38;5;241;43m=[39;49m[43m[[49m[43mmodel_logp[49m[43m][49m[43m)[49m
+[1;32m    147[0m [38;5;28;01mdef[39;00m [38;5;21mlogp_fn_wrap[39m(x):
+[1;32m    148[0m     [38;5;28;01mreturn[39;00m logp_fn([38;5;241m*[39mx)[[38;5;241m0[39m]
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/pymc/sampling/jax.py:138[0m, in [0;36mget_jaxified_graph[0;34m(inputs, outputs)[0m
+[1;32m    135[0m mode[38;5;241m.[39mJAX[38;5;241m.[39moptimizer[38;5;241m.[39mrewrite(fgraph)
+[1;32m    137[0m [38;5;66;03m# We now jaxify the optimized fgraph[39;00m
+[0;32m--> 138[0m [38;5;28;01mreturn[39;00m [43mjax_funcify[49m[43m([49m[43mfgraph[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/functools.py:888[0m, in [0;36msingledispatch.<locals>.wrapper[0;34m(*args, **kw)[0m
+[1;32m    884[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m args:
+[1;32m    885[0m     [38;5;28;01mraise[39;00m [38;5;167;01mTypeError[39;00m([38;5;124mf[39m[38;5;124m'[39m[38;5;132;01m{[39;00mfuncname[38;5;132;01m}[39;00m[38;5;124m requires at least [39m[38;5;124m'[39m
+[1;32m    886[0m                     [38;5;124m'[39m[38;5;124m1 positional argument[39m[38;5;124m'[39m)
+[0;32m--> 888[0m [38;5;28;01mreturn[39;00m [43mdispatch[49m[43m([49m[43margs[49m[43m[[49m[38;5;241;43m0[39;49m[43m][49m[38;5;241;43m.[39;49m[38;5;18;43m__class__[39;49m[43m)[49m[43m([49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkw[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/pytensor/link/jax/dispatch/basic.py:51[0m, in [0;36mjax_funcify_FunctionGraph[0;34m(fgraph, node, fgraph_name, **kwargs)[0m
+[1;32m     44[0m [38;5;129m@jax_funcify[39m[38;5;241m.[39mregister(FunctionGraph)
+[1;32m     45[0m [38;5;28;01mdef[39;00m [38;5;21mjax_funcify_FunctionGraph[39m(
+[1;32m     46[0m     fgraph,
+[0;32m   (...)[0m
+[1;32m     49[0m     [38;5;241m*[39m[38;5;241m*[39mkwargs,
+[1;32m     50[0m ):
+[0;32m---> 51[0m     [38;5;28;01mreturn[39;00m [43mfgraph_to_python[49m[43m([49m
+[1;32m     52[0m [43m        [49m[43mfgraph[49m[43m,[49m
+[1;32m     53[0m [43m        [49m[43mjax_funcify[49m[43m,[49m
+[1;32m     54[0m [43m        [49m[43mtype_conversion_fn[49m[38;5;241;43m=[39;49m[43mjax_typify[49m[43m,[49m
+[1;32m     55[0m [43m        [49m[43mfgraph_name[49m[38;5;241;43m=[39;49m[43mfgraph_name[49m[43m,[49m
+[1;32m     56[0m [43m        [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m,[49m
+[1;32m     57[0m [43m    [49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/pytensor/link/utils.py:738[0m, in [0;36mfgraph_to_python[0;34m(fgraph, op_conversion_fn, type_conversion_fn, order, storage_map, fgraph_name, global_env, local_env, get_name_for_object, squeeze_output, **kwargs)[0m
+[1;32m    736[0m body_assigns [38;5;241m=[39m []
+[1;32m    737[0m [38;5;28;01mfor[39;00m node [38;5;129;01min[39;00m order:
+[0;32m--> 738[0m     compiled_func [38;5;241m=[39m [43mop_conversion_fn[49m[43m([49m
+[1;32m    739[0m [43m        [49m[43mnode[49m[38;5;241;43m.[39;49m[43mop[49m[43m,[49m[43m [49m[43mnode[49m[38;5;241;43m=[39;49m[43mnode[49m[43m,[49m[43m [49m[43mstorage_map[49m[38;5;241;43m=[39;49m[43mstorage_map[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m
+[1;32m    740[0m [43m    [49m[43m)[49m
+[1;32m    742[0m     [38;5;66;03m# Create a local alias with a unique name[39;00m
+[1;32m    743[0m     local_compiled_func_name [38;5;241m=[39m unique_name(compiled_func)
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/functools.py:888[0m, in [0;36msingledispatch.<locals>.wrapper[0;34m(*args, **kw)[0m
+[1;32m    884[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m args:
+[1;32m    885[0m     [38;5;28;01mraise[39;00m [38;5;167;01mTypeError[39;00m([38;5;124mf[39m[38;5;124m'[39m[38;5;132;01m{[39;00mfuncname[38;5;132;01m}[39;00m[38;5;124m requires at least [39m[38;5;124m'[39m
+[1;32m    886[0m                     [38;5;124m'[39m[38;5;124m1 positional argument[39m[38;5;124m'[39m)
+[0;32m--> 888[0m [38;5;28;01mreturn[39;00m [43mdispatch[49m[43m([49m[43margs[49m[43m[[49m[38;5;241;43m0[39;49m[43m][49m[38;5;241;43m.[39;49m[38;5;18;43m__class__[39;49m[43m)[49m[43m([49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkw[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/pytensor/link/jax/dispatch/elemwise.py:12[0m, in [0;36mjax_funcify_Elemwise[0;34m(op, node, **kwargs)[0m
+[1;32m      9[0m [38;5;129m@jax_funcify[39m[38;5;241m.[39mregister(Elemwise)
+[1;32m     10[0m [38;5;28;01mdef[39;00m [38;5;21mjax_funcify_Elemwise[39m(op, node, [38;5;241m*[39m[38;5;241m*[39mkwargs):
+[1;32m     11[0m     scalar_op [38;5;241m=[39m op[38;5;241m.[39mscalar_op
+[0;32m---> 12[0m     base_fn [38;5;241m=[39m [43mjax_funcify[49m[43m([49m[43mscalar_op[49m[43m,[49m[43m [49m[43mnode[49m[38;5;241;43m=[39;49m[43mnode[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m     14[0m     [38;5;28;01mdef[39;00m [38;5;21melemwise_fn[39m([38;5;241m*[39minputs):
+[1;32m     15[0m         [38;5;66;03m# ScalarVariables in JAX are passed as int/float.[39;00m
+[1;32m     16[0m         [38;5;66;03m# We wrap them in arrays just for the broadcast check[39;00m
+[1;32m     17[0m         Elemwise[38;5;241m.[39m_check_runtime_broadcast(node, [38;5;28mtuple[39m([38;5;28mmap[39m(jnp[38;5;241m.[39masarray, inputs)))
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/functools.py:888[0m, in [0;36msingledispatch.<locals>.wrapper[0;34m(*args, **kw)[0m
+[1;32m    884[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m args:
+[1;32m    885[0m     [38;5;28;01mraise[39;00m [38;5;167;01mTypeError[39;00m([38;5;124mf[39m[38;5;124m'[39m[38;5;132;01m{[39;00mfuncname[38;5;132;01m}[39;00m[38;5;124m requires at least [39m[38;5;124m'[39m
+[1;32m    886[0m                     [38;5;124m'[39m[38;5;124m1 positional argument[39m[38;5;124m'[39m)
+[0;32m--> 888[0m [38;5;28;01mreturn[39;00m [43mdispatch[49m[43m([49m[43margs[49m[43m[[49m[38;5;241;43m0[39;49m[43m][49m[38;5;241;43m.[39;49m[38;5;18;43m__class__[39;49m[43m)[49m[43m([49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkw[49m[43m)[49m
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/pytensor/link/jax/dispatch/scalar.py:85[0m, in [0;36mjax_funcify_ScalarOp[0;34m(op, node, **kwargs)[0m
+[1;32m     78[0m     jnp_func [38;5;241m=[39m [38;5;28mgetattr[39m(jnp, func_name)
+[1;32m     80[0m [38;5;28;01mif[39;00m [38;5;28mhasattr[39m(op, [38;5;124m"[39m[38;5;124mnfunc_variadic[39m[38;5;124m"[39m):
+[1;32m     81[0m     [38;5;66;03m# These are special cases that handle invalid arities due to the broken[39;00m
+[1;32m     82[0m     [38;5;66;03m# PyTensor `Op` type contract (e.g. binary `Op`s that also function as[39;00m
+[1;32m     83[0m     [38;5;66;03m# their own variadic counterparts--even when those counterparts already[39;00m
+[1;32m     84[0m     [38;5;66;03m# exist as independent `Op`s).[39;00m
+[0;32m---> 85[0m     jax_variadic_func [38;5;241m=[39m [38;5;28;43mgetattr[39;49m[43m([49m[43mjnp[49m[43m,[49m[43m [49m[43mop[49m[38;5;241;43m.[39;49m[43mnfunc_variadic[49m[43m)[49m
+[1;32m     87[0m     [38;5;28;01mdef[39;00m [38;5;21melemwise[39m([38;5;241m*[39margs):
+[1;32m     88[0m         [38;5;28;01mif[39;00m [38;5;28mlen[39m(args) [38;5;241m>[39m op[38;5;241m.[39mnfunc_spec[[38;5;241m1[39m]:
+
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/deprecations.py:53[0m, in [0;36mdeprecation_getattr.<locals>.getattr[0;34m(name)[0m
+[1;32m     51[0m   warnings[38;5;241m.[39mwarn(message, [38;5;167;01mDeprecationWarning[39;00m, stacklevel[38;5;241m=[39m[38;5;241m2[39m)
+[1;32m     52[0m   [38;5;28;01mreturn[39;00m fn
+[0;32m---> 53[0m [38;5;28;01mraise[39;00m [38;5;167;01mAttributeError[39;00m([38;5;124mf[39m[38;5;124m"[39m[38;5;124mmodule [39m[38;5;132;01m{[39;00mmodule[38;5;132;01m!r}[39;00m[38;5;124m has no attribute [39m[38;5;132;01m{[39;00mname[38;5;132;01m!r}[39;00m[38;5;124m"[39m)
+
+[0;31mAttributeError[0m: module 'jax.numpy' has no attribute 'product'
+
