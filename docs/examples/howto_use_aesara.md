@@ -136,7 +136,7 @@ def init_param_fn(seed):
         "thetas": jax.random.uniform(seed, (n_rat_tumors,), "float64", minval=0, maxval=1),
     }
 
-rng_key = jax.random.PRNGKey(0)
+rng_key = jax.random.key(0)
 init_position = init_param_fn(rng_key)
 ```
 

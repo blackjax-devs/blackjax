@@ -184,7 +184,7 @@ def logdensity_fn(y):
 hmc = blackjax.hmc(logdensity_fn,1e-3, jnp.ones(1), 10)
 state = hmc.init(1.)
 
-rng_key = jax.random.PRNGKey(0)
+rng_key = jax.random.key(0)
 new_state, info = hmc.step(rng_key, state)
 ```
 

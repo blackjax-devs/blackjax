@@ -87,7 +87,7 @@ initial_position = {
 }
 
 
-rng_key = jax.random.PRNGKey(0)
+rng_key = jax.random.key(0)
 adapt = blackjax.window_adaptation(
     blackjax.hmc, logdensity_fn, num_integration_steps=3
 )

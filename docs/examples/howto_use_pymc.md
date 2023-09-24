@@ -67,7 +67,7 @@ import jax
 init_position_dict = model.initial_point()
 init_position = [init_position_dict[rv] for rv in rvs]
 
-rng_key = jax.random.PRNGKey(1234)
+rng_key = jax.random.key(1234)
 
 adapt = blackjax.window_adaptation(blackjax.nuts, logdensity_fn)
 (last_state, parameters), _ = adapt.run(rng_key, init_position, 1000)
