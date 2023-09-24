@@ -57,7 +57,7 @@ a project may be further defined and clarified by project maintainers.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting Blackjax Gardener 
+reported by contacting Blackjax Gardener
 - Junpeng Lao [email](junpenglao@gmail.com)
 - Alberto Cabezas Gonzalez [email](a.cabezasgonzalez@lancaster.ac.uk)
 
