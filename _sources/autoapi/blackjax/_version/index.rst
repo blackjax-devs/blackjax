@@ -6,3 +6,11 @@
 .. py:module:: blackjax._version
 
 
+Module Contents
+---------------
+
+.. py:data:: TYPE_CHECKING
+   :value: False
+
+   
+

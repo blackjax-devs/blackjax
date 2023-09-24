@@ -200,7 +200,7 @@ def sampling_loop(rng_key, initial_state, parameters, num_samples):
 
 ```{code-cell} ipython3
 %%time
-rng_key = jax.random.PRNGKey(0)
+rng_key = jax.random.key(0)
 positions = sampling_loop(rng_key, initial_state, parameters, 10_000)
 ```
 
@@ -305,7 +305,7 @@ def sampling_loop_general(rng_key, initial_state, logdensity_fn, step_fn, init, 
 
 ```{code-cell} ipython3
 %%time
-rng_key = jax.random.PRNGKey(0)
+rng_key = jax.random.key(0)
 positions_general = sampling_loop_general(
     rng_key=rng_key,
     initial_state=initial_state,

@@ -516,7 +516,7 @@ JAX raised an exception while differentiating!
 <span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">numba_logpdf</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">)</span>
 <span class="n">init</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="mf">0.</span><span class="p">)</span>
 
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">init</span><span class="p">)</span>
 
 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
@@ -543,8 +543,8 @@ JAX raised an exception while differentiating!
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 4.09 s, sys: 0 ns, total: 4.09 s
-Wall time: 4.1 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.76 s, sys: 0 ns, total: 3.76 s
+Wall time: 3.76 s
 </pre></div>
 </div>
 </div>
@@ -559,8 +559,8 @@ Wall time: 4.1 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 16.4 s, sys: 152 ms, total: 16.6 s
-Wall time: 16.6 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 15.1 s, sys: 176 ms, total: 15.2 s
+Wall time: 15.2 s
 </pre></div>
 </div>
 </div>

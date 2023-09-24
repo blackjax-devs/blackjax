@@ -618,7 +618,7 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
                |Elemwise{sigmoid,no_inplace} [id FD]
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;ipykernel.iostream.OutStream at 0x7f29f6f623a0&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;ipykernel.iostream.OutStream at 0x7fc94dea23d0&gt;
 </pre></div>
 </div>
 </div>
@@ -665,7 +665,7 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
         <span class="s2">&quot;thetas&quot;</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="p">(</span><span class="n">n_rat_tumors</span><span class="p">,),</span> <span class="s2">&quot;float64&quot;</span><span class="p">,</span> <span class="n">minval</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">maxval</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
     <span class="p">}</span>
 
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">init_position</span> <span class="o">=</span> <span class="n">init_param_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
 </pre></div>
 </div>

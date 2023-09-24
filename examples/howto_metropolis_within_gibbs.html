@@ -417,7 +417,7 @@ $$</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
-I0000 00:00:1695293803.377859    2234 tfrt_cpu_pjrt_client.cc:349] TfrtCpuClient created.
+I0000 00:00:1695568867.116352    2376 tfrt_cpu_pjrt_client.cc:349] TfrtCpuClient created.
 No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
@@ -578,14 +578,14 @@ No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">positions</span> <span class="o">=</span> <span class="n">sampling_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.63 s, sys: 3.99 ms, total: 1.63 s
-Wall time: 1.63 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.43 s, sys: 12.4 ms, total: 1.44 s
+Wall time: 1.44 s
 </pre></div>
 </div>
 </div>
@@ -668,48 +668,6 @@ Wall time: 1.63 s
   if pd.api.types.is_categorical_dtype(vector):
 /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
   if pd.api.types.is_categorical_dtype(vector):
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
-  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
-/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
-  if pd.api.types.is_categorical_dtype(vector):
 /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
   with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
 /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
@@ -732,9 +690,49 @@ Wall time: 1.63 s
   with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
 /opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
   with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
+  if pd.api.types.is_categorical_dtype(vector):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
+  if pd.api.types.is_categorical_dtype(vector):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
+  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
+  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
+  if pd.api.types.is_categorical_dtype(vector):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
+  if pd.api.types.is_categorical_dtype(vector):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
+  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
+  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
+  if pd.api.types.is_categorical_dtype(vector):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
+  if pd.api.types.is_categorical_dtype(vector):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
+  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
+  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
+  if pd.api.types.is_categorical_dtype(vector):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
+  if pd.api.types.is_categorical_dtype(vector):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
+  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
+  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
+  if pd.api.types.is_categorical_dtype(vector):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1498: FutureWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, CategoricalDtype) instead
+  if pd.api.types.is_categorical_dtype(vector):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
+  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
+/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/seaborn/_oldcore.py:1119: FutureWarning: use_inf_as_na option is deprecated and will be removed in a future version. Convert inf values to NaN before operating instead.
+  with pd.option_context(&#39;mode.use_inf_as_na&#39;, True):
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;seaborn.axisgrid.PairGrid at 0x7f0d99d54d30&gt;
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;seaborn.axisgrid.PairGrid at 0x7fa39c5a27c0&gt;
 </pre></div>
 </div>
 <img alt="../_images/d5545642ab81482dcb87be7e3914404d6091fd31322d2d6715a43bb452bb0f94.png" src="../_images/d5545642ab81482dcb87be7e3914404d6091fd31322d2d6715a43bb452bb0f94.png" />
@@ -839,7 +837,7 @@ Wall time: 1.63 s
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">positions_general</span> <span class="o">=</span> <span class="n">sampling_loop_general</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="o">=</span><span class="n">rng_key</span><span class="p">,</span>
     <span class="n">initial_state</span><span class="o">=</span><span class="n">initial_state</span><span class="p">,</span>
@@ -859,8 +857,8 @@ Wall time: 1.63 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.36 s, sys: 12.1 ms, total: 1.38 s
-Wall time: 1.37 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.19 s, sys: 8.15 ms, total: 1.19 s
+Wall time: 1.19 s
 </pre></div>
 </div>
 </div>

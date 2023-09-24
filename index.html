@@ -390,7 +390,7 @@ document.write(`
 <span class="n">state</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">initial_position</span><span class="p">)</span>
 
 <span class="c1"># Iterate</span>
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1_000</span><span class="p">):</span>
    <span class="n">rng_key</span><span class="p">,</span> <span class="n">nuts_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>

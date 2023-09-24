@@ -415,7 +415,7 @@ $$</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
-I0000 00:00:1695293789.875109    2182 tfrt_cpu_pjrt_client.cc:349] TfrtCpuClient created.
+I0000 00:00:1695568853.972519    2321 tfrt_cpu_pjrt_client.cc:349] TfrtCpuClient created.
 No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
@@ -554,7 +554,7 @@ $$</p>
 <span class="n">hmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="mf">1.</span><span class="p">)</span>
 
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
 </div>
