@@ -96,7 +96,7 @@ And finally, to put `jax.vmap` and `jax.pmap` on an equal foot we sample as many
 import multiprocessing
 
 
-rng_key = jax.random.PRNGKey(0)
+rng_key = jax.random.key(0)
 num_chains = multiprocessing.cpu_count()
 ```
 

@@ -138,7 +138,7 @@ step_size=1e-3
 nuts = blackjax.nuts(numba_logpdf, step_size, inverse_mass_matrix)
 init = nuts.init(0.)
 
-rng_key = jax.random.PRNGKey(0)
+rng_key = jax.random.key(0)
 state, info = nuts.step(rng_key, init)
 
 for _ in range(10):

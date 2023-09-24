@@ -37,7 +37,7 @@ initial_position = {"loc": 1., "scale": 2.}
 state = nuts.init(initial_position)
 
 # Iterate
-rng_key = jax.random.PRNGKey(0)
+rng_key = jax.random.key(0)
 step = jax.jit(nuts.step)
 for _ in range(1_000):
    rng_key, nuts_key = jax.random.split(rng_key)
