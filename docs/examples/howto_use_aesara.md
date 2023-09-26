@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.13.1
+    jupytext_version: 1.15.2
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -29,7 +29,7 @@ Y &\sim \operatorname{Binomial}(N, \theta)\\
 \end{align*}
 ```
 
-```{code-cell} python
+```{code-cell} ipython3
 :tags: [hide-cell]
 
 # index of array is type of tumor and value shows number of total people tested.
@@ -41,9 +41,20 @@ n_of_positives = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
 n_rat_tumors = len(group_size)
 ```
 
+```{code-cell} ipython3
+:tags: [remove-output]
+
+import jax
+
+from datetime import date
+rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
+```
+
 We implement the generative model in two parts, the improper prior on `a` and `b` and then the response model:
 
-```{code-cell} python
+```{code-cell} ipython3
+:tags: [remove-output]
+
 import aesara
 import aesara.tensor as at
 
@@ -62,7 +73,7 @@ Y_rv = srng.binomial(group_size, theta_rv)
 
 We can then easily compile a function that samples from the prior predictive distribution, i.e. returns values of `Y_rv` based on the variables' prior distribution. Let us make this function depend on the values of `a_vv` and `b_vv`:
 
-```{code-cell} python
+```{code-cell} ipython3
 prior_predictive_fn = aesara.function((a_vv, b_vv), Y_rv)
 print(prior_predictive_fn(.5, .5))
 print(prior_predictive_fn(.1, .3))
@@ -70,14 +81,14 @@ print(prior_predictive_fn(.1, .3))
 
 To sample from the posterior distribution of `theta_rv`, `a_rv` and `b_rv` we need to be able to compute the model's joint log-density. In AePPL, we use `joint_logprob` to build the graph of the joint log-density from the model graph:
 
-```{code-cell} python
+```{code-cell} ipython3
 loglikelihood, (y_vv, theta_vv) = joint_logprob(Y_rv, theta_rv)
 logprob = logprior + loglikelihood
 ```
 
 However, the Beta distribution generates samples between 0 and 1 and gradient-based algorithms like NUTS work better on unbounded intervals. We can tell AePPL to apply a log-odds transformation to the Beta-distributed variable, and subsequently sample in the transformed space:
 
-```{code-cell} python
+```{code-cell} ipython3
 from aeppl.transforms import TransformValuesRewrite, LogOddsTransform
 
 transforms_op = TransformValuesRewrite(
@@ -93,7 +104,7 @@ NUTS is not the best sampler for this model: the Beta distribution is the conjug
 
 You can alway debug the `logprob` graph by printing it:
 
-```{code-cell} python
+```{code-cell} ipython3
 :tags: [output_scroll]
 
 aesara.dprint(logprob)
@@ -101,8 +112,8 @@ aesara.dprint(logprob)
 
 To sample with Blackjax we will need to use Aesara's JAX backend; `logprob_jax` defined below is a function that uses JAX operators, can be passed as an argument to `jax.jit` and `jax.grad`:
 
-```{code-cell} python
-:tags: [remove-stderr]
+```{code-cell} ipython3
+:tags: [remove-stderr, remove-output]
 
 logdensity_fn = aesara.function((a_vv, b_vv, theta_vv, y_vv), logprob, mode="JAX")
 logprob_jax = logdensity_fn.vm.jit_fn
@@ -114,7 +125,7 @@ Let's wrap this function to make our life simpler:
 2. We would like to work with dictionaries for the values of the variables;
 3. `Y_vv` is observed, so let's fix its value.
 
-```{code-cell} python
+```{code-cell} ipython3
 def logdensity_fn(position):
     flat_position = tuple(position.values())
     return logprob_jax(*flat_position, n_of_positives)[0]
@@ -122,27 +133,25 @@ def logdensity_fn(position):
 
 Let's define the initial position from which we are going to start sampling:
 
-```{code-cell} python
-import jax
-
+```{code-cell} ipython3
 def init_param_fn(seed):
     """
     initialize a, b & thetas
     """
-    key1, key2 = jax.random.split(seed)
+    key1, key2, key3 = jax.random.split(seed, 3)
     return {
         "a": jax.random.uniform(key1, (), "float64", minval=0, maxval=3),
         "b": jax.random.uniform(key2, (), "float64", minval=0, maxval=3),
-        "thetas": jax.random.uniform(seed, (n_rat_tumors,), "float64", minval=0, maxval=1),
+        "thetas": jax.random.uniform(key3, (n_rat_tumors,), "float64", minval=0, maxval=1),
     }
 
-rng_key = jax.random.key(0)
-init_position = init_param_fn(rng_key)
+rng_key, init_key = jax.random.split(rng_key)
+init_position = init_param_fn(init_key)
 ```
 
 And finally sample using Blackjax:
 
-```{code-cell} python
+```{code-cell} ipython3
 :tags: [hide-cell]
 
 def inference_loop(
@@ -159,17 +168,24 @@ def inference_loop(
     return (states, infos)
 ```
 
-```{code-cell} python
+```{code-cell} ipython3
 import blackjax
 
 n_adapt = 3000
 n_samples = 1000
 
 adapt = blackjax.window_adaptation(blackjax.nuts, logdensity_fn)
-(state, parameters), _ = adapt.run(rng_key, init_position, n_adapt)
+rng_key, warmup_key, sample_key = jax.random.split(rng_key, 3)
+(state, parameters), _ = adapt.run(warmup_key, init_position, n_adapt)
 kernel = blackjax.nuts(logdensity_fn, **parameters).step
 
 states, infos = inference_loop(
-    rng_key, kernel, state, n_samples
+    sample_key, kernel, state, n_samples
 )
+```
+
+```{code-cell} ipython3
+import arviz as az
+idata = az.from_dict(posterior={k: v[None, ...] for k, v in states.position.items()})
+az.plot_trace(idata);
 ```

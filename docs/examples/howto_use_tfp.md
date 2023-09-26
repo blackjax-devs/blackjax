@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.5
+    jupytext_version: 1.15.2
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -21,17 +21,13 @@ You will need [tensorflow-probability](https://www.tensorflow.org/probability) t
 
 We reproduce the Eight Schools example from the [TFP documentation](https://www.tensorflow.org/probability/examples/Eight_Schools).
 
-```{code-cell} python
-:tags: [hide-input]
-
-import jax
-import blackjax
-```
++++
 
 Please refer to the [original TFP example](https://www.tensorflow.org/probability/examples/Eight_Schools) for a description of the problem and the model that is used.
 
-```{code-cell} python
+```{code-cell} ipython3
 :tags: [hide-cell]
+
 import numpy as np
 
 
@@ -44,14 +40,22 @@ treatment_stddevs = np.array(
 )  # treatment SE
 ```
 
+```{code-cell} ipython3
+:tags: [remove-output]
+
+import jax
+import jax.numpy as jnp
+
+from datetime import date
+rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
+```
+
 We implement the non-centered version of the hierarchical model:
 
-```{code-cell} python
+```{code-cell} ipython3
 from tensorflow_probability.substrates import jax as tfp
 tfd = tfp.distributions
 jdc = tfd.JointDistributionCoroutineAutoBatched
-
-import jax.numpy as jnp
 
 @jdc
 def model():
@@ -66,7 +70,7 @@ def model():
 
 We need to translate the model into a log-probability density function that will be used by Blackjax to perform inference.
 
-```{code-cell} python
+```{code-cell} ipython3
 # Condition on the observed
 pinned_model = model.experimental_pin(treatment_effects=treatment_effects)
 
@@ -75,9 +79,8 @@ logdensity_fn = pinned_model.unnormalized_log_prob
 
 Let us first run the window adaptation to find a good value for the step size and for the inverse mass matrix. As in the original example we will run the HMC integrator 3 times at each step.
 
-```{code-cell} python
+```{code-cell} ipython3
 import blackjax
-import jax
 
 
 initial_position = {
@@ -87,18 +90,18 @@ initial_position = {
 }
 
 
-rng_key = jax.random.key(0)
+rng_key, warmup_key = jax.random.split(rng_key)
 adapt = blackjax.window_adaptation(
     blackjax.hmc, logdensity_fn, num_integration_steps=3
 )
 
-(last_state, parameters), _ = adapt.run(rng_key, initial_position, 1000)
+(last_state, parameters), _ = adapt.run(warmup_key, initial_position, 1000)
 kernel = blackjax.hmc(logdensity_fn, **parameters).step
 ```
 
 We can now perform inference with the tuned kernel:
 
-```{code-cell} python
+```{code-cell} ipython3
 :tags: [hide-cell]
 
 def inference_loop(rng_key, kernel, initial_state, num_samples):
@@ -112,14 +115,14 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     return states, infos
 ```
 
-```{code-cell} python
-states, infos = inference_loop(rng_key, kernel, last_state, 500_000)
-states.position["avg_effect"].block_until_ready()
+```{code-cell} ipython3
+rng_key, sample_key = jax.random.split(rng_key)
+states, infos = inference_loop(sample_key, kernel, last_state, 50_000)
 ```
 
 Extra information about the inference is contained in the `infos` namedtuple. Let us compute the average acceptance rate:
 
-```{code-cell} python
+```{code-cell} ipython3
 :tags: [hide-input]
 
 acceptance_rate = np.mean(infos.acceptance_rate)
@@ -128,7 +131,7 @@ print(f"Average acceptance rate: {acceptance_rate:.2f}")
 
 The samples are contained as a dictionnary in `states.position`. Let us compute the posterior of the school treatment effect:
 
-```{code-cell} python
+```{code-cell} ipython3
 samples = states.position
 school_effects_samples = (
     samples["avg_effect"][:, np.newaxis]
@@ -138,21 +141,13 @@ school_effects_samples = (
 
 And now let us plot the correponding chains and distributions:
 
-```{code-cell} python
+```{code-cell} ipython3
 :tags: [hide-input, remove-stderr]
 
-import seaborn as sns
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+import arviz as az
 
-fig, axes = plt.subplots(8, 2, sharex="col", sharey="col")
-fig.set_size_inches(12, 10)
-for i in range(num_schools):
-    axes[i][0].plot(school_effects_samples[:, i])
-    axes[i][0].title.set_text(f"School {i} treatment effect chain")
-    sns.kdeplot(school_effects_samples[:, i], ax=axes[i][1], fill=True)
-    axes[i][1].title.set_text(f"School {i} treatment effect distribution")
-axes[num_schools - 1][0].set_xlabel("Iteration")
-axes[num_schools - 1][1].set_xlabel("School effect")
-fig.tight_layout()
-plt.show()
+idata = az.from_dict(posterior={k: v[None, ...] for k, v in states.position.items()})
+az.plot_trace(idata, var_names=["school_effects_standard"], compact=False)
+plt.tight_layout();
 ```

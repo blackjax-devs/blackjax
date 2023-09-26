@@ -12,10 +12,9 @@ myst_nb
 numba
 numpyro
 optax
-oryx
+oryx @ git+https://github.com/jax-ml/oryx.git@main
 pymc
 scikit-learn
-seaborn
 sphinx
 sphinx-autoapi
 sphinx-autobuild
@@ -26,4 +25,3 @@ sphinxcontrib-bibtex
 tensorflow-cpu
 tfp-nightly[jax]
 versioneer
-watermark
