@@ -2,6 +2,7 @@
 aeppl>=0.0.40
 aesara>=2.8.8
 arviz
+astroid==2.15.8  # remove after https://github.com/executablebooks/MyST-NB/issues/543
 flax
 ipython
 jax>=0.4.16

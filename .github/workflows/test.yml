@@ -11,11 +11,11 @@ jobs:
     name: Check the code style
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.9
-    - uses: pre-commit/action@v2.0.0
+    - uses: pre-commit/action@v3.0.0
 
   test:
     name: Run tests for Python ${{ matrix.python-version }}
@@ -26,9 +26,9 @@ jobs:
       matrix:
         python-version: [ '3.9', '3.11']
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Set up test environment
@@ -40,7 +40,7 @@ jobs:
       run: |
         pytest -n auto -vv -m "not benchmark" --cov=blackjax --cov-report=xml --cov-report=term tests
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v3
       with:
         env_vars: OS,PYTHON
         name: codecov-umbrella
