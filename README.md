@@ -64,8 +64,8 @@ import blackjax
 
 observed = np.random.normal(10, 20, size=1_000)
 def logdensity_fn(x):
-  logpdf = stats.norm.logpdf(observed, x["loc"], x["scale"])
-  return jnp.sum(logpdf)
+    logpdf = stats.norm.logpdf(observed, x["loc"], x["scale"])
+    return jnp.sum(logpdf)
 
 # Build the kernel
 step_size = 1e-3
@@ -136,11 +136,11 @@ To cite this repository:
 
 ```
 @software{blackjax2020github,
-  author = {Lao, Junpeng and Louf, R\'emi},
+  author = {Cabezas, Alberto, Lao, Junpeng, and Louf, R\'emi},
   title = {{B}lackjax: A sampling library for {JAX}},
   url = {http://github.com/blackjax-devs/blackjax},
   version = {<insert current release tag>},
-  year = {2020},
+  year = {2023},
 }
 ```
 In the above bibtex entry, names are in alphabetical order, the version number should be the last tag on the `main` branch.

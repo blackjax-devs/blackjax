@@ -13,10 +13,9 @@ myst_nb
 numba
 numpyro
 optax
-oryx
+oryx @ git+https://github.com/jax-ml/oryx.git@main  # remove after oryx release
 pymc
 scikit-learn
-seaborn
 sphinx
 sphinx-autoapi
 sphinx-autobuild
@@ -24,6 +23,5 @@ sphinx-book-theme
 sphinx-design
 sphinx-math-dollar
 sphinxcontrib-bibtex
-tensorflow-cpu
 tfp-nightly[jax]
 versioneer

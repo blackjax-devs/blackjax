@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.0
+    jupytext_version: 1.15.2
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -37,8 +37,16 @@ $$
 
 And define the function $f$ as $f(x) = -min_y g(x, y)$ which we can be implemented as:
 
-```{code-cell} python
+```{code-cell} ipython3
+:tags: [remove-output]
+
 import jax
+
+from datetime import date
+rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
+```
+
+```{code-cell} ipython3
 import jax.numpy as jnp
 from jax.scipy.optimize import minimize
 
@@ -56,7 +64,6 @@ def f(x, p):
     return -res.fun, res.x[0]
 ```
 
-
 Note the we also return the value of $y$ where the minimum of $g$ is achieved (this will be useful later).
 
 
@@ -64,7 +71,7 @@ Note the we also return the value of $y$ where the minimum of $g$ is achieved (t
 
 The gradient of the function $f$ is undefined for JAX, which cannot differentiate through `while` loops, and trying to compute it directly raises an error:
 
-```{code-cell} python
+```{code-cell} ipython3
 # We only want the gradient with respect to `x`
 try:
     jax.grad(f, has_aux=True)(0.5, 3)
@@ -105,7 +112,7 @@ i.e. the value of the derivative at $x$ is the value $y(x)$ at which the minimum
 
 We can thus now tell JAX to compute the derivative of the function using the argmin using `jax.custom_vjp`
 
-```{code-cell} python
+```{code-cell} ipython3
 from functools import partial
 
 
@@ -128,7 +135,7 @@ def f_jac_vec_prod(p, primals, tangents):
 
 Which now outputs a value:
 
-```{code-cell} python
+```{code-cell} ipython3
 jax.grad(f_with_gradient)(0.31415, 3)
 ```
 
@@ -145,7 +152,7 @@ $$
 
 Which is obviously differentiable. We implement it:
 
-```{code-cell} python
+```{code-cell} ipython3
 def true_f(x, p):
     q = 1 / (1 - 1 / p)
     out = jnp.abs(x) ** q
@@ -156,8 +163,9 @@ print(jax.grad(true_f)(0.31415, 3))
 
 And compare the gradient of this function with the custom gradient defined above:
 
-```{code-cell} python
+```{code-cell} ipython3
 :tags: [hide-input]
+
 print(f"Gradient of closed-form f: {jax.grad(true_f)(0.31415, 3)}")
 print(f"Custom gradient based on argmin: {jax.grad(f_with_gradient)(0.31415, 3)}")
 ```
@@ -171,7 +179,7 @@ They give close enough values! In other words, it suffices to know that the valu
 
 Let us now demonstrate that we can use `f_with_gradients` with Blackjax. We define a toy log-density function and use a gradient-based sampler:
 
-```{code-cell} python
+```{code-cell} ipython3
 import blackjax
 
 
@@ -181,13 +189,13 @@ def logdensity_fn(y):
     logdensity += jax.scipy.stats.norm.logpdf(x)
     return logdensity
 
-hmc = blackjax.hmc(logdensity_fn,1e-3, jnp.ones(1), 10)
+hmc = blackjax.hmc(logdensity_fn,1e-2, jnp.ones(1), 20)
 state = hmc.init(1.)
 
-rng_key = jax.random.key(0)
-new_state, info = hmc.step(rng_key, state)
+rng_key, step_key = jax.random.split(rng_key)
+new_state, info = hmc.step(step_key, state)
 ```
 
-```{code-cell} python
-new_state
+```{code-cell} ipython3
+state, new_state
 ```

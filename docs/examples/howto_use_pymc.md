@@ -21,7 +21,7 @@ You will need [PyMC](https://github.com/pymc-devs/pymc) to run this example. Ple
 
 We will reproduce the Eight School example from the [ TFP documentation](https://www.tensorflow.org/probability/examples/Eight_Schools). Follow the link for a description of the problem and the model that is used.
 
-```{code-cell} python
+```{code-cell} ipython3
 :tags: [hide-cell]
 import numpy as np
 
@@ -31,9 +31,20 @@ y = np.array([28.0, 8.0, -3.0, 7.0, -1.0, 1.0, 18.0, 12.0])
 sigma = np.array([15.0, 10.0, 16.0, 11.0, 9.0, 11.0, 10.0, 18.0])
 ```
 
+
+```{code-cell} ipython3
+:tags: [remove-output]
+
+import jax
+import jax.numpy as jnp
+
+from datetime import date
+rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
+```
+
 We implement the non-centered version of the hierarchical model:
 
-```{code-cell} python
+```{code-cell} ipython3
 import pymc as pm
 
 
@@ -50,7 +61,7 @@ with pm.Model() as model:
 
 We need to translate the model into a log-probability function that will be used by Blackjax to perform inference. For that we use the `get_jaxified_logp` function in PyMC's internals.
 
-```{code-cell} python
+```{code-cell} ipython3
 from pymc.sampling_jax import get_jaxified_logp
 
 rvs = [rv.name for rv in model.value_vars]
@@ -59,24 +70,22 @@ logdensity_fn = get_jaxified_logp(model)
 
 We can now run the window adaptation for the NUTS sampler:
 
-```{code-cell} python
+```{code-cell} ipython3
 import blackjax
-import jax
-
 # Get the initial position from PyMC
 init_position_dict = model.initial_point()
 init_position = [init_position_dict[rv] for rv in rvs]
 
-rng_key = jax.random.key(1234)
+rng_key, warmup_key = jax.random.split(rng_key)
 
 adapt = blackjax.window_adaptation(blackjax.nuts, logdensity_fn)
-(last_state, parameters), _ = adapt.run(rng_key, init_position, 1000)
+(last_state, parameters), _ = adapt.run(warmup_key, init_position, 1000)
 kernel = blackjax.nuts(logdensity_fn, **parameters).step
 ```
 
 Let us now perform inference with the tuned kernel:
 
-```{code-cell} python
+```{code-cell} ipython3
 :tags: [hide-cell]
 
 def inference_loop(rng_key, kernel, initial_state, num_samples):
@@ -90,6 +99,22 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     return states, infos
 ```
 
-```{code-cell} python
-states, infos = inference_loop(rng_key, kernel, last_state, 50_000)
+```{code-cell} ipython3
+rng_key, sample_key = jax.random.split(rng_key)
+states, infos = inference_loop(sample_key, kernel, last_state, 50_000)
+```
+
+And we can then show the posterior samples using `Arviz`:
+
+```{code-cell} ipython3
+:tags: [hide-input, remove-stderr]
+
+import matplotlib.pyplot as plt
+import arviz as az
+
+idata = az.from_dict(
+    posterior={k: v[None, ...]
+               for k, v in zip(model.initial_point().keys(), states.position)})
+az.plot_trace(idata)
+plt.tight_layout();
 ```
