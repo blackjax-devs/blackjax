@@ -347,20 +347,6 @@ document.write(`
 <p>You will need <a class="reference external" href="https://www.tensorflow.org/probability">tensorflow-probability</a> to run this example. Please follow the installation instructions on TFP’s repository.</p>
 </div>
 <p>We reproduce the Eight Schools example from the <a class="reference external" href="https://www.tensorflow.org/probability/examples/Eight_Schools">TFP documentation</a>.</p>
-<div class="cell tag_hide-input docutils container">
-<details class="hide above-input">
-<summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell source</span>
-<span class="expanded">Hide code cell source</span>
-</summary>
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">blackjax</span>
-</pre></div>
-</div>
-</div>
-</details>
-</div>
 <p>Please refer to the <a class="reference external" href="https://www.tensorflow.org/probability/examples/Eight_Schools">original TFP example</a> for a description of the problem and the model that is used.</p>
 <div class="cell tag_hide-cell docutils container">
 <details class="hide above-input">
@@ -384,14 +370,23 @@ document.write(`
 </div>
 </details>
 </div>
+<div class="cell tag_remove-output docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+</div>
 <p>We implement the non-centered version of the hierarchical model:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">tensorflow_probability.substrates</span> <span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">tfp</span>
 <span class="n">tfd</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">distributions</span>
 <span class="n">jdc</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">JointDistributionCoroutineAutoBatched</span>
-
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
 <span class="nd">@jdc</span>
 <span class="k">def</span> <span class="nf">model</span><span class="p">():</span>
@@ -416,19 +411,11 @@ document.write(`
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
-I0000 00:00:1695802796.859171    3105 tfrt_cpu_pjrt_client.cc:349] TfrtCpuClient created.
-No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-</pre></div>
-</div>
-</div>
 </div>
 <p>Let us first run the window adaptation to find a good value for the step size and for the inverse mass matrix. As in the original example we will run the HMC integrator 3 times at each step.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax</span>
-<span class="kn">import</span> <span class="nn">jax</span>
 
 
 <span class="n">initial_position</span> <span class="o">=</span> <span class="p">{</span>
@@ -438,12 +425,12 @@ No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for
 <span class="p">}</span>
 
 
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">rng_key</span><span class="p">,</span> <span class="n">warmup_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
 <span class="n">adapt</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span>
     <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="o">=</span><span class="mi">3</span>
 <span class="p">)</span>
 
-<span class="p">(</span><span class="n">last_state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="p">(</span><span class="n">last_state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adapt</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">warmup_key</span><span class="p">,</span> <span class="n">initial_position</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
 <span class="n">kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">)</span><span class="o">.</span><span class="n">step</span>
 </pre></div>
 </div>
@@ -473,14 +460,8 @@ No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="mi">500_000</span><span class="p">)</span>
-<span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;avg_effect&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Array([10.000816 , 12.275808 ,  5.402025 , ..., -4.6742063,  2.9311733,
-        4.6128426], dtype=float32)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rng_key</span><span class="p">,</span> <span class="n">sample_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+<span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">inference_loop</span><span class="p">(</span><span class="n">sample_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">last_state</span><span class="p">,</span> <span class="mi">50_000</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -500,7 +481,7 @@ No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Average acceptance rate: 0.93
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Average acceptance rate: 0.92
 </pre></div>
 </div>
 </div>
@@ -525,26 +506,18 @@ No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for
 <span class="expanded">Hide code cell source</span>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">arviz</span> <span class="k">as</span> <span class="nn">az</span>
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="s2">&quot;col&quot;</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="s2">&quot;col&quot;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_schools</span><span class="p">):</span>
-    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">school_effects_samples</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
-    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;School </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> treatment effect chain&quot;</span><span class="p">)</span>
-    <span class="n">sns</span><span class="o">.</span><span class="n">kdeplot</span><span class="p">(</span><span class="n">school_effects_samples</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">fill</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;School </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> treatment effect distribution&quot;</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="n">num_schools</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Iteration&quot;</span><span class="p">)</span>
-<span class="n">axes</span><span class="p">[</span><span class="n">num_schools</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;School effect&quot;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">idata</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+<span class="n">az</span><span class="o">.</span><span class="n">plot_trace</span><span class="p">(</span><span class="n">idata</span><span class="p">,</span> <span class="n">var_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;school_effects_standard&quot;</span><span class="p">],</span> <span class="n">compact</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">();</span>
 </pre></div>
 </div>
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/76959d774292e96622811915def94b20cbdea3f50775d1353975ba572122808a.png" src="../_images/76959d774292e96622811915def94b20cbdea3f50775d1353975ba572122808a.png" />
+<img alt="../_images/959a0e20efe03c12e7fd4705b77f32fbb4737ac37f54b7ca9284bbce7a91a1cb.png" src="../_images/959a0e20efe03c12e7fd4705b77f32fbb4737ac37f54b7ca9284bbce7a91a1cb.png" />
 </div>
 </div>
 </section>

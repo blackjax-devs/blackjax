@@ -356,6 +356,15 @@ document.write(`
 <p>We obviously recommend to use Blackjax with log-probability functions that are compatible with JAX’s primitives. These can be built manually or with Aesara, Numpyro, Oryx, PyMC, TensorFlow-Probability.</p>
 <p>Nevertheless, you may have a good reason to use a function that is incompatible with JAX’s primitives, whether it is for performance reasons or for compatiblity with an already-implemented model. Who are we to judge?</p>
 <p>In this example we will show you how this can be done using JAX’s experimental <code class="docutils literal notranslate"><span class="pre">host_callback</span></code> API, and hint at a faster solution.</p>
+<div class="cell tag_remove-output docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+</div>
 <section id="aesara-model-compiled-to-numba">
 <h2>Aesara model compiled to Numba<a class="headerlink" href="#aesara-model-compiled-to-numba" title="Permalink to this heading">#</a></h2>
 <p>The following example builds a logdensity function with <a class="reference external" href="https://github.com/aesara-devs/aesara">Aesara</a>, compiles it with <a class="reference external" href="https://numba.pydata.org/">Numba</a> and uses Blackjax to sample from the posterior distribution of the model.</p>
@@ -472,8 +481,7 @@ JAX raised an exception while differentiating!
 <p>In order to be able to call <code class="docutils literal notranslate"><span class="pre">logdensity_fn</span></code> within JAX, we need to define a function that will call it via JAX’s <code class="docutils literal notranslate"><span class="pre">host_callback</span></code>. Yet, this wrapper function is not differentiable with JAX, and so we will also need to define this functions’ <code class="docutils literal notranslate"><span class="pre">custom_vjp</span></code>, and use <code class="docutils literal notranslate"><span class="pre">host_callback</span></code> to call the gradient-computing function as well:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jax.experimental.host_callback</span> <span class="k">as</span> <span class="nn">hcb</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax.experimental.host_callback</span> <span class="k">as</span> <span class="nn">hcb</span>
 
 <span class="nd">@jax</span><span class="o">.</span><span class="n">custom_vjp</span>
 <span class="k">def</span> <span class="nf">numba_logpdf</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
@@ -516,8 +524,8 @@ JAX raised an exception while differentiating!
 <span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">numba_logpdf</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">)</span>
 <span class="n">init</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="mf">0.</span><span class="p">)</span>
 
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">init</span><span class="p">)</span>
+<span class="n">rng_key</span><span class="p">,</span> <span class="n">init_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+<span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">init_key</span><span class="p">,</span> <span class="n">init</span><span class="p">)</span>
 
 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
     <span class="n">rng_key</span><span class="p">,</span> <span class="n">nuts_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
@@ -528,7 +536,7 @@ JAX raised an exception while differentiating!
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(2.909098, dtype=float32, weak_type=True), logdensity=Array(-3.7348793, dtype=float32), logdensity_grad=Array(-0.11291742, dtype=float32))
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(0.58907664, dtype=float32, weak_type=True), logdensity=Array(-2.9909554, dtype=float32), logdensity_grad=Array(-0.31128684, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -543,8 +551,8 @@ JAX raised an exception while differentiating!
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.32 s, sys: 0 ns, total: 3.32 s
-Wall time: 3.32 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.75 s, sys: 0 ns, total: 3.75 s
+Wall time: 3.76 s
 </pre></div>
 </div>
 </div>
@@ -559,8 +567,8 @@ Wall time: 3.32 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 15.8 s, sys: 160 ms, total: 16 s
-Wall time: 16 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 16.5 s, sys: 140 ms, total: 16.6 s
+Wall time: 16.6 s
 </pre></div>
 </div>
 </div>

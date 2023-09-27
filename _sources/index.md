@@ -24,8 +24,8 @@ import blackjax
 
 observed = np.random.normal(10, 20, size=1_000)
 def logdensity_fn(x):
-      logpdf = stats.norm.logpdf(observed, x["loc"], x["scale"])
-      return jnp.sum(logpdf)
+    logpdf = stats.norm.logpdf(observed, x["loc"], x["scale"])
+    return jnp.sum(logpdf)
 
 # Build the kernel
 step_size = 1e-3
@@ -40,8 +40,8 @@ state = nuts.init(initial_position)
 rng_key = jax.random.key(0)
 step = jax.jit(nuts.step)
 for _ in range(1_000):
-   rng_key, nuts_key = jax.random.split(rng_key)
-   state, _ = step(nuts_key, state)
+    rng_key, nuts_key = jax.random.split(rng_key)
+    state, _ = nuts.step(nuts_key, state)
 ```
 
 :::{note}

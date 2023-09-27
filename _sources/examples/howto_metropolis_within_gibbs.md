@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.7
+    jupytext_version: 1.15.2
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -16,14 +16,16 @@ kernelspec:
 Gibbs sampling is an MCMC technique where sampling from a joint probability distribution $\newcommand{\xx}{\boldsymbol{x}}\newcommand{\yy}{\boldsymbol{y}}p(\xx, \yy)$ is achieved by alternately sampling from $\xx \sim p(\xx \mid \yy)$ and $\yy \sim p(\yy \mid \xx)$.  Ideally these conditional distributions can be sampled from analytically.  In general however they must each be updated using any MCMC kernel appropriate to the conditional distribution at hand.   This technique is referred to as Metropolis-within-Gibbs (MWG) sampling.  The idea can be applied to an arbitrary number of blocks of variables $p(\xx_1, \ldots, \xx_n)$.  For simplicity in this notebook we focus on a two-block example.
 
 ```{code-cell} ipython3
+:tags: [remove-output]
+
 import jax
 import jax.numpy as jnp
 import jax.scipy as jsp
 
 import blackjax
 
-import pandas as pd
-import seaborn as sns
+from datetime import date
+rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
 ```
 
 ## The Model
@@ -200,19 +202,17 @@ def sampling_loop(rng_key, initial_state, parameters, num_samples):
 
 ```{code-cell} ipython3
 %%time
-rng_key = jax.random.key(0)
-positions = sampling_loop(rng_key, initial_state, parameters, 10_000)
+rng_key, sample_key = jax.random.split(rng_key)
+positions = sampling_loop(sample_key, initial_state, parameters, 10_000)
 ```
 
 ```{code-cell} ipython3
-plt_data = pd.DataFrame({
-    "x1": positions["x"][:,0],
-    "x2": positions["x"][:,1],
-    "y1": positions["y"][:,0],
-    "y2": positions["y"][:,1]
-})
+import matplotlib.pyplot as plt
+import arviz as az
 
-sns.pairplot(plt_data, kind="hist")
+idata = az.from_dict(posterior={k: v[None, ...] for k, v in positions.items()})
+az.plot_pair(idata, kind='hexbin', marginals=True)
+plt.tight_layout();
 ```
 
 ## General MWG Kernel
@@ -305,9 +305,8 @@ def sampling_loop_general(rng_key, initial_state, logdensity_fn, step_fn, init, 
 
 ```{code-cell} ipython3
 %%time
-rng_key = jax.random.key(0)
 positions_general = sampling_loop_general(
-    rng_key=rng_key,
+    rng_key=sample_key,  # reuse PRNG key from above
     initial_state=initial_state,
     logdensity_fn=logdensity,
     step_fn={
@@ -326,7 +325,7 @@ positions_general = sampling_loop_general(
 ### Check Result
 
 ```{code-cell} ipython3
-{k: jnp.max(jnp.abs(positions[k] - positions_general[k])) for k in initial_state.keys()}
+jax.tree_map(lambda x, y: jnp.max(jnp.abs(x-y)), positions, positions_general)
 ```
 
 ## Developer Notes

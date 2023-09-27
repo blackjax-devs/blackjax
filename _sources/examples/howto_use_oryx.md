@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.0
+    jupytext_version: 1.15.2
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -36,12 +36,20 @@ print(f"Number of classes: {num_classes}")
 print(f"Number of data points: {features.shape[0]}")
 ```
 
+```{code-cell} ipython3
+:tags: [remove-output]
+
+import jax
+import jax.numpy as jnp
+
+from datetime import date
+rng_key = jax.random.PRNGKey(int(date.today().strftime("%Y%m%d")))
+```
+
 Oryx's approach, like Aesara's, is to implement probabilistic models as generative models and then apply transformations to get the log-probability density function. We begin with implementing a dense layer with normal prior probability on the weights and use the function `random_variable` to define random variables:
 
 ```{code-cell} ipython3
-import jax
 from oryx.core.ppl import random_variable
-
 
 from tensorflow_probability.substrates import jax as tfp
 tfd = tfp.distributions
@@ -70,7 +78,6 @@ We now use this layer to build a multi-layer perceptron. The `nest` function is 
 
 ```{code-cell} ipython3
 from oryx.core.ppl import nest
-
 
 def mlp(hidden_sizes, num_classes):
     num_hidden = len(hidden_sizes)
@@ -104,12 +111,11 @@ def predict(mlp):
 We can now build the BNN and sample an initial position for the inference algorithm using `joint_sample`:
 
 ```{code-cell} ipython3
-import jax.numpy as jnp
 from oryx.core.ppl import joint_sample
 
-
 bnn = mlp([50, 50], num_classes)
-initial_weights = joint_sample(bnn)(jax.random.key(0), jnp.ones(num_features))
+rng_key, init_key = jax.random.split(rng_key)
+initial_weights = joint_sample(bnn)(init_key, jnp.ones(num_features))
 
 print(initial_weights.keys())
 ```
@@ -136,9 +142,9 @@ We can now run the window adaptation to get good values for the parameters of th
 %%time
 import blackjax
 
-rng_key = jax.random.key(0)
+rng_key, warmup_key = jax.random.split(rng_key)
 adapt = blackjax.window_adaptation(blackjax.nuts, logdensity_fn)
-(last_state, parameters), _ = adapt.run(rng_key, initial_weights, 100)
+(last_state, parameters), _ = adapt.run(warmup_key, initial_weights, 100)
 kernel = blackjax.nuts(logdensity_fn, **parameters).step
 ```
 
@@ -161,7 +167,8 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
 ```{code-cell} ipython3
 %%time
 
-states, infos = inference_loop(rng_key, kernel, last_state, 100)
+rng_key, sample_key = jax.random.split(rng_key)
+states, infos = inference_loop(sample_key, kernel, last_state, 100)
 ```
 
 We can now use our samples to take an estimate of the accuracy that is averaged over the posterior distribution. We use `intervene` to "inject" the posterior values of the weights instead of sampling from the prior distribution:
@@ -171,9 +178,10 @@ from oryx.core.ppl import intervene
 
 posterior_weights = states.position
 
+rng_key, pred_key = jax.random.split(rng_key)
 output_logits = jax.vmap(
     lambda weights: jax.vmap(lambda x: intervene(bnn, **weights)(
-        jax.random.key(0), x)
+        pred_key, x)
     )(features)
 )(posterior_weights)
 

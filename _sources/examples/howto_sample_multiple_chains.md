@@ -4,14 +4,14 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.1
+    jupytext_version: 1.15.2
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
   name: python3
 ---
 
-```{code-cell} python
+```{code-cell} ipython3
 :tags: [remove-cell]
 
 import os
@@ -42,7 +42,7 @@ In the following we will sample from a linear regression with a NUTS sampler. Th
 
 The model is
 
-```{code-cell} python
+```{code-cell} ipython3
 import numpy as np
 
 import jax
@@ -78,9 +78,16 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     return states
 ```
 
+```{code-cell} ipython3
+:tags: [remove-output]
+
+from datetime import date
+rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
+```
+
 To make our demonstration more dramatic we will used a NUTS sampler with poorly chosen parameters:
 
-```{code-cell} python
+```{code-cell} ipython3
 import blackjax
 
 
@@ -92,11 +99,9 @@ nuts = blackjax.nuts(logdensity, step_size, inv_mass_matrix)
 
 And finally, to put `jax.vmap` and `jax.pmap` on an equal foot we sample as many chains as the machine has CPU cores:
 
-```{code-cell} python
+```{code-cell} ipython3
 import multiprocessing
 
-
-rng_key = jax.random.key(0)
 num_chains = multiprocessing.cpu_count()
 ```
 
@@ -106,7 +111,7 @@ Newcomers to JAX immediately recognize the benefits of using `jax.vmap`, and for
 
 Here we apply `jax.vmap` inside the `one_step` function and vectorize the transition kernel:
 
-```{code-cell} python
+```{code-cell} ipython3
 def inference_loop_multiple_chains(
     rng_key, kernel, initial_state, num_samples, num_chains
 ):
@@ -125,16 +130,18 @@ def inference_loop_multiple_chains(
 
 We now prepare the initial states using `jax.vmap` again, to vectorize the `init` function:
 
-```{code-cell} python
+```{code-cell} ipython3
 initial_positions = {"loc": np.ones(num_chains), "log_scale": np.ones(num_chains)}
 initial_states = jax.vmap(nuts.init, in_axes=(0))(initial_positions)
 ```
 
 And finally run the sampler
 
-```{code-cell} python
+```{code-cell} ipython3
+%%time
+rng_key, sample_key = jax.random.split(rng_key)
 states = inference_loop_multiple_chains(
-    rng_key, nuts.step, initial_states, 2_000, num_chains
+    sample_key, nuts.step, initial_states, 2_000, num_chains
 )
 _ = states.position["loc"].block_until_ready()
 ```
@@ -164,7 +171,7 @@ Currently, this can only be done via `XLA_FLAGS` environmental variable.
 This variable has to be set before JAX or any library that imports it is imported
 ```
 
-```{code-cell} python
+```python
 import os
 import multiprocessing
 
@@ -175,9 +182,7 @@ os.environ["XLA_FLAGS"] = "--xla_force_host_platform_device_count={}".format(
 
 We advise you to confirm that JAX has successfuly recognized our CPU as multiple devices with the following command before moving forward:
 
-```{code-cell} python
-import jax
-
+```{code-cell} ipython3
 len(jax.devices())
 ```
 
@@ -185,9 +190,7 @@ len(jax.devices())
 
 `jax.pmap` has one more limitation: it is not able to parallelize the execution when you ask it to perform more computations than there are available deviced. The following code snippet asks `jax.pmap` perform 1024 operations in parallel:
 
-```{code-cell} python
-import jax.numpy as jnp
-
+```{code-cell} ipython3
 def fn(x):
     return x + 1
 
@@ -208,7 +211,7 @@ Another option (we advise against) is to set the device count to a number larger
 
 In case of `jax.pmap`, we apply the transformation directly to the original `inference_loop` function.
 
-```{code-cell} python
+```{code-cell} ipython3
 inference_loop_multiple_chains = jax.pmap(inference_loop, in_axes=(0, None, 0, None), static_broadcasted_argnums=(1, 3))
 ```
 
@@ -218,17 +221,24 @@ We could have done that in the `jax.vmap` example (and it wouldn't have helped),
 
 We are now ready to sample:
 
-```{code-cell} python
-keys = jax.random.split(rng_key, num_chains)
+```{code-cell} ipython3
+%%time
+rng_key, sample_key = jax.random.split(rng_key)
+sample_keys = jax.random.split(sample_key, num_chains)
 
 pmap_states = inference_loop_multiple_chains(
-    keys, nuts.step, initial_states, 2_000
+    sample_keys, nuts.step, initial_states, 2_000
 )
 _ = pmap_states.position["loc"].block_until_ready()
 ```
 
 Wow, this was much faster, our intuition was correct! Note that the samples are transposed compared to the ones obtained with `jax.vmap`.
 
+Also, note how the shape of the posterior samples are different:
+
+```{code-cell} ipython3
+states.position["loc"].shape, pmap_states.position["loc"].shape
+```
 
 ### Conclusions
 

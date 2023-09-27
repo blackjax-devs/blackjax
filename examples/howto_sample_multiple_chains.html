@@ -419,6 +419,14 @@ and <a class="reference external" href="https://jax.readthedocs.io/en/latest/jax
 </div>
 </div>
 </div>
+<div class="cell tag_remove-output docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+</div>
 <p>To make our demonstration more dramatic we will used a NUTS sampler with poorly chosen parameters:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -438,16 +446,7 @@ and <a class="reference external" href="https://jax.readthedocs.io/en/latest/jax
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">multiprocessing</span>
 
-
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">num_chains</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
-I0000 00:00:1695802722.628787    2665 tfrt_cpu_pjrt_client.cc:349] TfrtCpuClient created.
-No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 </pre></div>
 </div>
 </div>
@@ -488,10 +487,18 @@ No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for
 <p>And finally run the sampler</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="mi">2_000</span><span class="p">,</span> <span class="n">num_chains</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">rng_key</span><span class="p">,</span> <span class="n">sample_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+<span class="n">states</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
+    <span class="n">sample_key</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="mi">2_000</span><span class="p">,</span> <span class="n">num_chains</span>
 <span class="p">)</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10.2 s, sys: 41.4 ms, total: 10.2 s
+Wall time: 10.2 s
 </pre></div>
 </div>
 </div>
@@ -516,9 +523,7 @@ to instruct JAX to split the CPU into multiple devices. See <a class="reference 
 <p class="admonition-title">Warning</p>
 <p>This variable has to be set before JAX or any library that imports it is imported</p>
 </div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">multiprocessing</span>
 
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;XLA_FLAGS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;--xla_force_host_platform_device_count=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -526,14 +531,10 @@ to instruct JAX to split the CPU into multiple devices. See <a class="reference 
 <span class="p">)</span>
 </pre></div>
 </div>
-</div>
-</div>
 <p>We advise you to confirm that JAX has successfuly recognized our CPU as multiple devices with the following command before moving forward:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
-
-<span class="nb">len</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">devices</span><span class="p">())</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">len</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">devices</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -548,9 +549,7 @@ to instruct JAX to split the CPU into multiple devices. See <a class="reference 
 <p><code class="docutils literal notranslate"><span class="pre">jax.pmap</span></code> has one more limitation: it is not able to parallelize the execution when you ask it to perform more computations than there are available deviced. The following code snippet asks <code class="docutils literal notranslate"><span class="pre">jax.pmap</span></code> perform 1024 operations in parallel:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-
-<span class="k">def</span> <span class="nf">fn</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">fn</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span>
 
 <span class="k">try</span><span class="p">:</span>
@@ -591,17 +590,38 @@ and a workaround involving nesting <code class="docutils literal notranslate"><s
 <p>We are now ready to sample:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">rng_key</span><span class="p">,</span> <span class="n">sample_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+<span class="n">sample_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">sample_key</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
 
 <span class="n">pmap_states</span> <span class="o">=</span> <span class="n">inference_loop_multiple_chains</span><span class="p">(</span>
-    <span class="n">keys</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="mi">2_000</span>
+    <span class="n">sample_keys</span><span class="p">,</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">,</span> <span class="mi">2_000</span>
 <span class="p">)</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">pmap_states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 7.1 s, sys: 8.23 ms, total: 7.11 s
+Wall time: 4.72 s
+</pre></div>
+</div>
+</div>
 </div>
 <p>Wow, this was much faster, our intuition was correct! Note that the samples are transposed compared to the ones obtained with <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code>.</p>
+<p>Also, note how the shape of the posterior samples are different:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">pmap_states</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>((2000, 2), (2, 2000))
+</pre></div>
+</div>
+</div>
+</div>
 </section>
 <section id="conclusions">
 <h3>Conclusions<a class="headerlink" href="#conclusions" title="Permalink to this heading">#</a></h3>
