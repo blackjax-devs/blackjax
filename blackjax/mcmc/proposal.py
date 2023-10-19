@@ -108,7 +108,7 @@ def proposal_from_energy_diff(
     new_energy
         the energy at the proposed state
     divergence_threshold
-        max value allowed for the difference in energies not to be considered a divergence
+        max value allowed for an increase in energies not to be considered a divergence
     state
         the proposed state
 
@@ -118,7 +118,7 @@ def proposal_from_energy_diff(
     """
     delta_energy = initial_energy - new_energy
     delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
-    is_transition_divergent = jnp.abs(delta_energy) > divergence_threshold
+    is_transition_divergent = -delta_energy > divergence_threshold
 
     # The weight of the new proposal is equal to H0 - H(z_new)
     weight = delta_energy
