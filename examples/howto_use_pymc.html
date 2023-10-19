@@ -409,6 +409,33 @@ document.write(`
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div>
 </div>
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">line</span> <span class="mi">1</span>
+<span class="ne">----&gt; </span><span class="mi">1</span> <span class="kn">from</span> <span class="nn">pymc.sampling_jax</span> <span class="kn">import</span> <span class="n">get_jaxified_logp</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="n">rvs</span> <span class="o">=</span> <span class="p">[</span><span class="n">rv</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">rv</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">value_vars</span><span class="p">]</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="n">logdensity_fn</span> <span class="o">=</span> <span class="n">get_jaxified_logp</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.18</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">pymc</span><span class="o">/</span><span class="n">sampling_jax</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">22</span>
+<span class="g g-Whitespace">     </span><span class="mi">19</span> <span class="kn">import</span> <span class="nn">warnings</span>
+<span class="g g-Whitespace">     </span><span class="mi">21</span> <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;This module is deprecated, use pymc.sampling.jax&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
+<span class="ne">---&gt; </span><span class="mi">22</span> <span class="kn">from</span> <span class="nn">pymc.sampling.jax</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.9.18</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.9</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">pymc</span><span class="o">/</span><span class="n">sampling</span><span class="o">/</span><span class="n">jax</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span>
+<span class="g g-Whitespace">    </span><span class="mi">178</span> <span class="k">def</span> <span class="nf">_device_put</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="g g-Whitespace">    </span><span class="mi">179</span>     <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">device_put</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">devices</span><span class="p">(</span><span class="n">device</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+<span class="g g-Whitespace">    </span><span class="mi">182</span> <span class="k">def</span> <span class="nf">_postprocess_samples</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">183</span>     <span class="n">jax_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">184</span>     <span class="n">raw_mcmc_samples</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TensorVariable</span><span class="p">],</span>
+<span class="ne">--&gt; </span><span class="mi">185</span>     <span class="n">postprocessing_backend</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="s2">&quot;gpu&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">186</span>     <span class="n">postprocessing_vectorize</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;vmap&quot;</span><span class="p">,</span> <span class="s2">&quot;scan&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;scan&quot;</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">187</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">TensorVariable</span><span class="p">]:</span>
+<span class="g g-Whitespace">    </span><span class="mi">188</span>     <span class="k">if</span> <span class="n">postprocessing_vectorize</span> <span class="o">==</span> <span class="s2">&quot;scan&quot;</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">189</span>         <span class="n">t_raw_mcmc_samples</span> <span class="o">=</span> <span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">raw_mcmc_samples</span><span class="p">]</span>
+
+<span class="ne">TypeError</span>: unsupported operand type(s) for |: &#39;_LiteralGenericAlias&#39; and &#39;NoneType&#39;
+</pre></div>
+</div>
 </div>
 </div>
 <p>We can now run the window adaptation for the NUTS sampler:</p>
@@ -478,9 +505,6 @@ document.write(`
 </div>
 </div>
 </details>
-<div class="cell_output docutils container">
-<img alt="../_images/3202ec3e98ce887d193ca3e6ddc0d08ce92d15a1f65413d4b3a9479dd338a3fd.png" src="../_images/3202ec3e98ce887d193ca3e6ddc0d08ce92d15a1f65413d4b3a9479dd338a3fd.png" />
-</div>
 </div>
 </section>
 

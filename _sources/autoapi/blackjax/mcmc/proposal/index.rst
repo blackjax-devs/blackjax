@@ -100,7 +100,7 @@ Attributes
 
    :param initial_energy: the energy from the initial state
    :param new_energy: the energy at the proposed state
-   :param divergence_threshold: max value allowed for the difference in energies not to be considered a divergence
+   :param divergence_threshold: max value allowed for an increase in energies not to be considered a divergence
    :param state: the proposed state
 
    :rtype: A proposal and a flag for divergence

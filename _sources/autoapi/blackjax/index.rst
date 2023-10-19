@@ -69,6 +69,15 @@ Functions
 
 
 
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   blackjax.__version__
+
+
+
 
 
 

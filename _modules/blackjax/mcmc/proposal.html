@@ -447,7 +447,7 @@ document.write(`
 <span class="sd">    new_energy</span>
 <span class="sd">        the energy at the proposed state</span>
 <span class="sd">    divergence_threshold</span>
-<span class="sd">        max value allowed for the difference in energies not to be considered a divergence</span>
+<span class="sd">        max value allowed for an increase in energies not to be considered a divergence</span>
 <span class="sd">    state</span>
 <span class="sd">        the proposed state</span>
 
@@ -457,7 +457,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">delta_energy</span> <span class="o">=</span> <span class="n">initial_energy</span> <span class="o">-</span> <span class="n">new_energy</span>
     <span class="n">delta_energy</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">delta_energy</span><span class="p">),</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">delta_energy</span><span class="p">)</span>
-    <span class="n">is_transition_divergent</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">delta_energy</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">divergence_threshold</span>
+    <span class="n">is_transition_divergent</span> <span class="o">=</span> <span class="o">-</span><span class="n">delta_energy</span> <span class="o">&gt;</span> <span class="n">divergence_threshold</span>
 
     <span class="c1"># The weight of the new proposal is equal to H0 - H(z_new)</span>
     <span class="n">weight</span> <span class="o">=</span> <span class="n">delta_energy</span>
