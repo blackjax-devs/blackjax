@@ -297,7 +297,7 @@ def window_adaptation(
     )
 
     def one_step(carry, xs):
-        _, rng_key, adaptation_stage = xs
+        rng_key, adaptation_stage = xs
         state, adaptation_state = carry
 
         new_state, info = mcmc_kernel(
@@ -335,7 +335,7 @@ def window_adaptation(
         last_state, info = jax.lax.scan(
             one_step_,
             (init_state, init_adaptation_state),
-            (jnp.arange(num_steps), keys, schedule),
+            (keys, schedule),
         )
         last_chain_state, last_warmup_state, *_ = last_state
 
