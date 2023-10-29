@@ -90,7 +90,7 @@ class RMHProposalTest(unittest.TestCase):
         return Proposal(state, 0, 0, 0)
 
     def generate_proposal(self, prev, new):
-        return Proposal(new, 0, 0, 0), False
+        return Proposal(new, 0, 0, 0)
 
     def test_generate_reject(self):
         """

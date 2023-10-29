@@ -276,7 +276,7 @@ def hmc_proposal(
     """
     build_trajectory = trajectory.static_integration(integrator)
     init_proposal, generate_proposal = proposal.proposal_generator(
-        hmc_energy(kinetic_energy), divergence_threshold
+        hmc_energy(kinetic_energy)
     )
 
     def generate(
@@ -286,7 +286,8 @@ def hmc_proposal(
         end_state = build_trajectory(state, step_size, num_integration_steps)
         end_state = flip_momentum(end_state)
         proposal = init_proposal(state)
-        new_proposal, is_diverging = generate_proposal(proposal.energy, end_state)
+        new_proposal = generate_proposal(proposal.energy, end_state)
+        is_diverging = -new_proposal.weight > divergence_threshold
         sampled_proposal, *info = sample_proposal(rng_key, proposal, new_proposal)
         do_accept, p_accept = info
 
