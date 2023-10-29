@@ -159,9 +159,7 @@ def dynamic_progressive_integration(
         which we say a transition is divergent.
 
     """
-    _, generate_proposal = proposal_generator(
-        hmc_energy(kinetic_energy)
-    )
+    _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy))
     sample_proposal = progressive_uniform_sampling
 
     def integrate(
@@ -320,9 +318,7 @@ def dynamic_recursive_integration(
         Bool to indicate whether to perform additional U turn check between two trajectory.
 
     """
-    _, generate_proposal = proposal_generator(
-        hmc_energy(kinetic_energy)
-    )
+    _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy))
     sample_proposal = progressive_uniform_sampling
 
     def buildtree_integrate(

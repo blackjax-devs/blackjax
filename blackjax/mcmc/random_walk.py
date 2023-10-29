@@ -63,7 +63,6 @@ Examples
 from typing import Callable, NamedTuple, Optional
 
 import jax
-import numpy as np
 from jax import numpy as jnp
 
 from blackjax.base import SamplingAlgorithm

@@ -29,9 +29,7 @@ class TestAsymmetricProposalGenerator(unittest.TestCase):
             assert new_state == 50
             return new_proposal
 
-        _, update = asymmetric_proposal_generator(
-            transition_energy, proposal_factory
-        )
+        _, update = asymmetric_proposal_generator(transition_energy, proposal_factory)
         proposed = update(30, 50)
         assert proposed == new_proposal
 

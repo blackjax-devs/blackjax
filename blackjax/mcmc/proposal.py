@@ -40,9 +40,7 @@ class Proposal(NamedTuple):
     sum_log_p_accept: float
 
 
-def proposal_generator(
-    energy: Callable
-) -> tuple[Callable, Callable]:
+def proposal_generator(energy: Callable) -> tuple[Callable, Callable]:
     """
 
     Parameters
@@ -59,7 +57,7 @@ def proposal_generator(
     def new(state: TrajectoryState) -> Proposal:
         return Proposal(state, energy(state), 0.0, -jnp.inf)
 
-    def update(initial_energy: float, state: TrajectoryState) -> tuple[Proposal, bool]:
+    def update(initial_energy: float, state: TrajectoryState) -> Proposal:
         """Generate a new proposal from a trajectory state.
 
         The trajectory state records information about the position in the state
@@ -81,9 +79,7 @@ def proposal_generator(
 
         """
         new_energy = energy(state)
-        return proposal_from_energy_diff(
-            initial_energy, new_energy, state
-        )
+        return proposal_from_energy_diff(initial_energy, new_energy, state)
 
     return new, update
 
@@ -92,7 +88,7 @@ def proposal_from_energy_diff(
     initial_energy: float,
     new_energy: float,
     state: TrajectoryState,
-) -> tuple[Proposal, bool]:
+) -> Proposal:
     """Computes a new proposal from the energy difference between two states.
 
     Parameters
@@ -118,11 +114,11 @@ def proposal_from_energy_diff(
     sum_log_p_accept = jnp.minimum(delta_energy, 0.0)
 
     return Proposal(
-            state,
-            new_energy,
-            weight,
-            sum_log_p_accept,
-        )
+        state,
+        new_energy,
+        weight,
+        sum_log_p_accept,
+    )
 
 
 def asymmetric_proposal_generator(
