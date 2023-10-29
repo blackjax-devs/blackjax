@@ -90,7 +90,7 @@ def build_kernel():
         return -state.logdensity + 0.25 * (1.0 / step_size) * theta_dot
 
     init_proposal, generate_proposal = proposal.asymmetric_proposal_generator(
-        transition_energy, divergence_threshold=jnp.inf
+        transition_energy
     )
     sample_proposal = proposal.static_binomial_sampling
 
@@ -107,7 +107,7 @@ def build_kernel():
         new_state = MALAState(*new_state)
 
         proposal = init_proposal(state)
-        new_proposal, _ = generate_proposal(state, new_state, step_size=step_size)
+        new_proposal = generate_proposal(state, new_state, step_size=step_size)
         sampled_proposal, do_accept, p_accept = sample_proposal(
             key_rmh, proposal, new_proposal
         )

@@ -391,7 +391,7 @@ def build_rmh():
         transition_energy = build_rmh_transition_energy(proposal_logdensity_fn)
 
         init_proposal, generate_proposal = proposal.asymmetric_proposal_generator(
-            transition_energy, np.inf
+            transition_energy
         )
 
         proposal_generator = rmh_proposal(
@@ -496,7 +496,7 @@ def rmh_proposal(
     def generate(rng_key, state: RWState) -> tuple[RWState, bool, float]:
         key_proposal, key_accept = jax.random.split(rng_key, 2)
         end_state = build_trajectory(key_proposal, state)
-        new_proposal, _ = generate_proposal(state, end_state)
+        new_proposal = generate_proposal(state, end_state)
         previous_proposal = init_proposal(state)
         sampled_proposal, do_accept, p_accept = sample_proposal(
             key_accept, previous_proposal, new_proposal
