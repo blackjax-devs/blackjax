@@ -82,31 +82,26 @@ Attributes
       
 
 
-.. py:function:: proposal_generator(energy: Callable, divergence_threshold: float) -> tuple[Callable, Callable]
+.. py:function:: proposal_generator(energy: Callable) -> tuple[Callable, Callable]
 
    :param energy: A function that computes the energy associated to a given state
-   :param divergence_threshold: max value allowed for the difference in energies not to be considered a divergence
 
    :returns: * *Two functions, one to generate an initial proposal when no step has been taken,*
              * *another to generate proposals after each step.*
 
 
-.. py:function:: proposal_from_energy_diff(initial_energy: float, new_energy: float, divergence_threshold: float, state: TrajectoryState) -> tuple[Proposal, bool]
+.. py:function:: proposal_from_energy_diff(initial_energy: float, new_energy: float, state: TrajectoryState) -> Proposal
 
    Computes a new proposal from the energy difference between two states.
 
-   It also verifies whether this difference is a divergence, if the
-   energy diff is above divergence_threshold.
-
    :param initial_energy: the energy from the initial state
    :param new_energy: the energy at the proposed state
-   :param divergence_threshold: max value allowed for an increase in energies not to be considered a divergence
    :param state: the proposed state
 
    :rtype: A proposal and a flag for divergence
 
 
-.. py:function:: asymmetric_proposal_generator(transition_energy_fn: Callable, divergence_threshold: float, proposal_factory: Callable = proposal_from_energy_diff) -> tuple[Callable, Callable]
+.. py:function:: asymmetric_proposal_generator(transition_energy_fn: Callable, proposal_factory: Callable = proposal_from_energy_diff) -> tuple[Callable, Callable]
 
    A proposal generator that takes into account the transition between
    two states to compute a new proposal.
@@ -116,7 +111,6 @@ Attributes
 
    :param transition_energy_fn: A function that computes the energy of a transition from an initial state
                                 to a new state, given some optional keyword arguments.
-   :param divergence_threshold: The maximum value allowed for the difference in energies not to be considered a divergence.
    :param proposal_factory: A function that builds a proposal from the transition energies.
 
    :returns: * *Two functions, one to generate an initial proposal when no step has been taken,*

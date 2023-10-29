@@ -496,9 +496,7 @@ document.write(`
 <span class="sd">        which we say a transition is divergent.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">generate_proposal</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span>
-        <span class="n">hmc_energy</span><span class="p">(</span><span class="n">kinetic_energy</span><span class="p">),</span> <span class="n">divergence_threshold</span>
-    <span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">generate_proposal</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="n">hmc_energy</span><span class="p">(</span><span class="n">kinetic_energy</span><span class="p">))</span>
     <span class="n">sample_proposal</span> <span class="o">=</span> <span class="n">progressive_uniform_sampling</span>
 
     <span class="k">def</span> <span class="nf">integrate</span><span class="p">(</span>
@@ -552,7 +550,8 @@ document.write(`
             <span class="n">rng_key</span><span class="p">,</span> <span class="n">proposal_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
 
             <span class="n">new_state</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="p">,</span> <span class="n">direction</span> <span class="o">*</span> <span class="n">step_size</span><span class="p">)</span>
-            <span class="n">new_proposal</span><span class="p">,</span> <span class="n">is_diverging</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">new_state</span><span class="p">)</span>
+            <span class="n">new_proposal</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">new_state</span><span class="p">)</span>
+            <span class="n">is_diverging</span> <span class="o">=</span> <span class="o">-</span><span class="n">new_proposal</span><span class="o">.</span><span class="n">weight</span> <span class="o">&gt;</span> <span class="n">divergence_threshold</span>
 
             <span class="c1"># At step 0, we always accept the proposal, since we</span>
             <span class="c1"># take one step to get the leftmost state of the tree.</span>
@@ -585,7 +584,7 @@ document.write(`
 
             <span class="k">return</span> <span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">new_integration_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">has_terminated</span><span class="p">))</span>
 
-        <span class="n">proposal_placeholder</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">)</span>
+        <span class="n">proposal_placeholder</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">)</span>
         <span class="n">trajectory_placeholder</span> <span class="o">=</span> <span class="n">Trajectory</span><span class="p">(</span>
             <span class="n">initial_state</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">initial_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span> <span class="mi">0</span>
         <span class="p">)</span>
@@ -656,9 +655,7 @@ document.write(`
 <span class="sd">        Bool to indicate whether to perform additional U turn check between two trajectory.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">generate_proposal</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span>
-        <span class="n">hmc_energy</span><span class="p">(</span><span class="n">kinetic_energy</span><span class="p">),</span> <span class="n">divergence_threshold</span>
-    <span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">generate_proposal</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="n">hmc_energy</span><span class="p">(</span><span class="n">kinetic_energy</span><span class="p">))</span>
     <span class="n">sample_proposal</span> <span class="o">=</span> <span class="n">progressive_uniform_sampling</span>
 
     <span class="k">def</span> <span class="nf">buildtree_integrate</span><span class="p">(</span>
@@ -694,7 +691,8 @@ document.write(`
         <span class="k">if</span> <span class="n">tree_depth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="c1"># Base case - take one leapfrog step in the direction v.</span>
             <span class="n">next_state</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">direction</span> <span class="o">*</span> <span class="n">step_size</span><span class="p">)</span>
-            <span class="n">new_proposal</span><span class="p">,</span> <span class="n">is_diverging</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">next_state</span><span class="p">)</span>
+            <span class="n">new_proposal</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">next_state</span><span class="p">)</span>
+            <span class="n">is_diverging</span> <span class="o">=</span> <span class="o">-</span><span class="n">new_proposal</span><span class="o">.</span><span class="n">weight</span> <span class="o">&gt;</span> <span class="n">divergence_threshold</span>
             <span class="n">trajectory</span> <span class="o">=</span> <span class="n">Trajectory</span><span class="p">(</span><span class="n">next_state</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">next_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
             <span class="k">return</span> <span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>

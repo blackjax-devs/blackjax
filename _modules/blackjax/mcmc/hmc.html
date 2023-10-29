@@ -613,7 +613,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">build_trajectory</span> <span class="o">=</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">static_integration</span><span class="p">(</span><span class="n">integrator</span><span class="p">)</span>
     <span class="n">init_proposal</span><span class="p">,</span> <span class="n">generate_proposal</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">proposal_generator</span><span class="p">(</span>
-        <span class="n">hmc_energy</span><span class="p">(</span><span class="n">kinetic_energy</span><span class="p">),</span> <span class="n">divergence_threshold</span>
+        <span class="n">hmc_energy</span><span class="p">(</span><span class="n">kinetic_energy</span><span class="p">)</span>
     <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span>
@@ -623,7 +623,8 @@ document.write(`
         <span class="n">end_state</span> <span class="o">=</span> <span class="n">build_trajectory</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
         <span class="n">end_state</span> <span class="o">=</span> <span class="n">flip_momentum</span><span class="p">(</span><span class="n">end_state</span><span class="p">)</span>
         <span class="n">proposal</span> <span class="o">=</span> <span class="n">init_proposal</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-        <span class="n">new_proposal</span><span class="p">,</span> <span class="n">is_diverging</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">proposal</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span> <span class="n">end_state</span><span class="p">)</span>
+        <span class="n">new_proposal</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">proposal</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span> <span class="n">end_state</span><span class="p">)</span>
+        <span class="n">is_diverging</span> <span class="o">=</span> <span class="o">-</span><span class="n">new_proposal</span><span class="o">.</span><span class="n">weight</span> <span class="o">&gt;</span> <span class="n">divergence_threshold</span>
         <span class="n">sampled_proposal</span><span class="p">,</span> <span class="o">*</span><span class="n">info</span> <span class="o">=</span> <span class="n">sample_proposal</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">)</span>
         <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span> <span class="o">=</span> <span class="n">info</span>
 

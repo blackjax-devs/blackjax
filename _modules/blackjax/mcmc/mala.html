@@ -427,7 +427,7 @@ document.write(`
         <span class="k">return</span> <span class="o">-</span><span class="n">state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">+</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">step_size</span><span class="p">)</span> <span class="o">*</span> <span class="n">theta_dot</span>
 
     <span class="n">init_proposal</span><span class="p">,</span> <span class="n">generate_proposal</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">asymmetric_proposal_generator</span><span class="p">(</span>
-        <span class="n">transition_energy</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span>
+        <span class="n">transition_energy</span>
     <span class="p">)</span>
     <span class="n">sample_proposal</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">static_binomial_sampling</span>
 
@@ -444,7 +444,7 @@ document.write(`
         <span class="n">new_state</span> <span class="o">=</span> <span class="n">MALAState</span><span class="p">(</span><span class="o">*</span><span class="n">new_state</span><span class="p">)</span>
 
         <span class="n">proposal</span> <span class="o">=</span> <span class="n">init_proposal</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-        <span class="n">new_proposal</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="n">step_size</span><span class="p">)</span>
+        <span class="n">new_proposal</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="n">step_size</span><span class="p">)</span>
         <span class="n">sampled_proposal</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span> <span class="o">=</span> <span class="n">sample_proposal</span><span class="p">(</span>
             <span class="n">key_rmh</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span>
         <span class="p">)</span>
