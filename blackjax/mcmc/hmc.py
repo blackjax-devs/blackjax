@@ -42,6 +42,13 @@ class HMCState(NamedTuple):
 
 
 class DynamicHMCState(NamedTuple):
+    """State of the dynamic HMC algorithm.
+
+    Adds a utility array for generating a pseudo or quasi-random sequence of
+    number of integration steps.
+
+    """
+
     hmc_state: HMCState
     random_generator_arg: Array
 
@@ -164,6 +171,11 @@ def build_dynamic_kernel(
         The symplectic integrator to use to integrate the Hamiltonian dynamics.
     divergence_threshold
         Value of the difference in energy above which we consider that the transition is divergent.
+    next_random_arg_fn
+        Function that generates the next `random_generator_arg` from its previous value.
+    integration_steps_fn
+        Function that generates the next pseudo or quasi-random number of integration steps in the
+        sequence, given the current `random_generator_arg`.
 
     Returns
     -------
