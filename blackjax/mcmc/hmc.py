@@ -24,7 +24,16 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.trajectory import hmc_energy
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["HMCState", "DynamicHMCState", "HMCInfo", "init", "build_kernel", "hmc"]
+__all__ = [
+    "HMCState",
+    "DynamicHMCState",
+    "HMCInfo",
+    "init",
+    "init_dynamic",
+    "build_kernel",
+    "build_dynamic_kernel",
+    "hmc",
+]
 
 
 class HMCState(NamedTuple):
@@ -49,7 +58,9 @@ class DynamicHMCState(NamedTuple):
 
     """
 
-    hmc_state: HMCState
+    position: ArrayTree
+    logdensity: float
+    logdensity_grad: ArrayTree
     random_generator_arg: Array
 
 
@@ -94,6 +105,13 @@ class HMCInfo(NamedTuple):
 def init(position: ArrayLikeTree, logdensity_fn: Callable):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return HMCState(position, logdensity, logdensity_grad)
+
+
+def init_dynamic(
+    position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: Array
+):
+    logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
+    return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
 
 
 def build_kernel(
@@ -195,9 +213,10 @@ def build_dynamic_kernel(
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the HMC kernel."""
         num_integration_steps = integration_steps_fn(state.random_generator_arg)
+        hmc_state = HMCState(state.position, state.logdensity, state.logdensity_grad)
         hmc_proposal, info = hmc_base(
             rng_key,
-            state.hmc_state,
+            hmc_state,
             logdensity_fn,
             step_size,
             inverse_mass_matrix,
@@ -206,7 +225,10 @@ def build_dynamic_kernel(
         next_random_arg = next_random_arg_fn(state.random_generator_arg)
         return (
             DynamicHMCState(
-                hmc_state=hmc_proposal, random_generator_arg=next_random_arg
+                hmc_proposal.position,
+                hmc_proposal.logdensity,
+                hmc_proposal.logdensity_grad,
+                next_random_arg,
             ),
             info,
         )

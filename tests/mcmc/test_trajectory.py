@@ -310,8 +310,7 @@ class TrajectoryTest(chex.TestCase):
         hmc_kernel = lambda key, state: kernel_factory(
             key, state, logprob, **parameters
         )
-        hmc_state = hmc.init(initial_position, logprob)
-        init_state = hmc.DynamicHMCState(hmc_state, num_step_key)
+        init_state = hmc.init_dynamic(initial_position, logprob, num_step_key)
 
         def one_step(state, rng_key):
             state, info = hmc_kernel(rng_key, state)
