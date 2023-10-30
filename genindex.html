@@ -793,6 +793,8 @@ document.write(`
       </ul></li>
       <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_additive_step">build_additive_step() (in module blackjax.mcmc.random_walk)</a>
 </li>
+      <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.build_dynamic_kernel">build_dynamic_kernel() (in module blackjax.mcmc.hmc)</a>
+</li>
       <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_irmh">build_irmh() (in module blackjax.mcmc.random_walk)</a>
 </li>
       <li><a href="autoapi/blackjax/smc/adaptive_tempered/index.html#blackjax.smc.adaptive_tempered.adaptive_tempered_smc.build_kernel">build_kernel (adaptive_tempered_smc attribute)</a>
@@ -904,6 +906,8 @@ document.write(`
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.dynamic_recursive_integration">dynamic_recursive_integration() (in module blackjax.mcmc.trajectory)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicExpansionState">DynamicExpansionState (class in blackjax.mcmc.trajectory)</a>
+</li>
+      <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.DynamicHMCState">DynamicHMCState (class in blackjax.mcmc.hmc)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicIntegrationState">DynamicIntegrationState (class in blackjax.mcmc.trajectory)</a>
 </li>
@@ -1057,8 +1061,6 @@ document.write(`
         <li><a href="autoapi/blackjax/base/index.html#blackjax.base.VIAlgorithm.init">(VIAlgorithm attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.init">init() (in module blackjax.mcmc.elliptical_slice)</a>
 
       <ul>
@@ -1083,7 +1085,11 @@ document.write(`
         <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.init">(in module blackjax.smc.tempered)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.init_and_kernel">init_and_kernel() (in module blackjax.mcmc.marginal_latent_gaussian)</a>
+</li>
+      <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.init_dynamic">init_dynamic() (in module blackjax.mcmc.hmc)</a>
 </li>
       <li><a href="autoapi/blackjax/base/index.html#blackjax.base.InitFn">InitFn (class in blackjax.base)</a>
 </li>
@@ -1151,15 +1157,17 @@ document.write(`
 </li>
       <li><a href="autoapi/blackjax/optimizers/dual_averaging/index.html#blackjax.optimizers.dual_averaging.DualAveragingState.log_x_avg">log_x_avg (DualAveragingState attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/mcmc/periodic_orbital/index.html#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState.logdensities">logdensities (PeriodicOrbitalState attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/mcmc/periodic_orbital/index.html#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState.logdensities_grad">logdensities_grad (PeriodicOrbitalState attribute)</a>
 </li>
-      <li><a href="autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceState.logdensity">logdensity (EllipSliceState attribute)</a>
+      <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.DynamicHMCState.logdensity">logdensity (DynamicHMCState attribute)</a>
 
       <ul>
+        <li><a href="autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceState.logdensity">(EllipSliceState attribute)</a>
+</li>
         <li><a href="autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.logdensity">(GHMCState attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState.logdensity">(HMCState attribute)</a>
@@ -1173,9 +1181,11 @@ document.write(`
       </ul></li>
       <li><a href="autoapi/blackjax/sgmcmc/gradients/index.html#blackjax.sgmcmc.gradients.logdensity_estimator">logdensity_estimator() (in module blackjax.sgmcmc.gradients)</a>
 </li>
-      <li><a href="autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.logdensity_grad">logdensity_grad (GHMCState attribute)</a>
+      <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.DynamicHMCState.logdensity_grad">logdensity_grad (DynamicHMCState attribute)</a>
 
       <ul>
+        <li><a href="autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.logdensity_grad">(GHMCState attribute)</a>
+</li>
         <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState.logdensity_grad">(HMCState attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.MALAState.logdensity_grad">(MALAState attribute)</a>
@@ -1437,6 +1447,8 @@ document.write(`
       <li><a href="autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.ContourSGLDState.position">position (ContourSGLDState attribute)</a>
 
       <ul>
+        <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.DynamicHMCState.position">(DynamicHMCState attribute)</a>
+</li>
         <li><a href="autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceState.position">(EllipSliceState attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.position">(GHMCState attribute)</a>
@@ -1500,6 +1512,8 @@ document.write(`
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.DynamicHMCState.random_generator_arg">random_generator_arg (DynamicHMCState attribute)</a>
+</li>
       <li><a href="autoapi/blackjax/vi/svgd/index.html#blackjax.vi.svgd.rbf_kernel">rbf_kernel() (in module blackjax.vi.svgd)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.reorder_trajectories">reorder_trajectories() (in module blackjax.mcmc.trajectory)</a>
