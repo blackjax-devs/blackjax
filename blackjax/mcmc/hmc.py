@@ -24,7 +24,7 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.trajectory import hmc_energy
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["HMCState", "HMCInfo", "init", "build_kernel", "hmc"]
+__all__ = ["HMCState", "DynamicHMCState", "HMCInfo", "init", "build_kernel", "hmc"]
 
 
 class HMCState(NamedTuple):
@@ -39,6 +39,11 @@ class HMCState(NamedTuple):
     position: ArrayTree
     logdensity: float
     logdensity_grad: ArrayTree
+
+
+class DynamicHMCState(NamedTuple):
+    hmc_state: HMCState
+    random_generator_arg: Array
 
 
 class HMCInfo(NamedTuple):
@@ -141,6 +146,58 @@ def build_kernel(
         )
 
         return proposal, info
+
+    return kernel
+
+
+def build_dynamic_kernel(
+    integrator: Callable = integrators.velocity_verlet,
+    divergence_threshold: float = 1000,
+    next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
+    integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+):
+    """Build a Dynamic HMC kernel where the number of integration steps is chosen randomly.
+
+    Parameters
+    ----------
+    integrator
+        The symplectic integrator to use to integrate the Hamiltonian dynamics.
+    divergence_threshold
+        Value of the difference in energy above which we consider that the transition is divergent.
+
+    Returns
+    -------
+    A kernel that takes a rng_key and a Pytree that contains the current state
+    of the chain and that returns a new state of the chain along with
+    information about the transition.
+
+    """
+    hmc_base = build_kernel(integrator, divergence_threshold)
+
+    def kernel(
+        rng_key: PRNGKey,
+        state: DynamicHMCState,
+        logdensity_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: Array,
+    ) -> tuple[DynamicHMCState, HMCInfo]:
+        """Generate a new sample with the HMC kernel."""
+        num_integration_steps = integration_steps_fn(state.random_generator_arg)
+        hmc_proposal, info = hmc_base(
+            rng_key,
+            state.hmc_state,
+            logdensity_fn,
+            step_size,
+            inverse_mass_matrix,
+            num_integration_steps,
+        )
+        next_random_arg = next_random_arg_fn(state.random_generator_arg)
+        return (
+            DynamicHMCState(
+                hmc_state=hmc_proposal, random_generator_arg=next_random_arg
+            ),
+            info,
+        )
 
     return kernel
 
