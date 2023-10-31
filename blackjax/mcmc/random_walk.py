@@ -280,7 +280,7 @@ def build_irmh() -> Callable:
             domain of the target distribution.
         """
 
-        def proposal_generator(rng_key: PRNGKey, position):
+        def proposal_generator(rng_key: PRNGKey, position: ArrayTree):
             return proposal_distribution(rng_key)
 
         inner_kernel = build_rmh()
