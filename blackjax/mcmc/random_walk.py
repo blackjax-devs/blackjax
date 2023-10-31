@@ -270,7 +270,7 @@ def build_irmh() -> Callable:
         state: RWState,
         logdensity_fn: Callable,
         proposal_distribution: Callable,
-        proposal_logdensity_fn: Callable = None
+        proposal_logdensity_fn: Optional[Callable] = None,
     ) -> Tuple[RWState, RWInfo]:
         """
         Parameters
@@ -288,9 +288,12 @@ def build_irmh() -> Callable:
             return proposal_distribution(rng_key)
 
         inner_kernel = build_rmh()
-        return inner_kernel(rng_key, state, logdensity_fn, proposal_generator, proposal_logdensity_fn)
+        return inner_kernel(
+            rng_key, state, logdensity_fn, proposal_generator, proposal_logdensity_fn
+        )
 
     return kernel
+
 
 class irmh:
     """Implements the (basic) user interface for the independent RMH.
@@ -337,7 +340,7 @@ class irmh:
         cls,
         logdensity_fn: Callable,
         proposal_distribution: Callable,
-        proposal_logdensity_fn: Optional[Callable] = None
+        proposal_logdensity_fn: Optional[Callable] = None,
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel()
 
@@ -345,7 +348,13 @@ class irmh:
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return kernel(rng_key, state, logdensity_fn, proposal_distribution, proposal_logdensity_fn)
+            return kernel(
+                rng_key,
+                state,
+                logdensity_fn,
+                proposal_distribution,
+                proposal_logdensity_fn,
+            )
 
         return SamplingAlgorithm(init_fn, step_fn)
 
