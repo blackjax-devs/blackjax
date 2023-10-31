@@ -251,6 +251,9 @@ Functions
    :param logdensity_fn: The log density probability density function from which we wish to sample.
    :param proposal_distribution: A Callable that takes a random number generator and produces a new proposal. The
                                  proposal is independent of the sampler's current state.
+   :param proposal_logdensity_fn: For non-symmetric proposals, a function that returns the log-density
+                                  to obtain a given proposal knowing the current state. If it is not
+                                  provided we assume the proposal is symmetric.
 
    :rtype: A ``SamplingAlgorithm``.
 

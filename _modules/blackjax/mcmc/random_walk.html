@@ -18,12 +18,12 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=c5ced968eda925caa686" rel="stylesheet" />
-<link href="../../../_static/styles/bootstrap.css?digest=c5ced968eda925caa686" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=c5ced968eda925caa686" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
 
   
-  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=c5ced968eda925caa686" rel="stylesheet" />
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
@@ -36,9 +36,9 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=c5ced968eda925caa686" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=c5ced968eda925caa686" />
-  <script src="../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=c5ced968eda925caa686"></script>
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6" />
+  <script src="../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=365ca57ee442770a23c6"></script>
 
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/doctools.js"></script>
@@ -607,14 +607,18 @@ document.write(`
         <span class="n">state</span><span class="p">:</span> <span class="n">RWState</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">proposal_distribution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">proposal_logdensity_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">RWState</span><span class="p">,</span> <span class="n">RWInfo</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        proposal_distribution</span>
 <span class="sd">            A function that, given a PRNGKey, is able to produce a sample in the same</span>
 <span class="sd">            domain of the target distribution.</span>
+<span class="sd">        proposal_logdensity_fn:</span>
+<span class="sd">            For non-symmetric proposals, a function that returns the log-density</span>
+<span class="sd">            to obtain a given proposal knowing the current state. If it is not</span>
+<span class="sd">            provided we assume the proposal is symmetric.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">def</span> <span class="nf">proposal_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">):</span>
@@ -622,7 +626,9 @@ document.write(`
             <span class="k">return</span> <span class="n">proposal_distribution</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
 
         <span class="n">inner_kernel</span> <span class="o">=</span> <span class="n">build_rmh</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">inner_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">proposal_generator</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">inner_kernel</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">proposal_generator</span><span class="p">,</span> <span class="n">proposal_logdensity_fn</span>
+        <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">kernel</span></div>
 
@@ -655,7 +661,10 @@ document.write(`
 <span class="sd">    proposal_distribution</span>
 <span class="sd">        A Callable that takes a random number generator and produces a new proposal. The</span>
 <span class="sd">        proposal is independent of the sampler&#39;s current state.</span>
-
+<span class="sd">    proposal_logdensity_fn:</span>
+<span class="sd">        For non-symmetric proposals, a function that returns the log-density</span>
+<span class="sd">        to obtain a given proposal knowing the current state. If it is not</span>
+<span class="sd">        provided we assume the proposal is symmetric.</span>
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
@@ -669,6 +678,7 @@ document.write(`
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">proposal_distribution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">proposal_logdensity_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
         <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
 
@@ -676,7 +686,13 @@ document.write(`
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">proposal_distribution</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">logdensity_fn</span><span class="p">,</span>
+                <span class="n">proposal_distribution</span><span class="p">,</span>
+                <span class="n">proposal_logdensity_fn</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
@@ -901,8 +917,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../../_static/scripts/bootstrap.js?digest=c5ced968eda925caa686"></script>
-<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=c5ced968eda925caa686"></script>
+  <script src="../../../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6"></script>
 
   <footer class="bd-footer">
   </footer>
