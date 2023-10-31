@@ -270,14 +270,18 @@ def build_irmh() -> Callable:
         state: RWState,
         logdensity_fn: Callable,
         proposal_distribution: Callable,
+        proposal_logdensity_fn: Optional[Callable] = None,
     ) -> tuple[RWState, RWInfo]:
         """
-
         Parameters
         ----------
         proposal_distribution
             A function that, given a PRNGKey, is able to produce a sample in the same
             domain of the target distribution.
+        proposal_logdensity_fn:
+            For non-symmetric proposals, a function that returns the log-density
+            to obtain a given proposal knowing the current state. If it is not
+            provided we assume the proposal is symmetric.
         """
 
         def proposal_generator(rng_key: PRNGKey, position: ArrayTree):
@@ -285,7 +289,9 @@ def build_irmh() -> Callable:
             return proposal_distribution(rng_key)
 
         inner_kernel = build_rmh()
-        return inner_kernel(rng_key, state, logdensity_fn, proposal_generator)
+        return inner_kernel(
+            rng_key, state, logdensity_fn, proposal_generator, proposal_logdensity_fn
+        )
 
     return kernel
 
@@ -318,7 +324,10 @@ class irmh:
     proposal_distribution
         A Callable that takes a random number generator and produces a new proposal. The
         proposal is independent of the sampler's current state.
-
+    proposal_logdensity_fn:
+        For non-symmetric proposals, a function that returns the log-density
+        to obtain a given proposal knowing the current state. If it is not
+        provided we assume the proposal is symmetric.
     Returns
     -------
     A ``SamplingAlgorithm``.
@@ -332,6 +341,7 @@ class irmh:
         cls,
         logdensity_fn: Callable,
         proposal_distribution: Callable,
+        proposal_logdensity_fn: Optional[Callable] = None,
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel()
 
@@ -339,7 +349,13 @@ class irmh:
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
-            return kernel(rng_key, state, logdensity_fn, proposal_distribution)
+            return kernel(
+                rng_key,
+                state,
+                logdensity_fn,
+                proposal_distribution,
+                proposal_logdensity_fn,
+            )
 
         return SamplingAlgorithm(init_fn, step_fn)
 
