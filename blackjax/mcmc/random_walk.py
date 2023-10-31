@@ -60,7 +60,7 @@ Examples
         new_state, info = step(rng_key, state)
 
 """
-from typing import Callable, NamedTuple, Optional
+from typing import Callable, NamedTuple, Optional, Tuple
 
 import jax
 from jax import numpy as jnp
@@ -270,9 +270,9 @@ def build_irmh() -> Callable:
         state: RWState,
         logdensity_fn: Callable,
         proposal_distribution: Callable,
-    ) -> tuple[RWState, RWInfo]:
+        proposal_logdensity_fn: Callable = None
+    ) -> Tuple[RWState, RWInfo]:
         """
-
         Parameters
         ----------
         proposal_distribution
@@ -280,15 +280,13 @@ def build_irmh() -> Callable:
             domain of the target distribution.
         """
 
-        def proposal_generator(rng_key: PRNGKey, position: ArrayTree):
-            del position
+        def proposal_generator(rng_key: PRNGKey, position):
             return proposal_distribution(rng_key)
 
         inner_kernel = build_rmh()
-        return inner_kernel(rng_key, state, logdensity_fn, proposal_generator)
+        return inner_kernel(rng_key, state, logdensity_fn, proposal_generator, proposal_logdensity_fn)
 
     return kernel
-
 
 class irmh:
     """Implements the (basic) user interface for the independent RMH.
