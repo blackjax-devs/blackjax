@@ -60,7 +60,7 @@ Examples
         new_state, info = step(rng_key, state)
 
 """
-from typing import Callable, NamedTuple, Optional, Tuple
+from typing import Callable, NamedTuple, Optional
 
 import jax
 from jax import numpy as jnp
@@ -271,7 +271,7 @@ def build_irmh() -> Callable:
         logdensity_fn: Callable,
         proposal_distribution: Callable,
         proposal_logdensity_fn: Optional[Callable] = None,
-    ) -> Tuple[RWState, RWInfo]:
+    ) -> tuple[RWState, RWInfo]:
         """
         Parameters
         ----------
@@ -285,6 +285,7 @@ def build_irmh() -> Callable:
         """
 
         def proposal_generator(rng_key: PRNGKey, position: ArrayTree):
+            del position
             return proposal_distribution(rng_key)
 
         inner_kernel = build_rmh()
