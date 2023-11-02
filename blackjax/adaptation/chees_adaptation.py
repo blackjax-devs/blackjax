@@ -399,16 +399,13 @@ def chees_adaptation(
             keys = jax.random.split(rng_key, num_chains)
             _step_fn = partial(
                 step_fn,
+                logdensity_fn=logprob_fn,
+                step_size=adaptation_state.step_size,
+                inverse_mass_matrix=jnp.ones(num_dim),
                 trajectory_length_adjusted=adaptation_state.trajectory_length
                 / adaptation_state.step_size,
             )
-            new_states, info = jax.vmap(_step_fn, (0, 0, None, None, None))(
-                keys,
-                states,
-                logprob_fn,
-                adaptation_state.step_size,
-                jnp.ones(num_dim),
-            )
+            new_states, info = jax.vmap(_step_fn)(keys, states)
             new_adaptation_state = update(
                 adaptation_state,
                 info.proposal.state.position,
