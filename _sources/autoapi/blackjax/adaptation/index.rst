@@ -11,6 +11,7 @@ Submodules
    :maxdepth: 1
 
    base/index.rst
+   chees_adaptation/index.rst
    mass_matrix/index.rst
    meads_adaptation/index.rst
    pathfinder_adaptation/index.rst

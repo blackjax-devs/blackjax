@@ -36,6 +36,7 @@ Classes
 
    blackjax.elliptical_slice
    blackjax.ghmc
+   blackjax.dynamic_hmc
    blackjax.hmc
    blackjax.mala
    blackjax.mgrad_gaussian
@@ -61,6 +62,7 @@ Functions
 
 .. autoapisummary::
 
+   blackjax.chees_adaptation
    blackjax.meads_adaptation
    blackjax.pathfinder_adaptation
    blackjax.window_adaptation
@@ -75,6 +77,8 @@ Attributes
 .. autoapisummary::
 
    blackjax.__version__
+
+
 
 
 

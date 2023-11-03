@@ -1,0 +1,861 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.adaptation.chees_adaptation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=365ca57ee442770a23c6" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6" />
+  <script src="../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=365ca57ee442770a23c6"></script>
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/adaptation/chees_adaptation';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="../../../_static/blackjax.png" class="logo__image only-dark" alt=" - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.chees_adaptation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/step_size/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.step_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.window_adaptation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.diffusions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.elliptical_slice</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/ghmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.ghmc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/hmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.hmc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/integrators/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.integrators</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mala/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.mala</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.marginal_latent_gaussian</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/metrics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.metrics</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/nuts/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.nuts</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.csgld</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.diffusions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.gradients</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sghmc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sgld</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.sgmcmc.sgnht</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc.adaptive_tempered</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc.base</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/ess/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc.ess</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc.resampling</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc.solver</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.smc.tempered</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.meanfield_vi</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.pathfinder</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/svgd/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.svgd</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.diagnostics</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <h1>Source code for blackjax.adaptation.chees_adaptation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Public API for ChEES-HMC&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">optax</span>
+
+<span class="kn">import</span> <span class="nn">blackjax.mcmc.hmc</span> <span class="k">as</span> <span class="nn">hmc</span>
+<span class="kn">import</span> <span class="nn">blackjax.optimizers.dual_averaging</span> <span class="k">as</span> <span class="nn">dual_averaging</span>
+<span class="kn">from</span> <span class="nn">blackjax.adaptation.base</span> <span class="kn">import</span> <span class="n">AdaptationInfo</span><span class="p">,</span> <span class="n">AdaptationResults</span>
+<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">AdaptationAlgorithm</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">pytree_size</span>
+
+<span class="c1"># optimal tuning for HMC, see https://arxiv.org/abs/1001.4460</span>
+<div class="viewcode-block" id="OPTIMAL_TARGET_ACCEPTANCE_RATE"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.OPTIMAL_TARGET_ACCEPTANCE_RATE">[docs]</a><span class="n">OPTIMAL_TARGET_ACCEPTANCE_RATE</span> <span class="o">=</span> <span class="mf">0.651</span></div>
+
+
+<div class="viewcode-block" id="ChEESAdaptationState"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState">[docs]</a><span class="k">class</span> <span class="nc">ChEESAdaptationState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the ChEES-HMC adaptation scheme.</span>
+
+<span class="sd">    step_size</span>
+<span class="sd">        Value of the step_size parameter of the HMC algorithm.</span>
+<span class="sd">    log_step_size_moving_average</span>
+<span class="sd">        Running moving average of the log step_size parameter.</span>
+<span class="sd">    trajectory_length</span>
+<span class="sd">        Value of the num_integration_steps / step_size parameter of</span>
+<span class="sd">        the HMC algorithm.</span>
+<span class="sd">    log_trajectory_length_moving_average</span>
+<span class="sd">        Running moving average of the log num_integration_steps / step_size</span>
+<span class="sd">        parameter.</span>
+<span class="sd">    optim_state</span>
+<span class="sd">        Optax optimizing state for used to maximize the ChEES criterion.</span>
+<span class="sd">    random_generator_arg</span>
+<span class="sd">        Utility array for generating a pseudo or quasi-random sequence of</span>
+<span class="sd">        numbers.</span>
+<span class="sd">    step</span>
+<span class="sd">        Current iteration number.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ChEESAdaptationState.step_size"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.step_size">[docs]</a>    <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span></div>
+<div class="viewcode-block" id="ChEESAdaptationState.log_step_size_moving_average"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.log_step_size_moving_average">[docs]</a>    <span class="n">log_step_size_moving_average</span><span class="p">:</span> <span class="nb">float</span></div>
+<div class="viewcode-block" id="ChEESAdaptationState.trajectory_length"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.trajectory_length">[docs]</a>    <span class="n">trajectory_length</span><span class="p">:</span> <span class="nb">float</span></div>
+<div class="viewcode-block" id="ChEESAdaptationState.log_trajectory_length_moving_average"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.log_trajectory_length_moving_average">[docs]</a>    <span class="n">log_trajectory_length_moving_average</span><span class="p">:</span> <span class="nb">float</span></div>
+<div class="viewcode-block" id="ChEESAdaptationState.da_state"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.da_state">[docs]</a>    <span class="n">da_state</span><span class="p">:</span> <span class="n">dual_averaging</span><span class="o">.</span><span class="n">DualAveragingState</span></div>
+<div class="viewcode-block" id="ChEESAdaptationState.optim_state"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.optim_state">[docs]</a>    <span class="n">optim_state</span><span class="p">:</span> <span class="n">optax</span><span class="o">.</span><span class="n">OptState</span></div>
+<div class="viewcode-block" id="ChEESAdaptationState.random_generator_arg"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.random_generator_arg">[docs]</a>    <span class="n">random_generator_arg</span><span class="p">:</span> <span class="n">Array</span></div>
+<div class="viewcode-block" id="ChEESAdaptationState.step"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.step">[docs]</a>    <span class="n">step</span><span class="p">:</span> <span class="nb">int</span></div></div>
+
+
+<div class="viewcode-block" id="base"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.base">[docs]</a><span class="k">def</span> <span class="nf">base</span><span class="p">(</span>
+    <span class="n">jitter_generator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">next_random_arg_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">optim</span><span class="p">:</span> <span class="n">optax</span><span class="o">.</span><span class="n">GradientTransformation</span><span class="p">,</span>
+    <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">decay_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximizing the Change in the Estimator of the Expected Square criterion</span>
+<span class="sd">    (trajectory length) and dual averaging procedure (step size) for the jittered</span>
+<span class="sd">    Hamiltonian Monte Carlo kernel :cite:p:`hoffman2021adaptive`.</span>
+
+<span class="sd">    This adaptation algorithm tunes the step size and trajectory length, i.e.</span>
+<span class="sd">    number of integration steps / step size, of the jittered HMC algorithm based</span>
+<span class="sd">    on statistics collected from a population of many chains. It maximizes the Change</span>
+<span class="sd">    in the Estimator of the Expected Square (ChEES) criterion to tune the trajectory</span>
+<span class="sd">    length and uses dual averaging targeting an acceptance rate of 0.651 of the harmonic</span>
+<span class="sd">    mean of the chain&#39;s acceptance probabilities to tune the step size.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    jitter_generator</span>
+<span class="sd">        Optional function that generates a value in [0, 1] used to jitter the trajectory</span>
+<span class="sd">        lengths given a PRNGKey, used to propose the number of integration steps. If None,</span>
+<span class="sd">        then a quasi-random Halton is used to jitter the trajectory length.</span>
+<span class="sd">    next_random_arg_fn</span>
+<span class="sd">        Function that generates the next `random_generator_arg` from its previous value.</span>
+<span class="sd">    optim</span>
+<span class="sd">        Optax compatible optimizer, which conforms to the `optax.GradientTransformation` protocol.</span>
+<span class="sd">    target_acceptance_rate</span>
+<span class="sd">        Average acceptance rate to target with dual averaging.</span>
+<span class="sd">    decay_rate</span>
+<span class="sd">        Float representing how much to favor recent iterations over earlier ones in the optimization</span>
+<span class="sd">        of step size and trajectory length.</span>
+
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    init</span>
+<span class="sd">        Function that initializes the warmup.</span>
+<span class="sd">    update</span>
+<span class="sd">        Function that moves the warmup one step.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">da_init</span><span class="p">,</span> <span class="n">da_update</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">dual_averaging</span><span class="o">.</span><span class="n">dual_averaging</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">compute_parameters</span><span class="p">(</span>
+        <span class="n">proposed_positions</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">proposed_momentums</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">initial_positions</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">acceptance_probabilities</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">is_divergent</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">initial_adaptation_state</span><span class="p">:</span> <span class="n">ChEESAdaptationState</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChEESAdaptationState</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute values for the parameters based on statistics collected from</span>
+<span class="sd">        multiple chains.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        proposed_positions:</span>
+<span class="sd">            A PyTree that contains the position proposed by the HMC algorithm of</span>
+<span class="sd">            every chain (proposal that is accepted or rejected using MH).</span>
+<span class="sd">        proposed_momentums:</span>
+<span class="sd">            A PyTree that contains the momentum variable proposed by the HMC algorithm</span>
+<span class="sd">            of every chain (proposal that is accepted or rejected using MH).</span>
+<span class="sd">        initial_positions:</span>
+<span class="sd">            A PyTree that contains the initial position at the start of the HMC</span>
+<span class="sd">            algorithm of every chain.</span>
+<span class="sd">        acceptance_probabilities:</span>
+<span class="sd">            Metropolis-Hastings acceptance probabilty of proposals of every chain.</span>
+<span class="sd">        initial_adaptation_state:</span>
+<span class="sd">            ChEES adaptation step used to generate proposals and acceptance probabilities.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        New values of the step size and trajectory length of the jittered HMC algorithm.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="p">(</span>
+            <span class="n">step_size</span><span class="p">,</span>
+            <span class="n">log_step_size_ma</span><span class="p">,</span>
+            <span class="n">trajectory_length</span><span class="p">,</span>
+            <span class="n">log_trajectory_length_ma</span><span class="p">,</span>
+            <span class="n">da_state</span><span class="p">,</span>
+            <span class="n">optim_state</span><span class="p">,</span>
+            <span class="n">random_generator_arg</span><span class="p">,</span>
+            <span class="n">step</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">initial_adaptation_state</span>
+
+        <span class="n">harmonic_mean</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+            <span class="mf">1.0</span> <span class="o">/</span> <span class="n">acceptance_probabilities</span><span class="p">,</span> <span class="n">where</span><span class="o">=~</span><span class="n">is_divergent</span>
+        <span class="p">)</span>
+        <span class="n">da_state_</span> <span class="o">=</span> <span class="n">da_update</span><span class="p">(</span><span class="n">da_state</span><span class="p">,</span> <span class="n">target_acceptance_rate</span> <span class="o">-</span> <span class="n">harmonic_mean</span><span class="p">)</span>
+        <span class="n">step_size_</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">da_state_</span><span class="o">.</span><span class="n">log_x</span><span class="p">)</span>
+        <span class="n">new_step_size</span><span class="p">,</span> <span class="n">new_da_state</span><span class="p">,</span> <span class="n">new_log_step_size</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">step_size_</span><span class="p">),</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span><span class="n">step_size_</span><span class="p">,</span> <span class="n">da_state_</span><span class="p">,</span> <span class="n">da_state_</span><span class="o">.</span><span class="n">log_x</span><span class="p">),</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">da_state</span><span class="p">,</span> <span class="n">da_state</span><span class="o">.</span><span class="n">log_x</span><span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">update_weight</span> <span class="o">=</span> <span class="n">step</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">decay_rate</span><span class="p">)</span>
+        <span class="n">new_log_step_size_ma</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mf">1.0</span> <span class="o">-</span> <span class="n">update_weight</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">log_step_size_ma</span> <span class="o">+</span> <span class="n">update_weight</span> <span class="o">*</span> <span class="n">new_log_step_size</span>
+
+        <span class="n">proposals_mean</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">proposed_positions</span>
+        <span class="p">)</span>
+        <span class="n">initials_mean</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">initial_positions</span>
+        <span class="p">)</span>
+        <span class="n">proposals_centered</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">pm</span><span class="p">:</span> <span class="n">p</span> <span class="o">-</span> <span class="n">pm</span><span class="p">,</span> <span class="n">proposed_positions</span><span class="p">,</span> <span class="n">proposals_mean</span>
+        <span class="p">)</span>
+        <span class="n">initials_centered</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">pm</span><span class="p">:</span> <span class="n">p</span> <span class="o">-</span> <span class="n">pm</span><span class="p">,</span> <span class="n">initial_positions</span><span class="p">,</span> <span class="n">initials_mean</span>
+        <span class="p">)</span>
+
+        <span class="n">vmap_flatten_op</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">proposals_matrix</span> <span class="o">=</span> <span class="n">vmap_flatten_op</span><span class="p">(</span><span class="n">proposals_centered</span><span class="p">)</span>
+        <span class="n">initials_matrix</span> <span class="o">=</span> <span class="n">vmap_flatten_op</span><span class="p">(</span><span class="n">initials_centered</span><span class="p">)</span>
+        <span class="n">momentums_matrix</span> <span class="o">=</span> <span class="n">vmap_flatten_op</span><span class="p">(</span><span class="n">proposed_momentums</span><span class="p">)</span>
+
+        <span class="n">trajectory_gradients</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">jitter_generator</span><span class="p">(</span><span class="n">random_generator_arg</span><span class="p">)</span>
+            <span class="o">*</span> <span class="n">trajectory_length</span>
+            <span class="o">*</span> <span class="p">(</span>
+                <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">))(</span><span class="n">proposals_matrix</span><span class="p">)</span>
+                <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">))(</span><span class="n">initials_matrix</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">*</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">m</span><span class="p">))(</span><span class="n">proposals_matrix</span><span class="p">,</span> <span class="n">momentums_matrix</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">trajectory_gradient</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+            <span class="n">acceptance_probabilities</span> <span class="o">*</span> <span class="n">trajectory_gradients</span><span class="p">,</span> <span class="n">where</span><span class="o">=~</span><span class="n">is_divergent</span>
+        <span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">acceptance_probabilities</span><span class="p">,</span> <span class="n">where</span><span class="o">=~</span><span class="n">is_divergent</span><span class="p">)</span>
+
+        <span class="n">log_trajectory_length</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">trajectory_length</span><span class="p">)</span>
+        <span class="n">updates</span><span class="p">,</span> <span class="n">optim_state_</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">trajectory_gradient</span><span class="p">,</span> <span class="n">optim_state</span><span class="p">,</span> <span class="n">log_trajectory_length</span>
+        <span class="p">)</span>
+        <span class="n">log_trajectory_length_</span> <span class="o">=</span> <span class="n">optax</span><span class="o">.</span><span class="n">apply_updates</span><span class="p">(</span><span class="n">log_trajectory_length</span><span class="p">,</span> <span class="n">updates</span><span class="p">)</span>
+        <span class="n">new_log_trajectory_length</span><span class="p">,</span> <span class="n">new_optim_state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span>
+                <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">log_trajectory_length_</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span><span class="n">log_trajectory_length_</span><span class="p">,</span> <span class="n">optim_state_</span><span class="p">),</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span><span class="n">log_trajectory_length</span><span class="p">,</span> <span class="n">optim_state</span><span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">new_log_trajectory_length_ma</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mf">1.0</span> <span class="o">-</span> <span class="n">update_weight</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">log_trajectory_length_ma</span> <span class="o">+</span> <span class="n">update_weight</span> <span class="o">*</span> <span class="n">new_log_trajectory_length</span>
+        <span class="n">new_trajectory_length</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_log_trajectory_length_ma</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ChEESAdaptationState</span><span class="p">(</span>
+            <span class="n">new_step_size</span><span class="p">,</span>
+            <span class="n">new_log_step_size_ma</span><span class="p">,</span>
+            <span class="n">new_trajectory_length</span><span class="p">,</span>
+            <span class="n">new_log_trajectory_length_ma</span><span class="p">,</span>
+            <span class="n">new_da_state</span><span class="p">,</span>
+            <span class="n">new_optim_state</span><span class="p">,</span>
+            <span class="n">next_random_arg_fn</span><span class="p">(</span><span class="n">random_generator_arg</span><span class="p">),</span>
+            <span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">random_generator_arg</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ChEESAdaptationState</span><span class="p">(</span>
+            <span class="n">step_size</span><span class="o">=</span><span class="n">step_size</span><span class="p">,</span>
+            <span class="n">log_step_size_moving_average</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">trajectory_length</span><span class="o">=</span><span class="n">step_size</span><span class="p">,</span>
+            <span class="n">log_trajectory_length_moving_average</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">da_state</span><span class="o">=</span><span class="n">da_init</span><span class="p">(</span><span class="n">step_size</span><span class="p">),</span>
+            <span class="n">optim_state</span><span class="o">=</span><span class="n">optim</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">step_size</span><span class="p">),</span>
+            <span class="n">random_generator_arg</span><span class="o">=</span><span class="n">random_generator_arg</span><span class="p">,</span>
+            <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+        <span class="n">adaptation_state</span><span class="p">:</span> <span class="n">ChEESAdaptationState</span><span class="p">,</span>
+        <span class="n">proposed_positions</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">proposed_momentums</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">initial_positions</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">acceptance_probabilities</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">is_divergent</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the adaptation state and parameter values.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        adaptation_state</span>
+<span class="sd">            The current state of the adaptation algorithm</span>
+<span class="sd">        proposed_positions:</span>
+<span class="sd">            The position proposed by the HMC algorithm of every chain.</span>
+<span class="sd">        proposed_momentums:</span>
+<span class="sd">            The momentum variable proposed by the HMC algorithm of every chain.</span>
+<span class="sd">        initial_positions:</span>
+<span class="sd">            The initial position at the start of the HMC algorithm of every chain.</span>
+<span class="sd">        acceptance_probabilities:</span>
+<span class="sd">            Metropolis-Hastings acceptance probabilty of proposals of every chain.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        New adaptation state that contains the step size and trajectory length of the</span>
+<span class="sd">        jittered HMC algorithm.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_state</span> <span class="o">=</span> <span class="n">compute_parameters</span><span class="p">(</span>
+            <span class="n">proposed_positions</span><span class="p">,</span>
+            <span class="n">proposed_momentums</span><span class="p">,</span>
+            <span class="n">initial_positions</span><span class="p">,</span>
+            <span class="n">acceptance_probabilities</span><span class="p">,</span>
+            <span class="n">is_divergent</span><span class="p">,</span>
+            <span class="n">adaptation_state</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">new_state</span>
+
+    <span class="k">return</span> <span class="n">init</span><span class="p">,</span> <span class="n">update</span></div>
+
+
+<div class="viewcode-block" id="chees_adaptation"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.chees_adaptation">[docs]</a><span class="k">def</span> <span class="nf">chees_adaptation</span><span class="p">(</span>
+    <span class="n">logprob_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">num_chains</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">jitter_generator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">jitter_amount</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">OPTIMAL_TARGET_ACCEPTANCE_RATE</span><span class="p">,</span>
+    <span class="n">decay_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdaptationAlgorithm</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adapt the step size and trajectory length (number of integration steps / step size)</span>
+<span class="sd">    parameters of the jittered HMC algorthm.</span>
+
+<span class="sd">    The jittered HMC algorithm depends on the value of a step size, controlling</span>
+<span class="sd">    the discretization step of the integrator, and a trajectory length, given by the</span>
+<span class="sd">    number of integration steps / step size, jittered by using only a random percentage</span>
+<span class="sd">    of this trajectory length.</span>
+
+<span class="sd">    This adaptation algorithm tunes the trajectory length by heuristically maximizing</span>
+<span class="sd">    the Change in the Estimator of the Expected Square (ChEES) criterion over</span>
+<span class="sd">    an ensamble of parallel chains. At equilibrium, the algorithm aims at eliminating</span>
+<span class="sd">    correlations between target dimensions, making the HMC algorithm efficient.</span>
+
+<span class="sd">    Jittering requires generating a random sequence of uniform variables in [0, 1].</span>
+<span class="sd">    However, this adds another source of variance to the sampling procedure,</span>
+<span class="sd">    which may slow adaptation or lead to suboptimal mixing. To alleviate this,</span>
+<span class="sd">    rather than use uniform random noise to jitter the trajectory lengths, we use a</span>
+<span class="sd">    quasi-random Halton sequence, which ensures a more even distribution of trajectory</span>
+<span class="sd">    lengths.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    An HMC adapted kernel can be learned and used with the following code:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        warmup = blackjax.chees_adaptation(logprob_fn, num_chains)</span>
+<span class="sd">        key_warmup, key_sample = jax.random.split(rng_key)</span>
+<span class="sd">        optim = optax.adam(learning_rate)</span>
+<span class="sd">        (last_states, parameters), _ = warmup.run(</span>
+<span class="sd">            key_warmup,</span>
+<span class="sd">            positions, #PyTree where each leaf has shape (num_chains, ...)</span>
+<span class="sd">            initial_step_size,</span>
+<span class="sd">            optim,</span>
+<span class="sd">            num_warmup_steps,</span>
+<span class="sd">        )</span>
+<span class="sd">        kernel = blackjax.dynamic_hmc(logprob_fn, **parameters).step</span>
+<span class="sd">        new_states, info = jax.vmap(kernel)(key_sample, last_states)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logprob_fn</span>
+<span class="sd">        The log density probability density function from which we wish to sample.</span>
+<span class="sd">    num_chains</span>
+<span class="sd">        Number of chains used for cross-chain warm-up training.</span>
+<span class="sd">    jitter_generator</span>
+<span class="sd">        Optional function that generates a value in [0, 1] used to jitter the trajectory</span>
+<span class="sd">        lengths given a PRNGKey, used to propose the number of integration steps. If None,</span>
+<span class="sd">        then a quasi-random Halton is used to jitter the trajectory length.</span>
+<span class="sd">    jitter_value</span>
+<span class="sd">        A percentage in [0, 1] representing how much of the calculated trajectory should be jitted.</span>
+<span class="sd">    target_acceptance_rate</span>
+<span class="sd">        Average acceptance rate to target with dual averaging. Defaults to optimal tuning for HMC.</span>
+<span class="sd">    decay_rate</span>
+<span class="sd">        Float representing how much to favor recent iterations over earlier ones in the optimization</span>
+<span class="sd">        of step size and trajectory length. A value of 1 gives equal weight to all history. A value</span>
+<span class="sd">        of 0 gives weight only to the most recent iteration.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A function that returns the last cross-chain state, a sampling kernel with the</span>
+<span class="sd">    tuned parameter values, and all the warm-up states for diagnostics.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">positions</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">optim</span><span class="p">:</span> <span class="n">optax</span><span class="o">.</span><span class="n">GradientTransformation</span><span class="p">,</span>
+        <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">max_sampling_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span>
+                <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">num_chains</span><span class="p">,</span> <span class="n">positions</span><span class="p">)</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">),</span> <span class="s2">&quot;initial `positions` leading dimension must be equal to the `num_chains`&quot;</span>
+        <span class="n">num_dim</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span> <span class="o">//</span> <span class="n">num_chains</span>
+
+        <span class="n">key_init</span><span class="p">,</span> <span class="n">key_step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">jitter_generator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">jitter_gn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">jitter_generator</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">*</span> <span class="n">jitter_amount</span> <span class="o">+</span> <span class="p">(</span>
+                <span class="mf">1.0</span> <span class="o">-</span> <span class="n">jitter_amount</span>
+            <span class="p">)</span>
+            <span class="n">next_random_arg_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">init_random_arg</span> <span class="o">=</span> <span class="n">key_init</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">jitter_gn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">_halton_sequence</span><span class="p">(</span>
+                <span class="n">i</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">+</span> <span class="n">max_sampling_steps</span><span class="p">))</span>
+            <span class="p">)</span> <span class="o">*</span> <span class="n">jitter_amount</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">jitter_amount</span><span class="p">)</span>
+            <span class="n">next_random_arg_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">init_random_arg</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">def</span> <span class="nf">integration_steps_fn</span><span class="p">(</span><span class="n">random_generator_arg</span><span class="p">,</span> <span class="n">trajectory_length_adjusted</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">jitter_gn</span><span class="p">(</span><span class="n">random_generator_arg</span><span class="p">)</span> <span class="o">*</span> <span class="n">trajectory_length_adjusted</span><span class="p">),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">step_fn</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">build_dynamic_kernel</span><span class="p">(</span>
+            <span class="n">next_random_arg_fn</span><span class="o">=</span><span class="n">next_random_arg_fn</span><span class="p">,</span>
+            <span class="n">integration_steps_fn</span><span class="o">=</span><span class="n">integration_steps_fn</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">init</span><span class="p">,</span> <span class="n">update</span> <span class="o">=</span> <span class="n">base</span><span class="p">(</span>
+            <span class="n">jitter_gn</span><span class="p">,</span> <span class="n">next_random_arg_fn</span><span class="p">,</span> <span class="n">optim</span><span class="p">,</span> <span class="n">target_acceptance_rate</span><span class="p">,</span> <span class="n">decay_rate</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+            <span class="n">states</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
+
+            <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
+            <span class="n">_step_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+                <span class="n">step_fn</span><span class="p">,</span>
+                <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logprob_fn</span><span class="p">,</span>
+                <span class="n">step_size</span><span class="o">=</span><span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+                <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_dim</span><span class="p">),</span>
+                <span class="n">trajectory_length_adjusted</span><span class="o">=</span><span class="n">adaptation_state</span><span class="o">.</span><span class="n">trajectory_length</span>
+                <span class="o">/</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">new_states</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">_step_fn</span><span class="p">)(</span><span class="n">keys</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span>
+            <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">update</span><span class="p">(</span>
+                <span class="n">adaptation_state</span><span class="p">,</span>
+                <span class="n">info</span><span class="o">.</span><span class="n">proposal</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+                <span class="n">info</span><span class="o">.</span><span class="n">proposal</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+                <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+                <span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
+                <span class="n">info</span><span class="o">.</span><span class="n">is_divergent</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">(</span><span class="n">new_states</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span> <span class="n">AdaptationInfo</span><span class="p">(</span>
+                <span class="n">new_states</span><span class="p">,</span>
+                <span class="n">info</span><span class="p">,</span>
+                <span class="n">new_adaptation_state</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">batch_init</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init_dynamic</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">logprob_fn</span><span class="p">,</span> <span class="n">init_random_arg</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">init_states</span> <span class="o">=</span> <span class="n">batch_init</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
+        <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">init_random_arg</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+
+        <span class="n">keys_step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key_step</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">last_states</span><span class="p">,</span> <span class="n">last_adaptation_state</span><span class="p">),</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+            <span class="n">one_step</span><span class="p">,</span> <span class="p">(</span><span class="n">init_states</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">),</span> <span class="n">keys_step</span>
+        <span class="p">)</span>
+
+        <span class="n">trajectory_length_adjusted</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+            <span class="n">last_adaptation_state</span><span class="o">.</span><span class="n">log_trajectory_length_moving_average</span>
+            <span class="o">-</span> <span class="n">last_adaptation_state</span><span class="o">.</span><span class="n">log_step_size_moving_average</span>
+        <span class="p">)</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">last_adaptation_state</span><span class="o">.</span><span class="n">log_step_size_moving_average</span><span class="p">),</span>
+            <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_dim</span><span class="p">),</span>
+            <span class="s2">&quot;next_random_arg_fn&quot;</span><span class="p">:</span> <span class="n">next_random_arg_fn</span><span class="p">,</span>
+            <span class="s2">&quot;integration_steps_fn&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">arg</span><span class="p">:</span> <span class="n">integration_steps_fn</span><span class="p">(</span>
+                <span class="n">arg</span><span class="p">,</span> <span class="n">trajectory_length_adjusted</span>
+            <span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">last_states</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">info</span>
+
+    <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
+
+
+<span class="k">def</span> <span class="nf">_halton_sequence</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">max_bits</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">bit_masks</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">max_bits</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">i</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;i,i-&gt;&quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mod</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">bit_masks</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">bit_masks</span><span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  <!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2023, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=365ca57ee442770a23c6"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=365ca57ee442770a23c6"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

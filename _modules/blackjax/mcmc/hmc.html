@@ -167,6 +167,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.chees_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -370,6 +371,7 @@ document.write(`
     <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span>
     <span class="s2">&quot;build_dynamic_kernel&quot;</span><span class="p">,</span>
     <span class="s2">&quot;hmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dynamic_hmc&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -530,7 +532,7 @@ document.write(`
 <span class="sd">        Function that generates the next `random_generator_arg` from its previous value.</span>
 <span class="sd">    integration_steps_fn</span>
 <span class="sd">        Function that generates the next pseudo or quasi-random number of integration steps in the</span>
-<span class="sd">        sequence, given the current `random_generator_arg`.</span>
+<span class="sd">        sequence, given the current `random_generator_arg`. Needs to return an `int`.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -547,9 +549,12 @@ document.write(`
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">integration_steps_kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">DynamicHMCState</span><span class="p">,</span> <span class="n">HMCInfo</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new sample with the HMC kernel.&quot;&quot;&quot;</span>
-        <span class="n">num_integration_steps</span> <span class="o">=</span> <span class="n">integration_steps_fn</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">random_generator_arg</span><span class="p">)</span>
+        <span class="n">num_integration_steps</span> <span class="o">=</span> <span class="n">integration_steps_fn</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">random_generator_arg</span><span class="p">,</span> <span class="o">**</span><span class="n">integration_steps_kwargs</span>
+        <span class="p">)</span>
         <span class="n">hmc_state</span> <span class="o">=</span> <span class="n">HMCState</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">)</span>
         <span class="n">hmc_proposal</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">hmc_base</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">,</span>
@@ -665,6 +670,69 @@ document.write(`
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="dynamic_hmc"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.dynamic_hmc">[docs]</a><span class="k">class</span> <span class="nc">dynamic_hmc</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the dynamic HMC kernel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        The log-density function we wish to draw samples from.</span>
+<span class="sd">    step_size</span>
+<span class="sd">        The value to use for the step size in the symplectic integrator.</span>
+<span class="sd">    inverse_mass_matrix</span>
+<span class="sd">        The value to use for the inverse mass matrix when drawing a value for</span>
+<span class="sd">        the momentum and computing the kinetic energy.</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        The absolute value of the difference in energy between two states above</span>
+<span class="sd">        which we say that the transition is divergent. The default value is</span>
+<span class="sd">        commonly found in other libraries, and yet is arbitrary.</span>
+<span class="sd">    integrator</span>
+<span class="sd">        (algorithm parameter) The symplectic integrator to use to integrate the trajectory.</span>
+<span class="sd">    next_random_arg_fn</span>
+<span class="sd">        Function that generates the next `random_generator_arg` from its previous value.</span>
+<span class="sd">    integration_steps_fn</span>
+<span class="sd">        Function that generates the next pseudo or quasi-random number of integration steps in the</span>
+<span class="sd">        sequence, given the current `random_generator_arg`.</span>
+
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="dynamic_hmc.init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.dynamic_hmc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init_dynamic</span><span class="p">)</span></div>
+<div class="viewcode-block" id="dynamic_hmc.build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.dynamic_hmc.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_dynamic_kernel</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
+        <span class="n">next_random_arg_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">integration_steps_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">(),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span>
+            <span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">next_random_arg_fn</span><span class="p">,</span> <span class="n">integration_steps_fn</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">random_generator_arg</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">random_generator_arg</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">logdensity_fn</span><span class="p">,</span>
+                <span class="n">step_size</span><span class="p">,</span>
+                <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 
 
 <span class="k">def</span> <span class="nf">hmc_proposal</span><span class="p">(</span>

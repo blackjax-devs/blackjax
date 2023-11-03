@@ -21,6 +21,7 @@ Classes
    blackjax.mcmc.hmc.DynamicHMCState
    blackjax.mcmc.hmc.HMCInfo
    blackjax.mcmc.hmc.hmc
+   blackjax.mcmc.hmc.dynamic_hmc
 
 
 
@@ -190,7 +191,7 @@ Functions
    :param divergence_threshold: Value of the difference in energy above which we consider that the transition is divergent.
    :param next_random_arg_fn: Function that generates the next `random_generator_arg` from its previous value.
    :param integration_steps_fn: Function that generates the next pseudo or quasi-random number of integration steps in the
-                                sequence, given the current `random_generator_arg`.
+                                sequence, given the current `random_generator_arg`. Needs to return an `int`.
 
    :returns: * *A kernel that takes a rng_key and a Pytree that contains the current state*
              * *of the chain and that returns a new state of the chain along with*
@@ -247,6 +248,34 @@ Functions
                                 which we say that the transition is divergent. The default value is
                                 commonly found in other libraries, and yet is arbitrary.
    :param integrator: (algorithm parameter) The symplectic integrator to use to integrate the trajectory.
+
+   :rtype: A ``SamplingAlgorithm``.
+
+   .. py:attribute:: init
+
+      
+
+   .. py:attribute:: build_kernel
+
+      
+
+
+.. py:class:: dynamic_hmc
+
+
+   Implements the (basic) user interface for the dynamic HMC kernel.
+
+   :param logdensity_fn: The log-density function we wish to draw samples from.
+   :param step_size: The value to use for the step size in the symplectic integrator.
+   :param inverse_mass_matrix: The value to use for the inverse mass matrix when drawing a value for
+                               the momentum and computing the kinetic energy.
+   :param divergence_threshold: The absolute value of the difference in energy between two states above
+                                which we say that the transition is divergent. The default value is
+                                commonly found in other libraries, and yet is arbitrary.
+   :param integrator: (algorithm parameter) The symplectic integrator to use to integrate the trajectory.
+   :param next_random_arg_fn: Function that generates the next `random_generator_arg` from its previous value.
+   :param integration_steps_fn: Function that generates the next pseudo or quasi-random number of integration steps in the
+                                sequence, given the current `random_generator_arg`.
 
    :rtype: A ``SamplingAlgorithm``.
 

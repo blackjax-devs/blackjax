@@ -170,6 +170,7 @@
 <li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="adaptation/chees_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.chees_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -362,6 +363,7 @@ document.write(`
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="adaptation/chees_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.chees_adaptation</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -433,55 +435,58 @@ document.write(`
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ghmc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the Generalized HMC kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">hmc</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dynamic_hmc</span></code></p></td>
+<td><p>Implements the (basic) user interface for the dynamic HMC kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">hmc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the HMC kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mala</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mala</span></code></p></td>
 <td><p>Implements the (basic) user interface for the MALA kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mgrad_gaussian</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mgrad_gaussian</span></code></p></td>
 <td><p>Implements the marginal sampler for latent Gaussian model of <span id="id1">[<a class="reference internal" href="../../bib.html#id12" title="Michalis K Titsias and Omiros Papaspiliopoulos. Auxiliary gradient-based sampling algorithms. Journal of the Royal Statistical Society. Series B (Statistical Methodology), 80(4):749–767, 2018.">TP18</a>]</span>.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">nuts</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">nuts</span></code></p></td>
 <td><p>Implements the (basic) user interface for the nuts kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">orbital_hmc</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">orbital_hmc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">additive_step_random_walk</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">additive_step_random_walk</span></code></p></td>
 <td><p>Implements the user interface for the Additive Step RMH</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">irmh</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">irmh</span></code></p></td>
 <td><p>Implements the (basic) user interface for the independent RMH.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh</span></code></p></td>
 <td><p>Implements the user interface for the RMH.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">csgld</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">csgld</span></code></p></td>
 <td><p>Implements the (basic) user interface for the Contour SGLD kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sghmc</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sghmc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the SGHMC kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgld</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgld</span></code></p></td>
 <td><p>Implements the (basic) user interface for the SGLD kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgnht</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgnht</span></code></p></td>
 <td><p>Implements the (basic) user interface for the SGNHT kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">meanfield_vi</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">meanfield_vi</span></code></p></td>
 <td><p>High-level implementation of Mean-Field Variational Inference.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathfinder</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathfinder</span></code></p></td>
 <td><p>Implements the (basic) user interface for the pathfinder kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">svgd</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">svgd</span></code></p></td>
 <td><p>Implements the (basic) user interface for the svgd algorithm.</p></td>
 </tr>
 </tbody>
@@ -491,19 +496,22 @@ document.write(`
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">meads_adaptation</span></code>(→ blackjax.base.AdaptationAlgorithm)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">chees_adaptation</span></code>(→ blackjax.base.AdaptationAlgorithm)</p></td>
+<td><p>Adapt the step size and trajectory length (number of integration steps / step size)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">meads_adaptation</span></code>(→ blackjax.base.AdaptationAlgorithm)</p></td>
 <td><p>Adapt the parameters of the Generalized HMC algorithm.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathfinder_adaptation</span></code>(→ blackjax.base.AdaptationAlgorithm)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathfinder_adaptation</span></code>(→ blackjax.base.AdaptationAlgorithm)</p></td>
 <td><p>Adapt the value of the inverse mass matrix and step size parameters of</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">window_adaptation</span></code>(→ blackjax.base.AdaptationAlgorithm)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">window_adaptation</span></code>(→ blackjax.base.AdaptationAlgorithm)</p></td>
 <td><p>Adapt the value of the inverse mass matrix and step size parameters of</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ess</span></code>(→ blackjax.types.Array)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ess</span></code>(→ blackjax.types.Array)</p></td>
 <td><p>Compute estimate of the effective sample size (ess).</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rhat</span></code>(→ blackjax.types.Array)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rhat</span></code>(→ blackjax.types.Array)</p></td>
 <td><p>Gelman and Rubin (1992)'s potential scale reduction for computing multiple MCMC chain convergence.</p></td>
 </tr>
 </tbody>

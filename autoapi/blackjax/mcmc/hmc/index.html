@@ -170,6 +170,7 @@
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/chees_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.chees_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
@@ -370,6 +371,11 @@ document.write(`
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.hmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">hmc.build_kernel</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.dynamic_hmc"><code class="docutils literal notranslate"><span class="pre">dynamic_hmc</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.dynamic_hmc.init"><code class="docutils literal notranslate"><span class="pre">dynamic_hmc.init</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.dynamic_hmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">dynamic_hmc.build_kernel</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -405,6 +411,9 @@ document.write(`
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.hmc.hmc" title="blackjax.mcmc.hmc.hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hmc</span></code></a></p></td>
 <td><p>Implements the (basic) user interface for the HMC kernel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.hmc.dynamic_hmc" title="blackjax.mcmc.hmc.dynamic_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dynamic_hmc</span></code></a></p></td>
+<td><p>Implements the (basic) user interface for the dynamic HMC kernel.</p></td>
 </tr>
 </tbody>
 </table>
@@ -587,7 +596,7 @@ momentum.</p>
 <li><p><strong>divergence_threshold</strong> – Value of the difference in energy above which we consider that the transition is divergent.</p></li>
 <li><p><strong>next_random_arg_fn</strong> – Function that generates the next <cite>random_generator_arg</cite> from its previous value.</p></li>
 <li><p><strong>integration_steps_fn</strong> – Function that generates the next pseudo or quasi-random number of integration steps in the
-sequence, given the current <cite>random_generator_arg</cite>.</p></li>
+sequence, given the current <cite>random_generator_arg</cite>. Needs to return an <cite>int</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -658,6 +667,42 @@ commonly found in other libraries, and yet is arbitrary.</p></li>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.hmc.hmc.build_kernel">
 <span class="sig-name descname"><span class="pre">build_kernel</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/hmc.html#hmc.build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.hmc.hmc.build_kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.mcmc.hmc.dynamic_hmc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dynamic_hmc</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/hmc.html#dynamic_hmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.hmc.dynamic_hmc" title="Permalink to this definition">#</a></dt>
+<dd><p>Implements the (basic) user interface for the dynamic HMC kernel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – The log-density function we wish to draw samples from.</p></li>
+<li><p><strong>step_size</strong> – The value to use for the step size in the symplectic integrator.</p></li>
+<li><p><strong>inverse_mass_matrix</strong> – The value to use for the inverse mass matrix when drawing a value for
+the momentum and computing the kinetic energy.</p></li>
+<li><p><strong>divergence_threshold</strong> – The absolute value of the difference in energy between two states above
+which we say that the transition is divergent. The default value is
+commonly found in other libraries, and yet is arbitrary.</p></li>
+<li><p><strong>integrator</strong> – (algorithm parameter) The symplectic integrator to use to integrate the trajectory.</p></li>
+<li><p><strong>next_random_arg_fn</strong> – Function that generates the next <cite>random_generator_arg</cite> from its previous value.</p></li>
+<li><p><strong>integration_steps_fn</strong> – Function that generates the next pseudo or quasi-random number of integration steps in the
+sequence, given the current <cite>random_generator_arg</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.hmc.dynamic_hmc.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/hmc.html#dynamic_hmc.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.hmc.dynamic_hmc.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.hmc.dynamic_hmc.build_kernel">
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/hmc.html#dynamic_hmc.build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.hmc.dynamic_hmc.build_kernel" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -743,6 +788,11 @@ commonly found in other libraries, and yet is arbitrary.</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.hmc"><code class="docutils literal notranslate"><span class="pre">hmc</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.hmc.init"><code class="docutils literal notranslate"><span class="pre">hmc.init</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.hmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">hmc.build_kernel</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.dynamic_hmc"><code class="docutils literal notranslate"><span class="pre">dynamic_hmc</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.dynamic_hmc.init"><code class="docutils literal notranslate"><span class="pre">dynamic_hmc.init</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.dynamic_hmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">dynamic_hmc.build_kernel</span></code></a></li>
 </ul>
 </li>
 </ul>
