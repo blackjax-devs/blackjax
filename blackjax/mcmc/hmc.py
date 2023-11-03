@@ -33,6 +33,7 @@ __all__ = [
     "build_kernel",
     "build_dynamic_kernel",
     "hmc",
+    "dynamic_hmc",
 ]
 
 
@@ -193,7 +194,7 @@ def build_dynamic_kernel(
         Function that generates the next `random_generator_arg` from its previous value.
     integration_steps_fn
         Function that generates the next pseudo or quasi-random number of integration steps in the
-        sequence, given the current `random_generator_arg`.
+        sequence, given the current `random_generator_arg`. Needs to return an `int`.
 
     Returns
     -------
@@ -210,9 +211,12 @@ def build_dynamic_kernel(
         logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
+        **integration_steps_kwargs,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the HMC kernel."""
-        num_integration_steps = integration_steps_fn(state.random_generator_arg)
+        num_integration_steps = integration_steps_fn(
+            state.random_generator_arg, **integration_steps_kwargs
+        )
         hmc_state = HMCState(state.position, state.logdensity, state.logdensity_grad)
         hmc_proposal, info = hmc_base(
             rng_key,
@@ -328,6 +332,69 @@ class hmc:
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
+
+
+class dynamic_hmc:
+    """Implements the (basic) user interface for the dynamic HMC kernel.
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log-density function we wish to draw samples from.
+    step_size
+        The value to use for the step size in the symplectic integrator.
+    inverse_mass_matrix
+        The value to use for the inverse mass matrix when drawing a value for
+        the momentum and computing the kinetic energy.
+    divergence_threshold
+        The absolute value of the difference in energy between two states above
+        which we say that the transition is divergent. The default value is
+        commonly found in other libraries, and yet is arbitrary.
+    integrator
+        (algorithm parameter) The symplectic integrator to use to integrate the trajectory.
+    next_random_arg_fn
+        Function that generates the next `random_generator_arg` from its previous value.
+    integration_steps_fn
+        Function that generates the next pseudo or quasi-random number of integration steps in the
+        sequence, given the current `random_generator_arg`.
+
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+    """
+
+    init = staticmethod(init_dynamic)
+    build_kernel = staticmethod(build_dynamic_kernel)
+
+    def __new__(  # type: ignore[misc]
+        cls,
+        logdensity_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: Array,
+        *,
+        divergence_threshold: int = 1000,
+        integrator: Callable = integrators.velocity_verlet,
+        next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
+        integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+    ) -> SamplingAlgorithm:
+        kernel = cls.build_kernel(
+            integrator, divergence_threshold, next_random_arg_fn, integration_steps_fn
+        )
+
+        def init_fn(position: ArrayLikeTree, random_generator_arg: Array):
+            return cls.init(position, logdensity_fn, random_generator_arg)
+
+        def step_fn(rng_key: PRNGKey, state):
+            return kernel(
+                rng_key,
+                state,
+                logdensity_fn,
+                step_size,
+                inverse_mass_matrix,
+            )
+
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
 
 def hmc_proposal(
