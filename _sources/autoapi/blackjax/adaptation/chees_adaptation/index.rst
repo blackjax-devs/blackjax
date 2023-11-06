@@ -56,7 +56,7 @@ Attributes
    log_step_size_moving_average
        Running moving average of the log step_size parameter.
    trajectory_length
-       Value of the num_integration_steps / step_size parameter of
+       Value of the num_integration_steps * step_size parameter of
        the HMC algorithm.
    log_trajectory_length_moving_average
        Running moving average of the log num_integration_steps / step_size
