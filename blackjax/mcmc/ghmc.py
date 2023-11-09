@@ -131,7 +131,7 @@ def build_kernel(
         """
 
         flat_inverse_scale = jax.flatten_util.ravel_pytree(momentum_inverse_scale)[0]
-        _, kinetic_energy_fn, _ = metrics.gaussian_euclidean(flat_inverse_scale**2)
+        momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(flat_inverse_scale**2)
 
         symplectic_integrator = integrators.velocity_verlet(
             logdensity_fn, kinetic_energy_fn
@@ -147,8 +147,7 @@ def build_kernel(
         key_momentum, key_noise = jax.random.split(rng_key)
         position, momentum, logdensity, logdensity_grad, slice = state
         # New momentum is persistent
-        momentum = update_momentum(key_momentum, state, alpha)
-        momentum = jax.tree_map(lambda m, s: m / s, momentum, momentum_inverse_scale)
+        momentum = update_momentum(key_momentum, state, alpha, momentum_generator)
         # Slice is non-reversible
         slice = ((slice + 1.0 + delta + noise_fn(key_noise)) % 2) - 1.0
 
@@ -159,7 +158,7 @@ def build_kernel(
         proposal = hmc.flip_momentum(proposal)
         state = GHMCState(
             proposal.position,
-            jax.tree_map(lambda m, s: m * s, proposal.momentum, momentum_inverse_scale),
+            proposal.momentum,
             proposal.logdensity,
             proposal.logdensity_grad,
             info.acceptance_rate,
@@ -170,7 +169,7 @@ def build_kernel(
     return kernel
 
 
-def update_momentum(rng_key, state, alpha):
+def update_momentum(rng_key, state, alpha, momentum_generator):
     """Persistent update of the momentum variable.
 
     Performs a persistent update of the momentum, taking as input the previous
@@ -182,11 +181,9 @@ def update_momentum(rng_key, state, alpha):
     """
     position, momentum, *_ = state
 
-    m_size = pytree_size(momentum)
-    momentum_generator, *_ = metrics.gaussian_euclidean(1 / alpha * jnp.ones((m_size,)))
     momentum = jax.tree_map(
         lambda prev_momentum, shifted_momentum: prev_momentum * jnp.sqrt(1.0 - alpha)
-        + shifted_momentum,
+        + jnp.sqrt(alpha)*shifted_momentum,
         momentum,
         momentum_generator(rng_key, position),
     )
