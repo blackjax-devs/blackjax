@@ -361,7 +361,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="k">as</span> <span class="nn">proposal</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
-<span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span><span class="p">,</span> <span class="n">pytree_size</span>
+<span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;GHMCState&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;ghmc&quot;</span><span class="p">]</span>
 
@@ -469,7 +469,9 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">flat_inverse_scale</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">gaussian_euclidean</span><span class="p">(</span><span class="n">flat_inverse_scale</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">gaussian_euclidean</span><span class="p">(</span>
+            <span class="n">flat_inverse_scale</span><span class="o">**</span><span class="mi">2</span>
+        <span class="p">)</span>
 
         <span class="n">symplectic_integrator</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">(</span>
             <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span>
@@ -485,8 +487,7 @@ document.write(`
         <span class="n">key_momentum</span><span class="p">,</span> <span class="n">key_noise</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
         <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">,</span> <span class="nb">slice</span> <span class="o">=</span> <span class="n">state</span>
         <span class="c1"># New momentum is persistent</span>
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">update_momentum</span><span class="p">(</span><span class="n">key_momentum</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="n">m</span> <span class="o">/</span> <span class="n">s</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">momentum_inverse_scale</span><span class="p">)</span>
+        <span class="n">momentum</span> <span class="o">=</span> <span class="n">update_momentum</span><span class="p">(</span><span class="n">key_momentum</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">momentum_generator</span><span class="p">)</span>
         <span class="c1"># Slice is non-reversible</span>
         <span class="nb">slice</span> <span class="o">=</span> <span class="p">((</span><span class="nb">slice</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">+</span> <span class="n">noise_fn</span><span class="p">(</span><span class="n">key_noise</span><span class="p">))</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span>
 
@@ -497,7 +498,7 @@ document.write(`
         <span class="n">proposal</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">flip_momentum</span><span class="p">(</span><span class="n">proposal</span><span class="p">)</span>
         <span class="n">state</span> <span class="o">=</span> <span class="n">GHMCState</span><span class="p">(</span>
             <span class="n">proposal</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
-            <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="n">m</span> <span class="o">*</span> <span class="n">s</span><span class="p">,</span> <span class="n">proposal</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span> <span class="n">momentum_inverse_scale</span><span class="p">),</span>
+            <span class="n">proposal</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
             <span class="n">proposal</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span>
             <span class="n">proposal</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">,</span>
             <span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
@@ -508,11 +509,12 @@ document.write(`
     <span class="k">return</span> <span class="n">kernel</span></div>
 
 
-<span class="k">def</span> <span class="nf">update_momentum</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">update_momentum</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">momentum_generator</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Persistent update of the momentum variable.</span>
 
 <span class="sd">    Performs a persistent update of the momentum, taking as input the previous</span>
-<span class="sd">    momentum, a random number generating key and the parameter alpha. Outputs</span>
+<span class="sd">    momentum, a random number generating key, the parameter alpha and the</span>
+<span class="sd">    momentum generator function. Outputs</span>
 <span class="sd">    an updated momentum that is a mixture of the previous momentum a new sample</span>
 <span class="sd">    from a Gaussian density (dependent on alpha). The weights of the mixture of</span>
 <span class="sd">    these two components are a function of alpha.</span>
@@ -520,11 +522,9 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">state</span>
 
-    <span class="n">m_size</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
-    <span class="n">momentum_generator</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">gaussian_euclidean</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">m_size</span><span class="p">,)))</span>
     <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
         <span class="k">lambda</span> <span class="n">prev_momentum</span><span class="p">,</span> <span class="n">shifted_momentum</span><span class="p">:</span> <span class="n">prev_momentum</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span>
-        <span class="o">+</span> <span class="n">shifted_momentum</span><span class="p">,</span>
+        <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">shifted_momentum</span><span class="p">,</span>
         <span class="n">momentum</span><span class="p">,</span>
         <span class="n">momentum_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">),</span>
     <span class="p">)</span>
