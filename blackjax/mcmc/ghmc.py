@@ -23,7 +23,7 @@ import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
-from blackjax.util import generate_gaussian_noise, pytree_size
+from blackjax.util import generate_gaussian_noise
 
 __all__ = ["GHMCState", "init", "build_kernel", "ghmc"]
 
