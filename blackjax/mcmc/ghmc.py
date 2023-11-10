@@ -131,7 +131,9 @@ def build_kernel(
         """
 
         flat_inverse_scale = jax.flatten_util.ravel_pytree(momentum_inverse_scale)[0]
-        momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(flat_inverse_scale**2)
+        momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
+            flat_inverse_scale**2
+        )
 
         symplectic_integrator = integrators.velocity_verlet(
             logdensity_fn, kinetic_energy_fn
@@ -173,7 +175,8 @@ def update_momentum(rng_key, state, alpha, momentum_generator):
     """Persistent update of the momentum variable.
 
     Performs a persistent update of the momentum, taking as input the previous
-    momentum, a random number generating key and the parameter alpha. Outputs
+    momentum, a random number generating key, the parameter alpha and the
+    momentum generator function. Outputs
     an updated momentum that is a mixture of the previous momentum a new sample
     from a Gaussian density (dependent on alpha). The weights of the mixture of
     these two components are a function of alpha.
@@ -183,7 +186,7 @@ def update_momentum(rng_key, state, alpha, momentum_generator):
 
     momentum = jax.tree_map(
         lambda prev_momentum, shifted_momentum: prev_momentum * jnp.sqrt(1.0 - alpha)
-        + jnp.sqrt(alpha)*shifted_momentum,
+        + jnp.sqrt(alpha) * shifted_momentum,
         momentum,
         momentum_generator(rng_key, position),
     )
