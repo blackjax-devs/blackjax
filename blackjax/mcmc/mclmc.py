@@ -33,6 +33,7 @@ class MCLMCInfo(NamedTuple):
     logdensity: Array
     dE: float
 
+
 class Parameters(NamedTuple):
     """Tunable parameters"""
 
@@ -69,10 +70,9 @@ def build_kernel(grad_logp, dim: int, integrator, transform, params: Parameters)
     return kernel
 
 
-
-
 def minimal_norm(dim, T, V):
     lambda_c = 0.1931833275037836  # critical value of the lambda parameter for the minimal norm integrator
+
     def step(state: MCLMCState, params: Parameters):
         """Integrator from https://arxiv.org/pdf/hep-lat/0505020.pdf, see Equation 20."""
 
@@ -104,15 +104,15 @@ class mclmc:
         logdensity_fn: Callable,
         dim: int,
         transform: Callable,
-        params : Parameters,
+        params: Parameters,
         integrator=minimal_norm,
     ) -> SamplingAlgorithm:
         grad_logp = jax.value_and_grad(logdensity_fn)
 
         kernel = cls.build_kernel(grad_logp, dim, integrator, transform, params)
 
-        def init_fn(position: ArrayLike, rng_key: PRNGKey):
-            return cls.init(position, logdensity_fn, rng_key)
+        def init_fn(position: ArrayLike):
+            return cls.init(position, logdensity_fn, jax.random.PRNGKey(0))
 
         return SamplingAlgorithm(init_fn, kernel)
 
@@ -162,4 +162,3 @@ def update_momentum(step_size, u, g):
     uu = e * (1 - zeta) * (1 + zeta + ue * (1 - zeta)) + 2 * zeta * u
     delta_r = delta - jnp.log(2) + jnp.log(1 + ue + (1 - ue) * zeta**2)
     return uu / jnp.sqrt(jnp.sum(jnp.square(uu))), delta_r
-
