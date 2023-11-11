@@ -52,11 +52,12 @@ def init(x_initial: ArrayLike, logdensity_fn, rng_key):
     )
 
 
-def build_kernel(grad_logp, dim: int, integrator, transform, params: Parameters):
-    step = integrator(T=update_position(grad_logp), V=update_momentum, dim=dim)
+def build_kernel(grad_logp, integrator, transform, params: Parameters):
+    step = integrator(T=update_position(grad_logp), V=update_momentum)
 
     def kernel(rng_key: PRNGKey, state: MCLMCState) -> tuple[MCLMCState, MCLMCInfo]:
         xx, uu, ll, gg, kinetic_change = step(state, params)
+        dim = xx.shape[0]
         # Langevin-like noise
         nu = jnp.sqrt((jnp.exp(2 * params.step_size / params.L) - 1.0) / dim)
         uu = partially_refresh_momentum(u=uu, rng_key=rng_key, nu=nu)
@@ -70,7 +71,7 @@ def build_kernel(grad_logp, dim: int, integrator, transform, params: Parameters)
     return kernel
 
 
-def minimal_norm(dim, T, V):
+def minimal_norm(T, V):
     lambda_c = 0.1931833275037836  # critical value of the lambda parameter for the minimal norm integrator
 
     def step(state: MCLMCState, params: Parameters):
@@ -86,6 +87,7 @@ def minimal_norm(dim, T, V):
         uu, r3 = V(dt * lambda_c, uu, gg * sigma)
 
         # kinetic energy change
+        dim = xx.shape[0]
         kinetic_change = (r1 + r2 + r3) * (dim - 1)
 
         return xx, uu, ll, gg, kinetic_change
@@ -94,7 +96,64 @@ def minimal_norm(dim, T, V):
 
 
 class mclmc:
-    """todo: add documentation"""
+    """The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias `blackjax.hmc.build_kernel`) can be
+    cumbersome to manipulate. Since most users only need to specify the kernel
+    parameters at initialization time, we provide a helper function that
+    specializes the general kernel.
+
+    We also add the general kernel and state generator as an attribute to this class so
+    users only need to pass `blackjax.hmc` to SMC, adaptation, etc. algorithms.
+
+    Examples
+    --------
+
+    A new HMC kernel can be initialized and used with the following code:
+
+    .. code::
+
+        hmc = blackjax.hmc(logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
+        state = hmc.init(position)
+        new_state, info = hmc.step(rng_key, state)
+
+    Kernels are not jit-compiled by default so you will need to do it manually:
+
+    .. code::
+
+       step = jax.jit(hmc.step)
+       new_state, info = step(rng_key, state)
+
+    Should you need to you can always use the base kernel directly:
+
+    .. code::
+
+       import blackjax.mcmc.integrators as integrators
+
+       kernel = blackjax.hmc.build_kernel(integrators.mclachlan)
+       state = blackjax.hmc.init(position, logdensity_fn)
+       state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log-density function we wish to draw samples from.
+    TODO
+            transform
+        The value to use for the inverse mass matrix when drawing a value for
+        the momentum and computing the kinetic energy.
+    num_integration_steps
+        The number of steps we take with the symplectic integrator at each
+        sample step before returning a sample.
+    divergence_threshold
+        The absolute value of the difference in energy between two states above
+        which we say that the transition is divergent. The default value is
+        commonly found in other libraries, and yet is arbitrary.
+    integrator
+        (algorithm parameter) The symplectic integrator to use to integrate the trajectory.\
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+    """
 
     init = staticmethod(init)
     build_kernel = staticmethod(build_kernel)
@@ -102,14 +161,13 @@ class mclmc:
     def __new__(  # type: ignore[misc]
         cls,
         logdensity_fn: Callable,
-        dim: int,
         transform: Callable,
         params: Parameters,
         integrator=minimal_norm,
     ) -> SamplingAlgorithm:
         grad_logp = jax.value_and_grad(logdensity_fn)
 
-        kernel = cls.build_kernel(grad_logp, dim, integrator, transform, params)
+        kernel = cls.build_kernel(grad_logp, integrator, transform, params)
 
         def init_fn(position: ArrayLike):
             return cls.init(position, logdensity_fn, jax.random.PRNGKey(0))
