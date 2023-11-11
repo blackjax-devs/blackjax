@@ -23,15 +23,6 @@ from blackjax.types import Array, ArrayLike, PRNGKey
 
 __all__ = ["MCLMCState", "MCLMCInfo", "init", "build_kernel", "mclmc", "Parameters"]
 
-
-class Parameters(NamedTuple):
-    """Tunable parameters"""
-
-    L: float
-    step_size: float
-    inverse_mass_matrix: Array
-
-
 MCLMCState = integrators.IntegratorState
 
 
@@ -42,59 +33,19 @@ class MCLMCInfo(NamedTuple):
     logdensity: Array
     dE: float
 
+class Parameters(NamedTuple):
+    """Tunable parameters"""
 
-###
-# helper funcs
-###
-
-
-def random_unit_vector(random_key, dim):
-    u = jax.random.normal(random_key, shape=(dim,))
-    u /= jnp.sqrt(jnp.sum(jnp.square(u)))
-    return u
+    L: float
+    step_size: float
+    inverse_mass_matrix: Array
 
 
-def update_position(grad_logp):
-    def update(step_size, x, u):
-        xx = x + step_size * u
-        ll, gg = grad_logp(xx)
-        return xx, ll, gg
-
-    return update
-
-
-def partially_refresh_momentum(u, random_key, nu):
-    """Adds a small noise to u and normalizes."""
-    z = nu * jax.random.normal(random_key, shape=(u.shape[0],))
-    return (u + z) / jnp.sqrt(jnp.sum(jnp.square(u + z)))
-
-
-###
-# integrator
-###
-
-
-def update_momentum(step_size, u, g):
-    """The momentum updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)
-    similar to the implementation: https://github.com/gregversteeg/esh_dynamics
-    There are no exponentials e^delta, which prevents overflows when the gradient norm is large.
-    """
-    g_norm = jnp.sqrt(jnp.sum(jnp.square(g)))
-    e = g / g_norm
-    ue = jnp.dot(u, e)
-    dim = u.shape[0]
-    delta = step_size * g_norm / (dim - 1)
-    zeta = jnp.exp(-delta)
-    uu = e * (1 - zeta) * (1 + zeta + ue * (1 - zeta)) + 2 * zeta * u
-    delta_r = delta - jnp.log(2) + jnp.log(1 + ue + (1 - ue) * zeta**2)
-    return uu / jnp.sqrt(jnp.sum(jnp.square(uu))), delta_r
-
-
-def init(x_initial: ArrayLike, logdensity_fn, random_key):
+def init(x_initial: ArrayLike, logdensity_fn, rng_key):
     l, g = jax.value_and_grad(logdensity_fn)(x_initial)
     return MCLMCState(
         position=x_initial,
-        momentum=random_unit_vector(random_key, dim=x_initial.shape[0]),
+        momentum=random_unit_vector(rng_key, dim=x_initial.shape[0]),
         logdensity=l,
         logdensity_grad=g,
     )
@@ -107,7 +58,7 @@ def build_kernel(grad_logp, dim: int, integrator, transform, params: Parameters)
         xx, uu, ll, gg, kinetic_change = step(state, params)
         # Langevin-like noise
         nu = jnp.sqrt((jnp.exp(2 * params.step_size / params.L) - 1.0) / dim)
-        uu = partially_refresh_momentum(u=uu, random_key=rng_key, nu=nu)
+        uu = partially_refresh_momentum(u=uu, rng_key=rng_key, nu=nu)
 
         return MCLMCState(xx, uu, ll, gg), MCLMCInfo(
             transformed_x=transform(xx),
@@ -118,16 +69,16 @@ def build_kernel(grad_logp, dim: int, integrator, transform, params: Parameters)
     return kernel
 
 
-lambda_c = 0.1931833275037836  # critical value of the lambda parameter for the minimal norm integrator
 
 
 def minimal_norm(dim, T, V):
+    lambda_c = 0.1931833275037836  # critical value of the lambda parameter for the minimal norm integrator
     def step(state: MCLMCState, params: Parameters):
         """Integrator from https://arxiv.org/pdf/hep-lat/0505020.pdf, see Equation 20."""
 
         # V T V T V
         dt = params.step_size
-        sigma = params.inverse_mass_matrix
+        sigma = jnp.sqrt(params.inverse_mass_matrix)
         uu, r1 = V(dt * lambda_c, state.momentum, state.logdensity_grad * sigma)
         xx, ll, gg = T(dt, state.position, 0.5 * uu * sigma)
         uu, r2 = V(dt * (1 - 2 * lambda_c), uu, gg * sigma)
@@ -164,3 +115,51 @@ class mclmc:
             return cls.init(position, logdensity_fn, rng_key)
 
         return SamplingAlgorithm(init_fn, kernel)
+
+
+###
+# helper funcs
+###
+
+
+def random_unit_vector(rng_key, dim):
+    u = jax.random.normal(rng_key, shape=(dim,))
+    u /= jnp.sqrt(jnp.sum(jnp.square(u)))
+    return u
+
+
+def update_position(grad_logp):
+    def update(step_size, x, u):
+        xx = x + step_size * u
+        ll, gg = grad_logp(xx)
+        return xx, ll, gg
+
+    return update
+
+
+def partially_refresh_momentum(u, rng_key, nu):
+    """Adds a small noise to u and normalizes."""
+    z = nu * jax.random.normal(rng_key, shape=(u.shape[0],))
+    return (u + z) / jnp.sqrt(jnp.sum(jnp.square(u + z)))
+
+
+###
+# integrator
+###
+
+
+def update_momentum(step_size, u, g):
+    """The momentum updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)
+    similar to the implementation: https://github.com/gregversteeg/esh_dynamics
+    There are no exponentials e^delta, which prevents overflows when the gradient norm is large.
+    """
+    g_norm = jnp.sqrt(jnp.sum(jnp.square(g)))
+    e = g / g_norm
+    ue = jnp.dot(u, e)
+    dim = u.shape[0]
+    delta = step_size * g_norm / (dim - 1)
+    zeta = jnp.exp(-delta)
+    uu = e * (1 - zeta) * (1 + zeta + ue * (1 - zeta)) + 2 * zeta * u
+    delta_r = delta - jnp.log(2) + jnp.log(1 + ue + (1 - ue) * zeta**2)
+    return uu / jnp.sqrt(jnp.sum(jnp.square(uu))), delta_r
+
