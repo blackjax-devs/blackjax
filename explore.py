@@ -17,7 +17,7 @@ initial_position = jnp.array([1.0, 1.0])
 
 
 mclmc = blackjax.mcmc.mclmc.mclmc(
-    logdensity_fn=logdensity_fn, d=2, transform=lambda x: x
+    logdensity_fn=logdensity_fn, dim=2, transform=lambda x: x
 )
 
 params = Parameters(
