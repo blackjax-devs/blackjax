@@ -31,9 +31,7 @@ class Parameters(NamedTuple):
     step_size: float
     inverse_mass_matrix: Array
 
-
 MCLMCState = integrators.IntegratorState
-
 
 class MCLMCInfo(NamedTuple):
     """Additional information on the MCLMC transition.
@@ -47,14 +45,9 @@ class MCLMCInfo(NamedTuple):
     de: float
 
 
-def init(x_initial: ArrayTree, logdensity_fn, random_key):
-    grad_logp = jax.value_and_grad(logdensity_fn)
-    l, g = grad_logp(x_initial)
-
-    u = random_unit_vector(random_key, dim=x_initial.shape[0])
-
-    return MCLMCState(x_initial, u, l, g)
-
+###
+# helper funcs
+###
 
 def random_unit_vector(random_key, dim):
     u = jax.random.normal(random_key, shape=(dim,))
@@ -70,7 +63,16 @@ def update_position(grad_logp):
 
     return update
 
+def partially_refresh_momentum(u, random_key, nu):
+    """Adds a small noise to u and normalizes."""
+    z = nu * jax.random.normal(random_key, shape=(u.shape[0],))
 
+    return (u + z) / jnp.sqrt(jnp.sum(jnp.square(u + z)))
+
+
+###
+# integrator
+###
 
 def update_momentum(step_size, u, g):
     """The momentum updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)
@@ -88,37 +90,19 @@ def update_momentum(step_size, u, g):
     return uu / jnp.sqrt(jnp.sum(jnp.square(uu))), delta_r
 
 
+def init(x_initial: ArrayTree, logdensity_fn, random_key):
+    grad_logp = jax.value_and_grad(logdensity_fn)
+    l, g = grad_logp(x_initial)
 
-def partially_refresh_momentum(u, random_key, nu):
-    """Adds a small noise to u and normalizes."""
-    z = nu * jax.random.normal(random_key, shape=(u.shape[0],))
+    u = random_unit_vector(random_key, dim=x_initial.shape[0])
 
-    return (u + z) / jnp.sqrt(jnp.sum(jnp.square(u + z)))
-
-
-def update(hamiltonian_dynamics, partially_refresh_momentum, dim):
-    def step(x, u, g, random_key, L, step_size, inverse_mass_matrix):
-        """One step of the generalized dynamics."""
-
-        # Hamiltonian step
-        xx, uu, ll, gg, kinetic_change = hamiltonian_dynamics(
-            x=x, u=u, g=g, step_size=step_size, inverse_mass_matrix=inverse_mass_matrix
-        )
-
-        # Langevin-like noise
-        nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
-        uu = partially_refresh_momentum(u=uu, random_key=random_key, nu=nu)
-
-        return xx, uu, ll, gg, kinetic_change
-
-    return step
+    return MCLMCState(x_initial, u, l, g)
 
 
 def build_kernel(grad_logp, dim, integrator, transform):
-    hamiltonian_step = integrator(
+    step = integrator(
         T=update_position(grad_logp), V=update_momentum, dim=dim
     )
-    move = update(hamiltonian_step, partially_refresh_momentum, dim)
 
     def kernel(
         rng_key: PRNGKey, state: MCLMCState, params: Parameters
@@ -127,9 +111,14 @@ def build_kernel(grad_logp, dim, integrator, transform):
 
         L, step_size, inverse_mass_matrix = params
 
-        xx, uu, ll, gg, kinetic_change = move(
-            x, u, g, rng_key, L, step_size, inverse_mass_matrix
+        xx, uu, ll, gg, kinetic_change = step(
+            x=x, u=u, g=g, step_size=step_size, inverse_mass_matrix=inverse_mass_matrix
         )
+
+        # Langevin-like noise
+        nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
+        uu = partially_refresh_momentum(u=uu, random_key=rng_key, nu=nu)
+
         de = kinetic_change + ll - l
         return MCLMCState(xx, uu, ll, gg), MCLMCInfo(transform(xx), ll, de)
 
