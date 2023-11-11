@@ -25,14 +25,21 @@ __all__ = ["MCLMCState", "MCLMCInfo", "init", "build_kernel", "mclmc", "Paramete
 
 MCLMCState = integrators.IntegratorState
 
-
 class MCLMCInfo(NamedTuple):
-    """Additional information on the MCLMC transition."""
+    """Additional information on the MCLMC transition.
+    
+    transformed_x
+      The value of the samples after a transformation (e.g. projection onto lower dim subspace)
+    logdensity
+      logdensity at given step
+    dE
+      energy difference
+    
+    """
 
     transformed_x: Array
     logdensity: Array
     dE: float
-
 
 class Parameters(NamedTuple):
     """Tunable parameters"""
@@ -40,7 +47,6 @@ class Parameters(NamedTuple):
     L: float
     step_size: float
     inverse_mass_matrix: Array
-
 
 def init(x_initial: ArrayLike, logdensity_fn, rng_key):
     l, g = jax.value_and_grad(logdensity_fn)(x_initial)
@@ -51,8 +57,26 @@ def init(x_initial: ArrayLike, logdensity_fn, rng_key):
         logdensity_grad=g,
     )
 
-
 def build_kernel(grad_logp, integrator, transform, params: Parameters):
+    
+    """Build a HMC kernel.
+
+    Parameters
+    ----------
+    integrator
+        The symplectic integrator to use to integrate the Hamiltonian dynamics.
+    transform
+        Value of the difference in energy above which we consider that the transition is divergent.
+    params
+        Parameters
+        
+    Returns
+    -------
+    A kernel that takes a rng_key and a Pytree that contains the current state
+    of the chain and that returns a new state of the chain along with
+    information about the transition.
+
+    """
     step = integrator(T=update_position(grad_logp), V=update_momentum)
 
     def kernel(rng_key: PRNGKey, state: MCLMCState) -> tuple[MCLMCState, MCLMCInfo]:
@@ -69,7 +93,6 @@ def build_kernel(grad_logp, integrator, transform, params: Parameters):
         )
 
     return kernel
-
 
 def minimal_norm(T, V):
     lambda_c = 0.1931833275037836  # critical value of the lambda parameter for the minimal norm integrator
@@ -96,59 +119,47 @@ def minimal_norm(T, V):
 
 
 class mclmc:
-    """The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias `blackjax.hmc.build_kernel`) can be
+    """The general mclmc kernel builder (:meth:`blackjax.mcmc.mclmc.build_kernel`, alias `blackjax.mclmc.build_kernel`) can be
     cumbersome to manipulate. Since most users only need to specify the kernel
     parameters at initialization time, we provide a helper function that
     specializes the general kernel.
 
     We also add the general kernel and state generator as an attribute to this class so
-    users only need to pass `blackjax.hmc` to SMC, adaptation, etc. algorithms.
+    users only need to pass `blackjax.mclmc` to SMC, adaptation, etc. algorithms.
 
     Examples
     --------
 
-    A new HMC kernel can be initialized and used with the following code:
+    A new mclmc kernel can be initialized and used with the following code:
 
     .. code::
 
-        hmc = blackjax.hmc(logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
-        state = hmc.init(position)
-        new_state, info = hmc.step(rng_key, state)
+        mclmc = blackjax.mcmc.mclmc.mclmc(
+            logdensity_fn=logdensity_fn,
+            transform=lambda x: x,
+            params=params
+        )
+        state = mclmc.init(position)
+        new_state, info = mclmc.step(rng_key, state)
 
     Kernels are not jit-compiled by default so you will need to do it manually:
 
     .. code::
 
-       step = jax.jit(hmc.step)
+       step = jax.jit(mclmc.step)
        new_state, info = step(rng_key, state)
-
-    Should you need to you can always use the base kernel directly:
-
-    .. code::
-
-       import blackjax.mcmc.integrators as integrators
-
-       kernel = blackjax.hmc.build_kernel(integrators.mclachlan)
-       state = blackjax.hmc.init(position, logdensity_fn)
-       state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
 
     Parameters
     ----------
     logdensity_fn
         The log-density function we wish to draw samples from.
-    TODO
-            transform
+    transform
         The value to use for the inverse mass matrix when drawing a value for
         the momentum and computing the kinetic energy.
-    num_integration_steps
-        The number of steps we take with the symplectic integrator at each
-        sample step before returning a sample.
-    divergence_threshold
-        The absolute value of the difference in energy between two states above
-        which we say that the transition is divergent. The default value is
-        commonly found in other libraries, and yet is arbitrary.
+    params
+      Paramters
     integrator
-        (algorithm parameter) The symplectic integrator to use to integrate the trajectory.\
+      an integrator. We recommend using the default here.
 
     Returns
     -------
