@@ -24,29 +24,19 @@ import blackjax.mcmc.trajectory as trajectory
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["MCLMCState", "MCLMCInfo", "init", "build_kernel", "mclmc"]
+__all__ = ["MCLMCState", "MCLMCInfo", "init", "build_kernel", "mclmc", "Parameters"]
 
 class Parameters(NamedTuple):
     """Tunable parameters
     """
 
     L: float
-    eps: float
-    sigma: Array
+    step_size: float
+    inverse_mass_matrix: Array
 
 
-# MCLMCState = integrators.IntegratorState
+MCLMCState = integrators.IntegratorState
 
-
-class MCLMCState(NamedTuple):
-    """State of the MCLMC algorithm.
-
-    """
-
-    x: Array
-    u: Array
-    l: float
-    g: Array
 
 class MCLMCInfo(NamedTuple):
     """Additional information on the MCLMC transition.
@@ -61,8 +51,8 @@ class MCLMCInfo(NamedTuple):
 
 def init(x_initial : ArrayLikeTree, logdensity_fn, random_key):
 
-        grad_nlogp = jax.value_and_grad(lambda x : - logdensity_fn(x))
-        l, g = grad_nlogp(x_initial)
+        grad_logp = jax.value_and_grad(logdensity_fn)
+        l, g = grad_logp(x_initial)
 
         u = random_unit_vector(random_key, d=x_initial.shape[0])
 
@@ -75,11 +65,11 @@ def random_unit_vector(random_key,d):
     return u
 
 
-def update_position(grad_nlogp):
+def update_position(grad_logp):
   
-  def update(eps, x, u):
-    xx = x + eps * u
-    ll, gg = grad_nlogp(xx)
+  def update(step_size, x, u):
+    xx = x + step_size * u
+    ll, gg = grad_logp(xx)
     return xx, ll, gg
   
   return update
@@ -90,11 +80,11 @@ def update_momentum(d):
   There are no exponentials e^delta, which prevents overflows when the gradient norm is large."""
   
   
-  def update(eps, u, g):
+  def update(step_size, u, g):
       g_norm = jnp.sqrt(jnp.sum(jnp.square(g)))
-      e = - g / g_norm
+      e = g / g_norm
       ue = jnp.dot(u, e)
-      delta = eps * g_norm / (d-1)
+      delta = step_size * g_norm / (d-1)
       zeta = jnp.exp(-delta)
       uu = e *(1-zeta)*(1+zeta + ue * (1-zeta)) + 2*zeta* u
       delta_r = delta - jnp.log(2) + jnp.log(1 + ue + (1-ue)*zeta**2)
@@ -102,60 +92,47 @@ def update_momentum(d):
 
   return update
 
-def partially_refresh_momentum(d, sequential= True):
-  """Adds a small noise to u and normalizes."""
     
-    
-  def rng_sequential(u, random_key, nu):
-    z = nu * jax.random.normal(random_key, shape = (d, ))
+def partially_refresh_momentum(u, random_key, nu):
+    """Adds a small noise to u and normalizes."""
+    z = nu * jax.random.normal(random_key, shape = (u.shape[0], ))
 
     return (u + z) / jnp.sqrt(jnp.sum(jnp.square(u + z)))
-  
-
-#   def rng_parallel(u, random_key, nu):
-#       key, subkey = jax.random.split(random_key)
-#       noise = nu * jax.random.normal(subkey, shape= u.shape, dtype=u.dtype)
-
-#       return (u + noise) / jnp.sqrt(jnp.sum(jnp.square(u + noise), axis = 1))[:, None], key
 
 
-  return rng_sequential
+
 
 def update(hamiltonian_dynamics, partially_refresh_momentum, d):
     
-#   print("BAR 4")
-  def step(x, u, g, random_key, L, eps, sigma):
+  def step(x, u, g, random_key, L, step_size, inverse_mass_matrix):
       """One step of the generalized dynamics."""
 
       # Hamiltonian step
-    #   print("BAR 3")
-      xx, uu, ll, gg, kinetic_change = hamiltonian_dynamics(x=x, u=u, g=g, eps=eps, sigma = sigma)
+      xx, uu, ll, gg, kinetic_change = hamiltonian_dynamics(x=x, u=u, g=g, step_size=step_size, inverse_mass_matrix = inverse_mass_matrix)
 
       # Langevin-like noise
-      nu = jnp.sqrt((jnp.exp(2 * eps / L) - 1.) / d)
+      nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.) / d)
       uu = partially_refresh_momentum(u= uu, random_key= random_key, nu= nu)
 
       return xx, uu, ll, gg, kinetic_change
 
   return step
 
-def build_kernel(grad_nlogp, d, integrator, transform, params):
+def build_kernel(grad_logp, d, integrator, transform):
 
-        L, eps, sigma = params
 
-        hamiltonian_step, _ = integrator(T= update_position(grad_nlogp), 
+        hamiltonian_step, _ = integrator(T= update_position(grad_logp), 
                                                                 V= update_momentum(d),
                                                                 d= d)
-        # print("BAR")
-        move = update(hamiltonian_step, partially_refresh_momentum(d), d)
-        # print("BAZ")
+        move = update(hamiltonian_step, partially_refresh_momentum, d)
         
-        def kernel(rng_key : PRNGKey, state : MCLMCState) -> tuple[MCLMCState, MCLMCInfo]:
+        def kernel(rng_key : PRNGKey, state : MCLMCState, params : Parameters) -> tuple[MCLMCState, MCLMCInfo]:
 
             x, u, l, g = state
 
+            L, step_size, inverse_mass_matrix = params
         
-            xx, uu, ll, gg, kinetic_change = move(x, u, g, rng_key, L, eps, sigma)
+            xx, uu, ll, gg, kinetic_change = move(x, u, g, rng_key, L, step_size, inverse_mass_matrix)
             de = kinetic_change + ll - l
             return MCLMCState(xx, uu, ll, gg), MCLMCInfo(transform(xx), ll, de)
 
@@ -165,15 +142,15 @@ lambda_c = 0.1931833275037836 #critical value of the lambda parameter for the mi
 
 def minimal_norm(d, T, V):
 
-  def step(x, u, g, eps, sigma):
+  def step(x, u, g, step_size, inverse_mass_matrix):
       """Integrator from https://arxiv.org/pdf/hep-lat/0505020.pdf, see Equation 20."""
 
       # V T V T V
-      uu, r1 = V(eps * lambda_c, u, g * sigma)
-      xx, ll, gg = T(eps, x, 0.5*uu*sigma)
-      uu, r2 = V(eps * (1 - 2 * lambda_c), uu, gg * sigma)
-      xx, ll, gg = T(eps, xx, 0.5*uu*sigma)
-      uu, r3 = V(eps * lambda_c, uu, gg * sigma)
+      uu, r1 = V(step_size * lambda_c, u, g * inverse_mass_matrix)
+      xx, ll, gg = T(step_size, x, 0.5*uu*inverse_mass_matrix)
+      uu, r2 = V(step_size * (1 - 2 * lambda_c), uu, gg * inverse_mass_matrix)
+      xx, ll, gg = T(step_size, xx, 0.5*uu*inverse_mass_matrix)
+      uu, r3 = V(step_size * lambda_c, uu, gg * inverse_mass_matrix)
 
       #kinetic energy change
       kinetic_change = (r1 + r2 + r3) * (d-1)
@@ -195,24 +172,17 @@ class mclmc:
         logdensity_fn: Callable,
         d : int,
         transform : Callable,
-        params : Parameters,
-        init_key,
-        *,
         integrator = minimal_norm,
     ) -> SamplingAlgorithm:
                 
-        grad_nlogp = jax.value_and_grad(lambda x : - logdensity_fn(x))
+        grad_logp = jax.value_and_grad(logdensity_fn)
 
-        kernel = cls.build_kernel(grad_nlogp, d, integrator, transform, params)
+        kernel = cls.build_kernel(grad_logp, d, integrator, transform)
 
-        def init_fn(position: ArrayLikeTree):
-            return cls.init(position, logdensity_fn, init_key)
+        def init_fn(position: ArrayLikeTree, rng_key):
+            return cls.init(position, logdensity_fn, rng_key)
 
-        def step_fn(rng_key: PRNGKey, state):
-            return kernel(
-                rng_key,
-                state,
-            )
+    
 
-        return SamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, kernel)
 
