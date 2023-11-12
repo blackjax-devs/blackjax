@@ -35,7 +35,7 @@ class IntegratorState(NamedTuple):
     logdensity_grad: ArrayTree
 
 
-EuclideanIntegrator = Callable[[IntegratorState, float], IntegratorState]
+Integrator = Callable[[IntegratorState, float], IntegratorState]
 
 
 def new_integrator_state(logdensity_fn, position, momentum):
@@ -46,7 +46,7 @@ def new_integrator_state(logdensity_fn, position, momentum):
 def velocity_verlet(
     logdensity_fn: Callable,
     kinetic_energy_fn: EuclideanKineticEnergy,
-) -> EuclideanIntegrator:
+) -> Integrator:
     """The velocity Verlet (or Verlet-Störmer) integrator.
 
     The velocity Verlet is a two-stage palindromic integrator :cite:p:`bou2018geometric` of the form
@@ -105,7 +105,7 @@ def velocity_verlet(
 def mclachlan(
     logdensity_fn: Callable,
     kinetic_energy_fn: Callable,
-) -> EuclideanIntegrator:
+) -> Integrator:
     """Two-stage palindromic symplectic integrator derived in :cite:p:`blanes2014numerical`.
 
     The integrator is of the form (b1, a1, b2, a1, b1). The choice of the parameters
@@ -170,7 +170,7 @@ def mclachlan(
 def yoshida(
     logdensity_fn: Callable,
     kinetic_energy_fn: Callable,
-) -> EuclideanIntegrator:
+) -> Integrator:
     """Three stages palindromic symplectic integrator derived in :cite:p:`mclachlan1995numerical`
 
     The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of
