@@ -373,7 +373,7 @@ document.write(`
     <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayTree</span>
 
 
-<span class="n">EuclideanIntegrator</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">IntegratorState</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">IntegratorState</span><span class="p">]</span>
+<span class="n">Integrator</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">IntegratorState</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">IntegratorState</span><span class="p">]</span>
 
 
 <span class="k">def</span> <span class="nf">new_integrator_state</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">):</span>
@@ -384,7 +384,7 @@ document.write(`
 <div class="viewcode-block" id="velocity_verlet"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.velocity_verlet">[docs]</a><span class="k">def</span> <span class="nf">velocity_verlet</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">kinetic_energy_fn</span><span class="p">:</span> <span class="n">EuclideanKineticEnergy</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EuclideanIntegrator</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Integrator</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The velocity Verlet (or Verlet-Störmer) integrator.</span>
 
 <span class="sd">    The velocity Verlet is a two-stage palindromic integrator :cite:p:`bou2018geometric` of the form</span>
@@ -443,7 +443,7 @@ document.write(`
 <div class="viewcode-block" id="mclachlan"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.mclachlan">[docs]</a><span class="k">def</span> <span class="nf">mclachlan</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">kinetic_energy_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EuclideanIntegrator</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Integrator</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Two-stage palindromic symplectic integrator derived in :cite:p:`blanes2014numerical`.</span>
 
 <span class="sd">    The integrator is of the form (b1, a1, b2, a1, b1). The choice of the parameters</span>
@@ -508,7 +508,7 @@ document.write(`
 <div class="viewcode-block" id="yoshida"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.yoshida">[docs]</a><span class="k">def</span> <span class="nf">yoshida</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">kinetic_energy_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EuclideanIntegrator</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Integrator</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Three stages palindromic symplectic integrator derived in :cite:p:`mclachlan1995numerical`</span>
 
 <span class="sd">    The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of</span>

@@ -24,7 +24,7 @@ Functions
 
 
 
-.. py:function:: velocity_verlet(logdensity_fn: Callable, kinetic_energy_fn: blackjax.mcmc.metrics.EuclideanKineticEnergy) -> EuclideanIntegrator
+.. py:function:: velocity_verlet(logdensity_fn: Callable, kinetic_energy_fn: blackjax.mcmc.metrics.EuclideanKineticEnergy) -> Integrator
 
    The velocity Verlet (or Verlet-Störmer) integrator.
 
@@ -45,7 +45,7 @@ Functions
 
 
 
-.. py:function:: mclachlan(logdensity_fn: Callable, kinetic_energy_fn: Callable) -> EuclideanIntegrator
+.. py:function:: mclachlan(logdensity_fn: Callable, kinetic_energy_fn: Callable) -> Integrator
 
    Two-stage palindromic symplectic integrator derived in :cite:p:`blanes2014numerical`.
 
@@ -57,7 +57,7 @@ Functions
 
 
 
-.. py:function:: yoshida(logdensity_fn: Callable, kinetic_energy_fn: Callable) -> EuclideanIntegrator
+.. py:function:: yoshida(logdensity_fn: Callable, kinetic_energy_fn: Callable) -> Integrator
 
    Three stages palindromic symplectic integrator derived in :cite:p:`mclachlan1995numerical`
 

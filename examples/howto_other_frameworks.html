@@ -384,6 +384,16 @@ document.write(`
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/numpy/distutils/system_info.py:2159: UserWarning: 
+    Optimized (vendor) Blas libraries are not found.
+    Falls back to netlib Blas library which has worse performance.
+    A better performance should be easily gained by switching
+    Blas library.
+  if self._calc_info(blas):
+</pre></div>
+</div>
+</div>
 </div>
 <p>We can sample from the prior predictive distribution to make sure the model is correctly implemented:</p>
 <div class="cell docutils container">
@@ -535,7 +545,7 @@ JAX raised an exception while differentiating!
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(0.13428482, dtype=float32, weak_type=True), logdensity=Array(-2.901661, dtype=float32), logdensity_grad=Array(-0.0716538, dtype=float32))
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(-1.2313995, dtype=float32, weak_type=True), logdensity=Array(-3.2814565, dtype=float32), logdensity_grad=Array(0.5188081, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -550,8 +560,8 @@ JAX raised an exception while differentiating!
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.86 s, sys: 14 µs, total: 2.86 s
-Wall time: 2.85 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.66 s, sys: 262 µs, total: 3.66 s
+Wall time: 3.66 s
 </pre></div>
 </div>
 </div>
@@ -566,8 +576,8 @@ Wall time: 2.85 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11.3 s, sys: 132 ms, total: 11.5 s
-Wall time: 11.4 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 14.4 s, sys: 176 ms, total: 14.5 s
+Wall time: 14.5 s
 </pre></div>
 </div>
 </div>
