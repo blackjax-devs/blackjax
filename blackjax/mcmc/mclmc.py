@@ -77,10 +77,10 @@ def build_kernel(grad_logp, integrator, transform, params: Parameters):
     information about the transition.
 
     """
-    step = integrator(T=update_position(grad_logp), V=update_momentum)
+    step = integrator(T=update_position(grad_logp), V=update_momentum, inverse_mass_matrix=params.inverse_mass_matrix)
 
     def kernel(rng_key: PRNGKey, state: MCLMCState) -> tuple[MCLMCState, MCLMCInfo]:
-        xx, uu, ll, gg, kinetic_change = step(state, params)
+        xx, uu, ll, gg, kinetic_change = step(state, params.step_size)
         dim = xx.shape[0]
         # Langevin-like noise
         nu = jnp.sqrt((jnp.exp(2 * params.step_size / params.L) - 1.0) / dim)
@@ -94,28 +94,6 @@ def build_kernel(grad_logp, integrator, transform, params: Parameters):
 
     return kernel
 
-def minimal_norm(T, V):
-    lambda_c = 0.1931833275037836  # critical value of the lambda parameter for the minimal norm integrator
-
-    def step(state: MCLMCState, params: Parameters):
-        """Integrator from https://arxiv.org/pdf/hep-lat/0505020.pdf, see Equation 20."""
-
-        # V T V T V
-        dt = params.step_size
-        sigma = jnp.sqrt(params.inverse_mass_matrix)
-        uu, r1 = V(dt * lambda_c, state.momentum, state.logdensity_grad * sigma)
-        xx, ll, gg = T(dt, state.position, 0.5 * uu * sigma)
-        uu, r2 = V(dt * (1 - 2 * lambda_c), uu, gg * sigma)
-        xx, ll, gg = T(dt, xx, 0.5 * uu * sigma)
-        uu, r3 = V(dt * lambda_c, uu, gg * sigma)
-
-        # kinetic energy change
-        dim = xx.shape[0]
-        kinetic_change = (r1 + r2 + r3) * (dim - 1)
-
-        return xx, uu, ll, gg, kinetic_change
-
-    return step
 
 
 class mclmc:
@@ -174,7 +152,7 @@ class mclmc:
         logdensity_fn: Callable,
         transform: Callable,
         params: Parameters,
-        integrator=minimal_norm,
+        integrator=integrators.minimal_norm,
     ) -> SamplingAlgorithm:
         grad_logp = jax.value_and_grad(logdensity_fn)
 
