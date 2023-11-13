@@ -77,7 +77,7 @@ def build_kernel(grad_logp, integrator, transform, params: Parameters):
     information about the transition.
 
     """
-    step = integrator(T=update_position(grad_logp), V=update_momentum, inverse_mass_matrix=params.inverse_mass_matrix)
+    step = integrator(T=integrators.update_position_mclmc(grad_logp), V=integrators.update_momentum_mclmc, inverse_mass_matrix=params.inverse_mass_matrix)
 
     def kernel(rng_key: PRNGKey, state: MCLMCState) -> tuple[MCLMCState, MCLMCInfo]:
         xx, uu, ll, gg, kinetic_change = step(state, params.step_size)
@@ -175,13 +175,6 @@ def random_unit_vector(rng_key, dim):
     return u
 
 
-def update_position(grad_logp):
-    def update(step_size, x, u):
-        xx = x + step_size * u
-        ll, gg = grad_logp(xx)
-        return xx, ll, gg
-
-    return update
 
 
 def partially_refresh_momentum(u, rng_key, nu):
@@ -189,23 +182,3 @@ def partially_refresh_momentum(u, rng_key, nu):
     z = nu * jax.random.normal(rng_key, shape=(u.shape[0],))
     return (u + z) / jnp.sqrt(jnp.sum(jnp.square(u + z)))
 
-
-###
-# integrator
-###
-
-
-def update_momentum(step_size, u, g):
-    """The momentum updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)
-    similar to the implementation: https://github.com/gregversteeg/esh_dynamics
-    There are no exponentials e^delta, which prevents overflows when the gradient norm is large.
-    """
-    g_norm = jnp.sqrt(jnp.sum(jnp.square(g)))
-    e = g / g_norm
-    ue = jnp.dot(u, e)
-    dim = u.shape[0]
-    delta = step_size * g_norm / (dim - 1)
-    zeta = jnp.exp(-delta)
-    uu = e * (1 - zeta) * (1 + zeta + ue * (1 - zeta)) + 2 * zeta * u
-    delta_r = delta - jnp.log(2) + jnp.log(1 + ue + (1 - ue) * zeta**2)
-    return uu / jnp.sqrt(jnp.sum(jnp.square(uu))), delta_r

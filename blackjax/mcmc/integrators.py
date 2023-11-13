@@ -268,3 +268,31 @@ def minimal_norm(T, V, inverse_mass_matrix):
         return xx, uu, ll, gg, kinetic_change
 
     return step
+
+
+
+
+def update_position_mclmc(grad_logp):
+    """The position updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)
+    """
+    def update(step_size, x, u):
+        xx = x + step_size * u
+        ll, gg = grad_logp(xx)
+        return xx, ll, gg
+
+    return update
+
+def update_momentum_mclmc(step_size, u, g):
+    """The momentum updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)
+    similar to the implementation: https://github.com/gregversteeg/esh_dynamics
+    There are no exponentials e^delta, which prevents overflows when the gradient norm is large.
+    """
+    g_norm = jax.numpy.sqrt(jax.numpy.sum(jax.numpy.square(g)))
+    e = g / g_norm
+    ue = jax.numpy.dot(u, e)
+    dim = u.shape[0]
+    delta = step_size * g_norm / (dim - 1)
+    zeta = jax.numpy.exp(-delta)
+    uu = e * (1 - zeta) * (1 + zeta + ue * (1 - zeta)) + 2 * zeta * u
+    delta_r = delta - jax.numpy.log(2) + jax.numpy.log(1 + ue + (1 - ue) * zeta**2)
+    return uu / jax.numpy.sqrt(jax.numpy.sum(jax.numpy.square(uu))), delta_r
