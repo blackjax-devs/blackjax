@@ -41,12 +41,6 @@ class MCLMCInfo(NamedTuple):
     logdensity: Array
     dE: float
 
-class Parameters(NamedTuple):
-    """Tunable parameters"""
-
-    L: float
-    step_size: float
-    inverse_mass_matrix: Array
 
 def init(x_initial: ArrayLike, logdensity_fn, rng_key):
     l, g = jax.value_and_grad(logdensity_fn)(x_initial)
@@ -57,7 +51,7 @@ def init(x_initial: ArrayLike, logdensity_fn, rng_key):
         logdensity_grad=g,
     )
 
-def build_kernel(grad_logp, integrator, transform, params: Parameters):
+def build_kernel(grad_logp, integrator, transform, L, step_size, inverse_mass_matrix):
     
     """Build a HMC kernel.
 
@@ -67,8 +61,11 @@ def build_kernel(grad_logp, integrator, transform, params: Parameters):
         The symplectic integrator to use to integrate the Hamiltonian dynamics.
     transform
         Value of the difference in energy above which we consider that the transition is divergent.
-    params
-        Parameters
+    L
+      the momentum decoherence rate
+    step_size
+      step size of the integrator
+    inverse mass matrix
         
     Returns
     -------
@@ -77,13 +74,13 @@ def build_kernel(grad_logp, integrator, transform, params: Parameters):
     information about the transition.
 
     """
-    step = integrator(T=integrators.update_position_mclmc(grad_logp), V=integrators.update_momentum_mclmc, inverse_mass_matrix=params.inverse_mass_matrix)
+    step = integrator(T=integrators.update_position_mclmc(grad_logp), V=integrators.update_momentum_mclmc, inverse_mass_matrix=inverse_mass_matrix)
 
     def kernel(rng_key: PRNGKey, state: MCLMCState) -> tuple[MCLMCState, MCLMCInfo]:
-        xx, uu, ll, gg, kinetic_change = step(state, params.step_size)
+        xx, uu, ll, gg, kinetic_change = step(state, step_size)
         dim = xx.shape[0]
         # Langevin-like noise
-        nu = jnp.sqrt((jnp.exp(2 * params.step_size / params.L) - 1.0) / dim)
+        nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
         uu = partially_refresh_momentum(u=uu, rng_key=rng_key, nu=nu)
 
         return MCLMCState(xx, uu, ll, gg), MCLMCInfo(
@@ -115,7 +112,9 @@ class mclmc:
         mclmc = blackjax.mcmc.mclmc.mclmc(
             logdensity_fn=logdensity_fn,
             transform=lambda x: x,
-            params=params
+            L=L,
+            step_size=step_size
+            inverse mass matrix=inverse_mass_matrix
         )
         state = mclmc.init(position)
         new_state, info = mclmc.step(rng_key, state)
@@ -134,7 +133,11 @@ class mclmc:
     transform
         The value to use for the inverse mass matrix when drawing a value for
         the momentum and computing the kinetic energy.
-    params
+    L
+      the momentum decoherence rate
+    step_size
+      step size of the integrator
+    inverse mass matrix
       Paramters
     integrator
       an integrator. We recommend using the default here.
@@ -151,12 +154,14 @@ class mclmc:
         cls,
         logdensity_fn: Callable,
         transform: Callable,
-        params: Parameters,
+        L,
+        step_size,
+        inverse_mass_matrix,
         integrator=integrators.minimal_norm,
     ) -> SamplingAlgorithm:
         grad_logp = jax.value_and_grad(logdensity_fn)
 
-        kernel = cls.build_kernel(grad_logp, integrator, transform, params)
+        kernel = cls.build_kernel(grad_logp, integrator, transform, L, step_size, inverse_mass_matrix)
 
         def init_fn(position: ArrayLike):
             return cls.init(position, logdensity_fn, jax.random.PRNGKey(0))
