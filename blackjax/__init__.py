@@ -9,6 +9,7 @@ from .mcmc.elliptical_slice import elliptical_slice
 from .mcmc.ghmc import ghmc
 from .mcmc.hmc import hmc
 from .mcmc.mala import mala
+from .mcmc.mclmc import mclmc
 from .mcmc.marginal_latent_gaussian import mgrad_gaussian
 from .mcmc.nuts import nuts
 from .mcmc.periodic_orbital import orbital_hmc
@@ -36,6 +37,7 @@ __all__ = [
     "additive_step_random_walk",
     "rmh",
     "irmh",
+    "mclmc",
     "elliptical_slice",
     "ghmc",
     "sgld",  # stochastic gradient mcmc
