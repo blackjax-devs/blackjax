@@ -49,31 +49,58 @@ class AdditiveStepTest(unittest.TestCase):
 
 
 class IRMHTest(unittest.TestCase):
+    def proposal_distribution(self, key):
+        return jnp.array([10.0])
+
+    def logdensity_accepts(self, position):
+        """
+        a logdensity that gets maximized after the step
+        """
+        return 0.0 if all(position - 10.0 < 1e-10) else 0.5
+
     def test_proposal_is_independent_of_position(self):
-        """New position does not depend on previous"""
+        """New position does not depend on previous position"""
         rng_key = jax.random.key(0)
         initial_position = jnp.array([50.0])
         other_position = jnp.array([15000.0])
 
-        def proposal_distribution(key):
-            return jnp.array([10.0])
-
-        def test_logdensity_accepts(position):
-            """
-            a logdensity that gets maximized after the step
-            """
-            return 0.0 if all(position - 10.0 < 1e-10) else 0.5
-
         step = build_irmh()
 
         for previous_position in [initial_position, other_position]:
-            new_state, _ = step(
+            new_state, state_info = step(
                 rng_key,
                 RWState(position=previous_position, logdensity=1.0),
-                test_logdensity_accepts,
-                proposal_distribution,
+                self.logdensity_accepts,
+                self.proposal_distribution,
             )
             np.testing.assert_allclose(new_state.position, jnp.array([10.0]))
+            np.testing.assert_allclose(state_info.acceptance_rate, 0.367879, rtol=1e-5)
+
+    def test_non_symmetric_proposal(self):
+        """
+        Given that proposal_logdensity_fn is included,
+        thus the proposal is non-symmetric.
+        When computing the acceptance of the proposed state
+        Then proposal_logdensity_fn value is taken into account
+        """
+        rng_key = jax.random.key(0)
+        initial_position = jnp.array([50.0])
+
+        def test_proposal_logdensity(new_state, prev_state):
+            return 0.1 if all(new_state.position - 10 < 1e-10) else 0.5
+
+        step = build_irmh()
+
+        for previous_position in [initial_position]:
+            _, state_info = step(
+                rng_key,
+                RWState(position=previous_position, logdensity=1.0),
+                self.logdensity_accepts,
+                self.proposal_distribution,
+                test_proposal_logdensity,
+            )
+
+            np.testing.assert_allclose(state_info.acceptance_rate, 0.246597)
 
 
 class RMHProposalTest(unittest.TestCase):
@@ -90,7 +117,7 @@ class RMHProposalTest(unittest.TestCase):
         return Proposal(state, 0, 0, 0)
 
     def generate_proposal(self, prev, new):
-        return Proposal(new, 0, 0, 0), False
+        return Proposal(new, 0, 0, 0)
 
     def test_generate_reject(self):
         """

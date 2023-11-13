@@ -98,6 +98,7 @@ ehthumbs.db
 # Custom stuff
 *.profraw
 *.DS_Store
+venv_blackjax/
 
 # Apparently both patterns _have_ to be present on my system.
 # Having both is a nice backup, I guess.
