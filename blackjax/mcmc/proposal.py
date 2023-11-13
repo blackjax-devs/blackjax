@@ -40,17 +40,13 @@ class Proposal(NamedTuple):
     sum_log_p_accept: float
 
 
-def proposal_generator(
-    energy: Callable, divergence_threshold: float
-) -> tuple[Callable, Callable]:
+def proposal_generator(energy: Callable) -> tuple[Callable, Callable]:
     """
 
     Parameters
     ----------
     energy
         A function that computes the energy associated to a given state
-    divergence_threshold
-        max value allowed for the difference in energies not to be considered a divergence
 
     Returns
     -------
@@ -61,7 +57,7 @@ def proposal_generator(
     def new(state: TrajectoryState) -> Proposal:
         return Proposal(state, energy(state), 0.0, -jnp.inf)
 
-    def update(initial_energy: float, state: TrajectoryState) -> tuple[Proposal, bool]:
+    def update(initial_energy: float, state: TrajectoryState) -> Proposal:
         """Generate a new proposal from a trajectory state.
 
         The trajectory state records information about the position in the state
@@ -83,9 +79,7 @@ def proposal_generator(
 
         """
         new_energy = energy(state)
-        return proposal_from_energy_diff(
-            initial_energy, new_energy, divergence_threshold, state
-        )
+        return proposal_from_energy_diff(initial_energy, new_energy, state)
 
     return new, update
 
@@ -93,13 +87,9 @@ def proposal_generator(
 def proposal_from_energy_diff(
     initial_energy: float,
     new_energy: float,
-    divergence_threshold: float,
     state: TrajectoryState,
-) -> tuple[Proposal, bool]:
+) -> Proposal:
     """Computes a new proposal from the energy difference between two states.
-
-    It also verifies whether this difference is a divergence, if the
-    energy diff is above divergence_threshold.
 
     Parameters
     ----------
@@ -107,8 +97,6 @@ def proposal_from_energy_diff(
         the energy from the initial state
     new_energy
         the energy at the proposed state
-    divergence_threshold
-        max value allowed for an increase in energies not to be considered a divergence
     state
         the proposed state
 
@@ -118,7 +106,6 @@ def proposal_from_energy_diff(
     """
     delta_energy = initial_energy - new_energy
     delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
-    is_transition_divergent = -delta_energy > divergence_threshold
 
     # The weight of the new proposal is equal to H0 - H(z_new)
     weight = delta_energy
@@ -126,20 +113,16 @@ def proposal_from_energy_diff(
     # Acceptance statistic min(e^{H0 - H(z_new)}, 1)
     sum_log_p_accept = jnp.minimum(delta_energy, 0.0)
 
-    return (
-        Proposal(
-            state,
-            new_energy,
-            weight,
-            sum_log_p_accept,
-        ),
-        is_transition_divergent,
+    return Proposal(
+        state,
+        new_energy,
+        weight,
+        sum_log_p_accept,
     )
 
 
 def asymmetric_proposal_generator(
     transition_energy_fn: Callable,
-    divergence_threshold: float,
     proposal_factory: Callable = proposal_from_energy_diff,
 ) -> tuple[Callable, Callable]:
     """A proposal generator that takes into account the transition between
@@ -153,8 +136,6 @@ def asymmetric_proposal_generator(
     transition_energy_fn
         A function that computes the energy of a transition from an initial state
         to a new state, given some optional keyword arguments.
-    divergence_threshold
-        The maximum value allowed for the difference in energies not to be considered a divergence.
     proposal_factory
         A function that builds a proposal from the transition energies.
 
@@ -174,7 +155,7 @@ def asymmetric_proposal_generator(
     ) -> tuple[Proposal, bool]:
         new_energy = transition_energy_fn(initial_state, state, **energy_params)
         prev_energy = transition_energy_fn(state, initial_state, **energy_params)
-        return proposal_factory(prev_energy, new_energy, divergence_threshold, state)
+        return proposal_factory(prev_energy, new_energy, state)
 
     return new, update
 
