@@ -256,11 +256,11 @@ def minimal_norm(T, V, inverse_mass_matrix):
 
         # V T V T V
         sigma = jax.numpy.sqrt(inverse_mass_matrix)
-        uu, r1 = V(step_size * lambda_c, state.momentum, state.logdensity_grad * sigma)
-        xx, ll, gg = T(step_size, state.position, 0.5 * uu * sigma)
-        uu, r2 = V(step_size * (1 - 2 * lambda_c), uu, gg * sigma)
-        xx, ll, gg = T(step_size, xx, 0.5 * uu * sigma)
-        uu, r3 = V(step_size * lambda_c, uu, gg * sigma)
+        uu, r1 = jax.tree_util.tree_map(lambda u, g : V(step_size * lambda_c, u, g * sigma), state.momentum, state.logdensity_grad)
+        xx, ll, gg = jax.tree_util.tree_map(lambda x, u : T(step_size, x,  0.5 * u * sigma), state.position, uu)
+        uu, r2 = jax.tree_util.tree_map(lambda u, g : V(step_size * (1 - 2 * lambda_c), u, g * sigma), uu, gg)
+        xx, ll, gg = jax.tree_util.tree_map(lambda x, u : T(step_size, x,  0.5 * u * sigma), xx, uu)
+        uu, r3 = jax.tree_util.tree_map(lambda u, g : V(step_size * lambda_c, u, g * sigma), uu, gg)
 
         # kinetic energy change
         kinetic_change = (r1 + r2 + r3) * (dim - 1)
@@ -296,3 +296,4 @@ def update_momentum_mclmc(step_size, u, g):
     uu = e * (1 - zeta) * (1 + zeta + ue * (1 - zeta)) + 2 * zeta * u
     delta_r = delta - jax.numpy.log(2) + jax.numpy.log(1 + ue + (1 - ue) * zeta**2)
     return uu / jax.numpy.sqrt(jax.numpy.sum(jax.numpy.square(uu))), delta_r
+
