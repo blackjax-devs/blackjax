@@ -249,6 +249,7 @@ def yoshida(
 
 def minimal_norm(T, V, inverse_mass_matrix):
     lambda_c = 0.1931833275037836  # critical value of the lambda parameter for the minimal norm integrator
+    dim = inverse_mass_matrix.shape[0]
 
     def step(state: IntegratorState, step_size):
         """Integrator from https://arxiv.org/pdf/hep-lat/0505020.pdf, see Equation 20."""
@@ -262,7 +263,6 @@ def minimal_norm(T, V, inverse_mass_matrix):
         uu, r3 = V(step_size * lambda_c, uu, gg * sigma)
 
         # kinetic energy change
-        dim = xx.shape[0]
         kinetic_change = (r1 + r2 + r3) * (dim - 1)
 
         return xx, uu, ll, gg, kinetic_change
