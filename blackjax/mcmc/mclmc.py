@@ -91,7 +91,7 @@ def build_kernel(grad_logp, integrator, transform, L, step_size, inverse_mass_ma
         return MCLMCState(xx, uu, ll, gg), MCLMCInfo(
             transformed_x=transform(xx),
             logdensity=ll,
-            dE=kinetic_change + ll - state.logdensity,
+            dE=kinetic_change - ll + state.logdensity,
         )
 
     return kernel
