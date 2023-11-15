@@ -256,7 +256,11 @@ def minimal_norm(T, V, inverse_mass_matrix):
 
         # V T V T V
         sigma = jax.numpy.sqrt(inverse_mass_matrix)
-        uu, r1 = jax.tree_util.tree_map(lambda u, g : V(step_size * lambda_c, u, g * sigma), state.momentum, state.logdensity_grad)
+        # jax.debug.print("🤯 {x} inside integrator 1 🤯", x=(state.momentum, state.logdensity_grad))
+        uu, r1 = jax.tree_util.tree_map(lambda u, g : V(step_size * lambda_c, u, g * sigma), state.momentum, 
+        state.logdensity_grad)
+        # jax.debug.print("🤯 {x} inside integrator 2 🤯", x=(uu))
+
         xx, ll, gg = jax.tree_util.tree_map(lambda x, u : T(step_size, x,  0.5 * u * sigma), state.position, uu)
         uu, r2 = jax.tree_util.tree_map(lambda u, g : V(step_size * (1 - 2 * lambda_c), u, g * sigma), uu, gg)
         xx, ll, gg = jax.tree_util.tree_map(lambda x, u : T(step_size, x,  0.5 * u * sigma), xx, uu)
@@ -290,6 +294,7 @@ def update_momentum_mclmc(step_size, u, g):
     g_norm = jax.numpy.sqrt(jax.numpy.sum(jax.numpy.square(g)))
     e = g / g_norm
     ue = jax.numpy.dot(u, e)
+    # jax.debug.print("🤯 {x} inside momentum update 🤯", x=(ue))
     dim = u.shape[0]
     delta = step_size * g_norm / (dim - 1)
     zeta = jax.numpy.exp(-delta)
