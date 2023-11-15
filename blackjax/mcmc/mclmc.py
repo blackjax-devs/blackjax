@@ -38,12 +38,14 @@ class MCLMCInfo(NamedTuple):
     """
 
     transformed_x: Array
-    logdensity: Array
+    logdensity: float
     dE: float
 
 
 def init(x_initial: ArrayLike, logdensity_fn, rng_key):
     l, g = jax.value_and_grad(logdensity_fn)(x_initial)
+    jax.debug.print("🤯 {x} initial momentum 🤯", x=random_unit_vector(rng_key, dim=x_initial.shape[0]))
+    
     return MCLMCState(
         position=x_initial,
         momentum=random_unit_vector(rng_key, dim=x_initial.shape[0]),
@@ -78,6 +80,9 @@ def build_kernel(grad_logp, integrator, transform, L, step_size, inverse_mass_ma
 
     def kernel(rng_key: PRNGKey, state: MCLMCState) -> tuple[MCLMCState, MCLMCInfo]:
         xx, uu, ll, gg, kinetic_change = step(state, step_size)
+        jax.debug.print("🤯 {x} new 🤯", x=ll)
+        
+        
         dim = xx.shape[0]
         # Langevin-like noise
         nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
