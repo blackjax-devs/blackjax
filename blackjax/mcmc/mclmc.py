@@ -39,12 +39,13 @@ class MCLMCInfo(NamedTuple):
 
     transformed_x: Array
     logdensity: float
+    kinetic_change: float
     dE: float
 
 
 def init(x_initial: ArrayLike, logdensity_fn, rng_key):
     l, g = jax.value_and_grad(logdensity_fn)(x_initial)
-    jax.debug.print("🤯 {x} initial momentum 🤯", x=random_unit_vector(rng_key, dim=x_initial.shape[0]))
+    # jax.debug.print("🤯 {x} initial momentum 🤯", x=random_unit_vector(rng_key, dim=x_initial.shape[0]))
     
     return MCLMCState(
         position=x_initial,
@@ -53,7 +54,7 @@ def init(x_initial: ArrayLike, logdensity_fn, rng_key):
         logdensity_grad=g,
     )
 
-def build_kernel(grad_logp, integrator, transform, L, step_size, inverse_mass_matrix):
+def build_kernel(grad_logp, integrator, transform, inverse_mass_matrix):
     
     """Build a HMC kernel.
 
@@ -78,9 +79,9 @@ def build_kernel(grad_logp, integrator, transform, L, step_size, inverse_mass_ma
     """
     step = integrator(T=integrators.update_position_mclmc(grad_logp), V=integrators.update_momentum_mclmc, inverse_mass_matrix=inverse_mass_matrix)
 
-    def kernel(rng_key: PRNGKey, state: MCLMCState) -> tuple[MCLMCState, MCLMCInfo]:
+    def kernel(rng_key: PRNGKey, state: MCLMCState,  L : float, step_size : float) -> tuple[MCLMCState, MCLMCInfo]:
         xx, uu, ll, gg, kinetic_change = step(state, step_size)
-        jax.debug.print("🤯 {x} new 🤯", x=ll)
+        # jax.debug.print("🤯 {x} new 🤯", x=(kinetic_change, ll, state.logdensity))
         
         
         dim = xx.shape[0]
@@ -92,6 +93,7 @@ def build_kernel(grad_logp, integrator, transform, L, step_size, inverse_mass_ma
             transformed_x=transform(xx),
             logdensity=ll,
             dE=kinetic_change - ll + state.logdensity,
+            kinetic_change=kinetic_change
         )
 
     return kernel
@@ -166,12 +168,15 @@ class mclmc:
     ) -> SamplingAlgorithm:
         grad_logp = jax.value_and_grad(logdensity_fn)
 
-        kernel = cls.build_kernel(grad_logp, integrator, transform, L, step_size, inverse_mass_matrix)
+        kernel = cls.build_kernel(grad_logp, integrator, transform, inverse_mass_matrix)
+
+        def update_fn(rng_key, state):
+          return kernel(rng_key, state, L, step_size)
 
         def init_fn(position: ArrayLike):
             return cls.init(position, logdensity_fn, jax.random.PRNGKey(0))
 
-        return SamplingAlgorithm(init_fn, kernel)
+        return SamplingAlgorithm(init_fn, update_fn)
 
 
 ###
