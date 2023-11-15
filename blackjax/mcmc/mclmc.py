@@ -54,7 +54,7 @@ def init(x_initial: ArrayLike, logdensity_fn, rng_key):
         logdensity_grad=g,
     )
 
-def build_kernel(grad_logp, integrator, transform, inverse_mass_matrix):
+def build_kernel(grad_logp, integrator, transform):
     
     """Build a HMC kernel.
 
@@ -68,7 +68,6 @@ def build_kernel(grad_logp, integrator, transform, inverse_mass_matrix):
       the momentum decoherence rate
     step_size
       step size of the integrator
-    inverse mass matrix
         
     Returns
     -------
@@ -77,7 +76,7 @@ def build_kernel(grad_logp, integrator, transform, inverse_mass_matrix):
     information about the transition.
 
     """
-    step = integrator(T=integrators.update_position_mclmc(grad_logp), V=integrators.update_momentum_mclmc, inverse_mass_matrix=inverse_mass_matrix)
+    step = integrator(T=integrators.update_position_mclmc(grad_logp), V=integrators.update_momentum_mclmc)
 
     def kernel(rng_key: PRNGKey, state: MCLMCState,  L : float, step_size : float) -> tuple[MCLMCState, MCLMCInfo]:
         xx, uu, ll, gg, kinetic_change = step(state, step_size)
@@ -121,7 +120,6 @@ class mclmc:
             transform=lambda x: x,
             L=L,
             step_size=step_size
-            inverse mass matrix=inverse_mass_matrix
         )
         state = mclmc.init(position)
         new_state, info = mclmc.step(rng_key, state)
@@ -138,14 +136,11 @@ class mclmc:
     logdensity_fn
         The log-density function we wish to draw samples from.
     transform
-        The value to use for the inverse mass matrix when drawing a value for
-        the momentum and computing the kinetic energy.
+        A function to perform on the samples drawn from the target distribution
     L
       the momentum decoherence rate
     step_size
       step size of the integrator
-    inverse mass matrix
-      Paramters
     integrator
       an integrator. We recommend using the default here.
 
@@ -163,12 +158,11 @@ class mclmc:
         transform: Callable,
         L,
         step_size,
-        inverse_mass_matrix,
         integrator=integrators.minimal_norm,
     ) -> SamplingAlgorithm:
         grad_logp = jax.value_and_grad(logdensity_fn)
 
-        kernel = cls.build_kernel(grad_logp, integrator, transform, inverse_mass_matrix)
+        kernel = cls.build_kernel(grad_logp, integrator, transform)
 
         def update_fn(rng_key, state):
           return kernel(rng_key, state, L, step_size)
