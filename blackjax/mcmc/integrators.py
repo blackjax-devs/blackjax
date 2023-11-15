@@ -254,10 +254,10 @@ def minimal_norm(T, V):
         """Integrator from https://arxiv.org/pdf/hep-lat/0505020.pdf, see Equation 20."""
 
         # V T V T V
-        # jax.debug.print("🤯 {x} inside integrator 1 🤯", x=(state.momentum, state.logdensity_grad))
+        jax.debug.print("🤯 {x} inside integrator 1 🤯", x=(state.momentum, state.logdensity_grad))
         uu, r1 = jax.tree_util.tree_map(lambda u, g : V(step_size * lambda_c, u, g), state.momentum, 
         state.logdensity_grad)
-        # jax.debug.print("🤯 {x} inside integrator 2 🤯", x=(uu))
+        jax.debug.print("🤯 {x} inside integrator 2 🤯", x=(uu))
 
         xx, ll, gg = jax.tree_util.tree_map(lambda x, u : T(step_size, x,  0.5 * u), state.position, uu)
         uu, r2 = jax.tree_util.tree_map(lambda u, g : V(step_size * (1 - 2 * lambda_c), u, g), uu, gg)
