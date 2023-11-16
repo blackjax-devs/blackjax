@@ -516,18 +516,15 @@ def tune3(kernel, x, u, l, g, rng_key, L, eps, sigma, num_steps):
 
 def tune(kernel, num_steps: int, rng_key: PRNGKey) -> Parameters:
 
+    num_tune_step_ratio_1 = 0.1
+    num_tune_step_ratio_2 = 0.1
 
 
-    x, u, l, g, key, L, eps, sigma, steps1, steps2 = jnp.array([0.1, 0.1]), jnp.array([-0.6755803,   0.73728645]), 0.010000001, jnp.array([0.1, 0.1]), jax.random.PRNGKey(0), 1.4142135, 0.56568545, jnp.array([1., 1.]), 10, 10
+    x, u, l, g, L, eps, sigma = jnp.array([0.1, 0.1]), jnp.array([-0.6755803,   0.73728645]), 0.010000001, jnp.array([0.1, 0.1]), 1.4142135, 0.56568545, jnp.array([1., 1.])
 
-    L, eps, sigma, x, u, l, g, key = tune12(kernel, x, u, l, g, key, L, eps, sigma, steps1, steps2)
+    L, eps, sigma, x, u, l, g, key = tune12(kernel, x, u, l, g, rng_key, L, eps, sigma, int(num_steps * num_tune_step_ratio_1), int(num_steps * num_tune_step_ratio_1))
     print("L, eps post tune12", L, eps)
 
-    
-
-
-    
-    steps3 = int(num_steps * 0.1)
-    L, state = tune3(kernel, x, u, l, g, key, L, eps, sigma, steps3)
+    L, state = tune3(kernel, x, u, l, g, key, L, eps, sigma, int(num_steps * num_tune_step_ratio_2))
     print("L post tune3", L)
     return L, eps, state
