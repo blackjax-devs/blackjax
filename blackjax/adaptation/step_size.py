@@ -395,7 +395,7 @@ def nan_reject(x, u, l, g, xx, uu, ll, gg, eps, eps_max, dK):
         return nonans, *jax.tree_util.tree_map(lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old), (xx, uu, ll, gg, eps_max, dK), (x, u, l, g, eps * 0.8, 0.))
 
 
-def dynamics_adaptive(dynamics, state, L, sigma):
+def dynamics_adaptive(dynamics, state, L):
         """One step of the dynamics with the adaptive stepsize"""
 
         x, u, l, g, E, Feps, Weps, eps_max, key = state
@@ -403,19 +403,6 @@ def dynamics_adaptive(dynamics, state, L, sigma):
         eps = jnp.power(Feps/Weps, -1.0/6.0) #We use the Var[E] = O(eps^6) relation here.
         eps = (eps < eps_max) * eps + (eps > eps_max) * eps_max  # if the proposed stepsize is above the stepsize where we have seen divergences
 
-        # grad_logp = jax.value_and_grad(logdensity_fn)
-        
-
-        # print(L_given, eps, "\n\n\n")
-        # m = build_kernel(grad_logp, minimal_norm, lambda x:x, L_given, eps, sigma)
-        # dynamics = lambda x,u,l,g, key : m(jax.random.PRNGKey(0), MCLMCState(x,u,l,g))
-
-        # dynamics
-        
-        # xx, uu, ll, gg, kinetic_change, key = dynamics(x, u, g, key, L, eps, sigma)
-        # jax.debug.print("🤯 {x} x 🤯", x=(x,u,l,g, E, Feps, Weps, eps_max))
-        jax.debug.print("🤯 {x} L eps 🤯", x=(L, eps, sigma))
-        jax.debug.print("🤯 {x} x u 🤯", x=(x,u, g))
         state, info = dynamics(jax.random.PRNGKey(0), MCLMCState(x, u, -l, -g), L=L, step_size=eps)
         
         xx, uu, ll, gg = state
@@ -445,21 +432,18 @@ def dynamics_adaptive(dynamics, state, L, sigma):
 
         return xx, uu, ll, gg, EE, Feps, Weps, eps_max, key, eps * success
 
-def tune12(kernel,x, u, l, g, random_key, L_given, eps, sigma_given, num_steps1, num_steps2):
+def tune12(kernel,x, u, l, g, random_key, L_given, eps, num_steps1, num_steps2):
         """cheap hyperparameter tuning"""
 
         # mclmc = blackjax.mclmc(
         # logdensity_fn=logdensity_fn, transform=lambda x: x, L=params.L, step_size=params.step_size, inverse_mass_matrix=params.inverse_mass_matrix
         # )
-        
-
-        sigma = sigma_given
-        
+                
         def step(state, outer_weight):
             """one adaptive step of the dynamics"""
             # x,u,l,g = state
             # E, Feps, Weps, eps_max = 1.0,1.0,1.0,1.0
-            x, u, l, g, E, Feps, Weps, eps_max, key, eps = dynamics_adaptive(kernel, state[0], L, sigma)
+            x, u, l, g, E, Feps, Weps, eps_max, key, eps = dynamics_adaptive(kernel, state[0], L)
             W, F1, F2 = state[1]
             w = outer_weight * eps
             zero_prevention = 1-outer_weight
@@ -487,11 +471,10 @@ def tune12(kernel,x, u, l, g, random_key, L_given, eps, sigma_given, num_steps1,
             L = jnp.sqrt(sigma2 * x.shape[0])
 
         xx, uu, ll, gg, key = state[0][0], state[0][1], state[0][2], state[0][3], state[0][-1] # the final state
-        return L, eps[-1], sigma, xx, uu, ll, gg, key #return the tuned hyperparameters and the final state
+        return L, eps[-1], xx, uu, ll, gg, key #return the tuned hyperparameters and the final state
 
-def tune3(kernel, x, u, l, g, rng_key, L, eps, sigma, num_steps):
+def tune3(kernel, x, u, l, g, rng_key, L, eps, num_steps):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
-    print(L, eps, sigma, x,u, "initial params")
 
 
 
@@ -503,14 +486,11 @@ def tune3(kernel, x, u, l, g, rng_key, L, eps, sigma, num_steps):
         lambda s, k: (kernel(k, s, L, eps)), MCLMCState(x,u,-l,-g), keys
     )
 
-    # state, info = kernel(jax.random.PRNGKey(0), MCLMCState(x, u, l, g), L=L, step_size=eps)
-    # xx,uu,ll,gg = state
     X = info.transformed_x
     
-        # sample_full(num_steps, x, u, l, g, random_key, L, eps, sigma)
     ESS = ess_corr(X)
     Lfactor = 0.4
-    Lnew = Lfactor * eps / ESS # = 0.4 * correlation length
+    Lnew = Lfactor * eps / ESS
     print(ESS, "ess", X, Lfactor, eps)
     return Lnew, state
 
@@ -520,11 +500,11 @@ def tune(kernel, num_steps: int, rng_key: PRNGKey) -> Parameters:
     num_tune_step_ratio_2 = 0.1
 
 
-    x, u, l, g, L, eps, sigma = jnp.array([0.1, 0.1]), jnp.array([-0.6755803,   0.73728645]), 0.010000001, jnp.array([0.1, 0.1]), 1.4142135, 0.56568545, jnp.array([1., 1.])
+    x, u, l, g, L, eps = jnp.array([0.1, 0.1]), jnp.array([-0.6755803,   0.73728645]), 0.010000001, jnp.array([0.1, 0.1]), 1.4142135, 0.56568545
 
-    L, eps, sigma, x, u, l, g, key = tune12(kernel, x, u, l, g, rng_key, L, eps, sigma, int(num_steps * num_tune_step_ratio_1), int(num_steps * num_tune_step_ratio_1))
+    L, eps, x, u, l, g, key = tune12(kernel, x, u, l, g, rng_key, L, eps, int(num_steps * num_tune_step_ratio_1), int(num_steps * num_tune_step_ratio_1))
     print("L, eps post tune12", L, eps)
 
-    L, state = tune3(kernel, x, u, l, g, key, L, eps, sigma, int(num_steps * num_tune_step_ratio_2))
+    L, state = tune3(kernel, x, u, l, g, key, L, eps, int(num_steps * num_tune_step_ratio_2))
     print("L post tune3", L)
     return L, eps, state
