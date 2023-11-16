@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Step size adaptation"""
+import math
 from typing import Callable, NamedTuple
 
 import jax
@@ -21,7 +22,7 @@ from scipy.fft import next_fast_len
 from blackjax.mcmc.hmc import HMCState
 from blackjax.mcmc.mclmc import MCLMCState
 from blackjax.optimizers.dual_averaging import dual_averaging
-from blackjax.types import PRNGKey
+from blackjax.types import Array, ArrayLikeTree, PRNGKey
 
 __all__ = [
     "DualAveragingAdaptationState",
@@ -271,12 +272,146 @@ def find_reasonable_step_size(
 
 #### mclmc
 
-class Parameters(NamedTuple):
+class MCLMCAdaptationState(NamedTuple):
     """Tunable parameters"""
 
     L: float
     step_size: float
 
+def effective_sample_size(
+    input_array: ArrayLikeTree, chain_axis: int = 0, sample_axis: int = 1
+) -> Array:
+    """Compute estimate of the effective sample size (ess).
+
+    Parameters
+    ----------
+    input_array:
+        An array representing multiple chains of MCMC samples. The array must
+        contains a chain dimension and a sample dimension.
+    chain_axis
+        The axis indicating the multiple chains. Default to 0.
+    sample_axis
+        The axis indicating a single chain of MCMC samples. Default to 1.
+
+    Returns
+    -------
+    NDArray of the resulting statistics (ess), with the chain and sample dimensions squeezed.
+
+    Notes
+    -----
+    The basic ess (:math:`N_{\\mathit{eff}}`) diagnostic is computed by:
+
+    .. math:: \\hat{N}_{\\mathit{eff}} = \\frac{MN}{\\hat{\\tau}}
+
+    .. math:: \\hat{\\tau} = -1 + 2 \\sum_{t'=0}^K \\hat{P}_{t'}
+
+    where :math:`M` is the number of chains, :math:`N` the number of draws,
+    :math:`\\hat{\\rho}_t` is the estimated _autocorrelation at lag :math:`t`, and
+    :math:`K` is the last integer for which :math:`\\hat{P}_{K} = \\hat{\\rho}_{2K} +
+    \\hat{\\rho}_{2K+1}` is still positive :cite:p:`stan_ess,gelman1995bayesian`.
+
+    The current implementation is similar to Stan, which uses Geyer's initial monotone sequence
+    criterion :cite:p:`geyer1992practical,geyer2011introduction`.
+
+    """
+    input_shape = input_array.shape
+    sample_axis = sample_axis if sample_axis >= 0 else len(input_shape) + sample_axis
+    num_chains = input_shape[chain_axis]
+    num_samples = input_shape[sample_axis]
+    assert (
+        num_chains > 1
+    ), "effective_sample_size as implemented only works for two or more chains."
+
+    mean_across_chain = input_array.mean(axis=sample_axis, keepdims=True)
+    print("mean 1", mean_across_chain)
+    # Compute autocovariance estimates for every lag for the input array using FFT.
+    centered_array = input_array - mean_across_chain
+    m = next_fast_len(2 * num_samples)
+    ifft_ary = jnp.fft.rfft(centered_array, n=m, axis=sample_axis)
+    ifft_ary *= jnp.conjugate(ifft_ary)
+    autocov_value = jnp.fft.irfft(ifft_ary, n=m, axis=sample_axis)
+    autocov_value = (
+        jnp.take(autocov_value, jnp.arange(num_samples), axis=sample_axis) / num_samples
+    )
+    mean_autocov_var = autocov_value.mean(chain_axis, keepdims=True)
+    mean_var0 = (
+        jnp.take(mean_autocov_var, jnp.array([0]), axis=sample_axis)
+        * num_samples
+        / (num_samples - 1.0)
+    )
+    weighted_var = mean_var0 * (num_samples - 1.0) / num_samples
+    weighted_var = jax.lax.cond(
+        num_chains > 1,
+        lambda _: weighted_var
+        + mean_across_chain.var(axis=chain_axis, ddof=1, keepdims=True),
+        lambda _: weighted_var,
+        operand=None,
+    )
+
+    # Geyer's initial positive sequence
+    num_samples_even = num_samples - num_samples % 2
+    mean_autocov_var_tp1 = jnp.take(
+        mean_autocov_var, jnp.arange(1, num_samples_even), axis=sample_axis
+    )
+    rho_hat = jnp.concatenate(
+        [
+            jnp.ones_like(mean_var0),
+            1.0 - (mean_var0 - mean_autocov_var_tp1) / weighted_var,
+        ],
+        axis=sample_axis,
+    )
+
+    rho_hat = jnp.moveaxis(rho_hat, sample_axis, 0)
+    rho_hat_even = rho_hat[0::2]
+    rho_hat_odd = rho_hat[1::2]
+
+    mask0 = (rho_hat_even + rho_hat_odd) > 0.0
+    carry_cond = jnp.ones_like(mask0[0])
+    max_t = jnp.zeros_like(mask0[0], dtype=int)
+
+    def positive_sequence_body_fn(state, mask_t):
+        t, carry_cond, max_t = state
+        next_mask = carry_cond & mask_t
+        next_max_t = jnp.where(next_mask, jnp.ones_like(max_t) * t, max_t)
+        return (t + 1, next_mask, next_max_t), next_mask
+
+    (*_, max_t_next), mask = jax.lax.scan(
+        positive_sequence_body_fn, (0, carry_cond, max_t), mask0
+    )
+    indices = jnp.indices(max_t_next.shape)
+    indices = tuple([max_t_next + 1] + [indices[i] for i in range(max_t_next.ndim)])
+    rho_hat_odd = jnp.where(mask, rho_hat_odd, jnp.zeros_like(rho_hat_odd))
+    # improve estimation
+    mask_even = mask.at[indices].set(rho_hat_even[indices] > 0)
+    rho_hat_even = jnp.where(mask_even, rho_hat_even, jnp.zeros_like(rho_hat_even))
+
+    # Geyer's initial monotone sequence
+    def monotone_sequence_body_fn(rho_hat_sum_tm1, rho_hat_sum_t):
+        update_mask = rho_hat_sum_t > rho_hat_sum_tm1
+        next_rho_hat_sum_t = jnp.where(update_mask, rho_hat_sum_tm1, rho_hat_sum_t)
+        return next_rho_hat_sum_t, (update_mask, next_rho_hat_sum_t)
+
+    rho_hat_sum = rho_hat_even + rho_hat_odd
+    _, (update_mask, update_value) = jax.lax.scan(
+        monotone_sequence_body_fn, rho_hat_sum[0], rho_hat_sum
+    )
+
+    rho_hat_even_final = jnp.where(update_mask, update_value / 2.0, rho_hat_even)
+    rho_hat_odd_final = jnp.where(update_mask, update_value / 2.0, rho_hat_odd)
+
+    # compute effective sample size
+    ess_raw = num_chains * num_samples
+    tau_hat = (
+        -1.0
+        + 2.0 * jnp.sum(rho_hat_even_final + rho_hat_odd_final, axis=0)
+        - rho_hat_even_final[indices]
+    )
+
+    tau_hat = jnp.maximum(tau_hat, 1 / jnp.log10(ess_raw))
+    ess = ess_raw / tau_hat
+    print("tau hat", ess)
+
+    return ess.squeeze()
 
 def ess_corr(x):
     """Taken from: https://blackjax-devs.github.io/blackjax/diagnostics.html
@@ -292,6 +427,7 @@ def ess_corr(x):
     num_samples = input_array.shape[1]
 
     mean_across_chain = input_array.mean(axis=1, keepdims=True)
+    print("mean 2", mean_across_chain)
     # Compute autocovariance estimates for every lag for the input array using FFT.
     centered_array = input_array - mean_across_chain
     m = next_fast_len(2 * num_samples)
@@ -379,21 +515,15 @@ def ess_corr(x):
 
     ### my part (combine all dimensions): ###
     neff = ess.squeeze() / num_samples
+    print("tau hat", ess, num_samples, neff)
     return 1.0 / jnp.average(1 / neff)
 
-
-# ?
-# tuning()
-num_steps = 100
-initial_params = Parameters(1.9913111, 0.6458658)
 
 def nan_reject(x, u, l, g, xx, uu, ll, gg, eps, eps_max, dK):
         """if there are nans, let's reduce the stepsize, and not update the state. The function returns the old state in this case."""
         
         nonans = jnp.all(jnp.isfinite(xx))
-
         return nonans, *jax.tree_util.tree_map(lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old), (xx, uu, ll, gg, eps_max, dK), (x, u, l, g, eps * 0.8, 0.))
-
 
 def dynamics_adaptive(dynamics, state, L):
         """One step of the dynamics with the adaptive stepsize"""
@@ -403,11 +533,10 @@ def dynamics_adaptive(dynamics, state, L):
         eps = jnp.power(Feps/Weps, -1.0/6.0) #We use the Var[E] = O(eps^6) relation here.
         eps = (eps < eps_max) * eps + (eps > eps_max) * eps_max  # if the proposed stepsize is above the stepsize where we have seen divergences
 
-        state, info = dynamics(jax.random.PRNGKey(0), MCLMCState(x, u, -l, -g), L=L, step_size=eps)
+        state, info = dynamics(jax.random.PRNGKey(0), MCLMCState(x, u, l, g), L=L, step_size=eps)
         
         xx, uu, ll, gg = state
-        ll, gg = -ll, -gg
-        # jax.debug.print("🤯 {x} xx uu 🤯", x=(xx,uu))
+        # ll, gg = -ll, -gg
         kinetic_change = info.kinetic_change
 
         varEwanted = 5e-4
@@ -417,12 +546,10 @@ def dynamics_adaptive(dynamics, state, L):
 
 
         # step updating
-        # jax.debug.print("🤯 {x} L eps 🤯", x=(x, u, l, g, xx, uu, ll, gg, eps, eps_max, kinetic_change))
         success, xx, uu, ll, gg, eps_max, kinetic_change = nan_reject(x, u, l, g, xx, uu, ll, gg, eps, eps_max, kinetic_change)
 
 
         DE = info.dE  # energy difference
-        # jax.debug.print("🤯 {x} DE 🤯", x=(DE, kinetic_change))
         EE = E + DE  # energy
         # Warning: var = 0 if there were nans, but we will give it a very small weight
         xi = ((DE ** 2) / (xx.shape[0] * varEwanted)) + 1e-8  # 1e-8 is added to avoid divergences in log xi
@@ -432,17 +559,11 @@ def dynamics_adaptive(dynamics, state, L):
 
         return xx, uu, ll, gg, EE, Feps, Weps, eps_max, key, eps * success
 
-def tune12(kernel,x, u, l, g, random_key, L_given, eps, num_steps1, num_steps2):
+def tune12(kernel,x, u, l, g, random_key, L, eps, num_steps1, num_steps2):
         """cheap hyperparameter tuning"""
-
-        # mclmc = blackjax.mclmc(
-        # logdensity_fn=logdensity_fn, transform=lambda x: x, L=params.L, step_size=params.step_size, inverse_mass_matrix=params.inverse_mass_matrix
-        # )
                 
         def step(state, outer_weight):
             """one adaptive step of the dynamics"""
-            # x,u,l,g = state
-            # E, Feps, Weps, eps_max = 1.0,1.0,1.0,1.0
             x, u, l, g, E, Feps, Weps, eps_max, key, eps = dynamics_adaptive(kernel, state[0], L)
             W, F1, F2 = state[1]
             w = outer_weight * eps
@@ -452,8 +573,6 @@ def tune12(kernel,x, u, l, g, random_key, L_given, eps, num_steps1, num_steps2):
             W += w
 
             return ((x, u, l, g, E, Feps, Weps, eps_max, key), (W, F1, F2)), eps
-
-        L = L_given
 
         # we use the last num_steps2 to compute the diagonal preconditioner
         outer_weights = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
@@ -470,41 +589,36 @@ def tune12(kernel,x, u, l, g, random_key, L_given, eps, num_steps1, num_steps2):
 
             L = jnp.sqrt(sigma2 * x.shape[0])
 
-        xx, uu, ll, gg, key = state[0][0], state[0][1], state[0][2], state[0][3], state[0][-1] # the final state
-        return L, eps[-1], xx, uu, ll, gg, key #return the tuned hyperparameters and the final state
+        xx, uu, ll, gg, _, _, _, _, _ = state[0] # the final state
+        return L, eps[-1], MCLMCState(xx, uu, ll, gg) #return the tuned hyperparameters and the final state
 
-def tune3(kernel, x, u, l, g, rng_key, L, eps, num_steps):
+def tune3(kernel, state, rng_key, L, eps, num_steps):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
 
-
-    
-    
-    keys = jnp.array([jax.random.PRNGKey(0)]*num_steps)
-
     state, info = jax.lax.scan(
-        lambda s, k: (kernel(k, s, L, eps)), MCLMCState(x,u,-l,-g), keys
+        lambda s, k: (kernel(k, s, L, eps)), state, jax.random.split(rng_key, num_steps)
     )
-
-    X = info.transformed_x
     
-    ESS = ess_corr(X)
     Lfactor = 0.4
-    Lnew = Lfactor * eps / ESS
-    print(ESS, "ess", X, Lfactor, eps)
+    ESS2 = effective_sample_size(info.transformed_x)
+    neff = ESS2.squeeze() / info.transformed_x.shape[0]
+    print("neff", neff, info.transformed_x.shape[0])
+    ESS_alt = 1.0 / jnp.average(1 / neff)
+    print(ess_corr(info.transformed_x), ESS_alt, "\n\nESSse\n\n")
+    Lnew = Lfactor * eps / ess_corr(info.transformed_x)
     return Lnew, state
 
-def tune(kernel, num_steps: int, rng_key: PRNGKey) -> Parameters:
+def tune(kernel, num_steps: int, rng_key: PRNGKey, params : MCLMCAdaptationState) -> tuple[MCLMCAdaptationState, MCLMCState]:
 
     num_tune_step_ratio_1 = 0.1
     num_tune_step_ratio_2 = 0.1
 
+    x, u, l, g = jnp.array([0.1, 0.1]), jnp.array([-0.6755803,   0.73728645]), -0.010000001, -jnp.array([0.1, 0.1])
 
-    x, u, l, g, L, eps = jnp.array([0.1, 0.1]), jnp.array([-0.6755803,   0.73728645]), 0.010000001, jnp.array([0.1, 0.1]), 1.4142135, 0.56568545
+    tune1_key, tune2_key = jax.random.split(rng_key)
 
-    L, eps, x, u, l, g, key = tune12(kernel, x, u, l, g, rng_key, L, eps, int(num_steps * num_tune_step_ratio_1), int(num_steps * num_tune_step_ratio_1))
-    print("L, eps post tune12", L, eps)
+    L, eps, state = tune12(kernel, x, u, l, g, tune1_key, params.L, params.step_size, int(num_steps * num_tune_step_ratio_1), int(num_steps * num_tune_step_ratio_1))
 
-    L, state = tune3(kernel, x, u, l, g, key, L, eps, int(num_steps * num_tune_step_ratio_2))
-    print("L post tune3", L)
-    return L, eps, state
+    L, state = tune3(kernel, state, tune2_key, L, eps, int(num_steps * num_tune_step_ratio_2))
+    return MCLMCAdaptationState(L, eps), state
