@@ -13,6 +13,7 @@
 # limitations under the License.
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
 import functools
+import itertools
 from typing import Callable, NamedTuple
 
 import jax
@@ -249,39 +250,39 @@ def yoshida(
     return one_step
 
 
-def minimal_norm(O1, O2):
-    lambda_c = 0.1931833275037836  # critical value of the lambda parameter for the minimal norm integrator
+# def palindromic_sequence(s):
+    
+#     return lambda O1, O2 : list(itertools.zip_longest(itertools.cycle([O1, O2]), s))
 
+# print(palindromic_sequence([1,2])('f','g'))
+
+# minimal_norm_sequence = palindromic_sequence([0.1931833275037836, 1., 1.- 2.*0.1931833275037836])
+
+minimal_norm_sequence = lambda O1, O2 : [
+        (O1, 0.1931833275037836),
+        (O2, 1.), 
+        (O1, 1.- 2.*0.1931833275037836), 
+        (O2, 1.), 
+        (O1, 0.1931833275037836), 
+        ]
+
+
+def make_integrator(O1, O2, order):
+
+    sequence = order(O1,O2)
+    
     def step(state: IntegratorState, step_size):
         """Integrator from https://arxiv.org/pdf/hep-lat/0505020.pdf, see Equation 20."""
 
-        # V T V T V
-        # jax.debug.print("🤯 {x} inside integrator 1 🤯", x=(state.momentum, state.logdensity_grad))
-        uu, r1 = jax.tree_util.tree_map(
-            lambda x, u, g: O1(step_size * lambda_c)(x, u, g),
-            state.position,
-            state.momentum,
-            state.logdensity_grad,
-        )
-        # jax.debug.print("🤯 {x} inside integrator 2 🤯", x=(uu))
+        xx, uu, ll, gg = state
+        total_r = 0
 
-        xx, _, ll, gg = jax.tree_util.tree_map(
-            lambda x, u: O2(step_size, x, u), state.position, uu*0.5
-        )
-        uu, r2 = jax.tree_util.tree_map(
-            lambda x, u, g: O1(step_size * (1 - 2 * lambda_c))(x, u, g), xx, uu, gg
-        )
-        xx, _, ll, gg = jax.tree_util.tree_map(
-            lambda x, u: O2(step_size, x, u), xx, uu*0.5
-        )
-        uu, r3 = jax.tree_util.tree_map(
-            lambda x, u, g: O1(step_size * lambda_c)(x, u, g), xx, uu, gg
-        )
+        for O,factor in sequence:
+            xx, uu, ll, gg, r = jax.tree_util.tree_map(O(step_size*factor), xx, uu, ll, gg)
+            total_r += r
 
-        # kinetic energy change
-        kinetic_change = (r1 + r2 + r3) * (uu.shape[0] - 1)
-
-        return xx, uu, ll, gg, kinetic_change
+        kinetic_change = jax.numpy.sum(total_r)
+        return IntegratorState(xx, uu, ll, gg), kinetic_change
 
     return step
 
@@ -289,12 +290,14 @@ def minimal_norm(O1, O2):
 def update_position_mclmc(grad_logp):
     """The position updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)"""
 
-    def update(step_size, x, u):
+    def update(step_size, x, u, l, g):
+        u *= 0.5
         xx = x + step_size * u
         ll, gg = grad_logp(xx)
-        return xx, u, ll, gg
+        u *= 2.
+        return xx, u, ll, gg, 0
 
-    return update
+    return lambda O : functools.partial(update,O)
 
 
 def update_momentum_mclmc(step_size):
@@ -303,7 +306,7 @@ def update_momentum_mclmc(step_size):
     There are no exponentials e^delta, which prevents overflows when the gradient norm is large.
     """
     
-    def update(x, u, g):
+    def update(x, u, l, g):
         g_norm = jax.numpy.sqrt(jax.numpy.sum(jax.numpy.square(g)))
         e = g / g_norm
         ue = jax.numpy.dot(u, e)
@@ -313,5 +316,75 @@ def update_momentum_mclmc(step_size):
         zeta = jax.numpy.exp(-delta)
         uu = e * (1 - zeta) * (1 + zeta + ue * (1 - zeta)) + 2 * zeta * u
         delta_r = delta - jax.numpy.log(2) + jax.numpy.log(1 + ue + (1 - ue) * zeta**2)
-        return uu / jax.numpy.sqrt(jax.numpy.sum(jax.numpy.square(uu))), delta_r
+        return x, uu / jax.numpy.sqrt(jax.numpy.sum(jax.numpy.square(uu))), l, g, delta_r
     return update
+
+minimal_norm = lambda O1, O2: make_integrator(O1, O2, minimal_norm_sequence)
+
+
+# def minimal_norm(O1, O2):
+#     lambda_c = 0.1931833275037836  # critical value of the lambda parameter for the minimal norm integrator
+
+#     def step(state: IntegratorState, step_size):
+#         """Integrator from https://arxiv.org/pdf/hep-lat/0505020.pdf, see Equation 20."""
+
+#         # V T V T V
+#         # jax.debug.print("🤯 {x} inside integrator 1 🤯", x=(state.momentum, state.logdensity_grad))
+#         uu, r1 = jax.tree_util.tree_map(
+#             lambda x, u, g: O1(step_size * lambda_c)(x, u, g),
+#             state.position,
+#             state.momentum,
+#             state.logdensity_grad,
+#         )
+#         # jax.debug.print("🤯 {x} inside integrator 2 🤯", x=(uu))
+
+#         xx, _, ll, gg = jax.tree_util.tree_map(
+#             lambda x, u: O2(step_size, x, u), state.position, uu*0.5
+#         )
+#         uu, r2 = jax.tree_util.tree_map(
+#             lambda x, u, g: O1(step_size * (1 - 2 * lambda_c))(x, u, g), xx, uu, gg
+#         )
+#         xx, _, ll, gg = jax.tree_util.tree_map(
+#             lambda x, u: O2(step_size, x, u), xx, uu*0.5
+#         )
+#         uu, r3 = jax.tree_util.tree_map(
+#             lambda x, u, g: O1(step_size * lambda_c)(x, u, g), xx, uu, gg
+#         )
+
+#         # kinetic energy change
+#         kinetic_change = (r1 + r2 + r3) * (uu.shape[0] - 1)
+
+#         return xx, uu, ll, gg, kinetic_change
+
+#     return step
+
+
+# def update_position_mclmc(grad_logp):
+#     """The position updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)"""
+
+#     def update(step_size, x, u):
+#         xx = x + step_size * u
+#         ll, gg = grad_logp(xx)
+#         return xx, u, ll, gg
+
+#     return update
+
+
+# def update_momentum_mclmc(step_size):
+#     """The momentum updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)
+#     similar to the implementation: https://github.com/gregversteeg/esh_dynamics
+#     There are no exponentials e^delta, which prevents overflows when the gradient norm is large.
+#     """
+    
+#     def update(x, u, g):
+#         g_norm = jax.numpy.sqrt(jax.numpy.sum(jax.numpy.square(g)))
+#         e = g / g_norm
+#         ue = jax.numpy.dot(u, e)
+#         # jax.debug.print("🤯 {x} inside momentum update 🤯", x=(ue))
+#         dim = u.shape[0]
+#         delta = step_size * g_norm / (dim - 1)
+#         zeta = jax.numpy.exp(-delta)
+#         uu = e * (1 - zeta) * (1 + zeta + ue * (1 - zeta)) + 2 * zeta * u
+#         delta_r = delta - jax.numpy.log(2) + jax.numpy.log(1 + ue + (1 - ue) * zeta**2)
+#         return uu / jax.numpy.sqrt(jax.numpy.sum(jax.numpy.square(uu))), delta_r
+#     return update

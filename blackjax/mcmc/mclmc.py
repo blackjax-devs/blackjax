@@ -85,9 +85,8 @@ def build_kernel(grad_logp, integrator, transform):
     def kernel(
         rng_key: PRNGKey, state: MCLMCState, L: float, step_size: float
     ) -> tuple[MCLMCState, MCLMCInfo]:
-        xx, uu, ll, gg, kinetic_change = step(state, step_size)
-        # jax.debug.print("🤯 {x} new 🤯", x=(kinetic_change, ll, state.logdensity))
-
+        (xx, uu, ll, gg), kinetic_change = step(state, step_size)
+        
         dim = xx.shape[0]
         # Langevin-like noise
         nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
@@ -97,7 +96,7 @@ def build_kernel(grad_logp, integrator, transform):
             transformed_x=transform(xx),
             logdensity=ll,
             dE=kinetic_change - ll + state.logdensity,
-            kinetic_change=kinetic_change,
+            kinetic_change=kinetic_change*(uu.shape[0] - 1),
         )
 
     return kernel
