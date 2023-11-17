@@ -248,7 +248,7 @@ def yoshida(
     return one_step
 
 
-def minimal_norm(T, V):
+def minimal_norm(update_position, update_momentum):
     lambda_c = 0.1931833275037836  # critical value of the lambda parameter for the minimal norm integrator
 
     def step(state: IntegratorState, step_size):
@@ -257,23 +257,23 @@ def minimal_norm(T, V):
         # V T V T V
         # jax.debug.print("🤯 {x} inside integrator 1 🤯", x=(state.momentum, state.logdensity_grad))
         uu, r1 = jax.tree_util.tree_map(
-            lambda u, g: V(step_size * lambda_c, u, g),
+            lambda u, g: update_momentum(step_size * lambda_c, u, g),
             state.momentum,
             state.logdensity_grad,
         )
         # jax.debug.print("🤯 {x} inside integrator 2 🤯", x=(uu))
 
         xx, ll, gg = jax.tree_util.tree_map(
-            lambda x, u: T(step_size, x, 0.5 * u), state.position, uu
+            lambda x, u: update_position(step_size, x, 0.5 * u), state.position, uu
         )
         uu, r2 = jax.tree_util.tree_map(
-            lambda u, g: V(step_size * (1 - 2 * lambda_c), u, g), uu, gg
+            lambda u, g: update_momentum(step_size * (1 - 2 * lambda_c), u, g), uu, gg
         )
         xx, ll, gg = jax.tree_util.tree_map(
-            lambda x, u: T(step_size, x, 0.5 * u), xx, uu
+            lambda x, u: update_position(step_size, x, 0.5 * u), xx, uu
         )
         uu, r3 = jax.tree_util.tree_map(
-            lambda u, g: V(step_size * lambda_c, u, g), uu, gg
+            lambda u, g: update_momentum(step_size * lambda_c, u, g), uu, gg
         )
 
         # kinetic energy change

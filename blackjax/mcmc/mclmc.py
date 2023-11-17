@@ -78,8 +78,8 @@ def build_kernel(grad_logp, integrator, transform):
 
     """
     step = integrator(
-        T=integrators.update_position_mclmc(grad_logp),
-        V=integrators.update_momentum_mclmc,
+        update_position=integrators.update_position_mclmc(grad_logp),
+        update_momentum=integrators.update_momentum_mclmc,
     )
 
     def kernel(
