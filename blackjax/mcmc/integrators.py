@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
+import functools
 from typing import Callable, NamedTuple
 
 import jax
@@ -248,7 +249,7 @@ def yoshida(
     return one_step
 
 
-def minimal_norm(update_position, update_momentum):
+def minimal_norm(O1, O2):
     lambda_c = 0.1931833275037836  # critical value of the lambda parameter for the minimal norm integrator
 
     def step(state: IntegratorState, step_size):
@@ -257,23 +258,24 @@ def minimal_norm(update_position, update_momentum):
         # V T V T V
         # jax.debug.print("🤯 {x} inside integrator 1 🤯", x=(state.momentum, state.logdensity_grad))
         uu, r1 = jax.tree_util.tree_map(
-            lambda u, g: update_momentum(step_size * lambda_c, u, g),
+            lambda x, u, g: O1(step_size * lambda_c)(x, u, g),
+            state.position,
             state.momentum,
             state.logdensity_grad,
         )
         # jax.debug.print("🤯 {x} inside integrator 2 🤯", x=(uu))
 
-        xx, ll, gg = jax.tree_util.tree_map(
-            lambda x, u: update_position(step_size, x, 0.5 * u), state.position, uu
+        xx, _, ll, gg = jax.tree_util.tree_map(
+            lambda x, u: O2(step_size, x, u), state.position, uu*0.5
         )
         uu, r2 = jax.tree_util.tree_map(
-            lambda u, g: update_momentum(step_size * (1 - 2 * lambda_c), u, g), uu, gg
+            lambda x, u, g: O1(step_size * (1 - 2 * lambda_c))(x, u, g), xx, uu, gg
         )
-        xx, ll, gg = jax.tree_util.tree_map(
-            lambda x, u: update_position(step_size, x, 0.5 * u), xx, uu
+        xx, _, ll, gg = jax.tree_util.tree_map(
+            lambda x, u: O2(step_size, x, u), xx, uu*0.5
         )
         uu, r3 = jax.tree_util.tree_map(
-            lambda u, g: update_momentum(step_size * lambda_c, u, g), uu, gg
+            lambda x, u, g: O1(step_size * lambda_c)(x, u, g), xx, uu, gg
         )
 
         # kinetic energy change
@@ -290,23 +292,26 @@ def update_position_mclmc(grad_logp):
     def update(step_size, x, u):
         xx = x + step_size * u
         ll, gg = grad_logp(xx)
-        return xx, ll, gg
+        return xx, u, ll, gg
 
     return update
 
 
-def update_momentum_mclmc(step_size, u, g):
+def update_momentum_mclmc(step_size):
     """The momentum updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)
     similar to the implementation: https://github.com/gregversteeg/esh_dynamics
     There are no exponentials e^delta, which prevents overflows when the gradient norm is large.
     """
-    g_norm = jax.numpy.sqrt(jax.numpy.sum(jax.numpy.square(g)))
-    e = g / g_norm
-    ue = jax.numpy.dot(u, e)
-    # jax.debug.print("🤯 {x} inside momentum update 🤯", x=(ue))
-    dim = u.shape[0]
-    delta = step_size * g_norm / (dim - 1)
-    zeta = jax.numpy.exp(-delta)
-    uu = e * (1 - zeta) * (1 + zeta + ue * (1 - zeta)) + 2 * zeta * u
-    delta_r = delta - jax.numpy.log(2) + jax.numpy.log(1 + ue + (1 - ue) * zeta**2)
-    return uu / jax.numpy.sqrt(jax.numpy.sum(jax.numpy.square(uu))), delta_r
+    
+    def update(x, u, g):
+        g_norm = jax.numpy.sqrt(jax.numpy.sum(jax.numpy.square(g)))
+        e = g / g_norm
+        ue = jax.numpy.dot(u, e)
+        # jax.debug.print("🤯 {x} inside momentum update 🤯", x=(ue))
+        dim = u.shape[0]
+        delta = step_size * g_norm / (dim - 1)
+        zeta = jax.numpy.exp(-delta)
+        uu = e * (1 - zeta) * (1 + zeta + ue * (1 - zeta)) + 2 * zeta * u
+        delta_r = delta - jax.numpy.log(2) + jax.numpy.log(1 + ue + (1 - ue) * zeta**2)
+        return uu / jax.numpy.sqrt(jax.numpy.sum(jax.numpy.square(uu))), delta_r
+    return update
