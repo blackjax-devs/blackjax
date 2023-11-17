@@ -21,20 +21,21 @@ import blackjax.mcmc.integrators as integrators
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import Array, ArrayLike, PRNGKey
 
-__all__ = ["MCLMCState", "MCLMCInfo", "init", "build_kernel", "mclmc", "Parameters"]
+__all__ = ["MCLMCState", "MCLMCInfo", "init", "build_kernel", "mclmc"]
 
 MCLMCState = integrators.IntegratorState
 
+
 class MCLMCInfo(NamedTuple):
     """Additional information on the MCLMC transition.
-    
+
     transformed_x
       The value of the samples after a transformation (e.g. projection onto lower dim subspace)
     logdensity
       logdensity at given step
     dE
       energy difference
-    
+
     """
 
     transformed_x: Array
@@ -46,7 +47,7 @@ class MCLMCInfo(NamedTuple):
 def init(x_initial: ArrayLike, logdensity_fn, rng_key):
     l, g = jax.value_and_grad(logdensity_fn)(x_initial)
     # jax.debug.print("🤯 {x} initial momentum 🤯", x=random_unit_vector(rng_key, dim=x_initial.shape[0]))
-    
+
     return MCLMCState(
         position=x_initial,
         momentum=random_unit_vector(rng_key, dim=x_initial.shape[0]),
@@ -54,8 +55,8 @@ def init(x_initial: ArrayLike, logdensity_fn, rng_key):
         logdensity_grad=g,
     )
 
+
 def build_kernel(grad_logp, integrator, transform):
-    
     """Build a HMC kernel.
 
     Parameters
@@ -68,7 +69,7 @@ def build_kernel(grad_logp, integrator, transform):
       the momentum decoherence rate
     step_size
       step size of the integrator
-        
+
     Returns
     -------
     A kernel that takes a rng_key and a Pytree that contains the current state
@@ -76,13 +77,17 @@ def build_kernel(grad_logp, integrator, transform):
     information about the transition.
 
     """
-    step = integrator(T=integrators.update_position_mclmc(grad_logp), V=integrators.update_momentum_mclmc)
+    step = integrator(
+        T=integrators.update_position_mclmc(grad_logp),
+        V=integrators.update_momentum_mclmc,
+    )
 
-    def kernel(rng_key: PRNGKey, state: MCLMCState,  L : float, step_size : float) -> tuple[MCLMCState, MCLMCInfo]:
+    def kernel(
+        rng_key: PRNGKey, state: MCLMCState, L: float, step_size: float
+    ) -> tuple[MCLMCState, MCLMCInfo]:
         xx, uu, ll, gg, kinetic_change = step(state, step_size)
         # jax.debug.print("🤯 {x} new 🤯", x=(kinetic_change, ll, state.logdensity))
-        
-        
+
         dim = xx.shape[0]
         # Langevin-like noise
         nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
@@ -92,11 +97,10 @@ def build_kernel(grad_logp, integrator, transform):
             transformed_x=transform(xx),
             logdensity=ll,
             dE=kinetic_change - ll + state.logdensity,
-            kinetic_change=kinetic_change
+            kinetic_change=kinetic_change,
         )
 
     return kernel
-
 
 
 class mclmc:
@@ -165,7 +169,7 @@ class mclmc:
         kernel = cls.build_kernel(grad_logp, integrator, transform)
 
         def update_fn(rng_key, state):
-          return kernel(rng_key, state, L, step_size)
+            return kernel(rng_key, state, L, step_size)
 
         def init_fn(position: ArrayLike):
             return cls.init(position, logdensity_fn, jax.random.PRNGKey(0))
@@ -184,10 +188,7 @@ def random_unit_vector(rng_key, dim):
     return u
 
 
-
-
 def partially_refresh_momentum(u, rng_key, nu):
     """Adds a small noise to u and normalizes."""
     z = nu * jax.random.normal(rng_key, shape=(u.shape[0],))
     return (u + z) / jnp.sqrt(jnp.sum(jnp.square(u + z)))
-

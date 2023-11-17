@@ -10,8 +10,8 @@ from .mcmc.elliptical_slice import elliptical_slice
 from .mcmc.ghmc import ghmc
 from .mcmc.hmc import dynamic_hmc, hmc
 from .mcmc.mala import mala
-from .mcmc.mclmc import mclmc
 from .mcmc.marginal_latent_gaussian import mgrad_gaussian
+from .mcmc.mclmc import mclmc
 from .mcmc.nuts import nuts
 from .mcmc.periodic_orbital import orbital_hmc
 from .mcmc.random_walk import additive_step_random_walk, irmh, rmh

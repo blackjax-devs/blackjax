@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Step size adaptation"""
-import math
 from typing import Callable, NamedTuple
 
 import jax
@@ -262,21 +261,12 @@ def find_reasonable_step_size(
     return rss_state.step_size
 
 
-
-
-
-
-
-
-
-
-#### mclmc
-
 class MCLMCAdaptationState(NamedTuple):
-    """Tunable parameters"""
+    """Tunable parameters for MCLMC"""
 
     L: float
     step_size: float
+
 
 def effective_sample_size(
     input_array: ArrayLikeTree, chain_axis: int = 0, sample_axis: int = 1
@@ -413,6 +403,7 @@ def effective_sample_size(
 
     return ess.squeeze()
 
+
 def ess_corr(x):
     """Taken from: https://blackjax-devs.github.io/blackjax/diagnostics.html
     shape(x) = (num_samples, d)"""
@@ -513,93 +504,125 @@ def ess_corr(x):
     tau_hat = jnp.maximum(tau_hat, 1 / jnp.log10(ess_raw))
     ess = ess_raw / tau_hat
 
-    ### my part (combine all dimensions): ###
     neff = ess.squeeze() / num_samples
     print("tau hat", ess, num_samples, neff)
     return 1.0 / jnp.average(1 / neff)
 
 
 def nan_reject(x, u, l, g, xx, uu, ll, gg, eps, eps_max, dK):
-        """if there are nans, let's reduce the stepsize, and not update the state. The function returns the old state in this case."""
-        
-        nonans = jnp.all(jnp.isfinite(xx))
-        return nonans, *jax.tree_util.tree_map(lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old), (xx, uu, ll, gg, eps_max, dK), (x, u, l, g, eps * 0.8, 0.))
+    """if there are nans, let's reduce the stepsize, and not update the state. The function returns the old state in this case."""
+
+    nonans = jnp.all(jnp.isfinite(xx))
+    return nonans, *jax.tree_util.tree_map(
+        lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old),
+        (xx, uu, ll, gg, eps_max, dK),
+        (x, u, l, g, eps * 0.8, 0.0),
+    )
+
 
 def dynamics_adaptive(dynamics, state, L):
-        """One step of the dynamics with the adaptive stepsize"""
+    """One step of the dynamics with the adaptive stepsize"""
 
-        x, u, l, g, E, Feps, Weps, eps_max, key = state
+    x, u, l, g, E, Feps, Weps, eps_max, key = state
 
-        eps = jnp.power(Feps/Weps, -1.0/6.0) #We use the Var[E] = O(eps^6) relation here.
-        eps = (eps < eps_max) * eps + (eps > eps_max) * eps_max  # if the proposed stepsize is above the stepsize where we have seen divergences
+    eps = jnp.power(
+        Feps / Weps, -1.0 / 6.0
+    )  # We use the Var[E] = O(eps^6) relation here.
+    eps = (eps < eps_max) * eps + (
+        eps > eps_max
+    ) * eps_max  # if the proposed stepsize is above the stepsize where we have seen divergences
 
-        state, info = dynamics(jax.random.PRNGKey(0), MCLMCState(x, u, l, g), L=L, step_size=eps)
-        
-        xx, uu, ll, gg = state
-        # ll, gg = -ll, -gg
-        kinetic_change = info.kinetic_change
+    state, info = dynamics(
+        jax.random.PRNGKey(0), MCLMCState(x, u, l, g), L=L, step_size=eps
+    )
 
-        varEwanted = 5e-4
-        sigma_xi= 1.5        
-        neff = 150 # effective number of steps used to determine the stepsize in the adaptive step
-        gamma = (neff - 1.0) / (neff + 1.0) # forgeting factor in the adaptive step
+    xx, uu, ll, gg = state
+    # ll, gg = -ll, -gg
+    kinetic_change = info.kinetic_change
+
+    varEwanted = 5e-4
+    sigma_xi = 1.5
+    neff = 150  # effective number of steps used to determine the stepsize in the adaptive step
+    gamma = (neff - 1.0) / (neff + 1.0)  # forgeting factor in the adaptive step
+
+    # step updating
+    success, xx, uu, ll, gg, eps_max, kinetic_change = nan_reject(
+        x, u, l, g, xx, uu, ll, gg, eps, eps_max, kinetic_change
+    )
+
+    DE = info.dE  # energy difference
+    EE = E + DE  # energy
+    # Warning: var = 0 if there were nans, but we will give it a very small weight
+    xi = (
+        (DE**2) / (xx.shape[0] * varEwanted)
+    ) + 1e-8  # 1e-8 is added to avoid divergences in log xi
+    w = jnp.exp(
+        -0.5 * jnp.square(jnp.log(xi) / (6.0 * sigma_xi))
+    )  # the weight which reduces the impact of stepsizes which are much larger on much smaller than the desired one.
+    Feps = gamma * Feps + w * (
+        xi / jnp.power(eps, 6.0)
+    )  # Kalman update the linear combinations
+    Weps = gamma * Weps + w
+
+    return xx, uu, ll, gg, EE, Feps, Weps, eps_max, key, eps * success
 
 
-        # step updating
-        success, xx, uu, ll, gg, eps_max, kinetic_change = nan_reject(x, u, l, g, xx, uu, ll, gg, eps, eps_max, kinetic_change)
+def tune12(kernel, x, u, l, g, random_key, L, eps, num_steps1, num_steps2):
+    """cheap hyperparameter tuning"""
 
+    def step(state, outer_weight):
+        """one adaptive step of the dynamics"""
+        x, u, l, g, E, Feps, Weps, eps_max, key, eps = dynamics_adaptive(
+            kernel, state[0], L
+        )
+        W, F1, F2 = state[1]
+        w = outer_weight * eps
+        zero_prevention = 1 - outer_weight
+        F1 = (W * F1 + w * x) / (
+            W + w + zero_prevention
+        )  # Update <f(x)> with a Kalman filter
+        F2 = (W * F2 + w * jnp.square(x)) / (
+            W + w + zero_prevention
+        )  # Update <f(x)> with a Kalman filter
+        W += w
 
-        DE = info.dE  # energy difference
-        EE = E + DE  # energy
-        # Warning: var = 0 if there were nans, but we will give it a very small weight
-        xi = ((DE ** 2) / (xx.shape[0] * varEwanted)) + 1e-8  # 1e-8 is added to avoid divergences in log xi
-        w = jnp.exp(-0.5 * jnp.square(jnp.log(xi) / (6.0 * sigma_xi)))  # the weight which reduces the impact of stepsizes which are much larger on much smaller than the desired one.
-        Feps = gamma * Feps + w * (xi/jnp.power(eps, 6.0))  # Kalman update the linear combinations
-        Weps = gamma * Weps + w
+        return ((x, u, l, g, E, Feps, Weps, eps_max, key), (W, F1, F2)), eps
 
-        return xx, uu, ll, gg, EE, Feps, Weps, eps_max, key, eps * success
+    # we use the last num_steps2 to compute the diagonal preconditioner
+    outer_weights = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
-def tune12(kernel,x, u, l, g, random_key, L, eps, num_steps1, num_steps2):
-        """cheap hyperparameter tuning"""
-                
-        def step(state, outer_weight):
-            """one adaptive step of the dynamics"""
-            x, u, l, g, E, Feps, Weps, eps_max, key, eps = dynamics_adaptive(kernel, state[0], L)
-            W, F1, F2 = state[1]
-            w = outer_weight * eps
-            zero_prevention = 1-outer_weight
-            F1 = (W*F1 + w*x) / (W + w + zero_prevention)  # Update <f(x)> with a Kalman filter
-            F2 = (W*F2 + w*jnp.square(x)) / (W + w + zero_prevention)  # Update <f(x)> with a Kalman filter
-            W += w
+    # initial state
+    state = (
+        (x, u, l, g, 0.0, jnp.power(eps, -6.0) * 1e-5, 1e-5, jnp.inf, random_key),
+        (0.0, jnp.zeros(len(x)), jnp.zeros(len(x))),
+    )
+    # run the steps
+    state, eps = jax.lax.scan(
+        step, init=state, xs=outer_weights, length=num_steps1 + num_steps2
+    )
+    # determine L
+    if num_steps2 != 0.0:
+        F1, F2 = state[1][1], state[1][2]
+        variances = F2 - jnp.square(F1)
+        sigma2 = jnp.average(variances)
 
-            return ((x, u, l, g, E, Feps, Weps, eps_max, key), (W, F1, F2)), eps
+        L = jnp.sqrt(sigma2 * x.shape[0])
 
-        # we use the last num_steps2 to compute the diagonal preconditioner
-        outer_weights = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
+    xx, uu, ll, gg, _, _, _, _, _ = state[0]  # the final state
+    return (
+        L,
+        eps[-1],
+        MCLMCState(xx, uu, ll, gg),
+    )  # return the tuned hyperparameters and the final state
 
-        #initial state
-        state = ((x, u, l, g, 0., jnp.power(eps, -6.0) * 1e-5, 1e-5, jnp.inf, random_key), (0., jnp.zeros(len(x)), jnp.zeros(len(x))))
-        # run the steps
-        state, eps = jax.lax.scan(step, init=state, xs= outer_weights, length= num_steps1 + num_steps2)
-        # determine L
-        if num_steps2 != 0.:
-            F1, F2 = state[1][1], state[1][2]
-            variances = F2 - jnp.square(F1)
-            sigma2 = jnp.average(variances)
-
-            L = jnp.sqrt(sigma2 * x.shape[0])
-
-        xx, uu, ll, gg, _, _, _, _, _ = state[0] # the final state
-        return L, eps[-1], MCLMCState(xx, uu, ll, gg) #return the tuned hyperparameters and the final state
 
 def tune3(kernel, state, rng_key, L, eps, num_steps):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
-
     state, info = jax.lax.scan(
         lambda s, k: (kernel(k, s, L, eps)), state, jax.random.split(rng_key, num_steps)
     )
-    
+
     Lfactor = 0.4
     ESS2 = effective_sample_size(info.transformed_x)
     neff = ESS2.squeeze() / info.transformed_x.shape[0]
@@ -609,16 +632,36 @@ def tune3(kernel, state, rng_key, L, eps, num_steps):
     Lnew = Lfactor * eps / ess_corr(info.transformed_x)
     return Lnew, state
 
-def tune(kernel, num_steps: int, rng_key: PRNGKey, params : MCLMCAdaptationState) -> tuple[MCLMCAdaptationState, MCLMCState]:
 
+def tune(
+    kernel, num_steps: int, rng_key: PRNGKey, params: MCLMCAdaptationState
+) -> tuple[MCLMCAdaptationState, MCLMCState]:
     num_tune_step_ratio_1 = 0.1
     num_tune_step_ratio_2 = 0.1
 
-    x, u, l, g = jnp.array([0.1, 0.1]), jnp.array([-0.6755803,   0.73728645]), -0.010000001, -jnp.array([0.1, 0.1])
+    x, u, l, g = (
+        jnp.array([0.1, 0.1]),
+        jnp.array([-0.6755803, 0.73728645]),
+        -0.010000001,
+        -jnp.array([0.1, 0.1]),
+    )
 
     tune1_key, tune2_key = jax.random.split(rng_key)
 
-    L, eps, state = tune12(kernel, x, u, l, g, tune1_key, params.L, params.step_size, int(num_steps * num_tune_step_ratio_1), int(num_steps * num_tune_step_ratio_1))
+    L, eps, state = tune12(
+        kernel,
+        x,
+        u,
+        l,
+        g,
+        tune1_key,
+        params.L,
+        params.step_size,
+        int(num_steps * num_tune_step_ratio_1),
+        int(num_steps * num_tune_step_ratio_1),
+    )
 
-    L, state = tune3(kernel, state, tune2_key, L, eps, int(num_steps * num_tune_step_ratio_2))
+    L, state = tune3(
+        kernel, state, tune2_key, L, eps, int(num_steps * num_tune_step_ratio_2)
+    )
     return MCLMCAdaptationState(L, eps), state
