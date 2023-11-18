@@ -279,10 +279,8 @@ def update_position_mclmc(grad_logp):
     """The position updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)"""
 
     def update(step_size, x, u, l, g):
-        u *= 0.5
         xx = x + step_size * u
         ll, gg = grad_logp(xx)
-        u *= 2.
         return xx, u, ll, gg, 0
 
     return lambda O : functools.partial(update,O)
@@ -309,7 +307,7 @@ def update_momentum_mclmc(step_size):
 
 minimal_norm = lambda O1, O2: make_integrator(O1, O2, minimal_norm_sequence)
 
-minimal_norm_sequence = palindromic_sequence([0.1931833275037836, 1., 1.- 2.*0.1931833275037836])
+minimal_norm_sequence = palindromic_sequence([0.1931833275037836, 0.5, 1.- 2.*0.1931833275037836])
 leapfrog_sequence = palindromic_sequence([0.5, 1.])
 yoshida_sequence = palindromic_sequence([0.11888010966548, 0.29619504261126, 0.5 - 0.11888010966548, 1 - 2 * 0.29619504261126])
 
