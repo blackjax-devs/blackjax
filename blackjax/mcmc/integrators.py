@@ -250,22 +250,11 @@ def yoshida(
     return one_step
 
 
-# def palindromic_sequence(s):
-    
-#     return lambda O1, O2 : list(itertools.zip_longest(itertools.cycle([O1, O2]), s))
-
-# print(palindromic_sequence([1,2])('f','g'))
-
-# minimal_norm_sequence = palindromic_sequence([0.1931833275037836, 1., 1.- 2.*0.1931833275037836])
-
-minimal_norm_sequence = lambda O1, O2 : [
-        (O1, 0.1931833275037836),
-        (O2, 1.), 
-        (O1, 1.- 2.*0.1931833275037836), 
-        (O2, 1.), 
-        (O1, 0.1931833275037836), 
-        ]
-
+def palindromic_sequence(s):
+    # symetrize
+    s = s[:-1] + s[::-1]
+    # zip with alternating operators
+    return lambda O1, O2 : list(zip(itertools.cycle([O1, O2]), s))
 
 def make_integrator(O1, O2, order):
 
@@ -285,7 +274,6 @@ def make_integrator(O1, O2, order):
         return IntegratorState(xx, uu, ll, gg), kinetic_change
 
     return step
-
 
 def update_position_mclmc(grad_logp):
     """The position updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)"""
@@ -320,6 +308,10 @@ def update_momentum_mclmc(step_size):
     return update
 
 minimal_norm = lambda O1, O2: make_integrator(O1, O2, minimal_norm_sequence)
+
+minimal_norm_sequence = palindromic_sequence([0.1931833275037836, 1., 1.- 2.*0.1931833275037836])
+leapfrog_sequence = palindromic_sequence([0.5, 1.])
+yoshida_sequence = palindromic_sequence([0.11888010966548, 0.29619504261126, 0.5 - 0.11888010966548, 1 - 2 * 0.29619504261126])
 
 
 # def minimal_norm(O1, O2):
