@@ -13,6 +13,7 @@
 # limitations under the License.
 """Step size adaptation"""
 from typing import Callable, NamedTuple
+import warnings
 
 import jax
 import jax.numpy as jnp
@@ -500,7 +501,11 @@ def tune3(kernel, state, rng_key, L, eps, num_steps):
     print("neff", neff, info.transformed_x.shape[0])
     ESS_alt = 1.0 / jnp.average(1 / neff)
     print(ess_corr(info.transformed_x), ESS_alt, "\n\nESSse\n\n")
-    Lnew = Lfactor * eps / ess_corr(info.transformed_x)
+    ESS = ess_corr(info.transformed_x) 
+    if ESS * num_steps <= 10:
+        warnings.warn("tune3 cannot be expected to work with 10 or fewer effective samples")
+    
+    Lnew = Lfactor * eps / ESS
     return Lnew, state
 
 
