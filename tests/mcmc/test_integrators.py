@@ -51,6 +51,11 @@ algorithms = {
     "velocity_verlet": {"algorithm": integrators.velocity_verlet, "precision": 1e-4},
     "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-5},
     "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-6},
+    "non_euclidean_leapfrog": {
+        "algorithm": integrators.non_euclidean_leapfrog,
+        "precision": 1e-4,
+    },
+    "minimal_norm": {"algorithm": integrators.minimal_norm, "precision": 1e-5},
 }
 
 
@@ -101,7 +106,13 @@ class IntegratorTest(chex.TestCase):
     @parameterized.parameters(
         itertools.product(
             ["free_fall", "harmonic_oscillator", "planetary_motion"],
-            ["velocity_verlet", "mclachlan", "yoshida"],
+            [
+                "velocity_verlet",
+                "mclachlan",
+                "yoshida",
+                "non_euclidean_leapfrog",
+                "minimal_norm",
+            ],
         )
     )
     def test_integrator(self, example_name, integrator_name):
@@ -120,10 +131,14 @@ class IntegratorTest(chex.TestCase):
         initial_state = integrators.IntegratorState(
             q, p, neg_potential(q), jax.grad(neg_potential)(q)
         )
+        if integrator_name in ["non_euclidean_leapfrog", "minimal_norm"]:
+            one_step = lambda _, state: step(state, step_size)[0]
+        else:
+            one_step = lambda _, state: step(state, step_size)
         final_state = jax.lax.fori_loop(
             0,
             example["num_steps"],
-            lambda _, state: step(state, step_size),
+            one_step,
             initial_state,
         )
 
