@@ -74,8 +74,8 @@ def generalized_symplectic_integrator(
 
     def one_step(state: IntegratorState, step_size: float):
         position, momentum, _, logdensity_grad = state
-        # auxiliary infomation generated during integration for diagnostics. It is updated
-        # by the momentum_update_fn and position_update_fn at each call
+        # auxiliary infomation generated during integration for diagnostics. It is
+        # updated by the momentum_update_fn and position_update_fn at each call.
         momentum_update_info = None
         position_update_info = None
         for i, coef in enumerate(coefficients[:-1]):
@@ -101,7 +101,7 @@ def generalized_symplectic_integrator(
                     coef,
                     position_update_info,
                 )
-        # Separate the last steps to short circuit the computation of the kinetic_grad
+        # Separate the last steps to short circuit the computation of the kinetic_grad.
         momentum, kinetic_grad, momentum_update_info = momentum_update_fn(
             momentum,
             logdensity_grad,
@@ -188,100 +188,74 @@ def format_euclidean_state_output(
     return IntegratorState(position, momentum, logdensity, logdensity_grad)
 
 
-def velocity_verlet(
-    logdensity_fn: Callable,
-    kinetic_energy_fn: EuclideanKineticEnergy,
-) -> Integrator:
-    """The velocity Verlet (or Verlet-Störmer) integrator.
+def generate_euclidean_integrator(cofficients):
+    def euclidean_integrator(
+        logdensity_fn: Callable, kinetic_energy_fn: EuclideanKineticEnergy
+    ) -> Integrator:
+        position_update_fn = euclidean_position_update_fn(logdensity_fn)
+        momentum_update_fn = euclidean_momentum_update_fn(kinetic_energy_fn)
+        one_step = generalized_symplectic_integrator(
+            momentum_update_fn,
+            position_update_fn,
+            cofficients,
+            format_output_fn=format_euclidean_state_output,
+        )
+        return one_step
 
-    The velocity Verlet is a two-stage palindromic integrator :cite:p:`bou2018geometric` of the form
-    (a1, b1, a2, b1, a1) with a1 = 0. It is numerically stable for values of
-    the step size that range between 0 and 2 (when the mass matrix is the
-    identity).
-
-    While the position (a1 = 0.5) and velocity Verlet are the most commonly used
-    in samplers, it is known in the numerical computation literature that the value
-    $a1 \approx 0.1932$ leads to a lower integration error :cite:p:`mclachlan1995numerical,schlick2010molecular`. The authors of :cite:p:`bou2018geometric`
-    show that the value $a1 \approx 0.21132$ leads to an even higher step acceptance
-    rate, up to 3 times higher than with the standard position verlet (p.22, Fig.4).
-
-    By choosing the velocity verlet we avoid two computations of the gradient
-    of the kinetic energy. We are trading accuracy in exchange, and it is not
-    clear whether this is the right tradeoff.
-
-    """
-    a1 = 0
-    b1 = 0.5
-    a2 = 1 - 2 * a1
-    cofficients = [b1, a2, b1]
-    position_update_fn = euclidean_position_update_fn(logdensity_fn)
-    momentum_update_fn = euclidean_momentum_update_fn(kinetic_energy_fn)
-    one_step = generalized_symplectic_integrator(
-        momentum_update_fn,
-        position_update_fn,
-        cofficients,
-        format_output_fn=format_euclidean_state_output,
-    )
-    return one_step
+    return euclidean_integrator
 
 
-def mclachlan(
-    logdensity_fn: Callable,
-    kinetic_energy_fn: EuclideanKineticEnergy,
-) -> Integrator:
-    """Two-stage palindromic symplectic integrator derived in :cite:p:`blanes2014numerical`.
+"""
+The velocity Verlet (or Verlet-Störmer) integrator.
 
-    The integrator is of the form (b1, a1, b2, a1, b1). The choice of the parameters
-    determine both the bound on the integration error and the stability of the
-    method with respect to the value of `step_size`. The values used here are
-    the ones derived in :cite:p:`mclachlan1995numerical`; note that :cite:p:`blanes2014numerical` is more focused on stability
-    and derives different values.
+The velocity Verlet is a two-stage palindromic integrator :cite:p:`bou2018geometric`
+of the form (a1, b1, a2, b1, a1) with a1 = 0. It is numerically stable for values of
+the step size that range between 0 and 2 (when the mass matrix is the identity).
 
-    """
-    b1 = 0.1931833275037836
-    a1 = 0.5
-    b2 = 1 - 2 * b1
-    cofficients = [b1, a1, b2, a1, b1]
-    position_update_fn = euclidean_position_update_fn(logdensity_fn)
-    momentum_update_fn = euclidean_momentum_update_fn(kinetic_energy_fn)
-    one_step = generalized_symplectic_integrator(
-        momentum_update_fn,
-        position_update_fn,
-        cofficients,
-        format_output_fn=format_euclidean_state_output,
-    )
+While the position (a1 = 0.5) and velocity Verlet are the most commonly used
+in samplers, it is known in the numerical computation literature that the value
+$a1 \approx 0.1932$ leads to a lower integration error :cite:p:`mclachlan1995numerical,schlick2010molecular`.
+The authors of :cite:p:`bou2018geometric` show that the value $a1 \approx 0.21132$
+leads to an even higher step acceptance rate, up to 3 times higher
+than with the standard position verlet (p.22, Fig.4).
 
-    return one_step
+By choosing the velocity verlet we avoid two computations of the gradient
+of the kinetic energy. We are trading accuracy in exchange, and it is not
+clear whether this is the right tradeoff.
+"""
+velocity_verlet_cofficients = [0.5, 1.0, 0.5]
+velocity_verlet = generate_euclidean_integrator(velocity_verlet_cofficients)
 
+"""
+Two-stage palindromic symplectic integrator derived in :cite:p:`blanes2014numerical`.
 
-def yoshida(
-    logdensity_fn: Callable,
-    kinetic_energy_fn: EuclideanKineticEnergy,
-) -> Integrator:
-    """Three stages palindromic symplectic integrator derived in :cite:p:`mclachlan1995numerical`
+The integrator is of the form (b1, a1, b2, a1, b1). The choice of the parameters
+determine both the bound on the integration error and the stability of the
+method with respect to the value of `step_size`. The values used here are
+the ones derived in :cite:p:`mclachlan1995numerical`; note that :cite:p:`blanes2014numerical`
+is more focused on stability and derives different values.
+"""
+b1 = 0.1931833275037836
+a1 = 0.5
+b2 = 1 - 2 * b1
+mclachlan_cofficients = [b1, a1, b2, a1, b1]
+mclachlan = generate_euclidean_integrator(mclachlan_cofficients)
 
-    The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of
-    the parameters determine both the bound on the integration error and the
-    stability of the method with respect to the value of `step_size`. The
-    values used here are the ones derived in :cite:p:`mclachlan1995numerical` which guarantees a stability
-    interval length approximately equal to 4.67.
+"""
+Three stages palindromic symplectic integrator derived in :cite:p:`mclachlan1995numerical`
 
-    """
-    b1 = 0.11888010966548
-    a1 = 0.29619504261126
-    b2 = 0.5 - b1
-    a2 = 1 - 2 * a1
-    cofficients = [b1, a1, b2, a2, b2, a1, b1]
-    position_update_fn = euclidean_position_update_fn(logdensity_fn)
-    momentum_update_fn = euclidean_momentum_update_fn(kinetic_energy_fn)
-    one_step = generalized_symplectic_integrator(
-        momentum_update_fn,
-        position_update_fn,
-        cofficients,
-        format_output_fn=format_euclidean_state_output,
-    )
-
-    return one_step
+The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of
+the parameters determine both the bound on the integration error and the
+stability of the method with respect to the value of `step_size`. The
+values used here are the ones derived in :cite:p:`mclachlan1995numerical` which
+guarantees a stability interval length approximately equal to 4.67.
+"""
+b1 = 0.11888010966548
+a1 = 0.29619504261126
+b2 = 0.5 - b1
+a2 = 1 - 2 * a1
+yoshida_cofficients = [b1, a1, b2, a2, b2, a1, b1]
+yoshida = generate_euclidean_integrator(yoshida_cofficients)
 
 
 # Intergrators with non Euclidean updates
@@ -298,7 +272,8 @@ def esh_dynamics_momentum_update_one_step(
     [TODO]: update this docstring with proper references and citations.
     The momentum updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)
     similar to the implementation: https://github.com/gregversteeg/esh_dynamics
-    There are no exponentials e^delta, which prevents overflows when the gradient norm is large.
+    There are no exponentials e^delta, which prevents overflows when the gradient norm
+    is large.
     """
 
     flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
@@ -343,36 +318,20 @@ def format_noneuclidean_state_output(
     )
 
 
-def non_euclidean_leapfrog(logdensity_fn: Callable, *args, **kwargs) -> Callable:
-    """Leapfrog integrator with non Euclidean updates.
+def generate_noneuclidean_integrator(cofficients):
+    def noneuclidean_integrator(logdensity_fn: Callable, *args, **kwargs) -> Callable:
+        position_update_fn = euclidean_position_update_fn(logdensity_fn)
+        one_step = generalized_symplectic_integrator(
+            esh_dynamics_momentum_update_one_step,
+            position_update_fn,
+            cofficients,
+            format_output_fn=format_noneuclidean_state_output,
+        )
+        return one_step
 
-    Similar update scheme as velocity_verlet, but with non Euclidean updates of the momentum.
-    """
-    cofficients = [0.5, 1.0, 0.5]
-    position_update_fn = euclidean_position_update_fn(logdensity_fn)
-    one_step = generalized_symplectic_integrator(
-        esh_dynamics_momentum_update_one_step,
-        position_update_fn,
-        cofficients,
-        format_output_fn=format_noneuclidean_state_output,
-    )
-    return one_step
+    return noneuclidean_integrator
 
 
-def minimal_norm(logdensity_fn: Callable, *args, **kwargs) -> Callable:
-    """minimal_norm integrator with non Euclidean updates.
-
-    Similar update scheme as mclachlan, but with non Euclidean updates of the momentum.
-    """
-    b1 = 0.1931833275037836
-    a1 = 0.5
-    b2 = 1 - 2 * b1
-    cofficients = [b1, a1, b2, a1, b1]
-    position_update_fn = euclidean_position_update_fn(logdensity_fn)
-    one_step = generalized_symplectic_integrator(
-        esh_dynamics_momentum_update_one_step,
-        position_update_fn,
-        cofficients,
-        format_output_fn=format_noneuclidean_state_output,
-    )
-    return one_step
+noneuclidean_leapfrog = generate_noneuclidean_integrator(velocity_verlet_cofficients)
+noneuclidean_mclachlan = generate_noneuclidean_integrator(mclachlan_cofficients)
+noneuclidean_yoshida = generate_noneuclidean_integrator(yoshida_cofficients)

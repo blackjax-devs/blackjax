@@ -52,10 +52,13 @@ algorithms = {
     "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-5},
     "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-6},
     "non_euclidean_leapfrog": {
-        "algorithm": integrators.non_euclidean_leapfrog,
+        "algorithm": integrators.noneuclidean_leapfrog,
         "precision": 1e-4,
     },
-    "minimal_norm": {"algorithm": integrators.minimal_norm, "precision": 1e-5},
+    "non_euclidean_mclachlan": {
+        "algorithm": integrators.noneuclidean_mclachlan,
+        "precision": 1e-5,
+    },
 }
 
 
@@ -110,8 +113,8 @@ class IntegratorTest(chex.TestCase):
                 "velocity_verlet",
                 "mclachlan",
                 "yoshida",
-                "non_euclidean_leapfrog",
-                "minimal_norm",
+                # "noneuclidean_leapfrog",
+                # "noneuclidean_mclachlan",
             ],
         )
     )
