@@ -21,7 +21,14 @@ from jax.flatten_util import ravel_pytree
 from blackjax.mcmc.metrics import EuclideanKineticEnergy
 from blackjax.types import ArrayTree
 
-__all__ = ["mclachlan", "velocity_verlet", "yoshida"]
+__all__ = [
+    "mclachlan",
+    "velocity_verlet",
+    "yoshida",
+    "noneuclidean_leapfrog",
+    "noneuclidean_mclachlan",
+    "noneuclidean_yoshida",
+]
 
 
 class IntegratorState(NamedTuple):
@@ -40,27 +47,37 @@ class IntegratorState(NamedTuple):
 Integrator = Callable[[IntegratorState, float], IntegratorState]
 
 
-def generalized_symplectic_integrator(
-    momentum_update_fn: Callable,
-    position_update_fn: Callable,
+def generalized_two_stage_integrator(
+    operator1: Callable,
+    operator2: Callable,
     coefficients: list[float],
     format_output_fn: Callable = lambda x: x,
 ):
-    """Generalized symplectic integrator.
+    """Generalized numerical integrator for solving ODEs.
 
-    The generalized symplectic integrator performs numerical integration
-    of a Hamiltonian system by alernating between momentum and position updates.
-    The update scheme is decided by the coefficients and palindromic, i.e.
-    the coefficients of the update scheme should be symmetric with respect to the
+    The generalized integrator performs numerical integration of a ODE system by
+    alernating between stage 1 and stage 2 updates.
+    The update scheme is decided by the coefficients, The scheme should be palindromic,
+    i.e. the coefficients of the update scheme should be symmetric with respect to the
     middle of the scheme.
-    [TODO]: expand this with information in https://github.com/blackjax-devs/blackjax/issues/587
+
+    For instance, for *any* differential equation of the form:
+
+    .. math:: \\frac{d}{dt}f = (O_1+O_2)f
+
+    The leapfrog operator can be seen as approximating :math:`e^{\\epsilon(O_1 + O_2)}`
+    by :math:`e^{\\epsilon O_1/2}e^{\\epsilon O_2}e^{\\epsilon O_1/2}`.
+
+    In a standard Hamiltonian, the forms of :math:`e^{\\epsilon O_2}` and
+    :math:`e^{\\epsilon O_1}` are simple, but for other differential equations,
+    they may be more complex.
 
     Parameters
     ----------
-    momentum_update_fn
-        Function that updates the momentum.
-    position_update_fn
-        Function that updates the position.
+    operator1
+        Stage 1 operator, a function that updates the momentum.
+    operator2
+        Stage 2 operator, a function that updates the position.
     coefficients
         Coefficients of the integrator.
     format_output_fn
@@ -75,12 +92,12 @@ def generalized_symplectic_integrator(
     def one_step(state: IntegratorState, step_size: float):
         position, momentum, _, logdensity_grad = state
         # auxiliary infomation generated during integration for diagnostics. It is
-        # updated by the momentum_update_fn and position_update_fn at each call.
+        # updated by the operator1 and operator2 at each call.
         momentum_update_info = None
         position_update_info = None
         for i, coef in enumerate(coefficients[:-1]):
             if i % 2 == 0:
-                momentum, kinetic_grad, momentum_update_info = momentum_update_fn(
+                momentum, kinetic_grad, momentum_update_info = operator1(
                     momentum,
                     logdensity_grad,
                     step_size,
@@ -94,7 +111,7 @@ def generalized_symplectic_integrator(
                     logdensity,
                     logdensity_grad,
                     position_update_info,
-                ) = position_update_fn(
+                ) = operator2(
                     position,
                     kinetic_grad,
                     step_size,
@@ -102,7 +119,7 @@ def generalized_symplectic_integrator(
                     position_update_info,
                 )
         # Separate the last steps to short circuit the computation of the kinetic_grad.
-        momentum, kinetic_grad, momentum_update_info = momentum_update_fn(
+        momentum, kinetic_grad, momentum_update_info = operator1(
             momentum,
             logdensity_grad,
             step_size,
@@ -189,12 +206,18 @@ def format_euclidean_state_output(
 
 
 def generate_euclidean_integrator(cofficients):
+    """Generate symplectic integrator for solving a Hamiltonian system.
+
+    The resulting integrator is volume-preserve and preserves the symplectic structure
+    of phase space.
+    """
+
     def euclidean_integrator(
         logdensity_fn: Callable, kinetic_energy_fn: EuclideanKineticEnergy
     ) -> Integrator:
         position_update_fn = euclidean_position_update_fn(logdensity_fn)
         momentum_update_fn = euclidean_momentum_update_fn(kinetic_energy_fn)
-        one_step = generalized_symplectic_integrator(
+        one_step = generalized_two_stage_integrator(
             momentum_update_fn,
             position_update_fn,
             cofficients,
@@ -234,6 +257,8 @@ determine both the bound on the integration error and the stability of the
 method with respect to the value of `step_size`. The values used here are
 the ones derived in :cite:p:`mclachlan1995numerical`; note that :cite:p:`blanes2014numerical`
 is more focused on stability and derives different values.
+
+Also known as the minimal norm integrator.
 """
 b1 = 0.1931833275037836
 a1 = 0.5
@@ -259,6 +284,11 @@ yoshida = generate_euclidean_integrator(yoshida_cofficients)
 
 
 # Intergrators with non Euclidean updates
+def normalized_flatten_array(x, tol=1e-13):
+    norm = jnp.sqrt(jnp.sum(jnp.square(x)))
+    return jnp.where(norm > tol, x / norm, x), norm
+
+
 def esh_dynamics_momentum_update_one_step(
     momentum: ArrayTree,
     logdensity_grad: ArrayTree,
@@ -269,9 +299,7 @@ def esh_dynamics_momentum_update_one_step(
 ):
     """Momentum update based on Esh dynamics.
 
-    [TODO]: update this docstring with proper references and citations.
-    The momentum updating map of the esh dynamics (see https://arxiv.org/pdf/2111.02434.pdf)
-    similar to the implementation: https://github.com/gregversteeg/esh_dynamics
+    The momentum updating map of the esh dynamics as derived in :cite:p:`steeg2021hamiltonian`
     There are no exponentials e^delta, which prevents overflows when the gradient norm
     is large.
     """
@@ -279,22 +307,21 @@ def esh_dynamics_momentum_update_one_step(
     flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
     flatten_momentum, _ = ravel_pytree(momentum)
     dims = flatten_momentum.shape[0]
-    gradient_norm = jnp.sqrt(jnp.sum(jnp.square(flatten_grads)))
-    normalized_gradient = -flatten_grads / gradient_norm
+    normalized_gradient, gradient_norm = normalized_flatten_array(flatten_grads)
     momentum_proj = jnp.dot(flatten_momentum, normalized_gradient)
     delta = step_size * coef * gradient_norm / (dims - 1)
     zeta = jnp.exp(-delta)
-    new_momentum = (
+    new_momentum_raw = (
         normalized_gradient * (1 - zeta) * (1 + zeta + momentum_proj * (1 - zeta))
         + 2 * zeta * flatten_momentum
     )
-    new_momentum_norm = new_momentum / jnp.sqrt(jnp.sum(jnp.square(new_momentum)))
+    new_momentum_normalized, _ = normalized_flatten_array(new_momentum_raw)
+    next_momentum = unravel_fn(new_momentum_normalized)
     kinetic_energy_change = (
         delta
         - jnp.log(2)
         + jnp.log(1 + momentum_proj + (1 - momentum_proj) * zeta**2)
     )
-    next_momentum = unravel_fn(new_momentum_norm)
     if previous_kinetic_energy_change is not None:
         kinetic_energy_change += previous_kinetic_energy_change
     if is_last_call:
@@ -321,7 +348,7 @@ def format_noneuclidean_state_output(
 def generate_noneuclidean_integrator(cofficients):
     def noneuclidean_integrator(logdensity_fn: Callable, *args, **kwargs) -> Callable:
         position_update_fn = euclidean_position_update_fn(logdensity_fn)
-        one_step = generalized_symplectic_integrator(
+        one_step = generalized_two_stage_integrator(
             esh_dynamics_momentum_update_one_step,
             position_update_fn,
             cofficients,

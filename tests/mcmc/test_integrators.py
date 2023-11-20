@@ -3,9 +3,13 @@ import itertools
 import chex
 import jax
 import jax.numpy as jnp
+import jax.scipy.stats as stats
+import numpy as np
 from absl.testing import absltest, parameterized
+from jax.flatten_util import ravel_pytree
 
 import blackjax.mcmc.integrators as integrators
+from blackjax.mcmc.integrators import esh_dynamics_momentum_update_one_step
 
 
 def HarmonicOscillator(inv_mass_matrix, k=1.0, m=1.0):
@@ -47,20 +51,37 @@ def PlanetaryMotion(inv_mass_matrix):
     return neg_potential_energy, kinetic_energy
 
 
-algorithms = {
-    "velocity_verlet": {"algorithm": integrators.velocity_verlet, "precision": 1e-4},
-    "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-5},
-    "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-6},
-    "non_euclidean_leapfrog": {
-        "algorithm": integrators.noneuclidean_leapfrog,
-        "precision": 1e-4,
-    },
-    "non_euclidean_mclachlan": {
-        "algorithm": integrators.noneuclidean_mclachlan,
-        "precision": 1e-5,
-    },
-}
+def MultivariateNormal(inv_mass_matrix):
+    """Potential and kinetic energy for a multivariate normal distribution."""
 
+    def log_density(q):
+        q, _ = ravel_pytree(q)
+        return stats.multivariate_normal.logpdf(q, jnp.zeros_like(q), inv_mass_matrix)
+
+    def kinetic_energy(p):
+        p, _ = ravel_pytree(p)
+        return 0.5 * p.T @ inv_mass_matrix @ p
+
+    return log_density, kinetic_energy
+
+
+mvnormal_position_init = {
+    "a": 0.0,
+    "b": jnp.asarray([1.0, 2.0, 3.0]),
+    "c": jnp.ones((2, 1)),
+}
+_, unravel_fn = ravel_pytree(mvnormal_position_init)
+key0, key1 = jax.random.split(jax.random.key(52))
+mvnormal_momentum_init = unravel_fn(jax.random.normal(key0, (6,)))
+a = jax.random.normal(key1, (6, 6))
+cov = jnp.matmul(a.T, a)
+# Validated numerically
+mvnormal_position_end = unravel_fn(
+    jnp.asarray([0.38887993, 0.85231394, 2.7879136, 3.0339851, 0.5856687, 1.9291426])
+)
+mvnormal_momentum_end = unravel_fn(
+    jnp.asarray([0.46576163, 0.23854092, 1.2518811, -0.35647452, -0.742138, 1.2552949])
+)
 
 examples = {
     "free_fall": {
@@ -93,6 +114,22 @@ examples = {
         "p_final": {"x": 0.0, "y": 1.0},
         "inv_mass_matrix": jnp.array([1.0, 1.0]),
     },
+    "multivariate_normal": {
+        "model": MultivariateNormal,
+        "num_steps": 16,
+        "step_size": 0.005,
+        "q_init": mvnormal_position_init,
+        "p_init": mvnormal_momentum_init,
+        "q_final": mvnormal_position_end,
+        "p_final": mvnormal_momentum_end,
+        "inv_mass_matrix": cov,
+    },
+}
+
+algorithms = {
+    "velocity_verlet": {"algorithm": integrators.velocity_verlet, "precision": 1e-4},
+    "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-5},
+    "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-6},
 }
 
 
@@ -108,17 +145,20 @@ class IntegratorTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
         itertools.product(
-            ["free_fall", "harmonic_oscillator", "planetary_motion"],
+            [
+                "free_fall",
+                "harmonic_oscillator",
+                "planetary_motion",
+                "multivariate_normal",
+            ],
             [
                 "velocity_verlet",
                 "mclachlan",
                 "yoshida",
-                # "noneuclidean_leapfrog",
-                # "noneuclidean_mclachlan",
             ],
         )
     )
-    def test_integrator(self, example_name, integrator_name):
+    def test_euclidean_integrator(self, example_name, integrator_name):
         integrator = algorithms[integrator_name]
         example = examples[example_name]
 
@@ -134,14 +174,11 @@ class IntegratorTest(chex.TestCase):
         initial_state = integrators.IntegratorState(
             q, p, neg_potential(q), jax.grad(neg_potential)(q)
         )
-        if integrator_name in ["non_euclidean_leapfrog", "minimal_norm"]:
-            one_step = lambda _, state: step(state, step_size)[0]
-        else:
-            one_step = lambda _, state: step(state, step_size)
+
         final_state = jax.lax.fori_loop(
             0,
             example["num_steps"],
-            one_step,
+            lambda _, state: step(state, step_size),
             initial_state,
         )
 
@@ -154,6 +191,37 @@ class IntegratorTest(chex.TestCase):
             final_state.momentum
         )
         self.assertAlmostEqual(energy, new_energy, delta=integrator["precision"])
+
+    @chex.all_variants(with_pmap=False)
+    @parameterized.parameters([3, 5])
+    def test_esh_momentum_update(self, dims):
+        """
+        Test the numerically efficient version of the momentum update currently
+        implemented match the naive implementation according to the equation in
+        :cite:p:`robnik2023microcanonical`
+        """
+        step_size = 1e-3
+        momentum = jax.random.uniform(key=jax.random.PRNGKey(0), shape=(dims,))
+        momentum /= jnp.linalg.norm(momentum)
+        gradient = jax.random.uniform(key=jax.random.PRNGKey(1), shape=(dims,))
+
+        # Navie implementation
+        gradient_norm = jnp.linalg.norm(gradient)
+        gradient_normalized = gradient / gradient_norm
+        delta = step_size * gradient_norm / (dims - 1)
+        next_momentum = (
+            momentum
+            + gradient_normalized
+            * (
+                jnp.sinh(delta)
+                + jnp.dot(gradient_normalized, momentum * (jnp.cosh(delta) - 1))
+            )
+        ) / (jnp.cosh(delta) + jnp.dot(gradient_normalized, momentum * jnp.sinh(delta)))
+
+        # Efficient implementation
+        update_stable = self.variant(esh_dynamics_momentum_update_one_step)
+        next_momentum1, *_ = update_stable(momentum, gradient, step_size, 1.0)
+        np.testing.assert_array_almost_equal(next_momentum, next_momentum1)
 
 
 if __name__ == "__main__":
