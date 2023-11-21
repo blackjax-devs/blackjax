@@ -288,7 +288,7 @@ yoshida = generate_euclidean_integrator(yoshida_cofficients)
 
 # Intergrators with non Euclidean updates
 def _normalized_flatten_array(x, tol=1e-13):
-    norm = jnp.sqrt(jnp.sum(jnp.square(x)))
+    norm = jnp.linalg.norm(x)
     return jnp.where(norm > tol, x / norm, x), norm
 
 
