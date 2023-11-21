@@ -197,13 +197,14 @@ class IntegratorTest(chex.TestCase):
     def test_esh_momentum_update(self, dims):
         """
         Test the numerically efficient version of the momentum update currently
-        implemented match the naive implementation according to the equation in
+        implemented match the naive implementation according to the Equation 16 in
         :cite:p:`robnik2023microcanonical`
         """
         step_size = 1e-3
-        momentum = jax.random.uniform(key=jax.random.PRNGKey(0), shape=(dims,))
+        key0, key1 = jax.random.split(jax.random.key(62))
+        gradient = jax.random.uniform(key0, shape=(dims,))
+        momentum = jax.random.uniform(key1, shape=(dims,))
         momentum /= jnp.linalg.norm(momentum)
-        gradient = jax.random.uniform(key=jax.random.PRNGKey(1), shape=(dims,))
 
         # Navie implementation
         gradient_norm = jnp.linalg.norm(gradient)

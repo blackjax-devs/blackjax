@@ -45,6 +45,9 @@ class IntegratorState(NamedTuple):
 
 
 Integrator = Callable[[IntegratorState, float], IntegratorState]
+GeneralIntegrator = Callable[
+    [IntegratorState, float], tuple[IntegratorState, ArrayTree]
+]
 
 
 def generalized_two_stage_integrator(
@@ -284,7 +287,7 @@ yoshida = generate_euclidean_integrator(yoshida_cofficients)
 
 
 # Intergrators with non Euclidean updates
-def normalized_flatten_array(x, tol=1e-13):
+def _normalized_flatten_array(x, tol=1e-13):
     norm = jnp.sqrt(jnp.sum(jnp.square(x)))
     return jnp.where(norm > tol, x / norm, x), norm
 
@@ -307,7 +310,7 @@ def esh_dynamics_momentum_update_one_step(
     flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
     flatten_momentum, _ = ravel_pytree(momentum)
     dims = flatten_momentum.shape[0]
-    normalized_gradient, gradient_norm = normalized_flatten_array(flatten_grads)
+    normalized_gradient, gradient_norm = _normalized_flatten_array(flatten_grads)
     momentum_proj = jnp.dot(flatten_momentum, normalized_gradient)
     delta = step_size * coef * gradient_norm / (dims - 1)
     zeta = jnp.exp(-delta)
@@ -315,7 +318,7 @@ def esh_dynamics_momentum_update_one_step(
         normalized_gradient * (1 - zeta) * (1 + zeta + momentum_proj * (1 - zeta))
         + 2 * zeta * flatten_momentum
     )
-    new_momentum_normalized, _ = normalized_flatten_array(new_momentum_raw)
+    new_momentum_normalized, _ = _normalized_flatten_array(new_momentum_raw)
     next_momentum = unravel_fn(new_momentum_normalized)
     kinetic_energy_change = (
         delta
@@ -346,7 +349,9 @@ def format_noneuclidean_state_output(
 
 
 def generate_noneuclidean_integrator(cofficients):
-    def noneuclidean_integrator(logdensity_fn: Callable, *args, **kwargs) -> Callable:
+    def noneuclidean_integrator(
+        logdensity_fn: Callable, *args, **kwargs
+    ) -> GeneralIntegrator:
         position_update_fn = euclidean_position_update_fn(logdensity_fn)
         one_step = generalized_two_stage_integrator(
             esh_dynamics_momentum_update_one_step,
