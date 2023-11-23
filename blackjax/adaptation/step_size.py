@@ -21,7 +21,7 @@ from scipy.fft import next_fast_len
 from blackjax.diagnostics import effective_sample_size
 
 from blackjax.mcmc.hmc import HMCState
-from blackjax.mcmc.mclmc import MCLMCState
+from blackjax.mcmc.mclmc import IntegratorState
 from blackjax.optimizers.dual_averaging import dual_averaging
 from blackjax.types import Array, ArrayLikeTree, PRNGKey
 
@@ -281,14 +281,10 @@ def ess_corr(x):
         ]
     )
 
-    print(input_array.shape,"input shape 2")
-    
-
     num_chains = 1  # input_array.shape[0]
     num_samples = input_array.shape[1]
 
     mean_across_chain = input_array.mean(axis=1, keepdims=True)
-    print("mean 2", mean_across_chain)
     # Compute autocovariance estimates for every lag for the input array using FFT.
     centered_array = input_array - mean_across_chain
     m = next_fast_len(2 * num_samples)
@@ -305,7 +301,6 @@ def ess_corr(x):
         / (num_samples - 1.0)
     )
     weighted_var = mean_var0 * (num_samples - 1.0) / num_samples
-    jax.debug.print("🤯 {x} weighted_var 2 🤯", x=weighted_var)
     
     weighted_var = jax.lax.cond(
         num_chains > 1,
@@ -377,7 +372,6 @@ def ess_corr(x):
     ess = ess_raw / tau_hat
 
     neff = ess.squeeze() / num_samples
-    print("tau hat", ess, num_samples, neff)
     return 1.0 / jnp.average(1 / neff)
 
 
@@ -405,7 +399,7 @@ def dynamics_adaptive(dynamics, state, L):
     ) * eps_max  # if the proposed stepsize is above the stepsize where we have seen divergences
 
     state, info = dynamics(
-        jax.random.PRNGKey(0), MCLMCState(x, u, l, g), L=L, step_size=eps
+        jax.random.PRNGKey(0), IntegratorState(x, u, l, g), L=L, step_size=eps
     )
 
     xx, uu, ll, gg = state
@@ -484,7 +478,7 @@ def tune12(kernel, x, u, l, g, random_key, L, eps, num_steps1, num_steps2):
     return (
         L,
         eps[-1],
-        MCLMCState(xx, uu, ll, gg),
+        IntegratorState(xx, uu, ll, gg),
     )  # return the tuned hyperparameters and the final state
 
 
@@ -498,9 +492,7 @@ def tune3(kernel, state, rng_key, L, eps, num_steps):
     Lfactor = 0.4
     ESS2 = effective_sample_size(info.transformed_x)
     neff = ESS2.squeeze() / info.transformed_x.shape[0]
-    print("neff", neff, info.transformed_x.shape[0])
     ESS_alt = 1.0 / jnp.average(1 / neff)
-    print(ess_corr(info.transformed_x), ESS_alt, "\n\nESSse\n\n")
     ESS = ess_corr(info.transformed_x) 
     if ESS * num_steps <= 10:
         warnings.warn("tune3 cannot be expected to work with 10 or fewer effective samples")
@@ -511,7 +503,7 @@ def tune3(kernel, state, rng_key, L, eps, num_steps):
 
 def tune(
     kernel, num_steps: int, rng_key: PRNGKey, params: MCLMCAdaptationState
-) -> tuple[MCLMCAdaptationState, MCLMCState]:
+) -> tuple[MCLMCAdaptationState, IntegratorState]:
     num_tune_step_ratio_1 = 0.1
     num_tune_step_ratio_2 = 0.1
 

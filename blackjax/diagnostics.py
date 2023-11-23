@@ -112,7 +112,6 @@ def effective_sample_size(
 
     """
     input_shape = input_array.shape
-    print(input_shape, "input shape")
     sample_axis = sample_axis if sample_axis >= 0 else len(input_shape) + sample_axis
     num_chains = input_shape[chain_axis]
     num_samples = input_shape[sample_axis]
@@ -144,7 +143,6 @@ def effective_sample_size(
         lambda _: weighted_var,
         operand=None,
     )
-    jax.debug.print("🤯 {x} weighted_var 🤯", x=weighted_var)
 
     # Geyer's initial positive sequence
     num_samples_even = num_samples - num_samples % 2

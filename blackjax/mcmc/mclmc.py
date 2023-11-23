@@ -17,13 +17,11 @@ from typing import Callable, NamedTuple
 import jax
 import jax.numpy as jnp
 
-import blackjax.mcmc.integrators as integrators
+from blackjax.mcmc.integrators import IntegratorState, noneuclidean_mclachlan
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import Array, ArrayLike, PRNGKey
 
-__all__ = ["MCLMCState", "MCLMCInfo", "init", "build_kernel", "mclmc"]
-
-MCLMCState = integrators.IntegratorState
+__all__ = ["MCLMCInfo", "init", "build_kernel", "mclmc"]
 
 
 class MCLMCInfo(NamedTuple):
@@ -46,9 +44,8 @@ class MCLMCInfo(NamedTuple):
 
 def init(x_initial: ArrayLike, logdensity_fn, rng_key):
     l, g = jax.value_and_grad(logdensity_fn)(x_initial)
-    # jax.debug.print("🤯 {x} initial momentum 🤯", x=random_unit_vector(rng_key, dim=x_initial.shape[0]))
 
-    return MCLMCState(
+    return IntegratorState(
         position=x_initial,
         momentum=random_unit_vector(rng_key, dim=x_initial.shape[0]),
         logdensity=l,
@@ -56,7 +53,7 @@ def init(x_initial: ArrayLike, logdensity_fn, rng_key):
     )
 
 
-def build_kernel(grad_logp, integrator, transform):
+def build_kernel(logdensity_fn, integrator, transform):
     """Build a HMC kernel.
 
     Parameters
@@ -77,14 +74,11 @@ def build_kernel(grad_logp, integrator, transform):
     information about the transition.
 
     """
-    step = integrator(
-        O1=integrators.update_momentum_mclmc,
-        O2=integrators.update_position_mclmc(grad_logp),
-    )
+    step = integrator(logdensity_fn)
 
     def kernel(
-        rng_key: PRNGKey, state: MCLMCState, L: float, step_size: float
-    ) -> tuple[MCLMCState, MCLMCInfo]:
+        rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
+    ) -> tuple[IntegratorState, MCLMCInfo]:
         (xx, uu, ll, gg), kinetic_change = step(state, step_size)
         
         dim = xx.shape[0]
@@ -92,7 +86,7 @@ def build_kernel(grad_logp, integrator, transform):
         nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
         uu = partially_refresh_momentum(u=uu, rng_key=rng_key, nu=nu)
 
-        return MCLMCState(xx, uu, ll, gg), MCLMCInfo(
+        return IntegratorState(xx, uu, ll, gg), MCLMCInfo(
             transformed_x=transform(xx),
             logdensity=ll,
             dE=kinetic_change - ll + state.logdensity,
@@ -161,11 +155,10 @@ class mclmc:
         transform: Callable,
         L,
         step_size,
-        integrator=integrators.minimal_norm,
+        integrator=noneuclidean_mclachlan,
     ) -> SamplingAlgorithm:
-        grad_logp = jax.value_and_grad(logdensity_fn)
 
-        kernel = cls.build_kernel(grad_logp, integrator, transform)
+        kernel = cls.build_kernel(logdensity_fn, integrator, transform)
 
         def update_fn(rng_key, state):
             return kernel(rng_key, state, L, step_size)
