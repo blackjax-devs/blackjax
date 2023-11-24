@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Step size adaptation"""
-from typing import Callable, NamedTuple
 import warnings
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 from scipy.fft import next_fast_len
-from blackjax.diagnostics import effective_sample_size
 
+from blackjax.diagnostics import effective_sample_size
 from blackjax.mcmc.hmc import HMCState
 from blackjax.mcmc.mclmc import IntegratorState
 from blackjax.optimizers.dual_averaging import dual_averaging
-from blackjax.types import Array, ArrayLikeTree, PRNGKey
+from blackjax.types import PRNGKey
 
 __all__ = [
     "DualAveragingAdaptationState",
@@ -270,7 +270,6 @@ class MCLMCAdaptationState(NamedTuple):
     step_size: float
 
 
-
 def ess_corr(x):
     """Taken from: https://blackjax-devs.github.io/blackjax/diagnostics.html
     shape(x) = (num_samples, d)"""
@@ -301,7 +300,7 @@ def ess_corr(x):
         / (num_samples - 1.0)
     )
     weighted_var = mean_var0 * (num_samples - 1.0) / num_samples
-    
+
     weighted_var = jax.lax.cond(
         num_chains > 1,
         lambda _: weighted_var + mean_across_chain.var(axis=0, ddof=1, keepdims=True),
@@ -492,11 +491,13 @@ def tune3(kernel, state, rng_key, L, eps, num_steps):
     Lfactor = 0.4
     ESS2 = effective_sample_size(info.transformed_x)
     neff = ESS2.squeeze() / info.transformed_x.shape[0]
-    ESS_alt = 1.0 / jnp.average(1 / neff)
-    ESS = ess_corr(info.transformed_x) 
+    # ESS_alt = 1.0 / jnp.average(1 / neff)
+    ESS = ess_corr(info.transformed_x)
     if ESS * num_steps <= 10:
-        warnings.warn("tune3 cannot be expected to work with 10 or fewer effective samples")
-    
+        warnings.warn(
+            "tune3 cannot be expected to work with 10 or fewer effective samples"
+        )
+
     Lnew = Lfactor * eps / ESS
     return Lnew, state
 

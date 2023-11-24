@@ -17,8 +17,8 @@ from typing import Callable, NamedTuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.mcmc.integrators import IntegratorState, noneuclidean_mclachlan
 from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.integrators import IntegratorState, noneuclidean_mclachlan
 from blackjax.types import Array, ArrayLike, PRNGKey
 
 __all__ = ["MCLMCInfo", "init", "build_kernel", "mclmc"]
@@ -79,18 +79,18 @@ def build_kernel(logdensity_fn, integrator, transform):
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
     ) -> tuple[IntegratorState, MCLMCInfo]:
-        (xx, uu, ll, gg), kinetic_change = step(state, step_size)
-        
-        dim = xx.shape[0]
+        (position, momentum, logdensity, logdensitygrad), kinetic_change = step(state, step_size)
+
+        dim = position.shape[0]
         # Langevin-like noise
         nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
-        uu = partially_refresh_momentum(u=uu, rng_key=rng_key, nu=nu)
+        momentum = partially_refresh_momentum(momentum=momentum, rng_key=rng_key, nu=nu)
 
-        return IntegratorState(xx, uu, ll, gg), MCLMCInfo(
-            transformed_x=transform(xx),
-            logdensity=ll,
-            dE=kinetic_change - ll + state.logdensity,
-            kinetic_change=kinetic_change*(uu.shape[0] - 1),
+        return IntegratorState(position, momentum, logdensity, logdensitygrad), MCLMCInfo(
+            transformed_x=transform(position),
+            logdensity=logdensity,
+            dE=kinetic_change - logdensity + state.logdensity,
+            kinetic_change=kinetic_change * (dim - 1),
         )
 
     return kernel
@@ -157,7 +157,6 @@ class mclmc:
         step_size,
         integrator=noneuclidean_mclachlan,
     ) -> SamplingAlgorithm:
-
         kernel = cls.build_kernel(logdensity_fn, integrator, transform)
 
         def update_fn(rng_key, state):
@@ -175,12 +174,12 @@ class mclmc:
 
 
 def random_unit_vector(rng_key, dim):
-    u = jax.random.normal(rng_key, shape=(dim,))
-    u /= jnp.sqrt(jnp.sum(jnp.square(u)))
-    return u
+    momentum = jax.random.normal(rng_key, shape=(dim,))
+    momentum /= jnp.sqrt(jnp.sum(jnp.square(momentum)))
+    return momentum
 
 
-def partially_refresh_momentum(u, rng_key, nu):
-    """Adds a small noise to u and normalizes."""
-    z = nu * jax.random.normal(rng_key, shape=(u.shape[0],))
-    return (u + z) / jnp.sqrt(jnp.sum(jnp.square(u + z)))
+def partially_refresh_momentum(momentum, rng_key, nu):
+    """Adds a small noise to momentum and normalizes."""
+    z = nu * jax.random.normal(rng_key, shape=(momentum.shape[0],))
+    return (momentum + z) / jnp.sqrt(jnp.sum(jnp.square(momentum + z)))
