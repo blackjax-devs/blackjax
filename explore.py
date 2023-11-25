@@ -63,6 +63,7 @@ out = tune_and_run(logdensity_fn=logdensity_fn, key=jax.random.PRNGKey(0), dim=2
 print(jnp.mean(out.transformed_x, axis=0))
 
 
+
 # assert params.L==1.3147894144058228 and params.step_size==0.6470216512680054
 # assert jnp.allclose(jnp.mean(out.transformed_x, axis=0), jnp.array([1.9507202e-03, 2.8414153e-05]))
 assert jnp.allclose(jnp.mean(out.transformed_x, axis=0), jnp.array([0.00296992, 0.00087555]))
