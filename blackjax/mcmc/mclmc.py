@@ -16,10 +16,12 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
+from jax.flatten_util import ravel_pytree
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.integrators import IntegratorState, noneuclidean_mclachlan
 from blackjax.types import Array, ArrayLike, PRNGKey
+from blackjax.util import generate_unit_vector, partially_refresh_momentum
 
 __all__ = ["MCLMCInfo", "init", "build_kernel", "mclmc"]
 
@@ -47,7 +49,7 @@ def init(x_initial: ArrayLike, logdensity_fn, rng_key):
 
     return IntegratorState(
         position=x_initial,
-        momentum=random_unit_vector(rng_key, dim=x_initial.shape[0]),
+        momentum=generate_unit_vector(rng_key, x_initial),
         logdensity=l,
         logdensity_grad=g,
     )
@@ -81,10 +83,11 @@ def build_kernel(logdensity_fn, integrator, transform):
     ) -> tuple[IntegratorState, MCLMCInfo]:
         (position, momentum, logdensity, logdensitygrad), kinetic_change = step(state, step_size)
 
-        dim = position.shape[0]
+        # dim = position.shape[0]
+        dim = 2
         # Langevin-like noise
-        nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
-        momentum = partially_refresh_momentum(momentum=momentum, rng_key=rng_key, nu=nu)
+        
+        momentum, dim = partially_refresh_momentum(momentum=momentum, rng_key=rng_key, L=L, step_size=step_size)
 
         return IntegratorState(position, momentum, logdensity, logdensitygrad), MCLMCInfo(
             transformed_x=transform(position),
@@ -168,18 +171,3 @@ class mclmc:
         return SamplingAlgorithm(init_fn, update_fn)
 
 
-###
-# helper funcs
-###
-
-
-def random_unit_vector(rng_key, dim):
-    momentum = jax.random.normal(rng_key, shape=(dim,))
-    momentum /= jnp.sqrt(jnp.sum(jnp.square(momentum)))
-    return momentum
-
-
-def partially_refresh_momentum(momentum, rng_key, nu):
-    """Adds a small noise to momentum and normalizes."""
-    z = nu * jax.random.normal(rng_key, shape=(momentum.shape[0],))
-    return (momentum + z) / jnp.sqrt(jnp.sum(jnp.square(momentum + z)))

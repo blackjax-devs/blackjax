@@ -35,28 +35,31 @@ def run_sampling_algorithm(
 def tune_and_run(position, logdensity_fn, key, dim, num_steps):
     main_key, tune_key = jax.random.split(key)
 
-    params, state = tune(
-        position=position,
-        params=MCLMCAdaptationState(L=math.sqrt(dim), step_size=math.sqrt(dim) * 0.4),
-        logdensity_fn=logdensity_fn,
-        num_steps=num_steps,
-        rng_key=tune_key,
-    )
+    # params, state = tune(
+    #     position=position,
+    #     params=MCLMCAdaptationState(L=math.sqrt(dim), step_size=math.sqrt(dim) * 0.4),
+    #     logdensity_fn=logdensity_fn,
+    #     num_steps=num_steps,
+    #     rng_key=tune_key,
+    # )
+    # print(
+    #     f"L is {params.L} and should be {1.3147894144058228} and step_size is {params.step_size} and should be {0.6470216512680054}"
+    # )
 
     mclmc = blackjax.mcmc.mclmc.mclmc(
         logdensity_fn=logdensity_fn,
         transform=lambda x: x,
-        L=params.L,
-        step_size=params.step_size,
+        # L=params.L,
+        # step_size=params.step_size,
+        L=math.sqrt(dim), step_size=math.sqrt(dim) * 0.4
     )
 
-    print(
-        f"L is {params.L} and should be {1.3147894144058228} and step_size is {params.step_size} and should be {0.6470216512680054}"
-    )
+
     return run_sampling_algorithm(
         sampling_algorithm=mclmc,
         num_steps=num_steps,
-        initial_val=state.position,
+        # initial_val=state.position,
+        initial_val=position,
         rng_key=main_key,
     )
 

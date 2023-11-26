@@ -103,6 +103,31 @@ def generate_unit_vector(
     sample = normal(rng_key, shape=p.shape, dtype=p.dtype)
     return unravel_fn(sample / jnp.linalg.norm(sample))
 
+def partially_refresh_momentum(momentum, rng_key, step_size, L):
+    """Adds a small noise to momentum and normalizes.
+
+    Parameters
+    ----------
+    rng_key:
+        The pseudo-random number generator key used to generate random numbers.
+    momentum:
+        PyTree that the structure the output should to match.
+    step_size:
+        Step size
+    L:
+        controls rate of momentum change
+
+    Returns
+    -------
+    momentum with random change in angle
+    """
+    m, unravel_fn = ravel_pytree(momentum)
+    dim = m.shape[0]
+    nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
+    z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
+    return unravel_fn((m + z) / jnp.sqrt(jnp.sum(jnp.square(m + z)))), dim
+
+
 
 def pytree_size(pytree: ArrayLikeTree) -> int:
     """Return the dimension of the flatten PyTree."""
