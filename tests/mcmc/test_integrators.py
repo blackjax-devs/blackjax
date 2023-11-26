@@ -131,9 +131,9 @@ algorithms = {
     "velocity_verlet": {"algorithm": integrators.velocity_verlet, "precision": 1e-4},
     "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-5},
     "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-6},
-    "noneuclidean_leapfrog" : {"algorithm": integrators.noneuclidean_leapfrog},
-    "noneuclidean_mclachlan" : {"algorithm": integrators.noneuclidean_mclachlan},
-    "noneuclidean_yoshida" : {"algorithm": integrators.noneuclidean_yoshida},
+    "noneuclidean_leapfrog": {"algorithm": integrators.noneuclidean_leapfrog},
+    "noneuclidean_mclachlan": {"algorithm": integrators.noneuclidean_mclachlan},
+    "noneuclidean_yoshida": {"algorithm": integrators.noneuclidean_yoshida},
 }
 
 
@@ -230,17 +230,18 @@ class IntegratorTest(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
-            [
-                "noneuclidean_leapfrog",
-                "noneuclidean_mclachlan",
-                "noneuclidean_yoshida",
-            ],
+        [
+            "noneuclidean_leapfrog",
+            "noneuclidean_mclachlan",
+            "noneuclidean_yoshida",
+        ],
     )
     def test_noneuclidean_integrator(self, integrator_name):
         integrator = algorithms[integrator_name]
-        cov = jnp.asarray([[1., .5] , [.5, 2.]])
+        cov = jnp.asarray([[1.0, 0.5], [0.5, 2.0]])
         logdensity_fn = lambda x: stats.multivariate_normal.logpdf(
-            x, jnp.zeros([2]), cov)
+            x, jnp.zeros([2]), cov
+        )
 
         step = self.variant(integrator["algorithm"](logdensity_fn))
 
@@ -248,9 +249,10 @@ class IntegratorTest(chex.TestCase):
         key0, key1 = jax.random.split(rng, 2)
         position_init = jax.random.normal(key0, (2,))
         momentum_init = generate_unit_vector(key1, position_init)
-        step_size = .0001
+        step_size = 0.0001
         initial_state = integrators.new_integrator_state(
-            logdensity_fn, position_init, momentum_init)
+            logdensity_fn, position_init, momentum_init
+        )
 
         final_state, kinetic_energy_change = jax.lax.scan(
             lambda state, _: step(state, step_size),
