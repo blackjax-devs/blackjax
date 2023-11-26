@@ -21,7 +21,8 @@ from scipy.fft import next_fast_len
 
 from blackjax.diagnostics import effective_sample_size
 from blackjax.mcmc.hmc import HMCState
-from blackjax.mcmc.mclmc import IntegratorState
+from blackjax.mcmc.integrators import noneuclidean_mclachlan
+from blackjax.mcmc.mclmc import IntegratorState, build_kernel, init
 from blackjax.optimizers.dual_averaging import dual_averaging
 from blackjax.types import PRNGKey
 
@@ -503,19 +504,27 @@ def tune3(kernel, state, rng_key, L, eps, num_steps):
 
 
 def tune(
-    kernel, num_steps: int, rng_key: PRNGKey, params: MCLMCAdaptationState
+    position, logdensity_fn, num_steps: int, rng_key: PRNGKey, params: MCLMCAdaptationState
 ) -> tuple[MCLMCAdaptationState, IntegratorState]:
     num_tune_step_ratio_1 = 0.1
     num_tune_step_ratio_2 = 0.1
 
-    x, u, l, g = (
-        jnp.array([0.1, 0.1]),
-        jnp.array([-0.6755803, 0.73728645]),
-        -0.010000001,
-        -jnp.array([0.1, 0.1]),
-    )
+    kernel=build_kernel(
+            logdensity_fn, integrator=noneuclidean_mclachlan, transform=lambda x:x
+        )
 
-    tune1_key, tune2_key = jax.random.split(rng_key)
+
+    
+    init_key, tune1_key, tune2_key = jax.random.split(rng_key, 3)
+
+    x,u,l,g = init(position, logdensity_fn=logdensity_fn, rng_key=init_key)
+    # x, u, l, g = (
+    #     jnp.array([0.1, 0.1]),
+    #     jnp.array([-0.6755803, 0.73728645]),
+    #     -0.010000001,
+    #     -jnp.array([0.1, 0.1]),
+    # )
+
 
     L, eps, state = tune12(
         kernel,
