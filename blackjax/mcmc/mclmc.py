@@ -15,6 +15,7 @@
 from typing import Callable, NamedTuple
 
 import jax
+
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.integrators import IntegratorState, noneuclidean_mclachlan
 from blackjax.types import Array, ArrayLike, PRNGKey
@@ -33,7 +34,7 @@ class MCLMCInfo(NamedTuple):
         The value of the samples after a transformation. This is typically a projection onto a lower dimensional subspace.
     logdensity :
         The log-density of the distribution at the current step of the MCLMC chain.
-    dE : 
+    dE :
         The difference in energy between the current and previous step.
     """
 
@@ -80,15 +81,21 @@ def build_kernel(logdensity_fn, integrator, transform):
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
     ) -> tuple[IntegratorState, MCLMCInfo]:
-        (position, momentum, logdensity, logdensitygrad), kinetic_change = step(state, step_size)
+        (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
+            state, step_size
+        )
 
         # dim = position.shape[0]
         dim = 2
         # Langevin-like noise
-        
-        momentum, dim = partially_refresh_momentum(momentum=momentum, rng_key=rng_key, L=L, step_size=step_size)
 
-        return IntegratorState(position, momentum, logdensity, logdensitygrad), MCLMCInfo(
+        momentum, dim = partially_refresh_momentum(
+            momentum=momentum, rng_key=rng_key, L=L, step_size=step_size
+        )
+
+        return IntegratorState(
+            position, momentum, logdensity, logdensitygrad
+        ), MCLMCInfo(
             transformed_x=transform(position),
             logdensity=logdensity,
             dE=kinetic_change - logdensity + state.logdensity,
@@ -168,5 +175,3 @@ class mclmc:
             return cls.init(position, logdensity_fn, jax.random.PRNGKey(0))
 
         return SamplingAlgorithm(init_fn, update_fn)
-
-
