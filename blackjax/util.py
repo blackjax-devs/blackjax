@@ -82,6 +82,28 @@ def generate_gaussian_noise(
     return unravel_fn(mu + linear_map(sigma, sample))
 
 
+def generate_unit_vector(
+    rng_key: PRNGKey,
+    position: ArrayLikeTree,
+) -> Array:
+    """Generate a random unit vector with output structure that match a given PyTree.
+
+    Parameters
+    ----------
+    rng_key:
+        The pseudo-random number generator key used to generate random numbers.
+    position:
+        PyTree that the structure the output should to match.
+
+    Returns
+    -------
+    Random unit vector that match the structure of position.
+    """
+    p, unravel_fn = ravel_pytree(position)
+    sample = normal(rng_key, shape=p.shape, dtype=p.dtype)
+    return unravel_fn(sample / jnp.linalg.norm(sample))
+
+
 def pytree_size(pytree: ArrayLikeTree) -> int:
     """Return the dimension of the flatten PyTree."""
     return sum(jnp.size(value) for value in tree_leaves(pytree))
