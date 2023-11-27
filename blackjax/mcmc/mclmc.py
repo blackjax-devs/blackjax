@@ -15,9 +15,6 @@
 from typing import Callable, NamedTuple
 
 import jax
-import jax.numpy as jnp
-from jax.flatten_util import ravel_pytree
-
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.integrators import IntegratorState, noneuclidean_mclachlan
 from blackjax.types import Array, ArrayLike, PRNGKey
@@ -27,15 +24,17 @@ __all__ = ["MCLMCInfo", "init", "build_kernel", "mclmc"]
 
 
 class MCLMCInfo(NamedTuple):
-    """Additional information on the MCLMC transition.
+    """
+    Additional information on the MCLMC transition.
 
-    transformed_x
-      The value of the samples after a transformation (e.g. projection onto lower dim subspace)
-    logdensity
-      logdensity at given step
-    dE
-      energy difference
-
+    Attributes
+    ----------
+    transformed_x :
+        The value of the samples after a transformation. This is typically a projection onto a lower dimensional subspace.
+    logdensity :
+        The log-density of the distribution at the current step of the MCLMC chain.
+    dE : 
+        The difference in energy between the current and previous step.
     """
 
     transformed_x: Array
