@@ -420,6 +420,28 @@ document.write(`
     <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">mu</span> <span class="o">+</span> <span class="n">linear_map</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">sample</span><span class="p">))</span></div>
 
 
+<div class="viewcode-block" id="generate_unit_vector"><a class="viewcode-back" href="../../autoapi/blackjax/util/index.html#blackjax.util.generate_unit_vector">[docs]</a><span class="k">def</span> <span class="nf">generate_unit_vector</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a random unit vector with output structure that match a given PyTree.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    rng_key:</span>
+<span class="sd">        The pseudo-random number generator key used to generate random numbers.</span>
+<span class="sd">    position:</span>
+<span class="sd">        PyTree that the structure the output should to match.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Random unit vector that match the structure of position.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">p</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+    <span class="n">sample</span> <span class="o">=</span> <span class="n">normal</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">sample</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">sample</span><span class="p">))</span></div>
+
+
 <div class="viewcode-block" id="pytree_size"><a class="viewcode-back" href="../../autoapi/blackjax/util/index.html#blackjax.util.pytree_size">[docs]</a><span class="k">def</span> <span class="nf">pytree_size</span><span class="p">(</span><span class="n">pytree</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the dimension of the flatten PyTree.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">tree_leaves</span><span class="p">(</span><span class="n">pytree</span><span class="p">))</span></div>

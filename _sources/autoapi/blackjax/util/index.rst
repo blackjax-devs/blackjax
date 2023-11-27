@@ -22,6 +22,7 @@ Functions
 
    blackjax.util.linear_map
    blackjax.util.generate_gaussian_noise
+   blackjax.util.generate_unit_vector
    blackjax.util.pytree_size
    blackjax.util.index_pytree
 
@@ -61,6 +62,16 @@ Functions
    :param sigma: The standard deviation of the Gaussian distribution.
 
    :rtype: Gaussian noise following N(mu, sigma) that match the structure of position.
+
+
+.. py:function:: generate_unit_vector(rng_key: blackjax.types.PRNGKey, position: blackjax.types.ArrayLikeTree) -> blackjax.types.Array
+
+   Generate a random unit vector with output structure that match a given PyTree.
+
+   :param rng_key: The pseudo-random number generator key used to generate random numbers.
+   :param position: PyTree that the structure the output should to match.
+
+   :rtype: Random unit vector that match the structure of position.
 
 
 .. py:function:: pytree_size(pytree: blackjax.types.ArrayLikeTree) -> int

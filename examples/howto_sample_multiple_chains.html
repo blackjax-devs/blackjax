@@ -496,8 +496,8 @@ and <a class="reference external" href="https://jax.readthedocs.io/en/latest/jax
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 8.85 s, sys: 84.9 ms, total: 8.93 s
-Wall time: 8.93 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 15.6 s, sys: 24.7 ms, total: 15.6 s
+Wall time: 15.6 s
 </pre></div>
 </div>
 </div>
@@ -538,7 +538,7 @@ to instruct JAX to split the CPU into multiple devices. See <a class="reference 
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>4
 </pre></div>
 </div>
 </div>
@@ -561,7 +561,7 @@ to instruct JAX to split the CPU into multiple devices. See <a class="reference 
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>compiling computation that requires 1024 logical devices, but only 2 XLA devices are available (num_replicas=1024)
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>compiling computation that requires 1024 logical devices, but only 4 XLA devices are available (num_replicas=1024)
 </pre></div>
 </div>
 </div>
@@ -601,8 +601,8 @@ and a workaround involving nesting <code class="docutils literal notranslate"><s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 5.92 s, sys: 12.2 ms, total: 5.93 s
-Wall time: 3.94 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 18.4 s, sys: 11.8 ms, total: 18.4 s
+Wall time: 6 s
 </pre></div>
 </div>
 </div>
@@ -616,7 +616,7 @@ Wall time: 3.94 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>((2000, 2), (2, 2000))
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>((2000, 4), (4, 2000))
 </pre></div>
 </div>
 </div>

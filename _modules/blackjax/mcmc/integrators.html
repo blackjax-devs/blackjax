@@ -353,11 +353,20 @@ document.write(`
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">from</span> <span class="nn">jax.flatten_util</span> <span class="kn">import</span> <span class="n">ravel_pytree</span>
 
 <span class="kn">from</span> <span class="nn">blackjax.mcmc.metrics</span> <span class="kn">import</span> <span class="n">EuclideanKineticEnergy</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayTree</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;mclachlan&quot;</span><span class="p">,</span> <span class="s2">&quot;velocity_verlet&quot;</span><span class="p">,</span> <span class="s2">&quot;yoshida&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;mclachlan&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;velocity_verlet&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;yoshida&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;noneuclidean_leapfrog&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;noneuclidean_mclachlan&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;noneuclidean_yoshida&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
 
 <span class="k">class</span> <span class="nc">IntegratorState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -374,6 +383,102 @@ document.write(`
 
 
 <span class="n">Integrator</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">IntegratorState</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">IntegratorState</span><span class="p">]</span>
+<span class="n">GeneralIntegrator</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span>
+    <span class="p">[</span><span class="n">IntegratorState</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">IntegratorState</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">generalized_two_stage_integrator</span><span class="p">(</span>
+    <span class="n">operator1</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">operator2</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">coefficients</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">format_output_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generalized numerical integrator for solving ODEs.</span>
+
+<span class="sd">    The generalized integrator performs numerical integration of a ODE system by</span>
+<span class="sd">    alernating between stage 1 and stage 2 updates.</span>
+<span class="sd">    The update scheme is decided by the coefficients, The scheme should be palindromic,</span>
+<span class="sd">    i.e. the coefficients of the update scheme should be symmetric with respect to the</span>
+<span class="sd">    middle of the scheme.</span>
+
+<span class="sd">    For instance, for *any* differential equation of the form:</span>
+
+<span class="sd">    .. math:: \\frac{d}{dt}f = (O_1+O_2)f</span>
+
+<span class="sd">    The leapfrog operator can be seen as approximating :math:`e^{\\epsilon(O_1 + O_2)}`</span>
+<span class="sd">    by :math:`e^{\\epsilon O_1/2}e^{\\epsilon O_2}e^{\\epsilon O_1/2}`.</span>
+
+<span class="sd">    In a standard Hamiltonian, the forms of :math:`e^{\\epsilon O_2}` and</span>
+<span class="sd">    :math:`e^{\\epsilon O_1}` are simple, but for other differential equations,</span>
+<span class="sd">    they may be more complex.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    operator1</span>
+<span class="sd">        Stage 1 operator, a function that updates the momentum.</span>
+<span class="sd">    operator2</span>
+<span class="sd">        Stage 2 operator, a function that updates the position.</span>
+<span class="sd">    coefficients</span>
+<span class="sd">        Coefficients of the integrator.</span>
+<span class="sd">    format_output_fn</span>
+<span class="sd">        Function that formats the output of the integrator.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    integrator</span>
+<span class="sd">        Integrator function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">,</span> <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">state</span>
+        <span class="c1"># auxiliary infomation generated during integration for diagnostics. It is</span>
+        <span class="c1"># updated by the operator1 and operator2 at each call.</span>
+        <span class="n">momentum_update_info</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">position_update_info</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">coef</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">coefficients</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">momentum</span><span class="p">,</span> <span class="n">kinetic_grad</span><span class="p">,</span> <span class="n">momentum_update_info</span> <span class="o">=</span> <span class="n">operator1</span><span class="p">(</span>
+                    <span class="n">momentum</span><span class="p">,</span>
+                    <span class="n">logdensity_grad</span><span class="p">,</span>
+                    <span class="n">step_size</span><span class="p">,</span>
+                    <span class="n">coef</span><span class="p">,</span>
+                    <span class="n">momentum_update_info</span><span class="p">,</span>
+                    <span class="n">is_last_call</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="p">(</span>
+                    <span class="n">position</span><span class="p">,</span>
+                    <span class="n">logdensity</span><span class="p">,</span>
+                    <span class="n">logdensity_grad</span><span class="p">,</span>
+                    <span class="n">position_update_info</span><span class="p">,</span>
+                <span class="p">)</span> <span class="o">=</span> <span class="n">operator2</span><span class="p">(</span>
+                    <span class="n">position</span><span class="p">,</span>
+                    <span class="n">kinetic_grad</span><span class="p">,</span>
+                    <span class="n">step_size</span><span class="p">,</span>
+                    <span class="n">coef</span><span class="p">,</span>
+                    <span class="n">position_update_info</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="c1"># Separate the last steps to short circuit the computation of the kinetic_grad.</span>
+        <span class="n">momentum</span><span class="p">,</span> <span class="n">kinetic_grad</span><span class="p">,</span> <span class="n">momentum_update_info</span> <span class="o">=</span> <span class="n">operator1</span><span class="p">(</span>
+            <span class="n">momentum</span><span class="p">,</span>
+            <span class="n">logdensity_grad</span><span class="p">,</span>
+            <span class="n">step_size</span><span class="p">,</span>
+            <span class="n">coefficients</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">momentum_update_info</span><span class="p">,</span>
+            <span class="n">is_last_call</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">format_output_fn</span><span class="p">(</span>
+            <span class="n">position</span><span class="p">,</span>
+            <span class="n">momentum</span><span class="p">,</span>
+            <span class="n">logdensity</span><span class="p">,</span>
+            <span class="n">logdensity_grad</span><span class="p">,</span>
+            <span class="n">kinetic_grad</span><span class="p">,</span>
+            <span class="n">position_update_info</span><span class="p">,</span>
+            <span class="n">momentum_update_info</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">one_step</span>
 
 
 <span class="k">def</span> <span class="nf">new_integrator_state</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">):</span>
@@ -381,209 +486,225 @@ document.write(`
     <span class="k">return</span> <span class="n">IntegratorState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="velocity_verlet"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.velocity_verlet">[docs]</a><span class="k">def</span> <span class="nf">velocity_verlet</span><span class="p">(</span>
-    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">kinetic_energy_fn</span><span class="p">:</span> <span class="n">EuclideanKineticEnergy</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Integrator</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The velocity Verlet (or Verlet-Störmer) integrator.</span>
-
-<span class="sd">    The velocity Verlet is a two-stage palindromic integrator :cite:p:`bou2018geometric` of the form</span>
-<span class="sd">    (a1, b1, a2, b1, a1) with a1 = 0. It is numerically stable for values of</span>
-<span class="sd">    the step size that range between 0 and 2 (when the mass matrix is the</span>
-<span class="sd">    identity).</span>
-
-<span class="sd">    While the position (a1 = 0.5) and velocity Verlet are the most commonly used</span>
-<span class="sd">    in samplers, it is known in the numerical computation literature that the value</span>
-<span class="sd">    $a1 \approx 0.1932$ leads to a lower integration error :cite:p:`mclachlan1995numerical,schlick2010molecular`. The authors of :cite:p:`bou2018geometric`</span>
-<span class="sd">    show that the value $a1 \approx 0.21132$ leads to an even higher step acceptance</span>
-<span class="sd">    rate, up to 3 times higher than with the standard position verlet (p.22, Fig.4).</span>
-
-<span class="sd">    By choosing the velocity verlet we avoid two computations of the gradient</span>
-<span class="sd">    of the kinetic energy. We are trading accuracy in exchange, and it is not</span>
-<span class="sd">    clear whether this is the right tradeoff.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">a1</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">b1</span> <span class="o">=</span> <span class="mf">0.5</span>
-    <span class="n">a2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">a1</span>
-
+<span class="k">def</span> <span class="nf">euclidean_position_update_fn</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
     <span class="n">logdensity_and_grad_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span>
+        <span class="n">kinetic_grad</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">coef</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">auxiliary_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">del</span> <span class="n">auxiliary_info</span>
+        <span class="n">new_position</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">grad</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">coef</span> <span class="o">*</span> <span class="n">grad</span><span class="p">,</span>
+            <span class="n">position</span><span class="p">,</span>
+            <span class="n">kinetic_grad</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">logdensity_and_grad_fn</span><span class="p">(</span><span class="n">new_position</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">update</span>
+
+
+<span class="k">def</span> <span class="nf">euclidean_momentum_update_fn</span><span class="p">(</span><span class="n">kinetic_energy_fn</span><span class="p">:</span> <span class="n">EuclideanKineticEnergy</span><span class="p">):</span>
     <span class="n">kinetic_energy_grad_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">kinetic_energy_fn</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">,</span> <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IntegratorState</span><span class="p">:</span>
-        <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">state</span>
-
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">momentum</span>
-            <span class="o">+</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">logdensity_grad</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+        <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span>
+        <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">coef</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">auxiliary_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">is_last_call</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">del</span> <span class="n">auxiliary_info</span>
+        <span class="n">new_momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">grad</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">coef</span> <span class="o">*</span> <span class="n">grad</span><span class="p">,</span>
             <span class="n">momentum</span><span class="p">,</span>
             <span class="n">logdensity_grad</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_last_call</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">new_momentum</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="n">kinetic_grad</span> <span class="o">=</span> <span class="n">kinetic_energy_grad_fn</span><span class="p">(</span><span class="n">new_momentum</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_momentum</span><span class="p">,</span> <span class="n">kinetic_grad</span><span class="p">,</span> <span class="kc">None</span>
 
-        <span class="n">kinetic_grad</span> <span class="o">=</span> <span class="n">kinetic_energy_grad_fn</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
-        <span class="n">position</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">position</span><span class="p">,</span> <span class="n">kinetic_grad</span><span class="p">:</span> <span class="n">position</span> <span class="o">+</span> <span class="n">a2</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">kinetic_grad</span><span class="p">,</span>
-            <span class="n">position</span><span class="p">,</span>
-            <span class="n">kinetic_grad</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">logdensity_and_grad_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">momentum</span>
-            <span class="o">+</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">logdensity_grad</span><span class="p">,</span>
-            <span class="n">momentum</span><span class="p">,</span>
-            <span class="n">logdensity_grad</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">IntegratorState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">one_step</span></div>
+    <span class="k">return</span> <span class="n">update</span>
 
 
-<div class="viewcode-block" id="mclachlan"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.mclachlan">[docs]</a><span class="k">def</span> <span class="nf">mclachlan</span><span class="p">(</span>
-    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">kinetic_energy_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Integrator</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Two-stage palindromic symplectic integrator derived in :cite:p:`blanes2014numerical`.</span>
+<span class="k">def</span> <span class="nf">format_euclidean_state_output</span><span class="p">(</span>
+    <span class="n">position</span><span class="p">,</span>
+    <span class="n">momentum</span><span class="p">,</span>
+    <span class="n">logdensity</span><span class="p">,</span>
+    <span class="n">logdensity_grad</span><span class="p">,</span>
+    <span class="n">kinetic_grad</span><span class="p">,</span>
+    <span class="n">position_update_info</span><span class="p">,</span>
+    <span class="n">momentum_update_info</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">del</span> <span class="n">kinetic_grad</span><span class="p">,</span> <span class="n">position_update_info</span><span class="p">,</span> <span class="n">momentum_update_info</span>
+    <span class="k">return</span> <span class="n">IntegratorState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">)</span>
 
-<span class="sd">    The integrator is of the form (b1, a1, b2, a1, b1). The choice of the parameters</span>
-<span class="sd">    determine both the bound on the integration error and the stability of the</span>
-<span class="sd">    method with respect to the value of `step_size`. The values used here are</span>
-<span class="sd">    the ones derived in :cite:p:`mclachlan1995numerical`; note that :cite:p:`blanes2014numerical` is more focused on stability</span>
-<span class="sd">    and derives different values.</span>
 
+<span class="k">def</span> <span class="nf">generate_euclidean_integrator</span><span class="p">(</span><span class="n">cofficients</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate symplectic integrator for solving a Hamiltonian system.</span>
+
+<span class="sd">    The resulting integrator is volume-preserve and preserves the symplectic structure</span>
+<span class="sd">    of phase space.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">b1</span> <span class="o">=</span> <span class="mf">0.1932</span>
-    <span class="n">a1</span> <span class="o">=</span> <span class="mf">0.5</span>
-    <span class="n">b2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b1</span>
 
-    <span class="n">logdensity_and_grad_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
-    <span class="n">kinetic_energy_grad_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">kinetic_energy_fn</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">,</span> <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IntegratorState</span><span class="p">:</span>
-        <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">state</span>
-
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">momentum</span>
-            <span class="o">+</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">logdensity_grad</span><span class="p">,</span>
-            <span class="n">momentum</span><span class="p">,</span>
-            <span class="n">logdensity_grad</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">euclidean_integrator</span><span class="p">(</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">:</span> <span class="n">EuclideanKineticEnergy</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Integrator</span><span class="p">:</span>
+        <span class="n">position_update_fn</span> <span class="o">=</span> <span class="n">euclidean_position_update_fn</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
+        <span class="n">momentum_update_fn</span> <span class="o">=</span> <span class="n">euclidean_momentum_update_fn</span><span class="p">(</span><span class="n">kinetic_energy_fn</span><span class="p">)</span>
+        <span class="n">one_step</span> <span class="o">=</span> <span class="n">generalized_two_stage_integrator</span><span class="p">(</span>
+            <span class="n">momentum_update_fn</span><span class="p">,</span>
+            <span class="n">position_update_fn</span><span class="p">,</span>
+            <span class="n">cofficients</span><span class="p">,</span>
+            <span class="n">format_output_fn</span><span class="o">=</span><span class="n">format_euclidean_state_output</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="k">return</span> <span class="n">one_step</span>
 
-        <span class="n">kinetic_grad</span> <span class="o">=</span> <span class="n">kinetic_energy_grad_fn</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
-        <span class="n">position</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">position</span><span class="p">,</span> <span class="n">kinetic_grad</span><span class="p">:</span> <span class="n">position</span> <span class="o">+</span> <span class="n">a1</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">kinetic_grad</span><span class="p">,</span>
-            <span class="n">position</span><span class="p">,</span>
-            <span class="n">kinetic_grad</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">_</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">logdensity_and_grad_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">momentum</span>
-            <span class="o">+</span> <span class="n">b2</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">logdensity_grad</span><span class="p">,</span>
-            <span class="n">momentum</span><span class="p">,</span>
-            <span class="n">logdensity_grad</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">kinetic_grad</span> <span class="o">=</span> <span class="n">kinetic_energy_grad_fn</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
-        <span class="n">position</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">position</span><span class="p">,</span> <span class="n">kinetic_grad</span><span class="p">:</span> <span class="n">position</span> <span class="o">+</span> <span class="n">a1</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">kinetic_grad</span><span class="p">,</span>
-            <span class="n">position</span><span class="p">,</span>
-            <span class="n">kinetic_grad</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">logdensity_and_grad_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">momentum</span>
-            <span class="o">+</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">logdensity_grad</span><span class="p">,</span>
-            <span class="n">momentum</span><span class="p">,</span>
-            <span class="n">logdensity_grad</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">IntegratorState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">one_step</span></div>
+    <span class="k">return</span> <span class="n">euclidean_integrator</span>
 
 
-<div class="viewcode-block" id="yoshida"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.yoshida">[docs]</a><span class="k">def</span> <span class="nf">yoshida</span><span class="p">(</span>
-    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">kinetic_energy_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Integrator</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Three stages palindromic symplectic integrator derived in :cite:p:`mclachlan1995numerical`</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The velocity Verlet (or Verlet-Störmer) integrator.</span>
 
-<span class="sd">    The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of</span>
-<span class="sd">    the parameters determine both the bound on the integration error and the</span>
-<span class="sd">    stability of the method with respect to the value of `step_size`. The</span>
-<span class="sd">    values used here are the ones derived in :cite:p:`mclachlan1995numerical` which guarantees a stability</span>
-<span class="sd">    interval length approximately equal to 4.67.</span>
+<span class="sd">The velocity Verlet is a two-stage palindromic integrator :cite:p:`bou2018geometric`</span>
+<span class="sd">of the form (a1, b1, a2, b1, a1) with a1 = 0. It is numerically stable for values of</span>
+<span class="sd">the step size that range between 0 and 2 (when the mass matrix is the identity).</span>
 
+<span class="sd">While the position (a1 = 0.5) and velocity Verlet are the most commonly used</span>
+<span class="sd">in samplers, it is known in the numerical computation literature that the value</span>
+<span class="sd">$a1 \approx 0.1932$ leads to a lower integration error :cite:p:`mclachlan1995numerical,schlick2010molecular`.</span>
+<span class="sd">The authors of :cite:p:`bou2018geometric` show that the value $a1 \approx 0.21132$</span>
+<span class="sd">leads to an even higher step acceptance rate, up to 3 times higher</span>
+<span class="sd">than with the standard position verlet (p.22, Fig.4).</span>
+
+<span class="sd">By choosing the velocity verlet we avoid two computations of the gradient</span>
+<span class="sd">of the kinetic energy. We are trading accuracy in exchange, and it is not</span>
+<span class="sd">clear whether this is the right tradeoff.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">velocity_verlet_cofficients</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span>
+<div class="viewcode-block" id="velocity_verlet"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.velocity_verlet">[docs]</a><span class="n">velocity_verlet</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">velocity_verlet_cofficients</span><span class="p">)</span></div>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Two-stage palindromic symplectic integrator derived in :cite:p:`blanes2014numerical`.</span>
+
+<span class="sd">The integrator is of the form (b1, a1, b2, a1, b1). The choice of the parameters</span>
+<span class="sd">determine both the bound on the integration error and the stability of the</span>
+<span class="sd">method with respect to the value of `step_size`. The values used here are</span>
+<span class="sd">the ones derived in :cite:p:`mclachlan1995numerical`; note that :cite:p:`blanes2014numerical`</span>
+<span class="sd">is more focused on stability and derives different values.</span>
+
+<span class="sd">Also known as the minimal norm integrator.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">b1</span> <span class="o">=</span> <span class="mf">0.1931833275037836</span>
+<span class="n">a1</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">b2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b1</span>
+<span class="n">mclachlan_cofficients</span> <span class="o">=</span> <span class="p">[</span><span class="n">b1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">]</span>
+<div class="viewcode-block" id="mclachlan"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.mclachlan">[docs]</a><span class="n">mclachlan</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">mclachlan_cofficients</span><span class="p">)</span></div>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Three stages palindromic symplectic integrator derived in :cite:p:`mclachlan1995numerical`</span>
+
+<span class="sd">The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of</span>
+<span class="sd">the parameters determine both the bound on the integration error and the</span>
+<span class="sd">stability of the method with respect to the value of `step_size`. The</span>
+<span class="sd">values used here are the ones derived in :cite:p:`mclachlan1995numerical` which</span>
+<span class="sd">guarantees a stability interval length approximately equal to 4.67.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">b1</span> <span class="o">=</span> <span class="mf">0.11888010966548</span>
+<span class="n">a1</span> <span class="o">=</span> <span class="mf">0.29619504261126</span>
+<span class="n">b2</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">b1</span>
+<span class="n">a2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">a1</span>
+<span class="n">yoshida_cofficients</span> <span class="o">=</span> <span class="p">[</span><span class="n">b1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">]</span>
+<div class="viewcode-block" id="yoshida"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.yoshida">[docs]</a><span class="n">yoshida</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">yoshida_cofficients</span><span class="p">)</span></div>
+
+
+<span class="c1"># Intergrators with non Euclidean updates</span>
+<span class="k">def</span> <span class="nf">_normalized_flatten_array</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-13</span><span class="p">):</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">norm</span> <span class="o">&gt;</span> <span class="n">tol</span><span class="p">,</span> <span class="n">x</span> <span class="o">/</span> <span class="n">norm</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">norm</span>
+
+
+<span class="k">def</span> <span class="nf">esh_dynamics_momentum_update_one_step</span><span class="p">(</span>
+    <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span>
+    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span>
+    <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">coef</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">previous_kinetic_energy_change</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">is_last_call</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Momentum update based on Esh dynamics.</span>
+
+<span class="sd">    The momentum updating map of the esh dynamics as derived in :cite:p:`steeg2021hamiltonian`</span>
+<span class="sd">    There are no exponentials e^delta, which prevents overflows when the gradient norm</span>
+<span class="sd">    is large.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">b1</span> <span class="o">=</span> <span class="mf">0.11888010966548</span>
-    <span class="n">a1</span> <span class="o">=</span> <span class="mf">0.29619504261126</span>
-    <span class="n">b2</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">b1</span>
-    <span class="n">a2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">a1</span>
 
-    <span class="n">logdensity_and_grad_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
-    <span class="n">kinetic_energy_grad_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">kinetic_energy_fn</span><span class="p">)</span>
+    <span class="n">flatten_grads</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">logdensity_grad</span><span class="p">)</span>
+    <span class="n">flatten_momentum</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
+    <span class="n">dims</span> <span class="o">=</span> <span class="n">flatten_momentum</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">normalized_gradient</span><span class="p">,</span> <span class="n">gradient_norm</span> <span class="o">=</span> <span class="n">_normalized_flatten_array</span><span class="p">(</span><span class="n">flatten_grads</span><span class="p">)</span>
+    <span class="n">momentum_proj</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">flatten_momentum</span><span class="p">,</span> <span class="n">normalized_gradient</span><span class="p">)</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">coef</span> <span class="o">*</span> <span class="n">gradient_norm</span> <span class="o">/</span> <span class="p">(</span><span class="n">dims</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">zeta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">delta</span><span class="p">)</span>
+    <span class="n">new_momentum_raw</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">normalized_gradient</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">zeta</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">zeta</span> <span class="o">+</span> <span class="n">momentum_proj</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">zeta</span><span class="p">))</span>
+        <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">zeta</span> <span class="o">*</span> <span class="n">flatten_momentum</span>
+    <span class="p">)</span>
+    <span class="n">new_momentum_normalized</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_normalized_flatten_array</span><span class="p">(</span><span class="n">new_momentum_raw</span><span class="p">)</span>
+    <span class="n">next_momentum</span> <span class="o">=</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">new_momentum_normalized</span><span class="p">)</span>
+    <span class="n">kinetic_energy_change</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">delta</span>
+        <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">momentum_proj</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">momentum_proj</span><span class="p">)</span> <span class="o">*</span> <span class="n">zeta</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">previous_kinetic_energy_change</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kinetic_energy_change</span> <span class="o">+=</span> <span class="n">previous_kinetic_energy_change</span>
+    <span class="k">if</span> <span class="n">is_last_call</span><span class="p">:</span>
+        <span class="n">kinetic_energy_change</span> <span class="o">*=</span> <span class="n">dims</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">next_momentum</span><span class="p">,</span> <span class="n">next_momentum</span><span class="p">,</span> <span class="n">kinetic_energy_change</span>
 
-    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">,</span> <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IntegratorState</span><span class="p">:</span>
-        <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">state</span>
 
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">momentum</span>
-            <span class="o">+</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">logdensity_grad</span><span class="p">,</span>
-            <span class="n">momentum</span><span class="p">,</span>
-            <span class="n">logdensity_grad</span><span class="p">,</span>
+<span class="k">def</span> <span class="nf">format_noneuclidean_state_output</span><span class="p">(</span>
+    <span class="n">position</span><span class="p">,</span>
+    <span class="n">momentum</span><span class="p">,</span>
+    <span class="n">logdensity</span><span class="p">,</span>
+    <span class="n">logdensity_grad</span><span class="p">,</span>
+    <span class="n">kinetic_grad</span><span class="p">,</span>
+    <span class="n">position_update_info</span><span class="p">,</span>
+    <span class="n">momentum_update_info</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">del</span> <span class="n">kinetic_grad</span><span class="p">,</span> <span class="n">position_update_info</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">IntegratorState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">),</span>
+        <span class="n">momentum_update_info</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">generate_noneuclidean_integrator</span><span class="p">(</span><span class="n">cofficients</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">noneuclidean_integrator</span><span class="p">(</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneralIntegrator</span><span class="p">:</span>
+        <span class="n">position_update_fn</span> <span class="o">=</span> <span class="n">euclidean_position_update_fn</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
+        <span class="n">one_step</span> <span class="o">=</span> <span class="n">generalized_two_stage_integrator</span><span class="p">(</span>
+            <span class="n">esh_dynamics_momentum_update_one_step</span><span class="p">,</span>
+            <span class="n">position_update_fn</span><span class="p">,</span>
+            <span class="n">cofficients</span><span class="p">,</span>
+            <span class="n">format_output_fn</span><span class="o">=</span><span class="n">format_noneuclidean_state_output</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="k">return</span> <span class="n">one_step</span>
 
-        <span class="n">kinetic_grad</span> <span class="o">=</span> <span class="n">kinetic_energy_grad_fn</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
-        <span class="n">position</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">position</span><span class="p">,</span> <span class="n">kinetic_grad</span><span class="p">:</span> <span class="n">position</span> <span class="o">+</span> <span class="n">a1</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">kinetic_grad</span><span class="p">,</span>
-            <span class="n">position</span><span class="p">,</span>
-            <span class="n">kinetic_grad</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">noneuclidean_integrator</span>
 
-        <span class="n">_</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">logdensity_and_grad_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">momentum</span>
-            <span class="o">+</span> <span class="n">b2</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">logdensity_grad</span><span class="p">,</span>
-            <span class="n">momentum</span><span class="p">,</span>
-            <span class="n">logdensity_grad</span><span class="p">,</span>
-        <span class="p">)</span>
 
-        <span class="n">kinetic_grad</span> <span class="o">=</span> <span class="n">kinetic_energy_grad_fn</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
-        <span class="n">position</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">position</span><span class="p">,</span> <span class="n">kinetic_grad</span><span class="p">:</span> <span class="n">position</span> <span class="o">+</span> <span class="n">a2</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">kinetic_grad</span><span class="p">,</span>
-            <span class="n">position</span><span class="p">,</span>
-            <span class="n">kinetic_grad</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">_</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">logdensity_and_grad_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">momentum</span>
-            <span class="o">+</span> <span class="n">b2</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">logdensity_grad</span><span class="p">,</span>
-            <span class="n">momentum</span><span class="p">,</span>
-            <span class="n">logdensity_grad</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">kinetic_grad</span> <span class="o">=</span> <span class="n">kinetic_energy_grad_fn</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
-        <span class="n">position</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">position</span><span class="p">,</span> <span class="n">kinetic_grad</span><span class="p">:</span> <span class="n">position</span> <span class="o">+</span> <span class="n">a1</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">kinetic_grad</span><span class="p">,</span>
-            <span class="n">position</span><span class="p">,</span>
-            <span class="n">kinetic_grad</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">logdensity_and_grad_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">momentum</span>
-            <span class="o">+</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">logdensity_grad</span><span class="p">,</span>
-            <span class="n">momentum</span><span class="p">,</span>
-            <span class="n">logdensity_grad</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">IntegratorState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">one_step</span></div>
+<div class="viewcode-block" id="noneuclidean_leapfrog"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.noneuclidean_leapfrog">[docs]</a><span class="n">noneuclidean_leapfrog</span> <span class="o">=</span> <span class="n">generate_noneuclidean_integrator</span><span class="p">(</span><span class="n">velocity_verlet_cofficients</span><span class="p">)</span></div>
+<div class="viewcode-block" id="noneuclidean_mclachlan"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.noneuclidean_mclachlan">[docs]</a><span class="n">noneuclidean_mclachlan</span> <span class="o">=</span> <span class="n">generate_noneuclidean_integrator</span><span class="p">(</span><span class="n">mclachlan_cofficients</span><span class="p">)</span></div>
+<div class="viewcode-block" id="noneuclidean_yoshida"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.noneuclidean_yoshida">[docs]</a><span class="n">noneuclidean_yoshida</span> <span class="o">=</span> <span class="n">generate_noneuclidean_integrator</span><span class="p">(</span><span class="n">yoshida_cofficients</span><span class="p">)</span></div>
 </pre></div>
 
                 </article>

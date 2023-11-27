@@ -338,6 +338,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.linear_map"><code class="docutils literal notranslate"><span class="pre">linear_map()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.generate_gaussian_noise"><code class="docutils literal notranslate"><span class="pre">generate_gaussian_noise()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.generate_unit_vector"><code class="docutils literal notranslate"><span class="pre">generate_unit_vector()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.pytree_size"><code class="docutils literal notranslate"><span class="pre">pytree_size()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.index_pytree"><code class="docutils literal notranslate"><span class="pre">index_pytree()</span></code></a></li>
 </ul>
@@ -370,10 +371,13 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.util.generate_gaussian_noise" title="blackjax.util.generate_gaussian_noise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_gaussian_noise</span></code></a>(→ blackjax.types.ArrayTree)</p></td>
 <td><p>Generate N(mu, sigma) noise with output structure that match a given PyTree.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.util.pytree_size" title="blackjax.util.pytree_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pytree_size</span></code></a>(→ int)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.util.generate_unit_vector" title="blackjax.util.generate_unit_vector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_unit_vector</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Generate a random unit vector with output structure that match a given PyTree.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.util.pytree_size" title="blackjax.util.pytree_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pytree_size</span></code></a>(→ int)</p></td>
 <td><p>Return the dimension of the flatten PyTree.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.util.index_pytree" title="blackjax.util.index_pytree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">index_pytree</span></code></a>(→ blackjax.types.ArrayTree)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.util.index_pytree" title="blackjax.util.index_pytree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">index_pytree</span></code></a>(→ blackjax.types.ArrayTree)</p></td>
 <td><p>Builds a PyTree with elements indicating its corresponding index on a flat array.</p></td>
 </tr>
 </tbody>
@@ -421,6 +425,23 @@ more details.</p></li>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>Gaussian noise following N(mu, sigma) that match the structure of position.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.util.generate_unit_vector">
+<span class="sig-name descname"><span class="pre">generate_unit_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../_modules/blackjax/util.html#generate_unit_vector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.util.generate_unit_vector" title="Permalink to this definition">#</a></dt>
+<dd><p>Generate a random unit vector with output structure that match a given PyTree.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rng_key</strong> – The pseudo-random number generator key used to generate random numbers.</p></li>
+<li><p><strong>position</strong> – PyTree that the structure the output should to match.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Random unit vector that match the structure of position.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -488,6 +509,7 @@ column (and row) of a 1 dimensional (or 2 dimensional) array.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.linear_map"><code class="docutils literal notranslate"><span class="pre">linear_map()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.generate_gaussian_noise"><code class="docutils literal notranslate"><span class="pre">generate_gaussian_noise()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.generate_unit_vector"><code class="docutils literal notranslate"><span class="pre">generate_unit_vector()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.pytree_size"><code class="docutils literal notranslate"><span class="pre">pytree_size()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.index_pytree"><code class="docutils literal notranslate"><span class="pre">index_pytree()</span></code></a></li>
 </ul>
