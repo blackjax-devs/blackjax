@@ -70,6 +70,7 @@ def minimize_lbfgs(
     gtol: float = 1e-08,
     ftol: float = 1e-05,
     maxls: int = 1000,
+    **lbfgs_kwargs,
 ) -> tuple[OptStep, LBFGSHistory]:
     """
     Minimize a function using L-BFGS
@@ -91,6 +92,8 @@ def minimize_lbfgs(
         terminates the minimization when `|g_k|_norm < gtol`
     maxls:
         maximum number of line search steps (per iteration)
+    **lbfgs_kwargs
+        other keyword arguments passed to `jaxopt.LBFGS`.
 
     Returns
     -------
@@ -110,6 +113,7 @@ def minimize_lbfgs(
         gtol,
         ftol,
         maxls,
+        **lbfgs_kwargs,
     )
 
     # Unravel final optimization step.
@@ -152,6 +156,7 @@ def _minimize_lbfgs(
     gtol: float,
     ftol: float,
     maxls: int,
+    **lbfgs_kwargs,
 ) -> tuple[OptStep, LBFGSHistory]:
     def lbfgs_one_step(carry, i):
         (params, state), previous_history = carry
@@ -200,12 +205,17 @@ def _minimize_lbfgs(
         next_tup = lax.cond(not_converged, lbfgs_one_step, non_op, carry, it)
         return next_tup, next_tup[0][-1]
 
-    solver = jaxopt.LBFGS(fun=fun, maxiter=maxiter, maxls=maxls, history_size=maxcor)
-    value0, grad0 = jax.value_and_grad(fun)(x0)
+    solver = jaxopt.LBFGS(
+        fun=fun,
+        maxiter=maxiter,
+        maxls=maxls,
+        history_size=maxcor,
+        **lbfgs_kwargs,
+    )
     state = solver.init_state(x0)
 
     value0, grad0 = jax.value_and_grad(fun)(x0)
-    # LBFGS update overwirte value internally, here is to set the value for checking condition
+    # LBFGS update overwrite value internally, here is to set the value for checking condition
     state = state._replace(value=value0)
     init_step = OptStep(params=x0, state=state)
     initial_history = LBFGSHistory(
