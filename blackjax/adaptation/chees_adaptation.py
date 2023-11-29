@@ -178,11 +178,9 @@ def base(
         trajectory_gradients = (
             jitter_generator(random_generator_arg)
             * trajectory_length
-            * (
-                jax.vmap(lambda p: jnp.dot(p, p))(proposals_matrix)
-                - jax.vmap(lambda p: jnp.dot(p, p))(initials_matrix)
-            )
-            * jax.vmap(lambda p, m: jnp.dot(p, m))(proposals_matrix, momentums_matrix)
+            * jax.vmap(
+                lambda pm, im, mm: (jnp.dot(pm, pm) - jnp.dot(im, im)) * jnp.dot(pm, mm)
+            )(proposals_matrix, initials_matrix, momentums_matrix)
         )
         trajectory_gradient = jnp.sum(
             acceptance_probabilities * trajectory_gradients, where=~is_divergent
