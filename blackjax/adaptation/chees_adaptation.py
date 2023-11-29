@@ -273,7 +273,7 @@ def base(
 
 
 def chees_adaptation(
-    logprob_fn: Callable,
+    logdensity_fn: Callable,
     num_chains: int,
     *,
     jitter_generator: Optional[Callable] = None,
@@ -308,7 +308,7 @@ def chees_adaptation(
 
     .. code::
 
-        warmup = blackjax.chees_adaptation(logprob_fn, num_chains)
+        warmup = blackjax.chees_adaptation(logdensity_fn, num_chains)
         key_warmup, key_sample = jax.random.split(rng_key)
         optim = optax.adam(learning_rate)
         (last_states, parameters), _ = warmup.run(
@@ -318,12 +318,12 @@ def chees_adaptation(
             optim,
             num_warmup_steps,
         )
-        kernel = blackjax.dynamic_hmc(logprob_fn, **parameters).step
+        kernel = blackjax.dynamic_hmc(logdensity_fn, **parameters).step
         new_states, info = jax.vmap(kernel)(key_sample, last_states)
 
     Parameters
     ----------
-    logprob_fn
+    logdensity_fn
         The log density probability density function from which we wish to sample.
     num_chains
         Number of chains used for cross-chain warm-up training.
@@ -399,7 +399,7 @@ def chees_adaptation(
             keys = jax.random.split(rng_key, num_chains)
             _step_fn = partial(
                 step_fn,
-                logdensity_fn=logprob_fn,
+                logdensity_fn=logdensity_fn,
                 step_size=adaptation_state.step_size,
                 inverse_mass_matrix=jnp.ones(num_dim),
                 trajectory_length_adjusted=adaptation_state.trajectory_length
@@ -422,7 +422,7 @@ def chees_adaptation(
             )
 
         batch_init = jax.vmap(
-            lambda p: hmc.init_dynamic(p, logprob_fn, init_random_arg)
+            lambda p: hmc.init_dynamic(p, logdensity_fn, init_random_arg)
         )
         init_states = batch_init(positions)
         init_adaptation_state = init(init_random_arg, step_size)
