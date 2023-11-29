@@ -64,12 +64,12 @@ def init(x_initial : ArrayLikeTree, logdensity_fn, random_key):
         grad_nlogp = jax.value_and_grad(lambda x : - logdensity_fn(x))
         l, g = grad_nlogp(x_initial)
 
-        u = random_unit_vector(random_key, d=x_initial.shape[0])
+        u = full_refresh(random_key, d=x_initial.shape[0])
 
         return MCLMCState(x_initial, u, l, g)
 
 
-def random_unit_vector(random_key,d):
+def full_refresh(random_key, d):
     u = jax.random.normal(jax.random.PRNGKey(0), shape = (d, ))
     u /= jnp.sqrt(jnp.sum(jnp.square(u)))
     return u
@@ -102,33 +102,23 @@ def update_momentum(d):
 
   return update
 
-def partially_refresh_momentum(d, sequential= True):
+def partial_refresh(d):
   """Adds a small noise to u and normalizes."""
     
-    
-  def rng_sequential(u, random_key, nu):
+  def rng(u, random_key, nu):
     z = nu * jax.random.normal(random_key, shape = (d, ))
 
     return (u + z) / jnp.sqrt(jnp.sum(jnp.square(u + z)))
   
+  return rng
 
-#   def rng_parallel(u, random_key, nu):
-#       key, subkey = jax.random.split(random_key)
-#       noise = nu * jax.random.normal(subkey, shape= u.shape, dtype=u.dtype)
-
-#       return (u + noise) / jnp.sqrt(jnp.sum(jnp.square(u + noise), axis = 1))[:, None], key
-
-
-  return rng_sequential
 
 def update(hamiltonian_dynamics, partially_refresh_momentum, d):
     
-#   print("BAR 4")
   def step(x, u, g, random_key, L, eps, sigma):
       """One step of the generalized dynamics."""
 
       # Hamiltonian step
-    #   print("BAR 3")
       xx, uu, ll, gg, kinetic_change = hamiltonian_dynamics(x=x, u=u, g=g, eps=eps, sigma = sigma)
 
       # Langevin-like noise
@@ -146,15 +136,11 @@ def build_kernel(grad_nlogp, d, integrator, transform, params):
         hamiltonian_step, _ = integrator(T= update_position(grad_nlogp), 
                                                                 V= update_momentum(d),
                                                                 d= d)
-        # print("BAR")
-        move = update(hamiltonian_step, partially_refresh_momentum(d), d)
-        # print("BAZ")
+        move = update(hamiltonian_step, partial_refresh(d), d)
         
         def kernel(rng_key : PRNGKey, state : MCLMCState) -> tuple[MCLMCState, MCLMCInfo]:
 
             x, u, l, g = state
-
-        
             xx, uu, ll, gg, kinetic_change = move(x, u, g, rng_key, L, eps, sigma)
             de = kinetic_change + ll - l
             return MCLMCState(xx, uu, ll, gg), MCLMCInfo(transform(xx), ll, de)
