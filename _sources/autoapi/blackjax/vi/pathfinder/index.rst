@@ -82,7 +82,7 @@ Functions
       
 
 
-.. py:function:: approximate(rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable, initial_position: blackjax.types.ArrayLikeTree, num_samples: int = 200, *, maxiter=30, maxcor=10, maxls=1000, gtol=1e-08, ftol=1e-05) -> tuple[PathfinderState, PathfinderInfo]
+.. py:function:: approximate(rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable, initial_position: blackjax.types.ArrayLikeTree, num_samples: int = 200, *, maxiter=30, maxcor=10, maxls=1000, gtol=1e-08, ftol=1e-05, **lbfgs_kwargs) -> tuple[PathfinderState, PathfinderInfo]
 
    Pathfinder variational inference algorithm.
 
@@ -105,6 +105,7 @@ Functions
    :param gtol: The LGBFS algorithm terminates the minimization when `|g_k|_norm < gtol`
    :param maxls: The maximum number of line search steps (per iteration) for the LGBFS
                  algorithm
+   :param \*\*lbfgs_kwargs: other keyword arguments passed to `jaxopt.LBFGS`.
 
    :returns: * *A PathfinderState with information on the iteration in the optimization path*
              * *whose approximate samples yields the highest ELBO, and PathfinderInfo that*

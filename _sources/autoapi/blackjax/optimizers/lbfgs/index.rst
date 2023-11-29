@@ -76,7 +76,7 @@ Functions
       
 
 
-.. py:function:: minimize_lbfgs(fun: Callable, x0: blackjax.types.ArrayLikeTree, maxiter: int = 30, maxcor: float = 10, gtol: float = 1e-08, ftol: float = 1e-05, maxls: int = 1000) -> tuple[jaxopt.base.OptStep, LBFGSHistory]
+.. py:function:: minimize_lbfgs(fun: Callable, x0: blackjax.types.ArrayLikeTree, maxiter: int = 30, maxcor: float = 10, gtol: float = 1e-08, ftol: float = 1e-05, maxls: int = 1000, **lbfgs_kwargs) -> tuple[jaxopt.base.OptStep, LBFGSHistory]
 
    Minimize a function using L-BFGS
 
@@ -88,6 +88,7 @@ Functions
    :param ftol: terminates the minimization when `(f_k - f_{k+1}) < ftol`
    :param gtol: terminates the minimization when `|g_k|_norm < gtol`
    :param maxls: maximum number of line search steps (per iteration)
+   :param \*\*lbfgs_kwargs: other keyword arguments passed to `jaxopt.LBFGS`.
 
    :rtype: Optimization results and optimization path
 

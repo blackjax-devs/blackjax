@@ -137,7 +137,7 @@ Attributes
              * *update* -- Function that moves the warmup one step.
 
 
-.. py:function:: chees_adaptation(logprob_fn: Callable, num_chains: int, *, jitter_generator: Optional[Callable] = None, jitter_amount: float = 1.0, target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE, decay_rate: float = 0.5) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: chees_adaptation(logdensity_fn: Callable, num_chains: int, *, jitter_generator: Optional[Callable] = None, jitter_amount: float = 1.0, target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE, decay_rate: float = 0.5) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the step size and trajectory length (number of integration steps / step size)
    parameters of the jittered HMC algorthm.
@@ -165,7 +165,7 @@ Attributes
 
    .. code::
 
-       warmup = blackjax.chees_adaptation(logprob_fn, num_chains)
+       warmup = blackjax.chees_adaptation(logdensity_fn, num_chains)
        key_warmup, key_sample = jax.random.split(rng_key)
        optim = optax.adam(learning_rate)
        (last_states, parameters), _ = warmup.run(
@@ -175,10 +175,10 @@ Attributes
            optim,
            num_warmup_steps,
        )
-       kernel = blackjax.dynamic_hmc(logprob_fn, **parameters).step
+       kernel = blackjax.dynamic_hmc(logdensity_fn, **parameters).step
        new_states, info = jax.vmap(kernel)(key_sample, last_states)
 
-   :param logprob_fn: The log density probability density function from which we wish to sample.
+   :param logdensity_fn: The log density probability density function from which we wish to sample.
    :param num_chains: Number of chains used for cross-chain warm-up training.
    :param jitter_generator: Optional function that generates a value in [0, 1] used to jitter the trajectory
                             lengths given a PRNGKey, used to propose the number of integration steps. If None,
