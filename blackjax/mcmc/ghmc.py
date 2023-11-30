@@ -156,14 +156,16 @@ def build_kernel(
         integrator_state = integrators.IntegratorState(
             position, momentum, logdensity, logdensity_grad
         )
+        # Note that ghmc use nonreversible_slice_sampling, which overloads the pattern
+        # of SampleProposal and do not actually return the acceptance rate.
         proposal, info = proposal_generator(slice, integrator_state)
         proposal = hmc.flip_momentum(proposal)
         state = GHMCState(
-            proposal.position,
-            proposal.momentum,
-            proposal.logdensity,
-            proposal.logdensity_grad,
-            info.acceptance_rate,
+            position=proposal.position,
+            momentum=proposal.momentum,
+            logdensity=proposal.logdensity,
+            logdensity_grad=proposal.logdensity_grad,
+            slice=info.acceptance_rate,
         )
 
         return state, info
