@@ -11,10 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Protocol
 
 import jax
 import jax.numpy as jnp
+
+from blackjax.types import Array, PRNGKey
 
 TrajectoryState = NamedTuple
 
@@ -160,12 +162,21 @@ def asymmetric_proposal_generator(
     return new, update
 
 
+class SampleProposal(Protocol):
+    def __call__(
+        self, rng_key: Array, proposal: Proposal, new_proposal: Proposal
+    ) -> Proposal:
+        ...
+
+
 # --------------------------------------------------------------------
 #                        STATIC SAMPLING
 # --------------------------------------------------------------------
 
 
-def static_binomial_sampling(rng_key, proposal, new_proposal):
+def static_binomial_sampling(
+    rng_key: PRNGKey, proposal: Proposal, new_proposal: Proposal
+) -> Proposal:
     """Accept or reject a proposal.
 
     In the static setting, the probability with which the new proposal is
@@ -195,7 +206,9 @@ def static_binomial_sampling(rng_key, proposal, new_proposal):
 # --------------------------------------------------------------------
 
 
-def progressive_uniform_sampling(rng_key, proposal, new_proposal):
+def progressive_uniform_sampling(
+    rng_key: PRNGKey, proposal: Proposal, new_proposal: Proposal
+) -> Proposal:
     # Using expit to compute exp(w1) / (exp(w0) + exp(w1))
     p_accept = jax.scipy.special.expit(new_proposal.weight - proposal.weight)
     do_accept = jax.random.bernoulli(rng_key, p_accept)
@@ -222,7 +235,9 @@ def progressive_uniform_sampling(rng_key, proposal, new_proposal):
     )
 
 
-def progressive_biased_sampling(rng_key, proposal, new_proposal):
+def progressive_biased_sampling(
+    rng_key: PRNGKey, proposal: Proposal, new_proposal: Proposal
+) -> Proposal:
     """Baised proposal sampling :cite:p:`betancourt2017conceptual`.
 
     Unlike uniform sampling, biased sampling favors new proposals. It thus
@@ -259,7 +274,9 @@ def progressive_biased_sampling(rng_key, proposal, new_proposal):
 # --------------------------------------------------------------------
 
 
-def nonreversible_slice_sampling(slice, proposal, new_proposal):
+def nonreversible_slice_sampling(
+    slice: Array, proposal: Proposal, new_proposal: Proposal
+) -> Proposal:
     """Slice sampling for non-reversible Metropolis-Hasting update.
 
     Performs a non-reversible update of a uniform [0, 1] value
