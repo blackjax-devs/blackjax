@@ -1,6 +1,7 @@
 # BlackJAX
-![CI](https://github.com/blackjax-devs/blackjax/workflows/Run%20tests/badge.svg?branch=main)
-[![codecov](https://codecov.io/gh/blackjax-devs/blackjax/branch/main/graph/badge.svg)](https://codecov.io/gh/blackjax-devs/blackjax)
+![Continuous integration](https://github.com/blackjax-devs/blackjax/actions/workflows/test.yml/badge.svg)
+![codecov](https://codecov.io/gh/blackjax-devs/blackjax/branch/main/graph/badge.svg)
+![PyPI version](https://img.shields.io/pypi/v/blackjax)
 
 
 ## What is BlackJAX?
