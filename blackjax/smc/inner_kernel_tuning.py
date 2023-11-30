@@ -8,7 +8,7 @@ from blackjax.types import ArrayTree, PRNGKey
 
 
 class StateWithParameterOverride(NamedTuple):
-    sampling_state: ArrayTree
+    sampler_state: ArrayTree
     parameter_override: ArrayTree
 
 
@@ -69,9 +69,7 @@ def build_kernel(
             num_mcmc_steps=num_mcmc_steps,
             **extra_parameters,
         ).step
-        new_state, info = step_fn(
-            rng_key, state.sampling_state, **extra_step_parameters
-        )
+        new_state, info = step_fn(rng_key, state.sampler_state, **extra_step_parameters)
         new_parameter_override = mcmc_parameter_factory(new_state, info)
         return StateWithParameterOverride(new_state, new_parameter_override), info
 
@@ -82,8 +80,8 @@ class inner_kernel_tuning:
     """In the context of an SMC sampler (whose step_fn returning state
     has a .particles attribute), there's an inner MCMC that is used
     to perturbate/update each of the particles. This adaptation tunes some
-      parameter of that MCMC, based on particles.
-      The parameter type must be a valid JAX type.
+    parameter of that MCMC, based on particles.
+    The parameter type must be a valid JAX type.
 
     Parameters
     ----------
@@ -100,7 +98,7 @@ class inner_kernel_tuning:
         A callable that initializes the inner kernel
     mcmc_parameters
         Other (fixed across SMC iterations) parameters for the inner kernel
-    mcmc_parameter_factory
+    mcmc_parameter_update_fn
      A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the
       inner kernel in i+1 iteration.
     initial_parameter_value
@@ -108,9 +106,9 @@ class inner_kernel_tuning:
     extra_parameters:
         parameters to be used for the creation of the smc_algorithm.
 
-       Returns
-       -------
-       A ``SamplingAlgorithm``.
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -126,7 +124,7 @@ class inner_kernel_tuning:
         mcmc_init_fn: Callable,
         mcmc_parameters: Dict,
         resampling_fn: Callable,
-        mcmc_parameter_factory,
+        mcmc_parameter_update_fn: Callable[[SMCState, SMCInfo], ArrayTree],
         initial_parameter_value,
         num_mcmc_steps: int = 10,
         **extra_parameters,
@@ -139,7 +137,7 @@ class inner_kernel_tuning:
             mcmc_init_fn,
             mcmc_parameters,
             resampling_fn,
-            mcmc_parameter_factory,
+            mcmc_parameter_update_fn,
             num_mcmc_steps,
             **extra_parameters,
         )

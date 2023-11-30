@@ -10,10 +10,8 @@ from absl.testing import absltest
 import blackjax
 import blackjax.smc.resampling as resampling
 from blackjax.smc.inner_kernel_tuning import inner_kernel_tuning
-from blackjax.smc.optimizations.from_kernel_info import (
-    update_scale_from_acceptance_rate,
-)
-from blackjax.smc.optimizations.from_particles import (
+from blackjax.smc.tuning.from_kernel_info import update_scale_from_acceptance_rate
+from blackjax.smc.tuning.from_particles import (
     mass_matrix_from_particles,
     particles_covariance_matrix,
     particles_means,
@@ -66,7 +64,21 @@ class SMCParameterTuningTest(chex.TestCase):
         logpdf = stats.norm.logpdf(preds, y, scale)
         return jnp.sum(logpdf)
 
-    def test_smc_inner_kernel_tuning(self):
+    def test_smc_inner_kernel_adaptive_tempered(self):
+        self.smc_inner_kernel_tuning_test_case(
+            blackjax.adaptive_tempered_smc,
+            smc_parameters={"target_ess": 0.5},
+            step_parameters={},
+        )
+
+    def test_smc_inner_kernel_tempered(self):
+        self.smc_inner_kernel_tuning_test_case(
+            blackjax.tempered_smc, smc_parameters={}, step_parameters={"lmbda": 0.75}
+        )
+
+    def smc_inner_kernel_tuning_test_case(
+        self, smc_algorithm, smc_parameters, step_parameters
+    ):
         specialized_log_weights_fn = lambda tree: log_weights_fn(tree, 1.0)
         # Don't use exactly the invariant distribution for the MCMC kernel
         init_particles = 0.25 + np.random.randn(1000) * 50
@@ -74,7 +86,7 @@ class SMCParameterTuningTest(chex.TestCase):
         proposal_factory = MagicMock()
         proposal_factory.return_value = 100
 
-        def mcmc_parameter_factory(state, info):
+        def mcmc_parameter_update_fn(state, info):
             return 100
 
         mcmc_factory = MagicMock()
@@ -96,19 +108,19 @@ class SMCParameterTuningTest(chex.TestCase):
             mcmc_factory=kernel_factory,
             mcmc_init_fn=blackjax.irmh.init,
             resampling_fn=resampling.systematic,
-            smc_algorithm=blackjax.tempered_smc,
+            smc_algorithm=smc_algorithm,
             mcmc_parameters={},
-            mcmc_parameter_factory=mcmc_parameter_factory,
+            mcmc_parameter_update_fn=mcmc_parameter_update_fn,
             initial_parameter_value=irmh_proposal_distribution,
+            **smc_parameters,
         )
 
         new_state, new_info = kernel.step(
-            self.key, state=kernel.init(init_particles), lmbda=0.75
+            self.key, state=kernel.init(init_particles), **step_parameters
         )
         assert new_state.parameter_override == 100
 
 
-#
 class MeanAndStdFromParticlesTest(chex.TestCase):
     def setUp(self):
         super().setUp()
