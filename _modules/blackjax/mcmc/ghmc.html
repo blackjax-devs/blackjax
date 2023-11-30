@@ -497,14 +497,16 @@ document.write(`
         <span class="n">integrator_state</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span><span class="p">(</span>
             <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span>
         <span class="p">)</span>
+        <span class="c1"># Note that ghmc use nonreversible_slice_sampling, which overloads the pattern</span>
+        <span class="c1"># of SampleProposal and do not actually return the acceptance rate.</span>
         <span class="n">proposal</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="nb">slice</span><span class="p">,</span> <span class="n">integrator_state</span><span class="p">)</span>
         <span class="n">proposal</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">flip_momentum</span><span class="p">(</span><span class="n">proposal</span><span class="p">)</span>
         <span class="n">state</span> <span class="o">=</span> <span class="n">GHMCState</span><span class="p">(</span>
-            <span class="n">proposal</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
-            <span class="n">proposal</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
-            <span class="n">proposal</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span>
-            <span class="n">proposal</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">,</span>
-            <span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
+            <span class="n">position</span><span class="o">=</span><span class="n">proposal</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+            <span class="n">momentum</span><span class="o">=</span><span class="n">proposal</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+            <span class="n">logdensity</span><span class="o">=</span><span class="n">proposal</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span>
+            <span class="n">logdensity_grad</span><span class="o">=</span><span class="n">proposal</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">,</span>
+            <span class="nb">slice</span><span class="o">=</span><span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">info</span>

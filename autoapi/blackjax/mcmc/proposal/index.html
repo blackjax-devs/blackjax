@@ -355,6 +355,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.proposal_generator"><code class="docutils literal notranslate"><span class="pre">proposal_generator()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.proposal_from_energy_diff"><code class="docutils literal notranslate"><span class="pre">proposal_from_energy_diff()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.asymmetric_proposal_generator"><code class="docutils literal notranslate"><span class="pre">asymmetric_proposal_generator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.SampleProposal"><code class="docutils literal notranslate"><span class="pre">SampleProposal</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.static_binomial_sampling"><code class="docutils literal notranslate"><span class="pre">static_binomial_sampling()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.progressive_uniform_sampling"><code class="docutils literal notranslate"><span class="pre">progressive_uniform_sampling()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.progressive_biased_sampling"><code class="docutils literal notranslate"><span class="pre">progressive_biased_sampling()</span></code></a></li>
@@ -385,6 +386,9 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Proposal</span></code></a></p></td>
 <td><p>Proposal for the next chain step.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.SampleProposal" title="blackjax.mcmc.proposal.SampleProposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SampleProposal</span></code></a></p></td>
+<td><p>Base class for protocol classes.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -406,16 +410,16 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.asymmetric_proposal_generator" title="blackjax.mcmc.proposal.asymmetric_proposal_generator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asymmetric_proposal_generator</span></code></a>(→ tuple[Callable, Callable])</p></td>
 <td><p>A proposal generator that takes into account the transition between</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.static_binomial_sampling" title="blackjax.mcmc.proposal.static_binomial_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">static_binomial_sampling</span></code></a>(rng_key, proposal, new_proposal)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.static_binomial_sampling" title="blackjax.mcmc.proposal.static_binomial_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">static_binomial_sampling</span></code></a>(→ Proposal)</p></td>
 <td><p>Accept or reject a proposal.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.progressive_uniform_sampling" title="blackjax.mcmc.proposal.progressive_uniform_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">progressive_uniform_sampling</span></code></a>(rng_key, proposal, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.progressive_uniform_sampling" title="blackjax.mcmc.proposal.progressive_uniform_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">progressive_uniform_sampling</span></code></a>(→ Proposal)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.progressive_biased_sampling" title="blackjax.mcmc.proposal.progressive_biased_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">progressive_biased_sampling</span></code></a>(rng_key, proposal, ...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.progressive_biased_sampling" title="blackjax.mcmc.proposal.progressive_biased_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">progressive_biased_sampling</span></code></a>(→ Proposal)</p></td>
 <td><p>Baised proposal sampling <span id="id1">[<a class="reference internal" href="../../../../bib.html#id24" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.nonreversible_slice_sampling" title="blackjax.mcmc.proposal.nonreversible_slice_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nonreversible_slice_sampling</span></code></a>(slice, proposal, new_proposal)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.nonreversible_slice_sampling" title="blackjax.mcmc.proposal.nonreversible_slice_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nonreversible_slice_sampling</span></code></a>(→ Proposal)</p></td>
 <td><p>Slice sampling for non-reversible Metropolis-Hasting update.</p></td>
 </tr>
 </tbody>
@@ -532,9 +536,42 @@ to a new state, given some optional keyword arguments.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.mcmc.proposal.SampleProposal">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SampleProposal</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#SampleProposal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.SampleProposal" title="Permalink to this definition">#</a></dt>
+<dd><p>Base class for protocol classes.</p>
+<p>Protocol classes are defined as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Proto</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">meth</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>Such classes are primarily used with static type checkers that recognize
+structural subtyping (static duck-typing), for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">C</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">meth</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+<span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Proto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">meth</span><span class="p">()</span>
+
+<span class="n">func</span><span class="p">(</span><span class="n">C</span><span class="p">())</span>  <span class="c1"># Passes static type check</span>
+</pre></div>
+</div>
+<p>See PEP 544 for details. Protocol classes decorated with
+&#64;typing.runtime_checkable act as simple-minded runtime protocols that check
+only the presence of given attributes, ignoring their type signatures.
+Protocol classes can be generic, they are defined as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">GenProto</span><span class="p">(</span><span class="n">Protocol</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+    <span class="k">def</span> <span class="nf">meth</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.proposal.static_binomial_sampling">
-<span class="sig-name descname"><span class="pre">static_binomial_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#static_binomial_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.static_binomial_sampling" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">static_binomial_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#static_binomial_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.static_binomial_sampling" title="Permalink to this definition">#</a></dt>
 <dd><p>Accept or reject a proposal.</p>
 <p>In the static setting, the probability with which the new proposal is
 accepted is a function of the difference in energy between the previous and
@@ -544,12 +581,12 @@ then the new proposal is accepted with probability 1.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.proposal.progressive_uniform_sampling">
-<span class="sig-name descname"><span class="pre">progressive_uniform_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#progressive_uniform_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.progressive_uniform_sampling" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">progressive_uniform_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#progressive_uniform_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.progressive_uniform_sampling" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.proposal.progressive_biased_sampling">
-<span class="sig-name descname"><span class="pre">progressive_biased_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#progressive_biased_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.progressive_biased_sampling" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">progressive_biased_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#progressive_biased_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.progressive_biased_sampling" title="Permalink to this definition">#</a></dt>
 <dd><p>Baised proposal sampling <span id="id2">[<a class="reference internal" href="../../../../bib.html#id24" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>.</p>
 <p>Unlike uniform sampling, biased sampling favors new proposals. It thus
 biases the transition away from the trajectory’s initial state.</p>
@@ -557,7 +594,7 @@ biases the transition away from the trajectory’s initial state.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.proposal.nonreversible_slice_sampling">
-<span class="sig-name descname"><span class="pre">nonreversible_slice_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#nonreversible_slice_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.nonreversible_slice_sampling" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">nonreversible_slice_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slice</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#nonreversible_slice_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.nonreversible_slice_sampling" title="Permalink to this definition">#</a></dt>
 <dd><p>Slice sampling for non-reversible Metropolis-Hasting update.</p>
 <p>Performs a non-reversible update of a uniform [0, 1] value
 for Metropolis-Hastings accept/reject decisions <span id="id3">[<a class="reference internal" href="../../../../bib.html#id27" title="Radford M Neal. Non-reversibly updating a uniform [0, 1] value for metropolis accept/reject decisions. arXiv preprint arXiv:2001.11950, 2020.">Nea20</a>]</span>, in addition
@@ -627,6 +664,7 @@ to the accept/reject step of a current state and new proposal.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.proposal_generator"><code class="docutils literal notranslate"><span class="pre">proposal_generator()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.proposal_from_energy_diff"><code class="docutils literal notranslate"><span class="pre">proposal_from_energy_diff()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.asymmetric_proposal_generator"><code class="docutils literal notranslate"><span class="pre">asymmetric_proposal_generator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.SampleProposal"><code class="docutils literal notranslate"><span class="pre">SampleProposal</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.static_binomial_sampling"><code class="docutils literal notranslate"><span class="pre">static_binomial_sampling()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.progressive_uniform_sampling"><code class="docutils literal notranslate"><span class="pre">progressive_uniform_sampling()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.progressive_biased_sampling"><code class="docutils literal notranslate"><span class="pre">progressive_biased_sampling()</span></code></a></li>

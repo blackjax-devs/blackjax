@@ -13,6 +13,7 @@ Classes
 .. autoapisummary::
 
    blackjax.mcmc.proposal.Proposal
+   blackjax.mcmc.proposal.SampleProposal
 
 
 
@@ -117,7 +118,42 @@ Attributes
              * *another to generate proposals after each step.*
 
 
-.. py:function:: static_binomial_sampling(rng_key, proposal, new_proposal)
+.. py:class:: SampleProposal
+
+
+
+
+   Base class for protocol classes.
+
+   Protocol classes are defined as::
+
+       class Proto(Protocol):
+           def meth(self) -> int:
+               ...
+
+   Such classes are primarily used with static type checkers that recognize
+   structural subtyping (static duck-typing), for example::
+
+       class C:
+           def meth(self) -> int:
+               return 0
+
+       def func(x: Proto) -> int:
+           return x.meth()
+
+       func(C())  # Passes static type check
+
+   See PEP 544 for details. Protocol classes decorated with
+   @typing.runtime_checkable act as simple-minded runtime protocols that check
+   only the presence of given attributes, ignoring their type signatures.
+   Protocol classes can be generic, they are defined as::
+
+       class GenProto(Protocol[T]):
+           def meth(self) -> T:
+               ...
+
+
+.. py:function:: static_binomial_sampling(rng_key: blackjax.types.PRNGKey, proposal: Proposal, new_proposal: Proposal) -> Proposal
 
    Accept or reject a proposal.
 
@@ -128,10 +164,10 @@ Attributes
 
 
 
-.. py:function:: progressive_uniform_sampling(rng_key, proposal, new_proposal)
+.. py:function:: progressive_uniform_sampling(rng_key: blackjax.types.PRNGKey, proposal: Proposal, new_proposal: Proposal) -> Proposal
 
 
-.. py:function:: progressive_biased_sampling(rng_key, proposal, new_proposal)
+.. py:function:: progressive_biased_sampling(rng_key: blackjax.types.PRNGKey, proposal: Proposal, new_proposal: Proposal) -> Proposal
 
    Baised proposal sampling :cite:p:`betancourt2017conceptual`.
 
@@ -140,7 +176,7 @@ Attributes
 
 
 
-.. py:function:: nonreversible_slice_sampling(slice, proposal, new_proposal)
+.. py:function:: nonreversible_slice_sampling(slice: blackjax.types.Array, proposal: Proposal, new_proposal: Proposal) -> Proposal
 
    Slice sampling for non-reversible Metropolis-Hasting update.
 

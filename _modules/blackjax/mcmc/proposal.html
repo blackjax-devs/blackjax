@@ -352,10 +352,12 @@ document.write(`
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Protocol</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <div class="viewcode-block" id="TrajectoryState"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.TrajectoryState">[docs]</a><span class="n">TrajectoryState</span> <span class="o">=</span> <span class="n">NamedTuple</span></div>
 
@@ -501,12 +503,21 @@ document.write(`
     <span class="k">return</span> <span class="n">new</span><span class="p">,</span> <span class="n">update</span></div>
 
 
+<div class="viewcode-block" id="SampleProposal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.SampleProposal">[docs]</a><span class="k">class</span> <span class="nc">SampleProposal</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">proposal</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">:</span> <span class="n">Proposal</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
+        <span class="o">...</span></div>
+
+
 <span class="c1"># --------------------------------------------------------------------</span>
 <span class="c1">#                        STATIC SAMPLING</span>
 <span class="c1"># --------------------------------------------------------------------</span>
 
 
-<div class="viewcode-block" id="static_binomial_sampling"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.static_binomial_sampling">[docs]</a><span class="k">def</span> <span class="nf">static_binomial_sampling</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">):</span>
+<div class="viewcode-block" id="static_binomial_sampling"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.static_binomial_sampling">[docs]</a><span class="k">def</span> <span class="nf">static_binomial_sampling</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">proposal</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">:</span> <span class="n">Proposal</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Accept or reject a proposal.</span>
 
 <span class="sd">    In the static setting, the probability with which the new proposal is</span>
@@ -536,7 +547,9 @@ document.write(`
 <span class="c1"># --------------------------------------------------------------------</span>
 
 
-<div class="viewcode-block" id="progressive_uniform_sampling"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.progressive_uniform_sampling">[docs]</a><span class="k">def</span> <span class="nf">progressive_uniform_sampling</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">):</span>
+<div class="viewcode-block" id="progressive_uniform_sampling"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.progressive_uniform_sampling">[docs]</a><span class="k">def</span> <span class="nf">progressive_uniform_sampling</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">proposal</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">:</span> <span class="n">Proposal</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
     <span class="c1"># Using expit to compute exp(w1) / (exp(w0) + exp(w1))</span>
     <span class="n">p_accept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">expit</span><span class="p">(</span><span class="n">new_proposal</span><span class="o">.</span><span class="n">weight</span> <span class="o">-</span> <span class="n">proposal</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
     <span class="n">do_accept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">)</span>
@@ -563,7 +576,9 @@ document.write(`
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="progressive_biased_sampling"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.progressive_biased_sampling">[docs]</a><span class="k">def</span> <span class="nf">progressive_biased_sampling</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">):</span>
+<div class="viewcode-block" id="progressive_biased_sampling"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.progressive_biased_sampling">[docs]</a><span class="k">def</span> <span class="nf">progressive_biased_sampling</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">proposal</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">:</span> <span class="n">Proposal</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Baised proposal sampling :cite:p:`betancourt2017conceptual`.</span>
 
 <span class="sd">    Unlike uniform sampling, biased sampling favors new proposals. It thus</span>
@@ -600,7 +615,9 @@ document.write(`
 <span class="c1"># --------------------------------------------------------------------</span>
 
 
-<div class="viewcode-block" id="nonreversible_slice_sampling"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.nonreversible_slice_sampling">[docs]</a><span class="k">def</span> <span class="nf">nonreversible_slice_sampling</span><span class="p">(</span><span class="nb">slice</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">):</span>
+<div class="viewcode-block" id="nonreversible_slice_sampling"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.nonreversible_slice_sampling">[docs]</a><span class="k">def</span> <span class="nf">nonreversible_slice_sampling</span><span class="p">(</span>
+    <span class="nb">slice</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">proposal</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">:</span> <span class="n">Proposal</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Slice sampling for non-reversible Metropolis-Hasting update.</span>
 
 <span class="sd">    Performs a non-reversible update of a uniform [0, 1] value</span>
