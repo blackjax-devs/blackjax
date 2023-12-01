@@ -550,7 +550,7 @@ normal_test_cases = [
     {
         "algorithm": blackjax.barker_proposal,
         "initial_position": 1.0,
-        "parameters": {"step_size": 1.0},
+        "parameters": {"step_size": 1.5},
         "num_sampling_steps": 20_000,
         "burnin": 2_000,
     },
