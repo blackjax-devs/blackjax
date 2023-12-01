@@ -12,16 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Step size adaptation"""
-import warnings
 from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
-from scipy.fft import next_fast_len
 
 from blackjax.mcmc.hmc import HMCState
-from blackjax.mcmc.integrators import noneuclidean_mclachlan
-from blackjax.mcmc.mclmc import IntegratorState, build_kernel, init
 from blackjax.optimizers.dual_averaging import dual_averaging
 from blackjax.types import PRNGKey
 
@@ -261,4 +257,3 @@ def find_reasonable_step_size(
     rss_state = jax.lax.while_loop(do_continue, update, rss_state)
 
     return rss_state.step_size
-

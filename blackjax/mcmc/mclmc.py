@@ -47,12 +47,15 @@ class MCLMCInfo(NamedTuple):
 def init(x_initial: ArrayLike, logdensity_fn, rng_key):
     l, g = jax.value_and_grad(logdensity_fn)(x_initial)
 
-    jax.debug.print("thing blackjax {x}", x=IntegratorState(
-        position=x_initial,
-        momentum=generate_unit_vector(rng_key, x_initial),
-        logdensity=l,
-        logdensity_grad=g,
-    ))
+    jax.debug.print(
+        "thing blackjax {x}",
+        x=IntegratorState(
+            position=x_initial,
+            momentum=generate_unit_vector(rng_key, x_initial),
+            logdensity=l,
+            logdensity_grad=g,
+        ),
+    )
 
     return IntegratorState(
         position=x_initial,

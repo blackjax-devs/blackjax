@@ -1,7 +1,6 @@
 """Utility functions for BlackJax."""
 from functools import partial
 from typing import Union
-import jax
 
 import jax.numpy as jnp
 from jax import jit, lax
@@ -103,6 +102,7 @@ def generate_unit_vector(
     p, unravel_fn = ravel_pytree(position)
     sample = normal(rng_key, shape=p.shape, dtype=p.dtype)
     return unravel_fn(sample / jnp.linalg.norm(sample))
+
 
 def partially_refresh_momentum(momentum, rng_key, step_size, L):
     """Adds a small noise to momentum and normalizes.
