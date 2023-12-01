@@ -19,7 +19,7 @@ import jax
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.integrators import IntegratorState, noneuclidean_mclachlan
 from blackjax.types import Array, ArrayLike, PRNGKey
-from blackjax.util import full_refresh, generate_unit_vector, partially_refresh_momentum
+from blackjax.util import generate_unit_vector, partially_refresh_momentum
 
 __all__ = ["MCLMCInfo", "init", "build_kernel", "mclmc"]
 
@@ -172,6 +172,7 @@ class mclmc:
         L,
         step_size,
         integrator=noneuclidean_mclachlan,
+        seed=1,
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(logdensity_fn, integrator, transform)
 
@@ -179,6 +180,6 @@ class mclmc:
             return kernel(rng_key, state, L, step_size)
 
         def init_fn(position: ArrayLike):
-            return cls.init(position, logdensity_fn, jax.random.PRNGKey(0))
+            return cls.init(position, logdensity_fn, jax.random.PRNGKey(seed))
 
         return SamplingAlgorithm(init_fn, update_fn)
