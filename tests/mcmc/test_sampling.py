@@ -695,7 +695,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         if is_mass_matrix_diagonal is not None:
             if is_mass_matrix_diagonal:
                 inverse_mass_matrix = true_scale**2
-            elif is_mass_matrix_diagonal is not None:
+            else:
                 inverse_mass_matrix = true_cov
             kernel = algorithm(
                 logdensity_fn,

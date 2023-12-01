@@ -19,7 +19,6 @@ class BarkerSamplingTest(chex.TestCase):
         )
 
         keys = jax.random.split(key, n_samples)
-        _barker_sample_nd(key, m, a, scale)
         samples = jax.vmap(lambda k: _barker_sample_nd(k, m, a, scale))(keys)
         # Check that the emprical mean and the mean computed as sum(x * p(x) dx) are close
         _test_samples_vs_pdf(samples, lambda x: _barker_pdf(x, m, a, scale))

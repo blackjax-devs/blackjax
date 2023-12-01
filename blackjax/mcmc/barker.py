@@ -17,6 +17,7 @@ from typing import Callable, NamedTuple
 import jax
 import jax.numpy as jnp
 from jax.scipy import stats
+from jax.tree_util import tree_flatten
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
@@ -87,7 +88,6 @@ def build_kernel():
         scale: float,
     ) -> float:
         """Compute the acceptance probability of the Barker's proposal kernel."""
-        from jax.tree_util import tree_flatten
 
         logdensity_grad, _ = tree_flatten(logdensity_grad)
         logdensity_grad_proposal, _ = tree_flatten(logdensity_grad_proposal)
