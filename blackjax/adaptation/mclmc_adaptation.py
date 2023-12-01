@@ -33,6 +33,8 @@ from typing import NamedTuple
 
 from typing import NamedTuple
 
+from blackjax.util import pytree_size
+
 class MCLMCAdaptationState(NamedTuple):
     """Represents the tunable parameters for MCLMC adaptation.
 
@@ -44,26 +46,7 @@ class MCLMCAdaptationState(NamedTuple):
     L: float
     step_size: float
 
-def ess_corr(samples):
-    """
-    Calculates the effective sample size correction for a given set of samples.
-
-    Parameters:
-    x (ndarray): Array of samples.
-
-    A light wrapper around the blackjax.diagnostics.effective_sample_size function.
-
-    Returns:
-    float: The effective sample size correction.
-    """
-    num_samples = samples.shape[0]
-    ess = 0.5 * effective_sample_size(jnp.array([samples, samples]))
-    ess_per_sample = ess / num_samples
-    return 1.0 / jnp.average(1 / ess_per_sample)
-
-
-
-def mclmc_find_L_and_step_size(kernel, num_steps, initial_state, frac_tune1=0.1,
+def mclmc_find_L_and_step_size(kernel, num_steps, state, frac_tune1=0.1,
     frac_tune2=0.1,
     frac_tune3=0.1):
     """
@@ -72,97 +55,74 @@ def mclmc_find_L_and_step_size(kernel, num_steps, initial_state, frac_tune1=0.1,
     Args:
         kernel: The kernel function used for the MCMC algorithm.
         num_steps: The number of MCMC steps that will subsequently be run, after tuning
-        initial_state: The initial state of the MCMC algorithm.
+        state: The initial state of the MCMC algorithm.
         frac_tune1: The fraction of tuning for the first step of the adaptation.
         frac_tune2: The fraction of tuning for the second step of the adaptation.
         frac_tune3: The fraction of tuning for the third step of the adaptation.
 
     Returns:
-        dyn: The final state of the MCMC algorithm.
-        hyp: The final hyperparameters of the MCMC algorithm.
+        state: The final state of the MCMC algorithm.
+        params: The final hyperparameters of the MCMC algorithm.
     """
-    dim = initial_state.position.shape[0]
-    dyn = initial_state
-    hyp = MCLMCAdaptationState(jnp.sqrt(dim), 
+    dim = state.position.shape[0]
+    params = MCLMCAdaptationState(jnp.sqrt(dim), 
                                         jnp.sqrt(dim) * 0.25, 
                                         )
-
-    
     varEwanted = 5e-4
-    tune12p = tune12(kernel, dim, False, jnp.array([frac_tune1, frac_tune2]), varEwanted, 1.5, 150)
 
-    tune3p = tune3(kernel, frac_tune3, 0.4)
+    
+    state, params = make_L_step_size_adaptation(kernel, dim, jnp.array([frac_tune1, frac_tune2]), varEwanted, 1.5, 150)(state, params, num_steps)
 
-    if frac_tune3 != 0.:
-        tune3p = tune3(kernel, frac=frac_tune3, Lfactor=0.4)
-        schedule = [tune12p, tune3p]
-    else:
-        schedule = [tune12p, ]
+    if frac_tune3 != 0:
 
-    for program in schedule:
-        dyn, hyp = program(dyn, hyp, num_steps)
+        state, params = make_adaptation_L(kernel, frac=frac_tune3, Lfactor=0.4)(state,params, num_steps)
         
-    return dyn, hyp
+
+        
+    return state, params
 
 
- 
 
-def nan_reject(x, u, l, g, xx, uu, ll, gg, eps, eps_max, dK):
-    """if there are nans, let's reduce the stepsize, and not update the state. The function returns the old state in this case."""
-    
-    nonans = jnp.all(jnp.isfinite(xx))
-    _x, _u, _l, _g, _eps, _dk = jax.tree_util.tree_map(lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old), 
-                                                       (xx, uu, ll, gg, eps_max, dK), 
-                                                       (x, u, l, g, eps * 0.8, 0.))
-    
-    return nonans, _x, _u, _l, _g, _eps, _dk
-    
- 
-
-
-def tune12(kernel, d,
-           diag_precond, frac, 
+def make_L_step_size_adaptation(kernel, d, frac, 
            varEwanted = 1e-3, sigma_xi = 1.5, neff = 150):
-    
-    print("Starting tune12")
-           
+    """Adapts the stepsize and L of the MCLMC kernel. Designed for the unadjusted MCLMC"""
+
     gamma_forget = (neff - 1.0) / (neff + 1.0)
     
     
-    def predictor(dyn_old, hyp, adaptive_state):
+    def predictor(state_old, state, adaptive_state):
         """does one step with the dynamics and updates the prediction for the optimal stepsize
             Designed for the unadjusted MCHMC"""
         
-        W, F, eps_max = adaptive_state
+        W, F, step_size_max = adaptive_state
 
-        # dynamics
-        # dyn_new, energy_change = dynamics(dyn_old, hyp)
-        dyn_new, info = kernel(rng_key = jax.random.PRNGKey(0), state=dyn_old, L=hyp.L, step_size=hyp.step_size)
+        # stateamics
+        # state_new, energy_change = stateamics(state_old, state)
+        state_new, info = kernel(rng_key = jax.random.PRNGKey(0), state=state_old, L=state.L, step_size=state.step_size)
         energy_change = info.dE
         # step updating
-        success, x, u, l, g, eps_max, energy_change = nan_reject(dyn_old.position, dyn_old.momentum, dyn_old.logdensity, dyn_old.logdensity_grad, 
-                                                                      dyn_new.position, dyn_new.momentum, dyn_new.logdensity, dyn_new.logdensity_grad, 
-                                                                      hyp.step_size, eps_max, energy_change)
+        success, x, u, l, g, step_size_max, energy_change = handle_nans(state_old.position, state_old.momentum, state_old.logdensity, state_old.logdensity_grad, 
+                                                                      state_new.position, state_new.momentum, state_new.logdensity, state_new.logdensity_grad, 
+                                                                      state.step_size, step_size_max, energy_change)
 
-        dyn = IntegratorState(x, u, l, g)
         
         # Warning: var = 0 if there were nans, but we will give it a very small weight
         xi = (jnp.square(energy_change) / (d * varEwanted)) + 1e-8  # 1e-8 is added to avoid divergences in log xi
         w = jnp.exp(-0.5 * jnp.square(jnp.log(xi) / (6.0 * sigma_xi)))  # the weight reduces the impact of stepsizes which are much larger on much smaller than the desired one.
 
-        F = gamma_forget * F + w * (xi/jnp.power(hyp.step_size, 6.0))
+        F = gamma_forget * F + w * (xi/jnp.power(state.step_size, 6.0))
         W = gamma_forget * W + w
-        eps = jnp.power(F/W, -1.0/6.0) #We use the Var[E] = O(eps^6) relation here.
-        eps = (eps < eps_max) * eps + (eps > eps_max) * eps_max  # if the proposed stepsize is above the stepsize where we have seen divergences
-        hyp_new = MCLMCAdaptationState(hyp.L, eps)
+        step_size = jnp.power(F/W, -1.0/6.0) #We use the Var[E] = O(eps^6) relation here.
+        step_size = (step_size < step_size_max) * step_size + (step_size > step_size_max) * step_size_max  # if the proposed stepsize is above the stepsize where we have seen divergences
+        state_new = MCLMCAdaptationState(state.L, step_size)
         
-        return dyn, hyp_new, hyp_new, (W, F, eps_max), success
+        return IntegratorState(x, u, l, g), state_new, state_new, (W, F, step_size_max), success
 
 
-    def update_kalman(x, state, outer_weight, success, eps):
+    def update_kalman(x, state, outer_weight, success, step_size):
         """kalman filter to estimate the size of the posterior"""
         W, F1, F2 = state
-        w = outer_weight * eps * success
+        w = outer_weight * step_size * success
         zero_prevention = 1-outer_weight
         F1 = (W*F1 + w*x) / (W + w + zero_prevention)  # Update <f(x)> with a Kalman filter
         F2 = (W*F2 + w*jnp.square(x)) / (W + w + zero_prevention)  # Update <f(x)> with a Kalman filter
@@ -175,15 +135,15 @@ def tune12(kernel, d,
         
         
     def step(state, outer_weight):
-        """does one step of the dynamcis and updates the estimate of the posterior size and optimal stepsize"""
-        dyn, hyp, _, adaptive_state, kalman_state = state
-        dyn, hyp, hyp_final, adaptive_state, success = _step(dyn, hyp, adaptive_state)
-        kalman_state = update_kalman(dyn.position, kalman_state, outer_weight, success, hyp.step_size)
+        """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
+        state, params, _, adaptive_state, kalman_state = state
+        state, params, params_final, adaptive_state, success = _step(state, params, adaptive_state)
+        kalman_state = update_kalman(state.position, kalman_state, outer_weight, success, params.step_size)
 
-        return (dyn, hyp, hyp_final, adaptive_state, kalman_state), None
+        return (state, params, params_final, adaptive_state, kalman_state), None
 
 
-    def func(_dyn, _hyp, num_steps):
+    def L_step_size_adaptation(state, params, num_steps):
         
         num_steps1, num_steps2 = jnp.rint(num_steps * frac).astype(int)
             
@@ -195,64 +155,63 @@ def tune12(kernel, d,
         kalman_state = (0., jnp.zeros(d), jnp.zeros(d))
 
         # run the steps
-        state = jax.lax.scan(step, init= (_dyn, _hyp, _hyp, adap0, kalman_state), xs= outer_weights, length= num_steps1 + num_steps2)[0]
-        dyn, _, hyp, adap, kalman_state = state
+        kalman_state = jax.lax.scan(step, init= (state, params, params, adap0, kalman_state), xs= outer_weights, length= num_steps1 + num_steps2)[0]
+        state, _, params, _, kalman_state_output = kalman_state
         
-        L = hyp.L
+        L = params.L
         # determine L
         if num_steps2 != 0.:
-            _, F1, F2 = kalman_state
+            _, F1, F2 = kalman_state_output
             variances = F2 - jnp.square(F1)
             L = jnp.sqrt(jnp.sum(variances))
 
-            # # optionally we do the diagonal preconditioning (and readjust the stepsize)
-            # if diag_precond:
 
-            #     # diagonal preconditioning
-            #     sigma = jnp.sqrt(variances)
-            #     L = jnp.sqrt(d)
+        return state, MCLMCAdaptationState(L, params.step_size)
 
-            #     #readjust the stepsize
-            #     steps = num_steps2 // 3 #we do some small number of steps
-            #     state = jax.lax.scan(step, init= state, xs= jnp.ones(steps), length= steps)[0]
-            #     dyn, _, hyp, adap, kalman_state = state
-            # else:
-            #     sigma = hyp.sigma
-        
-        # jax.debug.print(" \n\n\nPARAMS:\n{x}", x=(dyn,MCLMCAdaptationState(L, hyp.step_size) ))
-        return dyn, MCLMCAdaptationState(L, hyp.step_size)
-
-    return func
+    return L_step_size_adaptation
 
 
 
 
-def tune3(kernel, frac, Lfactor):
+def make_adaptation_L(kernel, frac, Lfactor):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
     
 
-    def sample_full(num_steps, _dyn, hyp):
-        """Stores full x for each step. Used in tune2."""
+    def sample_full(num_steps, state, params):
 
-        def _step(state, useless):
-            dyn_old = state
-            # dyn_new, _ = step(dyn_old, hyp)
-            dyn_new, _ = kernel(rng_key=jax.random.PRNGKey(0), state=dyn_old, L=hyp.L, step_size=hyp.step_size)
+        def step(state, _):
+            state, _ = kernel(rng_key=jax.random.PRNGKey(0), state=state, L=params.L, step_size=params.step_size)
             
-            return dyn_new, dyn_new.position
+            return state, state.position
 
-        return jax.lax.scan(_step, init=_dyn, xs=None, length=num_steps)
+        return jax.lax.scan(step, init=state, xs=None, length=num_steps)
 
 
-    def func(dyn, hyp, num_steps):
+    def adaptation_L(state, params, num_steps):
         steps = jnp.rint(num_steps * frac).astype(int)
         
-        dyn, X = sample_full(steps, dyn, hyp)
-        ESS = ess_corr(X) # num steps / effective sample size
-        Lnew = Lfactor * hyp.step_size / ESS # = 0.4 * length corresponding to one effective sample
+        state, samples = sample_full(steps, state, params)
+        num_samples = samples.shape[0]
+        ESS = 0.5 * effective_sample_size(jnp.array([samples, samples]))
+        ess_per_sample = ESS / num_samples
+        ESS =  1.0 / jnp.average(1 / ess_per_sample)
 
-        return dyn, MCLMCAdaptationState(Lnew, hyp.step_size)
+        Lnew = Lfactor * params.step_size / ESS # = 0.4 * length corresponding to one effective sample
+
+        return state, MCLMCAdaptationState(Lnew, params.step_size)
 
 
-    return func
+    return adaptation_L
 
+
+def handle_nans(x, u, l, g, xx, uu, ll, gg, step_size, step_size_max, dK):
+    """if there are nans, let's reduce the stepsize, and not update the state. The function returns the old state in this case."""
+    
+    nonans = jnp.all(jnp.isfinite(xx))
+    x, u, l, g, step_size, dk = jax.tree_util.tree_map(lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old), 
+                                                       (xx, uu, ll, gg, step_size_max, dK), 
+                                                       (x, u, l, g, step_size * 0.8, 0.))
+    
+    return nonans, x, u, l, g, step_size, dk
+    
+ 
