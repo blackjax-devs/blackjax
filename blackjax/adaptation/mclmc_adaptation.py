@@ -31,24 +31,56 @@ import jax.numpy as jnp
 from typing import NamedTuple
 
 
-class MCLMCAdaptationState(NamedTuple):
-    """Tunable parameters for MCLMC"""
+from typing import NamedTuple
 
+class MCLMCAdaptationState(NamedTuple):
+    """Represents the tunable parameters for MCLMC adaptation.
+
+    Attributes:
+        L (float): The momentum decoherent rate for the MCLMC algorithm.
+        step_size (float): The step size used for the MCLMC algorithm.
+    """
+    
     L: float
     step_size: float
 
-def ess_corr(x):
-    num_samples = x.shape[0]
-    ess = 0.5 * effective_sample_size(jnp.array([x, x]))
+def ess_corr(samples):
+    """
+    Calculates the effective sample size correction for a given set of samples.
+
+    Parameters:
+    x (ndarray): Array of samples.
+
+    A light wrapper around the blackjax.diagnostics.effective_sample_size function.
+
+    Returns:
+    float: The effective sample size correction.
+    """
+    num_samples = samples.shape[0]
+    ess = 0.5 * effective_sample_size(jnp.array([samples, samples]))
     ess_per_sample = ess / num_samples
     return 1.0 / jnp.average(1 / ess_per_sample)
 
 
 
-def mclmc_find_L_and_step_size(kernel, num_steps, initial_state, frac_tune1 = 0.1,
-    frac_tune2 = 0.1,
-    frac_tune3 = 0.1):
+def mclmc_find_L_and_step_size(kernel, num_steps, initial_state, frac_tune1=0.1,
+    frac_tune2=0.1,
+    frac_tune3=0.1):
+    """
+    Finds the optimal value of L (step size) for the MCLMC algorithm.
 
+    Args:
+        kernel: The kernel function used for the MCMC algorithm.
+        num_steps: The number of MCMC steps that will subsequently be run, after tuning
+        initial_state: The initial state of the MCMC algorithm.
+        frac_tune1: The fraction of tuning for the first step of the adaptation.
+        frac_tune2: The fraction of tuning for the second step of the adaptation.
+        frac_tune3: The fraction of tuning for the third step of the adaptation.
+
+    Returns:
+        dyn: The final state of the MCMC algorithm.
+        hyp: The final hyperparameters of the MCMC algorithm.
+    """
     dim = initial_state.position.shape[0]
     dyn = initial_state
     hyp = MCLMCAdaptationState(jnp.sqrt(dim), 
@@ -62,26 +94,19 @@ def mclmc_find_L_and_step_size(kernel, num_steps, initial_state, frac_tune1 = 0.
     tune3p = tune3(kernel, frac_tune3, 0.4)
 
     if frac_tune3 != 0.:
-        tune3p = tune3(kernel, frac= frac_tune3, Lfactor= 0.4)
+        tune3p = tune3(kernel, frac=frac_tune3, Lfactor=0.4)
         schedule = [tune12p, tune3p]
     else:
         schedule = [tune12p, ]
 
-    dyn, hyp = run(dyn, hyp, schedule, num_steps)
+    for program in schedule:
+        dyn, hyp = program(dyn, hyp, num_steps)
+        
     return dyn, hyp
 
-def run(dyn, hyp, schedule, num_steps):
-    
-    _dyn, _hyp = dyn, hyp
-    
-    for program in schedule:
-        _dyn, _hyp = program(_dyn, _hyp, num_steps)
-        
-    return _dyn, _hyp
- 
- 
 
  
+
 def nan_reject(x, u, l, g, xx, uu, ll, gg, eps, eps_max, dK):
     """if there are nans, let's reduce the stepsize, and not update the state. The function returns the old state in this case."""
     
