@@ -366,5 +366,6 @@ def generate_noneuclidean_integrator(cofficients):
 
 
 noneuclidean_leapfrog = generate_noneuclidean_integrator(velocity_verlet_cofficients)
-noneuclidean_mclachlan = generate_noneuclidean_integrator(mclachlan_cofficients)
 noneuclidean_yoshida = generate_noneuclidean_integrator(yoshida_cofficients)
+noneuclidean_mclachlan = generate_noneuclidean_integrator(mclachlan_cofficients)
+
