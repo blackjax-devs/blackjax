@@ -16,8 +16,9 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
+from jax.flatten_util import ravel_pytree
 from jax.scipy import stats
-from jax.tree_util import tree_flatten, tree_leaves, tree_map, tree_unflatten
+from jax.tree_util import tree_leaves, tree_map
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
@@ -259,7 +260,7 @@ def _barker_sample(key, mean, a, scale):
 
     flat_mean, unravel_fn = ravel_pytree(mean)
     flat_a, _ = ravel_pytree(a)
-    flat_sample = _barker_sample_nd(keys, flat_mean, flat_a, scale)
+    flat_sample = _barker_sample_nd(key, flat_mean, flat_a, scale)
     return unravel_fn(flat_sample)
 
 
