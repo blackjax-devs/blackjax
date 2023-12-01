@@ -180,6 +180,7 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="mcmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcmc/barker/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.barker</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="mcmc/diffusions/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.diffusions</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="mcmc/elliptical_slice/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.elliptical_slice</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="mcmc/ghmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.ghmc</span></code></a></li>
@@ -375,6 +376,7 @@ document.write(`
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="mcmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mcmc/barker/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.barker</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="mcmc/diffusions/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.diffusions</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="mcmc/elliptical_slice/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.elliptical_slice</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="mcmc/ghmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.ghmc</span></code></a></li>
@@ -432,64 +434,67 @@ document.write(`
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">elliptical_slice</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">barker_proposal</span></code></p></td>
+<td><p>Implements the (basic) user interface for the Barker's proposal kernel with a Gaussian base kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">elliptical_slice</span></code></p></td>
 <td><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ghmc</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ghmc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the Generalized HMC kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dynamic_hmc</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dynamic_hmc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the dynamic HMC kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">hmc</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">hmc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the HMC kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mala</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mala</span></code></p></td>
 <td><p>Implements the (basic) user interface for the MALA kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mgrad_gaussian</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mgrad_gaussian</span></code></p></td>
 <td><p>Implements the marginal sampler for latent Gaussian model of <span id="id1">[<a class="reference internal" href="../../bib.html#id12" title="Michalis K Titsias and Omiros Papaspiliopoulos. Auxiliary gradient-based sampling algorithms. Journal of the Royal Statistical Society. Series B (Statistical Methodology), 80(4):749–767, 2018.">TP18</a>]</span>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">nuts</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">nuts</span></code></p></td>
 <td><p>Implements the (basic) user interface for the nuts kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">orbital_hmc</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">orbital_hmc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">additive_step_random_walk</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">additive_step_random_walk</span></code></p></td>
 <td><p>Implements the user interface for the Additive Step RMH</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">irmh</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">irmh</span></code></p></td>
 <td><p>Implements the (basic) user interface for the independent RMH.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh</span></code></p></td>
 <td><p>Implements the user interface for the RMH.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">csgld</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">csgld</span></code></p></td>
 <td><p>Implements the (basic) user interface for the Contour SGLD kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sghmc</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sghmc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the SGHMC kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgld</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgld</span></code></p></td>
 <td><p>Implements the (basic) user interface for the SGLD kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgnht</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgnht</span></code></p></td>
 <td><p>Implements the (basic) user interface for the SGNHT kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">meanfield_vi</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">meanfield_vi</span></code></p></td>
 <td><p>High-level implementation of Mean-Field Variational Inference.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathfinder</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathfinder</span></code></p></td>
 <td><p>Implements the (basic) user interface for the pathfinder kernel.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">svgd</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">svgd</span></code></p></td>
 <td><p>Implements the (basic) user interface for the svgd algorithm.</p></td>
 </tr>
 </tbody>

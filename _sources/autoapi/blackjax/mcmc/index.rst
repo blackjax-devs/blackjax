@@ -10,6 +10,7 @@ Submodules
    :titlesonly:
    :maxdepth: 1
 
+   barker/index.rst
    diffusions/index.rst
    elliptical_slice/index.rst
    ghmc/index.rst

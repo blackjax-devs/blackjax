@@ -34,6 +34,7 @@ Classes
 
 .. autoapisummary::
 
+   blackjax.barker_proposal
    blackjax.elliptical_slice
    blackjax.ghmc
    blackjax.dynamic_hmc
@@ -77,6 +78,7 @@ Attributes
 .. autoapisummary::
 
    blackjax.__version__
+
 
 
 
