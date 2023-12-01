@@ -267,7 +267,7 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
     def test_barker(self):
-        """Test the MALA kernel."""
+        """Test the Barker kernel."""
         init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
         x_data = jax.random.normal(init_key0, shape=(1000, 1))
         y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
