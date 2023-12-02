@@ -110,10 +110,14 @@ class LinearRegressionTest(chex.TestCase):
 
         keys = jax.random.split(key, num_steps)
 
+        sampling_alg = blackjax.mcmc.mclmc.mclmc(
+            logdensity_fn,
+            L=blackjax_mclmc_sampler_params.L,
+            step_size=blackjax_mclmc_sampler_params.step_size,
+        )
+
         _, blackjax_mclmc_result = jax.lax.scan(
-            f=lambda state, key: kernel(
-                L=blackjax_mclmc_sampler_params.L,
-                step_size=blackjax_mclmc_sampler_params.step_size,
+            f=lambda state, key: sampling_alg.step(
                 rng_key=key,
                 state=state,
             ),

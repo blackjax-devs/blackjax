@@ -161,9 +161,9 @@ class mclmc:
     def __new__(  # type: ignore[misc]
         cls,
         logdensity_fn: Callable,
-        transform: Callable,
         L,
         step_size,
+        transform: Callable = (lambda x: x),
         integrator=noneuclidean_mclachlan,
         seed=1,
     ) -> SamplingAlgorithm:
