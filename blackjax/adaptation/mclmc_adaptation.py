@@ -165,8 +165,7 @@ def make_L_step_size_adaptation(
         num_steps1, num_steps2 = int(num_steps * frac_tune1), int(
             num_steps * frac_tune2
         )
-        # TODO: change below to use jax.random.split
-        L_step_size_adaptation_keys = jnp.array([rng_key] * (num_steps1 + num_steps2))
+        L_step_size_adaptation_keys = jax.random.split(rng_key, num_steps1 + num_steps2)
 
         # we use the last num_steps2 to compute the diagonal preconditioner
         outer_weights = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
@@ -200,8 +199,7 @@ def make_adaptation_L(kernel, frac, Lfactor):
 
     def adaptation_L(state, params, num_steps, key):
         num_steps = int(num_steps * frac)
-        # TODO: change below to use jax.random.split
-        adaptation_L_keys = jnp.array([key] * num_steps)
+        adaptation_L_keys = jax.random.split(key, num_steps)
 
         # run kernel in the normal way
         state, info = jax.lax.scan(
