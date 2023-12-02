@@ -12,4 +12,4 @@ release:
 
 build-docs:
 	pip install -r requirements-doc.txt
-	sphinx-build -b html docs docs/_build/html
+	PYDEVD_DISABLE_FILE_VALIDATION=1 sphinx-build -b html docs docs/_build/html
