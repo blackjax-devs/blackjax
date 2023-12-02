@@ -4,6 +4,7 @@ from .adaptation.chees_adaptation import chees_adaptation
 from .adaptation.meads_adaptation import meads_adaptation
 from .adaptation.pathfinder_adaptation import pathfinder_adaptation
 from .adaptation.window_adaptation import window_adaptation
+from .adaptation.mclmc_adaptation import mclmc_find_L_and_step_size
 from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
 from .mcmc.barker import barker_proposal
@@ -14,6 +15,7 @@ from .mcmc.mala import mala
 from .mcmc.marginal_latent_gaussian import mgrad_gaussian
 from .mcmc.mclmc import mclmc
 from .mcmc.nuts import nuts
+from .mcmc.mclmc import mclmc
 from .mcmc.periodic_orbital import orbital_hmc
 from .mcmc.random_walk import additive_step_random_walk, irmh, rmh
 from .optimizers import dual_averaging, lbfgs

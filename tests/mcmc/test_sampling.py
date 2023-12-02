@@ -100,7 +100,7 @@ class LinearRegressionTest(chex.TestCase):
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
-        ) = blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size(
+        ) = blackjax.mclmc_find_L_and_step_size(
             kernel=kernel,
             num_steps=num_steps,
             state=initial_state,
@@ -110,7 +110,7 @@ class LinearRegressionTest(chex.TestCase):
 
         keys = jax.random.split(key, num_steps)
 
-        sampling_alg = blackjax.mcmc.mclmc.mclmc(
+        sampling_alg = blackjax.mclmc(
             logdensity_fn,
             L=blackjax_mclmc_sampler_params.L,
             step_size=blackjax_mclmc_sampler_params.step_size,
