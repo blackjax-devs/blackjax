@@ -38,17 +38,16 @@ class MCLMCAdaptationState(NamedTuple):
 
 
 def mclmc_find_L_and_step_size(
-    kernel,
+    mclmc_kernel,
     num_steps,
     state,
-    part1_key,
-    part2_key,
+    rng_key,
     frac_tune1=0.1,
     frac_tune2=0.1,
     frac_tune3=0.1,
 ):
     """
-    Finds the optimal value of L (step size) for the MCLMC algorithm.
+    Finds the optimal value of the parameters for the MCLMC algorithm.
 
     Args:
         kernel: The kernel function used for the MCMC algorithm.
@@ -65,9 +64,10 @@ def mclmc_find_L_and_step_size(
     dim = pytree_size(state.position)
     params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.25)
     varEwanted = 5e-4
+    part1_key, part2_key = jax.random.split(rng_key, 2)
 
     state, params = make_L_step_size_adaptation(
-        kernel=kernel,
+        kernel=mclmc_kernel,
         dim=dim,
         frac_tune1=frac_tune1,
         frac_tune2=frac_tune2,
@@ -77,7 +77,7 @@ def mclmc_find_L_and_step_size(
     )(state, params, num_steps, part1_key)
 
     if frac_tune3 != 0:
-        state, params = make_adaptation_L(kernel, frac=frac_tune3, Lfactor=0.4)(
+        state, params = make_adaptation_L(mclmc_kernel, frac=frac_tune3, Lfactor=0.4)(
             state, params, num_steps, part2_key
         )
 

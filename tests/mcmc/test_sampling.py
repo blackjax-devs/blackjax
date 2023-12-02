@@ -85,7 +85,7 @@ class LinearRegressionTest(chex.TestCase):
         return sum(x.sum() for x in [scale_prior, coefs_prior, logpdf])
 
     def run_mclmc(self, logdensity_fn, num_steps, initial_position, key):
-        init_key, part1_key, part2_key, run_key = jax.random.split(key, 4)
+        init_key, tune_key, run_key = jax.random.split(key, 3)
 
         initial_state = blackjax.mcmc.mclmc.init(
             x_initial=initial_position, logdensity_fn=logdensity_fn, rng_key=key
@@ -101,11 +101,10 @@ class LinearRegressionTest(chex.TestCase):
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
         ) = blackjax.mclmc_find_L_and_step_size(
-            kernel=kernel,
+            mclmc_kernel=kernel,
             num_steps=num_steps,
             state=initial_state,
-            part1_key=key,
-            part2_key=key,
+            rng_key=tune_key,
         )
 
         keys = jax.random.split(key, num_steps)
