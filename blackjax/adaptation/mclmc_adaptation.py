@@ -107,10 +107,9 @@ def make_L_step_size_adaptation(
         state_new, info = kernel(
             rng_key=rng_key, state=state_old, L=params.L, step_size=params.step_size
         )
-        energy_change = info.dE
         # step updating
         success, state, step_size_max, energy_change = handle_nans(
-            state_old, state_new, params.step_size, step_size_max, energy_change
+            state_old, state_new, params.step_size, step_size_max, info.energy_change
         )
 
         # Warning: var = 0 if there were nans, but we will give it a very small weight
@@ -222,7 +221,7 @@ def make_adaptation_L(kernel, frac, Lfactor):
         )  # TODO: should only use a single chain here
 
         return state, params._replace(
-            L=Lfactor * params.step_size * jnp.average(num_steps / ESS)
+            L=Lfactor * params.step_size * jnp.mean(num_steps / ESS)
         )
 
     return adaptation_L

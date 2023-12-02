@@ -15,11 +15,13 @@
 from typing import Callable, NamedTuple
 
 import jax
-
+import jax.numpy as jnp
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.integrators import IntegratorState, noneuclidean_mclachlan
 from blackjax.types import Array, ArrayLike, PRNGKey
-from blackjax.util import generate_unit_vector, partially_refresh_momentum
+from blackjax.util import generate_unit_vector, pytree_size
+from jax.flatten_util import ravel_pytree
+from jax.random import normal
 
 __all__ = ["MCLMCInfo", "init", "build_kernel", "mclmc"]
 
@@ -34,14 +36,14 @@ class MCLMCInfo(NamedTuple):
         The value of the samples after a transformation. This is typically a projection onto a lower dimensional subspace.
     logdensity :
         The log-density of the distribution at the current step of the MCLMC chain.
-    dE :
+    energy_change :
         The difference in energy between the current and previous step.
     """
 
     transformed_position: Array
     logdensity: float
     kinetic_change: float
-    dE: float
+    energy_change: float
 
 
 def init(x_initial: ArrayLike, logdensity_fn, rng_key):
@@ -85,10 +87,9 @@ def build_kernel(logdensity_fn, integrator, transform):
             state, step_size
         )
 
-        # dim = position.shape[0]
-        dim = 2
-        # Langevin-like noise
+        dim = pytree_size(position)
 
+        # Langevin-like noise
         momentum, dim = partially_refresh_momentum(
             momentum=momentum, rng_key=rng_key, L=L, step_size=step_size
         )
@@ -98,7 +99,7 @@ def build_kernel(logdensity_fn, integrator, transform):
         ), MCLMCInfo(
             transformed_position=transform(position),
             logdensity=logdensity,
-            dE=kinetic_change - logdensity + state.logdensity,
+            energy_change=kinetic_change - logdensity + state.logdensity,
             kinetic_change=kinetic_change * (dim - 1),
         )
 
@@ -176,3 +177,28 @@ class mclmc:
             return cls.init(position, logdensity_fn, jax.random.PRNGKey(seed))
 
         return SamplingAlgorithm(init_fn, update_fn)
+
+
+def partially_refresh_momentum(momentum, rng_key, step_size, L):
+    """Adds a small noise to momentum and normalizes.
+
+    Parameters
+    ----------
+    rng_key:
+        The pseudo-random number generator key used to generate random numbers.
+    momentum:
+        PyTree that the structure the output should to match.
+    step_size:
+        Step size
+    L:
+        controls rate of momentum change
+
+    Returns
+    -------
+    momentum with random change in angle
+    """
+    m, unravel_fn = ravel_pytree(momentum)
+    dim = m.shape[0]
+    nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
+    z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
+    return unravel_fn((m + z) / jnp.sqrt(jnp.sum(jnp.square(m + z)))), dim

@@ -13,7 +13,6 @@ from .mcmc.ghmc import ghmc
 from .mcmc.hmc import dynamic_hmc, hmc
 from .mcmc.mala import mala
 from .mcmc.marginal_latent_gaussian import mgrad_gaussian
-from .mcmc.mclmc import mclmc
 from .mcmc.nuts import nuts
 from .mcmc.mclmc import mclmc
 from .mcmc.periodic_orbital import orbital_hmc
@@ -54,6 +53,7 @@ __all__ = [
     "meads_adaptation",
     "chees_adaptation",
     "pathfinder_adaptation",
+    "mclmc_find_L_and_step_size" # mclmc adaptation
     "adaptive_tempered_smc",  # smc
     "tempered_smc",
     "meanfield_vi",  # variational inference
