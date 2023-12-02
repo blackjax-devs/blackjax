@@ -79,6 +79,7 @@ class SchrodingerFollmerTest(chex.TestCase):
 
         # make sure it runs with 1 sample only
         _ = schrodinger_follmer_algo.sample(rng_key_init, initial_state, 1)
+        _ = schrodinger_follmer_algo.step(rng_key_init, initial_state)
 
 
 if __name__ == "__main__":
