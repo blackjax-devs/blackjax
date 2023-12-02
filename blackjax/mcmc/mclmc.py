@@ -30,7 +30,7 @@ class MCLMCInfo(NamedTuple):
 
     Attributes
     ----------
-    transformed_x :
+    transformed_position :
         The value of the samples after a transformation. This is typically a projection onto a lower dimensional subspace.
     logdensity :
         The log-density of the distribution at the current step of the MCLMC chain.
@@ -38,7 +38,7 @@ class MCLMCInfo(NamedTuple):
         The difference in energy between the current and previous step.
     """
 
-    transformed_x: Array
+    transformed_position: Array
     logdensity: float
     kinetic_change: float
     dE: float
@@ -46,16 +46,6 @@ class MCLMCInfo(NamedTuple):
 
 def init(x_initial: ArrayLike, logdensity_fn, rng_key):
     l, g = jax.value_and_grad(logdensity_fn)(x_initial)
-
-    jax.debug.print(
-        "thing blackjax {x}",
-        x=IntegratorState(
-            position=x_initial,
-            momentum=generate_unit_vector(rng_key, x_initial),
-            logdensity=l,
-            logdensity_grad=g,
-        ),
-    )
 
     return IntegratorState(
         position=x_initial,
@@ -106,7 +96,7 @@ def build_kernel(logdensity_fn, integrator, transform):
         return IntegratorState(
             position, momentum, logdensity, logdensitygrad
         ), MCLMCInfo(
-            transformed_x=transform(position),
+            transformed_position=transform(position),
             logdensity=logdensity,
             dE=kinetic_change - logdensity + state.logdensity,
             kinetic_change=kinetic_change * (dim - 1),

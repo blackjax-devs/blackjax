@@ -211,7 +211,7 @@ def make_adaptation_L(kernel, frac, Lfactor):
             init=state,
             xs=adaptation_L_keys,
         )
-        samples = info.transformed_x  # tranform is the identity here
+        samples = info.transformed_position  # tranform is the identity here
         ESS = 0.5 * effective_sample_size(
             jnp.array([samples, samples])
         )  # TODO: should only use a single chain here
