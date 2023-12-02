@@ -19,11 +19,10 @@ from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
+from jax.flatten_util import ravel_pytree
 
 from blackjax.diagnostics import effective_sample_size  # type: ignore
 from blackjax.util import pytree_size
-from jax.flatten_util import ravel_pytree
-
 
 
 class MCLMCAdaptationState(NamedTuple):
@@ -215,7 +214,9 @@ def make_adaptation_L(kernel, frac, Lfactor):
             xs=adaptation_L_keys,
         )
         samples = info.transformed_position  # tranform is the identity here
-        flat_samples, unravel_fn = ravel_pytree(samples)
+        flat_samples, _ = ravel_pytree(samples)
+        dim = pytree_size(state.position)
+        flat_samples = flat_samples.reshape(-1, dim)
         ESS = 0.5 * effective_sample_size(
             jnp.array([flat_samples, flat_samples])
         )  # TODO: should only use a single chain here
@@ -232,7 +233,7 @@ def handle_nans(state_old, state_new, step_size, step_size_max, kinetic_change):
 
     reduced_step_size = 0.8
     p, unravel_fn = ravel_pytree(state_new.position)
-    nonans = (jnp.all(jnp.isfinite(p)))
+    nonans = jnp.all(jnp.isfinite(p))
     state, step_size, kinetic_change = jax.tree_util.tree_map(
         lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old),
         (state_new, step_size_max, kinetic_change),

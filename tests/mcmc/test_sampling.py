@@ -84,15 +84,23 @@ class LinearRegressionTest(chex.TestCase):
         # reduce sum otherwise broacasting will make the logprob biased.
         return sum(x.sum() for x in [scale_prior, coefs_prior, logpdf])
 
-    def run_mclmc(self, logdensity_fn,num_steps, initial_position, key):
-
+    def run_mclmc(self, logdensity_fn, num_steps, initial_position, key):
         init_key, part1_key, part2_key, run_key = jax.random.split(key, 4)
-        
-        initial_state = blackjax.mcmc.mclmc.init(x_initial=initial_position, logdensity_fn=logdensity_fn, rng_key=key)
-        
-        kernel = blackjax.mcmc.mclmc.build_kernel(logdensity_fn=logdensity_fn, integrator=blackjax.mcmc.integrators.noneuclidean_mclachlan, transform=lambda x: x)
 
-        blackjax_state_after_tuning, blackjax_mclmc_sampler_params = blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size(
+        initial_state = blackjax.mcmc.mclmc.init(
+            x_initial=initial_position, logdensity_fn=logdensity_fn, rng_key=key
+        )
+
+        kernel = blackjax.mcmc.mclmc.build_kernel(
+            logdensity_fn=logdensity_fn,
+            integrator=blackjax.mcmc.integrators.noneuclidean_mclachlan,
+            transform=lambda x: x,
+        )
+
+        (
+            blackjax_state_after_tuning,
+            blackjax_mclmc_sampler_params,
+        ) = blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size(
             kernel=kernel,
             num_steps=num_steps,
             state=initial_state,
@@ -102,11 +110,16 @@ class LinearRegressionTest(chex.TestCase):
 
         keys = jax.random.split(key, num_steps)
 
-        
         _, blackjax_mclmc_result = jax.lax.scan(
-            f=lambda state, key: kernel(L=blackjax_mclmc_sampler_params.L, step_size=blackjax_mclmc_sampler_params.step_size, rng_key=key, state=state), 
-            xs=keys, 
-            init=blackjax_state_after_tuning)
+            f=lambda state, key: kernel(
+                L=blackjax_mclmc_sampler_params.L,
+                step_size=blackjax_mclmc_sampler_params.step_size,
+                rng_key=key,
+                state=state,
+            ),
+            xs=keys,
+            init=blackjax_state_after_tuning,
+        )
 
         return blackjax_mclmc_result.transformed_position
 
@@ -180,7 +193,12 @@ class LinearRegressionTest(chex.TestCase):
         )
         logdensity_fn = lambda x: logposterior_fn_(**x)
 
-        states = self.run_mclmc(initial_position={"coefs": 1.0, "log_scale": 1.0}, logdensity_fn=logdensity_fn, key=inference_key, num_steps=10000)
+        states = self.run_mclmc(
+            initial_position={"coefs": 1.0, "log_scale": 1.0},
+            logdensity_fn=logdensity_fn,
+            key=inference_key,
+            num_steps=10000,
+        )
 
         coefs_samples = states["coefs"][3000:]
         scale_samples = np.exp(states["log_scale"][3000:])
