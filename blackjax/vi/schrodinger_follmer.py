@@ -153,7 +153,7 @@ def sample(
     initial_position = initial_state.position
     if n_samples == 1:
         initial_states = SchrodingerFollmerState(
-            jax.tree_map(lambda a: 0.0 * a), initial_position
+            jax.tree_map(lambda a: 0.0 * a, initial_position), 0.0
         )
     else:
         initial_positions = jax.tree_map(
@@ -167,8 +167,7 @@ def sample(
         key, states = carry
         next_key, inner_key = jax.random.split(key)
         if n_samples == 1:
-            inner_keys = inner_key[None, ...]
-            states, _ = step(inner_keys, states, log_density_fn, dt, n_inner_samples)
+            states, _ = step(inner_key, states, log_density_fn, dt, n_inner_samples)
         else:
             inner_keys = jax.random.split(inner_key, n_samples)
             states, _ = jax.vmap(step, [0, 0, None, None, None])(
