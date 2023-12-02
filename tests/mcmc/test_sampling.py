@@ -88,7 +88,7 @@ class LinearRegressionTest(chex.TestCase):
         init_key, tune_key, run_key = jax.random.split(key, 3)
 
         initial_state = blackjax.mcmc.mclmc.init(
-            x_initial=initial_position, logdensity_fn=logdensity_fn, rng_key=key
+            x_initial=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
         )
 
         kernel = blackjax.mcmc.mclmc.build_kernel(
@@ -107,7 +107,7 @@ class LinearRegressionTest(chex.TestCase):
             rng_key=tune_key,
         )
 
-        keys = jax.random.split(key, num_steps)
+        keys = jax.random.split(run_key, num_steps)
 
         sampling_alg = blackjax.mclmc(
             logdensity_fn,
@@ -116,8 +116,8 @@ class LinearRegressionTest(chex.TestCase):
         )
 
         _, blackjax_mclmc_result = jax.lax.scan(
-            f=lambda state, key: sampling_alg.step(
-                rng_key=key,
+            f=lambda state, k: sampling_alg.step(
+                rng_key=k,
                 state=state,
             ),
             xs=keys,
