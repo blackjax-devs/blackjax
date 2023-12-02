@@ -1,4 +1,5 @@
 from . import (
+    barker,
     elliptical_slice,
     ghmc,
     hmc,
@@ -11,6 +12,7 @@ from . import (
 )
 
 __all__ = [
+    "barker",
     "elliptical_slice",
     "ghmc",
     "hmc",

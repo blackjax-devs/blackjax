@@ -79,6 +79,7 @@ def approximate(
     maxls=1000,
     gtol=1e-08,
     ftol=1e-05,
+    **lbfgs_kwargs,
 ) -> tuple[PathfinderState, PathfinderInfo]:
     """Pathfinder variational inference algorithm.
 
@@ -112,6 +113,9 @@ def approximate(
     maxls
         The maximum number of line search steps (per iteration) for the LGBFS
         algorithm
+    **lbfgs_kwargs
+        other keyword arguments passed to `jaxopt.LBFGS`.
+
 
     Returns
     -------
@@ -131,6 +135,7 @@ def approximate(
         gtol,
         ftol,
         maxls,
+        **lbfgs_kwargs,
     )
 
     # Get postions and gradients of the optimization path (including the starting point).

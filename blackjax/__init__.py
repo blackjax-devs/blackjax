@@ -6,6 +6,7 @@ from .adaptation.pathfinder_adaptation import pathfinder_adaptation
 from .adaptation.window_adaptation import window_adaptation
 from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
+from .mcmc.barker import barker_proposal
 from .mcmc.elliptical_slice import elliptical_slice
 from .mcmc.ghmc import ghmc
 from .mcmc.hmc import dynamic_hmc, hmc
@@ -42,6 +43,7 @@ __all__ = [
     "mclmc",
     "elliptical_slice",
     "ghmc",
+    "barker_proposal",
     "sgld",  # stochastic gradient mcmc
     "sghmc",
     "sgnht",
