@@ -193,12 +193,6 @@ def _log_fn_corrected(position, logdensity_fn):
     return log_pdf_val + norm
 
 
-def _correct_logdensity_val(position, val):
-    norm = jax.tree_map(lambda a: 0.5 * jnp.sum(a**2), position)
-    norm = sum(jax.tree_leaves(norm))
-    return val + norm
-
-
 class schrodinger_follmer:
     """Implements the (basic) user interface for the Schrödinger-Föllmer algortithm :cite:p:`huang2021schrodingerfollmer`.
 
