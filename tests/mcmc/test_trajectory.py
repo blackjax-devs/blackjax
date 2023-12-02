@@ -7,6 +7,7 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
 
+import blackjax.mcmc.hmc as hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
@@ -291,6 +292,36 @@ class TrajectoryTest(chex.TestCase):
             fori_state,
             scan_state,
         )
+
+    def test_dynamic_hmc_integration_steps(self):
+        rng_key = jax.random.key(0)
+        num_step_key, sample_key = jax.random.split(rng_key)
+        initial_position = jnp.array(3.0)
+        parameters = {"step_size": 3.9, "inverse_mass_matrix": jnp.array([1.0])}
+
+        unique_integration_steps = jnp.asarray([5, 10, 20])
+        unique_probs = jnp.asarray([0.1, 0.8, 0.1])
+        num_step_fn = lambda key: jax.random.choice(
+            key, unique_integration_steps, p=unique_probs
+        )
+        kernel_factory = hmc.build_dynamic_kernel(integration_steps_fn=num_step_fn)
+
+        logprob = jax.scipy.stats.norm.logpdf
+        hmc_kernel = lambda key, state: kernel_factory(
+            key, state, logprob, **parameters
+        )
+        init_state = hmc.init_dynamic(initial_position, logprob, num_step_key)
+
+        def one_step(state, rng_key):
+            state, info = hmc_kernel(rng_key, state)
+            return state, info
+
+        num_iter = 1000
+        keys = jax.random.split(sample_key, num_iter)
+        _, infos = jax.lax.scan(one_step, init_state, keys)
+        _, unique_counts = np.unique(infos.num_integration_steps, return_counts=True)
+
+        np.testing.assert_allclose(unique_counts / num_iter, unique_probs, rtol=1e-1)
 
 
 if __name__ == "__main__":

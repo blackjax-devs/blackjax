@@ -7,6 +7,7 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
+import optax
 from absl.testing import absltest, parameterized
 
 import blackjax
@@ -222,6 +223,69 @@ class LinearRegressionTest(chex.TestCase):
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+
+    @parameterized.parameters([None, jax.random.uniform])
+    def test_chees(self, jitter_generator):
+        """Test the ChEES adaptation w/ HMC kernel."""
+        rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logposterior_fn = lambda x: logposterior_fn_(**x)
+
+        init_key, warmup_key, inference_key = jax.random.split(rng_key, 3)
+
+        num_chains = 128
+        warmup = blackjax.chees_adaptation(
+            logposterior_fn, num_chains=num_chains, jitter_generator=jitter_generator
+        )
+        scale_key, coefs_key = jax.random.split(init_key, 2)
+        log_scales = 1.0 + jax.random.normal(scale_key, (num_chains,))
+        coefs = 4.0 + jax.random.normal(coefs_key, (num_chains,))
+        initial_positions = {"log_scale": log_scales, "coefs": coefs}
+        (last_states, parameters), _ = warmup.run(
+            warmup_key,
+            initial_positions,
+            step_size=0.001,
+            optim=optax.adam(learning_rate=0.1),
+            num_steps=1000,
+        )
+        kernel = blackjax.dynamic_hmc(logposterior_fn, **parameters).step
+
+        chain_keys = jax.random.split(inference_key, num_chains)
+        states = jax.vmap(lambda key, state: inference_loop(kernel, 100, key, state))(
+            chain_keys, last_states
+        )
+
+        coefs_samples = states.position["coefs"]
+        scale_samples = np.exp(states.position["log_scale"])
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+
+    def test_barker(self):
+        """Test the Barker kernel."""
+        init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logposterior_fn = lambda x: logposterior_fn_(**x)
+
+        barker = blackjax.barker_proposal(logposterior_fn, 1e-1)
+        state = barker.init({"coefs": 1.0, "log_scale": 1.0})
+        states = inference_loop(barker.step, 10_000, inference_key, state)
+
+        coefs_samples = states.position["coefs"][3000:]
+        scale_samples = np.exp(states.position["log_scale"][3000:])
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
 
 
 class SGMCMCTest(chex.TestCase):
@@ -483,6 +547,13 @@ normal_test_cases = [
         "num_sampling_steps": 6000,
         "burnin": 1_000,
     },
+    {
+        "algorithm": blackjax.barker_proposal,
+        "initial_position": 1.0,
+        "parameters": {"step_size": 1.5},
+        "num_sampling_steps": 20_000,
+        "burnin": 2_000,
+    },
 ]
 
 
@@ -532,7 +603,6 @@ class UnivariateNormalTest(chex.TestCase):
             )
         else:
             samples = states.position[burnin:]
-
         np.testing.assert_allclose(np.mean(samples), 1.0, rtol=1e-1)
         np.testing.assert_allclose(np.var(samples), 4.0, rtol=1e-1)
 
@@ -563,6 +633,11 @@ mcse_test_cases = [
         "algorithm": blackjax.nuts,
         "parameters": {"step_size": 0.85},
         "is_mass_matrix_diagonal": False,
+    },
+    {
+        "algorithm": blackjax.barker_proposal,
+        "parameters": {"step_size": 0.5},
+        "is_mass_matrix_diagonal": None,
     },
 ]
 
@@ -617,15 +692,18 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             true_rho,
             true_cov,
         ) = self.generate_multivariate_target(None)
-        if is_mass_matrix_diagonal:
-            inverse_mass_matrix = true_scale**2
+        if is_mass_matrix_diagonal is not None:
+            if is_mass_matrix_diagonal:
+                inverse_mass_matrix = true_scale**2
+            else:
+                inverse_mass_matrix = true_cov
+            kernel = algorithm(
+                logdensity_fn,
+                inverse_mass_matrix=inverse_mass_matrix,
+                **parameters,
+            )
         else:
-            inverse_mass_matrix = true_cov
-        kernel = algorithm(
-            logdensity_fn,
-            inverse_mass_matrix=inverse_mass_matrix,
-            **parameters,
-        )
+            kernel = algorithm(logdensity_fn, **parameters)
 
         num_chains = 10
         initial_positions = jax.random.normal(pos_init_key, [num_chains, 2])
