@@ -1,4 +1,3 @@
-# @title `integrators.py` from https://github.com/blackjax-devs/blackjax/pull/589
 # Copyright 2020- The Blackjax Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
