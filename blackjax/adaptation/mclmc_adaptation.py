@@ -22,6 +22,8 @@ import jax.numpy as jnp
 
 from blackjax.diagnostics import effective_sample_size  # type: ignore
 from blackjax.util import pytree_size
+from jax.flatten_util import ravel_pytree
+
 
 
 class MCLMCAdaptationState(NamedTuple):
@@ -155,8 +157,9 @@ def make_L_step_size_adaptation(
         state, params, params_final, adaptive_state, success = predictor(
             state, params, adaptive_state, rng_key
         )
+        position, _ = ravel_pytree(state.position)
         kalman_state = update_kalman(
-            state.position, kalman_state, outer_weight, success, params.step_size
+            position, kalman_state, outer_weight, success, params.step_size
         )
 
         return (state, params_final, adaptive_state, kalman_state), None
@@ -165,7 +168,8 @@ def make_L_step_size_adaptation(
         num_steps1, num_steps2 = int(num_steps * frac_tune1), int(
             num_steps * frac_tune2
         )
-        L_step_size_adaptation_keys = jax.random.split(rng_key, num_steps1 + num_steps2)
+        # L_step_size_adaptation_keys = jax.random.split(rng_key, num_steps1 + num_steps2)
+        L_step_size_adaptation_keys = jnp.array([rng_key] * (num_steps1 + num_steps2))
 
         # we use the last num_steps2 to compute the diagonal preconditioner
         outer_weights = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
@@ -199,7 +203,8 @@ def make_adaptation_L(kernel, frac, Lfactor):
 
     def adaptation_L(state, params, num_steps, key):
         num_steps = int(num_steps * frac)
-        adaptation_L_keys = jax.random.split(key, num_steps)
+        # adaptation_L_keys = jax.random.split(key, num_steps)
+        adaptation_L_keys = jnp.array([key] * (num_steps))
 
         # run kernel in the normal way
         state, info = jax.lax.scan(
@@ -210,8 +215,9 @@ def make_adaptation_L(kernel, frac, Lfactor):
             xs=adaptation_L_keys,
         )
         samples = info.transformed_position  # tranform is the identity here
+        flat_samples, unravel_fn = ravel_pytree(samples)
         ESS = 0.5 * effective_sample_size(
-            jnp.array([samples, samples])
+            jnp.array([flat_samples, flat_samples])
         )  # TODO: should only use a single chain here
 
         return state, params._replace(
@@ -225,7 +231,8 @@ def handle_nans(state_old, state_new, step_size, step_size_max, kinetic_change):
     """if there are nans, let's reduce the stepsize, and not update the state. The function returns the old state in this case."""
 
     reduced_step_size = 0.8
-    nonans = jnp.all(jnp.isfinite(state_new.position))
+    p, unravel_fn = ravel_pytree(state_new.position)
+    nonans = (jnp.all(jnp.isfinite(p)))
     state, step_size, kinetic_change = jax.tree_util.tree_map(
         lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old),
         (state_new, step_size_max, kinetic_change),

@@ -84,35 +84,31 @@ class LinearRegressionTest(chex.TestCase):
         # reduce sum otherwise broacasting will make the logprob biased.
         return sum(x.sum() for x in [scale_prior, coefs_prior, logpdf])
 
-    # def tune_and_run(position, logdensity_fn, key, dim, num_steps):
-    #     main_key, tune_key = jax.random.split(key)
+    def run_mclmc(self, logdensity_fn,num_steps, initial_position, key):
 
-    #     # params, state = tune(
-    #     #     position=position,
-    #     #     params=MCLMCAdaptationState(L=math.sqrt(dim), step_size=math.sqrt(dim) * 0.4),
-    #     #     logdensity_fn=logdensity_fn,
-    #     #     num_steps=num_steps,
-    #     #     rng_key=tune_key,
-    #     # )
-    #     # print(
-    #     #     f"L is {params.L} and should be {1.3147894144058228} and step_size is {params.step_size} and should be {0.6470216512680054}"
-    #     # )
+        init_key, part1_key, part2_key, run_key = jax.random.split(key, 4)
+        
+        initial_state = blackjax.mcmc.mclmc.init(x_initial=initial_position, logdensity_fn=logdensity_fn, rng_key=key)
+        
+        kernel = blackjax.mcmc.mclmc.build_kernel(logdensity_fn=logdensity_fn, integrator=blackjax.mcmc.integrators.noneuclidean_mclachlan, transform=lambda x: x)
 
-    #     mclmc = blackjax.mcmc.mclmc.mclmc(
-    #         logdensity_fn=logdensity_fn,
-    #         transform=lambda x: x,
-    #         # L=params.L,
-    #         # step_size=params.step_size,
-    #         L=math.sqrt(dim), step_size=math.sqrt(dim) * 0.4
-    #     )
+        blackjax_state_after_tuning, blackjax_mclmc_sampler_params = blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size(
+            kernel=kernel,
+            num_steps=num_steps,
+            state=initial_state,
+            part1_key=key,
+            part2_key=key,
+        )
 
-    #     return run_sampling_algorithm(
-    #         sampling_algorithm=mclmc,
-    #         num_steps=num_steps,
-    #         # initial_val=state.position,
-    #         initial_val=position,
-    #         rng_key=main_key,
-    #     )
+        keys = jax.random.split(key, num_steps)
+
+        
+        _, blackjax_mclmc_result = jax.lax.scan(
+            f=lambda state, key: kernel(L=blackjax_mclmc_sampler_params.L, step_size=blackjax_mclmc_sampler_params.step_size, rng_key=key, state=state), 
+            xs=keys, 
+            init=blackjax_state_after_tuning)
+
+        return blackjax_mclmc_result.transformed_position
 
     @parameterized.parameters(itertools.product(regression_test_cases, [True, False]))
     def test_window_adaptation(self, case, is_mass_matrix_diagonal):
@@ -184,13 +180,13 @@ class LinearRegressionTest(chex.TestCase):
         )
         logdensity_fn = lambda x: logposterior_fn_(**x)
 
-        states = tune_and_run(position={"coefs": 1.0, "log_scale": 1.0}, logdensity_fn=logdensity_fn, key=inference_key, dim=2, num_steps=10000)
+        states = self.run_mclmc(initial_position={"coefs": 1.0, "log_scale": 1.0}, logdensity_fn=logdensity_fn, key=inference_key, num_steps=10000)
 
-        coefs_samples = states.transformed_position["coefs"][3000:]
-        scale_samples = np.exp(states.transformed_position["log_scale"][3000:])
+        coefs_samples = states["coefs"][3000:]
+        scale_samples = np.exp(states["log_scale"][3000:])
 
-        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
-        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
 
     @parameterized.parameters(regression_test_cases)
     def test_pathfinder_adaptation(

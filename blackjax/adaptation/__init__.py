@@ -3,6 +3,7 @@ from . import (
     meads_adaptation,
     pathfinder_adaptation,
     window_adaptation,
+    mclmc_adaptation,
 )
 
 __all__ = [
@@ -10,4 +11,5 @@ __all__ = [
     "meads_adaptation",
     "window_adaptation",
     "pathfinder_adaptation",
+    "mclmc_adaptation"
 ]
