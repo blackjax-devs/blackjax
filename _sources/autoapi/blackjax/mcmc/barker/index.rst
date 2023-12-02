@@ -112,7 +112,8 @@ Functions
 .. py:class:: barker_proposal
 
 
-   Implements the (basic) user interface for the Barker's proposal kernel with a Gaussian base kernel.
+   Implements the (basic) user interface for the Barker's proposal :cite:p:`Livingstone2022Barker` kernel with a
+   Gaussian base kernel.
 
    The general Barker kernel builder (:meth:`blackjax.mcmc.barker.build_kernel`, alias `blackjax.barker.build_kernel`) can be
    cumbersome to manipulate. Since most users only need to specify the kernel
