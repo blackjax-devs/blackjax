@@ -55,7 +55,7 @@ class SchrodingerFollmerInfo(NamedTuple):
 
 
 def init(example_position: ArrayLikeTree) -> SchrodingerFollmerState:
-    zero = jax.tree_map(lambda a: a * 0.0, example_position)
+    zero = jax.tree_map(jnp.zeros_like, example_position)
     return SchrodingerFollmerState(zero, 0.0)
 
 
