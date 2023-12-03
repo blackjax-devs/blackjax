@@ -45,7 +45,7 @@ class SchrodingerFollmerState(NamedTuple):
 
 
 class SchrodingerFollmerInfo(NamedTuple):
-    """Extra information returned by the Pathfinder algorithm.
+    """Extra information returned by the Schrodinger Follmer algorithm.
 
     drift:
         Approximation of the drift term of the SDE
