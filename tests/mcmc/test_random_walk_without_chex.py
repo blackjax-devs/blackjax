@@ -137,7 +137,7 @@ class RMHProposalTest(unittest.TestCase):
 
         assert not do_accept
         assert p_accept == 0.3
-        np.testing.assert_allclose(sampled_proposal.state.position, jnp.array([30.0]))
+        np.testing.assert_allclose(sampled_proposal.position, jnp.array([30.0]))
 
     def test_generate_accept(self):
         rng_key = jax.random.key(0)
@@ -151,7 +151,7 @@ class RMHProposalTest(unittest.TestCase):
         )
         sampled_proposal, do_accept, p_accept = generate(rng_key, prev_state)
 
-        np.testing.assert_allclose(sampled_proposal.state.position, jnp.array([10.0]))
+        np.testing.assert_allclose(sampled_proposal.position, jnp.array([10.0]))
 
 
 class RMHTransitionEnergyTest(unittest.TestCase):
