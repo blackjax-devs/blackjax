@@ -106,10 +106,10 @@ class RMHProposalTest(unittest.TestCase):
     def transition_distribution(self, key, position):
         return jnp.array([10.0])
 
-    def reject(self, key, previous_proposal, new_proposal):
+    def reject(self, key, log_p_accept, previous_proposal, new_proposal):
         return previous_proposal, False, 0.3
 
-    def accept(self, key, previous_proposal, new_proposal):
+    def accept(self, key, log_p_accept, previous_proposal, new_proposal):
         return new_proposal, True, 0.5
 
     def compute_ratio(self, new_state, prev_state):
