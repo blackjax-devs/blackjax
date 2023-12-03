@@ -107,10 +107,10 @@ class RMHProposalTest(unittest.TestCase):
         return jnp.array([10.0])
 
     def reject(self, key, log_p_accept, previous_proposal, new_proposal):
-        return previous_proposal, False, 0.3
+        return previous_proposal, (False, 0.3, None)
 
     def accept(self, key, log_p_accept, previous_proposal, new_proposal):
-        return new_proposal, True, 0.5
+        return new_proposal, (True, 0.5, None)
 
     def compute_ratio(self, new_state, prev_state):
         return 0.5
