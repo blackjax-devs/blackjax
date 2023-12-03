@@ -13,17 +13,7 @@ from absl.testing import absltest, parameterized
 import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
-
-
-def inference_loop(kernel, num_samples, rng_key, initial_state):
-    def one_step(state, rng_key):
-        state, _ = kernel(rng_key, state)
-        return state, state
-
-    keys = jax.random.split(rng_key, num_samples)
-    _, states = jax.lax.scan(one_step, initial_state, keys)
-
-    return states
+import blackjax.util as util
 
 
 def orbit_samples(orbits, weights, rng_key):
@@ -154,8 +144,8 @@ class LinearRegressionTest(chex.TestCase):
         )
         algorithm = case["algorithm"](logposterior_fn, **parameters)
 
-        states = inference_loop(
-            algorithm.step, case["num_sampling_steps"], inference_key, state
+        _, states, _ = util.run_inference_algorithm(
+            inference_key, state, algorithm, case["num_sampling_steps"]
         )
 
         coefs_samples = states.position["coefs"]
@@ -177,7 +167,7 @@ class LinearRegressionTest(chex.TestCase):
 
         mala = blackjax.mala(logposterior_fn, 1e-5)
         state = mala.init({"coefs": 1.0, "log_scale": 1.0})
-        states = inference_loop(mala.step, 10_000, inference_key, state)
+        _, states, _ = util.run_inference_algorithm(inference_key, state, mala, 10_000)
 
         coefs_samples = states.position["coefs"][3000:]
         scale_samples = np.exp(states.position["log_scale"][3000:])
@@ -240,9 +230,11 @@ class LinearRegressionTest(chex.TestCase):
             initial_position,
             num_warmup_steps,
         )
-        kernel = algorithm(logposterior_fn, **parameters).step
+        kernel = algorithm(logposterior_fn, **parameters)
 
-        states = inference_loop(kernel, num_sampling_steps, inference_key, state)
+        _, states, _ = util.run_inference_algorithm(
+            inference_key, state, kernel, num_sampling_steps
+        )
 
         coefs_samples = states.position["coefs"]
         scale_samples = np.exp(states.position["log_scale"])
@@ -277,12 +269,12 @@ class LinearRegressionTest(chex.TestCase):
             initial_positions,
             num_steps=1000,
         )
-        kernel = blackjax.ghmc(logposterior_fn, **parameters).step
+        kernel = blackjax.ghmc(logposterior_fn, **parameters)
 
         chain_keys = jax.random.split(inference_key, num_chains)
-        states = jax.vmap(lambda key, state: inference_loop(kernel, 100, key, state))(
-            chain_keys, last_states
-        )
+        _, states, _ = jax.vmap(
+            lambda key, state: util.run_inference_algorithm(key, state, kernel, 100)
+        )(chain_keys, last_states)
 
         coefs_samples = states.position["coefs"]
         scale_samples = np.exp(states.position["log_scale"])
@@ -319,12 +311,12 @@ class LinearRegressionTest(chex.TestCase):
             optim=optax.adam(learning_rate=0.1),
             num_steps=1000,
         )
-        kernel = blackjax.dynamic_hmc(logposterior_fn, **parameters).step
+        kernel = blackjax.dynamic_hmc(logposterior_fn, **parameters)
 
         chain_keys = jax.random.split(inference_key, num_chains)
-        states = jax.vmap(lambda key, state: inference_loop(kernel, 100, key, state))(
-            chain_keys, last_states
-        )
+        _, states, _ = jax.vmap(
+            lambda key, state: util.run_inference_algorithm(key, state, kernel, 100)
+        )(chain_keys, last_states)
 
         coefs_samples = states.position["coefs"]
         scale_samples = np.exp(states.position["log_scale"])
@@ -519,13 +511,19 @@ class LatentGaussianTest(chex.TestCase):
     def test_latent_gaussian(self):
         from blackjax import mgrad_gaussian
 
-        init, step = mgrad_gaussian(lambda x: -0.5 * jnp.sum((x - 1.0) ** 2), self.C)
+        algorithm = mgrad_gaussian(lambda x: -0.5 * jnp.sum((x - 1.0) ** 2), self.C)
+        algorithm = algorithm._replace(
+            step=functools.partial(algorithm.step, delta=self.delta)
+        )
 
-        kernel = lambda key, x: step(key, x, self.delta)
-        initial_state = init(jnp.zeros((1,)))
+        initial_state = algorithm.init(jnp.zeros((1,)))
 
-        states = self.variant(
-            functools.partial(inference_loop, kernel, self.sampling_steps),
+        _, states, _ = self.variant(
+            functools.partial(
+                util.run_inference_algorithm,
+                inference_algorithm=algorithm,
+                num_steps=self.sampling_steps,
+            ),
         )(self.key, initial_state)
 
         np.testing.assert_allclose(
@@ -650,7 +648,7 @@ class UnivariateNormalTest(chex.TestCase):
         algo = algorithm(self.normal_logprob, **parameters)
         rng_key = self.key
         if algorithm == blackjax.elliptical_slice:
-            algo = algorithm(lambda _: 1.0, **parameters)
+            algo = algorithm(lambda x: jnp.ones_like(x), **parameters)
         if algorithm == blackjax.ghmc:
             rng_key, initial_state_key = jax.random.split(rng_key)
             initial_state = algo.init(initial_position, initial_state_key)
@@ -658,9 +656,13 @@ class UnivariateNormalTest(chex.TestCase):
             initial_state = algo.init(initial_position)
 
         inference_key, orbit_key = jax.random.split(rng_key)
-        kernel = algo.step
-        states = self.variant(
-            functools.partial(inference_loop, kernel, num_sampling_steps)
+        kernel = algo
+        _, states, _ = self.variant(
+            functools.partial(
+                util.run_inference_algorithm,
+                inference_algorithm=kernel,
+                num_steps=num_sampling_steps,
+            )
         )(inference_key, initial_state)
 
         if algorithm == blackjax.orbital_hmc:
@@ -777,9 +779,15 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         multi_chain_sample_key = jax.random.split(sample_key, num_chains)
 
         inference_loop_multiple_chains = jax.vmap(
-            functools.partial(inference_loop, kernel.step, 2_000)
+            functools.partial(
+                util.run_inference_algorithm,
+                inference_algorithm=kernel,
+                num_steps=2_000,
+            )
         )
-        states = inference_loop_multiple_chains(multi_chain_sample_key, initial_states)
+        _, states, _ = inference_loop_multiple_chains(
+            multi_chain_sample_key, initial_states
+        )
 
         posterior_samples = states.position[:, -1000:]
         posterior_delta = posterior_samples - true_loc

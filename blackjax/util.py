@@ -1,6 +1,6 @@
 """Utility functions for BlackJax."""
 from functools import partial
-from typing import Tuple, Union
+from typing import Union
 
 import jax.numpy as jnp
 from jax import jit, lax
@@ -140,11 +140,11 @@ def index_pytree(input_pytree: ArrayLikeTree) -> ArrayTree:
 
 
 def run_inference_algorithm(
-    rng_key: PRNGKey,
-    initial_state_or_position: ArrayLikeTree,
-    inference_algorithm: Union[SamplingAlgorithm, VIAlgorithm],
-    num_steps: int,
-) -> Tuple[State, State, Info]:
+    rng_key,
+    initial_state_or_position,
+    inference_algorithm,
+    num_steps,
+) -> tuple[State, State, Info]:
     """Wrapper to run an inference algorithm.
 
     Parameters
@@ -169,8 +169,9 @@ def run_inference_algorithm(
     try:
         initial_state = inference_algorithm.init(initial_state_or_position)
     except TypeError:
-        # initial_state is already in the right format.
+        # We assume initial_state is already in the right format.
         initial_state = initial_state_or_position
+    initial_state = initial_state_or_position
 
     keys = split(rng_key, num_steps)
 
