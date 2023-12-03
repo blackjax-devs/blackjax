@@ -157,7 +157,7 @@ def sample(
         )
     else:
         initial_positions = jax.tree_map(
-            lambda a: jnp.repeat(0 * a[None, :], n_samples, 0), initial_position
+            lambda a: jnp.zeros([n_samples, *a.shape]), initial_position
         )
         initial_states = SchrodingerFollmerState(
             initial_positions, jnp.zeros((n_samples,))
