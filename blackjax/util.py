@@ -8,7 +8,7 @@ from jax.flatten_util import ravel_pytree
 from jax.random import normal, split
 from jax.tree_util import tree_leaves
 
-from blackjax.base import Info, SamplingAlgorithm, State, VIAlgorithm
+from blackjax.base import Info, State
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 
