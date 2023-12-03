@@ -153,7 +153,7 @@ def sample(
     initial_position = initial_state.position
     if n_samples == 1:
         initial_states = SchrodingerFollmerState(
-            jax.tree_map(lambda a: 0.0 * a, initial_position), 0.0
+            jax.tree_map(jnp.zeros_like, initial_position), 0.0
         )
     else:
         initial_positions = jax.tree_map(
