@@ -67,12 +67,13 @@ class SchrodingerFollmerTest(chex.TestCase):
             observed, prior_mu, prior_prec, true_prec
         )
 
-        schrodinger_follmer_algo = self.variant(schrodinger_follmer)(logp_model, 50, 25)
+        schrodinger_follmer_algo = schrodinger_follmer(logp_model, 50, 25)
 
         initial_state = schrodinger_follmer_algo.init(initial_position)
-        sampled_states = schrodinger_follmer_algo.sample(
-            rng_key_init, initial_state, 100
+        schrodinger_follmer_algo_sample = self.variant(
+            lambda k, s: schrodinger_follmer_algo.sample(k, s, 100)
         )
+        sampled_states = schrodinger_follmer_algo_sample(rng_key_init, initial_state)
         sampled_position = sampled_states.position
         chex.assert_trees_all_close(
             sampled_position.mean(0), posterior_mu, rtol=1e-2, atol=1e-1
