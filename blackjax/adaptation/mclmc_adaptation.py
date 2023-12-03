@@ -45,6 +45,9 @@ def mclmc_find_L_and_step_size(
     frac_tune1=0.1,
     frac_tune2=0.1,
     frac_tune3=0.1,
+    varEwanted=5e-4,
+    sigma_xi=1.5,
+    num_effective_samples=150,
 ):
     """
     Finds the optimal value of the parameters for the MCLMC algorithm.
@@ -72,8 +75,8 @@ def mclmc_find_L_and_step_size(
         frac_tune1=frac_tune1,
         frac_tune2=frac_tune2,
         varEwanted=varEwanted,
-        sigma_xi=1.5,
-        num_effective_samples=150,
+        sigma_xi=sigma_xi,
+        num_effective_samples=num_effective_samples,
     )(state, params, num_steps, part1_key)
 
     if frac_tune3 != 0:
