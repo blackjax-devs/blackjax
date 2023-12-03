@@ -5,7 +5,6 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest
 
-from blackjax.mcmc.proposal import Proposal
 from blackjax.mcmc.random_walk import (
     RWState,
     build_additive_step,
@@ -113,11 +112,8 @@ class RMHProposalTest(unittest.TestCase):
     def accept(self, key, previous_proposal, new_proposal):
         return new_proposal, True, 0.5
 
-    def init_proposal(self, state):
-        return Proposal(state, 0, 0, 0)
-
-    def generate_proposal(self, prev, new):
-        return Proposal(new, 0, 0, 0)
+    def compute_ratio(self, new_state, prev_state):
+        return 0.5
 
     def test_generate_reject(self):
         """
@@ -131,10 +127,9 @@ class RMHProposalTest(unittest.TestCase):
         prev_state = RWState(jnp.array([30.0]), 15.0)
 
         generate = rmh_proposal(
-            logdensity_fn=lambda position: 50.0,
+            logdensity_fn=lambda _: 50.0,
             transition_distribution=self.transition_distribution,
-            init_proposal=self.init_proposal,
-            generate_proposal=self.generate_proposal,
+            compute_acceptance_ratio=self.compute_ratio,
             sample_proposal=self.reject,
         )
 
@@ -149,10 +144,9 @@ class RMHProposalTest(unittest.TestCase):
         prev_state = RWState(jnp.array([30.0]), 15.0)
 
         generate = rmh_proposal(
-            logdensity_fn=lambda position: 50.0,
+            logdensity_fn=lambda _: 50.0,
             transition_distribution=self.transition_distribution,
-            init_proposal=self.init_proposal,
-            generate_proposal=self.generate_proposal,
+            compute_acceptance_ratio=self.compute_ratio,
             sample_proposal=self.accept,
         )
         sampled_proposal, do_accept, p_accept = generate(rng_key, prev_state)
