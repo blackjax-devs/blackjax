@@ -44,32 +44,6 @@ def init(x_initial : ArrayLikeTree, logdensity_fn):
 
 
 
-
-def halton(t, max_bits=10):
-    """for t= 0., 1., 2., ... it outputs halton sequence at that index (0.5, 0.25, 0.75, ...)
-        taken from: https://github.com/tensorflow/probability/blob/main/discussion/snaper_hmc/SNAPER-HMC.ipynb"""
-    float_index = jnp.asarray(t)
-    bit_masks = 2**jnp.arange(max_bits, dtype=float_index.dtype)
-    return jnp.einsum('i,i->', jnp.mod((float_index + 1) // bit_masks, 2), 0.5 / bit_masks)
-
-
-
-def rescale(mu):
-    """returns s, such that 
-        round(U(0, 1) * s + 0.5)
-       has expected value mu.    
-    """
-    k = jnp.floor(2 * mu -1)
-    x = k * (mu - 0.5 *(k+1)) / (k + 1 - mu)
-    return k + x
-
-
-def trajectory_length(t, mu):
-    s = rescale(mu)
-    return jnp.rint(0.5 + halton(t) * s)
-
-
-
 def proposal(hamiltonian_step, d):
 
     def prop(t, x, g, random_key, L, eps, sigma):
@@ -152,3 +126,32 @@ class rmchmc:
             )
 
         return SamplingAlgorithm(init_fn, step_fn)
+    
+
+
+
+
+
+def halton(t, max_bits=10):
+    """for t= 0., 1., 2., ... it outputs halton sequence at that index (0.5, 0.25, 0.75, ...)
+        taken from: https://github.com/tensorflow/probability/blob/main/discussion/snaper_hmc/SNAPER-HMC.ipynb"""
+    float_index = jnp.asarray(t)
+    bit_masks = 2**jnp.arange(max_bits, dtype=float_index.dtype)
+    return jnp.einsum('i,i->', jnp.mod((float_index + 1) // bit_masks, 2), 0.5 / bit_masks)
+
+
+
+def rescale(mu):
+    """returns s, such that 
+        round(U(0, 1) * s + 0.5)
+       has expected value mu.    
+    """
+    k = jnp.floor(2 * mu -1)
+    x = k * (mu - 0.5 *(k+1)) / (k + 1 - mu)
+    return k + x
+
+
+def trajectory_length(t, mu):
+    s = rescale(mu)
+    return jnp.rint(0.5 + halton(t) * s)
+
