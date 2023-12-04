@@ -18,9 +18,9 @@ import jax
 
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.trajectory as trajectory
 from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.proposal import safe_energy_diff, static_binomial_sampling
 from blackjax.mcmc.trajectory import hmc_energy
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -166,7 +166,7 @@ def build_kernel(
         integrator_state = integrators.IntegratorState(
             position, momentum, logdensity, logdensity_grad
         )
-        proposal, info = proposal_generator(key_integrator, integrator_state)
+        proposal, info, _ = proposal_generator(key_integrator, integrator_state)
         proposal = HMCState(
             proposal.position, proposal.logdensity, proposal.logdensity_grad
         )
@@ -404,7 +404,7 @@ def hmc_proposal(
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,
     *,
-    sample_proposal: Callable = proposal.static_binomial_sampling,
+    sample_proposal: Callable = static_binomial_sampling,
 ) -> Callable:
     """Vanilla HMC algorithm.
 
@@ -433,33 +433,32 @@ def hmc_proposal(
 
     """
     build_trajectory = trajectory.static_integration(integrator)
-    init_proposal, generate_proposal = proposal.proposal_generator(
-        hmc_energy(kinetic_energy)
-    )
+    hmc_energy_fn = hmc_energy(kinetic_energy)
 
     def generate(
         rng_key, state: integrators.IntegratorState
-    ) -> tuple[integrators.IntegratorState, HMCInfo]:
+    ) -> tuple[integrators.IntegratorState, HMCInfo, ArrayTree]:
         """Generate a new chain state."""
         end_state = build_trajectory(state, step_size, num_integration_steps)
         end_state = flip_momentum(end_state)
-        proposal = init_proposal(state)
-        new_proposal = generate_proposal(proposal.energy, end_state)
-        is_diverging = -new_proposal.weight > divergence_threshold
-        sampled_proposal, *info = sample_proposal(rng_key, proposal, new_proposal)
-        do_accept, p_accept = info
+        proposal_energy = hmc_energy_fn(state)
+        new_energy = hmc_energy_fn(end_state)
+        delta_energy = safe_energy_diff(proposal_energy, new_energy)
+        is_diverging = -delta_energy > divergence_threshold
+        sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
+        do_accept, p_accept, other_proposal_info = info
 
         info = HMCInfo(
             state.momentum,
             p_accept,
             do_accept,
             is_diverging,
-            new_proposal.energy,
-            new_proposal,
+            new_energy,
+            end_state,
             num_integration_steps,
         )
 
-        return sampled_proposal.state, info
+        return sampled_state, info, other_proposal_info
 
     return generate
 
