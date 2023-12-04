@@ -266,6 +266,27 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
+    def test_barker(self):
+        """Test the Barker kernel."""
+        init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logposterior_fn = lambda x: logposterior_fn_(**x)
+
+        barker = blackjax.barker_proposal(logposterior_fn, 1e-1)
+        state = barker.init({"coefs": 1.0, "log_scale": 1.0})
+        states = inference_loop(barker.step, 10_000, inference_key, state)
+
+        coefs_samples = states.position["coefs"][3000:]
+        scale_samples = np.exp(states.position["log_scale"][3000:])
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+
 
 class SGMCMCTest(chex.TestCase):
     """Test sampling of a linear regression model."""
@@ -526,6 +547,13 @@ normal_test_cases = [
         "num_sampling_steps": 6000,
         "burnin": 1_000,
     },
+    {
+        "algorithm": blackjax.barker_proposal,
+        "initial_position": 1.0,
+        "parameters": {"step_size": 1.5},
+        "num_sampling_steps": 20_000,
+        "burnin": 2_000,
+    },
 ]
 
 
@@ -575,7 +603,6 @@ class UnivariateNormalTest(chex.TestCase):
             )
         else:
             samples = states.position[burnin:]
-
         np.testing.assert_allclose(np.mean(samples), 1.0, rtol=1e-1)
         np.testing.assert_allclose(np.var(samples), 4.0, rtol=1e-1)
 
@@ -606,6 +633,11 @@ mcse_test_cases = [
         "algorithm": blackjax.nuts,
         "parameters": {"step_size": 0.85},
         "is_mass_matrix_diagonal": False,
+    },
+    {
+        "algorithm": blackjax.barker_proposal,
+        "parameters": {"step_size": 0.5},
+        "is_mass_matrix_diagonal": None,
     },
 ]
 
@@ -660,15 +692,18 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             true_rho,
             true_cov,
         ) = self.generate_multivariate_target(None)
-        if is_mass_matrix_diagonal:
-            inverse_mass_matrix = true_scale**2
+        if is_mass_matrix_diagonal is not None:
+            if is_mass_matrix_diagonal:
+                inverse_mass_matrix = true_scale**2
+            else:
+                inverse_mass_matrix = true_cov
+            kernel = algorithm(
+                logdensity_fn,
+                inverse_mass_matrix=inverse_mass_matrix,
+                **parameters,
+            )
         else:
-            inverse_mass_matrix = true_cov
-        kernel = algorithm(
-            logdensity_fn,
-            inverse_mass_matrix=inverse_mass_matrix,
-            **parameters,
-        )
+            kernel = algorithm(logdensity_fn, **parameters)
 
         num_chains = 10
         initial_positions = jax.random.normal(pos_init_key, [num_chains, 2])
