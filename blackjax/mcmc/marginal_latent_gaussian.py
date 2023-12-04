@@ -19,6 +19,7 @@ import jax.numpy as jnp
 import jax.scipy.linalg as linalg
 
 from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.proposal import static_binomial_sampling
 from blackjax.types import Array, PRNGKey
 
 __all__ = ["MarginalState", "MarginalInfo", "init_and_kernel", "mgrad_gaussian"]
@@ -121,13 +122,14 @@ def init_and_kernel(logdensity_fn, covariance, mean=None):
         hxy = jnp.dot(U_x - temp_y, Gamma_3 * U_grad_y)
         hyx = jnp.dot(U_y - temp_x, Gamma_3 * U_grad_x)
 
-        alpha = jnp.minimum(1, jnp.exp(log_p_y - logdensity + hxy - hyx))
-        accept = jax.random.uniform(u_key) < alpha
-
+        log_p_accept = log_p_y - logdensity + hxy - hyx
         proposed_state = MarginalState(y, log_p_y, grad_y, U_y, U_grad_y)
-        state = jax.lax.cond(accept, lambda _: proposed_state, lambda _: state, None)
-        info = MarginalInfo(alpha, accept, proposed_state)
-        return state, info
+        accepted_state, info = static_binomial_sampling(
+            u_key, log_p_accept, state, proposed_state
+        )
+        do_accept, p_accept, _ = info
+        info = MarginalInfo(p_accept, do_accept, proposed_state)
+        return accepted_state, info
 
     def init(position):
         logdensity, logdensity_grad = val_and_grad(position)
