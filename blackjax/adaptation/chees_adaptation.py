@@ -406,8 +406,8 @@ def chees_adaptation(
             new_states, info = jax.vmap(_step_fn)(keys, states)
             new_adaptation_state = update(
                 adaptation_state,
-                info.proposal.state.position,
-                info.proposal.state.momentum,
+                info.proposal.position,
+                info.proposal.momentum,
                 states.position,
                 info.acceptance_rate,
                 info.is_divergent,

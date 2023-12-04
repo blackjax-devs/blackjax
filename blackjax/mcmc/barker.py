@@ -21,6 +21,7 @@ from jax.scipy import stats
 from jax.tree_util import tree_leaves, tree_map
 
 from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.proposal import static_binomial_sampling
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["BarkerState", "BarkerInfo", "init", "build_kernel", "barker_proposal"]
@@ -99,9 +100,7 @@ def build_kernel():
             state.logdensity_grad,
         )
         ratio_proposal = sum(tree_leaves(ratios_proposals))
-        log_p_accept = proposal.logdensity - state.logdensity + ratio_proposal
-        p_accept = jnp.exp(log_p_accept)
-        return jnp.minimum(1.0, p_accept)
+        return proposal.logdensity - state.logdensity + ratio_proposal
 
     def kernel(
         rng_key: PRNGKey, state: BarkerState, logdensity_fn: Callable, step_size: float
@@ -119,13 +118,12 @@ def build_kernel():
             proposed_pos, proposed_logdensity, proposed_logdensity_grad
         )
 
-        p_accept = _compute_acceptance_probability(state, proposed_state)
-
-        accept = jax.random.uniform(key_rmh) < p_accept
-
-        state = jax.lax.cond(accept, lambda: proposed_state, lambda: state)
-        info = BarkerInfo(p_accept, accept, proposed_state)
-        return state, info
+        log_p_accept = _compute_acceptance_probability(state, proposed_state)
+        accepted_state, info = static_binomial_sampling(
+            key_rmh, log_p_accept, state, proposed_state
+        )
+        do_accept, p_accept, _ = info
+        return accepted_state, BarkerInfo(p_accept, do_accept, proposed_state)
 
     return kernel
 
