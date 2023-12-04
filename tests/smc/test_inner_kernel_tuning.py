@@ -1,3 +1,4 @@
+import functools
 from unittest.mock import MagicMock
 
 import chex
@@ -9,6 +10,7 @@ from absl.testing import absltest
 
 import blackjax
 import blackjax.smc.resampling as resampling
+from blackjax import adaptive_tempered_smc, tempered_smc
 from blackjax.smc.inner_kernel_tuning import inner_kernel_tuning
 from blackjax.smc.tuning.from_kernel_info import update_scale_from_acceptance_rate
 from blackjax.smc.tuning.from_particles import (
@@ -18,6 +20,7 @@ from blackjax.smc.tuning.from_particles import (
     particles_stds,
 )
 from tests.mcmc.test_sampling import irmh_proposal_distribution
+from tests.smc import SMCLinearRegressionTestCase
 
 
 class MultivariableParticlesDistribution:
@@ -158,42 +161,20 @@ class MeanAndStdFromParticlesTest(chex.TestCase):
         )
 
     def test_mean_and_std_multivariable_particles(self):
-        particles_distribution = MultivariableParticlesDistribution(
-            50000,
-            mean_x=[10.0, 3.0],
-            mean_y=[5.0, 20.0],
-            cov_x=[[2.0, 0.0], [0.0, 5.0]],
-        )
-        particles = particles_distribution.get_particles()
+        var1 = np.array([jnp.array([10.0, 15.0]), jnp.array([3.0, 4.0])])
+        var2 = np.array([jnp.array([10.0]), jnp.array([3.0])])
+        particles = {"var1": var1, "var2": var2}
         mean = particles_means(particles)
         std = particles_stds(particles)
         cov = particles_covariance_matrix(particles)
+        np.testing.assert_allclose(mean, np.array([6.5, 9.5, 6.5]))
+        np.testing.assert_allclose(std, np.array([3.5, 5.5, 3.5]))
         np.testing.assert_allclose(
-            mean[0],
-            particles_distribution.mean_x,
-            rtol=1e-1,
+            cov,
+            np.array(
+                [[12.25, 19.25, 12.25], [19.25, 30.25, 19.25], [12.25, 19.25, 12.25]]
+            ),
         )
-
-        np.testing.assert_allclose(
-            mean[1],
-            particles_distribution.mean_y,
-            rtol=1e-1,
-        )
-
-        np.testing.assert_allclose(
-            std[0],
-            np.sqrt(np.diag(particles_distribution.cov_x)),
-            rtol=1e-1,
-        )
-
-        np.testing.assert_allclose(
-            std[1],
-            np.sqrt(np.diag(particles_distribution.cov_y)),
-            rtol=1e-1,
-        )
-        np.testing.assert_allclose(cov[0], particles_distribution.cov_x, atol=1e-1)
-
-        np.testing.assert_allclose(cov[1], particles_distribution.cov_y, atol=1e-1)
 
 
 class InverseMassMatrixFromParticles(chex.TestCase):
@@ -215,6 +196,28 @@ class InverseMassMatrixFromParticles(chex.TestCase):
         )
         np.testing.assert_allclose(
             inverse_mass_matrix, np.diag(np.array([0.081633, 0.033058])), rtol=1e-4
+        )
+
+    def test_inverse_mass_matrix_from_multivariable_particles(self):
+        var1 = np.array([jnp.array([10.0, 15.0]), jnp.array([3.0, 4.0])])
+        var2 = np.array([jnp.array([10.0]), jnp.array([3.0])])
+        init_particles = {"var1": var1, "var2": var2}
+        mass_matrix = mass_matrix_from_particles(init_particles)
+        assert mass_matrix.shape == (3, 3)
+        np.testing.assert_allclose(
+            np.diag(mass_matrix),
+            np.array([0.081633, 0.033058, 0.081633], dtype="float32"),
+            rtol=1e-4,
+        )
+
+    def test_inverse_mass_matrix_from_multivariable_univariate_particles(self):
+        var1 = np.array([3.0, 2.0])
+        var2 = np.array([10.0, 3.0])
+        init_particles = {"var1": var1, "var2": var2}
+        mass_matrix = mass_matrix_from_particles(init_particles)
+        assert mass_matrix.shape == (2, 2)
+        np.testing.assert_allclose(
+            np.diag(mass_matrix), np.array([4, 0.081633], dtype="float32"), rtol=1e-4
         )
 
 
@@ -258,6 +261,102 @@ class ScaleCovarianceFromAcceptanceRates(chex.TestCase):
             jnp.array([0.521406, 0.495993]),
             rtol=1e-4,
         )
+
+
+class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.key(42)
+
+    def mcmc_factory(self, mass_matrix):
+        return functools.partial(
+            blackjax.hmc.build_kernel(),
+            inverse_mass_matrix=mass_matrix,
+            step_size=10e-2,
+            num_integration_steps=50,
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_with_adaptive_tempered(self):
+        (
+            init_particles,
+            logprior_fn,
+            loglikelihood_fn,
+        ) = self.particles_prior_loglikelihood()
+
+        init, step = blackjax.inner_kernel_tuning(
+            adaptive_tempered_smc,
+            logprior_fn,
+            loglikelihood_fn,
+            self.mcmc_factory,
+            blackjax.hmc.init,
+            {},
+            resampling.systematic,
+            mcmc_parameter_update_fn=lambda state, info: mass_matrix_from_particles(
+                state.particles
+            ),
+            initial_parameter_value=jnp.eye(2),
+            num_mcmc_steps=10,
+            target_ess=0.5,
+        )
+        init_state = init(init_particles)
+        smc_kernel = self.variant(step)
+
+        def inference_loop(kernel, rng_key, initial_state):
+            def cond(carry):
+                state, key = carry
+                return state.sampler_state.lmbda < 1
+
+            def body(carry):
+                state, op_key = carry
+                op_key, subkey = jax.random.split(op_key, 2)
+                state, _ = kernel(subkey, state)
+                return state, op_key
+
+            return jax.lax.while_loop(cond, body, (initial_state, rng_key))
+
+        state, _ = inference_loop(smc_kernel, self.key, init_state)
+
+        assert state.parameter_override.shape == (2, 2)
+        self.assert_linear_regression_test_case(state.sampler_state)
+
+    @chex.all_variants(with_pmap=False)
+    def test_with_tempered_smc(self):
+        num_tempering_steps = 10
+        (
+            init_particles,
+            logprior_fn,
+            loglikelihood_fn,
+        ) = self.particles_prior_loglikelihood()
+
+        init, step = blackjax.inner_kernel_tuning(
+            tempered_smc,
+            logprior_fn,
+            loglikelihood_fn,
+            self.mcmc_factory,
+            blackjax.hmc.init,
+            {},
+            resampling.systematic,
+            mcmc_parameter_update_fn=lambda state, info: mass_matrix_from_particles(
+                state.particles
+            ),
+            initial_parameter_value=jnp.eye(2),
+            num_mcmc_steps=10,
+        )
+
+        init_state = init(init_particles)
+        smc_kernel = self.variant(step)
+
+        lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
+
+        def body_fn(carry, lmbda):
+            rng_key, state = carry
+            rng_key, subkey = jax.random.split(rng_key)
+            new_state, info = smc_kernel(subkey, state, lmbda=lmbda)
+            return (rng_key, new_state), (new_state, info)
+
+        (_, result), _ = jax.lax.scan(body_fn, (self.key, init_state), lambda_schedule)
+        self.assert_linear_regression_test_case(result.sampler_state)
 
 
 if __name__ == "__main__":

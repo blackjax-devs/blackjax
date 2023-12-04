@@ -24,7 +24,7 @@ def build_kernel(
     mcmc_init_fn: Callable,
     mcmc_parameters: Dict,
     resampling_fn: Callable,
-    mcmc_parameter_factory: Callable[[SMCState, SMCInfo], ArrayTree],
+    mcmc_parameter_update_fn: Callable[[SMCState, SMCInfo], ArrayTree],
     num_mcmc_steps: int = 10,
     **extra_parameters,
 ) -> Callable:
@@ -49,7 +49,7 @@ def build_kernel(
         A callable that initializes the inner kernel
     mcmc_parameters
         Other (fixed across SMC iterations) parameters for the inner kernel
-    mcmc_parameter_factory
+    mcmc_parameter_update_fn
      A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the
       inner kernel in i+1 iteration.
     extra_parameters:
@@ -70,7 +70,7 @@ def build_kernel(
             **extra_parameters,
         ).step
         new_state, info = step_fn(rng_key, state.sampler_state, **extra_step_parameters)
-        new_parameter_override = mcmc_parameter_factory(new_state, info)
+        new_parameter_override = mcmc_parameter_update_fn(new_state, info)
         return StateWithParameterOverride(new_state, new_parameter_override), info
 
     return kernel
@@ -97,7 +97,7 @@ class inner_kernel_tuning:
     mcmc_init_fn
         A callable that initializes the inner kernel
     mcmc_parameters
-        Other (fixed across SMC iterations) parameters for the inner kernel
+        Other (fixed across SMC iterations) parameters for the inner kernel step
     mcmc_parameter_update_fn
      A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the
       inner kernel in i+1 iteration.

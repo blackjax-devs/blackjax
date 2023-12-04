@@ -12,6 +12,7 @@ import blackjax
 import blackjax.smc.resampling as resampling
 import blackjax.smc.solver as solver
 from blackjax import adaptive_tempered_smc, tempered_smc
+from tests.smc import SMCLinearRegressionTestCase
 
 
 def inference_loop(kernel, rng_key, initial_state):
@@ -32,19 +33,12 @@ def inference_loop(kernel, rng_key, initial_state):
     return total_iter, final_state, log_likelihood
 
 
-class TemperedSMCTest(chex.TestCase):
+class TemperedSMCTest(SMCLinearRegressionTestCase):
     """Test posterior mean estimate."""
 
     def setUp(self):
         super().setUp()
         self.key = jax.random.key(42)
-
-    def logdensity_fn(self, log_scale, coefs, preds, x):
-        """Linear regression"""
-        scale = jnp.exp(log_scale)
-        y = jnp.dot(x, coefs)
-        logpdf = stats.norm.logpdf(preds, y, scale)
-        return jnp.sum(logpdf)
 
     @chex.variants(with_jit=True)
     def test_adaptive_tempered_smc(self):
@@ -105,21 +99,13 @@ class TemperedSMCTest(chex.TestCase):
 
     @chex.variants(with_jit=True)
     def test_fixed_schedule_tempered_smc(self):
-        num_particles = 100
+        (
+            init_particles,
+            logprior_fn,
+            loglikelihood_fn,
+        ) = self.particles_prior_loglikelihood()
+
         num_tempering_steps = 10
-
-        x_data = np.random.normal(0, 1, size=(1000, 1))
-        y_data = 3 * x_data + np.random.normal(size=x_data.shape)
-        observations = {"x": x_data, "preds": y_data}
-
-        logprior_fn = lambda x: stats.norm.logpdf(x["log_scale"]) + stats.norm.logpdf(
-            x["coefs"]
-        )
-        loglikelihood_fn = lambda x: self.logdensity_fn(**x, **observations)
-
-        log_scale_init = np.random.randn(num_particles)
-        coeffs_init = np.random.randn(num_particles)
-        init_particles = {"log_scale": log_scale_init, "coefs": coeffs_init}
 
         lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
         hmc_init = blackjax.hmc.init
@@ -149,10 +135,7 @@ class TemperedSMCTest(chex.TestCase):
             return (rng_key, new_state), (new_state, info)
 
         (_, result), _ = jax.lax.scan(body_fn, (self.key, init_state), lambda_schedule)
-        np.testing.assert_allclose(
-            np.mean(np.exp(result.particles["log_scale"])), 1.0, rtol=1e-1
-        )
-        np.testing.assert_allclose(np.mean(result.particles["coefs"]), 3.0, rtol=1e-1)
+        self.assert_linear_regression_test_case(result)
 
 
 def normal_logdensity_fn(x, chol_cov):
