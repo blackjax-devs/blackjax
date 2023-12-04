@@ -405,15 +405,14 @@ def build_rmh():
         """
         transition_energy = build_rmh_transition_energy(proposal_logdensity_fn)
 
-        init_proposal, generate_proposal = proposal.asymmetric_proposal_generator(
+        compute_acceptance_ratio = proposal.compute_asymmetric_acceptance_ratio(
             transition_energy
         )
 
         proposal_generator = rmh_proposal(
-            logdensity_fn, transition_generator, init_proposal, generate_proposal
+            logdensity_fn, transition_generator, compute_acceptance_ratio
         )
-        sampled_proposal, do_accept, p_accept = proposal_generator(rng_key, state)
-        new_state = sampled_proposal.state
+        new_state, do_accept, p_accept = proposal_generator(rng_key, state)
         return new_state, RWInfo(p_accept, do_accept, new_state)
 
     return kernel
@@ -497,25 +496,21 @@ def build_rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> C
 
 
 def rmh_proposal(
-    logdensity_fn,
-    transition_distribution,
-    init_proposal,
-    generate_proposal,
+    logdensity_fn: Callable,
+    transition_distribution: Callable,
+    compute_acceptance_ratio: Callable,
     sample_proposal: Callable = proposal.static_binomial_sampling,
 ) -> Callable:
-    def build_trajectory(rng_key, initial_state: RWState) -> RWState:
-        position, logdensity = initial_state
-        new_position = transition_distribution(rng_key, position)
-        return RWState(new_position, logdensity_fn(new_position))
-
-    def generate(rng_key, state: RWState) -> tuple[RWState, bool, float]:
+    def generate(rng_key, previous_state: RWState) -> tuple[RWState, bool, float]:
         key_proposal, key_accept = jax.random.split(rng_key, 2)
-        end_state = build_trajectory(key_proposal, state)
-        new_proposal = generate_proposal(state, end_state)
-        previous_proposal = init_proposal(state)
-        sampled_proposal, do_accept, p_accept = sample_proposal(
-            key_accept, previous_proposal, new_proposal
+        position, _ = previous_state
+        new_position = transition_distribution(key_proposal, position)
+        proposed_state = RWState(new_position, logdensity_fn(new_position))
+        log_p_accept = compute_acceptance_ratio(previous_state, proposed_state)
+        accepted_state, info = sample_proposal(
+            key_accept, log_p_accept, previous_state, proposed_state
         )
-        return sampled_proposal, do_accept, p_accept
+        do_accept, p_accept, _ = info
+        return accepted_state, do_accept, p_accept
 
     return generate
