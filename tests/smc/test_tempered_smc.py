@@ -60,7 +60,7 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
         smc_state_init = [log_scale_init, coeffs_init]
 
         iterates = []
-        results = []  # type: List[TemperedSMCState]
+        results = []
 
         hmc_kernel = blackjax.hmc.build_kernel()
         hmc_init = blackjax.hmc.init

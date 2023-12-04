@@ -25,6 +25,7 @@ from .smc.inner_kernel_tuning import inner_kernel_tuning
 from .smc.tempered import tempered_smc
 from .vi.meanfield_vi import meanfield_vi
 from .vi.pathfinder import pathfinder
+from .vi.schrodinger_follmer import schrodinger_follmer
 from .vi.svgd import svgd
 
 __all__ = [
@@ -56,6 +57,7 @@ __all__ = [
     "inner_kernel_tuning",
     "meanfield_vi",  # variational inference
     "pathfinder",
+    "schrodinger_follmer",
     "svgd",
     "ess",  # diagnostics
     "rhat",
