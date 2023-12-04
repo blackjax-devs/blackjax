@@ -151,29 +151,18 @@ def sample(
     dt = 1.0 / n_steps
 
     initial_position = initial_state.position
-    if n_samples == 1:
-        initial_states = SchrodingerFollmerState(
-            jax.tree_map(jnp.zeros_like, initial_position), 0.0
-        )
-    else:
-        initial_positions = jax.tree_map(
-            lambda a: jnp.zeros([n_samples, *a.shape]), initial_position
-        )
-        initial_states = SchrodingerFollmerState(
-            initial_positions, jnp.zeros((n_samples,))
-        )
+    initial_positions = jax.tree_map(
+        lambda a: jnp.zeros([n_samples, *a.shape]), initial_position
+    )
+    initial_states = SchrodingerFollmerState(initial_positions, jnp.zeros((n_samples,)))
 
     def body(_, carry):
         key, states = carry
-        next_key, inner_key = jax.random.split(key)
-        if n_samples == 1:
-            states, _ = step(inner_key, states, log_density_fn, dt, n_inner_samples)
-        else:
-            inner_keys = jax.random.split(inner_key, n_samples)
-            states, _ = jax.vmap(step, [0, 0, None, None, None])(
-                inner_keys, states, log_density_fn, dt, n_inner_samples
-            )
-        return next_key, states
+        keys = jax.random.split(key, 1 + n_samples)
+        states, _ = jax.vmap(step, [0, 0, None, None, None])(
+            keys[1:], states, log_density_fn, dt, n_inner_samples
+        )
+        return keys[0], states
 
     _, final_states = jax.lax.fori_loop(0, n_steps, body, (rng_key, initial_states))
 

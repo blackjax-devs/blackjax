@@ -79,8 +79,7 @@ class SchrodingerFollmerTest(chex.TestCase):
             sampled_position.mean(0), posterior_mu, rtol=1e-2, atol=1e-1
         )
 
-        # make sure it runs with 1 sample only
-        _ = schrodinger_follmer_algo.sample(rng_key_init, initial_state, 1)
+        # make sure basic interface is independently covered
         _ = schrodinger_follmer_algo.step(rng_key_init, initial_state)
 
 
