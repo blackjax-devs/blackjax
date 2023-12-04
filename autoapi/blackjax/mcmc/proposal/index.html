@@ -219,6 +219,7 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../vi/meanfield_vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.meanfield_vi</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../vi/pathfinder/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.pathfinder</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/schrodinger_follmer/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.schrodinger_follmer</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../vi/svgd/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.svgd</span></code></a></li>
 </ul>
 </li>
@@ -353,13 +354,12 @@ document.write(`
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.Proposal.sum_log_p_accept"><code class="docutils literal notranslate"><span class="pre">Proposal.sum_log_p_accept</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.safe_energy_diff"><code class="docutils literal notranslate"><span class="pre">safe_energy_diff()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.proposal_generator"><code class="docutils literal notranslate"><span class="pre">proposal_generator()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.proposal_from_energy_diff"><code class="docutils literal notranslate"><span class="pre">proposal_from_energy_diff()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.asymmetric_proposal_generator"><code class="docutils literal notranslate"><span class="pre">asymmetric_proposal_generator()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.SampleProposal"><code class="docutils literal notranslate"><span class="pre">SampleProposal</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.static_binomial_sampling"><code class="docutils literal notranslate"><span class="pre">static_binomial_sampling()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.progressive_uniform_sampling"><code class="docutils literal notranslate"><span class="pre">progressive_uniform_sampling()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.progressive_biased_sampling"><code class="docutils literal notranslate"><span class="pre">progressive_biased_sampling()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.compute_asymmetric_acceptance_ratio"><code class="docutils literal notranslate"><span class="pre">compute_asymmetric_acceptance_ratio()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.static_binomial_sampling"><code class="docutils literal notranslate"><span class="pre">static_binomial_sampling()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.nonreversible_slice_sampling"><code class="docutils literal notranslate"><span class="pre">nonreversible_slice_sampling()</span></code></a></li>
 </ul>
 </li>
@@ -385,10 +385,7 @@ document.write(`
 <table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Proposal</span></code></a></p></td>
-<td><p>Proposal for the next chain step.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.SampleProposal" title="blackjax.mcmc.proposal.SampleProposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SampleProposal</span></code></a></p></td>
-<td><p>Base class for protocol classes.</p></td>
+<td><p>Proposal for the next chain step for MCMC with trajectory building (e.g., NUTS).</p></td>
 </tr>
 </tbody>
 </table>
@@ -397,22 +394,16 @@ document.write(`
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.proposal_generator" title="blackjax.mcmc.proposal.proposal_generator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">proposal_generator</span></code></a>(→ tuple[Callable, Callable])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.safe_energy_diff" title="blackjax.mcmc.proposal.safe_energy_diff"><code class="xref py py-obj docutils literal notranslate"><span class="pre">safe_energy_diff</span></code></a>(→ float)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.proposal_generator" title="blackjax.mcmc.proposal.proposal_generator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">proposal_generator</span></code></a>(→ tuple[Callable, Callable])</p></td>
 <td><p><dl class="field-list simple">
-<dt class="field-odd">param energy<span class="colon">:</span></dt>
+<dt class="field-odd">param energy_fn<span class="colon">:</span></dt>
 <dd class="field-odd"><p>A function that computes the energy associated to a given state</p>
 </dd>
 </dl>
 </p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.proposal_from_energy_diff" title="blackjax.mcmc.proposal.proposal_from_energy_diff"><code class="xref py py-obj docutils literal notranslate"><span class="pre">proposal_from_energy_diff</span></code></a>(→ Proposal)</p></td>
-<td><p>Computes a new proposal from the energy difference between two states.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.asymmetric_proposal_generator" title="blackjax.mcmc.proposal.asymmetric_proposal_generator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asymmetric_proposal_generator</span></code></a>(→ tuple[Callable, Callable])</p></td>
-<td><p>A proposal generator that takes into account the transition between</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.static_binomial_sampling" title="blackjax.mcmc.proposal.static_binomial_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">static_binomial_sampling</span></code></a>(→ Proposal)</p></td>
-<td><p>Accept or reject a proposal.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.progressive_uniform_sampling" title="blackjax.mcmc.proposal.progressive_uniform_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">progressive_uniform_sampling</span></code></a>(→ Proposal)</p></td>
 <td><p></p></td>
@@ -420,7 +411,13 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.progressive_biased_sampling" title="blackjax.mcmc.proposal.progressive_biased_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">progressive_biased_sampling</span></code></a>(→ Proposal)</p></td>
 <td><p>Baised proposal sampling <span id="id1">[<a class="reference internal" href="../../../../bib.html#id24" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.nonreversible_slice_sampling" title="blackjax.mcmc.proposal.nonreversible_slice_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nonreversible_slice_sampling</span></code></a>(→ Proposal)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.compute_asymmetric_acceptance_ratio" title="blackjax.mcmc.proposal.compute_asymmetric_acceptance_ratio"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_asymmetric_acceptance_ratio</span></code></a>(→ Callable)</p></td>
+<td><p>Generate a meta function to compute the transition between two states.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.static_binomial_sampling" title="blackjax.mcmc.proposal.static_binomial_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">static_binomial_sampling</span></code></a>(rng_key, log_p_accept, ...)</p></td>
+<td><p>Accept or reject a proposal.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.proposal.nonreversible_slice_sampling" title="blackjax.mcmc.proposal.nonreversible_slice_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nonreversible_slice_sampling</span></code></a>(slice, delta_energy, ...)</p></td>
 <td><p>Slice sampling for non-reversible Metropolis-Hasting update.</p></td>
 </tr>
 </tbody>
@@ -443,7 +440,7 @@ document.write(`
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.proposal.Proposal">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Proposal</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#Proposal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.Proposal" title="Permalink to this definition">#</a></dt>
-<dd><p>Proposal for the next chain step.</p>
+<dd><p>Proposal for the next chain step for MCMC with trajectory building (e.g., NUTS).</p>
 <dl class="simple">
 <dt>state:</dt><dd><p>The trajectory state that corresponds to this proposal.</p>
 </dd>
@@ -478,11 +475,16 @@ densities of each state <span class="math notranslate nohighlight">\(e^{-H(z)}\)
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.proposal.safe_energy_diff">
+<span class="sig-name descname"><span class="pre">safe_energy_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#safe_energy_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.safe_energy_diff" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.proposal.proposal_generator">
-<span class="sig-name descname"><span class="pre">proposal_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#proposal_generator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.proposal_generator" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">proposal_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">energy_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#proposal_generator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.proposal_generator" title="Permalink to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>energy</strong> – A function that computes the energy associated to a given state</p>
+<dd class="field-odd"><p><strong>energy_fn</strong> – A function that computes the energy associated to a given state</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
@@ -492,92 +494,6 @@ densities of each state <span class="math notranslate nohighlight">\(e^{-H(z)}\)
 </p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="blackjax.mcmc.proposal.proposal_from_energy_diff">
-<span class="sig-name descname"><span class="pre">proposal_from_energy_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TrajectoryState</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#proposal_from_energy_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.proposal_from_energy_diff" title="Permalink to this definition">#</a></dt>
-<dd><p>Computes a new proposal from the energy difference between two states.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>initial_energy</strong> – the energy from the initial state</p></li>
-<li><p><strong>new_energy</strong> – the energy at the proposed state</p></li>
-<li><p><strong>state</strong> – the proposed state</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>A proposal and a flag for divergence</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="blackjax.mcmc.proposal.asymmetric_proposal_generator">
-<span class="sig-name descname"><span class="pre">asymmetric_proposal_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transition_energy_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal_factory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">proposal_from_energy_diff</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#asymmetric_proposal_generator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.asymmetric_proposal_generator" title="Permalink to this definition">#</a></dt>
-<dd><p>A proposal generator that takes into account the transition between
-two states to compute a new proposal.</p>
-<p>In particular, both states are used to compute the energies to consider in weighting the proposal,
-to account for asymmetries.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>transition_energy_fn</strong> – A function that computes the energy of a transition from an initial state
-to a new state, given some optional keyword arguments.</p></li>
-<li><p><strong>proposal_factory</strong> – A function that builds a proposal from the transition energies.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><em>Two functions, one to generate an initial proposal when no step has been taken,</em></p></li>
-<li><p><em>another to generate proposals after each step.</em></p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="blackjax.mcmc.proposal.SampleProposal">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SampleProposal</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#SampleProposal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.SampleProposal" title="Permalink to this definition">#</a></dt>
-<dd><p>Base class for protocol classes.</p>
-<p>Protocol classes are defined as:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Proto</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">meth</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="o">...</span>
-</pre></div>
-</div>
-<p>Such classes are primarily used with static type checkers that recognize
-structural subtyping (static duck-typing), for example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">C</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">meth</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="mi">0</span>
-
-<span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Proto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">meth</span><span class="p">()</span>
-
-<span class="n">func</span><span class="p">(</span><span class="n">C</span><span class="p">())</span>  <span class="c1"># Passes static type check</span>
-</pre></div>
-</div>
-<p>See PEP 544 for details. Protocol classes decorated with
-&#64;typing.runtime_checkable act as simple-minded runtime protocols that check
-only the presence of given attributes, ignoring their type signatures.
-Protocol classes can be generic, they are defined as:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">GenProto</span><span class="p">(</span><span class="n">Protocol</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
-    <span class="k">def</span> <span class="nf">meth</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
-        <span class="o">...</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="blackjax.mcmc.proposal.static_binomial_sampling">
-<span class="sig-name descname"><span class="pre">static_binomial_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#static_binomial_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.static_binomial_sampling" title="Permalink to this definition">#</a></dt>
-<dd><p>Accept or reject a proposal.</p>
-<p>In the static setting, the probability with which the new proposal is
-accepted is a function of the difference in energy between the previous and
-the current states. If the current energy is lower than the previous one
-then the new proposal is accepted with probability 1.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -594,8 +510,35 @@ biases the transition away from the trajectory’s initial state.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.proposal.compute_asymmetric_acceptance_ratio">
+<span class="sig-name descname"><span class="pre">compute_asymmetric_acceptance_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transition_energy_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#compute_asymmetric_acceptance_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.compute_asymmetric_acceptance_ratio" title="Permalink to this definition">#</a></dt>
+<dd><p>Generate a meta function to compute the transition between two states.</p>
+<p>In particular, both states are used to compute the energies to consider in weighting
+the proposal, to account for asymmetries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>transition_energy_fn</strong> – A function that computes the energy of a transition from an initial state
+to a new state, given some optional keyword arguments.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A functions to compute the acceptance ratio .</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.proposal.static_binomial_sampling">
+<span class="sig-name descname"><span class="pre">static_binomial_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_p_accept</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#static_binomial_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.static_binomial_sampling" title="Permalink to this definition">#</a></dt>
+<dd><p>Accept or reject a proposal.</p>
+<p>In the static setting, the probability with which the new proposal is
+accepted is a function of the difference in energy between the previous and
+the current states. If the current energy is lower than the previous one
+then the new proposal is accepted with probability 1.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.proposal.nonreversible_slice_sampling">
-<span class="sig-name descname"><span class="pre">nonreversible_slice_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slice</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.mcmc.proposal.Proposal" title="blackjax.mcmc.proposal.Proposal"><span class="pre">Proposal</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#nonreversible_slice_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.nonreversible_slice_sampling" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">nonreversible_slice_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slice</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_proposal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/proposal.html#nonreversible_slice_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.proposal.nonreversible_slice_sampling" title="Permalink to this definition">#</a></dt>
 <dd><p>Slice sampling for non-reversible Metropolis-Hasting update.</p>
 <p>Performs a non-reversible update of a uniform [0, 1] value
 for Metropolis-Hastings accept/reject decisions <span id="id3">[<a class="reference internal" href="../../../../bib.html#id27" title="Radford M Neal. Non-reversibly updating a uniform [0, 1] value for metropolis accept/reject decisions. arXiv preprint arXiv:2001.11950, 2020.">Nea20</a>]</span>, in addition
@@ -662,13 +605,12 @@ to the accept/reject step of a current state and new proposal.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.Proposal.sum_log_p_accept"><code class="docutils literal notranslate"><span class="pre">Proposal.sum_log_p_accept</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.safe_energy_diff"><code class="docutils literal notranslate"><span class="pre">safe_energy_diff()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.proposal_generator"><code class="docutils literal notranslate"><span class="pre">proposal_generator()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.proposal_from_energy_diff"><code class="docutils literal notranslate"><span class="pre">proposal_from_energy_diff()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.asymmetric_proposal_generator"><code class="docutils literal notranslate"><span class="pre">asymmetric_proposal_generator()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.SampleProposal"><code class="docutils literal notranslate"><span class="pre">SampleProposal</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.static_binomial_sampling"><code class="docutils literal notranslate"><span class="pre">static_binomial_sampling()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.progressive_uniform_sampling"><code class="docutils literal notranslate"><span class="pre">progressive_uniform_sampling()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.progressive_biased_sampling"><code class="docutils literal notranslate"><span class="pre">progressive_biased_sampling()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.compute_asymmetric_acceptance_ratio"><code class="docutils literal notranslate"><span class="pre">compute_asymmetric_acceptance_ratio()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.static_binomial_sampling"><code class="docutils literal notranslate"><span class="pre">static_binomial_sampling()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.proposal.nonreversible_slice_sampling"><code class="docutils literal notranslate"><span class="pre">nonreversible_slice_sampling()</span></code></a></li>
 </ul>
 </li>

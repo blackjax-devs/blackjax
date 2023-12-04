@@ -318,6 +318,6 @@ Functions
 .. py:function:: build_rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> Callable
 
 
-.. py:function:: rmh_proposal(logdensity_fn, transition_distribution, init_proposal, generate_proposal, sample_proposal: Callable = proposal.static_binomial_sampling) -> Callable
+.. py:function:: rmh_proposal(logdensity_fn: Callable, transition_distribution: Callable, compute_acceptance_ratio: Callable, sample_proposal: Callable = proposal.static_binomial_sampling) -> Callable
 
 

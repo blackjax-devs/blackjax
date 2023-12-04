@@ -215,6 +215,7 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.meanfield_vi</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.pathfinder</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.schrodinger_follmer</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/svgd/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.svgd</span></code></a></li>
 </ul>
 </li>
@@ -362,8 +363,8 @@ document.write(`
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.hmc</span> <span class="k">as</span> <span class="nn">hmc</span>
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.integrators</span> <span class="k">as</span> <span class="nn">integrators</span>
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.metrics</span> <span class="k">as</span> <span class="nn">metrics</span>
-<span class="kn">import</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="k">as</span> <span class="nn">proposal</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
+<span class="kn">from</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="kn">import</span> <span class="n">nonreversible_slice_sampling</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span>
 
@@ -436,7 +437,6 @@ document.write(`
 <span class="sd">    returns a new state of the chain along with information about the transition.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">sample_proposal</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">nonreversible_slice_sampling</span>
 
     <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
@@ -485,7 +485,7 @@ document.write(`
             <span class="n">kinetic_energy_fn</span><span class="p">,</span>
             <span class="n">step_size</span><span class="p">,</span>
             <span class="n">divergence_threshold</span><span class="o">=</span><span class="n">divergence_threshold</span><span class="p">,</span>
-            <span class="n">sample_proposal</span><span class="o">=</span><span class="n">sample_proposal</span><span class="p">,</span>
+            <span class="n">sample_proposal</span><span class="o">=</span><span class="n">nonreversible_slice_sampling</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">key_momentum</span><span class="p">,</span> <span class="n">key_noise</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
@@ -500,14 +500,14 @@ document.write(`
         <span class="p">)</span>
         <span class="c1"># Note that ghmc use nonreversible_slice_sampling, which overloads the pattern</span>
         <span class="c1"># of SampleProposal and do not actually return the acceptance rate.</span>
-        <span class="n">proposal</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="nb">slice</span><span class="p">,</span> <span class="n">integrator_state</span><span class="p">)</span>
+        <span class="n">proposal</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">slice_next</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="nb">slice</span><span class="p">,</span> <span class="n">integrator_state</span><span class="p">)</span>
         <span class="n">proposal</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">flip_momentum</span><span class="p">(</span><span class="n">proposal</span><span class="p">)</span>
         <span class="n">state</span> <span class="o">=</span> <span class="n">GHMCState</span><span class="p">(</span>
             <span class="n">position</span><span class="o">=</span><span class="n">proposal</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
             <span class="n">momentum</span><span class="o">=</span><span class="n">proposal</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
             <span class="n">logdensity</span><span class="o">=</span><span class="n">proposal</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span>
             <span class="n">logdensity_grad</span><span class="o">=</span><span class="n">proposal</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">,</span>
-            <span class="nb">slice</span><span class="o">=</span><span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
+            <span class="nb">slice</span><span class="o">=</span><span class="n">slice_next</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">info</span>

@@ -54,6 +54,7 @@ Classes
    blackjax.tempered_smc
    blackjax.meanfield_vi
    blackjax.pathfinder
+   blackjax.schrodinger_follmer
    blackjax.svgd
 
 
@@ -78,6 +79,7 @@ Attributes
 .. autoapisummary::
 
    blackjax.__version__
+
 
 
 

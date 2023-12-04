@@ -215,6 +215,7 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.meanfield_vi</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.pathfinder</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.schrodinger_follmer</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/svgd/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.svgd</span></code></a></li>
 </ul>
 </li>
@@ -363,6 +364,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">jax.tree_util</span> <span class="kn">import</span> <span class="n">tree_leaves</span><span class="p">,</span> <span class="n">tree_map</span>
 
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
+<span class="kn">from</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="kn">import</span> <span class="n">static_binomial_sampling</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;BarkerState&quot;</span><span class="p">,</span> <span class="s2">&quot;BarkerInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;barker_proposal&quot;</span><span class="p">]</span>
@@ -441,9 +443,7 @@ document.write(`
             <span class="n">state</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">ratio_proposal</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">tree_leaves</span><span class="p">(</span><span class="n">ratios_proposals</span><span class="p">))</span>
-        <span class="n">log_p_accept</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">-</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">+</span> <span class="n">ratio_proposal</span>
-        <span class="n">p_accept</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_p_accept</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">proposal</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">-</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">+</span> <span class="n">ratio_proposal</span>
 
     <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">BarkerState</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span>
@@ -461,13 +461,12 @@ document.write(`
             <span class="n">proposed_pos</span><span class="p">,</span> <span class="n">proposed_logdensity</span><span class="p">,</span> <span class="n">proposed_logdensity_grad</span>
         <span class="p">)</span>
 
-        <span class="n">p_accept</span> <span class="o">=</span> <span class="n">_compute_acceptance_probability</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">proposed_state</span><span class="p">)</span>
-
-        <span class="n">accept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">key_rmh</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">p_accept</span>
-
-        <span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">accept</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">proposed_state</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">state</span><span class="p">)</span>
-        <span class="n">info</span> <span class="o">=</span> <span class="n">BarkerInfo</span><span class="p">(</span><span class="n">p_accept</span><span class="p">,</span> <span class="n">accept</span><span class="p">,</span> <span class="n">proposed_state</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">info</span>
+        <span class="n">log_p_accept</span> <span class="o">=</span> <span class="n">_compute_acceptance_probability</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">proposed_state</span><span class="p">)</span>
+        <span class="n">accepted_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">static_binomial_sampling</span><span class="p">(</span>
+            <span class="n">key_rmh</span><span class="p">,</span> <span class="n">log_p_accept</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">proposed_state</span>
+        <span class="p">)</span>
+        <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">info</span>
+        <span class="k">return</span> <span class="n">accepted_state</span><span class="p">,</span> <span class="n">BarkerInfo</span><span class="p">(</span><span class="n">p_accept</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">proposed_state</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">kernel</span></div>
 

@@ -215,6 +215,7 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.meanfield_vi</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.pathfinder</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.schrodinger_follmer</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/svgd/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.svgd</span></code></a></li>
 </ul>
 </li>
@@ -353,7 +354,7 @@ document.write(`
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Protocol</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -364,7 +365,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="Proposal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.Proposal">[docs]</a><span class="k">class</span> <span class="nc">Proposal</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Proposal for the next chain step.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Proposal for the next chain step for MCMC with trajectory building (e.g., NUTS).</span>
 
 <span class="sd">    state:</span>
 <span class="sd">        The trajectory state that corresponds to this proposal.</span>
@@ -384,12 +385,18 @@ document.write(`
 <div class="viewcode-block" id="Proposal.sum_log_p_accept"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.Proposal.sum_log_p_accept">[docs]</a>    <span class="n">sum_log_p_accept</span><span class="p">:</span> <span class="nb">float</span></div></div>
 
 
-<div class="viewcode-block" id="proposal_generator"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.proposal_generator">[docs]</a><span class="k">def</span> <span class="nf">proposal_generator</span><span class="p">(</span><span class="n">energy</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
+<div class="viewcode-block" id="safe_energy_diff"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.safe_energy_diff">[docs]</a><span class="k">def</span> <span class="nf">safe_energy_diff</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">new_energy</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="n">delta_energy</span> <span class="o">=</span> <span class="n">initial_energy</span> <span class="o">-</span> <span class="n">new_energy</span>
+    <span class="n">delta_energy</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">delta_energy</span><span class="p">),</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">delta_energy</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">delta_energy</span></div>
+
+
+<div class="viewcode-block" id="proposal_generator"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.proposal_generator">[docs]</a><span class="k">def</span> <span class="nf">proposal_generator</span><span class="p">(</span><span class="n">energy_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    energy</span>
+<span class="sd">    energy_fn</span>
 <span class="sd">        A function that computes the energy associated to a given state</span>
 
 <span class="sd">    Returns</span>
@@ -399,9 +406,9 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">new</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Proposal</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">energy</span><span class="p">(</span><span class="n">state</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Proposal</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">energy_fn</span><span class="p">(</span><span class="n">state</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">new_state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new proposal from a trajectory state.</span>
 
 <span class="sd">        The trajectory state records information about the position in the state</span>
@@ -414,128 +421,31 @@ document.write(`
 <span class="sd">        ----------</span>
 <span class="sd">        initial_energy:</span>
 <span class="sd">            The initial energy.</span>
-<span class="sd">        state:</span>
+<span class="sd">        new_state:</span>
 <span class="sd">            The new state.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        A proposal and a flag for divergence</span>
+<span class="sd">        A proposal</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">new_energy</span> <span class="o">=</span> <span class="n">energy</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">proposal_from_energy_diff</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">new_energy</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="n">new_energy</span> <span class="o">=</span> <span class="n">energy_fn</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span>
+        <span class="n">delta_energy</span> <span class="o">=</span> <span class="n">safe_energy_diff</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">new_energy</span><span class="p">)</span>
+
+        <span class="c1"># The weight of the new proposal is equal to H0 - H(z_new)</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">delta_energy</span>
+
+        <span class="c1"># Acceptance statistic min(e^{H0 - H(z_new)}, 1)</span>
+        <span class="n">sum_log_p_accept</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">delta_energy</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Proposal</span><span class="p">(</span>
+            <span class="n">new_state</span><span class="p">,</span>
+            <span class="n">new_energy</span><span class="p">,</span>
+            <span class="n">weight</span><span class="p">,</span>
+            <span class="n">sum_log_p_accept</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">new</span><span class="p">,</span> <span class="n">update</span></div>
-
-
-<div class="viewcode-block" id="proposal_from_energy_diff"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.proposal_from_energy_diff">[docs]</a><span class="k">def</span> <span class="nf">proposal_from_energy_diff</span><span class="p">(</span>
-    <span class="n">initial_energy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">new_energy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes a new proposal from the energy difference between two states.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    initial_energy</span>
-<span class="sd">        the energy from the initial state</span>
-<span class="sd">    new_energy</span>
-<span class="sd">        the energy at the proposed state</span>
-<span class="sd">    state</span>
-<span class="sd">        the proposed state</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    A proposal and a flag for divergence</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">delta_energy</span> <span class="o">=</span> <span class="n">initial_energy</span> <span class="o">-</span> <span class="n">new_energy</span>
-    <span class="n">delta_energy</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">delta_energy</span><span class="p">),</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">delta_energy</span><span class="p">)</span>
-
-    <span class="c1"># The weight of the new proposal is equal to H0 - H(z_new)</span>
-    <span class="n">weight</span> <span class="o">=</span> <span class="n">delta_energy</span>
-
-    <span class="c1"># Acceptance statistic min(e^{H0 - H(z_new)}, 1)</span>
-    <span class="n">sum_log_p_accept</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">delta_energy</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">Proposal</span><span class="p">(</span>
-        <span class="n">state</span><span class="p">,</span>
-        <span class="n">new_energy</span><span class="p">,</span>
-        <span class="n">weight</span><span class="p">,</span>
-        <span class="n">sum_log_p_accept</span><span class="p">,</span>
-    <span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="asymmetric_proposal_generator"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.asymmetric_proposal_generator">[docs]</a><span class="k">def</span> <span class="nf">asymmetric_proposal_generator</span><span class="p">(</span>
-    <span class="n">transition_energy_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">proposal_factory</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">proposal_from_energy_diff</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A proposal generator that takes into account the transition between</span>
-<span class="sd">    two states to compute a new proposal.</span>
-
-<span class="sd">    In particular, both states are used to compute the energies to consider in weighting the proposal,</span>
-<span class="sd">    to account for asymmetries.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    transition_energy_fn</span>
-<span class="sd">        A function that computes the energy of a transition from an initial state</span>
-<span class="sd">        to a new state, given some optional keyword arguments.</span>
-<span class="sd">    proposal_factory</span>
-<span class="sd">        A function that builds a proposal from the transition energies.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    Two functions, one to generate an initial proposal when no step has been taken,</span>
-<span class="sd">    another to generate proposals after each step.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">new</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Proposal</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
-        <span class="n">initial_state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">,</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">energy_params</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Proposal</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
-        <span class="n">new_energy</span> <span class="o">=</span> <span class="n">transition_energy_fn</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="o">**</span><span class="n">energy_params</span><span class="p">)</span>
-        <span class="n">prev_energy</span> <span class="o">=</span> <span class="n">transition_energy_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="o">**</span><span class="n">energy_params</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">proposal_factory</span><span class="p">(</span><span class="n">prev_energy</span><span class="p">,</span> <span class="n">new_energy</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">new</span><span class="p">,</span> <span class="n">update</span></div>
-
-
-<div class="viewcode-block" id="SampleProposal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.SampleProposal">[docs]</a><span class="k">class</span> <span class="nc">SampleProposal</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">proposal</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">:</span> <span class="n">Proposal</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
-        <span class="o">...</span></div>
-
-
-<span class="c1"># --------------------------------------------------------------------</span>
-<span class="c1">#                        STATIC SAMPLING</span>
-<span class="c1"># --------------------------------------------------------------------</span>
-
-
-<div class="viewcode-block" id="static_binomial_sampling"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.static_binomial_sampling">[docs]</a><span class="k">def</span> <span class="nf">static_binomial_sampling</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">proposal</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">:</span> <span class="n">Proposal</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Accept or reject a proposal.</span>
-
-<span class="sd">    In the static setting, the probability with which the new proposal is</span>
-<span class="sd">    accepted is a function of the difference in energy between the previous and</span>
-<span class="sd">    the current states. If the current energy is lower than the previous one</span>
-<span class="sd">    then the new proposal is accepted with probability 1.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">p_accept</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_proposal</span><span class="o">.</span><span class="n">weight</span><span class="p">),</span> <span class="n">a_max</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">do_accept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
-        <span class="n">do_accept</span><span class="p">,</span>
-        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span><span class="n">new_proposal</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">),</span>
-        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span><span class="n">proposal</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">),</span>
-        <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span></div>
 
 
 <span class="c1"># --------------------------------------------------------------------</span>
@@ -612,13 +522,73 @@ document.write(`
 
 
 <span class="c1"># --------------------------------------------------------------------</span>
+<span class="c1">#                        STATIC SAMPLING</span>
+<span class="c1"># --------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="compute_asymmetric_acceptance_ratio"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.compute_asymmetric_acceptance_ratio">[docs]</a><span class="k">def</span> <span class="nf">compute_asymmetric_acceptance_ratio</span><span class="p">(</span><span class="n">transition_energy_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a meta function to compute the transition between two states.</span>
+
+<span class="sd">    In particular, both states are used to compute the energies to consider in weighting</span>
+<span class="sd">    the proposal, to account for asymmetries.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    transition_energy_fn</span>
+<span class="sd">        A function that computes the energy of a transition from an initial state</span>
+<span class="sd">        to a new state, given some optional keyword arguments.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A functions to compute the acceptance ratio .</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">compute_acceptance_ratio</span><span class="p">(</span>
+        <span class="n">initial_state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">TrajectoryState</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">energy_params</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">new_energy</span> <span class="o">=</span> <span class="n">transition_energy_fn</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="o">**</span><span class="n">energy_params</span><span class="p">)</span>
+        <span class="n">prev_energy</span> <span class="o">=</span> <span class="n">transition_energy_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="o">**</span><span class="n">energy_params</span><span class="p">)</span>
+        <span class="n">log_p_accept</span> <span class="o">=</span> <span class="n">safe_energy_diff</span><span class="p">(</span><span class="n">prev_energy</span><span class="p">,</span> <span class="n">new_energy</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">log_p_accept</span>
+
+    <span class="k">return</span> <span class="n">compute_acceptance_ratio</span></div>
+
+
+<div class="viewcode-block" id="static_binomial_sampling"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.static_binomial_sampling">[docs]</a><span class="k">def</span> <span class="nf">static_binomial_sampling</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">log_p_accept</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Accept or reject a proposal.</span>
+
+<span class="sd">    In the static setting, the probability with which the new proposal is</span>
+<span class="sd">    accepted is a function of the difference in energy between the previous and</span>
+<span class="sd">    the current states. If the current energy is lower than the previous one</span>
+<span class="sd">    then the new proposal is accepted with probability 1.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">p_accept</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_p_accept</span><span class="p">),</span> <span class="n">a_max</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">do_accept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">)</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">do_accept</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">new_proposal</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">proposal</span><span class="p">,</span>
+            <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">info</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<span class="c1"># --------------------------------------------------------------------</span>
 <span class="c1">#                   NON-REVERSIVLE SLICE SAMPLING</span>
 <span class="c1"># --------------------------------------------------------------------</span>
 
 
 <div class="viewcode-block" id="nonreversible_slice_sampling"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.nonreversible_slice_sampling">[docs]</a><span class="k">def</span> <span class="nf">nonreversible_slice_sampling</span><span class="p">(</span>
-    <span class="nb">slice</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">proposal</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">:</span> <span class="n">Proposal</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Proposal</span><span class="p">:</span>
+    <span class="nb">slice</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">delta_energy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Slice sampling for non-reversible Metropolis-Hasting update.</span>
 
 <span class="sd">    Performs a non-reversible update of a uniform [0, 1] value</span>
@@ -626,13 +596,18 @@ document.write(`
 <span class="sd">    to the accept/reject step of a current state and new proposal.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">delta_energy</span> <span class="o">=</span> <span class="n">new_proposal</span><span class="o">.</span><span class="n">weight</span>
+    <span class="n">p_accept</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">delta_energy</span><span class="p">),</span> <span class="n">a_max</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">do_accept</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="nb">slice</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="n">delta_energy</span>
-    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
-        <span class="n">do_accept</span><span class="p">,</span>
-        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span><span class="n">new_proposal</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="nb">slice</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">delta_energy</span><span class="p">)),</span>
-        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span><span class="n">proposal</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="nb">slice</span><span class="p">),</span>
-        <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">slice_next</span> <span class="o">=</span> <span class="nb">slice</span> <span class="o">*</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">delta_energy</span><span class="p">)</span> <span class="o">*</span> <span class="n">do_accept</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">do_accept</span><span class="p">))</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">,</span> <span class="n">slice_next</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">do_accept</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">new_proposal</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">proposal</span><span class="p">,</span>
+            <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">info</span><span class="p">,</span>
     <span class="p">)</span></div>
 </pre></div>
 

@@ -13,7 +13,6 @@ Classes
 .. autoapisummary::
 
    blackjax.mcmc.proposal.Proposal
-   blackjax.mcmc.proposal.SampleProposal
 
 
 
@@ -22,12 +21,12 @@ Functions
 
 .. autoapisummary::
 
+   blackjax.mcmc.proposal.safe_energy_diff
    blackjax.mcmc.proposal.proposal_generator
-   blackjax.mcmc.proposal.proposal_from_energy_diff
-   blackjax.mcmc.proposal.asymmetric_proposal_generator
-   blackjax.mcmc.proposal.static_binomial_sampling
    blackjax.mcmc.proposal.progressive_uniform_sampling
    blackjax.mcmc.proposal.progressive_biased_sampling
+   blackjax.mcmc.proposal.compute_asymmetric_acceptance_ratio
+   blackjax.mcmc.proposal.static_binomial_sampling
    blackjax.mcmc.proposal.nonreversible_slice_sampling
 
 
@@ -49,7 +48,7 @@ Attributes
 
 
 
-   Proposal for the next chain step.
+   Proposal for the next chain step for MCMC with trajectory building (e.g., NUTS).
 
    state:
        The trajectory state that corresponds to this proposal.
@@ -83,85 +82,15 @@ Attributes
       
 
 
-.. py:function:: proposal_generator(energy: Callable) -> tuple[Callable, Callable]
-
-   :param energy: A function that computes the energy associated to a given state
-
-   :returns: * *Two functions, one to generate an initial proposal when no step has been taken,*
-             * *another to generate proposals after each step.*
+.. py:function:: safe_energy_diff(initial_energy: float, new_energy: float) -> float
 
 
-.. py:function:: proposal_from_energy_diff(initial_energy: float, new_energy: float, state: TrajectoryState) -> Proposal
+.. py:function:: proposal_generator(energy_fn: Callable) -> tuple[Callable, Callable]
 
-   Computes a new proposal from the energy difference between two states.
-
-   :param initial_energy: the energy from the initial state
-   :param new_energy: the energy at the proposed state
-   :param state: the proposed state
-
-   :rtype: A proposal and a flag for divergence
-
-
-.. py:function:: asymmetric_proposal_generator(transition_energy_fn: Callable, proposal_factory: Callable = proposal_from_energy_diff) -> tuple[Callable, Callable]
-
-   A proposal generator that takes into account the transition between
-   two states to compute a new proposal.
-
-   In particular, both states are used to compute the energies to consider in weighting the proposal,
-   to account for asymmetries.
-
-   :param transition_energy_fn: A function that computes the energy of a transition from an initial state
-                                to a new state, given some optional keyword arguments.
-   :param proposal_factory: A function that builds a proposal from the transition energies.
+   :param energy_fn: A function that computes the energy associated to a given state
 
    :returns: * *Two functions, one to generate an initial proposal when no step has been taken,*
              * *another to generate proposals after each step.*
-
-
-.. py:class:: SampleProposal
-
-
-
-
-   Base class for protocol classes.
-
-   Protocol classes are defined as::
-
-       class Proto(Protocol):
-           def meth(self) -> int:
-               ...
-
-   Such classes are primarily used with static type checkers that recognize
-   structural subtyping (static duck-typing), for example::
-
-       class C:
-           def meth(self) -> int:
-               return 0
-
-       def func(x: Proto) -> int:
-           return x.meth()
-
-       func(C())  # Passes static type check
-
-   See PEP 544 for details. Protocol classes decorated with
-   @typing.runtime_checkable act as simple-minded runtime protocols that check
-   only the presence of given attributes, ignoring their type signatures.
-   Protocol classes can be generic, they are defined as::
-
-       class GenProto(Protocol[T]):
-           def meth(self) -> T:
-               ...
-
-
-.. py:function:: static_binomial_sampling(rng_key: blackjax.types.PRNGKey, proposal: Proposal, new_proposal: Proposal) -> Proposal
-
-   Accept or reject a proposal.
-
-   In the static setting, the probability with which the new proposal is
-   accepted is a function of the difference in energy between the previous and
-   the current states. If the current energy is lower than the previous one
-   then the new proposal is accepted with probability 1.
-
 
 
 .. py:function:: progressive_uniform_sampling(rng_key: blackjax.types.PRNGKey, proposal: Proposal, new_proposal: Proposal) -> Proposal
@@ -176,7 +105,31 @@ Attributes
 
 
 
-.. py:function:: nonreversible_slice_sampling(slice: blackjax.types.Array, proposal: Proposal, new_proposal: Proposal) -> Proposal
+.. py:function:: compute_asymmetric_acceptance_ratio(transition_energy_fn: Callable) -> Callable
+
+   Generate a meta function to compute the transition between two states.
+
+   In particular, both states are used to compute the energies to consider in weighting
+   the proposal, to account for asymmetries.
+
+   :param transition_energy_fn: A function that computes the energy of a transition from an initial state
+                                to a new state, given some optional keyword arguments.
+
+   :rtype: A functions to compute the acceptance ratio .
+
+
+.. py:function:: static_binomial_sampling(rng_key: blackjax.types.PRNGKey, log_p_accept: float, proposal, new_proposal)
+
+   Accept or reject a proposal.
+
+   In the static setting, the probability with which the new proposal is
+   accepted is a function of the difference in energy between the previous and
+   the current states. If the current energy is lower than the previous one
+   then the new proposal is accepted with probability 1.
+
+
+
+.. py:function:: nonreversible_slice_sampling(slice: blackjax.types.Array, delta_energy: float, proposal, new_proposal)
 
    Slice sampling for non-reversible Metropolis-Hasting update.
 

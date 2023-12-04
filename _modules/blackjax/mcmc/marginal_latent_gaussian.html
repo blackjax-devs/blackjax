@@ -215,6 +215,7 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.meanfield_vi</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.pathfinder</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.schrodinger_follmer</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/svgd/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.svgd</span></code></a></li>
 </ul>
 </li>
@@ -361,6 +362,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax.scipy.linalg</span> <span class="k">as</span> <span class="nn">linalg</span>
 
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
+<span class="kn">from</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="kn">import</span> <span class="n">static_binomial_sampling</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MarginalState&quot;</span><span class="p">,</span> <span class="s2">&quot;MarginalInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init_and_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;mgrad_gaussian&quot;</span><span class="p">]</span>
@@ -463,13 +465,14 @@ document.write(`
         <span class="n">hxy</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">U_x</span> <span class="o">-</span> <span class="n">temp_y</span><span class="p">,</span> <span class="n">Gamma_3</span> <span class="o">*</span> <span class="n">U_grad_y</span><span class="p">)</span>
         <span class="n">hyx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">U_y</span> <span class="o">-</span> <span class="n">temp_x</span><span class="p">,</span> <span class="n">Gamma_3</span> <span class="o">*</span> <span class="n">U_grad_x</span><span class="p">)</span>
 
-        <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_p_y</span> <span class="o">-</span> <span class="n">logdensity</span> <span class="o">+</span> <span class="n">hxy</span> <span class="o">-</span> <span class="n">hyx</span><span class="p">))</span>
-        <span class="n">accept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">u_key</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">alpha</span>
-
+        <span class="n">log_p_accept</span> <span class="o">=</span> <span class="n">log_p_y</span> <span class="o">-</span> <span class="n">logdensity</span> <span class="o">+</span> <span class="n">hxy</span> <span class="o">-</span> <span class="n">hyx</span>
         <span class="n">proposed_state</span> <span class="o">=</span> <span class="n">MarginalState</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">log_p_y</span><span class="p">,</span> <span class="n">grad_y</span><span class="p">,</span> <span class="n">U_y</span><span class="p">,</span> <span class="n">U_grad_y</span><span class="p">)</span>
-        <span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">accept</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">proposed_state</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">state</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">info</span> <span class="o">=</span> <span class="n">MarginalInfo</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">accept</span><span class="p">,</span> <span class="n">proposed_state</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">info</span>
+        <span class="n">accepted_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">static_binomial_sampling</span><span class="p">(</span>
+            <span class="n">u_key</span><span class="p">,</span> <span class="n">log_p_accept</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">proposed_state</span>
+        <span class="p">)</span>
+        <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">info</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">MarginalInfo</span><span class="p">(</span><span class="n">p_accept</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">proposed_state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">accepted_state</span><span class="p">,</span> <span class="n">info</span>
 
     <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">):</span>
         <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">val_and_grad</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>

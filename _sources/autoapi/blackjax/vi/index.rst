@@ -12,6 +12,7 @@ Submodules
 
    meanfield_vi/index.rst
    pathfinder/index.rst
+   schrodinger_follmer/index.rst
    svgd/index.rst
 
 

@@ -215,6 +215,7 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="autoapi/blackjax/vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/vi/meanfield_vi/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.meanfield_vi</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/vi/pathfinder/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.pathfinder</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/vi/schrodinger_follmer/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.schrodinger_follmer</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/vi/svgd/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.vi.svgd</span></code></a></li>
 </ul>
 </li>
@@ -419,8 +420,6 @@ document.write(`
       <li><a href="autoapi/blackjax/types/index.html#blackjax.types.ArrayLikeTree">ArrayLikeTree (in module blackjax.types)</a>
 </li>
       <li><a href="autoapi/blackjax/types/index.html#blackjax.types.ArrayTree">ArrayTree (in module blackjax.types)</a>
-</li>
-      <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.asymmetric_proposal_generator">asymmetric_proposal_generator() (in module blackjax.mcmc.proposal)</a>
 </li>
       <li><a href="autoapi/blackjax/adaptation/step_size/index.html#blackjax.adaptation.step_size.DualAveragingAdaptationState.avg_error">avg_error (DualAveragingAdaptationState attribute)</a>
 
@@ -814,6 +813,13 @@ document.write(`
 </li>
       </ul></li>
       <li>
+    blackjax.vi.schrodinger_follmer
+
+      <ul>
+        <li><a href="autoapi/blackjax/vi/schrodinger_follmer/index.html#module-blackjax.vi.schrodinger_follmer">module</a>
+</li>
+      </ul></li>
+      <li>
     blackjax.vi.svgd
 
       <ul>
@@ -906,10 +912,12 @@ document.write(`
 </li>
       <li><a href="autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState">ChEESAdaptationState (class in blackjax.adaptation.chees_adaptation)</a>
 </li>
-      <li><a href="autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.ContourSGLDState">ContourSGLDState (class in blackjax.sgmcmc.csgld)</a>
+      <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.compute_asymmetric_acceptance_ratio">compute_asymmetric_acceptance_ratio() (in module blackjax.mcmc.proposal)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.ContourSGLDState">ContourSGLDState (class in blackjax.sgmcmc.csgld)</a>
+</li>
       <li><a href="autoapi/blackjax/sgmcmc/gradients/index.html#blackjax.sgmcmc.gradients.control_variates">control_variates() (in module blackjax.sgmcmc.gradients)</a>
 </li>
       <li><a href="autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.csgld">csgld (class in blackjax.sgmcmc.csgld)</a>
@@ -1134,6 +1142,8 @@ document.write(`
         <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.init">(in module blackjax.smc.base)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.init">(in module blackjax.smc.tempered)</a>
+</li>
+        <li><a href="autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.init">(in module blackjax.vi.schrodinger_follmer)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -1404,6 +1414,8 @@ document.write(`
 </li>
         <li><a href="autoapi/blackjax/vi/pathfinder/index.html#module-blackjax.vi.pathfinder">blackjax.vi.pathfinder</a>
 </li>
+        <li><a href="autoapi/blackjax/vi/schrodinger_follmer/index.html#module-blackjax.vi.schrodinger_follmer">blackjax.vi.schrodinger_follmer</a>
+</li>
         <li><a href="autoapi/blackjax/vi/svgd/index.html#module-blackjax.vi.svgd">blackjax.vi.svgd</a>
 </li>
       </ul></li>
@@ -1544,6 +1556,8 @@ document.write(`
 </li>
         <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWState.position">(RWState attribute)</a>
 </li>
+        <li><a href="autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.SchrodingerFollmerState.position">(SchrodingerFollmerState attribute)</a>
+</li>
         <li><a href="autoapi/blackjax/sgmcmc/sgnht/index.html#blackjax.sgmcmc.sgnht.SGNHTState.position">(SGNHTState attribute)</a>
 </li>
       </ul></li>
@@ -1579,8 +1593,6 @@ document.write(`
         <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo.proposal">(RWInfo attribute)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.proposal_from_energy_diff">proposal_from_energy_diff() (in module blackjax.mcmc.proposal)</a>
-</li>
       <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.proposal_generator">proposal_generator() (in module blackjax.mcmc.proposal)</a>
 </li>
       <li><a href="autoapi/blackjax/util/index.html#blackjax.util.pytree_size">pytree_size() (in module blackjax.util)</a>
@@ -1627,6 +1639,8 @@ document.write(`
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.safe_energy_diff">safe_energy_diff() (in module blackjax.mcmc.proposal)</a>
+</li>
       <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.meanfield_vi.sample">sample (meanfield_vi attribute)</a>
 
       <ul>
@@ -1640,12 +1654,14 @@ document.write(`
       <ul>
         <li><a href="autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.sample">(in module blackjax.vi.pathfinder)</a>
 </li>
+        <li><a href="autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.sample">(in module blackjax.vi.schrodinger_follmer)</a>
+</li>
       </ul></li>
       <li><a href="autoapi/blackjax/adaptation/mass_matrix/index.html#blackjax.adaptation.mass_matrix.WelfordAlgorithmState.sample_size">sample_size (WelfordAlgorithmState attribute)</a>
 </li>
-      <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.SampleProposal">SampleProposal (class in blackjax.mcmc.proposal)</a>
-</li>
       <li><a href="autoapi/blackjax/base/index.html#blackjax.base.SamplingAlgorithm">SamplingAlgorithm (class in blackjax.base)</a>
+</li>
+      <li><a href="autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.SchrodingerFollmerState">SchrodingerFollmerState (class in blackjax.vi.schrodinger_follmer)</a>
 </li>
       <li><a href="autoapi/blackjax/sgmcmc/sghmc/index.html#blackjax.sgmcmc.sghmc.sghmc">sghmc (class in blackjax.sgmcmc.sghmc)</a>
 </li>
@@ -1677,10 +1693,10 @@ document.write(`
         <li><a href="autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.AdaptationResults.state">(AdaptationResults attribute)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/blackjax/base/index.html#blackjax.base.State">State (in module blackjax.base)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/base/index.html#blackjax.base.State">State (in module blackjax.base)</a>
+</li>
       <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.Proposal.state">state (Proposal attribute)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.static_binomial_sampling">static_binomial_sampling() (in module blackjax.mcmc.proposal)</a>
@@ -1709,6 +1725,8 @@ document.write(`
 
       <ul>
         <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.step">(in module blackjax.vi.meanfield_vi)</a>
+</li>
+        <li><a href="autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.step">(in module blackjax.vi.schrodinger_follmer)</a>
 </li>
       </ul></li>
       <li><a href="autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.step_size">step_size (ChEESAdaptationState attribute)</a>
@@ -1747,16 +1765,18 @@ document.write(`
       </ul></li>
       <li><a href="autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceInfo.theta">theta (EllipSliceInfo attribute)</a>
 </li>
+      <li><a href="autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.SchrodingerFollmerState.time">time (SchrodingerFollmerState attribute)</a>
+</li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory">Trajectory (class in blackjax.mcmc.trajectory)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicExpansionState.trajectory">trajectory (DynamicExpansionState attribute)</a>
 
       <ul>
         <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicIntegrationState.trajectory">(DynamicIntegrationState attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.trajectory_leftmost_state">trajectory_leftmost_state (NUTSInfo attribute)</a>
 </li>
       <li><a href="autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.trajectory_length">trajectory_length (ChEESAdaptationState attribute)</a>
