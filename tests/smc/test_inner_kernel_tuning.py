@@ -1,4 +1,5 @@
 import functools
+import unittest
 from unittest.mock import MagicMock
 
 import chex
@@ -15,6 +16,7 @@ from blackjax.smc.inner_kernel_tuning import inner_kernel_tuning
 from blackjax.smc.tuning.from_kernel_info import update_scale_from_acceptance_rate
 from blackjax.smc.tuning.from_particles import (
     mass_matrix_from_particles,
+    particles_as_rows,
     particles_covariance_matrix,
     particles_means,
     particles_stds,
@@ -357,6 +359,44 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
 
         (_, result), _ = jax.lax.scan(body_fn, (self.key, init_state), lambda_schedule)
         self.assert_linear_regression_test_case(result.sampler_state)
+
+
+class ParticlesAsRowsTest(unittest.TestCase):
+    def test_single_variable(self):
+        np.testing.assert_allclose(
+            particles_as_rows(np.array([np.array(10.0), np.array(3.0)])),
+            np.array([[10.0], [3.0]]),
+        )
+
+    def test_single_variable_as_array(self):
+        np.testing.assert_allclose(
+            particles_as_rows(np.array([10.0, 3.0])), np.array([[10.0], [3.0]])
+        )
+
+    def test_single_variable_multivariate(self):
+        np.testing.assert_allclose(
+            particles_as_rows(np.array([np.array([10.0, 5.0]), np.array([3.0, 70])])),
+            np.array([[10.0, 5.0], [3.0, 70]]),
+        )
+
+    def test_multivariable_univariate(self):
+        np.testing.assert_allclose(
+            particles_as_rows(
+                {"var_1": np.array([10, 3.0]), "var_2": np.array([5.0, 6.0])}
+            ),
+            np.array([[10.0, 5.0], [3.0, 6.0]]),
+        )
+
+    def test_multivariable_multivariate(self):
+        np.testing.assert_allclose(
+            particles_as_rows(
+                {
+                    "var_1": np.array([[10, 3.0], [12, 15]]),
+                    "var_2": np.array([5.0, 6.0]),
+                }
+            ),
+            np.array([[10.0, 3.0, 5.0], [12, 15, 6.0]]),
+        )
 
 
 if __name__ == "__main__":

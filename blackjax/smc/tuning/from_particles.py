@@ -16,15 +16,15 @@ __all__ = [
 
 
 def particles_stds(particles):
-    return jax.numpy.std(particles_as_rows(particles), axis=0)
+    return jnp.std(particles_as_rows(particles), axis=0)
 
 
 def particles_means(particles):
-    return jax.numpy.mean(particles_as_rows(particles), axis=0)
+    return jnp.mean(particles_as_rows(particles), axis=0)
 
 
 def particles_covariance_matrix(particles):
-    return jax.numpy.cov(particles_as_rows(particles), ddof=0, rowvar=False)
+    return jnp.cov(particles_as_rows(particles), ddof=0, rowvar=False)
 
 
 def mass_matrix_from_particles(particles) -> Array:
@@ -37,7 +37,7 @@ def mass_matrix_from_particles(particles) -> Array:
     -------
     A mass Matrix
     """
-    stds = jax.numpy.std(particles_as_rows(particles), axis=0)
+    stds = jnp.std(particles_as_rows(particles), axis=0)
     return jnp.diag(jnp.atleast_1d(jnp.reciprocal(jnp.square(stds))))
 
 
@@ -47,4 +47,4 @@ def particles_as_rows(particles):
     as a matrix where each column is a variable, each row a particle.
     """
     particles = jax.tree_util.tree_map(lambda x: jnp.atleast_2d(x.T).T, particles)
-    return jnp.array(jax.numpy.hstack(jax.tree_util.tree_flatten(particles)[0]))
+    return jnp.array(jnp.hstack(jax.tree_util.tree_flatten(particles)[0]))
