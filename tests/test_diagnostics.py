@@ -80,12 +80,9 @@ class DiagnosticsTest(chex.TestCase):
         effective_sample_size = self.variant(
             functools.partial(diagnostics.effective_sample_size, **case)
         )
-        if num_chains > 1:
-            ess_val = effective_sample_size(mc_samples)
-            np.testing.assert_array_equal(ess_val.shape, event_shape)
-            np.testing.assert_allclose(ess_val, num_chains * self.num_samples, rtol=10)
-        else:
-            np.testing.assert_raises(AssertionError, effective_sample_size, mc_samples)
+        ess_val = effective_sample_size(mc_samples)
+        np.testing.assert_array_equal(ess_val.shape, event_shape)
+        np.testing.assert_allclose(ess_val, num_chains * self.num_samples, rtol=10)
 
 
 if __name__ == "__main__":
