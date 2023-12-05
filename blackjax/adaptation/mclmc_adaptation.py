@@ -214,12 +214,9 @@ def make_adaptation_L(kernel, frac, Lfactor):
             xs=adaptation_L_keys,
         )
         samples = info.transformed_position  # tranform is the identity here
-        flat_samples, _ = ravel_pytree(samples)
-        dim = pytree_size(state.position)
-        flat_samples = flat_samples.reshape(-1, dim)
-        ESS = 0.5 * effective_sample_size(
-            jnp.array([flat_samples, flat_samples])
-        )  # TODO: should only use a single chain here
+        flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
+        flat_samples = flat_samples.reshape(2, num_steps // 2, -1)
+        ESS = effective_sample_size(flat_samples)
 
         return state, params._replace(
             L=Lfactor * params.step_size * jnp.mean(num_steps / ESS)
