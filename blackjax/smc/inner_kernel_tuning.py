@@ -28,18 +28,16 @@ def build_kernel(
     num_mcmc_steps: int = 10,
     **extra_parameters,
 ) -> Callable:
-    """In the context of an SMC sampler (whose step_fn returning state
-    has a .particles attribute), there's an inner MCMC that is used
-    to perturbate/update each of the particles. This adaptation tunes some
-      parameter of that MCMC, based on particles.
-      The parameter type must be a valid JAX type.
+    """In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
+    MCMC that is used to perturbate/update each of the particles. This adaptation tunes some parameter of that MCMC,
+    based on particles. The parameter type must be a valid JAX type.
 
     Parameters
     ----------
     smc_algorithm
         Either blackjax.adaptive_tempered_smc or blackjax.tempered_smc (or any other implementation of
-    a sampling algorithm that returns an SMCState and SMCInfo pair).
-     logprior_fn
+        a sampling algorithm that returns an SMCState and SMCInfo pair).
+    logprior_fn
         A function that computes the log density of the prior distribution
     loglikelihood_fn
         A function that returns the probability at a given position.
@@ -50,8 +48,7 @@ def build_kernel(
     mcmc_parameters
         Other (fixed across SMC iterations) parameters for the inner kernel
     mcmc_parameter_update_fn
-     A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the
-      inner kernel in i+1 iteration.
+        A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the inner kernel in i+1 iteration.
     extra_parameters:
         parameters to be used for the creation of the smc_algorithm.
     """
@@ -87,8 +84,8 @@ class inner_kernel_tuning:
     ----------
     smc_algorithm
         Either blackjax.adaptive_tempered_smc or blackjax.tempered_smc (or any other implementation of
-    a sampling algorithm that returns an SMCState and SMCInfo pair).
-     logprior_fn
+        a sampling algorithm that returns an SMCState and SMCInfo pair).
+    logprior_fn
         A function that computes the log density of the prior distribution
     loglikelihood_fn
         A function that returns the probability at a given position.
@@ -99,10 +96,10 @@ class inner_kernel_tuning:
     mcmc_parameters
         Other (fixed across SMC iterations) parameters for the inner kernel step
     mcmc_parameter_update_fn
-     A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the
-      inner kernel in i+1 iteration.
+        A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the
+        inner kernel in i+1 iteration.
     initial_parameter_value
-      Paramter to be used by the mcmc_factory before the first iteration.
+        Paramter to be used by the mcmc_factory before the first iteration.
     extra_parameters:
         parameters to be used for the creation of the smc_algorithm.
 
