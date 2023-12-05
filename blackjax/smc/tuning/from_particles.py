@@ -4,6 +4,7 @@ used within SMC, based on particles.
 """
 import jax
 import jax.numpy as jnp
+from jax._src.flatten_util import ravel_pytree
 
 from blackjax.types import Array
 
@@ -46,5 +47,4 @@ def particles_as_rows(particles):
     Adds end dimension for single-dimension variables, and then represents multivariables
     as a matrix where each column is a variable, each row a particle.
     """
-    particles = jax.tree_util.tree_map(lambda x: jnp.atleast_2d(x.T).T, particles)
-    return jnp.array(jnp.hstack(jax.tree_util.tree_flatten(particles)[0]))
+    return jax.vmap(lambda x: ravel_pytree(x)[0])(particles)

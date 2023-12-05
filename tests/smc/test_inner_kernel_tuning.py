@@ -398,6 +398,21 @@ class ParticlesAsRowsTest(unittest.TestCase):
             np.array([[10.0, 3.0, 5.0], [12, 15, 6.0]]),
         )
 
+    def test_multivariable_trivariate(self):
+        np.testing.assert_allclose(
+            particles_as_rows(
+                {
+                    "var_1": np.array([[[10, 3.0],
+                                       [5.0, 7.0]],
+                                       [[11, 4.0],
+                                        [6.0, 8.0]]
+                                       ]),
+                    "var_2": np.array([5.0, 6.0]),
+                }
+            ),
+            np.array([[10.0, 3.0, 5.0, 7.0, 5.0], [11, 4.0, 6.0, 8.0, 6.0]]),
+        )
+
 
 if __name__ == "__main__":
     absltest.main()
