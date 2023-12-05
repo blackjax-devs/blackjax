@@ -18,6 +18,7 @@ Submodules
    integrators/index.rst
    mala/index.rst
    marginal_latent_gaussian/index.rst
+   mclmc/index.rst
    metrics/index.rst
    nuts/index.rst
    periodic_orbital/index.rst

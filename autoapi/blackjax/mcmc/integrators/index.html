@@ -173,6 +173,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/base/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/chees_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.chees_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/mass_matrix/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/mclmc_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.mclmc_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/meads_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/pathfinder_adaptation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.pathfinder_adaptation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/step_size/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.step_size</span></code></a></li>
@@ -188,6 +189,7 @@
 <li class="toctree-l3 current active"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.integrators</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../mala/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.mala</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../marginal_latent_gaussian/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.marginal_latent_gaussian</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mclmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.mclmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../metrics/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.metrics</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../nuts/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.nuts</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
@@ -346,8 +348,8 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.mclachlan"><code class="docutils literal notranslate"><span class="pre">mclachlan</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.yoshida"><code class="docutils literal notranslate"><span class="pre">yoshida</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_leapfrog"><code class="docutils literal notranslate"><span class="pre">noneuclidean_leapfrog</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_mclachlan"><code class="docutils literal notranslate"><span class="pre">noneuclidean_mclachlan</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_yoshida"><code class="docutils literal notranslate"><span class="pre">noneuclidean_yoshida</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_mclachlan"><code class="docutils literal notranslate"><span class="pre">noneuclidean_mclachlan</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -400,13 +402,13 @@ guarantees a stability interval length approximately equal to 4.67.</p>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt class="sig sig-object py" id="blackjax.mcmc.integrators.noneuclidean_mclachlan">
-<span class="sig-name descname"><span class="pre">noneuclidean_mclachlan</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#noneuclidean_mclachlan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.noneuclidean_mclachlan" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.mcmc.integrators.noneuclidean_yoshida">
+<span class="sig-name descname"><span class="pre">noneuclidean_yoshida</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#noneuclidean_yoshida"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.noneuclidean_yoshida" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt class="sig sig-object py" id="blackjax.mcmc.integrators.noneuclidean_yoshida">
-<span class="sig-name descname"><span class="pre">noneuclidean_yoshida</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#noneuclidean_yoshida"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.noneuclidean_yoshida" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.mcmc.integrators.noneuclidean_mclachlan">
+<span class="sig-name descname"><span class="pre">noneuclidean_mclachlan</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#noneuclidean_mclachlan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.noneuclidean_mclachlan" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 </section>
@@ -461,8 +463,8 @@ guarantees a stability interval length approximately equal to 4.67.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.mclachlan"><code class="docutils literal notranslate"><span class="pre">mclachlan</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.yoshida"><code class="docutils literal notranslate"><span class="pre">yoshida</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_leapfrog"><code class="docutils literal notranslate"><span class="pre">noneuclidean_leapfrog</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_mclachlan"><code class="docutils literal notranslate"><span class="pre">noneuclidean_mclachlan</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_yoshida"><code class="docutils literal notranslate"><span class="pre">noneuclidean_yoshida</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_mclachlan"><code class="docutils literal notranslate"><span class="pre">noneuclidean_mclachlan</span></code></a></li>
 </ul>
 </li>
 </ul>

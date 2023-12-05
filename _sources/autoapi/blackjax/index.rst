@@ -41,6 +41,7 @@ Classes
    blackjax.hmc
    blackjax.mala
    blackjax.mgrad_gaussian
+   blackjax.mclmc
    blackjax.nuts
    blackjax.orbital_hmc
    blackjax.additive_step_random_walk
@@ -65,6 +66,7 @@ Functions
 .. autoapisummary::
 
    blackjax.chees_adaptation
+   blackjax.mclmc_find_L_and_step_size
    blackjax.meads_adaptation
    blackjax.pathfinder_adaptation
    blackjax.window_adaptation
@@ -79,6 +81,8 @@ Attributes
 .. autoapisummary::
 
    blackjax.__version__
+
+
 
 
 

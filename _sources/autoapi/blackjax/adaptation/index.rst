@@ -13,6 +13,7 @@ Submodules
    base/index.rst
    chees_adaptation/index.rst
    mass_matrix/index.rst
+   mclmc_adaptation/index.rst
    meads_adaptation/index.rst
    pathfinder_adaptation/index.rst
    step_size/index.rst

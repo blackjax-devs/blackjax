@@ -42,11 +42,11 @@ Module Contents
 
    
 
-.. py:data:: noneuclidean_mclachlan
+.. py:data:: noneuclidean_yoshida
 
    
 
-.. py:data:: noneuclidean_yoshida
+.. py:data:: noneuclidean_mclachlan
 
    
 
