@@ -402,11 +402,9 @@ class ParticlesAsRowsTest(unittest.TestCase):
         np.testing.assert_allclose(
             particles_as_rows(
                 {
-                    "var_1": np.array([[[10, 3.0],
-                                       [5.0, 7.0]],
-                                       [[11, 4.0],
-                                        [6.0, 8.0]]
-                                       ]),
+                    "var_1": np.array(
+                        [[[10, 3.0], [5.0, 7.0]], [[11, 4.0], [6.0, 8.0]]]
+                    ),
                     "var_2": np.array([5.0, 6.0]),
                 }
             ),
