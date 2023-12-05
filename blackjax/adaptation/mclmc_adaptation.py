@@ -100,19 +100,26 @@ def make_L_step_size_adaptation(
 
     decay_rate = (num_effective_samples - 1.0) / (num_effective_samples + 1.0)
 
-    def predictor(state_old, params, adaptive_state, rng_key):
+    def predictor(previous_state, params, adaptive_state, rng_key):
         """does one step with the dynamics and updates the prediction for the optimal stepsize
         Designed for the unadjusted MCHMC"""
 
         time, x_average, step_size_max = adaptive_state
 
         # dynamics
-        state_new, info = kernel(
-            rng_key=rng_key, state=state_old, L=params.L, step_size=params.step_size
+        next_state, info = kernel(
+            rng_key=rng_key,
+            state=previous_state,
+            L=params.L,
+            step_size=params.step_size,
         )
         # step updating
         success, state, step_size_max, energy_change = handle_nans(
-            state_old, state_new, params.step_size, step_size_max, info.energy_change
+            previous_state,
+            next_state,
+            params.step_size,
+            step_size_max,
+            info.energy_change,
         )
 
         # Warning: var = 0 if there were nans, but we will give it a very small weight
@@ -227,16 +234,16 @@ def make_adaptation_L(kernel, frac, Lfactor):
     return adaptation_L
 
 
-def handle_nans(state_old, state_new, step_size, step_size_max, kinetic_change):
+def handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_change):
     """if there are nans, let's reduce the stepsize, and not update the state. The function returns the old state in this case."""
 
     reduced_step_size = 0.8
-    p, unravel_fn = ravel_pytree(state_new.position)
+    p, unravel_fn = ravel_pytree(next_state.position)
     nonans = jnp.all(jnp.isfinite(p))
     state, step_size, kinetic_change = jax.tree_util.tree_map(
         lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old),
-        (state_new, step_size_max, kinetic_change),
-        (state_old, step_size * reduced_step_size, 0.0),
+        (next_state, step_size_max, kinetic_change),
+        (previous_state, step_size * reduced_step_size, 0.0),
     )
 
     return nonans, state, step_size, kinetic_change
