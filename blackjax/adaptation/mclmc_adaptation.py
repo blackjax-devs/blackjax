@@ -53,20 +53,50 @@ def mclmc_find_L_and_step_size(
     Finds the optimal value of the parameters for the MCLMC algorithm.
 
     Args:
-        kernel: The kernel function used for the MCMC algorithm.
-        num_steps: The number of MCMC steps that will subsequently be run, after tuning
-        state: The initial state of the MCMC algorithm.
-        frac_tune1: The fraction of tuning for the first step of the adaptation.
-        frac_tune2: The fraction of tuning for the second step of the adaptation.
-        frac_tune3: The fraction of tuning for the third step of the adaptation.
+        mclmc_kernel (callable): The kernel function used for the MCMC algorithm.
+        num_steps (int): The number of MCMC steps that will subsequently be run, after tuning.
+        state (MCMCState): The initial state of the MCMC algorithm.
+        rng_key (jax.random.PRNGKey): The random number generator key.
+        frac_tune1 (float): The fraction of tuning for the first step of the adaptation.
+        frac_tune2 (float): The fraction of tuning for the second step of the adaptation.
+        frac_tune3 (float): The fraction of tuning for the third step of the adaptation.
+        desired_energy_var (float): The desired energy variance for the MCMC algorithm.
+        trust_in_estimate (float): The trust in the estimate of optimal stepsize.
+        num_effective_samples (int): The number of effective samples for the MCMC algorithm.
 
     Returns:
-        state: The final state of the MCMC algorithm.
-        params: The final hyperparameters of the MCMC algorithm.
+        tuple: A tuple containing the final state of the MCMC algorithm and the final hyperparameters.
+
+    Raises:
+        None
+
+    Examples:
+        # Define the kernel function
+        def kernel(x):
+            return x ** 2
+
+        # Define the initial state
+        initial_state = MCMCState(position=0, momentum=1)
+
+        # Generate a random number generator key
+        rng_key = jax.random.PRNGKey(0)
+
+        # Find the optimal parameters for the MCLMC algorithm
+        final_state, final_params = mclmc_find_L_and_step_size(
+            mclmc_kernel=kernel,
+            num_steps=1000,
+            state=initial_state,
+            rng_key=rng_key,
+            frac_tune1=0.2,
+            frac_tune2=0.3,
+            frac_tune3=0.1,
+            desired_energy_var=1e-4,
+            trust_in_estimate=2.0,
+            num_effective_samples=200,
+        )
     """
     dim = pytree_size(state.position)
     params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.25)
-    desired_energy_var = 5e-4
     part1_key, part2_key = jax.random.split(rng_key, 2)
 
     state, params = make_L_step_size_adaptation(
@@ -161,8 +191,9 @@ def make_L_step_size_adaptation(
     adap0 = (0.0, 0.0, jnp.inf)
 
     def step(iteration_state, weight_and_key):
-        outer_weight, rng_key = weight_and_key
         """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
+
+        outer_weight, rng_key = weight_and_key
         state, params, adaptive_state, kalman_state = iteration_state
         state, params, params_final, adaptive_state, success = predictor(
             state, params, adaptive_state, rng_key
