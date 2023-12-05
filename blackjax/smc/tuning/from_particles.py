@@ -38,8 +38,7 @@ def mass_matrix_from_particles(particles) -> Array:
     -------
     A mass Matrix
     """
-    stds = jnp.std(particles_as_rows(particles), axis=0)
-    return jnp.diag(jnp.atleast_1d(jnp.reciprocal(jnp.square(stds))))
+    return jnp.diag(1.0 / jnp.var(particles_as_rows(particles), axis=0))
 
 
 def particles_as_rows(particles):
