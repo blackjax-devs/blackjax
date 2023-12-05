@@ -45,8 +45,8 @@ def mclmc_find_L_and_step_size(
     frac_tune1=0.1,
     frac_tune2=0.1,
     frac_tune3=0.1,
-    varEwanted=5e-4,
-    sigma_xi=1.5,
+    desired_energy_var=5e-4,
+    trust_in_estimate=1.5,
     num_effective_samples=150,
 ):
     """
@@ -66,7 +66,7 @@ def mclmc_find_L_and_step_size(
     """
     dim = pytree_size(state.position)
     params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.25)
-    varEwanted = 5e-4
+    desired_energy_var = 5e-4
     part1_key, part2_key = jax.random.split(rng_key, 2)
 
     state, params = make_L_step_size_adaptation(
@@ -74,8 +74,8 @@ def mclmc_find_L_and_step_size(
         dim=dim,
         frac_tune1=frac_tune1,
         frac_tune2=frac_tune2,
-        varEwanted=varEwanted,
-        sigma_xi=sigma_xi,
+        desired_energy_var=desired_energy_var,
+        trust_in_estimate=trust_in_estimate,
         num_effective_samples=num_effective_samples,
     )(state, params, num_steps, part1_key)
 
@@ -92,19 +92,19 @@ def make_L_step_size_adaptation(
     dim,
     frac_tune1,
     frac_tune2,
-    varEwanted=1e-3,
-    sigma_xi=1.5,
+    desired_energy_var=1e-3,
+    trust_in_estimate=1.5,
     num_effective_samples=150,
 ):
     """Adapts the stepsize and L of the MCLMC kernel. Designed for the unadjusted MCLMC"""
 
-    gamma_forget = (num_effective_samples - 1.0) / (num_effective_samples + 1.0)
+    decay_rate = (num_effective_samples - 1.0) / (num_effective_samples + 1.0)
 
     def predictor(state_old, params, adaptive_state, rng_key):
         """does one step with the dynamics and updates the prediction for the optimal stepsize
         Designed for the unadjusted MCHMC"""
 
-        W, F, step_size_max = adaptive_state
+        time, x_average, step_size_max = adaptive_state
 
         # dynamics
         state_new, info = kernel(
@@ -117,37 +117,39 @@ def make_L_step_size_adaptation(
 
         # Warning: var = 0 if there were nans, but we will give it a very small weight
         xi = (
-            jnp.square(energy_change) / (dim * varEwanted)
+            jnp.square(energy_change) / (dim * desired_energy_var)
         ) + 1e-8  # 1e-8 is added to avoid divergences in log xi
-        w = jnp.exp(
-            -0.5 * jnp.square(jnp.log(xi) / (6.0 * sigma_xi))
+        weight = jnp.exp(
+            -0.5 * jnp.square(jnp.log(xi) / (6.0 * trust_in_estimate))
         )  # the weight reduces the impact of stepsizes which are much larger on much smaller than the desired one.
 
-        F = gamma_forget * F + w * (xi / jnp.power(params.step_size, 6.0))
-        W = gamma_forget * W + w
+        x_average = decay_rate * x_average + weight * (
+            xi / jnp.power(params.step_size, 6.0)
+        )
+        time = decay_rate * time + weight
         step_size = jnp.power(
-            F / W, -1.0 / 6.0
+            x_average / time, -1.0 / 6.0
         )  # We use the Var[E] = O(eps^6) relation here.
         step_size = (step_size < step_size_max) * step_size + (
             step_size > step_size_max
         ) * step_size_max  # if the proposed stepsize is above the stepsize where we have seen divergences
         params_new = params._replace(step_size=step_size)
 
-        return state, params_new, params_new, (W, F, step_size_max), success
+        return state, params_new, params_new, (time, x_average, step_size_max), success
 
     def update_kalman(x, state, outer_weight, success, step_size):
         """kalman filter to estimate the size of the posterior"""
-        W, F1, F2 = state
-        w = outer_weight * step_size * success
+        time, x_average, x_squared_average = state
+        weight = outer_weight * step_size * success
         zero_prevention = 1 - outer_weight
-        F1 = (W * F1 + w * x) / (
-            W + w + zero_prevention
+        x_average = (time * x_average + weight * x) / (
+            time + weight + zero_prevention
         )  # Update <f(x)> with a Kalman filter
-        F2 = (W * F2 + w * jnp.square(x)) / (
-            W + w + zero_prevention
+        x_squared_average = (time * x_squared_average + weight * jnp.square(x)) / (
+            time + weight + zero_prevention
         )  # Update <f(x)> with a Kalman filter
-        W += w
-        return (W, F1, F2)
+        time += weight
+        return (time, x_average, x_squared_average)
 
     adap0 = (0.0, 0.0, jnp.inf)
 
