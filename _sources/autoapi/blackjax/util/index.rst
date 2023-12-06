@@ -25,6 +25,7 @@ Functions
    blackjax.util.generate_unit_vector
    blackjax.util.pytree_size
    blackjax.util.index_pytree
+   blackjax.util.run_inference_algorithm
 
 
 
@@ -97,5 +98,27 @@ Functions
    :param input_pytree: Example PyTree.
 
    :rtype: PyTree mapping each individual element of an arange array to elements in the PyTree.
+
+
+.. py:function:: run_inference_algorithm(rng_key, initial_state_or_position, inference_algorithm, num_steps) -> tuple[blackjax.base.State, blackjax.base.State, blackjax.base.Info]
+
+   Wrapper to run an inference algorithm.
+
+   :param rng_key: The random state used by JAX's random numbers generator.
+   :type rng_key: PRNGKey
+   :param initial_state_or_position: The initial state OR the initial position of the inference algorithm. If an initial position
+                                     is passed in, the function will automatically convert it into an initial state.
+   :type initial_state_or_position: ArrayLikeTree
+   :param inference_algorithm: One of blackjax's sampling algorithms or variational inference algorithms.
+   :type inference_algorithm: Union[SamplingAlgorithm, VIAlgorithm]
+   :param num_steps: Number of learning steps.
+   :type num_steps: int
+
+   :returns:
+
+             1. The final state of the inference algorithm.
+             2. The history of states of the inference algorithm.
+             3. The history of the info of the inference algorithm.
+   :rtype: Tuple[State, State, Info]
 
 

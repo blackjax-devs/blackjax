@@ -354,6 +354,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.generate_unit_vector"><code class="docutils literal notranslate"><span class="pre">generate_unit_vector()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.pytree_size"><code class="docutils literal notranslate"><span class="pre">pytree_size()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.index_pytree"><code class="docutils literal notranslate"><span class="pre">index_pytree()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.run_inference_algorithm"><code class="docutils literal notranslate"><span class="pre">run_inference_algorithm()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -392,6 +393,9 @@ document.write(`
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.util.index_pytree" title="blackjax.util.index_pytree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">index_pytree</span></code></a>(→ blackjax.types.ArrayTree)</p></td>
 <td><p>Builds a PyTree with elements indicating its corresponding index on a flat array.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.util.run_inference_algorithm" title="blackjax.util.run_inference_algorithm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_inference_algorithm</span></code></a>(→ tuple[blackjax.base.State, ...)</p></td>
+<td><p>Wrapper to run an inference algorithm.</p></td>
 </tr>
 </tbody>
 </table>
@@ -488,6 +492,34 @@ column (and row) of a 1 dimensional (or 2 dimensional) array.</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.util.run_inference_algorithm">
+<span class="sig-name descname"><span class="pre">run_inference_algorithm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_state_or_position</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inference_algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">blackjax.base.State</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.base.State</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.base.Info</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/blackjax/util.html#run_inference_algorithm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.util.run_inference_algorithm" title="Permalink to this definition">#</a></dt>
+<dd><p>Wrapper to run an inference algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rng_key</strong> (<em>PRNGKey</em>) – The random state used by JAX’s random numbers generator.</p></li>
+<li><p><strong>initial_state_or_position</strong> (<em>ArrayLikeTree</em>) – The initial state OR the initial position of the inference algorithm. If an initial position
+is passed in, the function will automatically convert it into an initial state.</p></li>
+<li><p><strong>inference_algorithm</strong> (<em>Union</em><em>[</em><a class="reference internal" href="../base/index.html#blackjax.base.SamplingAlgorithm" title="blackjax.base.SamplingAlgorithm"><em>SamplingAlgorithm</em></a><em>, </em><a class="reference internal" href="../base/index.html#blackjax.base.VIAlgorithm" title="blackjax.base.VIAlgorithm"><em>VIAlgorithm</em></a><em>]</em>) – One of blackjax’s sampling algorithms or variational inference algorithms.</p></li>
+<li><p><strong>num_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – Number of learning steps.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ol class="arabic simple">
+<li><p>The final state of the inference algorithm.</p></li>
+<li><p>The history of states of the inference algorithm.</p></li>
+<li><p>The history of the info of the inference algorithm.</p></li>
+</ol>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[State, State, Info]</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 </section>
@@ -525,6 +557,7 @@ column (and row) of a 1 dimensional (or 2 dimensional) array.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.generate_unit_vector"><code class="docutils literal notranslate"><span class="pre">generate_unit_vector()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.pytree_size"><code class="docutils literal notranslate"><span class="pre">pytree_size()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.index_pytree"><code class="docutils literal notranslate"><span class="pre">index_pytree()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.util.run_inference_algorithm"><code class="docutils literal notranslate"><span class="pre">run_inference_algorithm()</span></code></a></li>
 </ul>
 </li>
 </ul>
