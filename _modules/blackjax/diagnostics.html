@@ -460,9 +460,6 @@ document.write(`
     <span class="n">sample_axis</span> <span class="o">=</span> <span class="n">sample_axis</span> <span class="k">if</span> <span class="n">sample_axis</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span> <span class="o">+</span> <span class="n">sample_axis</span>
     <span class="n">num_chains</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="n">chain_axis</span><span class="p">]</span>
     <span class="n">num_samples</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="n">sample_axis</span><span class="p">]</span>
-    <span class="k">assert</span> <span class="p">(</span>
-        <span class="n">num_chains</span> <span class="o">&gt;</span> <span class="mi">1</span>
-    <span class="p">),</span> <span class="s2">&quot;effective_sample_size as implemented only works for two or more chains.&quot;</span>
 
     <span class="n">mean_across_chain</span> <span class="o">=</span> <span class="n">input_array</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># Compute autocovariance estimates for every lag for the input array using FFT.</span>
@@ -483,10 +480,10 @@ document.write(`
     <span class="n">weighted_var</span> <span class="o">=</span> <span class="n">mean_var0</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_samples</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_samples</span>
     <span class="n">weighted_var</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
         <span class="n">num_chains</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span>
-        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">weighted_var</span>
+        <span class="k">lambda</span> <span class="n">mean_across_chain</span><span class="p">:</span> <span class="n">weighted_var</span>
         <span class="o">+</span> <span class="n">mean_across_chain</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">chain_axis</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">weighted_var</span><span class="p">,</span>
-        <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">operand</span><span class="o">=</span><span class="n">mean_across_chain</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Geyer&#39;s initial positive sequence</span>
