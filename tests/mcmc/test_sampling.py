@@ -142,10 +142,10 @@ class LinearRegressionTest(chex.TestCase):
             case["initial_position"],
             case["num_warmup_steps"],
         )
-        algorithm = case["algorithm"](logposterior_fn, **parameters)
+        inference_algorithm = case["algorithm"](logposterior_fn, **parameters)
 
         _, states, _ = run_inference_algorithm(
-            inference_key, state, algorithm, case["num_sampling_steps"]
+            inference_key, state, inference_algorithm, case["num_sampling_steps"]
         )
 
         coefs_samples = states.position["coefs"]
@@ -230,10 +230,10 @@ class LinearRegressionTest(chex.TestCase):
             initial_position,
             num_warmup_steps,
         )
-        kernel = algorithm(logposterior_fn, **parameters)
+        inference_algorithm = algorithm(logposterior_fn, **parameters)
 
         _, states, _ = run_inference_algorithm(
-            inference_key, state, kernel, num_sampling_steps
+            inference_key, state, inference_algorithm, num_sampling_steps
         )
 
         coefs_samples = states.position["coefs"]
@@ -269,11 +269,13 @@ class LinearRegressionTest(chex.TestCase):
             initial_positions,
             num_steps=1000,
         )
-        kernel = blackjax.ghmc(logposterior_fn, **parameters)
+        inference_algorithm = blackjax.ghmc(logposterior_fn, **parameters)
 
         chain_keys = jax.random.split(inference_key, num_chains)
         _, states, _ = jax.vmap(
-            lambda key, state: run_inference_algorithm(key, state, kernel, 100)
+            lambda key, state: run_inference_algorithm(
+                key, state, inference_algorithm, 100
+            )
         )(chain_keys, last_states)
 
         coefs_samples = states.position["coefs"]
@@ -311,11 +313,13 @@ class LinearRegressionTest(chex.TestCase):
             optim=optax.adam(learning_rate=0.1),
             num_steps=1000,
         )
-        kernel = blackjax.dynamic_hmc(logposterior_fn, **parameters)
+        inference_algorithm = blackjax.dynamic_hmc(logposterior_fn, **parameters)
 
         chain_keys = jax.random.split(inference_key, num_chains)
         _, states, _ = jax.vmap(
-            lambda key, state: run_inference_algorithm(key, state, kernel, 100)
+            lambda key, state: run_inference_algorithm(
+                key, state, inference_algorithm, 100
+            )
         )(chain_keys, last_states)
 
         coefs_samples = states.position["coefs"]
@@ -339,7 +343,6 @@ class LinearRegressionTest(chex.TestCase):
         state = barker.init({"coefs": 1.0, "log_scale": 1.0})
 
         _, states, _ = run_inference_algorithm(inference_key, state, barker, 10_000)
-        # states = inference_loop(barker.step, 10_000, inference_key, state)
 
         coefs_samples = states.position["coefs"][3000:]
         scale_samples = np.exp(states.position["log_scale"][3000:])
@@ -513,17 +516,22 @@ class LatentGaussianTest(chex.TestCase):
     def test_latent_gaussian(self):
         from blackjax import mgrad_gaussian
 
-        algorithm = mgrad_gaussian(lambda x: -0.5 * jnp.sum((x - 1.0) ** 2), self.C)
-        algorithm = algorithm._replace(
-            step=functools.partial(algorithm.step, delta=self.delta)
+        inference_algorithm = mgrad_gaussian(
+            lambda x: -0.5 * jnp.sum((x - 1.0) ** 2), self.C
+        )
+        inference_algorithm = inference_algorithm._replace(
+            step=functools.partial(
+                inference_algorithm.step,
+                delta=self.delta,
+            )
         )
 
-        initial_state = algorithm.init(jnp.zeros((1,)))
+        initial_state = inference_algorithm.init(jnp.zeros((1,)))
 
         _, states, _ = self.variant(
             functools.partial(
                 run_inference_algorithm,
-                inference_algorithm=algorithm,
+                inference_algorithm=inference_algorithm,
                 num_steps=self.sampling_steps,
             ),
         )(self.key, initial_state)
@@ -647,22 +655,23 @@ class UnivariateNormalTest(chex.TestCase):
         if algorithm == blackjax.rmh:
             parameters["proposal_generator"] = rmh_proposal_distribution
 
-        algo = algorithm(self.normal_logprob, **parameters)
+        inference_algorithm = algorithm(self.normal_logprob, **parameters)
         rng_key = self.key
         if algorithm == blackjax.elliptical_slice:
-            algo = algorithm(lambda x: jnp.ones_like(x), **parameters)
+            inference_algorithm = algorithm(lambda x: jnp.ones_like(x), **parameters)
         if algorithm == blackjax.ghmc:
             rng_key, initial_state_key = jax.random.split(rng_key)
-            initial_state = algo.init(initial_position, initial_state_key)
+            initial_state = inference_algorithm.init(
+                initial_position, initial_state_key
+            )
         else:
-            initial_state = algo.init(initial_position)
+            initial_state = inference_algorithm.init(initial_position)
 
         inference_key, orbit_key = jax.random.split(rng_key)
-        kernel = algo
         _, states, _ = self.variant(
             functools.partial(
                 run_inference_algorithm,
-                inference_algorithm=kernel,
+                inference_algorithm=inference_algorithm,
                 num_steps=num_sampling_steps,
             )
         )(inference_key, initial_state)
@@ -767,23 +776,25 @@ class MonteCarloStandardErrorTest(chex.TestCase):
                 inverse_mass_matrix = true_scale**2
             else:
                 inverse_mass_matrix = true_cov
-            kernel = algorithm(
+            inference_algorithm = algorithm(
                 logdensity_fn,
                 inverse_mass_matrix=inverse_mass_matrix,
                 **parameters,
             )
         else:
-            kernel = algorithm(logdensity_fn, **parameters)
+            inference_algorithm = algorithm(logdensity_fn, **parameters)
 
         num_chains = 10
         initial_positions = jax.random.normal(pos_init_key, [num_chains, 2])
-        initial_states = jax.vmap(kernel.init, in_axes=(0,))(initial_positions)
+        initial_states = jax.vmap(inference_algorithm.init, in_axes=(0,))(
+            initial_positions
+        )
         multi_chain_sample_key = jax.random.split(sample_key, num_chains)
 
         inference_loop_multiple_chains = jax.vmap(
             functools.partial(
                 run_inference_algorithm,
-                inference_algorithm=kernel,
+                inference_algorithm=inference_algorithm,
                 num_steps=2_000,
             )
         )

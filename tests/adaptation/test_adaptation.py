@@ -58,11 +58,11 @@ def test_chees_adaptation():
         optim=optax.adamw(learning_rate=0.5),
         num_steps=num_burnin_steps,
     )
-    kernel = blackjax.dynamic_hmc(logprob_fn, **parameters)
+    algorithm = blackjax.dynamic_hmc(logprob_fn, **parameters)
 
     chain_keys = jax.random.split(inference_key, num_chains)
     _, _, infos = jax.vmap(
-        lambda key, state: run_inference_algorithm(key, state, kernel, num_results)
+        lambda key, state: run_inference_algorithm(key, state, algorithm, num_results)
     )(chain_keys, last_states)
 
     harmonic_mean = 1.0 / jnp.mean(1.0 / infos.acceptance_rate)
