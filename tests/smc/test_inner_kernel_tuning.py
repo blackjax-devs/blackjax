@@ -362,54 +362,18 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
 
 
 class ParticlesAsRowsTest(unittest.TestCase):
-    def test_single_variable(self):
-        np.testing.assert_allclose(
-            particles_as_rows(np.array([np.array(10.0), np.array(3.0)])),
-            np.array([[10.0], [3.0]]),
-        )
-
-    def test_single_variable_as_array(self):
-        np.testing.assert_allclose(
-            particles_as_rows(np.array([10.0, 3.0])), np.array([[10.0], [3.0]])
-        )
-
-    def test_single_variable_multivariate(self):
-        np.testing.assert_allclose(
-            particles_as_rows(np.array([np.array([10.0, 5.0]), np.array([3.0, 70])])),
-            np.array([[10.0, 5.0], [3.0, 70]]),
-        )
-
-    def test_multivariable_univariate(self):
-        np.testing.assert_allclose(
-            particles_as_rows(
-                {"var_1": np.array([10, 3.0]), "var_2": np.array([5.0, 6.0])}
+    def test_particles_as_rows(self):
+        n_particles = 1000
+        test_particles = {
+            "a": np.zeros(n_particles),
+            "b": np.ones([n_particles, 1]),
+            "c": np.repeat(
+                (np.arange(3 * 5) + 2).reshape(3, 5)[None, ...], n_particles, axis=0
             ),
-            np.array([[10.0, 5.0], [3.0, 6.0]]),
-        )
-
-    def test_multivariable_multivariate(self):
-        np.testing.assert_allclose(
-            particles_as_rows(
-                {
-                    "var_1": np.array([[10, 3.0], [12, 15]]),
-                    "var_2": np.array([5.0, 6.0]),
-                }
-            ),
-            np.array([[10.0, 3.0, 5.0], [12, 15, 6.0]]),
-        )
-
-    def test_multivariable_trivariate(self):
-        np.testing.assert_allclose(
-            particles_as_rows(
-                {
-                    "var_1": np.array(
-                        [[[10, 3.0], [5.0, 7.0]], [[11, 4.0], [6.0, 8.0]]]
-                    ),
-                    "var_2": np.array([5.0, 6.0]),
-                }
-            ),
-            np.array([[10.0, 3.0, 5.0, 7.0, 5.0], [11, 4.0, 6.0, 8.0, 6.0]]),
-        )
+        }
+        flatten_particles = particles_as_rows(test_particles)
+        assert flatten_particles.shape == (n_particles, 3 * 5 + 2)
+        np.testing.assert_array_equal(np.arange(3 * 5 + 2), flatten_particles[0])
 
 
 if __name__ == "__main__":
