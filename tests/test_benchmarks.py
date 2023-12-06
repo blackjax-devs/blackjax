@@ -13,7 +13,7 @@ import jax.scipy.stats as stats
 import pytest
 
 import blackjax
-import blackjax.util as util
+from blackjax.util import run_inference_algorithm
 
 
 def regression_logprob(log_scale, coefs, preds, x):
@@ -48,7 +48,7 @@ def run_regression(algorithm, **parameters):
     )
     kernel = algorithm(logdensity_fn, **parameters)
 
-    _, states, _ = util.run_inference_algorithm(inference_key, state, kernel, 10_000)
+    _, states, _ = run_inference_algorithm(inference_key, state, kernel, 10_000)
 
     return states
 
