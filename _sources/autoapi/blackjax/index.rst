@@ -52,6 +52,7 @@ Classes
    blackjax.sgld
    blackjax.sgnht
    blackjax.adaptive_tempered_smc
+   blackjax.inner_kernel_tuning
    blackjax.tempered_smc
    blackjax.meanfield_vi
    blackjax.pathfinder
@@ -81,6 +82,7 @@ Attributes
 .. autoapisummary::
 
    blackjax.__version__
+
 
 
 

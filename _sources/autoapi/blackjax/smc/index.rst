@@ -4,6 +4,15 @@
 .. py:module:: blackjax.smc
 
 
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   tuning/index.rst
+
+
 Submodules
 ----------
 .. toctree::
@@ -13,6 +22,7 @@ Submodules
    adaptive_tempered/index.rst
    base/index.rst
    ess/index.rst
+   inner_kernel_tuning/index.rst
    resampling/index.rst
    solver/index.rst
    tempered/index.rst
