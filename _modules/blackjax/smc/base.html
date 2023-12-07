@@ -371,9 +371,10 @@ document.write(`
 
 
 <div class="viewcode-block" id="SMCState"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState">[docs]</a><span class="k">class</span> <span class="nc">SMCState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the SMC sampler</span>
-<span class="sd">    Particles must be a ArrayTree, each leave represents</span>
-<span class="sd">    a variable from the posterior, being an array of size `(n_particles, ...)`.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the SMC sampler.</span>
+
+<span class="sd">    Particles must be a ArrayTree, each leave represents a variable from the posterior,</span>
+<span class="sd">    being an array of size `(n_particles, ...)`.</span>
 <span class="sd">    Examples (three particles):</span>
 <span class="sd">        - Single univariate posterior:</span>
 <span class="sd">            [ Array([[1.], [1.2], [3.4]]) ]</span>
@@ -394,14 +395,13 @@ document.write(`
 <div class="viewcode-block" id="SMCInfo"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo">[docs]</a><span class="k">class</span> <span class="nc">SMCInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on the tempered SMC step.</span>
 
-<span class="sd">    proposals: PyTree</span>
-<span class="sd">        The particles that were proposed by the MCMC pass.</span>
 <span class="sd">    ancestors: Array</span>
 <span class="sd">        The index of the particles proposed by the MCMC pass that were selected</span>
 <span class="sd">        by the resampling step.</span>
 <span class="sd">    log_likelihood_increment: float</span>
 <span class="sd">        The log-likelihood increment due to the current step of the SMC algorithm.</span>
-
+<span class="sd">    update_info: NamedTuple</span>
+<span class="sd">        Additional information returned by the update function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="SMCInfo.ancestors"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.ancestors">[docs]</a>    <span class="n">ancestors</span><span class="p">:</span> <span class="n">Array</span></div>
@@ -421,18 +421,18 @@ document.write(`
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">SMCState</span><span class="p">,</span>
     <span class="n">update_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">weigh_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">weight_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">resample_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">num_resampled</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SMCState</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;General SMC sampling step.</span>
 
-<span class="sd">    `update_fn` here corresponds to the Markov kernel $M_{t+1}$, and `weigh_fn`</span>
+<span class="sd">    `update_fn` here corresponds to the Markov kernel $M_{t+1}$, and `weight_fn`</span>
 <span class="sd">    corresponds to the potential function $G_t$. We first use `update_fn` to</span>
 <span class="sd">    generate new particles from the current ones, weigh these particles using</span>
-<span class="sd">    `weigh_fn` and resample them with `resample_fn`.</span>
+<span class="sd">    `weight_fn` and resample them with `resample_fn`.</span>
 
-<span class="sd">    The `update_fn` and `weigh_fn` functions must be batched by the called either</span>
+<span class="sd">    The `update_fn` and `weight_fn` functions must be batched by the called either</span>
 <span class="sd">    using `jax.vmap` or `jax.pmap`.</span>
 
 <span class="sd">    In Feynman-Kac terms, the algorithm goes roughly as follows:</span>
@@ -440,7 +440,7 @@ document.write(`
 <span class="sd">    .. code::</span>
 
 <span class="sd">        M_t: update_fn</span>
-<span class="sd">        G_t: weigh_fn</span>
+<span class="sd">        G_t: weight_fn</span>
 <span class="sd">        R_t: resample_fn</span>
 <span class="sd">        idx = R_t(weights)</span>
 <span class="sd">        x_t = x_tm1[idx]</span>
@@ -457,7 +457,7 @@ document.write(`
 <span class="sd">    update_fn</span>
 <span class="sd">        Function that takes an array of keys and particles and returns</span>
 <span class="sd">        new particles.</span>
-<span class="sd">    weigh_fn</span>
+<span class="sd">    weight_fn</span>
 <span class="sd">        Function that assigns a weight to the particles.</span>
 <span class="sd">    resample_fn</span>
 <span class="sd">        Function that resamples the particles.</span>
@@ -489,7 +489,7 @@ document.write(`
     <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">updating_key</span><span class="p">,</span> <span class="n">num_resampled</span><span class="p">)</span>
     <span class="n">particles</span><span class="p">,</span> <span class="n">update_info</span> <span class="o">=</span> <span class="n">update_fn</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">particles</span><span class="p">)</span>
 
-    <span class="n">log_weights</span> <span class="o">=</span> <span class="n">weigh_fn</span><span class="p">(</span><span class="n">particles</span><span class="p">)</span>
+    <span class="n">log_weights</span> <span class="o">=</span> <span class="n">weight_fn</span><span class="p">(</span><span class="n">particles</span><span class="p">)</span>
     <span class="n">logsum_weights</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">log_weights</span><span class="p">)</span>
     <span class="n">normalizing_constant</span> <span class="o">=</span> <span class="n">logsum_weights</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">num_particles</span><span class="p">)</span>
     <span class="n">weights</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_weights</span> <span class="o">-</span> <span class="n">logsum_weights</span><span class="p">)</span>

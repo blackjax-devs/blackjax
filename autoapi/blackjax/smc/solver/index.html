@@ -377,14 +377,14 @@ document.write(`
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.solver.dichotomy" title="blackjax.smc.solver.dichotomy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dichotomy</span></code></a>(fun, _delta0, min_delta, max_delta[, eps, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.solver.dichotomy" title="blackjax.smc.solver.dichotomy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dichotomy</span></code></a>(fun, min_delta, max_delta[, eps, max_iter])</p></td>
 <td><p>Solves for delta by dichotomy.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.smc.solver.dichotomy">
-<span class="sig-name descname"><span class="pre">dichotomy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fun</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_delta0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/solver.html#dichotomy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.solver.dichotomy" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">dichotomy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fun</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/solver.html#dichotomy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.solver.dichotomy" title="Permalink to this definition">#</a></dt>
 <dd><p>Solves for delta by dichotomy.</p>
 <p>If max_delta is such that fun(max_delta) &gt; 0, then we assume that max_delta
 can be used as an increment in the tempering.</p>

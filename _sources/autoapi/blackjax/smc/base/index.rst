@@ -32,9 +32,10 @@ Functions
 
 
 
-   State of the SMC sampler
-   Particles must be a ArrayTree, each leave represents
-   a variable from the posterior, being an array of size `(n_particles, ...)`.
+   State of the SMC sampler.
+
+   Particles must be a ArrayTree, each leave represents a variable from the posterior,
+   being an array of size `(n_particles, ...)`.
    Examples (three particles):
        - Single univariate posterior:
            [ Array([[1.], [1.2], [3.4]]) ]
@@ -65,14 +66,13 @@ Functions
 
    Additional information on the tempered SMC step.
 
-   proposals: PyTree
-       The particles that were proposed by the MCMC pass.
    ancestors: Array
        The index of the particles proposed by the MCMC pass that were selected
        by the resampling step.
    log_likelihood_increment: float
        The log-likelihood increment due to the current step of the SMC algorithm.
-
+   update_info: NamedTuple
+       Additional information returned by the update function.
 
    .. py:attribute:: ancestors
       :type: blackjax.types.Array
@@ -93,16 +93,16 @@ Functions
 .. py:function:: init(particles: blackjax.types.ArrayLikeTree)
 
 
-.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SMCState, update_fn: Callable, weigh_fn: Callable, resample_fn: Callable, num_resampled: Optional[int] = None) -> tuple[SMCState, SMCInfo]
+.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SMCState, update_fn: Callable, weight_fn: Callable, resample_fn: Callable, num_resampled: Optional[int] = None) -> tuple[SMCState, SMCInfo]
 
    General SMC sampling step.
 
-   `update_fn` here corresponds to the Markov kernel $M_{t+1}$, and `weigh_fn`
+   `update_fn` here corresponds to the Markov kernel $M_{t+1}$, and `weight_fn`
    corresponds to the potential function $G_t$. We first use `update_fn` to
    generate new particles from the current ones, weigh these particles using
-   `weigh_fn` and resample them with `resample_fn`.
+   `weight_fn` and resample them with `resample_fn`.
 
-   The `update_fn` and `weigh_fn` functions must be batched by the called either
+   The `update_fn` and `weight_fn` functions must be batched by the called either
    using `jax.vmap` or `jax.pmap`.
 
    In Feynman-Kac terms, the algorithm goes roughly as follows:
@@ -110,7 +110,7 @@ Functions
    .. code::
 
        M_t: update_fn
-       G_t: weigh_fn
+       G_t: weight_fn
        R_t: resample_fn
        idx = R_t(weights)
        x_t = x_tm1[idx]
@@ -122,7 +122,7 @@ Functions
                  log-weights
    :param update_fn: Function that takes an array of keys and particles and returns
                      new particles.
-   :param weigh_fn: Function that assigns a weight to the particles.
+   :param weight_fn: Function that assigns a weight to the particles.
    :param resample_fn: Function that resamples the particles.
    :param num_resampled: The number of particles to resample. This can be used to implement
                          Waste-Free SMC :cite:p:`dau2020waste`, in which case we resample a number :math:`M<N`

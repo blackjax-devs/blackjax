@@ -365,7 +365,6 @@ document.write(`
 <span class="sd">&quot;&quot;&quot;All things related to SMC effective sample size&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.scipy</span> <span class="k">as</span> <span class="nn">jsp</span>
 
@@ -381,7 +380,7 @@ document.write(`
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    log_weights: np.ndarray</span>
+<span class="sd">    log_weights: 1D Array</span>
 <span class="sd">        log-weights of the sample</span>
 
 <span class="sd">    Returns</span>
@@ -402,13 +401,13 @@ document.write(`
     <span class="n">max_delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">root_solver</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Tempered SMC step.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;ESS solver for computing the next increment of SMC tempering.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    logdensity_fn: Callable</span>
 <span class="sd">        The log probability function we wish to sample from.</span>
-<span class="sd">    smc_state: SMCState</span>
+<span class="sd">    particles: SMCState</span>
 <span class="sd">        Current state of the tempered SMC algorithm</span>
 <span class="sd">    target_ess: float</span>
 <span class="sd">        The relative ESS targeted for the next increment of SMC tempering</span>
@@ -425,9 +424,8 @@ document.write(`
 <span class="sd">        The increment that solves for the target ESS</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">n_particles</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">particles</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
     <span class="n">logprob</span> <span class="o">=</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">particles</span><span class="p">)</span>
+    <span class="n">n_particles</span> <span class="o">=</span> <span class="n">logprob</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">target_val</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">n_particles</span> <span class="o">*</span> <span class="n">target_ess</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">fun_to_solve</span><span class="p">(</span><span class="n">delta</span><span class="p">):</span>
@@ -436,7 +434,7 @@ document.write(`
 
         <span class="k">return</span> <span class="n">ess_val</span> <span class="o">-</span> <span class="n">target_val</span>
 
-    <span class="n">estimated_delta</span> <span class="o">=</span> <span class="n">root_solver</span><span class="p">(</span><span class="n">fun_to_solve</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">max_delta</span><span class="p">)</span>
+    <span class="n">estimated_delta</span> <span class="o">=</span> <span class="n">root_solver</span><span class="p">(</span><span class="n">fun_to_solve</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">max_delta</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">estimated_delta</span></div>
 </pre></div>
 

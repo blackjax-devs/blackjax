@@ -385,7 +385,7 @@ document.write(`
 <td><p>Compute the effective sample size.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.ess.ess_solver" title="blackjax.smc.ess.ess_solver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ess_solver</span></code></a>(logdensity_fn, particles, target_ess, ...)</p></td>
-<td><p>Build a Tempered SMC step.</p></td>
+<td><p>ESS solver for computing the next increment of SMC tempering.</p></td>
 </tr>
 </tbody>
 </table>
@@ -400,7 +400,7 @@ document.write(`
 <dd><p>Compute the effective sample size.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>log_weights</strong> (<em>np.ndarray</em>) – log-weights of the sample</p>
+<dd class="field-odd"><p><strong>log_weights</strong> (<em>1D Array</em>) – log-weights of the sample</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>log_ess</strong> – The logarithm of the effective sample size</p>
@@ -414,12 +414,12 @@ document.write(`
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.smc.ess.ess_solver">
 <span class="sig-name descname"><span class="pre">ess_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">particles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_ess</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_delta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/ess.html#ess_solver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.ess.ess_solver" title="Permalink to this definition">#</a></dt>
-<dd><p>Build a Tempered SMC step.</p>
+<dd><p>ESS solver for computing the next increment of SMC tempering.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>logdensity_fn</strong> (<em>Callable</em>) – The log probability function we wish to sample from.</p></li>
-<li><p><strong>smc_state</strong> (<a class="reference internal" href="../base/index.html#blackjax.smc.base.SMCState" title="blackjax.smc.base.SMCState"><em>SMCState</em></a>) – Current state of the tempered SMC algorithm</p></li>
+<li><p><strong>particles</strong> (<a class="reference internal" href="../base/index.html#blackjax.smc.base.SMCState" title="blackjax.smc.base.SMCState"><em>SMCState</em></a>) – Current state of the tempered SMC algorithm</p></li>
 <li><p><strong>target_ess</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The relative ESS targeted for the next increment of SMC tempering</p></li>
 <li><p><strong>max_delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – Max acceptable delta increment</p></li>
 <li><p><strong>root_solver</strong> (<em>Callable</em><em>, </em><em>optional</em>) – A solver to find the root of a function, takes a function <cite>f</cite>, a starting point <cite>delta0</cite>,

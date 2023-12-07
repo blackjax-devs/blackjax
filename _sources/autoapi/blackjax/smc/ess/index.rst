@@ -32,7 +32,7 @@ Functions
    Compute the effective sample size.
 
    :param log_weights: log-weights of the sample
-   :type log_weights: np.ndarray
+   :type log_weights: 1D Array
 
    :returns: **log_ess** -- The logarithm of the effective sample size
    :rtype: float
@@ -40,12 +40,12 @@ Functions
 
 .. py:function:: ess_solver(logdensity_fn: Callable, particles: blackjax.types.ArrayLikeTree, target_ess: float, max_delta: float, root_solver: Callable)
 
-   Build a Tempered SMC step.
+   ESS solver for computing the next increment of SMC tempering.
 
    :param logdensity_fn: The log probability function we wish to sample from.
    :type logdensity_fn: Callable
-   :param smc_state: Current state of the tempered SMC algorithm
-   :type smc_state: SMCState
+   :param particles: Current state of the tempered SMC algorithm
+   :type particles: SMCState
    :param target_ess: The relative ESS targeted for the next increment of SMC tempering
    :type target_ess: float
    :param max_delta: Max acceptable delta increment

@@ -390,7 +390,7 @@ document.write(`
 <table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.base.SMCState" title="blackjax.smc.base.SMCState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SMCState</span></code></a></p></td>
-<td><p>State of the SMC sampler</p></td>
+<td><p>State of the SMC sampler.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.base.SMCInfo" title="blackjax.smc.base.SMCInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SMCInfo</span></code></a></p></td>
 <td><p>Additional information on the tempered SMC step.</p></td>
@@ -413,9 +413,9 @@ document.write(`
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.smc.base.SMCState">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SMCState</span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCState" title="Permalink to this definition">#</a></dt>
-<dd><p>State of the SMC sampler
-Particles must be a ArrayTree, each leave represents
-a variable from the posterior, being an array of size <cite>(n_particles, …)</cite>.
+<dd><p>State of the SMC sampler.</p>
+<p>Particles must be a ArrayTree, each leave represents a variable from the posterior,
+being an array of size <cite>(n_particles, …)</cite>.
 Examples (three particles):</p>
 <blockquote>
 <div><ul class="simple">
@@ -460,12 +460,12 @@ Array([[50., 51., 52., 51], [51., 52., 52. ,54.], [55., 60, 60, 70]])]</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SMCInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCInfo" title="Permalink to this definition">#</a></dt>
 <dd><p>Additional information on the tempered SMC step.</p>
 <dl class="simple">
-<dt>proposals: PyTree</dt><dd><p>The particles that were proposed by the MCMC pass.</p>
-</dd>
 <dt>ancestors: Array</dt><dd><p>The index of the particles proposed by the MCMC pass that were selected
 by the resampling step.</p>
 </dd>
 <dt>log_likelihood_increment: float</dt><dd><p>The log-likelihood increment due to the current step of the SMC algorithm.</p>
+</dd>
+<dt>update_info: NamedTuple</dt><dd><p>Additional information returned by the update function.</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -492,17 +492,17 @@ by the resampling step.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.smc.base.step">
-<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.smc.base.SMCState" title="blackjax.smc.base.SMCState"><span class="pre">SMCState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weigh_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_resampled</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#blackjax.smc.base.SMCState" title="blackjax.smc.base.SMCState"><span class="pre">SMCState</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#blackjax.smc.base.SMCInfo" title="blackjax.smc.base.SMCInfo"><span class="pre">SMCInfo</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.step" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.smc.base.SMCState" title="blackjax.smc.base.SMCState"><span class="pre">SMCState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_resampled</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#blackjax.smc.base.SMCState" title="blackjax.smc.base.SMCState"><span class="pre">SMCState</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#blackjax.smc.base.SMCInfo" title="blackjax.smc.base.SMCInfo"><span class="pre">SMCInfo</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.step" title="Permalink to this definition">#</a></dt>
 <dd><p>General SMC sampling step.</p>
-<p><cite>update_fn</cite> here corresponds to the Markov kernel <span class="math notranslate nohighlight">\(M_{t+1}\)</span>, and <cite>weigh_fn</cite>
+<p><cite>update_fn</cite> here corresponds to the Markov kernel <span class="math notranslate nohighlight">\(M_{t+1}\)</span>, and <cite>weight_fn</cite>
 corresponds to the potential function <span class="math notranslate nohighlight">\(G_t\)</span>. We first use <cite>update_fn</cite> to
 generate new particles from the current ones, weigh these particles using
-<cite>weigh_fn</cite> and resample them with <cite>resample_fn</cite>.</p>
-<p>The <cite>update_fn</cite> and <cite>weigh_fn</cite> functions must be batched by the called either
+<cite>weight_fn</cite> and resample them with <cite>resample_fn</cite>.</p>
+<p>The <cite>update_fn</cite> and <cite>weight_fn</cite> functions must be batched by the called either
 using <cite>jax.vmap</cite> or <cite>jax.pmap</cite>.</p>
 <p>In Feynman-Kac terms, the algorithm goes roughly as follows:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">M_t</span><span class="p">:</span> <span class="n">update_fn</span>
-<span class="n">G_t</span><span class="p">:</span> <span class="n">weigh_fn</span>
+<span class="n">G_t</span><span class="p">:</span> <span class="n">weight_fn</span>
 <span class="n">R_t</span><span class="p">:</span> <span class="n">resample_fn</span>
 <span class="n">idx</span> <span class="o">=</span> <span class="n">R_t</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
 <span class="n">x_t</span> <span class="o">=</span> <span class="n">x_tm1</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
@@ -518,7 +518,7 @@ using <cite>jax.vmap</cite> or <cite>jax.pmap</cite>.</p>
 log-weights</p></li>
 <li><p><strong>update_fn</strong> – Function that takes an array of keys and particles and returns
 new particles.</p></li>
-<li><p><strong>weigh_fn</strong> – Function that assigns a weight to the particles.</p></li>
+<li><p><strong>weight_fn</strong> – Function that assigns a weight to the particles.</p></li>
 <li><p><strong>resample_fn</strong> – Function that resamples the particles.</p></li>
 <li><p><strong>num_resampled</strong> – The number of particles to resample. This can be used to implement
 Waste-Free SMC <span id="id1">[<a class="reference internal" href="../../../../bib.html#id32" title="Hai-Dang Dau and Nicolas Chopin. Waste-free sequential monte carlo. arXiv preprint arXiv:2011.02328, 2020.">DC20</a>]</span>, in which case we resample a number <span class="math notranslate nohighlight">\(M&lt;N\)</span>

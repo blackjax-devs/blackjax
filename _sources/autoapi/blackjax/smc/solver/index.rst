@@ -22,7 +22,7 @@ Functions
 
 
 
-.. py:function:: dichotomy(fun, _delta0, min_delta, max_delta, eps=0.0001, max_iter=100)
+.. py:function:: dichotomy(fun, min_delta, max_delta, eps=0.0001, max_iter=100)
 
    Solves for delta by dichotomy.
 

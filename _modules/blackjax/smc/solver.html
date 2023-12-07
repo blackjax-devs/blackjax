@@ -365,10 +365,11 @@ document.write(`
 <span class="sd">&quot;&quot;&quot;All things solving for adaptive tempering.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 
-<div class="viewcode-block" id="dichotomy"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/solver/index.html#blackjax.smc.solver.dichotomy">[docs]</a><span class="k">def</span> <span class="nf">dichotomy</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">_delta0</span><span class="p">,</span> <span class="n">min_delta</span><span class="p">,</span> <span class="n">max_delta</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+<div class="viewcode-block" id="dichotomy"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/solver/index.html#blackjax.smc.solver.dichotomy">[docs]</a><span class="k">def</span> <span class="nf">dichotomy</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">min_delta</span><span class="p">,</span> <span class="n">max_delta</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Solves for delta by dichotomy.</span>
 
 <span class="sd">    If max_delta is such that fun(max_delta) &gt; 0, then we assume that max_delta</span>
@@ -408,8 +409,6 @@ document.write(`
         <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">f_a</span><span class="p">,</span> <span class="n">f_b</span>
 
     <span class="k">def</span> <span class="nf">cond</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
-        <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-
         <span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">f_a</span><span class="p">,</span> <span class="n">f_b</span> <span class="o">=</span> <span class="n">carry</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">max_iter</span><span class="p">,</span> <span class="n">f_a</span> <span class="o">-</span> <span class="n">f_b</span> <span class="o">&gt;</span> <span class="n">eps</span><span class="p">)</span>
 
