@@ -100,7 +100,7 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
         return -5 * jnp.sum(jnp.square(x**2 - 1))
 
     @staticmethod
-    def root_solver(fun, _delta0, min_delta, max_delta, eps=1e-4, max_iter=100):
+    def root_solver(fun, min_delta, max_delta, eps=1e-4, max_iter=100):
         return 0.8
 
     @staticmethod
