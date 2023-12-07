@@ -11,9 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Algorithms to adapt the MCLMC kernel parameters, namely step size and L.
-
-"""
+"""Algorithms to adapt the MCLMC kernel parameters, namely step size and L."""
 
 from typing import NamedTuple
 
@@ -21,16 +19,17 @@ import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
-from blackjax.diagnostics import effective_sample_size  # type: ignore
+from blackjax.diagnostics import effective_sample_size
 from blackjax.util import pytree_size
 
 
 class MCLMCAdaptationState(NamedTuple):
     """Represents the tunable parameters for MCLMC adaptation.
 
-    Attributes:
-        L (float): The momentum decoherent rate for the MCLMC algorithm.
-        step_size (float): The step size used for the MCLMC algorithm.
+    L
+        The momentum decoherent rate for the MCLMC algorithm.
+    step_size
+        The step size used for the MCLMC algorithm.
     """
 
     L: float
@@ -52,25 +51,39 @@ def mclmc_find_L_and_step_size(
     """
     Finds the optimal value of the parameters for the MCLMC algorithm.
 
-    Args:
-        mclmc_kernel (callable): The kernel function used for the MCMC algorithm.
-        num_steps (int): The number of MCMC steps that will subsequently be run, after tuning.
-        state (MCMCState): The initial state of the MCMC algorithm.
-        rng_key (jax.random.PRNGKey): The random number generator key.
-        frac_tune1 (float): The fraction of tuning for the first step of the adaptation.
-        frac_tune2 (float): The fraction of tuning for the second step of the adaptation.
-        frac_tune3 (float): The fraction of tuning for the third step of the adaptation.
-        desired_energy_var (float): The desired energy variance for the MCMC algorithm.
-        trust_in_estimate (float): The trust in the estimate of optimal stepsize.
-        num_effective_samples (int): The number of effective samples for the MCMC algorithm.
+    Parameters
+    ----------
+    mclmc_kernel
+        The kernel function used for the MCMC algorithm.
+    num_steps
+        The number of MCMC steps that will subsequently be run, after tuning.
+    state
+        The initial state of the MCMC algorithm.
+    rng_key
+        The random number generator key.
+    frac_tune1
+        The fraction of tuning for the first step of the adaptation.
+    frac_tune2
+        The fraction of tuning for the second step of the adaptation.
+    frac_tune3
+        The fraction of tuning for the third step of the adaptation.
+    desired_energy_va
+        The desired energy variance for the MCMC algorithm.
+    trust_in_estimate
+        The trust in the estimate of optimal stepsize.
+    num_effective_samples
+        The number of effective samples for the MCMC algorithm.
 
-    Returns:
-        tuple: A tuple containing the final state of the MCMC algorithm and the final hyperparameters.
+    Returns
+    -------
+    A tuple containing the final state of the MCMC algorithm and the final hyperparameters.
 
-    Raises:
-        None
 
-    Examples:
+    Examples
+    -------
+
+    .. code::
+
         # Define the kernel function
         def kernel(x):
             return x ** 2
@@ -265,7 +278,8 @@ def make_adaptation_L(kernel, frac, Lfactor):
 
 
 def handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_change):
-    """if there are nans, let's reduce the stepsize, and not update the state. The function returns the old state in this case."""
+    """if there are nans, let's reduce the stepsize, and not update the state. The
+    function returns the old state in this case."""
 
     reduced_step_size = 0.8
     p, unravel_fn = ravel_pytree(next_state.position)

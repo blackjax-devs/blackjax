@@ -8,7 +8,7 @@ jax>=0.4.16
 jaxlib>=0.4.16
 jaxopt
 jupytext
-myst_nb>=1.0.0rc0
+myst_nb>=1.0.0
 numba
 numpyro
 optax

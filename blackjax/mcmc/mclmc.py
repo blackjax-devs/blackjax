@@ -31,13 +31,13 @@ class MCLMCInfo(NamedTuple):
     """
     Additional information on the MCLMC transition.
 
-    Attributes
-    ----------
-    transformed_position :
+    transformed_position
         The value of the samples after a transformation. This is typically a projection onto a lower dimensional subspace.
-    logdensity :
+    logdensity
         The log-density of the distribution at the current step of the MCLMC chain.
-    energy_change :
+    kinetic_change
+        The difference in kinetic energy between the current and previous step.
+    energy_change
         The difference in energy between the current and previous step.
     """
 
@@ -68,9 +68,9 @@ def build_kernel(logdensity_fn, integrator, transform):
     transform
         Value of the difference in energy above which we consider that the transition is divergent.
     L
-      the momentum decoherence rate
+        the momentum decoherence rate.
     step_size
-      step size of the integrator
+        step size of the integrator.
 
     Returns
     -------
@@ -136,8 +136,8 @@ class mclmc:
 
     .. code::
 
-       step = jax.jit(mclmc.step)
-       new_state, info = step(rng_key, state)
+        step = jax.jit(mclmc.step)
+        new_state, info = step(rng_key, state)
 
     Parameters
     ----------
@@ -146,11 +146,11 @@ class mclmc:
     transform
         A function to perform on the samples drawn from the target distribution
     L
-      the momentum decoherence rate
+        the momentum decoherence rate
     step_size
-      step size of the integrator
+        step size of the integrator
     integrator
-      an integrator. We recommend using the default here.
+        an integrator. We recommend using the default here.
 
     Returns
     -------
@@ -185,13 +185,13 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
 
     Parameters
     ----------
-    rng_key:
+    rng_key
         The pseudo-random number generator key used to generate random numbers.
-    momentum:
+    momentum
         PyTree that the structure the output should to match.
-    step_size:
+    step_size
         Step size
-    L:
+    L
         controls rate of momentum change
 
     Returns
