@@ -382,13 +382,13 @@ document.write(`
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Additional information on the MCLMC transition.</span>
 
-<span class="sd">    Attributes</span>
-<span class="sd">    ----------</span>
-<span class="sd">    transformed_position :</span>
+<span class="sd">    transformed_position</span>
 <span class="sd">        The value of the samples after a transformation. This is typically a projection onto a lower dimensional subspace.</span>
-<span class="sd">    logdensity :</span>
+<span class="sd">    logdensity</span>
 <span class="sd">        The log-density of the distribution at the current step of the MCLMC chain.</span>
-<span class="sd">    energy_change :</span>
+<span class="sd">    kinetic_change</span>
+<span class="sd">        The difference in kinetic energy between the current and previous step.</span>
+<span class="sd">    energy_change</span>
 <span class="sd">        The difference in energy between the current and previous step.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -419,9 +419,9 @@ document.write(`
 <span class="sd">    transform</span>
 <span class="sd">        Value of the difference in energy above which we consider that the transition is divergent.</span>
 <span class="sd">    L</span>
-<span class="sd">      the momentum decoherence rate</span>
+<span class="sd">        the momentum decoherence rate.</span>
 <span class="sd">    step_size</span>
-<span class="sd">      step size of the integrator</span>
+<span class="sd">        step size of the integrator.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -487,8 +487,8 @@ document.write(`
 
 <span class="sd">    .. code::</span>
 
-<span class="sd">       step = jax.jit(mclmc.step)</span>
-<span class="sd">       new_state, info = step(rng_key, state)</span>
+<span class="sd">        step = jax.jit(mclmc.step)</span>
+<span class="sd">        new_state, info = step(rng_key, state)</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -497,11 +497,11 @@ document.write(`
 <span class="sd">    transform</span>
 <span class="sd">        A function to perform on the samples drawn from the target distribution</span>
 <span class="sd">    L</span>
-<span class="sd">      the momentum decoherence rate</span>
+<span class="sd">        the momentum decoherence rate</span>
 <span class="sd">    step_size</span>
-<span class="sd">      step size of the integrator</span>
+<span class="sd">        step size of the integrator</span>
 <span class="sd">    integrator</span>
-<span class="sd">      an integrator. We recommend using the default here.</span>
+<span class="sd">        an integrator. We recommend using the default here.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -536,13 +536,13 @@ document.write(`
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    rng_key:</span>
+<span class="sd">    rng_key</span>
 <span class="sd">        The pseudo-random number generator key used to generate random numbers.</span>
-<span class="sd">    momentum:</span>
+<span class="sd">    momentum</span>
 <span class="sd">        PyTree that the structure the output should to match.</span>
-<span class="sd">    step_size:</span>
+<span class="sd">    step_size</span>
 <span class="sd">        Step size</span>
-<span class="sd">    L:</span>
+<span class="sd">    L</span>
 <span class="sd">        controls rate of momentum change</span>
 
 <span class="sd">    Returns</span>

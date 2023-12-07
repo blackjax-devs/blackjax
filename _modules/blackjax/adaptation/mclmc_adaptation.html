@@ -362,9 +362,7 @@ document.write(`
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sd">&quot;&quot;&quot;Algorithms to adapt the MCLMC kernel parameters, namely step size and L.</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Algorithms to adapt the MCLMC kernel parameters, namely step size and L.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span>
 
@@ -372,16 +370,17 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">from</span> <span class="nn">jax.flatten_util</span> <span class="kn">import</span> <span class="n">ravel_pytree</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.diagnostics</span> <span class="kn">import</span> <span class="n">effective_sample_size</span>  <span class="c1"># type: ignore</span>
+<span class="kn">from</span> <span class="nn">blackjax.diagnostics</span> <span class="kn">import</span> <span class="n">effective_sample_size</span>
 <span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">pytree_size</span>
 
 
 <div class="viewcode-block" id="MCLMCAdaptationState"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState">[docs]</a><span class="k">class</span> <span class="nc">MCLMCAdaptationState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents the tunable parameters for MCLMC adaptation.</span>
 
-<span class="sd">    Attributes:</span>
-<span class="sd">        L (float): The momentum decoherent rate for the MCLMC algorithm.</span>
-<span class="sd">        step_size (float): The step size used for the MCLMC algorithm.</span>
+<span class="sd">    L</span>
+<span class="sd">        The momentum decoherent rate for the MCLMC algorithm.</span>
+<span class="sd">    step_size</span>
+<span class="sd">        The step size used for the MCLMC algorithm.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="MCLMCAdaptationState.L"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.L">[docs]</a>    <span class="n">L</span><span class="p">:</span> <span class="nb">float</span></div>
@@ -403,25 +402,39 @@ document.write(`
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Finds the optimal value of the parameters for the MCLMC algorithm.</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        mclmc_kernel (callable): The kernel function used for the MCMC algorithm.</span>
-<span class="sd">        num_steps (int): The number of MCMC steps that will subsequently be run, after tuning.</span>
-<span class="sd">        state (MCMCState): The initial state of the MCMC algorithm.</span>
-<span class="sd">        rng_key (jax.random.PRNGKey): The random number generator key.</span>
-<span class="sd">        frac_tune1 (float): The fraction of tuning for the first step of the adaptation.</span>
-<span class="sd">        frac_tune2 (float): The fraction of tuning for the second step of the adaptation.</span>
-<span class="sd">        frac_tune3 (float): The fraction of tuning for the third step of the adaptation.</span>
-<span class="sd">        desired_energy_var (float): The desired energy variance for the MCMC algorithm.</span>
-<span class="sd">        trust_in_estimate (float): The trust in the estimate of optimal stepsize.</span>
-<span class="sd">        num_effective_samples (int): The number of effective samples for the MCMC algorithm.</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mclmc_kernel</span>
+<span class="sd">        The kernel function used for the MCMC algorithm.</span>
+<span class="sd">    num_steps</span>
+<span class="sd">        The number of MCMC steps that will subsequently be run, after tuning.</span>
+<span class="sd">    state</span>
+<span class="sd">        The initial state of the MCMC algorithm.</span>
+<span class="sd">    rng_key</span>
+<span class="sd">        The random number generator key.</span>
+<span class="sd">    frac_tune1</span>
+<span class="sd">        The fraction of tuning for the first step of the adaptation.</span>
+<span class="sd">    frac_tune2</span>
+<span class="sd">        The fraction of tuning for the second step of the adaptation.</span>
+<span class="sd">    frac_tune3</span>
+<span class="sd">        The fraction of tuning for the third step of the adaptation.</span>
+<span class="sd">    desired_energy_va</span>
+<span class="sd">        The desired energy variance for the MCMC algorithm.</span>
+<span class="sd">    trust_in_estimate</span>
+<span class="sd">        The trust in the estimate of optimal stepsize.</span>
+<span class="sd">    num_effective_samples</span>
+<span class="sd">        The number of effective samples for the MCMC algorithm.</span>
 
-<span class="sd">    Returns:</span>
-<span class="sd">        tuple: A tuple containing the final state of the MCMC algorithm and the final hyperparameters.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A tuple containing the final state of the MCMC algorithm and the final hyperparameters.</span>
 
-<span class="sd">    Raises:</span>
-<span class="sd">        None</span>
 
-<span class="sd">    Examples:</span>
+<span class="sd">    Examples</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    .. code::</span>
+
 <span class="sd">        # Define the kernel function</span>
 <span class="sd">        def kernel(x):</span>
 <span class="sd">            return x ** 2</span>
@@ -616,7 +629,8 @@ document.write(`
 
 
 <div class="viewcode-block" id="handle_nans"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.handle_nans">[docs]</a><span class="k">def</span> <span class="nf">handle_nans</span><span class="p">(</span><span class="n">previous_state</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">step_size_max</span><span class="p">,</span> <span class="n">kinetic_change</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;if there are nans, let&#39;s reduce the stepsize, and not update the state. The function returns the old state in this case.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;if there are nans, let&#39;s reduce the stepsize, and not update the state. The</span>
+<span class="sd">    function returns the old state in this case.&quot;&quot;&quot;</span>
 
     <span class="n">reduced_step_size</span> <span class="o">=</span> <span class="mf">0.8</span>
     <span class="n">p</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">next_state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>

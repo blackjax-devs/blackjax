@@ -40,7 +40,8 @@ Functions
    Implements tuning from section 3.1 from https://arxiv.org/pdf/1808.07730.pdf
    Computing a mass matrix to be used in HMC from particles.
    Given the particles covariance matrix, set all non-diagonal elements as zero,
-    take the inverse, and keep the diagonal.
+   take the inverse, and keep the diagonal.
+
    :rtype: A mass Matrix
 
 

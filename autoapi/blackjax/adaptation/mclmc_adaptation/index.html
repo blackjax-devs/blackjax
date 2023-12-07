@@ -355,8 +355,6 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.L"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.L</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.step_size"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.step_size</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.L</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.step_size</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size"><code class="docutils literal notranslate"><span class="pre">mclmc_find_L_and_step_size()</span></code></a></li>
@@ -407,7 +405,7 @@ document.write(`
 <td><p>determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.mclmc_adaptation.handle_nans" title="blackjax.adaptation.mclmc_adaptation.handle_nans"><code class="xref py py-obj docutils literal notranslate"><span class="pre">handle_nans</span></code></a>(previous_state, next_state, step_size, ...)</p></td>
-<td><p>if there are nans, let's reduce the stepsize, and not update the state. The function returns the old state in this case.</p></td>
+<td><p>if there are nans, let's reduce the stepsize, and not update the state. The</p></td>
 </tr>
 </tbody>
 </table>
@@ -415,36 +413,20 @@ document.write(`
 <dt class="sig sig-object py" id="blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MCLMCAdaptationState</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_adaptation.html#MCLMCAdaptationState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState" title="Permalink to this definition">#</a></dt>
 <dd><p>Represents the tunable parameters for MCLMC adaptation.</p>
+<dl class="simple">
+<dt>L</dt><dd><p>The momentum decoherent rate for the MCLMC algorithm.</p>
+</dd>
+<dt>step_size</dt><dd><p>The step size used for the MCLMC algorithm.</p>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.L">
-<span class="sig-name descname"><span class="pre">L</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_adaptation.html#MCLMCAdaptationState.L"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.L" title="Permalink to this definition">#</a></dt>
-<dd><p>The momentum decoherent rate for the MCLMC algorithm.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)">float</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.step_size">
-<span class="sig-name descname"><span class="pre">step_size</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_adaptation.html#MCLMCAdaptationState.step_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.step_size" title="Permalink to this definition">#</a></dt>
-<dd><p>The step size used for the MCLMC algorithm.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)">float</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id0">
-<span class="sig-name descname"><span class="pre">L</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_adaptation.html#MCLMCAdaptationState.L"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">L</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_adaptation.html#MCLMCAdaptationState.L"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.L" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="id1">
-<span class="sig-name descname"><span class="pre">step_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_adaptation.html#MCLMCAdaptationState.step_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id1" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.step_size">
+<span class="sig-name descname"><span class="pre">step_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_adaptation.html#MCLMCAdaptationState.step_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.step_size" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -456,53 +438,48 @@ document.write(`
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mclmc_kernel</strong> (<em>callable</em>) – The kernel function used for the MCMC algorithm.</p></li>
-<li><p><strong>num_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – The number of MCMC steps that will subsequently be run, after tuning.</p></li>
-<li><p><strong>state</strong> (<em>MCMCState</em>) – The initial state of the MCMC algorithm.</p></li>
-<li><p><strong>rng_key</strong> (<em>jax.random.PRNGKey</em>) – The random number generator key.</p></li>
-<li><p><strong>frac_tune1</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The fraction of tuning for the first step of the adaptation.</p></li>
-<li><p><strong>frac_tune2</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The fraction of tuning for the second step of the adaptation.</p></li>
-<li><p><strong>frac_tune3</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The fraction of tuning for the third step of the adaptation.</p></li>
-<li><p><strong>desired_energy_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The desired energy variance for the MCMC algorithm.</p></li>
-<li><p><strong>trust_in_estimate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – The trust in the estimate of optimal stepsize.</p></li>
-<li><p><strong>num_effective_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – The number of effective samples for the MCMC algorithm.</p></li>
+<li><p><strong>mclmc_kernel</strong> – The kernel function used for the MCMC algorithm.</p></li>
+<li><p><strong>num_steps</strong> – The number of MCMC steps that will subsequently be run, after tuning.</p></li>
+<li><p><strong>state</strong> – The initial state of the MCMC algorithm.</p></li>
+<li><p><strong>rng_key</strong> – The random number generator key.</p></li>
+<li><p><strong>frac_tune1</strong> – The fraction of tuning for the first step of the adaptation.</p></li>
+<li><p><strong>frac_tune2</strong> – The fraction of tuning for the second step of the adaptation.</p></li>
+<li><p><strong>frac_tune3</strong> – The fraction of tuning for the third step of the adaptation.</p></li>
+<li><p><strong>desired_energy_va</strong> – The desired energy variance for the MCMC algorithm.</p></li>
+<li><p><strong>trust_in_estimate</strong> – The trust in the estimate of optimal stepsize.</p></li>
+<li><p><strong>num_effective_samples</strong> – The number of effective samples for the MCMC algorithm.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>A tuple containing the final state of the MCMC algorithm and the final hyperparameters.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)">tuple</a></p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>None</strong> – </p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<p># Define the kernel function
-def kernel(x):</p>
-<blockquote>
-<div><p>return x ** 2</p>
-</div></blockquote>
-<p># Define the initial state
-initial_state = MCMCState(position=0, momentum=1)</p>
-<p># Generate a random number generator key
-rng_key = jax.random.PRNGKey(0)</p>
-<p># Find the optimal parameters for the MCLMC algorithm
-final_state, final_params = mclmc_find_L_and_step_size(</p>
-<blockquote>
-<div><p>mclmc_kernel=kernel,
-num_steps=1000,
-state=initial_state,
-rng_key=rng_key,
-frac_tune1=0.2,
-frac_tune2=0.3,
-frac_tune3=0.1,
-desired_energy_var=1e-4,
-trust_in_estimate=2.0,
-num_effective_samples=200,</p>
-</div></blockquote>
-<p>)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define the kernel function</span>
+<span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">2</span>
+
+<span class="c1"># Define the initial state</span>
+<span class="n">initial_state</span> <span class="o">=</span> <span class="n">MCMCState</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Generate a random number generator key</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># Find the optimal parameters for the MCLMC algorithm</span>
+<span class="n">final_state</span><span class="p">,</span> <span class="n">final_params</span> <span class="o">=</span> <span class="n">mclmc_find_L_and_step_size</span><span class="p">(</span>
+    <span class="n">mclmc_kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span>
+    <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="n">initial_state</span><span class="p">,</span>
+    <span class="n">rng_key</span><span class="o">=</span><span class="n">rng_key</span><span class="p">,</span>
+    <span class="n">frac_tune1</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+    <span class="n">frac_tune2</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+    <span class="n">frac_tune3</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">desired_energy_var</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+    <span class="n">trust_in_estimate</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
+    <span class="n">num_effective_samples</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -520,7 +497,8 @@ num_effective_samples=200,</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.adaptation.mclmc_adaptation.handle_nans">
 <span class="sig-name descname"><span class="pre">handle_nans</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">previous_state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kinetic_change</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_adaptation.html#handle_nans"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_adaptation.handle_nans" title="Permalink to this definition">#</a></dt>
-<dd><p>if there are nans, let’s reduce the stepsize, and not update the state. The function returns the old state in this case.</p>
+<dd><p>if there are nans, let’s reduce the stepsize, and not update the state. The
+function returns the old state in this case.</p>
 </dd></dl>
 
 </section>
@@ -577,8 +555,6 @@ num_effective_samples=200,</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.L"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.L</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.step_size"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.step_size</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.L</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.step_size</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size"><code class="docutils literal notranslate"><span class="pre">mclmc_find_L_and_step_size()</span></code></a></li>

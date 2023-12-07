@@ -39,17 +39,14 @@ Functions
 
    Additional information on the MCLMC transition.
 
-   .. attribute:: transformed_position
-
-      The value of the samples after a transformation. This is typically a projection onto a lower dimensional subspace.
-
-   .. attribute:: logdensity
-
-      The log-density of the distribution at the current step of the MCLMC chain.
-
-   .. attribute:: energy_change
-
-      The difference in energy between the current and previous step.
+   transformed_position
+       The value of the samples after a transformation. This is typically a projection onto a lower dimensional subspace.
+   logdensity
+       The log-density of the distribution at the current step of the MCLMC chain.
+   kinetic_change
+       The difference in kinetic energy between the current and previous step.
+   energy_change
+       The difference in energy between the current and previous step.
 
    .. py:attribute:: transformed_position
       :type: blackjax.types.Array
@@ -81,8 +78,8 @@ Functions
 
    :param integrator: The symplectic integrator to use to integrate the Hamiltonian dynamics.
    :param transform: Value of the difference in energy above which we consider that the transition is divergent.
-   :param L: the momentum decoherence rate
-   :param step_size: step size of the integrator
+   :param L: the momentum decoherence rate.
+   :param step_size: step size of the integrator.
 
    :returns: * *A kernel that takes a rng_key and a Pytree that contains the current state*
              * *of the chain and that returns a new state of the chain along with*
@@ -119,8 +116,8 @@ Functions
 
    .. code::
 
-      step = jax.jit(mclmc.step)
-      new_state, info = step(rng_key, state)
+       step = jax.jit(mclmc.step)
+       new_state, info = step(rng_key, state)
 
    :param logdensity_fn: The log-density function we wish to draw samples from.
    :param transform: A function to perform on the samples drawn from the target distribution

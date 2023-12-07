@@ -414,10 +414,8 @@ used within SMC, based on particles.</p>
 <span class="sig-name descname"><span class="pre">mass_matrix_from_particles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">particles</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../../_modules/blackjax/smc/tuning/from_particles.html#mass_matrix_from_particles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.tuning.from_particles.mass_matrix_from_particles" title="Permalink to this definition">#</a></dt>
 <dd><p>Implements tuning from section 3.1 from <a class="reference external" href="https://arxiv.org/pdf/1808.07730.pdf">https://arxiv.org/pdf/1808.07730.pdf</a>
 Computing a mass matrix to be used in HMC from particles.
-Given the particles covariance matrix, set all non-diagonal elements as zero,</p>
-<blockquote>
-<div><p>take the inverse, and keep the diagonal.</p>
-</div></blockquote>
+Given the particles covariance matrix, set all non-diagonal elements as zero,
+take the inverse, and keep the diagonal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>A mass Matrix</p>
