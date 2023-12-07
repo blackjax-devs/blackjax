@@ -22,7 +22,7 @@ from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 class SMCState(NamedTuple):
     """State of the SMC sampler.
 
-    Particles must be a ArrayTree, each leave represents a variable from the posterior, 
+    Particles must be a ArrayTree, each leave represents a variable from the posterior,
     being an array of size `(n_particles, ...)`.
     Examples (three particles):
         - Single univariate posterior:
