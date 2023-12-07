@@ -14,10 +14,11 @@
 """All things solving for adaptive tempering."""
 
 import jax
+import jax.numpy as jnp
 import numpy as np
 
 
-def dichotomy(fun, _delta0, min_delta, max_delta, eps=1e-4, max_iter=100):
+def dichotomy(fun, min_delta, max_delta, eps=1e-4, max_iter=100):
     """Solves for delta by dichotomy.
 
     If max_delta is such that fun(max_delta) > 0, then we assume that max_delta
@@ -57,8 +58,6 @@ def dichotomy(fun, _delta0, min_delta, max_delta, eps=1e-4, max_iter=100):
         return i + 1, a, b, f_a, f_b
 
     def cond(carry):
-        import jax.numpy as jnp
-
         i, a, b, f_a, f_b = carry
         return jnp.logical_and(i < max_iter, f_a - f_b > eps)
 
