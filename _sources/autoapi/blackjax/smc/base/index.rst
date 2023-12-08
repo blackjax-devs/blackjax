@@ -38,16 +38,16 @@ Functions
    being an array of size `(n_particles, ...)`.
 
    Examples (three particles):
-   - Single univariate posterior:
-       [ Array([[1.], [1.2], [3.4]]) ]
-   - Single bivariate  posterior:
-       [ Array([[1,2], [3,4], [5,6]]) ]
-   - Two variables, each univariate:
-       [ Array([[1.], [1.2], [3.4]]),
-       Array([[50.], [51], [55]]) ]
-   - Two variables, first one bivariate, second one 4-variate:
-       [ Array([[1., 2.], [1.2, 0.5], [3.4, 50]]),
-       Array([[50., 51., 52., 51], [51., 52., 52. ,54.], [55., 60, 60, 70]]) ]
+       - Single univariate posterior:
+           [ Array([[1.], [1.2], [3.4]]) ]
+       - Single bivariate  posterior:
+           [ Array([[1,2], [3,4], [5,6]]) ]
+       - Two variables, each univariate:
+           [ Array([[1.], [1.2], [3.4]]),
+           Array([[50.], [51], [55]]) ]
+       - Two variables, first one bivariate, second one 4-variate:
+           [ Array([[1., 2.], [1.2, 0.5], [3.4, 50]]),
+           Array([[50., 51., 52., 51], [51., 52., 52. ,54.], [55., 60, 60, 70]]) ]
 
    .. py:attribute:: particles
       :type: blackjax.types.ArrayTree

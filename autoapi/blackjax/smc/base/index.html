@@ -416,12 +416,13 @@ document.write(`
 <dd><p>State of the SMC sampler.</p>
 <p>Particles must be a ArrayTree, each leave represents a variable from the posterior,
 being an array of size <cite>(n_particles, …)</cite>.</p>
-<p>Examples (three particles):
-- Single univariate posterior:</p>
-<blockquote>
-<div><p>[ Array([[1.], [1.2], [3.4]]) ]</p>
-</div></blockquote>
-<ul class="simple">
+<dl class="simple">
+<dt>Examples (three particles):</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>Single univariate posterior:</dt><dd><p>[ Array([[1.], [1.2], [3.4]]) ]</p>
+</dd>
+</dl>
+</li>
 <li><dl class="simple">
 <dt>Single bivariate  posterior:</dt><dd><p>[ Array([[1,2], [3,4], [5,6]]) ]</p>
 </dd>
@@ -440,6 +441,8 @@ Array([[50., 51., 52., 51], [51., 52., 52. ,54.], [55., 60, 60, 70]]) ]</p>
 </dl>
 </li>
 </ul>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.smc.base.SMCState.particles">
 <span class="sig-name descname"><span class="pre">particles</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.ArrayTree</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCState.particles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCState.particles" title="Permalink to this definition">#</a></dt>
