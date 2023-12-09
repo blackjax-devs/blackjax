@@ -360,6 +360,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">jax.tree_util</span> <span class="kn">import</span> <span class="n">tree_leaves</span>
 
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">Info</span><span class="p">,</span> <span class="n">State</span>
+<span class="kn">from</span> <span class="nn">blackjax.progress_bar</span> <span class="kn">import</span> <span class="n">progress_bar_scan</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 
@@ -495,6 +496,7 @@ document.write(`
     <span class="n">initial_state_or_position</span><span class="p">,</span>
     <span class="n">inference_algorithm</span><span class="p">,</span>
     <span class="n">num_steps</span><span class="p">,</span>
+    <span class="n">progress_bar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">State</span><span class="p">,</span> <span class="n">State</span><span class="p">,</span> <span class="n">Info</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper to run an inference algorithm.</span>
 
@@ -522,16 +524,22 @@ document.write(`
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
         <span class="c1"># We assume initial_state is already in the right format.</span>
         <span class="n">initial_state</span> <span class="o">=</span> <span class="n">initial_state_or_position</span>
-    <span class="n">initial_state</span> <span class="o">=</span> <span class="n">initial_state_or_position</span>
 
     <span class="n">keys</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
 
     <span class="nd">@jit</span>
-    <span class="k">def</span> <span class="nf">one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">xs</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">xs</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">inference_algorithm</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
 
-    <span class="n">final_state</span><span class="p">,</span> <span class="p">(</span><span class="n">state_history</span><span class="p">,</span> <span class="n">info_history</span><span class="p">)</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">progress_bar</span><span class="p">:</span>
+        <span class="n">one_step</span> <span class="o">=</span> <span class="n">progress_bar_scan</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)(</span><span class="n">_one_step</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">one_step</span> <span class="o">=</span> <span class="n">_one_step</span>
+
+    <span class="n">xs</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="n">keys</span><span class="p">)</span>
+    <span class="n">final_state</span><span class="p">,</span> <span class="p">(</span><span class="n">state_history</span><span class="p">,</span> <span class="n">info_history</span><span class="p">)</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">one_step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">final_state</span><span class="p">,</span> <span class="n">state_history</span><span class="p">,</span> <span class="n">info_history</span></div>
 </pre></div>
 

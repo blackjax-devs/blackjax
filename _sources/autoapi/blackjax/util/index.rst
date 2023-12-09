@@ -100,7 +100,7 @@ Functions
    :rtype: PyTree mapping each individual element of an arange array to elements in the PyTree.
 
 
-.. py:function:: run_inference_algorithm(rng_key, initial_state_or_position, inference_algorithm, num_steps) -> tuple[blackjax.base.State, blackjax.base.State, blackjax.base.Info]
+.. py:function:: run_inference_algorithm(rng_key, initial_state_or_position, inference_algorithm, num_steps, progress_bar: bool = False) -> tuple[blackjax.base.State, blackjax.base.State, blackjax.base.Info]
 
    Wrapper to run an inference algorithm.
 
