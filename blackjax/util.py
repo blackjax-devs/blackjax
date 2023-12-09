@@ -173,7 +173,6 @@ def run_inference_algorithm(
     except TypeError:
         # We assume initial_state is already in the right format.
         initial_state = initial_state_or_position
-    initial_state = initial_state_or_position
 
     keys = split(rng_key, num_steps)
 
