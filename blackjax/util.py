@@ -146,7 +146,7 @@ def run_inference_algorithm(
     inference_algorithm,
     num_steps,
     progress_bar: bool = False,
-    transform = lambda x: x,
+    transform=lambda x: x,
 ) -> tuple[State, State, Info]:
     """Wrapper to run an inference algorithm.
 
