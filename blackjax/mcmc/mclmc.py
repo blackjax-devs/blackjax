@@ -88,7 +88,6 @@ def build_kernel(logdensity_fn, integrator, transform):
             state, step_size
         )
 
-        dim = pytree_size(position)
 
         # Langevin-like noise
         momentum, dim = partially_refresh_momentum(
@@ -202,9 +201,4 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     dim = m.shape[0]
     nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
     z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
-    return unravel_fn((m + z) / jnp.sqrt(jnp.sum(jnp.square(m + z)))), dim
-
-
-
-
-
+    return unravel_fn((m + z) / jnp.linalg.norm(m + z)), dim
