@@ -6,6 +6,7 @@ import pytest
 
 import blackjax
 from blackjax.adaptation import window_adaptation
+from blackjax.util import run_inference_algorithm
 
 
 @pytest.mark.parametrize(
@@ -57,15 +58,12 @@ def test_chees_adaptation():
         optim=optax.adamw(learning_rate=0.5),
         num_steps=num_burnin_steps,
     )
-    kernel = blackjax.dynamic_hmc(logprob_fn, **parameters).step
+    algorithm = blackjax.dynamic_hmc(logprob_fn, **parameters)
 
-    def one_step(states, rng_key):
-        keys = jax.random.split(rng_key, num_chains)
-        states, infos = jax.vmap(kernel)(keys, states)
-        return states, infos
-
-    keys = jax.random.split(inference_key, num_results)
-    _, infos = jax.lax.scan(one_step, last_states, keys)
+    chain_keys = jax.random.split(inference_key, num_chains)
+    _, _, infos = jax.vmap(
+        lambda key, state: run_inference_algorithm(key, state, algorithm, num_results)
+    )(chain_keys, last_states)
 
     harmonic_mean = 1.0 / jnp.mean(1.0 / infos.acceptance_rate)
     np.testing.assert_allclose(harmonic_mean, 0.75, rtol=1e-1)

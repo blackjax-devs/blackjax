@@ -14,7 +14,6 @@
 """All things related to SMC effective sample size"""
 from typing import Callable
 
-import jax
 import jax.numpy as jnp
 import jax.scipy as jsp
 
@@ -30,7 +29,7 @@ def log_ess(log_weights: Array) -> float:
 
     Parameters
     ----------
-    log_weights: np.ndarray
+    log_weights: 1D Array
         log-weights of the sample
 
     Returns
@@ -51,13 +50,13 @@ def ess_solver(
     max_delta: float,
     root_solver: Callable,
 ):
-    """Build a Tempered SMC step.
+    """ESS solver for computing the next increment of SMC tempering.
 
     Parameters
     ----------
     logdensity_fn: Callable
         The log probability function we wish to sample from.
-    smc_state: SMCState
+    particles: SMCState
         Current state of the tempered SMC algorithm
     target_ess: float
         The relative ESS targeted for the next increment of SMC tempering
@@ -74,9 +73,8 @@ def ess_solver(
         The increment that solves for the target ESS
 
     """
-    n_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
-
     logprob = logdensity_fn(particles)
+    n_particles = logprob.shape[0]
     target_val = jnp.log(n_particles * target_ess)
 
     def fun_to_solve(delta):
@@ -85,5 +83,5 @@ def ess_solver(
 
         return ess_val - target_val
 
-    estimated_delta = root_solver(fun_to_solve, 0.0, 0.0, max_delta)
+    estimated_delta = root_solver(fun_to_solve, 0.0, max_delta)
     return estimated_delta

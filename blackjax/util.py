@@ -5,9 +5,10 @@ from typing import Union
 import jax.numpy as jnp
 from jax import jit, lax
 from jax.flatten_util import ravel_pytree
-from jax.random import normal
+from jax.random import normal, split
 from jax.tree_util import tree_leaves
 
+from blackjax.base import Info, State
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 
@@ -136,3 +137,48 @@ def index_pytree(input_pytree: ArrayLikeTree) -> ArrayTree:
     (dim_input,) = flat_input.shape
     array = jnp.arange(dim_input, dtype=flat_input.dtype)
     return unravel_fn(array)
+
+
+def run_inference_algorithm(
+    rng_key,
+    initial_state_or_position,
+    inference_algorithm,
+    num_steps,
+) -> tuple[State, State, Info]:
+    """Wrapper to run an inference algorithm.
+
+    Parameters
+    ----------
+    rng_key : PRNGKey
+        The random state used by JAX's random numbers generator.
+    initial_state_or_position: ArrayLikeTree
+        The initial state OR the initial position of the inference algorithm. If an initial position
+        is passed in, the function will automatically convert it into an initial state.
+    inference_algorithm : Union[SamplingAlgorithm, VIAlgorithm]
+        One of blackjax's sampling algorithms or variational inference algorithms.
+    num_steps : int
+        Number of learning steps.
+
+    Returns
+    -------
+    Tuple[State, State, Info]
+        1. The final state of the inference algorithm.
+        2. The history of states of the inference algorithm.
+        3. The history of the info of the inference algorithm.
+    """
+    try:
+        initial_state = inference_algorithm.init(initial_state_or_position)
+    except TypeError:
+        # We assume initial_state is already in the right format.
+        initial_state = initial_state_or_position
+    initial_state = initial_state_or_position
+
+    keys = split(rng_key, num_steps)
+
+    @jit
+    def one_step(state, rng_key):
+        state, info = inference_algorithm.step(rng_key, state)
+        return state, (state, info)
+
+    final_state, (state_history, info_history) = lax.scan(one_step, initial_state, keys)
+    return final_state, state_history, info_history

@@ -20,20 +20,22 @@ from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 
 class SMCState(NamedTuple):
-    """State of the SMC sampler
-    Particles must be a ArrayTree, each leave represents
-    a variable from the posterior, being an array of size `(n_particles, ...)`.
+    """State of the SMC sampler.
+
+    Particles must be a ArrayTree, each leave represents a variable from the posterior,
+    being an array of size `(n_particles, ...)`.
+
     Examples (three particles):
         - Single univariate posterior:
             [ Array([[1.], [1.2], [3.4]]) ]
         - Single bivariate  posterior:
-            [Array([[1,2], [3,4], [5,6]])]
+            [ Array([[1,2], [3,4], [5,6]]) ]
         - Two variables, each univariate:
             [ Array([[1.], [1.2], [3.4]]),
             Array([[50.], [51], [55]]) ]
         - Two variables, first one bivariate, second one 4-variate:
             [ Array([[1., 2.], [1.2, 0.5], [3.4, 50]]),
-            Array([[50., 51., 52., 51], [51., 52., 52. ,54.], [55., 60, 60, 70]])]
+            Array([[50., 51., 52., 51], [51., 52., 52. ,54.], [55., 60, 60, 70]]) ]
     """
 
     particles: ArrayTree
@@ -43,14 +45,13 @@ class SMCState(NamedTuple):
 class SMCInfo(NamedTuple):
     """Additional information on the tempered SMC step.
 
-    proposals: PyTree
-        The particles that were proposed by the MCMC pass.
     ancestors: Array
         The index of the particles proposed by the MCMC pass that were selected
         by the resampling step.
     log_likelihood_increment: float
         The log-likelihood increment due to the current step of the SMC algorithm.
-
+    update_info: NamedTuple
+        Additional information returned by the update function.
     """
 
     ancestors: Array
@@ -70,18 +71,18 @@ def step(
     rng_key: PRNGKey,
     state: SMCState,
     update_fn: Callable,
-    weigh_fn: Callable,
+    weight_fn: Callable,
     resample_fn: Callable,
     num_resampled: Optional[int] = None,
 ) -> tuple[SMCState, SMCInfo]:
     """General SMC sampling step.
 
-    `update_fn` here corresponds to the Markov kernel $M_{t+1}$, and `weigh_fn`
+    `update_fn` here corresponds to the Markov kernel $M_{t+1}$, and `weight_fn`
     corresponds to the potential function $G_t$. We first use `update_fn` to
     generate new particles from the current ones, weigh these particles using
-    `weigh_fn` and resample them with `resample_fn`.
+    `weight_fn` and resample them with `resample_fn`.
 
-    The `update_fn` and `weigh_fn` functions must be batched by the called either
+    The `update_fn` and `weight_fn` functions must be batched by the called either
     using `jax.vmap` or `jax.pmap`.
 
     In Feynman-Kac terms, the algorithm goes roughly as follows:
@@ -89,7 +90,7 @@ def step(
     .. code::
 
         M_t: update_fn
-        G_t: weigh_fn
+        G_t: weight_fn
         R_t: resample_fn
         idx = R_t(weights)
         x_t = x_tm1[idx]
@@ -106,7 +107,7 @@ def step(
     update_fn
         Function that takes an array of keys and particles and returns
         new particles.
-    weigh_fn
+    weight_fn
         Function that assigns a weight to the particles.
     resample_fn
         Function that resamples the particles.
@@ -138,7 +139,7 @@ def step(
     keys = jax.random.split(updating_key, num_resampled)
     particles, update_info = update_fn(keys, particles)
 
-    log_weights = weigh_fn(particles)
+    log_weights = weight_fn(particles)
     logsum_weights = jax.scipy.special.logsumexp(log_weights)
     normalizing_constant = logsum_weights - jnp.log(num_particles)
     weights = jnp.exp(log_weights - logsum_weights)

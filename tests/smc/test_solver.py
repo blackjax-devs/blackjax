@@ -43,7 +43,7 @@ class SolverTest(chex.TestCase):
     )
     def test_resampling_methods(self, fun_to_test_with_expected_res, solving_method):
         fun_to_test, expected_res = fun_to_test_with_expected_res
-        res = jax.jit(solving_method, static_argnums=0)(fun_to_test, 0.5, 0.0, 1.0)
+        res = jax.jit(solving_method, static_argnums=0)(fun_to_test, 0.0, 1.0)
         np.testing.assert_allclose(res, expected_res, atol=1e-3, equal_nan=True)
 
 
