@@ -9,6 +9,7 @@ from jax.random import normal, split
 from jax.tree_util import tree_leaves
 
 from blackjax.base import Info, State
+from blackjax.progress_bar import progress_bar_scan
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 
@@ -144,6 +145,7 @@ def run_inference_algorithm(
     initial_state_or_position,
     inference_algorithm,
     num_steps,
+    progress_bar: bool = False,
 ) -> tuple[State, State, Info]:
     """Wrapper to run an inference algorithm.
 
@@ -171,14 +173,20 @@ def run_inference_algorithm(
     except TypeError:
         # We assume initial_state is already in the right format.
         initial_state = initial_state_or_position
-    initial_state = initial_state_or_position
 
     keys = split(rng_key, num_steps)
 
     @jit
-    def one_step(state, rng_key):
+    def _one_step(state, xs):
+        _, rng_key = xs
         state, info = inference_algorithm.step(rng_key, state)
         return state, (state, info)
 
-    final_state, (state_history, info_history) = lax.scan(one_step, initial_state, keys)
+    if progress_bar:
+        one_step = progress_bar_scan(num_steps)(_one_step)
+    else:
+        one_step = _one_step
+
+    xs = (jnp.arange(num_steps), keys)
+    final_state, (state_history, info_history) = lax.scan(one_step, initial_state, xs)
     return final_state, state_history, info_history
