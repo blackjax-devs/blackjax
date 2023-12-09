@@ -145,6 +145,7 @@ def run_inference_algorithm(
     initial_state_or_position,
     inference_algorithm,
     num_steps,
+    progress_bar: bool = False,
 ) -> tuple[State, State, Info]:
     """Wrapper to run an inference algorithm.
 
@@ -182,8 +183,11 @@ def run_inference_algorithm(
         state, info = inference_algorithm.step(rng_key, state)
         return state, (state, info)
 
-    one_step = progress_bar_scan(num_steps)(_one_step)
-    xs = (jnp.arange(num_steps), keys)
+    if progress_bar:
+        one_step = progress_bar_scan(num_steps)(_one_step)
+    else:
+        one_step = _one_step
 
+    xs = (jnp.arange(num_steps), keys)
     final_state, (state_history, info_history) = lax.scan(one_step, initial_state, xs)
     return final_state, state_history, info_history
