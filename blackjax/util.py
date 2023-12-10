@@ -146,6 +146,7 @@ def run_inference_algorithm(
     inference_algorithm,
     num_steps,
     progress_bar: bool = False,
+    transform=lambda x: x,
 ) -> tuple[State, State, Info]:
     """Wrapper to run an inference algorithm.
 
@@ -160,6 +161,8 @@ def run_inference_algorithm(
         One of blackjax's sampling algorithms or variational inference algorithms.
     num_steps : int
         Number of learning steps.
+    transform:
+        a transformation of the sequence of states to be returned. By default, the states are returned as is.
 
     Returns
     -------
@@ -180,7 +183,7 @@ def run_inference_algorithm(
     def _one_step(state, xs):
         _, rng_key = xs
         state, info = inference_algorithm.step(rng_key, state)
-        return state, (state, info)
+        return state, (transform(state), info)
 
     if progress_bar:
         one_step = progress_bar_scan(num_steps)(_one_step)
