@@ -161,6 +161,8 @@ def run_inference_algorithm(
         One of blackjax's sampling algorithms or variational inference algorithms.
     num_steps : int
         Number of learning steps.
+    transform:
+        a transformation of the sequence of states to be returned. By default, the states are returned as is.
 
     Returns
     -------
