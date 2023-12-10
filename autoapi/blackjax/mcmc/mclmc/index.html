@@ -353,7 +353,6 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.mclmc.MCLMCInfo"><code class="docutils literal notranslate"><span class="pre">MCLMCInfo</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.mclmc.MCLMCInfo.transformed_position"><code class="docutils literal notranslate"><span class="pre">MCLMCInfo.transformed_position</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.mclmc.MCLMCInfo.logdensity"><code class="docutils literal notranslate"><span class="pre">MCLMCInfo.logdensity</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.mclmc.MCLMCInfo.kinetic_change"><code class="docutils literal notranslate"><span class="pre">MCLMCInfo.kinetic_change</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.mclmc.MCLMCInfo.energy_change"><code class="docutils literal notranslate"><span class="pre">MCLMCInfo.energy_change</span></code></a></li>
@@ -406,7 +405,7 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.mclmc.init" title="blackjax.mcmc.mclmc.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(x_initial, logdensity_fn, rng_key)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.mclmc.build_kernel" title="blackjax.mcmc.mclmc.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(logdensity_fn, integrator, transform)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.mclmc.build_kernel" title="blackjax.mcmc.mclmc.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(logdensity_fn, integrator)</p></td>
 <td><p>Build a HMC kernel.</p></td>
 </tr>
 </tbody>
@@ -416,8 +415,6 @@ document.write(`
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MCLMCInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/mclmc.html#MCLMCInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.mclmc.MCLMCInfo" title="Permalink to this definition">#</a></dt>
 <dd><p>Additional information on the MCLMC transition.</p>
 <dl class="simple">
-<dt>transformed_position</dt><dd><p>The value of the samples after a transformation. This is typically a projection onto a lower dimensional subspace.</p>
-</dd>
 <dt>logdensity</dt><dd><p>The log-density of the distribution at the current step of the MCLMC chain.</p>
 </dd>
 <dt>kinetic_change</dt><dd><p>The difference in kinetic energy between the current and previous step.</p>
@@ -425,11 +422,6 @@ document.write(`
 <dt>energy_change</dt><dd><p>The difference in energy between the current and previous step.</p>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.mclmc.MCLMCInfo.transformed_position">
-<span class="sig-name descname"><span class="pre">transformed_position</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/mclmc.html#MCLMCInfo.transformed_position"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.mclmc.MCLMCInfo.transformed_position" title="Permalink to this definition">#</a></dt>
-<dd></dd></dl>
-
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.mclmc.MCLMCInfo.logdensity">
 <span class="sig-name descname"><span class="pre">logdensity</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/mclmc.html#MCLMCInfo.logdensity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.mclmc.MCLMCInfo.logdensity" title="Permalink to this definition">#</a></dt>
@@ -454,13 +446,12 @@ document.write(`
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.mclmc.build_kernel">
-<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/mclmc.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.mclmc.build_kernel" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrator</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/mclmc.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.mclmc.build_kernel" title="Permalink to this definition">#</a></dt>
 <dd><p>Build a HMC kernel.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>integrator</strong> – The symplectic integrator to use to integrate the Hamiltonian dynamics.</p></li>
-<li><p><strong>transform</strong> – Value of the difference in energy above which we consider that the transition is divergent.</p></li>
 <li><p><strong>L</strong> – the momentum decoherence rate.</p></li>
 <li><p><strong>step_size</strong> – step size of the integrator.</p></li>
 </ul>
@@ -489,7 +480,6 @@ users only need to pass <cite>blackjax.mclmc</cite> to SMC, adaptation, etc. alg
 <p>A new mclmc kernel can be initialized and used with the following code:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mclmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mclmc</span><span class="o">.</span><span class="n">mclmc</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span>
-    <span class="n">transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>
     <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">,</span>
     <span class="n">step_size</span><span class="o">=</span><span class="n">step_size</span>
 <span class="p">)</span>
@@ -506,7 +496,6 @@ users only need to pass <cite>blackjax.mclmc</cite> to SMC, adaptation, etc. alg
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>logdensity_fn</strong> – The log-density function we wish to draw samples from.</p></li>
-<li><p><strong>transform</strong> – A function to perform on the samples drawn from the target distribution</p></li>
 <li><p><strong>L</strong> – the momentum decoherence rate</p></li>
 <li><p><strong>step_size</strong> – step size of the integrator</p></li>
 <li><p><strong>integrator</strong> – an integrator. We recommend using the default here.</p></li>
@@ -580,7 +569,6 @@ users only need to pass <cite>blackjax.mclmc</cite> to SMC, adaptation, etc. alg
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.mclmc.MCLMCInfo"><code class="docutils literal notranslate"><span class="pre">MCLMCInfo</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.mclmc.MCLMCInfo.transformed_position"><code class="docutils literal notranslate"><span class="pre">MCLMCInfo.transformed_position</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.mclmc.MCLMCInfo.logdensity"><code class="docutils literal notranslate"><span class="pre">MCLMCInfo.logdensity</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.mclmc.MCLMCInfo.kinetic_change"><code class="docutils literal notranslate"><span class="pre">MCLMCInfo.kinetic_change</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.mclmc.MCLMCInfo.energy_change"><code class="docutils literal notranslate"><span class="pre">MCLMCInfo.energy_change</span></code></a></li>

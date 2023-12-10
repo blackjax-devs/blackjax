@@ -39,19 +39,12 @@ Functions
 
    Additional information on the MCLMC transition.
 
-   transformed_position
-       The value of the samples after a transformation. This is typically a projection onto a lower dimensional subspace.
    logdensity
        The log-density of the distribution at the current step of the MCLMC chain.
    kinetic_change
        The difference in kinetic energy between the current and previous step.
    energy_change
        The difference in energy between the current and previous step.
-
-   .. py:attribute:: transformed_position
-      :type: blackjax.types.Array
-
-      
 
    .. py:attribute:: logdensity
       :type: float
@@ -72,12 +65,11 @@ Functions
 .. py:function:: init(x_initial: blackjax.types.ArrayLike, logdensity_fn, rng_key)
 
 
-.. py:function:: build_kernel(logdensity_fn, integrator, transform)
+.. py:function:: build_kernel(logdensity_fn, integrator)
 
    Build a HMC kernel.
 
    :param integrator: The symplectic integrator to use to integrate the Hamiltonian dynamics.
-   :param transform: Value of the difference in energy above which we consider that the transition is divergent.
    :param L: the momentum decoherence rate.
    :param step_size: step size of the integrator.
 
@@ -105,7 +97,6 @@ Functions
 
        mclmc = blackjax.mcmc.mclmc.mclmc(
            logdensity_fn=logdensity_fn,
-           transform=lambda x: x,
            L=L,
            step_size=step_size
        )
@@ -120,7 +111,6 @@ Functions
        new_state, info = step(rng_key, state)
 
    :param logdensity_fn: The log-density function we wish to draw samples from.
-   :param transform: A function to perform on the samples drawn from the target distribution
    :param L: the momentum decoherence rate
    :param step_size: step size of the integrator
    :param integrator: an integrator. We recommend using the default here.

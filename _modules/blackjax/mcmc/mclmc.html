@@ -372,7 +372,7 @@ document.write(`
 
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.mcmc.integrators</span> <span class="kn">import</span> <span class="n">IntegratorState</span><span class="p">,</span> <span class="n">noneuclidean_mclachlan</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_unit_vector</span><span class="p">,</span> <span class="n">pytree_size</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MCLMCInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;mclmc&quot;</span><span class="p">]</span>
@@ -382,8 +382,6 @@ document.write(`
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Additional information on the MCLMC transition.</span>
 
-<span class="sd">    transformed_position</span>
-<span class="sd">        The value of the samples after a transformation. This is typically a projection onto a lower dimensional subspace.</span>
 <span class="sd">    logdensity</span>
 <span class="sd">        The log-density of the distribution at the current step of the MCLMC chain.</span>
 <span class="sd">    kinetic_change</span>
@@ -392,7 +390,6 @@ document.write(`
 <span class="sd">        The difference in energy between the current and previous step.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="MCLMCInfo.transformed_position"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mclmc/index.html#blackjax.mcmc.mclmc.MCLMCInfo.transformed_position">[docs]</a>    <span class="n">transformed_position</span><span class="p">:</span> <span class="n">Array</span></div>
 <div class="viewcode-block" id="MCLMCInfo.logdensity"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mclmc/index.html#blackjax.mcmc.mclmc.MCLMCInfo.logdensity">[docs]</a>    <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span></div>
 <div class="viewcode-block" id="MCLMCInfo.kinetic_change"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mclmc/index.html#blackjax.mcmc.mclmc.MCLMCInfo.kinetic_change">[docs]</a>    <span class="n">kinetic_change</span><span class="p">:</span> <span class="nb">float</span></div>
 <div class="viewcode-block" id="MCLMCInfo.energy_change"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mclmc/index.html#blackjax.mcmc.mclmc.MCLMCInfo.energy_change">[docs]</a>    <span class="n">energy_change</span><span class="p">:</span> <span class="nb">float</span></div></div>
@@ -409,15 +406,13 @@ document.write(`
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mclmc/index.html#blackjax.mcmc.mclmc.build_kernel">[docs]</a><span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">integrator</span><span class="p">,</span> <span class="n">transform</span><span class="p">):</span>
+<div class="viewcode-block" id="build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mclmc/index.html#blackjax.mcmc.mclmc.build_kernel">[docs]</a><span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">integrator</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a HMC kernel.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    integrator</span>
 <span class="sd">        The symplectic integrator to use to integrate the Hamiltonian dynamics.</span>
-<span class="sd">    transform</span>
-<span class="sd">        Value of the difference in energy above which we consider that the transition is divergent.</span>
 <span class="sd">    L</span>
 <span class="sd">        the momentum decoherence rate.</span>
 <span class="sd">    step_size</span>
@@ -449,7 +444,6 @@ document.write(`
         <span class="k">return</span> <span class="n">IntegratorState</span><span class="p">(</span>
             <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensitygrad</span>
         <span class="p">),</span> <span class="n">MCLMCInfo</span><span class="p">(</span>
-            <span class="n">transformed_position</span><span class="o">=</span><span class="n">transform</span><span class="p">(</span><span class="n">position</span><span class="p">),</span>
             <span class="n">logdensity</span><span class="o">=</span><span class="n">logdensity</span><span class="p">,</span>
             <span class="n">energy_change</span><span class="o">=</span><span class="n">kinetic_change</span> <span class="o">-</span> <span class="n">logdensity</span> <span class="o">+</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span>
             <span class="n">kinetic_change</span><span class="o">=</span><span class="n">kinetic_change</span> <span class="o">*</span> <span class="p">(</span><span class="n">dim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
@@ -476,7 +470,6 @@ document.write(`
 
 <span class="sd">        mclmc = blackjax.mcmc.mclmc.mclmc(</span>
 <span class="sd">            logdensity_fn=logdensity_fn,</span>
-<span class="sd">            transform=lambda x: x,</span>
 <span class="sd">            L=L,</span>
 <span class="sd">            step_size=step_size</span>
 <span class="sd">        )</span>
@@ -494,8 +487,6 @@ document.write(`
 <span class="sd">    ----------</span>
 <span class="sd">    logdensity_fn</span>
 <span class="sd">        The log-density function we wish to draw samples from.</span>
-<span class="sd">    transform</span>
-<span class="sd">        A function to perform on the samples drawn from the target distribution</span>
 <span class="sd">    L</span>
 <span class="sd">        the momentum decoherence rate</span>
 <span class="sd">    step_size</span>
@@ -516,11 +507,10 @@ document.write(`
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">L</span><span class="p">,</span>
         <span class="n">step_size</span><span class="p">,</span>
-        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">),</span>
         <span class="n">integrator</span><span class="o">=</span><span class="n">noneuclidean_mclachlan</span><span class="p">,</span>
         <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">integrator</span><span class="p">,</span> <span class="n">transform</span><span class="p">)</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">integrator</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">update_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
