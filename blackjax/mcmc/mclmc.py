@@ -21,7 +21,7 @@ from jax.random import normal
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.integrators import IntegratorState, noneuclidean_mclachlan
-from blackjax.types import Array, ArrayLike, PRNGKey
+from blackjax.types import ArrayLike, PRNGKey
 from blackjax.util import generate_unit_vector, pytree_size
 
 __all__ = ["MCLMCInfo", "init", "build_kernel", "mclmc"]

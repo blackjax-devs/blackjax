@@ -96,7 +96,6 @@ class LinearRegressionTest(chex.TestCase):
             rng_key=tune_key,
         )
 
-
         sampling_alg = blackjax.mclmc(
             logdensity_fn,
             L=blackjax_mclmc_sampler_params.L,
