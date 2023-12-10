@@ -84,7 +84,6 @@ class LinearRegressionTest(chex.TestCase):
         kernel = blackjax.mcmc.mclmc.build_kernel(
             logdensity_fn=logdensity_fn,
             integrator=blackjax.mcmc.integrators.noneuclidean_mclachlan,
-            transform=lambda x: x,
         )
 
         (
@@ -97,24 +96,21 @@ class LinearRegressionTest(chex.TestCase):
             rng_key=tune_key,
         )
 
-        keys = jax.random.split(run_key, num_steps)
-
         sampling_alg = blackjax.mclmc(
             logdensity_fn,
             L=blackjax_mclmc_sampler_params.L,
             step_size=blackjax_mclmc_sampler_params.step_size,
         )
 
-        _, blackjax_mclmc_result = jax.lax.scan(
-            f=lambda state, k: sampling_alg.step(
-                rng_key=k,
-                state=state,
-            ),
-            xs=keys,
-            init=blackjax_state_after_tuning,
+        _, samples, _ = run_inference_algorithm(
+            rng_key=run_key,
+            initial_state_or_position=blackjax_state_after_tuning,
+            inference_algorithm=sampling_alg,
+            num_steps=num_steps,
+            transform=lambda x: x.position,
         )
 
-        return blackjax_mclmc_result.transformed_position
+        return samples
 
     @parameterized.parameters(itertools.product(regression_test_cases, [True, False]))
     def test_window_adaptation(self, case, is_mass_matrix_diagonal):
