@@ -497,6 +497,7 @@ document.write(`
     <span class="n">inference_algorithm</span><span class="p">,</span>
     <span class="n">num_steps</span><span class="p">,</span>
     <span class="n">progress_bar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">State</span><span class="p">,</span> <span class="n">State</span><span class="p">,</span> <span class="n">Info</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper to run an inference algorithm.</span>
 
@@ -511,6 +512,8 @@ document.write(`
 <span class="sd">        One of blackjax&#39;s sampling algorithms or variational inference algorithms.</span>
 <span class="sd">    num_steps : int</span>
 <span class="sd">        Number of learning steps.</span>
+<span class="sd">    transform:</span>
+<span class="sd">        a transformation of the sequence of states to be returned. By default, the states are returned as is.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -531,7 +534,7 @@ document.write(`
     <span class="k">def</span> <span class="nf">_one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">xs</span><span class="p">):</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">xs</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">inference_algorithm</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">transform</span><span class="p">(</span><span class="n">state</span><span class="p">),</span> <span class="n">info</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">progress_bar</span><span class="p">:</span>
         <span class="n">one_step</span> <span class="o">=</span> <span class="n">progress_bar_scan</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)(</span><span class="n">_one_step</span><span class="p">)</span>

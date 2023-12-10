@@ -100,7 +100,7 @@ Functions
    :rtype: PyTree mapping each individual element of an arange array to elements in the PyTree.
 
 
-.. py:function:: run_inference_algorithm(rng_key, initial_state_or_position, inference_algorithm, num_steps, progress_bar: bool = False) -> tuple[blackjax.base.State, blackjax.base.State, blackjax.base.Info]
+.. py:function:: run_inference_algorithm(rng_key, initial_state_or_position, inference_algorithm, num_steps, progress_bar: bool = False, transform=lambda x: x) -> tuple[blackjax.base.State, blackjax.base.State, blackjax.base.Info]
 
    Wrapper to run an inference algorithm.
 
@@ -113,6 +113,7 @@ Functions
    :type inference_algorithm: Union[SamplingAlgorithm, VIAlgorithm]
    :param num_steps: Number of learning steps.
    :type num_steps: int
+   :param transform: a transformation of the sequence of states to be returned. By default, the states are returned as is.
 
    :returns:
 
