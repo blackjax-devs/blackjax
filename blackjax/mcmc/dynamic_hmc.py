@@ -12,18 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Dynamic HMC Kernel"""
-import jax
-
 from typing import Callable, NamedTuple
 
+import jax
 import jax.numpy as jnp
 
-from blackjax.base import SamplingAlgorithm
 import blackjax.mcmc.integrators as integrators
+from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.hmc import HMCInfo, HMCState
 from blackjax.mcmc.hmc import build_kernel as build_static_hmc_kernel
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
-
 
 __all__ = [
     "DynamicHMCState",
@@ -31,7 +29,6 @@ __all__ = [
     "build_kernel",
     "dynamic_hmc",
     "halton_sequence",
-    "generate_jitter_adjusted_num_step",
 ]
 
 
