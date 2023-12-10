@@ -307,7 +307,7 @@ def esh_dynamics_momentum_update_one_step(
     is large.
     """
     del is_last_call
-    
+
     flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
     flatten_momentum, _ = ravel_pytree(momentum)
     dims = flatten_momentum.shape[0]
