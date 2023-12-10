@@ -306,7 +306,8 @@ def esh_dynamics_momentum_update_one_step(
     There are no exponentials e^delta, which prevents overflows when the gradient norm
     is large.
     """
-
+    del is_last_call
+    
     flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
     flatten_momentum, _ = ravel_pytree(momentum)
     dims = flatten_momentum.shape[0]
@@ -324,11 +325,9 @@ def esh_dynamics_momentum_update_one_step(
         delta
         - jnp.log(2)
         + jnp.log(1 + momentum_proj + (1 - momentum_proj) * zeta**2)
-    )
+    ) * (dims - 1)
     if previous_kinetic_energy_change is not None:
         kinetic_energy_change += previous_kinetic_energy_change
-    if is_last_call:
-        kinetic_energy_change *= dims - 1
     return next_momentum, next_momentum, kinetic_energy_change
 
 
