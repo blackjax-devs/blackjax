@@ -8,7 +8,7 @@ import jax.numpy as jnp
 import numpy as np
 import optax
 
-import blackjax.mcmc.hmc as hmc
+import blackjax.mcmc.dynamic_hmc as dynamic_hmc
 import blackjax.optimizers.dual_averaging as dual_averaging
 from blackjax.adaptation.base import AdaptationInfo, AdaptationResults
 from blackjax.base import AdaptationAlgorithm
@@ -370,7 +370,7 @@ def chees_adaptation(
             next_random_arg_fn = lambda key: jax.random.split(key)[1]
             init_random_arg = key_init
         else:
-            jitter_gn = lambda i: _halton_sequence(
+            jitter_gn = lambda i: dynamic_hmc.halton_sequence(
                 i, np.ceil(np.log2(num_steps + max_sampling_steps))
             ) * jitter_amount + (1.0 - jitter_amount)
             next_random_arg_fn = lambda i: i + 1
@@ -382,7 +382,7 @@ def chees_adaptation(
                 dtype=int,
             )
 
-        step_fn = hmc.build_dynamic_kernel(
+        step_fn = dynamic_hmc.build_kernel(
             next_random_arg_fn=next_random_arg_fn,
             integration_steps_fn=integration_steps_fn,
         )
@@ -420,7 +420,7 @@ def chees_adaptation(
             )
 
         batch_init = jax.vmap(
-            lambda p: hmc.init_dynamic(p, logdensity_fn, init_random_arg)
+            lambda p: dynamic_hmc.init(p, logdensity_fn, init_random_arg)
         )
         init_states = batch_init(positions)
         init_adaptation_state = init(init_random_arg, step_size)
@@ -446,8 +446,3 @@ def chees_adaptation(
         return AdaptationResults(last_states, parameters), info
 
     return AdaptationAlgorithm(run)  # type: ignore[arg-type]
-
-
-def _halton_sequence(i, max_bits=10):
-    bit_masks = 2 ** jnp.arange(max_bits, dtype=i.dtype)
-    return jnp.einsum("i,i->", jnp.mod((i + 1) // bit_masks, 2), 0.5 / bit_masks)
