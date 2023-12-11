@@ -658,6 +658,7 @@ document.write(`
 <span class="sd">    There are no exponentials e^delta, which prevents overflows when the gradient norm</span>
 <span class="sd">    is large.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">del</span> <span class="n">is_last_call</span>
 
     <span class="n">flatten_grads</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">logdensity_grad</span><span class="p">)</span>
     <span class="n">flatten_momentum</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
@@ -676,11 +677,9 @@ document.write(`
         <span class="n">delta</span>
         <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">momentum_proj</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">momentum_proj</span><span class="p">)</span> <span class="o">*</span> <span class="n">zeta</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
-    <span class="p">)</span>
+    <span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">dims</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">previous_kinetic_energy_change</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">kinetic_energy_change</span> <span class="o">+=</span> <span class="n">previous_kinetic_energy_change</span>
-    <span class="k">if</span> <span class="n">is_last_call</span><span class="p">:</span>
-        <span class="n">kinetic_energy_change</span> <span class="o">*=</span> <span class="n">dims</span> <span class="o">-</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="n">next_momentum</span><span class="p">,</span> <span class="n">next_momentum</span><span class="p">,</span> <span class="n">kinetic_energy_change</span>
 
 
