@@ -2,11 +2,17 @@ import itertools
 
 import chex
 import jax
+import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest, parameterized
 
-from blackjax.mcmc.marginal_latent_gaussian import init_and_kernel
+from blackjax.mcmc.marginal_latent_gaussian import (
+    CovarianceSVD,
+    build_kernel,
+    generate_mean_shifted_logprob,
+    init,
+)
 
 
 class GaussianTest(chex.TestCase):
@@ -26,14 +32,16 @@ class GaussianTest(chex.TestCase):
 
         obs = jax.random.normal(key4, (D,))
         log_pdf = lambda x: stats.multivariate_normal.logpdf(x, obs, R)
-
+        if prior_mean is not None:
+            log_pdf = generate_mean_shifted_logprob(log_pdf, prior_mean, C)
+        
         DELTA = 50.0
-
-        init, step = init_and_kernel(log_pdf, C, mean=prior_mean)
-        step = jax.jit(step)
+        cov_svd = CovarianceSVD(*jnp.linalg.svd(C, hermitian=True))
+        _step = build_kernel(cov_svd)
+        step = jax.jit(lambda key, state, delta: _step(key, state, log_pdf, delta))
 
         init_x = np.zeros((D,))
-        init_state = init(init_x)
+        init_state = init(init_x, log_pdf, cov_svd.U_t)
 
         keys = jax.random.split(key5, n_samples)
 
