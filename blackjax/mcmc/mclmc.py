@@ -84,7 +84,7 @@ def build_kernel(logdensity_fn, integrator):
         )
 
         # Langevin-like noise
-        momentum, dim = partially_refresh_momentum(
+        momentum = partially_refresh_momentum(
             momentum=momentum, rng_key=rng_key, L=L, step_size=step_size
         )
 
@@ -93,8 +93,7 @@ def build_kernel(logdensity_fn, integrator):
         ), MCLMCInfo(
             logdensity=logdensity,
             energy_change=kinetic_change - logdensity + state.logdensity,
-            # TODO: Potential bug here, see #625
-            kinetic_change=kinetic_change * (dim - 1),
+            kinetic_change=kinetic_change,
         )
 
     return kernel
@@ -191,4 +190,4 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     dim = m.shape[0]
     nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
     z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
-    return unravel_fn((m + z) / jnp.linalg.norm(m + z)), dim
+    return unravel_fn((m + z) / jnp.linalg.norm(m + z))
