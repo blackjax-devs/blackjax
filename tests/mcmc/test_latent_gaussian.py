@@ -34,7 +34,7 @@ class GaussianTest(chex.TestCase):
         log_pdf = lambda x: stats.multivariate_normal.logpdf(x, obs, R)
         if prior_mean is not None:
             log_pdf = generate_mean_shifted_logprob(log_pdf, prior_mean, C)
-        
+
         DELTA = 50.0
         cov_svd = CovarianceSVD(*jnp.linalg.svd(C, hermitian=True))
         _step = build_kernel(cov_svd)

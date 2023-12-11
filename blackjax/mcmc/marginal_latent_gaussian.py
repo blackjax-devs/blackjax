@@ -246,6 +246,8 @@ class mgrad_gaussian:
                 raise ValueError("Either covariance or cov_svd must be provided.")
             U, Gamma, U_t = jnp.linalg.svd(covariance, hermitian=True)
             cov_svd = CovarianceSVD(U, Gamma, U_t)
+        else:
+            U, Gamma, U_t = cov_svd
 
         if mean is not None:
             logdensity_fn = generate_mean_shifted_logprob(
@@ -255,7 +257,7 @@ class mgrad_gaussian:
         kernel = cls.build_kernel(cov_svd)
 
         def init_fn(position: Array):
-            return init(position, logdensity_fn, cov_svd.U_t)
+            return init(position, logdensity_fn, U_t)
 
         def step_fn(rng_key: PRNGKey, state):
             return kernel(
