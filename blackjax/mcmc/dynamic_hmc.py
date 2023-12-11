@@ -165,7 +165,7 @@ class dynamic_hmc:
 
         def init_fn(position: ArrayLikeTree, rng_key: Array):
             # Note that rng_key here is not necessarily a PRNGKey, could be a Array that
-            # for generates a sequence of pseudo or quasi-random numbers (previously 
+            # for generates a sequence of pseudo or quasi-random numbers (previously
             # named as `random_generator_arg`)
             return cls.init(position, logdensity_fn, rng_key)
 
