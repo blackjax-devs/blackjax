@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
 
-import blackjax.mcmc.hmc as hmc
+import blackjax.mcmc.dynamic_hmc as dynamic_hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
@@ -304,13 +304,13 @@ class TrajectoryTest(chex.TestCase):
         num_step_fn = lambda key: jax.random.choice(
             key, unique_integration_steps, p=unique_probs
         )
-        kernel_factory = hmc.build_dynamic_kernel(integration_steps_fn=num_step_fn)
+        kernel_factory = dynamic_hmc.build_kernel(integration_steps_fn=num_step_fn)
 
         logprob = jax.scipy.stats.norm.logpdf
         hmc_kernel = lambda key, state: kernel_factory(
             key, state, logprob, **parameters
         )
-        init_state = hmc.init_dynamic(initial_position, logprob, num_step_key)
+        init_state = dynamic_hmc.init(initial_position, logprob, num_step_key)
 
         def one_step(state, rng_key):
             state, info = hmc_kernel(rng_key, state)
