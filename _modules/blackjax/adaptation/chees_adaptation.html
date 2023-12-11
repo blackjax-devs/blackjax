@@ -180,6 +180,7 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/barker/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.barker</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.diffusions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.dynamic_hmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.elliptical_slice</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/ghmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.ghmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/hmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.hmc</span></code></a></li>
@@ -359,7 +360,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">optax</span>
 
-<span class="kn">import</span> <span class="nn">blackjax.mcmc.hmc</span> <span class="k">as</span> <span class="nn">hmc</span>
+<span class="kn">import</span> <span class="nn">blackjax.mcmc.dynamic_hmc</span> <span class="k">as</span> <span class="nn">dynamic_hmc</span>
 <span class="kn">import</span> <span class="nn">blackjax.optimizers.dual_averaging</span> <span class="k">as</span> <span class="nn">dual_averaging</span>
 <span class="kn">from</span> <span class="nn">blackjax.adaptation.base</span> <span class="kn">import</span> <span class="n">AdaptationInfo</span><span class="p">,</span> <span class="n">AdaptationResults</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">AdaptationAlgorithm</span>
@@ -721,7 +722,7 @@ document.write(`
             <span class="n">next_random_arg_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">init_random_arg</span> <span class="o">=</span> <span class="n">key_init</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">jitter_gn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">_halton_sequence</span><span class="p">(</span>
+            <span class="n">jitter_gn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">dynamic_hmc</span><span class="o">.</span><span class="n">halton_sequence</span><span class="p">(</span>
                 <span class="n">i</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">+</span> <span class="n">max_sampling_steps</span><span class="p">))</span>
             <span class="p">)</span> <span class="o">*</span> <span class="n">jitter_amount</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">jitter_amount</span><span class="p">)</span>
             <span class="n">next_random_arg_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
@@ -733,7 +734,7 @@ document.write(`
                 <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="n">step_fn</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">build_dynamic_kernel</span><span class="p">(</span>
+        <span class="n">step_fn</span> <span class="o">=</span> <span class="n">dynamic_hmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span>
             <span class="n">next_random_arg_fn</span><span class="o">=</span><span class="n">next_random_arg_fn</span><span class="p">,</span>
             <span class="n">integration_steps_fn</span><span class="o">=</span><span class="n">integration_steps_fn</span><span class="p">,</span>
         <span class="p">)</span>
@@ -771,7 +772,7 @@ document.write(`
             <span class="p">)</span>
 
         <span class="n">batch_init</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init_dynamic</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">init_random_arg</span><span class="p">)</span>
+            <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">dynamic_hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">init_random_arg</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="n">init_states</span> <span class="o">=</span> <span class="n">batch_init</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
         <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">init_random_arg</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
@@ -797,11 +798,6 @@ document.write(`
         <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">last_states</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">info</span>
 
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
-
-
-<span class="k">def</span> <span class="nf">_halton_sequence</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">max_bits</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-    <span class="n">bit_masks</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">max_bits</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">i</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;i,i-&gt;&quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mod</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">bit_masks</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">bit_masks</span><span class="p">)</span>
 </pre></div>
 
                 </article>

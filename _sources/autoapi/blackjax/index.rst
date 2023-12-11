@@ -35,9 +35,9 @@ Classes
 .. autoapisummary::
 
    blackjax.barker_proposal
+   blackjax.dynamic_hmc
    blackjax.elliptical_slice
    blackjax.ghmc
-   blackjax.dynamic_hmc
    blackjax.hmc
    blackjax.mala
    blackjax.mgrad_gaussian

@@ -12,6 +12,7 @@ Submodules
 
    barker/index.rst
    diffusions/index.rst
+   dynamic_hmc/index.rst
    elliptical_slice/index.rst
    ghmc/index.rst
    hmc/index.rst

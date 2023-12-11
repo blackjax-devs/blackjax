@@ -183,6 +183,7 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="mcmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="mcmc/barker/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.barker</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="mcmc/diffusions/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.diffusions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcmc/dynamic_hmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.dynamic_hmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="mcmc/elliptical_slice/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.elliptical_slice</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="mcmc/ghmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.ghmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="mcmc/hmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.hmc</span></code></a></li>
@@ -388,6 +389,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="mcmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="mcmc/barker/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.barker</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="mcmc/diffusions/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.diffusions</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="mcmc/dynamic_hmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.dynamic_hmc</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="mcmc/elliptical_slice/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.elliptical_slice</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="mcmc/ghmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.ghmc</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="mcmc/hmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.hmc</span></code></a></li>
@@ -455,14 +457,14 @@ document.write(`
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">barker_proposal</span></code></p></td>
 <td><p>Implements the (basic) user interface for the Barker's proposal <span id="id1">[<a class="reference internal" href="../../bib.html#id49" title="Samuel Livingstone and Giacomo Zanella. The Barker Proposal: Combining Robustness and Efficiency in Gradient-Based MCMC. Journal of the Royal Statistical Society Series B: Statistical Methodology, 84(2):496-523, 01 2022. URL: https://doi.org/10.1111/rssb.12482, arXiv:https://academic.oup.com/jrsssb/article-pdf/84/2/496/49322274/jrsssb\_84\_2\_496.pdf, doi:10.1111/rssb.12482.">LZ22</a>]</span> kernel with a</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">elliptical_slice</span></code></p></td>
-<td><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ghmc</span></code></p></td>
-<td><p>Implements the (basic) user interface for the Generalized HMC kernel.</p></td>
-</tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dynamic_hmc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the dynamic HMC kernel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">elliptical_slice</span></code></p></td>
+<td><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ghmc</span></code></p></td>
+<td><p>Implements the (basic) user interface for the Generalized HMC kernel.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">hmc</span></code></p></td>
 <td><p>Implements the (basic) user interface for the HMC kernel.</p></td>
