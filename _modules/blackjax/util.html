@@ -352,7 +352,7 @@ document.write(`
   <h1>Source code for blackjax.util</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Utility functions for BlackJax.&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">jit</span><span class="p">,</span> <span class="n">lax</span>
@@ -360,7 +360,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">jax.random</span> <span class="kn">import</span> <span class="n">normal</span><span class="p">,</span> <span class="n">split</span>
 <span class="kn">from</span> <span class="nn">jax.tree_util</span> <span class="kn">import</span> <span class="n">tree_leaves</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">Info</span><span class="p">,</span> <span class="n">State</span>
+<span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">Info</span><span class="p">,</span> <span class="n">SamplingAlgorithm</span><span class="p">,</span> <span class="n">State</span><span class="p">,</span> <span class="n">VIAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.progress_bar</span> <span class="kn">import</span> <span class="n">progress_bar_scan</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
@@ -493,35 +493,39 @@ document.write(`
 
 
 <div class="viewcode-block" id="run_inference_algorithm"><a class="viewcode-back" href="../../autoapi/blackjax/util/index.html#blackjax.util.run_inference_algorithm">[docs]</a><span class="k">def</span> <span class="nf">run_inference_algorithm</span><span class="p">(</span>
-    <span class="n">rng_key</span><span class="p">,</span>
-    <span class="n">initial_state_or_position</span><span class="p">,</span>
-    <span class="n">inference_algorithm</span><span class="p">,</span>
-    <span class="n">num_steps</span><span class="p">,</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+    <span class="n">initial_state_or_position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+    <span class="n">inference_algorithm</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SamplingAlgorithm</span><span class="p">,</span> <span class="n">VIAlgorithm</span><span class="p">],</span>
+    <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">progress_bar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>
+    <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">State</span><span class="p">,</span> <span class="n">State</span><span class="p">,</span> <span class="n">Info</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper to run an inference algorithm.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    rng_key : PRNGKey</span>
+<span class="sd">    rng_key</span>
 <span class="sd">        The random state used by JAX&#39;s random numbers generator.</span>
-<span class="sd">    initial_state_or_position: ArrayLikeTree</span>
+<span class="sd">    initial_state_or_position</span>
 <span class="sd">        The initial state OR the initial position of the inference algorithm. If an initial position</span>
 <span class="sd">        is passed in, the function will automatically convert it into an initial state.</span>
-<span class="sd">    inference_algorithm : Union[SamplingAlgorithm, VIAlgorithm]</span>
+<span class="sd">    inference_algorithm</span>
 <span class="sd">        One of blackjax&#39;s sampling algorithms or variational inference algorithms.</span>
-<span class="sd">    num_steps : int</span>
-<span class="sd">        Number of learning steps.</span>
-<span class="sd">    transform:</span>
-<span class="sd">        a transformation of the sequence of states to be returned. By default, the states are returned as is.</span>
+<span class="sd">    num_steps</span>
+<span class="sd">        Number of MCMC steps.</span>
+<span class="sd">    progress_bar</span>
+<span class="sd">        Whether to display a progress bar.</span>
+<span class="sd">    transform</span>
+<span class="sd">        A transformation of the trace of states to be returned. This is useful for</span>
+<span class="sd">        computing determinstic variables, or returning a subset of the states.</span>
+<span class="sd">        By default, the states are returned as is.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    Tuple[State, State, Info]</span>
 <span class="sd">        1. The final state of the inference algorithm.</span>
-<span class="sd">        2. The history of states of the inference algorithm.</span>
-<span class="sd">        3. The history of the info of the inference algorithm.</span>
+<span class="sd">        2. The trace of states of the inference algorithm (contains the MCMC samples).</span>
+<span class="sd">        3. The trace of the info of the inference algorithm for diagnostics.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">initial_state</span> <span class="o">=</span> <span class="n">inference_algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">initial_state_or_position</span><span class="p">)</span>

@@ -62,7 +62,7 @@ Functions
       
 
 
-.. py:function:: init(x_initial: blackjax.types.ArrayLike, logdensity_fn, rng_key)
+.. py:function:: init(position: blackjax.types.ArrayLike, logdensity_fn, rng_key)
 
 
 .. py:function:: build_kernel(logdensity_fn, integrator)

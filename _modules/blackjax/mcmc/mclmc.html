@@ -374,7 +374,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.mcmc.integrators</span> <span class="kn">import</span> <span class="n">IntegratorState</span><span class="p">,</span> <span class="n">noneuclidean_mclachlan</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">PRNGKey</span>
-<span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_unit_vector</span><span class="p">,</span> <span class="n">pytree_size</span>
+<span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_unit_vector</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MCLMCInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;mclmc&quot;</span><span class="p">]</span>
 
@@ -396,12 +396,12 @@ document.write(`
 <div class="viewcode-block" id="MCLMCInfo.energy_change"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mclmc/index.html#blackjax.mcmc.mclmc.MCLMCInfo.energy_change">[docs]</a>    <span class="n">energy_change</span><span class="p">:</span> <span class="nb">float</span></div></div>
 
 
-<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mclmc/index.html#blackjax.mcmc.mclmc.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">x_initial</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
-    <span class="n">l</span><span class="p">,</span> <span class="n">g</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">x_initial</span><span class="p">)</span>
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mclmc/index.html#blackjax.mcmc.mclmc.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+    <span class="n">l</span><span class="p">,</span> <span class="n">g</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">IntegratorState</span><span class="p">(</span>
-        <span class="n">position</span><span class="o">=</span><span class="n">x_initial</span><span class="p">,</span>
-        <span class="n">momentum</span><span class="o">=</span><span class="n">generate_unit_vector</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">x_initial</span><span class="p">),</span>
+        <span class="n">position</span><span class="o">=</span><span class="n">position</span><span class="p">,</span>
+        <span class="n">momentum</span><span class="o">=</span><span class="n">generate_unit_vector</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">),</span>
         <span class="n">logdensity</span><span class="o">=</span><span class="n">l</span><span class="p">,</span>
         <span class="n">logdensity_grad</span><span class="o">=</span><span class="n">g</span><span class="p">,</span>
     <span class="p">)</span></div>
@@ -435,8 +435,6 @@ document.write(`
             <span class="n">state</span><span class="p">,</span> <span class="n">step_size</span>
         <span class="p">)</span>
 
-        <span class="n">dim</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-
         <span class="c1"># Langevin-like noise</span>
         <span class="n">momentum</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">partially_refresh_momentum</span><span class="p">(</span>
             <span class="n">momentum</span><span class="o">=</span><span class="n">momentum</span><span class="p">,</span> <span class="n">rng_key</span><span class="o">=</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="n">step_size</span>
@@ -447,6 +445,7 @@ document.write(`
         <span class="p">),</span> <span class="n">MCLMCInfo</span><span class="p">(</span>
             <span class="n">logdensity</span><span class="o">=</span><span class="n">logdensity</span><span class="p">,</span>
             <span class="n">energy_change</span><span class="o">=</span><span class="n">kinetic_change</span> <span class="o">-</span> <span class="n">logdensity</span> <span class="o">+</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span>
+            <span class="c1"># TODO: Potential bug here, see #625</span>
             <span class="n">kinetic_change</span><span class="o">=</span><span class="n">kinetic_change</span> <span class="o">*</span> <span class="p">(</span><span class="n">dim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
         <span class="p">)</span>
 

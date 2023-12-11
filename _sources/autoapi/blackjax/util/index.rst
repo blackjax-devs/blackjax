@@ -100,26 +100,25 @@ Functions
    :rtype: PyTree mapping each individual element of an arange array to elements in the PyTree.
 
 
-.. py:function:: run_inference_algorithm(rng_key, initial_state_or_position, inference_algorithm, num_steps, progress_bar: bool = False, transform=lambda x: x) -> tuple[blackjax.base.State, blackjax.base.State, blackjax.base.Info]
+.. py:function:: run_inference_algorithm(rng_key: blackjax.types.PRNGKey, initial_state_or_position: blackjax.types.ArrayLikeTree, inference_algorithm: Union[blackjax.base.SamplingAlgorithm, blackjax.base.VIAlgorithm], num_steps: int, progress_bar: bool = False, transform: Callable = lambda x: x) -> tuple[blackjax.base.State, blackjax.base.State, blackjax.base.Info]
 
    Wrapper to run an inference algorithm.
 
    :param rng_key: The random state used by JAX's random numbers generator.
-   :type rng_key: PRNGKey
    :param initial_state_or_position: The initial state OR the initial position of the inference algorithm. If an initial position
                                      is passed in, the function will automatically convert it into an initial state.
-   :type initial_state_or_position: ArrayLikeTree
    :param inference_algorithm: One of blackjax's sampling algorithms or variational inference algorithms.
-   :type inference_algorithm: Union[SamplingAlgorithm, VIAlgorithm]
-   :param num_steps: Number of learning steps.
-   :type num_steps: int
-   :param transform: a transformation of the sequence of states to be returned. By default, the states are returned as is.
+   :param num_steps: Number of MCMC steps.
+   :param progress_bar: Whether to display a progress bar.
+   :param transform: A transformation of the trace of states to be returned. This is useful for
+                     computing determinstic variables, or returning a subset of the states.
+                     By default, the states are returned as is.
 
    :returns:
 
              1. The final state of the inference algorithm.
-             2. The history of states of the inference algorithm.
-             3. The history of the info of the inference algorithm.
+             2. The trace of states of the inference algorithm (contains the MCMC samples).
+             3. The trace of the info of the inference algorithm for diagnostics.
    :rtype: Tuple[State, State, Info]
 
 
