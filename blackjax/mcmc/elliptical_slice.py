@@ -164,7 +164,8 @@ class elliptical_slice:
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(cov, mean)
 
-        def init_fn(position: ArrayLikeTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position, loglikelihood_fn)
 
         def step_fn(rng_key: PRNGKey, state):

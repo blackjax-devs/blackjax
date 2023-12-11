@@ -189,7 +189,8 @@ class barker_proposal:
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel()
 
-        def init_fn(position: ArrayLikeTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):

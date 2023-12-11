@@ -229,7 +229,8 @@ class hmc:
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(integrator, divergence_threshold)
 
-        def init_fn(position: ArrayLikeTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):

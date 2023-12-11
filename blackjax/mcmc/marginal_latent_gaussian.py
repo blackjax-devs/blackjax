@@ -184,18 +184,20 @@ class mgrad_gaussian:
         cls,
         logdensity_fn: Callable,
         covariance: Array,
+        delta: float,
         mean: Optional[Array] = None,
     ) -> SamplingAlgorithm:
         init, kernel = init_and_kernel(logdensity_fn, covariance, mean)
 
-        def init_fn(position: Array):
+        def init_fn(position: Array, rng_key=None):
+            del rng_key
             return init(position)
 
-        def step_fn(rng_key: PRNGKey, state, delta: float):
+        def step_fn(rng_key: PRNGKey, state):
             return kernel(
                 rng_key,
                 state,
                 delta,
             )
 
-        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)
