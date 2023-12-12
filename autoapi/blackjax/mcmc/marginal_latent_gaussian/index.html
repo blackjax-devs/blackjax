@@ -367,8 +367,13 @@ document.write(`
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.MarginalInfo.proposal"><code class="docutils literal notranslate"><span class="pre">MarginalInfo.proposal</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.init_and_kernel"><code class="docutils literal notranslate"><span class="pre">init_and_kernel()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian"><code class="docutils literal notranslate"><span class="pre">mgrad_gaussian</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian"><code class="docutils literal notranslate"><span class="pre">mgrad_gaussian</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian.init"><code class="docutils literal notranslate"><span class="pre">mgrad_gaussian.init</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian.build_kernel"><code class="docutils literal notranslate"><span class="pre">mgrad_gaussian.build_kernel</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -409,8 +414,11 @@ document.write(`
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.marginal_latent_gaussian.init_and_kernel" title="blackjax.mcmc.marginal_latent_gaussian.init_and_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_and_kernel</span></code></a>(logdensity_fn, covariance[, mean])</p></td>
-<td><p>Build the marginal version of the auxiliary gradient-based sampler</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.marginal_latent_gaussian.init" title="blackjax.mcmc.marginal_latent_gaussian.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(position, logdensity_fn, U_t)</p></td>
+<td><p>Initialize the marginal version of the auxiliary gradient-based sampler.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.marginal_latent_gaussian.build_kernel" title="blackjax.mcmc.marginal_latent_gaussian.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(cov_svd)</p></td>
+<td><p>Build the marginal version of the auxiliary gradient-based sampler.</p></td>
 </tr>
 </tbody>
 </table>
@@ -491,16 +499,33 @@ was returned.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="blackjax.mcmc.marginal_latent_gaussian.init_and_kernel">
-<span class="sig-name descname"><span class="pre">init_and_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/marginal_latent_gaussian.html#init_and_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.marginal_latent_gaussian.init_and_kernel" title="Permalink to this definition">#</a></dt>
-<dd><p>Build the marginal version of the auxiliary gradient-based sampler</p>
+<dt class="sig sig-object py" id="blackjax.mcmc.marginal_latent_gaussian.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">U_t</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/marginal_latent_gaussian.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.marginal_latent_gaussian.init" title="Permalink to this definition">#</a></dt>
+<dd><p>Initialize the marginal version of the auxiliary gradient-based sampler.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><ul class="simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>position</strong> – The initial position of the chain.</p></li>
+<li><p><strong>logdensity_fn</strong> – The logarithm of the likelihood function for the latent Gaussian model.</p></li>
+<li><p><strong>U_t</strong> – The unitary array of the covariance matrix.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.marginal_latent_gaussian.build_kernel">
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_svd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CovarianceSVD</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/marginal_latent_gaussian.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.marginal_latent_gaussian.build_kernel" title="Permalink to this definition">#</a></dt>
+<dd><p>Build the marginal version of the auxiliary gradient-based sampler.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cov_svd</strong> – The singular value decomposition of the covariance matrix.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
 <li><p><em>A kernel that takes a rng_key and a Pytree that contains the current state</em></p></li>
 <li><p><em>of the chain and that returns a new state of the chain along with</em></p></li>
 <li><p><em>information about the transition.</em></p></li>
-<li><p><em>An init function.</em></p></li>
 </ul>
 </p>
 </dd>
@@ -512,19 +537,20 @@ was returned.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mgrad_gaussian</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/marginal_latent_gaussian.html#mgrad_gaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian" title="Permalink to this definition">#</a></dt>
 <dd><p>Implements the marginal sampler for latent Gaussian model of <span id="id2">[<a class="reference internal" href="../../../../bib.html#id12" title="Michalis K Titsias and Omiros Papaspiliopoulos. Auxiliary gradient-based sampling algorithms. Journal of the Royal Statistical Society. Series B (Statistical Methodology), 80(4):749–767, 2018.">TP18</a>]</span>.</p>
 <p>It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
-Interestingly, the only parameter that needs calibrating is the “step size” delta, which can be done very efficiently.
+Interestingly, the only parameter that needs calibrating is the “step size” delta,
+which can be done very efficiently.
 Calibrating it to have an acceptance rate of roughly 50% is a good starting point.</p>
 <p class="rubric">Examples</p>
-<p>A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C) can be initialized and
-used for a given “step size” delta with the following code:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mgrad_gaussian</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mgrad_gaussian</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">use_inverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">m</span><span class="p">)</span>
+<p>A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C)
+can be initialized and used for a given “step size” delta with the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mgrad_gaussian</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mgrad_gaussian</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="n">delta</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">mgrad_gaussian</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">zeros</span><span class="p">)</span>  <span class="c1"># Starting at the mean of the prior</span>
-<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mgrad_gaussian</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mgrad_gaussian</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>We can JIT-compile the step function for better performance</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">mgrad_gaussian</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
-<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -539,6 +565,16 @@ used for a given “step size” delta with the following code:</p>
 <dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/marginal_latent_gaussian.html#mgrad_gaussian.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian.init" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian.build_kernel">
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/marginal_latent_gaussian.html#mgrad_gaussian.build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian.build_kernel" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </section>
@@ -606,8 +642,13 @@ used for a given “step size” delta with the following code:</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.MarginalInfo.proposal"><code class="docutils literal notranslate"><span class="pre">MarginalInfo.proposal</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.init_and_kernel"><code class="docutils literal notranslate"><span class="pre">init_and_kernel()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian"><code class="docutils literal notranslate"><span class="pre">mgrad_gaussian</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian"><code class="docutils literal notranslate"><span class="pre">mgrad_gaussian</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian.init"><code class="docutils literal notranslate"><span class="pre">mgrad_gaussian.init</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian.build_kernel"><code class="docutils literal notranslate"><span class="pre">mgrad_gaussian.build_kernel</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

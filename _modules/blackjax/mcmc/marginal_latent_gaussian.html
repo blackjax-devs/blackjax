@@ -374,7 +374,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="kn">import</span> <span class="n">static_binomial_sampling</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MarginalState&quot;</span><span class="p">,</span> <span class="s2">&quot;MarginalInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init_and_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;mgrad_gaussian&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MarginalState&quot;</span><span class="p">,</span> <span class="s2">&quot;MarginalInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;mgrad_gaussian&quot;</span><span class="p">]</span>
 
 
 <span class="c1"># [TODO](https://github.com/blackjax-devs/blackjax/issues/237)</span>
@@ -402,6 +402,40 @@ document.write(`
 <div class="viewcode-block" id="MarginalState.U_grad_x"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.MarginalState.U_grad_x">[docs]</a>    <span class="n">U_grad_x</span><span class="p">:</span> <span class="n">Array</span></div></div>
 
 
+<span class="k">class</span> <span class="nc">CovarianceSVD</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Singular Value Decomposition of the covariance matrix.</span>
+
+<span class="sd">    U</span>
+<span class="sd">        Unitary array of the covariance matrix.</span>
+<span class="sd">    Gamma</span>
+<span class="sd">        Singular values of the covariance matrix.</span>
+<span class="sd">    U_t</span>
+<span class="sd">        Transpose of the unitary array of the covariance matrix.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">U</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">Gamma</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">U_t</span><span class="p">:</span> <span class="n">Array</span>
+
+
+<span class="k">def</span> <span class="nf">svd_from_covariance</span><span class="p">(</span><span class="n">covariance</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CovarianceSVD</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the singular value decomposition of the covariance matrix.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    covariance</span>
+<span class="sd">        The covariance matrix.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``CovarianceSVD`` object.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">U</span><span class="p">,</span> <span class="n">Gamma</span><span class="p">,</span> <span class="n">U_t</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">covariance</span><span class="p">,</span> <span class="n">hermitian</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">CovarianceSVD</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">Gamma</span><span class="p">,</span> <span class="n">U_t</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="MarginalInfo"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.MarginalInfo">[docs]</a><span class="k">class</span> <span class="nc">MarginalInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on the RMH chain.</span>
 
@@ -424,28 +458,66 @@ document.write(`
 <div class="viewcode-block" id="MarginalInfo.proposal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.MarginalInfo.proposal">[docs]</a>    <span class="n">proposal</span><span class="p">:</span> <span class="n">MarginalState</span></div></div>
 
 
-<div class="viewcode-block" id="init_and_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.init_and_kernel">[docs]</a><span class="k">def</span> <span class="nf">init_and_kernel</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">covariance</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the marginal version of the auxiliary gradient-based sampler</span>
+<span class="k">def</span> <span class="nf">generate_mean_shifted_logprob</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">covariance</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a log-density function that is shifted by a constant</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        The original log-density function</span>
+<span class="sd">    mean</span>
+<span class="sd">        The mean of the prior Gaussian density</span>
+<span class="sd">    covariance</span>
+<span class="sd">        The covariance of the prior Gaussian density.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A log-density function that is shifted by a constant</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">covariance</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">assume_a</span><span class="o">=</span><span class="s2">&quot;pos&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">shifted_logdensity_fn</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">shift</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">shifted_logdensity_fn</span>
+
+
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">U_t</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the marginal version of the auxiliary gradient-based sampler.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    position</span>
+<span class="sd">        The initial position of the chain.</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        The logarithm of the likelihood function for the latent Gaussian model.</span>
+<span class="sd">    U_t</span>
+<span class="sd">        The unitary array of the covariance matrix.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">MarginalState</span><span class="p">(</span>
+        <span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">,</span> <span class="n">U_t</span> <span class="o">@</span> <span class="n">position</span><span class="p">,</span> <span class="n">U_t</span> <span class="o">@</span> <span class="n">logdensity_grad</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.build_kernel">[docs]</a><span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span><span class="n">cov_svd</span><span class="p">:</span> <span class="n">CovarianceSVD</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the marginal version of the auxiliary gradient-based sampler.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cov_svd</span>
+<span class="sd">        The singular value decomposition of the covariance matrix.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A kernel that takes a rng_key and a Pytree that contains the current state</span>
 <span class="sd">    of the chain and that returns a new state of the chain along with</span>
 <span class="sd">    information about the transition.</span>
-<span class="sd">    An init function.</span>
-
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">U</span><span class="p">,</span> <span class="n">Gamma</span><span class="p">,</span> <span class="n">U_t</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">covariance</span><span class="p">,</span> <span class="n">hermitian</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">U</span><span class="p">,</span> <span class="n">Gamma</span><span class="p">,</span> <span class="n">U_t</span> <span class="o">=</span> <span class="n">cov_svd</span>
 
-    <span class="k">if</span> <span class="n">mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">shift</span> <span class="o">=</span> <span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">covariance</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">assume_a</span><span class="o">=</span><span class="s2">&quot;pos&quot;</span><span class="p">)</span>
-        <span class="n">val_and_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">shift</span><span class="p">)</span>
-        <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">val_and_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">MarginalState</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">MarginalState</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
         <span class="n">y_key</span><span class="p">,</span> <span class="n">u_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
         <span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">,</span> <span class="n">U_x</span><span class="p">,</span> <span class="n">U_grad_x</span> <span class="o">=</span> <span class="n">state</span>
@@ -463,7 +535,7 @@ document.write(`
         <span class="n">y</span> <span class="o">=</span> <span class="n">U</span> <span class="o">@</span> <span class="n">temp</span>
 
         <span class="c1"># Bookkeeping</span>
-        <span class="n">log_p_y</span><span class="p">,</span> <span class="n">grad_y</span> <span class="o">=</span> <span class="n">val_and_grad</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">log_p_y</span><span class="p">,</span> <span class="n">grad_y</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">y</span><span class="p">)</span>
         <span class="n">U_y</span> <span class="o">=</span> <span class="n">U_t</span> <span class="o">@</span> <span class="n">y</span>
         <span class="n">U_grad_y</span> <span class="o">=</span> <span class="n">U_t</span> <span class="o">@</span> <span class="n">grad_y</span>
 
@@ -483,39 +555,34 @@ document.write(`
         <span class="n">info</span> <span class="o">=</span> <span class="n">MarginalInfo</span><span class="p">(</span><span class="n">p_accept</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">proposed_state</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">accepted_state</span><span class="p">,</span> <span class="n">info</span>
 
-    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">):</span>
-        <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">val_and_grad</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">MarginalState</span><span class="p">(</span>
-            <span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">,</span> <span class="n">U_t</span> <span class="o">@</span> <span class="n">position</span><span class="p">,</span> <span class="n">U_t</span> <span class="o">@</span> <span class="n">logdensity_grad</span>
-        <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">init</span><span class="p">,</span> <span class="n">step</span></div>
+    <span class="k">return</span> <span class="n">kernel</span></div>
 
 
 <div class="viewcode-block" id="mgrad_gaussian"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian">[docs]</a><span class="k">class</span> <span class="nc">mgrad_gaussian</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.</span>
 
 <span class="sd">    It uses a first order approximation to the log_likelihood of a model with Gaussian prior.</span>
-<span class="sd">    Interestingly, the only parameter that needs calibrating is the &quot;step size&quot; delta, which can be done very efficiently.</span>
+<span class="sd">    Interestingly, the only parameter that needs calibrating is the &quot;step size&quot; delta,</span>
+<span class="sd">    which can be done very efficiently.</span>
 <span class="sd">    Calibrating it to have an acceptance rate of roughly 50% is a good starting point.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C) can be initialized and</span>
-<span class="sd">    used for a given &quot;step size&quot; delta with the following code:</span>
+<span class="sd">    A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C)</span>
+<span class="sd">    can be initialized and used for a given &quot;step size&quot; delta with the following code:</span>
 
 <span class="sd">    .. code::</span>
 
-<span class="sd">        mgrad_gaussian = blackjax.mgrad_gaussian(f, C, use_inverse=False, mean=m)</span>
+<span class="sd">        mgrad_gaussian = blackjax.mgrad_gaussian(f, C, mean=m, step_size=delta)</span>
 <span class="sd">        state = mgrad_gaussian.init(zeros)  # Starting at the mean of the prior</span>
-<span class="sd">        new_state, info = mgrad_gaussian.step(rng_key, state, delta)</span>
+<span class="sd">        new_state, info = mgrad_gaussian.step(rng_key, state)</span>
 
 <span class="sd">    We can JIT-compile the step function for better performance</span>
 
 <span class="sd">    .. code::</span>
 
 <span class="sd">        step = jax.jit(mgrad_gaussian.step)</span>
-<span class="sd">        new_state, info = step(rng_key, state, delta)</span>
+<span class="sd">        new_state, info = step(rng_key, state)</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -532,25 +599,43 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="mgrad_gaussian.init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init</span><span class="p">)</span></div>
+<div class="viewcode-block" id="mgrad_gaussian.build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_kernel</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">covariance</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">covariance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cov_svd</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CovarianceSVD</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">init</span><span class="p">,</span> <span class="n">kernel</span> <span class="o">=</span> <span class="n">init_and_kernel</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">covariance</span><span class="p">,</span> <span class="n">mean</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cov_svd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">covariance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either covariance or cov_svd must be provided.&quot;</span><span class="p">)</span>
+            <span class="n">cov_svd</span> <span class="o">=</span> <span class="n">svd_from_covariance</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span>
+
+        <span class="n">U</span><span class="p">,</span> <span class="n">Gamma</span><span class="p">,</span> <span class="n">U_t</span> <span class="o">=</span> <span class="n">cov_svd</span>
+
+        <span class="k">if</span> <span class="n">mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logdensity_fn</span> <span class="o">=</span> <span class="n">generate_mean_shifted_logprob</span><span class="p">(</span>
+                <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">covariance</span>
+            <span class="p">)</span>
+
+        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">cov_svd</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">U_t</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span>
                 <span class="n">state</span><span class="p">,</span>
-                <span class="n">delta</span><span class="p">,</span>
+                <span class="n">logdensity_fn</span><span class="p">,</span>
+                <span class="n">step_size</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 </pre></div>
 
                 </article>
