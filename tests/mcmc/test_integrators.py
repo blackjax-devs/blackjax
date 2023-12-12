@@ -63,7 +63,8 @@ def MultivariateNormal(inv_mass_matrix):
         q, _ = ravel_pytree(q)
         return stats.multivariate_normal.logpdf(q, jnp.zeros_like(q), inv_mass_matrix)
 
-    def kinetic_energy(p):
+    def kinetic_energy(p, position=None):
+        del position
         p, _ = ravel_pytree(p)
         return 0.5 * p.T @ inv_mass_matrix @ p
 
@@ -367,7 +368,7 @@ class IntegratorTest(chex.TestCase):
 
         # Check that the trajectory matches the closed-form solution to
         # acceptable precision
-        chex.assert_tree_all_close(traj.position, expected, atol=step_size)
+        chex.assert_trees_all_close(traj.position, expected, atol=step_size)
 
         # And check the conservation of energy
         energy = -neg_potential(q) + kinetic_energy(p, position=q)
