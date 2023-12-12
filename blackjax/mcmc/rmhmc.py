@@ -16,9 +16,9 @@ from typing import Callable, Union
 
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc import hmc
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import ArrayTree, PRNGKey
 
 __all__ = ["init", "build_kernel", "rmhmc"]
 
@@ -60,7 +60,7 @@ class rmhmc:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
     """
 
     init = staticmethod(init)
@@ -75,10 +75,11 @@ class rmhmc:
         *,
         divergence_threshold: int = 1000,
         integrator: Callable = integrators.implicit_midpoint,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(integrator, divergence_threshold)
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayTree, rng_key=None):
+            del rng_key
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
@@ -91,4 +92,4 @@ class rmhmc:
                 num_integration_steps,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
