@@ -272,7 +272,8 @@ class mgrad_gaussian:
 
         kernel = cls.build_kernel(cov_svd)
 
-        def init_fn(position: Array):
+        def init_fn(position: Array, rng_key=None):
+            del rng_key
             return init(position, logdensity_fn, U_t)
 
         def step_fn(rng_key: PRNGKey, state):

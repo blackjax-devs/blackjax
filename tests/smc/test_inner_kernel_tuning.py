@@ -60,7 +60,7 @@ def log_weights_fn(x, y):
 class SMCParameterTuningTest(chex.TestCase):
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(42)
+        self.key = jax.random.key(42)
 
     def logdensity_fn(self, log_scale, coefs, preds, x):
         """Linear regression"""
@@ -129,7 +129,7 @@ class SMCParameterTuningTest(chex.TestCase):
 class MeanAndStdFromParticlesTest(chex.TestCase):
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(42)
+        self.key = jax.random.key(42)
 
     def test_mean_and_std(self):
         particles = np.array(
@@ -182,7 +182,7 @@ class MeanAndStdFromParticlesTest(chex.TestCase):
 class InverseMassMatrixFromParticles(chex.TestCase):
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(42)
+        self.key = jax.random.key(42)
 
     def test_inverse_mass_matrix_from_particles(self):
         inverse_mass_matrix = mass_matrix_from_particles(

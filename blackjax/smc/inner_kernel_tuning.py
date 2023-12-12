@@ -139,7 +139,8 @@ class inner_kernel_tuning:
             **extra_parameters,
         )
 
-        def init_fn(position):
+        def init_fn(position, rng_key=None):
+            del rng_key
             return cls.init(smc_algorithm.init, position, initial_parameter_value)
 
         def step_fn(

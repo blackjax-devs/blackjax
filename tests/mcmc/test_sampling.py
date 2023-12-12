@@ -584,8 +584,8 @@ normal_test_cases = [
         "algorithm": blackjax.mala,
         "initial_position": 1.0,
         "parameters": {"step_size": 1e-1},
-        "num_sampling_steps": 20_000,
-        "burnin": 2_000,
+        "num_sampling_steps": 45_000,
+        "burnin": 5_000,
     },
     {
         "algorithm": blackjax.elliptical_slice,

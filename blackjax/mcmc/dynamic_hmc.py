@@ -163,8 +163,11 @@ class dynamic_hmc:
             integrator, divergence_threshold, next_random_arg_fn, integration_steps_fn
         )
 
-        def init_fn(position: ArrayLikeTree, random_generator_arg: Array):
-            return cls.init(position, logdensity_fn, random_generator_arg)
+        def init_fn(position: ArrayLikeTree, rng_key: Array):
+            # Note that rng_key here is not necessarily a PRNGKey, could be a Array that
+            # for generates a sequence of pseudo or quasi-random numbers (previously
+            # named as `random_generator_arg`)
+            return cls.init(position, logdensity_fn, rng_key)
 
         def step_fn(rng_key: PRNGKey, state):
             return kernel(
@@ -175,7 +178,7 @@ class dynamic_hmc:
                 inverse_mass_matrix,
             )
 
-        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def halton_sequence(i: Array, max_bits: int = 10) -> float:

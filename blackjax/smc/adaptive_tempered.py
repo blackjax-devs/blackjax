@@ -159,7 +159,8 @@ class adaptive_tempered_smc:
             root_solver,
         )
 
-        def init_fn(position: ArrayLikeTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position)
 
         def step_fn(rng_key: PRNGKey, state):

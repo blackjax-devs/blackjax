@@ -150,6 +150,10 @@ def run_inference_algorithm(
 ) -> tuple[State, State, Info]:
     """Wrapper to run an inference algorithm.
 
+    Note that this utility function does not work for Stochastic Gradient MCMC samplers
+    like sghmc, as SG-MCMC samplers require additional control flow for batches of data
+    to be passed in during each sample.
+
     Parameters
     ----------
     rng_key
@@ -175,13 +179,14 @@ def run_inference_algorithm(
         2. The trace of states of the inference algorithm (contains the MCMC samples).
         3. The trace of the info of the inference algorithm for diagnostics.
     """
+    init_key, sample_key = split(rng_key, 2)
     try:
-        initial_state = inference_algorithm.init(initial_state_or_position)
+        initial_state = inference_algorithm.init(initial_state_or_position, init_key)
     except TypeError:
         # We assume initial_state is already in the right format.
         initial_state = initial_state_or_position
 
-    keys = split(rng_key, num_steps)
+    keys = split(sample_key, num_steps)
 
     @jit
     def _one_step(state, xs):

@@ -155,15 +155,14 @@ class mclmc:
         L,
         step_size,
         integrator=noneuclidean_mclachlan,
-        seed=1,
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(logdensity_fn, integrator)
 
+        def init_fn(position: ArrayLike, rng_key: PRNGKey):
+            return cls.init(position, logdensity_fn, rng_key)
+
         def update_fn(rng_key, state):
             return kernel(rng_key, state, L, step_size)
-
-        def init_fn(position: ArrayLike):
-            return cls.init(position, logdensity_fn, jax.random.PRNGKey(seed))
 
         return SamplingAlgorithm(init_fn, update_fn)
 
