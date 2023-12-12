@@ -67,6 +67,23 @@ class CovarianceSVD(NamedTuple):
     U_t: Array
 
 
+def svd_from_covariance(covariance: Array) -> CovarianceSVD:
+    """Compute the singular value decomposition of the covariance matrix.
+
+    Parameters
+    ----------
+    covariance
+        The covariance matrix.
+
+    Returns
+    -------
+    A ``CovarianceSVD`` object.
+
+    """
+    U, Gamma, U_t = jnp.linalg.svd(covariance, hermitian=True)
+    return CovarianceSVD(U, Gamma, U_t)
+
+
 class MarginalInfo(NamedTuple):
     """Additional information on the RMH chain.
 
@@ -244,10 +261,9 @@ class mgrad_gaussian:
         if cov_svd is None:
             if covariance is None:
                 raise ValueError("Either covariance or cov_svd must be provided.")
-            U, Gamma, U_t = jnp.linalg.svd(covariance, hermitian=True)
-            cov_svd = CovarianceSVD(U, Gamma, U_t)
-        else:
-            U, Gamma, U_t = cov_svd
+            cov_svd = svd_from_covariance(covariance)
+
+        U, Gamma, U_t = cov_svd
 
         if mean is not None:
             logdensity_fn = generate_mean_shifted_logprob(

@@ -2,16 +2,15 @@ import itertools
 
 import chex
 import jax
-import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest, parameterized
 
 from blackjax.mcmc.marginal_latent_gaussian import (
-    CovarianceSVD,
     build_kernel,
     generate_mean_shifted_logprob,
     init,
+    svd_from_covariance,
 )
 
 
@@ -36,7 +35,7 @@ class GaussianTest(chex.TestCase):
             log_pdf = generate_mean_shifted_logprob(log_pdf, prior_mean, C)
 
         DELTA = 50.0
-        cov_svd = CovarianceSVD(*jnp.linalg.svd(C, hermitian=True))
+        cov_svd = svd_from_covariance(C)
         _step = build_kernel(cov_svd)
         step = jax.jit(lambda key, state, delta: _step(key, state, log_pdf, delta))
 
