@@ -12,19 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the HMC Kernel"""
-from typing import Callable, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Union
 
 import jax
 
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.trajectory as trajectory
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.proposal import safe_energy_diff, static_binomial_sampling
 from blackjax.mcmc.trajectory import hmc_energy
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["HMCState", "HMCInfo", "init", "build_kernel", "hmc"]
+__all__ = [
+    "HMCState",
+    "HMCInfo",
+    "init",
+    "build_kernel",
+    "hmc",
+]
 
 
 class HMCState(NamedTuple):
@@ -36,9 +42,9 @@ class HMCState(NamedTuple):
 
     """
 
-    position: PyTree
+    position: ArrayTree
     logdensity: float
-    logdensity_grad: PyTree
+    logdensity_grad: ArrayTree
 
 
 class HMCInfo(NamedTuple):
@@ -70,7 +76,7 @@ class HMCInfo(NamedTuple):
 
     """
 
-    momentum: PyTree
+    momentum: ArrayTree
     acceptance_rate: float
     is_accepted: bool
     is_divergent: bool
@@ -79,7 +85,7 @@ class HMCInfo(NamedTuple):
     num_integration_steps: int
 
 
-def init(position: PyTree, logdensity_fn: Callable):
+def init(position: ArrayLikeTree, logdensity_fn: Callable):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return HMCState(position, logdensity, logdensity_grad)
 
@@ -113,7 +119,7 @@ def build_kernel(
         step_size: float,
         inverse_mass_matrix: metrics.MetricTypes,
         num_integration_steps: int,
-    ) -> Tuple[HMCState, HMCInfo]:
+    ) -> tuple[HMCState, HMCInfo]:
         """Generate a new sample with the HMC kernel."""
 
         metric = metrics.default_metric(inverse_mass_matrix)
@@ -134,7 +140,7 @@ def build_kernel(
         integrator_state = integrators.IntegratorState(
             position, momentum, logdensity, logdensity_grad
         )
-        proposal, info = proposal_generator(key_integrator, integrator_state)
+        proposal, info, _ = proposal_generator(key_integrator, integrator_state)
         proposal = HMCState(
             proposal.position, proposal.logdensity, proposal.logdensity_grad
         )
@@ -216,7 +222,7 @@ class hmc:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
     """
 
     init = staticmethod(init)
@@ -231,10 +237,11 @@ class hmc:
         *,
         divergence_threshold: int = 1000,
         integrator: Callable = integrators.velocity_verlet,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(integrator, divergence_threshold)
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
@@ -247,17 +254,17 @@ class hmc:
                 num_integration_steps,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def hmc_proposal(
     integrator: Callable,
     kinetic_energy: metrics.KineticEnergy,
-    step_size: Union[float, PyTree],
+    step_size: Union[float, ArrayLikeTree],
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,
     *,
-    sample_proposal: Callable = proposal.static_binomial_sampling,
+    sample_proposal: Callable = static_binomial_sampling,
 ) -> Callable:
     """Vanilla HMC algorithm.
 
@@ -286,32 +293,32 @@ def hmc_proposal(
 
     """
     build_trajectory = trajectory.static_integration(integrator)
-    init_proposal, generate_proposal = proposal.proposal_generator(
-        hmc_energy(kinetic_energy), divergence_threshold
-    )
+    hmc_energy_fn = hmc_energy(kinetic_energy)
 
     def generate(
         rng_key, state: integrators.IntegratorState
-    ) -> Tuple[integrators.IntegratorState, HMCInfo]:
+    ) -> tuple[integrators.IntegratorState, HMCInfo, ArrayTree]:
         """Generate a new chain state."""
         end_state = build_trajectory(state, step_size, num_integration_steps)
         end_state = flip_momentum(end_state)
-        proposal = init_proposal(state)
-        new_proposal, is_diverging = generate_proposal(proposal.energy, end_state)
-        sampled_proposal, *info = sample_proposal(rng_key, proposal, new_proposal)
-        do_accept, p_accept = info
+        proposal_energy = hmc_energy_fn(state)
+        new_energy = hmc_energy_fn(end_state)
+        delta_energy = safe_energy_diff(proposal_energy, new_energy)
+        is_diverging = -delta_energy > divergence_threshold
+        sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
+        do_accept, p_accept, other_proposal_info = info
 
         info = HMCInfo(
             state.momentum,
             p_accept,
             do_accept,
             is_diverging,
-            new_proposal.energy,
-            new_proposal,
+            new_energy,
+            end_state,
             num_integration_steps,
         )
 
-        return sampled_proposal.state, info
+        return sampled_state, info, other_proposal_info
 
     return generate
 

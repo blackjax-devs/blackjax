@@ -15,13 +15,13 @@
 from typing import Callable
 
 import blackjax.sgmcmc.diffusions as diffusions
-from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.base import SamplingAlgorithm
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["init", "build_kernel", "sgld"]
 
 
-def init(position: PyTree) -> PyTree:
+def init(position: ArrayLikeTree) -> ArrayLikeTree:
     return position
 
 
@@ -31,12 +31,12 @@ def build_kernel() -> Callable:
 
     def kernel(
         rng_key: PRNGKey,
-        position: PyTree,
+        position: ArrayLikeTree,
         grad_estimator: Callable,
-        minibatch: PyTree,
+        minibatch: ArrayLikeTree,
         step_size: float,
         temperature: float = 1.0,
-    ):
+    ) -> ArrayTree:
         logdensity_grad = grad_estimator(position, minibatch)
         new_position = integrator(
             rng_key, position, logdensity_grad, step_size, temperature
@@ -96,7 +96,7 @@ class sgld:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -106,21 +106,22 @@ class sgld:
     def __new__(  # type: ignore[misc]
         cls,
         grad_estimator: Callable,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel()
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position)
 
         def step_fn(
             rng_key: PRNGKey,
-            state: PyTree,
-            minibatch: PyTree,
+            state: ArrayLikeTree,
+            minibatch: ArrayLikeTree,
             step_size: float,
             temperature: float = 1,
-        ) -> PyTree:
+        ) -> ArrayTree:
             return kernel(
                 rng_key, state, grad_estimator, minibatch, step_size, temperature
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Generalized (Non-reversible w/ persistent momentum) HMC Kernel"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -20,10 +20,10 @@ import jax.numpy as jnp
 import blackjax.mcmc.hmc as hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-import blackjax.mcmc.proposal as proposal
-from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import PRNGKey, PyTree
-from blackjax.util import generate_gaussian_noise, pytree_size
+from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.proposal import nonreversible_slice_sampling
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.util import generate_gaussian_noise
 
 __all__ = ["GHMCState", "init", "build_kernel", "ghmc"]
 
@@ -42,15 +42,15 @@ class GHMCState(NamedTuple):
 
     """
 
-    position: PyTree
-    momentum: PyTree
+    position: ArrayTree
+    momentum: ArrayTree
     logdensity: float
-    logdensity_grad: PyTree
+    logdensity_grad: ArrayTree
     slice: float
 
 
 def init(
-    position: PyTree,
+    position: ArrayLikeTree,
     rng_key: PRNGKey,
     logdensity_fn: Callable,
 ) -> GHMCState:
@@ -94,17 +94,16 @@ def build_kernel(
     returns a new state of the chain along with information about the transition.
 
     """
-    sample_proposal = proposal.nonreversible_slice_sampling
 
     def kernel(
         rng_key: PRNGKey,
         state: GHMCState,
         logdensity_fn: Callable,
         step_size: float,
-        momentum_inverse_scale: PyTree,
+        momentum_inverse_scale: ArrayLikeTree,
         alpha: float,
         delta: float,
-    ) -> Tuple[GHMCState, hmc.HMCInfo]:
+    ) -> tuple[GHMCState, hmc.HMCInfo]:
         """Generate new sample with the Generalized HMC kernel.
 
         Parameters
@@ -131,7 +130,9 @@ def build_kernel(
         """
 
         flat_inverse_scale = jax.flatten_util.ravel_pytree(momentum_inverse_scale)[0]
-        _, kinetic_energy_fn, _ = metrics.gaussian_euclidean(flat_inverse_scale**2)
+        momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
+            flat_inverse_scale**2
+        )
 
         symplectic_integrator = integrators.velocity_verlet(
             logdensity_fn, kinetic_energy_fn
@@ -141,33 +142,57 @@ def build_kernel(
             kinetic_energy_fn,
             step_size,
             divergence_threshold=divergence_threshold,
-            sample_proposal=sample_proposal,
+            sample_proposal=nonreversible_slice_sampling,
         )
 
         key_momentum, key_noise = jax.random.split(rng_key)
         position, momentum, logdensity, logdensity_grad, slice = state
         # New momentum is persistent
-        momentum = update_momentum(key_momentum, state, alpha)
-        momentum = jax.tree_map(lambda m, s: m / s, momentum, momentum_inverse_scale)
+        momentum = update_momentum(key_momentum, state, alpha, momentum_generator)
         # Slice is non-reversible
         slice = ((slice + 1.0 + delta + noise_fn(key_noise)) % 2) - 1.0
 
         integrator_state = integrators.IntegratorState(
             position, momentum, logdensity, logdensity_grad
         )
-        proposal, info = proposal_generator(slice, integrator_state)
+        # Note that ghmc use nonreversible_slice_sampling, which overloads the pattern
+        # of SampleProposal and do not actually return the acceptance rate.
+        proposal, info, slice_next = proposal_generator(slice, integrator_state)
         proposal = hmc.flip_momentum(proposal)
         state = GHMCState(
-            proposal.position,
-            jax.tree_map(lambda m, s: m * s, proposal.momentum, momentum_inverse_scale),
-            proposal.logdensity,
-            proposal.logdensity_grad,
-            info.acceptance_rate,
+            position=proposal.position,
+            momentum=proposal.momentum,
+            logdensity=proposal.logdensity,
+            logdensity_grad=proposal.logdensity_grad,
+            slice=slice_next,
         )
 
         return state, info
 
     return kernel
+
+
+def update_momentum(rng_key, state, alpha, momentum_generator):
+    """Persistent update of the momentum variable.
+
+    Performs a persistent update of the momentum, taking as input the previous
+    momentum, a random number generating key, the parameter alpha and the
+    momentum generator function. Outputs
+    an updated momentum that is a mixture of the previous momentum a new sample
+    from a Gaussian density (dependent on alpha). The weights of the mixture of
+    these two components are a function of alpha.
+
+    """
+    position, momentum, *_ = state
+
+    momentum = jax.tree_map(
+        lambda prev_momentum, shifted_momentum: prev_momentum * jnp.sqrt(1.0 - alpha)
+        + jnp.sqrt(alpha) * shifted_momentum,
+        momentum,
+        momentum_generator(rng_key, position),
+    )
+
+    return momentum
 
 
 class ghmc:
@@ -229,7 +254,7 @@ class ghmc:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
     """
 
     init = staticmethod(init)
@@ -239,16 +264,16 @@ class ghmc:
         cls,
         logdensity_fn: Callable,
         step_size: float,
-        momentum_inverse_scale: PyTree,
+        momentum_inverse_scale: ArrayLikeTree,
         alpha: float,
         delta: float,
         *,
         divergence_threshold: int = 1000,
         noise_gn: Callable = lambda _: 0.0,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(noise_gn, divergence_threshold)
 
-        def init_fn(position: PyTree, rng_key: PRNGKey):
+        def init_fn(position: ArrayLikeTree, rng_key: PRNGKey):
             return cls.init(position, rng_key, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
@@ -262,28 +287,4 @@ class ghmc:
                 delta,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
-
-
-def update_momentum(rng_key, state, alpha):
-    """Persistent update of the momentum variable.
-
-    Performs a persistent update of the momentum, taking as input the previous
-    momentum, a random number generating key and the parameter alpha. Outputs
-    an updated momentum that is a mixture of the previous momentum a new sample
-    from a Gaussian density (dependent on alpha). The weights of the mixture of
-    these two components are a function of alpha.
-
-    """
-    position, momentum, *_ = state
-
-    m_size = pytree_size(momentum)
-    momentum_generator, *_ = metrics.gaussian_euclidean(1 / alpha * jnp.ones((m_size,)))
-    momentum = jax.tree_map(
-        lambda prev_momentum, shifted_momentum: prev_momentum * jnp.sqrt(1.0 - alpha)
-        + shifted_momentum,
-        momentum,
-        momentum_generator(rng_key, position),
-    )
-
-    return momentum
+        return SamplingAlgorithm(init_fn, step_fn)

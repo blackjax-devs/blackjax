@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Callable, List, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -29,7 +29,7 @@ from blackjax.adaptation.step_size import (
 )
 from blackjax.base import AdaptationAlgorithm
 from blackjax.progress_bar import progress_bar_scan
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, PRNGKey
 from blackjax.util import pytree_size
 
 __all__ = ["WindowAdaptationState", "base", "build_schedule", "window_adaptation"]
@@ -45,7 +45,7 @@ class WindowAdaptationState(NamedTuple):
 def base(
     is_mass_matrix_diagonal: bool,
     target_acceptance_rate: float = 0.80,
-) -> Tuple[Callable, Callable, Callable]:
+) -> tuple[Callable, Callable, Callable]:
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
     The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
 
@@ -102,7 +102,9 @@ def base(
     mm_init, mm_update, mm_final = mass_matrix_adaptation(is_mass_matrix_diagonal)
     da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
 
-    def init(position: PyTree, initial_step_size: float) -> Tuple:
+    def init(
+        position: ArrayLikeTree, initial_step_size: float
+    ) -> WindowAdaptationState:
         """Initialze the adaptation state and parameter values.
 
         Unlike the original Stan window adaptation we do not use the
@@ -123,7 +125,7 @@ def base(
         )
 
     def fast_update(
-        position: PyTree,
+        position: ArrayLikeTree,
         acceptance_rate: float,
         warmup_state: WindowAdaptationState,
     ) -> WindowAdaptationState:
@@ -134,6 +136,8 @@ def base(
         compared to the covariance estimation with Welford's algorithm
 
         """
+        del position
+
         new_ss_state = da_update(warmup_state.ss_state, acceptance_rate)
         new_step_size = jnp.exp(new_ss_state.log_step_size)
 
@@ -145,7 +149,7 @@ def base(
         )
 
     def slow_update(
-        position: PyTree,
+        position: ArrayLikeTree,
         acceptance_rate: float,
         warmup_state: WindowAdaptationState,
     ) -> WindowAdaptationState:
@@ -187,8 +191,8 @@ def base(
 
     def update(
         adaptation_state: WindowAdaptationState,
-        adaptation_stage: Tuple,
-        position: PyTree,
+        adaptation_stage: tuple,
+        position: ArrayLikeTree,
         acceptance_rate: float,
     ) -> WindowAdaptationState:
         """Update the adaptation state and parameter values.
@@ -229,7 +233,7 @@ def base(
 
         return warmup_state
 
-    def final(warmup_state: WindowAdaptationState) -> Tuple[float, Array]:
+    def final(warmup_state: WindowAdaptationState) -> tuple[float, Array]:
         """Return the final values for the step size and mass matrix."""
         step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.imm_state.inverse_mass_matrix
@@ -316,7 +320,7 @@ def window_adaptation(
             AdaptationInfo(new_state, info, new_adaptation_state),
         )
 
-    def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 1000):
+    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
         init_state = algorithm.init(position, logdensity_fn)
         init_adaptation_state = adapt_init(position, initial_step_size)
 
@@ -358,7 +362,7 @@ def build_schedule(
     initial_buffer_size: int = 75,
     final_buffer_size: int = 50,
     first_window_size: int = 25,
-) -> List[Tuple[int, bool]]:
+) -> list[tuple[int, bool]]:
     """Return the schedule for Stan's warmup.
 
     The schedule below is intended to be as close as possible to Stan's :cite:p:`stan_hmc_param`.

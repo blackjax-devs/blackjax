@@ -11,7 +11,7 @@ from blackjax.mcmc import metrics
 class GaussianEuclideanMetricsTest(chex.TestCase):
     def setUp(self):
         super().setUp()
-        self.key = random.PRNGKey(0)
+        self.key = random.key(0)
         self.dtype = "float32"
 
     @parameterized.named_parameters(

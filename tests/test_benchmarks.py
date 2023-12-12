@@ -13,6 +13,7 @@ import jax.scipy.stats as stats
 import pytest
 
 import blackjax
+from blackjax.util import run_inference_algorithm
 
 
 def regression_logprob(log_scale, coefs, preds, x):
@@ -25,20 +26,8 @@ def regression_logprob(log_scale, coefs, preds, x):
     return sum(x.sum() for x in [scale_prior, coefs_prior, logpdf])
 
 
-def inference_loop(kernel, num_samples, rng_key, initial_state):
-    @jax.jit
-    def one_step(state, rng_key):
-        state, _ = kernel(rng_key, state)
-        return state, state
-
-    keys = jax.random.split(rng_key, num_samples)
-    _, states = jax.lax.scan(one_step, initial_state, keys)
-
-    return states
-
-
 def run_regression(algorithm, **parameters):
-    key = jax.random.PRNGKey(0)
+    key = jax.random.key(0)
     rng_key, init_key0, init_key1 = jax.random.split(key, 3)
     x_data = jax.random.normal(init_key0, shape=(100_000, 1))
     y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
@@ -57,9 +46,11 @@ def run_regression(algorithm, **parameters):
     (state, parameters), _ = warmup.run(
         warmup_key, {"log_scale": 0.0, "coefs": 2.0}, 1000
     )
-    kernel = algorithm(logdensity_fn, **parameters).step
+    inference_algorithm = algorithm(logdensity_fn, **parameters)
 
-    states = inference_loop(kernel, 10_000, inference_key, state)
+    _, states, _ = run_inference_algorithm(
+        inference_key, state, inference_algorithm, 10_000
+    )
 
     return states
 

@@ -1,9 +1,11 @@
 from . import (
+    barker,
     elliptical_slice,
     ghmc,
     hmc,
     mala,
     marginal_latent_gaussian,
+    mclmc,
     nuts,
     periodic_orbital,
     random_walk,
@@ -11,6 +13,7 @@ from . import (
 )
 
 __all__ = [
+    "barker",
     "elliptical_slice",
     "ghmc",
     "hmc",
@@ -20,4 +23,5 @@ __all__ = [
     "periodic_orbital",
     "marginal_latent_gaussian",
     "random_walk",
+    "mclmc",
 ]

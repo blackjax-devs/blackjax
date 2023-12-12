@@ -18,12 +18,14 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as linalg
 
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.proposal import static_binomial_sampling
 from blackjax.types import Array, PRNGKey
 
-__all__ = ["MarginalState", "MarginalInfo", "init_and_kernel", "mgrad_gaussian"]
+__all__ = ["MarginalState", "MarginalInfo", "init", "build_kernel", "mgrad_gaussian"]
 
 
+# [TODO](https://github.com/blackjax-devs/blackjax/issues/237)
 class MarginalState(NamedTuple):
     """State of the RMH chain.
 
@@ -36,6 +38,7 @@ class MarginalState(NamedTuple):
     U_x
         Auxiliary attributes
     U_grad_x
+        Gradient of the auxiliary attributes
 
     """
 
@@ -45,6 +48,40 @@ class MarginalState(NamedTuple):
 
     U_x: Array
     U_grad_x: Array
+
+
+class CovarianceSVD(NamedTuple):
+    """Singular Value Decomposition of the covariance matrix.
+
+    U
+        Unitary array of the covariance matrix.
+    Gamma
+        Singular values of the covariance matrix.
+    U_t
+        Transpose of the unitary array of the covariance matrix.
+
+    """
+
+    U: Array
+    Gamma: Array
+    U_t: Array
+
+
+def svd_from_covariance(covariance: Array) -> CovarianceSVD:
+    """Compute the singular value decomposition of the covariance matrix.
+
+    Parameters
+    ----------
+    covariance
+        The covariance matrix.
+
+    Returns
+    -------
+    A ``CovarianceSVD`` object.
+
+    """
+    U, Gamma, U_t = jnp.linalg.svd(covariance, hermitian=True)
+    return CovarianceSVD(U, Gamma, U_t)
 
 
 class MarginalInfo(NamedTuple):
@@ -69,28 +106,66 @@ class MarginalInfo(NamedTuple):
     proposal: MarginalState
 
 
-def init_and_kernel(logdensity_fn, covariance, mean=None):
-    """Build the marginal version of the auxiliary gradient-based sampler
+def generate_mean_shifted_logprob(logdensity_fn, mean, covariance):
+    """Generate a log-density function that is shifted by a constant
+
+    Parameters
+    ----------
+    logdensity_fn
+        The original log-density function
+    mean
+        The mean of the prior Gaussian density
+    covariance
+        The covariance of the prior Gaussian density.
+
+    Returns
+    -------
+    A log-density function that is shifted by a constant
+
+    """
+    shift = linalg.solve(covariance, mean, assume_a="pos")
+
+    def shifted_logdensity_fn(x):
+        return logdensity_fn(x) + jnp.dot(x, shift)
+
+    return shifted_logdensity_fn
+
+
+def init(position, logdensity_fn, U_t):
+    """Initialize the marginal version of the auxiliary gradient-based sampler.
+
+    Parameters
+    ----------
+    position
+        The initial position of the chain.
+    logdensity_fn
+        The logarithm of the likelihood function for the latent Gaussian model.
+    U_t
+        The unitary array of the covariance matrix.
+    """
+    logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
+    return MarginalState(
+        position, logdensity, logdensity_grad, U_t @ position, U_t @ logdensity_grad
+    )
+
+
+def build_kernel(cov_svd: CovarianceSVD):
+    """Build the marginal version of the auxiliary gradient-based sampler.
+
+    Parameters
+    ----------
+    cov_svd
+        The singular value decomposition of the covariance matrix.
 
     Returns
     -------
     A kernel that takes a rng_key and a Pytree that contains the current state
     of the chain and that returns a new state of the chain along with
     information about the transition.
-    An init function.
-
     """
-    U, Gamma, U_t = jnp.linalg.svd(covariance, hermitian=True)
+    U, Gamma, U_t = cov_svd
 
-    if mean is not None:
-        shift = linalg.solve(covariance, mean, assume_a="pos")
-        val_and_grad = jax.value_and_grad(
-            lambda x: logdensity_fn(x) + jnp.dot(x, shift)
-        )
-    else:
-        val_and_grad = jax.value_and_grad(logdensity_fn)
-
-    def step(key: PRNGKey, state: MarginalState, delta):
+    def kernel(key: PRNGKey, state: MarginalState, logdensity_fn, delta):
         y_key, u_key = jax.random.split(key, 2)
 
         position, logdensity, logdensity_grad, U_x, U_grad_x = state
@@ -108,7 +183,7 @@ def init_and_kernel(logdensity_fn, covariance, mean=None):
         y = U @ temp
 
         # Bookkeeping
-        log_p_y, grad_y = val_and_grad(y)
+        log_p_y, grad_y = jax.value_and_grad(logdensity_fn)(y)
         U_y = U_t @ y
         U_grad_y = U_t @ grad_y
 
@@ -119,47 +194,43 @@ def init_and_kernel(logdensity_fn, covariance, mean=None):
         hxy = jnp.dot(U_x - temp_y, Gamma_3 * U_grad_y)
         hyx = jnp.dot(U_y - temp_x, Gamma_3 * U_grad_x)
 
-        alpha = jnp.minimum(1, jnp.exp(log_p_y - logdensity + hxy - hyx))
-        accept = jax.random.uniform(u_key) < alpha
-
+        log_p_accept = log_p_y - logdensity + hxy - hyx
         proposed_state = MarginalState(y, log_p_y, grad_y, U_y, U_grad_y)
-        state = jax.lax.cond(accept, lambda _: proposed_state, lambda _: state, None)
-        info = MarginalInfo(alpha, accept, proposed_state)
-        return state, info
-
-    def init(position):
-        logdensity, logdensity_grad = val_and_grad(position)
-        return MarginalState(
-            position, logdensity, logdensity_grad, U_t @ position, U_t @ logdensity_grad
+        accepted_state, info = static_binomial_sampling(
+            u_key, log_p_accept, state, proposed_state
         )
+        do_accept, p_accept, _ = info
+        info = MarginalInfo(p_accept, do_accept, proposed_state)
+        return accepted_state, info
 
-    return init, step
+    return kernel
 
 
 class mgrad_gaussian:
     """Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.
 
     It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
-    Interestingly, the only parameter that needs calibrating is the "step size" delta, which can be done very efficiently.
+    Interestingly, the only parameter that needs calibrating is the "step size" delta,
+    which can be done very efficiently.
     Calibrating it to have an acceptance rate of roughly 50% is a good starting point.
 
     Examples
     --------
-    A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C) can be initialized and
-    used for a given "step size" delta with the following code:
+    A new marginal latent Gaussian MCMC kernel for a model q(x) ∝ exp(f(x)) N(x; m, C)
+    can be initialized and used for a given "step size" delta with the following code:
 
     .. code::
 
-        mgrad_gaussian = blackjax.mgrad_gaussian(f, C, use_inverse=False, mean=m)
+        mgrad_gaussian = blackjax.mgrad_gaussian(f, C, mean=m, step_size=delta)
         state = mgrad_gaussian.init(zeros)  # Starting at the mean of the prior
-        new_state, info = mgrad_gaussian.step(rng_key, state, delta)
+        new_state, info = mgrad_gaussian.step(rng_key, state)
 
     We can JIT-compile the step function for better performance
 
     .. code::
 
         step = jax.jit(mgrad_gaussian.step)
-        new_state, info = step(rng_key, state, delta)
+        new_state, info = step(rng_key, state)
 
     Parameters
     ----------
@@ -172,26 +243,45 @@ class mgrad_gaussian:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
+
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
         logdensity_fn: Callable,
-        covariance: Array,
+        covariance: Optional[Array] = None,
         mean: Optional[Array] = None,
-    ) -> MCMCSamplingAlgorithm:
-        init, kernel = init_and_kernel(logdensity_fn, covariance, mean)
+        cov_svd: Optional[CovarianceSVD] = None,
+        step_size: float = 1.0,
+    ) -> SamplingAlgorithm:
+        if cov_svd is None:
+            if covariance is None:
+                raise ValueError("Either covariance or cov_svd must be provided.")
+            cov_svd = svd_from_covariance(covariance)
 
-        def init_fn(position: Array):
-            return init(position)
+        U, Gamma, U_t = cov_svd
 
-        def step_fn(rng_key: PRNGKey, state, delta: float):
+        if mean is not None:
+            logdensity_fn = generate_mean_shifted_logprob(
+                logdensity_fn, mean, covariance
+            )
+
+        kernel = cls.build_kernel(cov_svd)
+
+        def init_fn(position: Array, rng_key=None):
+            del rng_key
+            return init(position, logdensity_fn, U_t)
+
+        def step_fn(rng_key: PRNGKey, state):
             return kernel(
                 rng_key,
                 state,
-                delta,
+                logdensity_fn,
+                step_size,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)

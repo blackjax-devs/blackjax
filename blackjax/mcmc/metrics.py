@@ -35,36 +35,38 @@ import jax.scipy as jscipy
 from jax.flatten_util import ravel_pytree
 from jax.scipy import stats as sp_stats
 
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = ["default_metric", "gaussian_euclidean", "gaussian_riemannian"]
 
 
 class KineticEnergy(Protocol):
-    def __call__(self, momentum: PyTree, position: Optional[PyTree] = None) -> float:
+    def __call__(
+        self, momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+    ) -> float:
         ...
 
 
 class CheckTurning(Protocol):
     def __call__(
         self,
-        momentum_left: PyTree,
-        momentum_right: PyTree,
-        momentum_sum: PyTree,
-        position_left: Optional[PyTree] = None,
-        position_right: Optional[PyTree] = None,
+        momentum_left: ArrayLikeTree,
+        momentum_right: ArrayLikeTree,
+        momentum_sum: ArrayLikeTree,
+        position_left: Optional[ArrayLikeTree] = None,
+        position_right: Optional[ArrayLikeTree] = None,
     ) -> bool:
         ...
 
 
 class Metric(NamedTuple):
-    sample_momentum: Callable[[PRNGKey, PyTree], PyTree]
+    sample_momentum: Callable[[PRNGKey, ArrayLikeTree], ArrayLikeTree]
     kinetic_energy: KineticEnergy
     check_turning: CheckTurning
 
 
-MetricTypes = Union[Metric, Array, Callable[[PyTree], Array]]
+MetricTypes = Union[Metric, Array, Callable[[ArrayLikeTree], Array]]
 
 
 def default_metric(metric: MetricTypes) -> Metric:
@@ -157,10 +159,12 @@ def gaussian_euclidean(
             f" expected 1 or 2, got {ndim}."
         )
 
-    def momentum_generator(rng_key: PRNGKey, position: PyTree) -> PyTree:
+    def momentum_generator(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayTree:
         return generate_gaussian_noise(rng_key, position, sigma=mass_matrix_sqrt)
 
-    def kinetic_energy(momentum: PyTree, position: Optional[PyTree] = None) -> float:
+    def kinetic_energy(
+        momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+    ) -> float:
         del position
         momentum, _ = ravel_pytree(momentum)
         velocity = matmul(inverse_mass_matrix, momentum)
@@ -168,11 +172,11 @@ def gaussian_euclidean(
         return kinetic_energy_val
 
     def is_turning(
-        momentum_left: PyTree,
-        momentum_right: PyTree,
-        momentum_sum: PyTree,
-        position_left: Optional[PyTree] = None,
-        position_right: Optional[PyTree] = None,
+        momentum_left: ArrayLikeTree,
+        momentum_right: ArrayLikeTree,
+        momentum_sum: ArrayLikeTree,
+        position_left: Optional[ArrayLikeTree] = None,
+        position_right: Optional[ArrayLikeTree] = None,
     ) -> bool:
         """Generalized U-turn criterion :cite:p:`betancourt2013generalizing,nuts_uturn`.
 
@@ -207,7 +211,7 @@ def gaussian_euclidean(
 def gaussian_riemannian(
     mass_matrix_fn: Callable,
 ) -> Metric:
-    def momentum_generator(rng_key: PRNGKey, position: PyTree) -> PyTree:
+    def momentum_generator(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayLikeTree:
         mass_matrix = mass_matrix_fn(position)
         ndim = jnp.ndim(mass_matrix)
         if ndim == 1:
@@ -222,7 +226,9 @@ def gaussian_riemannian(
 
         return generate_gaussian_noise(rng_key, position, sigma=mass_matrix_sqrt)
 
-    def kinetic_energy(momentum: PyTree, position: Optional[PyTree] = None) -> float:
+    def kinetic_energy(
+        momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+    ) -> float:
         if position is None:
             raise ValueError(
                 "A Reinmannian kinetic energy function must be called with the "
@@ -246,11 +252,11 @@ def gaussian_riemannian(
             )
 
     def is_turning(
-        momentum_left: PyTree,
-        momentum_right: PyTree,
-        momentum_sum: PyTree,
-        position_left: Optional[PyTree] = None,
-        position_right: Optional[PyTree] = None,
+        momentum_left: ArrayLikeTree,
+        momentum_right: ArrayLikeTree,
+        momentum_sum: ArrayLikeTree,
+        position_left: Optional[ArrayLikeTree] = None,
+        position_right: Optional[ArrayLikeTree] = None,
     ) -> bool:
         del momentum_left, momentum_right, momentum_sum, position_left, position_right
         raise NotImplementedError(

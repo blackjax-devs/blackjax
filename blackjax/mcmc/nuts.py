@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the NUTS Kernel"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -24,8 +24,8 @@ import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.termination as termination
 import blackjax.mcmc.trajectory as trajectory
-from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.base import SamplingAlgorithm
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["NUTSInfo", "init", "build_kernel", "nuts"]
 
@@ -63,7 +63,7 @@ class NUTSInfo(NamedTuple):
 
     """
 
-    momentum: PyTree
+    momentum: ArrayTree
     is_divergent: bool
     is_turning: bool
     energy: float
@@ -77,7 +77,6 @@ class NUTSInfo(NamedTuple):
 def build_kernel(
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: int = 1000,
-    max_num_doublings: int = 10,
 ):
     """Build an iterative NUTS kernel.
 
@@ -108,10 +107,6 @@ def build_kernel(
     divergence_threshold
         The absolute difference in energy above which we consider
         a transition "divergent".
-    max_num_doublings
-        The maximum number of times we expand the trajectory by
-        doubling the number of steps if the trajectory does not
-        turn onto itself.
 
     """
 
@@ -121,7 +116,8 @@ def build_kernel(
         logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: metrics.MetricTypes,
-    ) -> Tuple[hmc.HMCState, NUTSInfo]:
+        max_num_doublings: int = 10,
+    ) -> tuple[hmc.HMCState, NUTSInfo]:
         """Generate a new sample with the NUTS kernel."""
 
         metric = metrics.default_metric(inverse_mass_matrix)
@@ -203,7 +199,7 @@ class nuts:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -219,10 +215,11 @@ class nuts:
         max_num_doublings: int = 10,
         divergence_threshold: int = 1000,
         integrator: Callable = integrators.velocity_verlet,
-    ) -> MCMCSamplingAlgorithm:
-        kernel = cls.build_kernel(integrator, divergence_threshold, max_num_doublings)
+    ) -> SamplingAlgorithm:
+        kernel = cls.build_kernel(integrator, divergence_threshold)
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
@@ -232,9 +229,10 @@ class nuts:
                 logdensity_fn,
                 step_size,
                 inverse_mass_matrix,
+                max_num_doublings,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def iterative_nuts_proposal(

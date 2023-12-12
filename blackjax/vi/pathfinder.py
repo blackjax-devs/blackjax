@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -23,7 +23,7 @@ from blackjax.optimizers.lbfgs import (
     bfgs_sample,
     lbfgs_inverse_hessian_factors,
 )
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["PathfinderState", "approximate", "sample", "pathfinder"]
 
@@ -50,8 +50,8 @@ class PathfinderState(NamedTuple):
     """
 
     elbo: Array
-    position: PyTree
-    grad_position: PyTree
+    position: ArrayTree
+    grad_position: ArrayTree
     alpha: Array
     beta: Array
     gamma: Array
@@ -71,7 +71,7 @@ class PathFinderAlgorithm(NamedTuple):
 def approximate(
     rng_key: PRNGKey,
     logdensity_fn: Callable,
-    initial_position: PyTree,
+    initial_position: ArrayLikeTree,
     num_samples: int = 200,
     *,  # lgbfs parameters
     maxiter=30,
@@ -79,7 +79,8 @@ def approximate(
     maxls=1000,
     gtol=1e-08,
     ftol=1e-05,
-) -> Tuple[PathfinderState, PathfinderInfo]:
+    **lbfgs_kwargs,
+) -> tuple[PathfinderState, PathfinderInfo]:
     """Pathfinder variational inference algorithm.
 
     Pathfinder locates normal approximations to the target density along a
@@ -112,6 +113,9 @@ def approximate(
     maxls
         The maximum number of line search steps (per iteration) for the LGBFS
         algorithm
+    **lbfgs_kwargs
+        other keyword arguments passed to `jaxopt.LBFGS`.
+
 
     Returns
     -------
@@ -131,6 +135,7 @@ def approximate(
         gtol,
         ftol,
         maxls,
+        **lbfgs_kwargs,
     )
 
     # Get postions and gradients of the optimization path (including the starting point).
@@ -200,8 +205,8 @@ def approximate(
 def sample(
     rng_key: PRNGKey,
     state: PathfinderState,
-    num_samples: Union[int, Tuple[()], Tuple[int]] = (),
-) -> PyTree:
+    num_samples: Union[int, tuple[()], tuple[int]] = (),
+) -> ArrayTree:
     """Draw from the Pathfinder approximation of the target distribution.
 
     Parameters
@@ -267,7 +272,7 @@ class pathfinder:
     def __new__(cls, logdensity_fn: Callable) -> PathFinderAlgorithm:  # type: ignore[misc]
         def approximate_fn(
             rng_key: PRNGKey,
-            position: PyTree,
+            position: ArrayLikeTree,
             num_samples: int = 200,
             **lbfgs_parameters,
         ):

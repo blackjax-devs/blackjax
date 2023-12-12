@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Dict, Tuple
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
@@ -20,8 +20,8 @@ import blackjax.smc.base as base
 import blackjax.smc.ess as ess
 import blackjax.smc.solver as solver
 import blackjax.smc.tempered as tempered
-from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.base import SamplingAlgorithm
+from blackjax.types import ArrayLikeTree, PRNGKey
 
 __all__ = ["build_kernel", "adaptive_tempered_smc"]
 
@@ -95,7 +95,7 @@ def build_kernel(
         state: tempered.TemperedSMCState,
         num_mcmc_steps: int,
         mcmc_parameters: dict,
-    ) -> Tuple[tempered.TemperedSMCState, base.SMCInfo]:
+    ) -> tuple[tempered.TemperedSMCState, base.SMCInfo]:
         delta = compute_delta(state)
         lmbda = delta + state.lmbda
         return tempered_kernel(rng_key, state, num_mcmc_steps, lmbda, mcmc_parameters)
@@ -130,7 +130,7 @@ class adaptive_tempered_smc:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -143,12 +143,12 @@ class adaptive_tempered_smc:
         loglikelihood_fn: Callable,
         mcmc_step_fn: Callable,
         mcmc_init_fn: Callable,
-        mcmc_parameters: Dict,
+        mcmc_parameters: dict,
         resampling_fn: Callable,
         target_ess: float,
         root_solver: Callable = solver.dichotomy,
         num_mcmc_steps: int = 10,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(
             logprior_fn,
             loglikelihood_fn,
@@ -159,7 +159,8 @@ class adaptive_tempered_smc:
             root_solver,
         )
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position)
 
         def step_fn(rng_key: PRNGKey, state):
@@ -170,4 +171,4 @@ class adaptive_tempered_smc:
                 mcmc_parameters,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)

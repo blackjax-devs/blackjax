@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.14.4
+    jupytext_version: 1.15.2
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -16,14 +16,16 @@ kernelspec:
 Gibbs sampling is an MCMC technique where sampling from a joint probability distribution $\newcommand{\xx}{\boldsymbol{x}}\newcommand{\yy}{\boldsymbol{y}}p(\xx, \yy)$ is achieved by alternately sampling from $\xx \sim p(\xx \mid \yy)$ and $\yy \sim p(\yy \mid \xx)$.  Ideally these conditional distributions can be sampled from analytically.  In general however they must each be updated using any MCMC kernel appropriate to the conditional distribution at hand.   This technique is referred to as Metropolis-within-Gibbs (MWG) sampling.  The idea can be applied to an arbitrary number of blocks of variables $p(\xx_1, \ldots, \xx_n)$.  For simplicity in this notebook we focus on a two-block example.
 
 ```{code-cell} ipython3
+:tags: [remove-output]
+
 import jax
 import jax.numpy as jnp
 import jax.scipy as jsp
 
 import blackjax
 
-import pandas as pd
-import seaborn as sns
+from datetime import date
+rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
 ```
 
 ## The Model
@@ -67,9 +69,9 @@ In this case the conditional distributions $p(\xx \mid \yy)$ and $p(\yy \mid \xx
 1.  Maintain separate MCMC kernels to update each component of $p(\xx, \yy)$ while holding the other fixed.
 2.  Apply the kernel updates correctly.
 
-The issue with (2) is that each kernel update for a given MCMC `Algorithm` in BlackJAX refers to an algorithm-specific `AlgorithmState`.  For example, `RMHState` is a `typing.NamedTuple` class containing elements `position` and `log_probability`.  In our MWG sampling problem at the beginning of step $t$, `RMHState.log_probability` will consist of $\log p(\xx_{t-1}, \yy_{t-1})$.  After updating $\xx$, it will consist of $\log p(\xx_{t}, \yy_{t-1})$.  This happens automatically when we call `blackjax.mcmc.rmh.build_kernel()`.  However, after updating $\yy$ (via HMC), we must manually update `RMHState.log_probability` to consist of $\log p(\xx_{t}, \yy_{t})$.
+The issue with (2) is that each kernel update for a given MCMC `Algorithm` in BlackJAX refers to an algorithm-specific `AlgorithmState`.  For example, `RWState` is a `typing.NamedTuple` class containing elements `position` and `log_probability`.  In our MWG sampling problem at the beginning of step $t$, `RWState.log_probability` will consist of $\log p(\xx_{t-1}, \yy_{t-1})$.  After updating $\xx$, it will consist of $\log p(\xx_{t}, \yy_{t-1})$.  This happens automatically when we call `blackjax.rmh.build_kernel()`.  However, after updating $\yy$ (via HMC), we must manually update `RWState.log_probability` to consist of $\log p(\xx_{t}, \yy_{t})$.
 
-A general way of performing this manual update is to use the `blackjax.mcmc.algorithm.init()` function of the given component's MCMC algorithm to update the `AlgorithmState`.  This function has arguments `position` and `logdensity_fn`.  For example with the HMC component, after obtaining $\xx_t$ but before drawing $\yy_t$, the `position` would be $\yy_{t-1}$ and the `logdensity_fn` function would be $\log p(\xx_t, \cdot )$.
+A general way of performing this manual update is to use the `blackjax.algorithm.init()` function of the given component's MCMC algorithm to update the `AlgorithmState`.  This function has arguments `position` and `logdensity_fn`.  For example with the HMC component, after obtaining $\xx_t$ but before drawing $\yy_t$, the `position` would be $\yy_{t-1}$ and the `logdensity_fn` function would be $\log p(\xx_t, \cdot )$.
 
 Using this approach, we now are now ready to implement the Gibbs sampling kernel in the code below.
 
@@ -77,12 +79,12 @@ Using this approach, we now are now ready to implement the Gibbs sampling kernel
 
 ```{code-cell} ipython3
 # MCMC initializers for each set of paramters
-mwg_init_x = blackjax.mcmc.rmh.init
-mwg_init_y = blackjax.mcmc.hmc.init
+mwg_init_x = blackjax.rmh.init
+mwg_init_y = blackjax.hmc.init
 
 # MCMC updaters
-mwg_step_fn_x = blackjax.mcmc.rmh.build_kernel()
-mwg_step_fn_y = blackjax.mcmc.hmc.build_kernel()  # default integrator, etc.
+mwg_step_fn_x = blackjax.rmh.build_kernel()
+mwg_step_fn_y = blackjax.hmc.build_kernel()  # default integrator, etc.
 
 
 def mwg_kernel(rng_key, state, parameters):
@@ -151,7 +153,7 @@ def mwg_kernel(rng_key, state, parameters):
 ```{code-cell} ipython3
 parameters = {
     "x": {
-        "sigma": .2 * jnp.eye(2)
+        "transition_generator": blackjax.mcmc.random_walk.normal(.2 * jnp.eye(2))
     },
     "y": {
         "inverse_mass_matrix": jnp.array([1., 1.]),
@@ -200,19 +202,17 @@ def sampling_loop(rng_key, initial_state, parameters, num_samples):
 
 ```{code-cell} ipython3
 %%time
-rng_key = jax.random.PRNGKey(0)
-positions = sampling_loop(rng_key, initial_state, parameters, 10_000)
+rng_key, sample_key = jax.random.split(rng_key)
+positions = sampling_loop(sample_key, initial_state, parameters, 10_000)
 ```
 
 ```{code-cell} ipython3
-plt_data = pd.DataFrame({
-    "x1": positions["x"][:,0],
-    "x2": positions["x"][:,1],
-    "y1": positions["y"][:,0],
-    "y2": positions["y"][:,1]
-})
+import matplotlib.pyplot as plt
+import arviz as az
 
-sns.pairplot(plt_data, kind="hist")
+idata = az.from_dict(posterior={k: v[None, ...] for k, v in positions.items()})
+az.plot_pair(idata, kind='hexbin', marginals=True)
+plt.tight_layout();
 ```
 
 ## General MWG Kernel
@@ -305,9 +305,8 @@ def sampling_loop_general(rng_key, initial_state, logdensity_fn, step_fn, init, 
 
 ```{code-cell} ipython3
 %%time
-rng_key = jax.random.PRNGKey(0)
 positions_general = sampling_loop_general(
-    rng_key=rng_key,
+    rng_key=sample_key,  # reuse PRNG key from above
     initial_state=initial_state,
     logdensity_fn=logdensity,
     step_fn={
@@ -326,11 +325,11 @@ positions_general = sampling_loop_general(
 ### Check Result
 
 ```{code-cell} ipython3
-{k: jnp.max(jnp.abs(positions[k] - positions_general[k])) for k in initial_state.keys()}
+jax.tree_map(lambda x, y: jnp.max(jnp.abs(x-y)), positions, positions_general)
 ```
 
 ## Developer Notes
 
-- The update method above (using `blackjax.mcmc.algorithm.init()`) should work out-of-the-box for most (if not all) MCMC algorithms in BlackJAX.  However, it is not optimally efficient.  For example for the RMH update, after obtaining $\yy_{t-1}$ but before drawing $\xx_t$, the method above would calculate `RMHState.log_density` to be $\log p(\xx_{t-1}, \yy_{t-1})$.  But we've already calculated this value from the previous HMC update of $\yy_{t-1} \sim p(\yy \mid \xx_{t-1})$.  So, we could save ourselves the cost of calculating the log-density twice, at the expense of a deeper understanding of the low-level components of the algorithms at hand and less generalizable code.
+- The update method above (using `blackjax.algorithm.init()`) should work out-of-the-box for most (if not all) MCMC algorithms in BlackJAX.  However, it is not optimally efficient.  For example for the RMH update, after obtaining $\yy_{t-1}$ but before drawing $\xx_t$, the method above would calculate `RWState.log_density` to be $\log p(\xx_{t-1}, \yy_{t-1})$.  But we've already calculated this value from the previous HMC update of $\yy_{t-1} \sim p(\yy \mid \xx_{t-1})$.  So, we could save ourselves the cost of calculating the log-density twice, at the expense of a deeper understanding of the low-level components of the algorithms at hand and less generalizable code.
 
 - The general MWG kernel prototyped above should be adequate for problems with a small number of components.  However, the for-loop over the components of `state` gets unrolled by the JAX JIT compiler (as discussed [here](https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html#structured-control-flow-primitives)), which can cause long compilation times when the number of components is large.  To mitigate this problem, the for-loop could be replaced by a `lax.scan()` primitive.  For the sake of simplicity this approach is not fully developed here.

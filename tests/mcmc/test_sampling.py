@@ -7,22 +7,13 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
+import optax
 from absl.testing import absltest, parameterized
 
 import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
-
-
-def inference_loop(kernel, num_samples, rng_key, initial_state):
-    def one_step(state, rng_key):
-        state, _ = kernel(rng_key, state)
-        return state, state
-
-    keys = jax.random.split(rng_key, num_samples)
-    _, states = jax.lax.scan(one_step, initial_state, keys)
-
-    return states
+from blackjax.util import run_inference_algorithm
 
 
 def orbit_samples(orbits, weights, rng_key):
@@ -71,7 +62,7 @@ class LinearRegressionTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(19)
+        self.key = jax.random.key(19)
 
     def regression_logprob(self, log_scale, coefs, preds, x):
         """Linear regression"""
@@ -82,6 +73,44 @@ class LinearRegressionTest(chex.TestCase):
         logpdf = stats.norm.logpdf(preds, y, scale)
         # reduce sum otherwise broacasting will make the logprob biased.
         return sum(x.sum() for x in [scale_prior, coefs_prior, logpdf])
+
+    def run_mclmc(self, logdensity_fn, num_steps, initial_position, key):
+        init_key, tune_key, run_key = jax.random.split(key, 3)
+
+        initial_state = blackjax.mcmc.mclmc.init(
+            position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
+        )
+
+        kernel = blackjax.mcmc.mclmc.build_kernel(
+            logdensity_fn=logdensity_fn,
+            integrator=blackjax.mcmc.integrators.noneuclidean_mclachlan,
+        )
+
+        (
+            blackjax_state_after_tuning,
+            blackjax_mclmc_sampler_params,
+        ) = blackjax.mclmc_find_L_and_step_size(
+            mclmc_kernel=kernel,
+            num_steps=num_steps,
+            state=initial_state,
+            rng_key=tune_key,
+        )
+
+        sampling_alg = blackjax.mclmc(
+            logdensity_fn,
+            L=blackjax_mclmc_sampler_params.L,
+            step_size=blackjax_mclmc_sampler_params.step_size,
+        )
+
+        _, samples, _ = run_inference_algorithm(
+            rng_key=run_key,
+            initial_state_or_position=blackjax_state_after_tuning,
+            inference_algorithm=sampling_alg,
+            num_steps=num_steps,
+            transform=lambda x: x.position,
+        )
+
+        return samples
 
     @parameterized.parameters(itertools.product(regression_test_cases, [True, False]))
     def test_window_adaptation(self, case, is_mass_matrix_diagonal):
@@ -109,10 +138,10 @@ class LinearRegressionTest(chex.TestCase):
             case["initial_position"],
             case["num_warmup_steps"],
         )
-        algorithm = case["algorithm"](logposterior_fn, **parameters)
+        inference_algorithm = case["algorithm"](logposterior_fn, **parameters)
 
-        states = inference_loop(
-            algorithm.step, case["num_sampling_steps"], inference_key, state
+        _, states, _ = run_inference_algorithm(
+            inference_key, state, inference_algorithm, case["num_sampling_steps"]
         )
 
         coefs_samples = states.position["coefs"]
@@ -134,13 +163,37 @@ class LinearRegressionTest(chex.TestCase):
 
         mala = blackjax.mala(logposterior_fn, 1e-5)
         state = mala.init({"coefs": 1.0, "log_scale": 1.0})
-        states = inference_loop(mala.step, 10_000, inference_key, state)
+        _, states, _ = run_inference_algorithm(inference_key, state, mala, 10_000)
 
         coefs_samples = states.position["coefs"][3000:]
         scale_samples = np.exp(states.position["log_scale"][3000:])
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+
+    def test_mclmc(self):
+        """Test the MCLMC kernel."""
+        init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logdensity_fn = lambda x: logposterior_fn_(**x)
+
+        states = self.run_mclmc(
+            initial_position={"coefs": 1.0, "log_scale": 1.0},
+            logdensity_fn=logdensity_fn,
+            key=inference_key,
+            num_steps=10000,
+        )
+
+        coefs_samples = states["coefs"][3000:]
+        scale_samples = np.exp(states["log_scale"][3000:])
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
 
     @parameterized.parameters(regression_test_cases)
     def test_pathfinder_adaptation(
@@ -173,9 +226,11 @@ class LinearRegressionTest(chex.TestCase):
             initial_position,
             num_warmup_steps,
         )
-        kernel = algorithm(logposterior_fn, **parameters).step
+        inference_algorithm = algorithm(logposterior_fn, **parameters)
 
-        states = inference_loop(kernel, num_sampling_steps, inference_key, state)
+        _, states, _ = run_inference_algorithm(
+            inference_key, state, inference_algorithm, num_sampling_steps
+        )
 
         coefs_samples = states.position["coefs"]
         scale_samples = np.exp(states.position["log_scale"])
@@ -210,12 +265,14 @@ class LinearRegressionTest(chex.TestCase):
             initial_positions,
             num_steps=1000,
         )
-        kernel = blackjax.ghmc(logposterior_fn, **parameters).step
+        inference_algorithm = blackjax.ghmc(logposterior_fn, **parameters)
 
         chain_keys = jax.random.split(inference_key, num_chains)
-        states = jax.vmap(lambda key, state: inference_loop(kernel, 100, key, state))(
-            chain_keys, last_states
-        )
+        _, states, _ = jax.vmap(
+            lambda key, state: run_inference_algorithm(
+                key, state, inference_algorithm, 100
+            )
+        )(chain_keys, last_states)
 
         coefs_samples = states.position["coefs"]
         scale_samples = np.exp(states.position["log_scale"])
@@ -223,13 +280,79 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
+    @parameterized.parameters([None, jax.random.uniform])
+    def test_chees(self, jitter_generator):
+        """Test the ChEES adaptation w/ HMC kernel."""
+        rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logposterior_fn = lambda x: logposterior_fn_(**x)
+
+        init_key, warmup_key, inference_key = jax.random.split(rng_key, 3)
+
+        num_chains = 128
+        warmup = blackjax.chees_adaptation(
+            logposterior_fn, num_chains=num_chains, jitter_generator=jitter_generator
+        )
+        scale_key, coefs_key = jax.random.split(init_key, 2)
+        log_scales = 1.0 + jax.random.normal(scale_key, (num_chains,))
+        coefs = 4.0 + jax.random.normal(coefs_key, (num_chains,))
+        initial_positions = {"log_scale": log_scales, "coefs": coefs}
+        (last_states, parameters), _ = warmup.run(
+            warmup_key,
+            initial_positions,
+            step_size=0.001,
+            optim=optax.adam(learning_rate=0.1),
+            num_steps=1000,
+        )
+        inference_algorithm = blackjax.dynamic_hmc(logposterior_fn, **parameters)
+
+        chain_keys = jax.random.split(inference_key, num_chains)
+        _, states, _ = jax.vmap(
+            lambda key, state: run_inference_algorithm(
+                key, state, inference_algorithm, 100
+            )
+        )(chain_keys, last_states)
+
+        coefs_samples = states.position["coefs"]
+        scale_samples = np.exp(states.position["log_scale"])
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+
+    def test_barker(self):
+        """Test the Barker kernel."""
+        init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logposterior_fn = lambda x: logposterior_fn_(**x)
+
+        barker = blackjax.barker_proposal(logposterior_fn, 1e-1)
+        state = barker.init({"coefs": 1.0, "log_scale": 1.0})
+
+        _, states, _ = run_inference_algorithm(inference_key, state, barker, 10_000)
+
+        coefs_samples = states.position["coefs"][3000:]
+        scale_samples = np.exp(states.position["log_scale"][3000:])
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+
 
 class SGMCMCTest(chex.TestCase):
     """Test sampling of a linear regression model."""
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(19)
+        self.key = jax.random.key(19)
 
     def logprior_fn(self, position):
         return -0.5 * jnp.dot(position, position) * 0.01
@@ -379,7 +502,7 @@ class LatentGaussianTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(19)
+        self.key = jax.random.key(19)
         self.C = 2.0 * np.eye(1)
         self.delta = 5.0
         self.sampling_steps = 25_000
@@ -389,13 +512,20 @@ class LatentGaussianTest(chex.TestCase):
     def test_latent_gaussian(self):
         from blackjax import mgrad_gaussian
 
-        init, step = mgrad_gaussian(lambda x: -0.5 * jnp.sum((x - 1.0) ** 2), self.C)
+        inference_algorithm = mgrad_gaussian(
+            lambda x: -0.5 * jnp.sum((x - 1.0) ** 2),
+            covariance=self.C,
+            step_size=self.delta,
+        )
 
-        kernel = lambda key, x: step(key, x, self.delta)
-        initial_state = init(jnp.zeros((1,)))
+        initial_state = inference_algorithm.init(jnp.zeros((1,)))
 
-        states = self.variant(
-            functools.partial(inference_loop, kernel, self.sampling_steps),
+        _, states, _ = self.variant(
+            functools.partial(
+                run_inference_algorithm,
+                inference_algorithm=inference_algorithm,
+                num_steps=self.sampling_steps,
+            ),
         )(self.key, initial_state)
 
         np.testing.assert_allclose(
@@ -459,8 +589,8 @@ normal_test_cases = [
         "algorithm": blackjax.mala,
         "initial_position": 1.0,
         "parameters": {"step_size": 1e-1},
-        "num_sampling_steps": 20_000,
-        "burnin": 2_000,
+        "num_sampling_steps": 45_000,
+        "burnin": 5_000,
     },
     {
         "algorithm": blackjax.elliptical_slice,
@@ -489,6 +619,13 @@ normal_test_cases = [
         "burnin": 1_000,
     },
     {
+        "algorithm": blackjax.barker_proposal,
+        "initial_position": 1.0,
+        "parameters": {"step_size": 1.5},
+        "num_sampling_steps": 20_000,
+        "burnin": 2_000,
+    },
+    {
         "algorithm": blackjax.rmhmc,
         "initial_position": jnp.array(3.0),
         "parameters": {
@@ -509,7 +646,7 @@ class UnivariateNormalTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(12)
+        self.key = jax.random.key(12)
 
     def normal_logprob(self, x):
         return stats.norm.logpdf(x, loc=1.0, scale=2.0)
@@ -528,20 +665,25 @@ class UnivariateNormalTest(chex.TestCase):
         if algorithm == blackjax.rmhmc:
             parameters["mass_matrix"] = rmhmc_static_mass_matrix_fn
 
-        algo = algorithm(self.normal_logprob, **parameters)
+        inference_algorithm = algorithm(self.normal_logprob, **parameters)
         rng_key = self.key
         if algorithm == blackjax.elliptical_slice:
-            algo = algorithm(lambda _: 1.0, **parameters)
+            inference_algorithm = algorithm(lambda x: jnp.ones_like(x), **parameters)
         if algorithm == blackjax.ghmc:
             rng_key, initial_state_key = jax.random.split(rng_key)
-            initial_state = algo.init(initial_position, initial_state_key)
+            initial_state = inference_algorithm.init(
+                initial_position, initial_state_key
+            )
         else:
-            initial_state = algo.init(initial_position)
+            initial_state = inference_algorithm.init(initial_position)
 
         inference_key, orbit_key = jax.random.split(rng_key)
-        kernel = algo.step
-        states = self.variant(
-            functools.partial(inference_loop, kernel, num_sampling_steps)
+        _, states, _ = self.variant(
+            functools.partial(
+                run_inference_algorithm,
+                inference_algorithm=inference_algorithm,
+                num_steps=num_sampling_steps,
+            )
         )(inference_key, initial_state)
 
         if algorithm == blackjax.orbital_hmc:
@@ -550,7 +692,6 @@ class UnivariateNormalTest(chex.TestCase):
             )
         else:
             samples = states.position[burnin:]
-
         np.testing.assert_allclose(np.mean(samples), 1.0, rtol=1e-1)
         np.testing.assert_allclose(np.var(samples), 4.0, rtol=1e-1)
 
@@ -582,6 +723,11 @@ mcse_test_cases = [
         "parameters": {"step_size": 0.85},
         "is_mass_matrix_diagonal": False,
     },
+    {
+        "algorithm": blackjax.barker_proposal,
+        "parameters": {"step_size": 0.5},
+        "is_mass_matrix_diagonal": None,
+    },
 ]
 
 
@@ -590,7 +736,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(20220203)
+        self.key = jax.random.key(20220203)
 
     def generate_multivariate_target(self, rng=None):
         """Genrate a Multivariate Normal distribution as target."""
@@ -635,25 +781,36 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             true_rho,
             true_cov,
         ) = self.generate_multivariate_target(None)
-        if is_mass_matrix_diagonal:
-            inverse_mass_matrix = true_scale**2
+        if is_mass_matrix_diagonal is not None:
+            if is_mass_matrix_diagonal:
+                inverse_mass_matrix = true_scale**2
+            else:
+                inverse_mass_matrix = true_cov
+            inference_algorithm = algorithm(
+                logdensity_fn,
+                inverse_mass_matrix=inverse_mass_matrix,
+                **parameters,
+            )
         else:
-            inverse_mass_matrix = true_cov
-        kernel = algorithm(
-            logdensity_fn,
-            inverse_mass_matrix=inverse_mass_matrix,
-            **parameters,
-        )
+            inference_algorithm = algorithm(logdensity_fn, **parameters)
 
         num_chains = 10
         initial_positions = jax.random.normal(pos_init_key, [num_chains, 2])
-        initial_states = jax.vmap(kernel.init, in_axes=(0,))(initial_positions)
+        initial_states = jax.vmap(inference_algorithm.init, in_axes=(0,))(
+            initial_positions
+        )
         multi_chain_sample_key = jax.random.split(sample_key, num_chains)
 
         inference_loop_multiple_chains = jax.vmap(
-            functools.partial(inference_loop, kernel.step, 2_000)
+            functools.partial(
+                run_inference_algorithm,
+                inference_algorithm=inference_algorithm,
+                num_steps=2_000,
+            )
         )
-        states = inference_loop_multiple_chains(multi_chain_sample_key, initial_states)
+        _, states, _ = inference_loop_multiple_chains(
+            multi_chain_sample_key, initial_states
+        )
 
         posterior_samples = states.position[:, -1000:]
         posterior_delta = posterior_samples - true_loc

@@ -7,6 +7,7 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
 
+import blackjax.mcmc.dynamic_hmc as dynamic_hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
@@ -22,7 +23,7 @@ class TrajectoryTest(chex.TestCase):
     def test_dynamic_progressive_integration_divergence(
         self, step_size, should_diverge
     ):
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
 
         logdensity_fn = jax.scipy.stats.norm.logpdf
 
@@ -74,7 +75,7 @@ class TrajectoryTest(chex.TestCase):
         assert is_diverging.item() is should_diverge
 
     def test_dynamic_progressive_equal_recursive(self):
-        rng_key = jax.random.PRNGKey(23132)
+        rng_key = jax.random.key(23132)
 
         def logdensity_fn(x):
             return -((1.0 - x[0]) ** 2) - 1.5 * (x[1] - x[0] ** 2) ** 2
@@ -202,7 +203,7 @@ class TrajectoryTest(chex.TestCase):
     def test_dynamic_progressive_expansion(
         self, step_size, should_diverge, should_turn, expected_doublings
     ):
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
 
         def logdensity_fn(x):
             return -0.5 * x**2
@@ -260,7 +261,7 @@ class TrajectoryTest(chex.TestCase):
         assert is_turning == should_turn
 
     def test_static_integration_variable_num_steps(self):
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
 
         logdensity_fn = jax.scipy.stats.norm.logpdf
         position = 1.0
@@ -291,6 +292,36 @@ class TrajectoryTest(chex.TestCase):
             fori_state,
             scan_state,
         )
+
+    def test_dynamic_hmc_integration_steps(self):
+        rng_key = jax.random.key(0)
+        num_step_key, sample_key = jax.random.split(rng_key)
+        initial_position = jnp.array(3.0)
+        parameters = {"step_size": 3.9, "inverse_mass_matrix": jnp.array([1.0])}
+
+        unique_integration_steps = jnp.asarray([5, 10, 20])
+        unique_probs = jnp.asarray([0.1, 0.8, 0.1])
+        num_step_fn = lambda key: jax.random.choice(
+            key, unique_integration_steps, p=unique_probs
+        )
+        kernel_factory = dynamic_hmc.build_kernel(integration_steps_fn=num_step_fn)
+
+        logprob = jax.scipy.stats.norm.logpdf
+        hmc_kernel = lambda key, state: kernel_factory(
+            key, state, logprob, **parameters
+        )
+        init_state = dynamic_hmc.init(initial_position, logprob, num_step_key)
+
+        def one_step(state, rng_key):
+            state, info = hmc_kernel(rng_key, state)
+            return state, info
+
+        num_iter = 1000
+        keys = jax.random.split(sample_key, num_iter)
+        _, infos = jax.lax.scan(one_step, init_state, keys)
+        _, unique_counts = np.unique(infos.num_integration_steps, return_counts=True)
+
+        np.testing.assert_allclose(unique_counts / num_iter, unique_probs, rtol=1e-1)
 
 
 if __name__ == "__main__":

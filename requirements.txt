@@ -1,5 +1,5 @@
 -e ./
-chex
+chex>=0.1.83
 pre-commit
 pytest
 pytest-benchmark

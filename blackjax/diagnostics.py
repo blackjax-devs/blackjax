@@ -17,14 +17,14 @@ import jax.numpy as jnp
 import numpy as np
 from scipy.fftpack import next_fast_len  # type: ignore
 
-from blackjax.types import Array
+from blackjax.types import Array, ArrayLike
 
 __all__ = ["potential_scale_reduction", "effective_sample_size"]
 
 
 def potential_scale_reduction(
-    input_array: Array, chain_axis: int = 0, sample_axis: int = 1
-):
+    input_array: ArrayLike, chain_axis: int = 0, sample_axis: int = 1
+) -> Array:
     """Gelman and Rubin (1992)'s potential scale reduction for computing multiple MCMC chain convergence.
 
     Parameters
@@ -76,8 +76,8 @@ def potential_scale_reduction(
 
 
 def effective_sample_size(
-    input_array: Array, chain_axis: int = 0, sample_axis: int = 1
-):
+    input_array: ArrayLike, chain_axis: int = 0, sample_axis: int = 1
+) -> Array:
     """Compute estimate of the effective sample size (ess).
 
     Parameters
@@ -115,9 +115,6 @@ def effective_sample_size(
     sample_axis = sample_axis if sample_axis >= 0 else len(input_shape) + sample_axis
     num_chains = input_shape[chain_axis]
     num_samples = input_shape[sample_axis]
-    assert (
-        num_chains > 1
-    ), "effective_sample_size as implemented only works for two or more chains."
 
     mean_across_chain = input_array.mean(axis=sample_axis, keepdims=True)
     # Compute autocovariance estimates for every lag for the input array using FFT.
@@ -138,10 +135,10 @@ def effective_sample_size(
     weighted_var = mean_var0 * (num_samples - 1.0) / num_samples
     weighted_var = jax.lax.cond(
         num_chains > 1,
-        lambda _: weighted_var
+        lambda mean_across_chain: weighted_var
         + mean_across_chain.var(axis=chain_axis, ddof=1, keepdims=True),
         lambda _: weighted_var,
-        operand=None,
+        operand=mean_across_chain,
     )
 
     # Geyer's initial positive sequence

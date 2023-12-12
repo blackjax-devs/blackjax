@@ -17,7 +17,7 @@ import operator
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise, pytree_size
 
 __all__ = ["overdamped_langevin", "sghmc", "sgnht"]
@@ -32,11 +32,11 @@ def overdamped_langevin():
 
     def one_step(
         rng_key: PRNGKey,
-        position: PyTree,
-        logdensity_grad: PyTree,
+        position: ArrayLikeTree,
+        logdensity_grad: ArrayLikeTree,
         step_size: float,
         temperature: float = 1.0,
-    ) -> PyTree:
+    ) -> ArrayTree:
         noise = generate_gaussian_noise(rng_key, position)
         position = jax.tree_util.tree_map(
             lambda p, g, n: p
@@ -62,9 +62,9 @@ def sghmc(alpha: float = 0.01, beta: float = 0):
 
     def one_step(
         rng_key: PRNGKey,
-        position: PyTree,
-        momentum: PyTree,
-        logdensity_grad: PyTree,
+        position: ArrayLikeTree,
+        momentum: ArrayLikeTree,
+        logdensity_grad: ArrayLikeTree,
         step_size: float,
         temperature: float = 1.0,
     ):
@@ -98,10 +98,10 @@ def sgnht(alpha: float = 0.01, beta: float = 0):
 
     def one_step(
         rng_key: PRNGKey,
-        position: PyTree,
-        momentum: PyTree,
+        position: ArrayLikeTree,
+        momentum: ArrayLikeTree,
         xi: float,
-        logdensity_grad: PyTree,
+        logdensity_grad: ArrayLikeTree,
         step_size: float,
         temperature: float = 1.0,
     ):

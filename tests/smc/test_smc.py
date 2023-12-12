@@ -24,7 +24,7 @@ def _weighted_avg_and_std(values, weights):
 class SMCTest(chex.TestCase):
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(42)
+        self.key = jax.random.key(42)
 
     @chex.variants(with_jit=True)
     def test_smc(self):

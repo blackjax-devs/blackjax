@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -19,7 +19,7 @@ import jax.scipy as jsp
 from optax import GradientTransformation, OptState
 
 from blackjax.base import VIAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
     "MFVIState",
@@ -32,8 +32,8 @@ __all__ = [
 
 
 class MFVIState(NamedTuple):
-    mu: PyTree
-    rho: PyTree
+    mu: ArrayTree
+    rho: ArrayTree
     opt_state: OptState
 
 
@@ -42,7 +42,7 @@ class MFVIInfo(NamedTuple):
 
 
 def init(
-    position: PyTree,
+    position: ArrayLikeTree,
     optimizer: GradientTransformation,
     *optimizer_args,
     **optimizer_kwargs,
@@ -61,7 +61,7 @@ def step(
     optimizer: GradientTransformation,
     num_samples: int = 5,
     stl_estimator: bool = True,
-) -> Tuple[MFVIState, MFVIInfo]:
+) -> tuple[MFVIState, MFVIInfo]:
     """Approximate the target density using the mean-field approximation.
 
     Parameters
@@ -138,10 +138,10 @@ class meanfield_vi:
         optimizer: GradientTransformation,
         num_samples: int = 100,
     ):  # type: ignore[misc]
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position, optimizer)
 
-        def step_fn(rng_key: PRNGKey, state: MFVIState) -> Tuple[MFVIState, MFVIInfo]:
+        def step_fn(rng_key: PRNGKey, state: MFVIState) -> tuple[MFVIState, MFVIInfo]:
             return cls.step(rng_key, state, logdensity_fn, optimizer, num_samples)
 
         def sample_fn(rng_key: PRNGKey, state: MFVIState, num_samples: int):

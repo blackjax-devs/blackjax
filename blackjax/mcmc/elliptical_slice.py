@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Elliptical Slice sampling Kernel"""
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 
-from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.base import SamplingAlgorithm
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 __all__ = [
@@ -40,8 +40,8 @@ class EllipSliceState(NamedTuple):
 
     """
 
-    position: PyTree
-    logdensity: PyTree
+    position: ArrayTree
+    logdensity: ArrayTree
 
 
 class EllipSliceInfo(NamedTuple):
@@ -63,12 +63,12 @@ class EllipSliceInfo(NamedTuple):
 
     """
 
-    momentum: PyTree
+    momentum: ArrayTree
     theta: float
     subiter: int
 
 
-def init(position: PyTree, logdensity_fn: Callable):
+def init(position: ArrayLikeTree, logdensity_fn: Callable):
     logdensity = logdensity_fn(position)
     return EllipSliceState(position, logdensity)
 
@@ -110,7 +110,7 @@ def build_kernel(cov_matrix: Array, mean: Array):
         rng_key: PRNGKey,
         state: EllipSliceState,
         logdensity_fn: Callable,
-    ) -> Tuple[EllipSliceState, EllipSliceInfo]:
+    ) -> tuple[EllipSliceState, EllipSliceInfo]:
         proposal_generator = elliptical_proposal(
             logdensity_fn, momentum_generator, mean
         )
@@ -149,7 +149,7 @@ class elliptical_slice:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
     """
 
     init = staticmethod(init)
@@ -161,10 +161,11 @@ class elliptical_slice:
         *,
         mean: Array,
         cov: Array,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(cov, mean)
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position, loglikelihood_fn)
 
         def step_fn(rng_key: PRNGKey, state):
@@ -174,7 +175,7 @@ class elliptical_slice:
                 loglikelihood_fn,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 def elliptical_proposal(
@@ -205,7 +206,7 @@ def elliptical_proposal(
 
     def generate(
         rng_key: PRNGKey, state: EllipSliceState
-    ) -> Tuple[EllipSliceState, EllipSliceInfo]:
+    ) -> tuple[EllipSliceState, EllipSliceInfo]:
         position, logdensity = state
         key_momentum, key_uniform, key_theta = jax.random.split(rng_key, 3)
         # step 1: sample momentum

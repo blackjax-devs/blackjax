@@ -11,15 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Dict, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 
 import blackjax.smc as smc
-from blackjax.base import MCMCSamplingAlgorithm
+from blackjax.base import SamplingAlgorithm
 from blackjax.smc.base import SMCState
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["TemperedSMCState", "init", "build_kernel"]
 
@@ -34,12 +34,14 @@ class TemperedSMCState(NamedTuple):
 
     """
 
-    particles: PyTree
-    weights: jax.Array
+    particles: ArrayTree
+    weights: Array
     lmbda: float
 
 
-def init(particles: PyTree):
+def init(particles: ArrayLikeTree):
+    # Infer the number of particles from the size of the leading dimension of
+    # the first leaf of the inputted PyTree.
     num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
     weights = jnp.ones(num_particles) / num_particles
     return TemperedSMCState(particles, weights, 0.0)
@@ -95,7 +97,7 @@ def build_kernel(
         num_mcmc_steps: int,
         lmbda: float,
         mcmc_parameters: dict,
-    ) -> Tuple[TemperedSMCState, smc.base.SMCInfo]:
+    ) -> tuple[TemperedSMCState, smc.base.SMCInfo]:
         """Move the particles one step using the Tempered SMC algorithm.
 
         Parameters
@@ -117,10 +119,10 @@ def build_kernel(
         """
         delta = lmbda - state.lmbda
 
-        def log_weights_fn(position: PyTree) -> float:
+        def log_weights_fn(position: ArrayLikeTree) -> float:
             return delta * loglikelihood_fn(position)
 
-        def tempered_logposterior_fn(position: PyTree) -> float:
+        def tempered_logposterior_fn(position: ArrayLikeTree) -> float:
             logprior = logprior_fn(position)
             tempered_loglikelihood = state.lmbda * loglikelihood_fn(position)
             return logprior + tempered_loglikelihood
@@ -176,7 +178,7 @@ class tempered_smc:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -189,10 +191,10 @@ class tempered_smc:
         loglikelihood_fn: Callable,
         mcmc_step_fn: Callable,
         mcmc_init_fn: Callable,
-        mcmc_parameters: Dict,
+        mcmc_parameters: dict,
         resampling_fn: Callable,
         num_mcmc_steps: int = 10,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(
             logprior_fn,
             loglikelihood_fn,
@@ -201,7 +203,8 @@ class tempered_smc:
             resampling_fn,
         )
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position)
 
         def step_fn(rng_key: PRNGKey, state, lmbda):
@@ -213,4 +216,4 @@ class tempered_smc:
                 mcmc_parameters,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Pathinder warmup for the HMC family of sampling algorithms."""
-from typing import Callable, NamedTuple, Tuple, Union
+from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -26,7 +26,7 @@ from blackjax.adaptation.step_size import (
 )
 from blackjax.base import AdaptationAlgorithm
 from blackjax.optimizers.lbfgs import lbfgs_inverse_hessian_formula_1
-from blackjax.types import Array, PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, PRNGKey
 
 __all__ = ["PathfinderAdaptationState", "base", "pathfinder_adaptation"]
 
@@ -99,7 +99,7 @@ def base(
 
     def update(
         adaptation_state: PathfinderAdaptationState,
-        position: PyTree,
+        position: ArrayLikeTree,
         acceptance_rate: float,
     ) -> PathfinderAdaptationState:
         """Update the adaptation state and parameter values.
@@ -128,7 +128,7 @@ def base(
             new_ss_state, new_step_size, adaptation_state.inverse_mass_matrix
         )
 
-    def final(warmup_state: PathfinderAdaptationState) -> Tuple[float, Array]:
+    def final(warmup_state: PathfinderAdaptationState) -> tuple[float, Array]:
         """Return the final values for the step size and inverse mass matrix."""
         step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.inverse_mass_matrix
@@ -192,7 +192,7 @@ def pathfinder_adaptation(
             AdaptationInfo(new_state, info, new_adaptation_state),
         )
 
-    def run(rng_key: PRNGKey, position: PyTree, num_steps: int = 400):
+    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 400):
         init_key, sample_key, rng_key = jax.random.split(rng_key, 3)
 
         pathfinder_state, _ = vi.pathfinder.approximate(

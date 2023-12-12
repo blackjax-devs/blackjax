@@ -1,26 +1,26 @@
 import functools
-from typing import Any, Callable, Dict, NamedTuple
+from typing import Any, Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 import optax
 from jax.flatten_util import ravel_pytree
 
-from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import PyTree
+from blackjax.base import SamplingAlgorithm
+from blackjax.types import ArrayLikeTree, ArrayTree
 
 __all__ = ["svgd", "rbf_kernel", "update_median_heuristic"]
 
 
 class SVGDState(NamedTuple):
-    particles: PyTree
-    kernel_parameters: Dict[str, PyTree]
+    particles: ArrayTree
+    kernel_parameters: dict[str, ArrayTree]
     opt_state: Any
 
 
 def init(
-    initial_particles: PyTree,
-    kernel_parameters: Dict[str, Any],
+    initial_particles: ArrayLikeTree,
+    kernel_parameters: dict[str, Any],
     optimizer: optax.GradientTransformation,
 ) -> SVGDState:
     """
@@ -139,7 +139,7 @@ class svgd:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
     """
 
     init = staticmethod(init)
@@ -155,8 +155,8 @@ class svgd:
         kernel_ = cls.build_kernel(optimizer)
 
         def init_fn(
-            initial_position: PyTree,
-            kernel_parameters: Dict[str, Any] = {"length_scale": 1.0},
+            initial_position: ArrayLikeTree,
+            kernel_parameters: dict[str, Any] = {"length_scale": 1.0},
         ):
             return cls.init(initial_position, kernel_parameters, optimizer)
 
@@ -164,4 +164,4 @@ class svgd:
             state = kernel_(state, grad_logdensity_fn, kernel, **grad_params)
             return update_kernel_parameters(state)
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

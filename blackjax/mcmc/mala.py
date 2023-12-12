@@ -13,15 +13,15 @@
 # limitations under the License.
 """Public API for Metropolis Adjusted Langevin kernels."""
 import operator
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 
 import blackjax.mcmc.diffusions as diffusions
 import blackjax.mcmc.proposal as proposal
-from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.base import SamplingAlgorithm
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["MALAState", "MALAInfo", "init", "build_kernel", "mala"]
 
@@ -36,9 +36,9 @@ class MALAState(NamedTuple):
 
     """
 
-    position: PyTree
+    position: ArrayTree
     logdensity: float
-    logdensity_grad: PyTree
+    logdensity_grad: ArrayTree
 
 
 class MALAInfo(NamedTuple):
@@ -59,7 +59,7 @@ class MALAInfo(NamedTuple):
     is_accepted: bool
 
 
-def init(position: PyTree, logdensity_fn: Callable) -> MALAState:
+def init(position: ArrayLikeTree, logdensity_fn: Callable) -> MALAState:
     grad_fn = jax.value_and_grad(logdensity_fn)
     logdensity, logdensity_grad = grad_fn(position)
     return MALAState(position, logdensity, logdensity_grad)
@@ -89,14 +89,14 @@ def build_kernel():
         )
         return -state.logdensity + 0.25 * (1.0 / step_size) * theta_dot
 
-    init_proposal, generate_proposal = proposal.asymmetric_proposal_generator(
-        transition_energy, divergence_threshold=jnp.inf
+    compute_acceptance_ratio = proposal.compute_asymmetric_acceptance_ratio(
+        transition_energy
     )
     sample_proposal = proposal.static_binomial_sampling
 
     def kernel(
         rng_key: PRNGKey, state: MALAState, logdensity_fn: Callable, step_size: float
-    ) -> Tuple[MALAState, MALAInfo]:
+    ) -> tuple[MALAState, MALAInfo]:
         """Generate a new sample with the MALA kernel."""
         grad_fn = jax.value_and_grad(logdensity_fn)
         integrator = diffusions.overdamped_langevin(grad_fn)
@@ -106,15 +106,13 @@ def build_kernel():
         new_state = integrator(key_integrator, state, step_size)
         new_state = MALAState(*new_state)
 
-        proposal = init_proposal(state)
-        new_proposal, _ = generate_proposal(state, new_state, step_size=step_size)
-        sampled_proposal, do_accept, p_accept = sample_proposal(
-            key_rmh, proposal, new_proposal
-        )
+        log_p_accept = compute_acceptance_ratio(state, new_state, step_size=step_size)
+        accepted_state, info = sample_proposal(key_rmh, log_p_accept, state, new_state)
+        do_accept, p_accept, _ = info
 
         info = MALAInfo(p_accept, do_accept)
 
-        return sampled_proposal.state, info
+        return accepted_state, info
 
     return kernel
 
@@ -165,7 +163,7 @@ class mala:
 
     Returns
     -------
-    A ``MCMCSamplingAlgorithm``.
+    A ``SamplingAlgorithm``.
 
     """
 
@@ -176,13 +174,14 @@ class mala:
         cls,
         logdensity_fn: Callable,
         step_size: float,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel()
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
             return kernel(rng_key, state, logdensity_fn, step_size)
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)

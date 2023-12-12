@@ -1,6 +1,7 @@
 # BlackJAX
-![CI](https://github.com/blackjax-devs/blackjax/workflows/Run%20tests/badge.svg?branch=main)
-[![codecov](https://codecov.io/gh/blackjax-devs/blackjax/branch/main/graph/badge.svg)](https://codecov.io/gh/blackjax-devs/blackjax)
+![Continuous integration](https://github.com/blackjax-devs/blackjax/actions/workflows/test.yml/badge.svg)
+![codecov](https://codecov.io/gh/blackjax-devs/blackjax/branch/main/graph/badge.svg)
+![PyPI version](https://img.shields.io/pypi/v/blackjax)
 
 
 ## What is BlackJAX?
@@ -64,8 +65,8 @@ import blackjax
 
 observed = np.random.normal(10, 20, size=1_000)
 def logdensity_fn(x):
-  logpdf = stats.norm.logpdf(observed, x["loc"], x["scale"])
-  return jnp.sum(logpdf)
+    logpdf = stats.norm.logpdf(observed, x["loc"], x["scale"])
+    return jnp.sum(logpdf)
 
 # Build the kernel
 step_size = 1e-3
@@ -77,7 +78,7 @@ initial_position = {"loc": 1., "scale": 2.}
 state = nuts.init(initial_position)
 
 # Iterate
-rng_key = jax.random.PRNGKey(0)
+rng_key = jax.random.key(0)
 for _ in range(100):
     rng_key, nuts_key = jax.random.split(rng_key)
     state, _ = nuts.step(nuts_key, state)
@@ -128,22 +129,7 @@ passing parameters.
 
 ## Contributions
 
-### What contributions?
-
-We value the following contributions:
-- Bug fixes
-- Documentation
-- High-level sampling algorithms from any family of algorithms: random walk,
-  hamiltonian monte carlo, sequential monte carlo, variational inference,
-  inference compilation, etc.
-- New building blocks, e.g. new metrics for HMC, integrators, etc.
-
-### How to contribute?
-
-1. Run `pip install -r requirements.txt` to install all the dev
-   dependencies.
-2. Run `pre-commit run --all-files` and `make test` before pushing on the repo; CI should pass if
-   these pass locally.
+Please follow our [short guide](https://github.com/blackjax-devs/blackjax/blob/main/CONTRIBUTING.md).
 
 ## Citing Blackjax
 
@@ -151,11 +137,11 @@ To cite this repository:
 
 ```
 @software{blackjax2020github,
-  author = {Lao, Junpeng and Louf, R\'emi},
+  author = {Cabezas, Alberto, Lao, Junpeng, and Louf, R\'emi},
   title = {{B}lackjax: A sampling library for {JAX}},
   url = {http://github.com/blackjax-devs/blackjax},
   version = {<insert current release tag>},
-  year = {2020},
+  year = {2023},
 }
 ```
 In the above bibtex entry, names are in alphabetical order, the version number should be the last tag on the `main` branch.

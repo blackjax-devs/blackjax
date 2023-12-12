@@ -18,12 +18,12 @@ The Stan Manual :cite:p:`stan_hmc_param` is a very good reference on automatic t
 parameters used in Hamiltonian Monte Carlo.
 
 """
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import Array
+from blackjax.types import Array, ArrayLike
 
 __all__ = [
     "WelfordAlgorithmState",
@@ -68,7 +68,7 @@ class MassMatrixAdaptationState(NamedTuple):
 
 def mass_matrix_adaptation(
     is_diagonal_matrix: bool = True,
-) -> Tuple[Callable, Callable, Callable]:
+) -> tuple[Callable, Callable, Callable]:
     """Adapts the values in the mass matrix by computing the covariance
     between parameters.
 
@@ -111,7 +111,7 @@ def mass_matrix_adaptation(
         return MassMatrixAdaptationState(inverse_mass_matrix, wc_state)
 
     def update(
-        mm_state: MassMatrixAdaptationState, position: Array
+        mm_state: MassMatrixAdaptationState, position: ArrayLike
     ) -> MassMatrixAdaptationState:
         """Update the algorithm's state.
 
@@ -156,7 +156,7 @@ def mass_matrix_adaptation(
     return init, update, final
 
 
-def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Callable]:
+def welford_algorithm(is_diagonal_matrix: bool) -> tuple[Callable, Callable, Callable]:
     r"""Welford's online estimator of covariance.
 
     It is possible to compute the variance of a population of values in an
@@ -203,14 +203,16 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
             m2 = jnp.zeros((n_dims, n_dims))
         return WelfordAlgorithmState(mean, m2, sample_size)
 
-    def update(wa_state: WelfordAlgorithmState, value: Array) -> WelfordAlgorithmState:
+    def update(
+        wa_state: WelfordAlgorithmState, value: ArrayLike
+    ) -> WelfordAlgorithmState:
         """Update the M2 matrix using the new value.
 
         Parameters
         ----------
-        state:
+        wa_state:
             The current state of the Welford Algorithm
-        position: Array, shape (1,)
+        value: Array, shape (1,)
             The new sample (typically position of the chain) used to update m2
 
         """
@@ -229,7 +231,7 @@ def welford_algorithm(is_diagonal_matrix: bool) -> Tuple[Callable, Callable, Cal
 
     def final(
         wa_state: WelfordAlgorithmState,
-    ) -> Tuple[Array, int, Array]:
+    ) -> tuple[Array, int, Array]:
         mean, m2, sample_size = wa_state
         covariance = m2 / (sample_size - 1)
         return covariance, sample_size, mean

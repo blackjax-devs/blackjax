@@ -50,7 +50,7 @@ class DiagnosticsTest(chex.TestCase):
         itertools.product(test_cases, [1, 2, 10], [(), (3,), (5, 7)])
     )
     def test_rhat_ess(self, case, num_chains, event_shape):
-        rng_key = jax.random.PRNGKey(self.test_seed)
+        rng_key = jax.random.key(self.test_seed)
         sample_shape = list(event_shape)
         if case["chain_axis"] < case["sample_axis"]:
             sample_shape = insert_list(sample_shape, case["chain_axis"], num_chains)
@@ -80,12 +80,9 @@ class DiagnosticsTest(chex.TestCase):
         effective_sample_size = self.variant(
             functools.partial(diagnostics.effective_sample_size, **case)
         )
-        if num_chains > 1:
-            ess_val = effective_sample_size(mc_samples)
-            np.testing.assert_array_equal(ess_val.shape, event_shape)
-            np.testing.assert_allclose(ess_val, num_chains * self.num_samples, rtol=10)
-        else:
-            np.testing.assert_raises(AssertionError, effective_sample_size, mc_samples)
+        ess_val = effective_sample_size(mc_samples)
+        np.testing.assert_array_equal(ess_val.shape, event_shape)
+        np.testing.assert_allclose(ess_val, num_chains * self.num_samples, rtol=10)
 
 
 if __name__ == "__main__":

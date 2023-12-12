@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "blackjax"
 authors= [{name = "The Blackjax team", email = "remi@thetypicalset.com"}]
 description = "Flexible and fast sampling in Python"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 keywords=[
     "probability",
     "machine learning",
@@ -22,20 +22,20 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: MacOS",
     "Operating System :: POSIX",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Education",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
 dependencies = [
-    "fastprogress>=0.2.0",
-    "jax>=0.3.13",
-    "jaxlib>=0.3.10",
-    "jaxopt>=0.5.5",
-    "optax",
+    "fastprogress>=1.0.0",
+    "jax>=0.4.16",
+    "jaxlib>=0.4.16",
+    "jaxopt>=0.8",
+    "optax>=0.1.7",
     "typing-extensions>=4.4.0",
 ]
 dynamic = ["version"]

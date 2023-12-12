@@ -19,7 +19,7 @@ import jax.numpy as jnp
 import blackjax.mcmc as mcmc
 from blackjax.adaptation.base import AdaptationInfo, AdaptationResults
 from blackjax.base import AdaptationAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["MEADSAdaptationState", "base", "maximum_eigenvalue", "meads_adaptation"]
 
@@ -42,7 +42,7 @@ class MEADSAdaptationState(NamedTuple):
 
     current_iteration: int
     step_size: float
-    position_sigma: PyTree
+    position_sigma: ArrayTree
     alpha: float
     delta: float
 
@@ -72,7 +72,7 @@ def base():
     """
 
     def compute_parameters(
-        positions: PyTree, logdensity_grad: PyTree, current_iteration: int
+        positions: ArrayLikeTree, logdensity_grad: ArrayLikeTree, current_iteration: int
     ):
         """Compute values for the parameters based on statistics collected from
         multiple chains.
@@ -117,15 +117,17 @@ def base():
         delta = alpha / 2
         return epsilon, sd_position, alpha, delta
 
-    def init(positions: PyTree, logdensity_grad: PyTree):
+    def init(
+        positions: ArrayLikeTree, logdensity_grad: ArrayLikeTree
+    ) -> MEADSAdaptationState:
         parameters = compute_parameters(positions, logdensity_grad, 0)
         return MEADSAdaptationState(0, *parameters)
 
     def update(
         adaptation_state: MEADSAdaptationState,
-        positions: PyTree,
-        logdensity_grad: PyTree,
-    ):
+        positions: ArrayLikeTree,
+        logdensity_grad: ArrayLikeTree,
+    ) -> MEADSAdaptationState:
         """Update the adaptation state and parameter values.
 
         We find new optimal values for the parameters of the generalized HMC
@@ -231,7 +233,7 @@ def meads_adaptation(
             new_adaptation_state,
         )
 
-    def run(rng_key: PRNGKey, positions: PyTree, num_steps: int = 1000):
+    def run(rng_key: PRNGKey, positions: ArrayLikeTree, num_steps: int = 1000):
         key_init, key_adapt = jax.random.split(rng_key)
 
         rng_keys = jax.random.split(key_init, num_chains)
@@ -255,7 +257,7 @@ def meads_adaptation(
     return AdaptationAlgorithm(run)  # type: ignore[arg-type]
 
 
-def maximum_eigenvalue(matrix: PyTree):
+def maximum_eigenvalue(matrix: ArrayLikeTree) -> Array:
     """Estimate the largest eigenvalues of a matrix.
 
     We calculate an unbiased estimate of the ratio between the sum of the

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -22,7 +22,7 @@ from jax.flatten_util import ravel_pytree
 from jaxopt._src.lbfgs import LbfgsState
 from jaxopt.base import OptStep
 
-from blackjax.types import Array, PyTree
+from blackjax.types import Array, ArrayLikeTree
 
 __all__ = [
     "LBFGSHistory",
@@ -64,13 +64,14 @@ class LBFGSHistory(NamedTuple):
 
 def minimize_lbfgs(
     fun: Callable,
-    x0: PyTree,
+    x0: ArrayLikeTree,
     maxiter: int = 30,
     maxcor: float = 10,
     gtol: float = 1e-08,
     ftol: float = 1e-05,
     maxls: int = 1000,
-) -> Tuple[OptStep, LBFGSHistory]:
+    **lbfgs_kwargs,
+) -> tuple[OptStep, LBFGSHistory]:
     """
     Minimize a function using L-BFGS
 
@@ -91,6 +92,8 @@ def minimize_lbfgs(
         terminates the minimization when `|g_k|_norm < gtol`
     maxls:
         maximum number of line search steps (per iteration)
+    **lbfgs_kwargs
+        other keyword arguments passed to `jaxopt.LBFGS`.
 
     Returns
     -------
@@ -110,6 +113,7 @@ def minimize_lbfgs(
         gtol,
         ftol,
         maxls,
+        **lbfgs_kwargs,
     )
 
     # Unravel final optimization step.
@@ -152,7 +156,8 @@ def _minimize_lbfgs(
     gtol: float,
     ftol: float,
     maxls: int,
-) -> Tuple[OptStep, LBFGSHistory]:
+    **lbfgs_kwargs,
+) -> tuple[OptStep, LBFGSHistory]:
     def lbfgs_one_step(carry, i):
         (params, state), previous_history = carry
 
@@ -200,12 +205,17 @@ def _minimize_lbfgs(
         next_tup = lax.cond(not_converged, lbfgs_one_step, non_op, carry, it)
         return next_tup, next_tup[0][-1]
 
-    solver = jaxopt.LBFGS(fun=fun, maxiter=maxiter, maxls=maxls, history_size=maxcor)
-    value0, grad0 = jax.value_and_grad(fun)(x0)
+    solver = jaxopt.LBFGS(
+        fun=fun,
+        maxiter=maxiter,
+        maxls=maxls,
+        history_size=maxcor,
+        **lbfgs_kwargs,
+    )
     state = solver.init_state(x0)
 
     value0, grad0 = jax.value_and_grad(fun)(x0)
-    # LBFGS update overwirte value internally, here is to set the value for checking condition
+    # LBFGS update overwrite value internally, here is to set the value for checking condition
     state = state._replace(value=value0)
     init_step = OptStep(params=x0, state=state)
     initial_history = LBFGSHistory(
