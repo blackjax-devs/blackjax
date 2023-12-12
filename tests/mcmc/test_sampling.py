@@ -513,7 +513,9 @@ class LatentGaussianTest(chex.TestCase):
         from blackjax import mgrad_gaussian
 
         inference_algorithm = mgrad_gaussian(
-            lambda x: -0.5 * jnp.sum((x - 1.0) ** 2), self.C, self.delta
+            lambda x: -0.5 * jnp.sum((x - 1.0) ** 2),
+            covariance=self.C,
+            step_size=self.delta,
         )
 
         initial_state = inference_algorithm.init(jnp.zeros((1,)))
