@@ -515,8 +515,11 @@ document.write(`
             <span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">next_random_arg_fn</span><span class="p">,</span> <span class="n">integration_steps_fn</span>
         <span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">random_generator_arg</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">random_generator_arg</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
+            <span class="c1"># Note that rng_key here is not necessarily a PRNGKey, could be a Array that</span>
+            <span class="c1"># for generates a sequence of pseudo or quasi-random numbers (previously</span>
+            <span class="c1"># named as `random_generator_arg`)</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
@@ -527,7 +530,7 @@ document.write(`
                 <span class="n">inverse_mass_matrix</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
+        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="halton_sequence"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.halton_sequence">[docs]</a><span class="k">def</span> <span class="nf">halton_sequence</span><span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">max_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>

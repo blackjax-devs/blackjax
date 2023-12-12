@@ -502,6 +502,10 @@ document.write(`
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">State</span><span class="p">,</span> <span class="n">State</span><span class="p">,</span> <span class="n">Info</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper to run an inference algorithm.</span>
 
+<span class="sd">    Note that this utility function does not work for Stochastic Gradient MCMC samplers</span>
+<span class="sd">    like sghmc, as SG-MCMC samplers require additional control flow for batches of data</span>
+<span class="sd">    to be passed in during each sample.</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    rng_key</span>
@@ -527,13 +531,14 @@ document.write(`
 <span class="sd">        2. The trace of states of the inference algorithm (contains the MCMC samples).</span>
 <span class="sd">        3. The trace of the info of the inference algorithm for diagnostics.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">init_key</span><span class="p">,</span> <span class="n">sample_key</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">initial_state</span> <span class="o">=</span> <span class="n">inference_algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">initial_state_or_position</span><span class="p">)</span>
+        <span class="n">initial_state</span> <span class="o">=</span> <span class="n">inference_algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">initial_state_or_position</span><span class="p">,</span> <span class="n">init_key</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
         <span class="c1"># We assume initial_state is already in the right format.</span>
         <span class="n">initial_state</span> <span class="o">=</span> <span class="n">initial_state_or_position</span>
 
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">sample_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
 
     <span class="nd">@jit</span>
     <span class="k">def</span> <span class="nf">_one_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">xs</span><span class="p">):</span>

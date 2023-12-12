@@ -491,7 +491,8 @@ document.write(`
             <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">rng_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="k">del</span> <span class="n">rng_key</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">smc_algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">initial_parameter_value</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span>

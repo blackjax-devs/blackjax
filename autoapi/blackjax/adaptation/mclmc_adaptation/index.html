@@ -464,7 +464,7 @@ document.write(`
 <span class="n">initial_state</span> <span class="o">=</span> <span class="n">MCMCState</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 <span class="c1"># Generate a random number generator key</span>
-<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="c1"># Find the optimal parameters for the MCLMC algorithm</span>
 <span class="n">final_state</span><span class="p">,</span> <span class="n">final_params</span> <span class="o">=</span> <span class="n">mclmc_find_L_and_step_size</span><span class="p">(</span>

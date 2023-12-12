@@ -444,7 +444,7 @@ document.write(`
 <span class="sd">        initial_state = MCMCState(position=0, momentum=1)</span>
 
 <span class="sd">        # Generate a random number generator key</span>
-<span class="sd">        rng_key = jax.random.PRNGKey(0)</span>
+<span class="sd">        rng_key = jax.random.key(0)</span>
 
 <span class="sd">        # Find the optimal parameters for the MCLMC algorithm</span>
 <span class="sd">        final_state, final_params = mclmc_find_L_and_step_size(</span>

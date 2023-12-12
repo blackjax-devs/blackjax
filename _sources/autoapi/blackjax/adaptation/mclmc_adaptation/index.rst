@@ -85,7 +85,7 @@ Functions
        initial_state = MCMCState(position=0, momentum=1)
 
        # Generate a random number generator key
-       rng_key = jax.random.PRNGKey(0)
+       rng_key = jax.random.key(0)
 
        # Find the optimal parameters for the MCLMC algorithm
        final_state, final_params = mclmc_find_L_and_step_size(

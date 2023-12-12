@@ -104,6 +104,10 @@ Functions
 
    Wrapper to run an inference algorithm.
 
+   Note that this utility function does not work for Stochastic Gradient MCMC samplers
+   like sghmc, as SG-MCMC samplers require additional control flow for batches of data
+   to be passed in during each sample.
+
    :param rng_key: The random state used by JAX's random numbers generator.
    :param initial_state_or_position: The initial state OR the initial position of the inference algorithm. If an initial position
                                      is passed in, the function will automatically convert it into an initial state.
