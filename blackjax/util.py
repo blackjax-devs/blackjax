@@ -1,6 +1,7 @@
 """Utility functions for BlackJax."""
 from functools import partial
 from typing import Callable, Union
+import jax
 
 import jax.numpy as jnp
 from jax import jit, lax
@@ -147,6 +148,7 @@ def run_inference_algorithm(
     num_steps: int,
     progress_bar: bool = False,
     transform: Callable = lambda x: x,
+    seed = None,
 ) -> tuple[State, State, Info]:
     """Wrapper to run an inference algorithm.
 
@@ -179,14 +181,20 @@ def run_inference_algorithm(
         2. The trace of states of the inference algorithm (contains the MCMC samples).
         3. The trace of the info of the inference algorithm for diagnostics.
     """
-    init_key, sample_key = split(rng_key, 2)
+    if seed is None:
+        init_key, sample_key = split(rng_key, 2) 
+    else:
+        init_key, sample_key = jax.random.PRNGKey(seed), jax.random.PRNGKey(seed)
     try:
         initial_state = inference_algorithm.init(initial_state_or_position, init_key)
     except TypeError:
         # We assume initial_state is already in the right format.
         initial_state = initial_state_or_position
 
-    keys = split(sample_key, num_steps)
+    if seed is None:
+        keys = split(sample_key, num_steps) 
+    else: 
+        keys =jnp.array([jax.random.PRNGKey(seed) for i in range(num_steps)])
 
     @jit
     def _one_step(state, xs):
