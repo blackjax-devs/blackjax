@@ -47,6 +47,7 @@ def mclmc_find_L_and_step_size(
     desired_energy_var=5e-4,
     trust_in_estimate=1.5,
     num_effective_samples=150,
+    split_fn=jax.random.split,
 ):
     """
     Finds the optimal value of the parameters for the MCLMC algorithm.
@@ -110,22 +111,23 @@ def mclmc_find_L_and_step_size(
     """
     dim = pytree_size(state.position)
     params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.25)
-    part1_key, part2_key = jax.random.split(rng_key, 2)
+    part1_key, part2_key = split_fn(rng_key, 2)
 
     state, params = make_L_step_size_adaptation(
         kernel=mclmc_kernel,
         dim=dim,
         frac_tune1=frac_tune1,
         frac_tune2=frac_tune2,
+        split_fn=split_fn,
         desired_energy_var=desired_energy_var,
         trust_in_estimate=trust_in_estimate,
         num_effective_samples=num_effective_samples,
     )(state, params, num_steps, part1_key)
 
     if frac_tune3 != 0:
-        state, params = make_adaptation_L(mclmc_kernel, frac=frac_tune3, Lfactor=0.4)(
-            state, params, num_steps, part2_key
-        )
+        state, params = make_adaptation_L(
+            mclmc_kernel, frac=frac_tune3, Lfactor=0.4, split_fn=split_fn
+        )(state, params, num_steps, part2_key)
 
     return state, params
 
@@ -135,6 +137,7 @@ def make_L_step_size_adaptation(
     dim,
     frac_tune1,
     frac_tune2,
+    split_fn,
     desired_energy_var=1e-3,
     trust_in_estimate=1.5,
     num_effective_samples=150,
@@ -222,7 +225,7 @@ def make_L_step_size_adaptation(
         num_steps1, num_steps2 = int(num_steps * frac_tune1), int(
             num_steps * frac_tune2
         )
-        L_step_size_adaptation_keys = jax.random.split(rng_key, num_steps1 + num_steps2)
+        L_step_size_adaptation_keys = split_fn(rng_key, num_steps1 + num_steps2)
 
         # we use the last num_steps2 to compute the diagonal preconditioner
         outer_weights = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
@@ -251,12 +254,12 @@ def make_L_step_size_adaptation(
     return L_step_size_adaptation
 
 
-def make_adaptation_L(kernel, frac, Lfactor):
+def make_adaptation_L(kernel, frac, Lfactor, split_fn):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
     def adaptation_L(state, params, num_steps, key):
         num_steps = int(num_steps * frac)
-        adaptation_L_keys = jax.random.split(key, num_steps)
+        adaptation_L_keys = split_fn(key, num_steps)
 
         # run kernel in the normal way
         def step(state, key):
