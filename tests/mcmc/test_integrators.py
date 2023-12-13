@@ -267,36 +267,5 @@ class IntegratorTest(chex.TestCase):
         energy_change = kinetic_energy_change[-1] + potential_energy_change
         self.assertAlmostEqual(energy_change, 0, delta=1e-3)
 
-
-# test that the non-euclidean integrator agrees with a simple implementation exactly
-def test_non_euclidean_implementation():
-    logdensity_fn = lambda x : -0.5 * jnp.sum(jnp.square(x))
-
-    step = noneuclidean_mclachlan(logdensity_fn=logdensity_fn)
-    initial_position = jnp.array([1.,1.])
-    initial_state = blackjax.mcmc.mclmc.init(initial_position, logdensity_fn, rng_key=jax.random.PRNGKey(0))
-    # raise Exception(step(initial_state, step_size=1e-3))
-
-    lambda_c = 0.1931833275037836
-    
-    def minimal_norm(T, V):
-
-        def step(x, u, g, eps, sigma):
-            """Integrator from https://arxiv.org/pdf/hep-lat/0505020.pdf, see Equation 20."""
-
-            # V T V T V
-            uu, r1 = V(eps * lambda_c, u, g * sigma)
-            xx, uu, ll, gg = T(0.5 * eps, x, uu, sigma)
-            uu, r2 = V(eps * (1 - 2 * lambda_c), uu, gg * sigma)
-            xx, uu, ll, gg = T(0.5 * eps, xx, uu, sigma)
-            uu, r3 = V(eps * lambda_c, uu, gg * sigma)
-
-            #kinetic energy change
-            kinetic_change = (r1 + r2 + r3)
-
-            return xx, uu, ll, gg, kinetic_change
-    
-    return step
-
 if __name__ == "__main__":
     absltest.main()
