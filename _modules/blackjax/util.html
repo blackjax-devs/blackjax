@@ -535,7 +535,7 @@ document.write(`
     <span class="n">init_key</span><span class="p">,</span> <span class="n">sample_key</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">initial_state</span> <span class="o">=</span> <span class="n">inference_algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">initial_state_or_position</span><span class="p">,</span> <span class="n">init_key</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
         <span class="c1"># We assume initial_state is already in the right format.</span>
         <span class="n">initial_state</span> <span class="o">=</span> <span class="n">initial_state_or_position</span>
 
