@@ -193,6 +193,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -377,7 +378,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.termination</span> <span class="k">as</span> <span class="nn">termination</span>
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.trajectory</span> <span class="k">as</span> <span class="nn">trajectory</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;NUTSInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;nuts&quot;</span><span class="p">]</span>
 
@@ -467,21 +468,17 @@ document.write(`
         <span class="n">state</span><span class="p">:</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCState</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
         <span class="n">max_num_doublings</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">hmc</span><span class="o">.</span><span class="n">HMCState</span><span class="p">,</span> <span class="n">NUTSInfo</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new sample with the NUTS kernel.&quot;&quot;&quot;</span>
 
-        <span class="p">(</span>
-            <span class="n">momentum_generator</span><span class="p">,</span>
-            <span class="n">kinetic_energy_fn</span><span class="p">,</span>
-            <span class="n">uturn_check_fn</span><span class="p">,</span>
-        <span class="p">)</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">gaussian_euclidean</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
-        <span class="n">symplectic_integrator</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">)</span>
+        <span class="n">metric</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">default_metric</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
+        <span class="n">symplectic_integrator</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">)</span>
         <span class="n">proposal_generator</span> <span class="o">=</span> <span class="n">iterative_nuts_proposal</span><span class="p">(</span>
             <span class="n">symplectic_integrator</span><span class="p">,</span>
-            <span class="n">kinetic_energy_fn</span><span class="p">,</span>
-            <span class="n">uturn_check_fn</span><span class="p">,</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">,</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">check_turning</span><span class="p">,</span>
             <span class="n">max_num_doublings</span><span class="p">,</span>
             <span class="n">divergence_threshold</span><span class="p">,</span>
         <span class="p">)</span>
@@ -489,7 +486,7 @@ document.write(`
         <span class="n">key_momentum</span><span class="p">,</span> <span class="n">key_integrator</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
         <span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">state</span>
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">momentum_generator</span><span class="p">(</span><span class="n">key_momentum</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+        <span class="n">momentum</span> <span class="o">=</span> <span class="n">metric</span><span class="o">.</span><span class="n">sample_momentum</span><span class="p">(</span><span class="n">key_momentum</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
 
         <span class="n">integrator_state</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span><span class="p">(</span>
             <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span>
@@ -566,7 +563,7 @@ document.write(`
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">max_num_doublings</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
         <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
@@ -593,8 +590,8 @@ document.write(`
 
 <span class="k">def</span> <span class="nf">iterative_nuts_proposal</span><span class="p">(</span>
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">kinetic_energy</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">uturn_check_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">kinetic_energy</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">KineticEnergy</span><span class="p">,</span>
+    <span class="n">uturn_check_fn</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">CheckTurning</span><span class="p">,</span>
     <span class="n">max_num_expansions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>

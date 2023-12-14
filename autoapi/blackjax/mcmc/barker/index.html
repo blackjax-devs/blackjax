@@ -196,6 +196,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -403,7 +404,7 @@ document.write(`
 <td><p>Additional information on the Barker's proposal kernel transition.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.barker.barker_proposal" title="blackjax.mcmc.barker.barker_proposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">barker_proposal</span></code></a></p></td>
-<td><p>Implements the (basic) user interface for the Barker's proposal <span id="id1">[<a class="reference internal" href="../../../../bib.html#id49" title="Samuel Livingstone and Giacomo Zanella. The Barker Proposal: Combining Robustness and Efficiency in Gradient-Based MCMC. Journal of the Royal Statistical Society Series B: Statistical Methodology, 84(2):496-523, 01 2022. URL: https://doi.org/10.1111/rssb.12482, arXiv:https://academic.oup.com/jrsssb/article-pdf/84/2/496/49322274/jrsssb\_84\_2\_496.pdf, doi:10.1111/rssb.12482.">LZ22</a>]</span> kernel with a</p></td>
+<td><p>Implements the (basic) user interface for the Barker's proposal <span id="id1">[<a class="reference internal" href="../../../../bib.html#id50" title="Samuel Livingstone and Giacomo Zanella. The Barker Proposal: Combining Robustness and Efficiency in Gradient-Based MCMC. Journal of the Royal Statistical Society Series B: Statistical Methodology, 84(2):496-523, 01 2022. URL: https://doi.org/10.1111/rssb.12482, arXiv:https://academic.oup.com/jrsssb/article-pdf/84/2/496/49322274/jrsssb\_84\_2\_496.pdf, doi:10.1111/rssb.12482.">LZ22</a>]</span> kernel with a</p></td>
 </tr>
 </tbody>
 </table>
@@ -501,7 +502,7 @@ was returned.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.barker.barker_proposal">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">barker_proposal</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/barker.html#barker_proposal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.barker.barker_proposal" title="Permalink to this definition">#</a></dt>
-<dd><p>Implements the (basic) user interface for the Barker’s proposal <span id="id2">[<a class="reference internal" href="../../../../bib.html#id49" title="Samuel Livingstone and Giacomo Zanella. The Barker Proposal: Combining Robustness and Efficiency in Gradient-Based MCMC. Journal of the Royal Statistical Society Series B: Statistical Methodology, 84(2):496-523, 01 2022. URL: https://doi.org/10.1111/rssb.12482, arXiv:https://academic.oup.com/jrsssb/article-pdf/84/2/496/49322274/jrsssb\_84\_2\_496.pdf, doi:10.1111/rssb.12482.">LZ22</a>]</span> kernel with a
+<dd><p>Implements the (basic) user interface for the Barker’s proposal <span id="id2">[<a class="reference internal" href="../../../../bib.html#id50" title="Samuel Livingstone and Giacomo Zanella. The Barker Proposal: Combining Robustness and Efficiency in Gradient-Based MCMC. Journal of the Royal Statistical Society Series B: Statistical Methodology, 84(2):496-523, 01 2022. URL: https://doi.org/10.1111/rssb.12482, arXiv:https://academic.oup.com/jrsssb/article-pdf/84/2/496/49322274/jrsssb\_84\_2\_496.pdf, doi:10.1111/rssb.12482.">LZ22</a>]</span> kernel with a
 Gaussian base kernel.</p>
 <p>The general Barker kernel builder (<a class="reference internal" href="#blackjax.mcmc.barker.build_kernel" title="blackjax.mcmc.barker.build_kernel"><code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.barker.build_kernel()</span></code></a>, alias <cite>blackjax.barker.build_kernel</cite>) can be
 cumbersome to manipulate. Since most users only need to specify the kernel

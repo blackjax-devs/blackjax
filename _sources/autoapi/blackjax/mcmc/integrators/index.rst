@@ -12,6 +12,29 @@
 Module Contents
 ---------------
 
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   blackjax.mcmc.integrators.implicit_midpoint
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   blackjax.mcmc.integrators.velocity_verlet
+   blackjax.mcmc.integrators.mclachlan
+   blackjax.mcmc.integrators.yoshida
+   blackjax.mcmc.integrators.noneuclidean_leapfrog
+   blackjax.mcmc.integrators.noneuclidean_yoshida
+   blackjax.mcmc.integrators.noneuclidean_mclachlan
+
+
 .. py:data:: velocity_verlet
 
    Two-stage palindromic symplectic integrator derived in :cite:p:`blanes2014numerical`.
@@ -49,4 +72,17 @@ Module Contents
 .. py:data:: noneuclidean_mclachlan
 
    
+
+.. py:function:: implicit_midpoint(logdensity_fn: Callable, kinetic_energy_fn: blackjax.mcmc.metrics.KineticEnergy, *, solver: FixedPointSolver = solve_fixed_point_iteration, **solver_kwargs: Any) -> Integrator
+
+   The implicit midpoint integrator with support for non-stationary kinetic energy
+
+   This is an integrator based on :cite:t:`brofos2021evaluating`, which provides
+   support for kinetic energies that depend on position. This integrator requires that
+   the kinetic energy function takes two arguments: position and momentum.
+
+   The ``solver`` parameter allows overloading of the fixed point solver. By default, a
+   simple fixed point iteration is used, but more advanced solvers could be implemented
+   in the future.
+
 

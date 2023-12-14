@@ -195,6 +195,7 @@
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -366,31 +367,35 @@ document.write(`
 <span class="label"><span class="fn-bracket">[</span>stac<span class="fn-bracket">]</span></span>
 <p>Potential scale reduction, stan manual. URL: <a class="reference external" href="https://mc-stan.org/docs/2_27/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction">https://mc-stan.org/docs/2_27/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction</a>.</p>
 </div>
-<div class="citation" id="id39" role="doc-biblioentry">
+<div class="citation" id="id40" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>ASD20<span class="fn-bracket">]</span></span>
 <p>Abhinav Agrawal, Daniel R Sheldon, and Justin Domke. Advances in black-box vi: normalizing flows, importance weighting, and optimization. <em>Advances in Neural Information Processing Systems</em>, 33:17358–17369, 2020.</p>
 </div>
-<div class="citation" id="id31" role="doc-biblioentry">
+<div class="citation" id="id32" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>BFFN19<span class="fn-bracket">]</span></span>
 <p>Jack Baker, Paul Fearnhead, Emily B Fox, and Christopher Nemeth. Control variates for stochastic gradient mcmc. <em>Statistics and Computing</em>, 29:599–615, 2019.</p>
 </div>
-<div class="citation" id="id33" role="doc-biblioentry">
+<div class="citation" id="id34" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Bet13<span class="fn-bracket">]</span></span>
 <p>Michael Betancourt. A general metric for riemannian manifold hamiltonian monte carlo. In <em>Geometric Science of Information: First International Conference, GSI 2013, Paris, France, August 28-30, 2013. Proceedings</em>, 327–334. Springer, 2013.</p>
 </div>
-<div class="citation" id="id24" role="doc-biblioentry">
+<div class="citation" id="id25" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Bet17<span class="fn-bracket">]</span></span>
 <p>Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. <em>arXiv preprint arXiv:1701.02434</em>, 2017.</p>
 </div>
-<div class="citation" id="id22" role="doc-biblioentry">
+<div class="citation" id="id23" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>BBLG17<span class="fn-bracket">]</span></span>
 <p>Michael Betancourt, Simon Byrne, Sam Livingstone, and Mark Girolami. The geometric foundations of hamiltonian monte carlo. <em>arXiv preprint arXiv:arXiv:1410.5110</em>, 2017.</p>
 </div>
-<div class="citation" id="id21" role="doc-biblioentry">
+<div class="citation" id="id22" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>BCSS14<span class="fn-bracket">]</span></span>
 <p>Sergio Blanes, Fernando Casas, and Jesús Marıa Sanz-Serna. Numerical integrators for the hybrid monte carlo method. <em>SIAM Journal on Scientific Computing</em>, 36(4):A1556–A1580, 2014.</p>
 </div>
-<div class="citation" id="id29" role="doc-biblioentry">
+<div class="citation" id="id20" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>BL21<span class="fn-bracket">]</span></span>
+<p>James Brofos and Roy R Lederman. Evaluating the implicit midpoint integrator for riemannian hamiltonian monte carlo. In Marina Meila and Tong Zhang, editors, <em>Proceedings of the 38th International Conference on Machine Learning</em>, volume 139 of Proceedings of Machine Learning Research, 1072–1081. PMLR, 18–24 Jul 2021.</p>
+</div>
+<div class="citation" id="id30" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>CFG14<span class="fn-bracket">]</span></span>
 <p>Tianqi Chen, Emily Fox, and Carlos Guestrin. Stochastic gradient hamiltonian monte carlo. In <em>International conference on machine learning</em>, 1683–1691. PMLR, 2014.</p>
 </div>
@@ -398,23 +403,23 @@ document.write(`
 <span class="label"><span class="fn-bracket">[</span>Cou<span class="fn-bracket">]</span></span>
 <p>Jeremie Coullon. How to add a progress bar to jax scans and loops. URL: <a class="reference external" href="https://www.jeremiecoullon.com/2021/01/29/jax_progress_bar/">https://www.jeremiecoullon.com/2021/01/29/jax_progress_bar/</a>.</p>
 </div>
-<div class="citation" id="id28" role="doc-biblioentry">
+<div class="citation" id="id29" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>CN22<span class="fn-bracket">]</span></span>
 <p>Jeremie Coullon and Christopher Nemeth. Sgmcmcjax: a lightweight jax library for stochastic gradient markov chain monte carlo algorithms. <em>Journal of Open Source Software</em>, 7(72):4113, 2022.</p>
 </div>
-<div class="citation" id="id32" role="doc-biblioentry">
+<div class="citation" id="id33" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>DC20<span class="fn-bracket">]</span></span>
 <p>Hai-Dang Dau and Nicolas Chopin. Waste-free sequential monte carlo. <em>arXiv preprint arXiv:2011.02328</em>, 2020.</p>
 </div>
-<div class="citation" id="id37" role="doc-biblioentry">
+<div class="citation" id="id38" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>DLH+22<span class="fn-bracket">]</span></span>
 <p>Wei Deng, Siqi Liang, Botao Hao, Guang Lin, and Faming Liang. Interacting contour stochastic gradient langevin dynamics. <em>arXiv preprint arXiv:2202.09867</em>, 2022.</p>
 </div>
-<div class="citation" id="id36" role="doc-biblioentry">
+<div class="citation" id="id37" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>DLL20<span class="fn-bracket">]</span></span>
 <p>Wei Deng, Guang Lin, and Faming Liang. A contour stochastic gradient langevin dynamics algorithm for simulations of multi-modal distributions. <em>Advances in neural information processing systems</em>, 33:15725–15736, 2020.</p>
 </div>
-<div class="citation" id="id42" role="doc-biblioentry">
+<div class="citation" id="id43" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>DFB+14<span class="fn-bracket">]</span></span>
 <p>Nan Ding, Youhan Fang, Ryan Babbush, Changyou Chen, Robert D Skeel, and Hartmut Neven. Bayesian sampling using stochastic gradient thermostats. <em>Advances in neural information processing systems</em>, 2014.</p>
 </div>
@@ -422,7 +427,7 @@ document.write(`
 <span class="label"><span class="fn-bracket">[</span>GCSR95<span class="fn-bracket">]</span></span>
 <p>Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. <em>Bayesian data analysis</em>. Chapman and Hall/CRC, 1995.</p>
 </div>
-<div class="citation" id="id41" role="doc-biblioentry">
+<div class="citation" id="id42" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>GCSR14<span class="fn-bracket">]</span></span>
 <p>Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. <em>Bayesian data analysis</em>. Chapman and Hall/CRC, 2014.</p>
 </div>
@@ -438,7 +443,7 @@ document.write(`
 <span class="label"><span class="fn-bracket">[</span>Gey11<span class="fn-bracket">]</span></span>
 <p>Charles J Geyer. Introduction to markov chain monte carlo. <em>Handbook of Markov Chain Monte Carlo</em>, 20116022:45, 2011.</p>
 </div>
-<div class="citation" id="id45" role="doc-biblioentry">
+<div class="citation" id="id46" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>HRS21<span class="fn-bracket">]</span></span>
 <p>Matthew Hoffman, Alexey Radul, and Pavel Sountsov. An adaptive-mcmc scheme for setting trajectory lengths in hamiltonian monte carlo. In <em>International Conference on Artificial Intelligence and Statistics</em>, 3907–3915. PMLR, 2021.</p>
 </div>
@@ -450,23 +455,23 @@ document.write(`
 <span class="label"><span class="fn-bracket">[</span>HS22<span class="fn-bracket">]</span></span>
 <p>Matthew D Hoffman and Pavel Sountsov. Tuning-free generalized hamiltonian monte carlo. In <em>International Conference on Artificial Intelligence and Statistics</em>, 7799–7813. PMLR, 2022.</p>
 </div>
-<div class="citation" id="id50" role="doc-biblioentry">
+<div class="citation" id="id51" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>HJK+21<span class="fn-bracket">]</span></span>
 <p>Jian Huang, Yuling Jiao, Lican Kang, Xu Liao, Jin Liu, and Yanyan Liu. Schrödinger-föllmer sampler: sampling without ergodicity. 2021. <a class="reference external" href="https://arxiv.org/abs/2106.10880">arXiv:2106.10880</a>.</p>
 </div>
-<div class="citation" id="id26" role="doc-biblioentry">
+<div class="citation" id="id27" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>LSL+20<span class="fn-bracket">]</span></span>
 <p>Junpeng Lao, Christopher Suter, Ian Langmore, Cyril Chimisov, Ashish Saxena, Pavel Sountsov, Dave Moore, Rif A Saurous, Matthew D Hoffman, and Joshua V Dillon. Tfp. mcmc: modern markov chain monte carlo tools built for modern hardware. <em>arXiv preprint arXiv:2002.01184</em>, 2020.</p>
 </div>
-<div class="citation" id="id49" role="doc-biblioentry">
+<div class="citation" id="id50" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>LZ22<span class="fn-bracket">]</span></span>
 <p>Samuel Livingstone and Giacomo Zanella. The Barker Proposal: Combining Robustness and Efficiency in Gradient-Based MCMC. <em>Journal of the Royal Statistical Society Series B: Statistical Methodology</em>, 84(2):496–523, 01 2022. URL: <a class="reference external" href="https://doi.org/10.1111/rssb.12482">https://doi.org/10.1111/rssb.12482</a>, <a class="reference external" href="https://arxiv.org/abs/https://academic.oup.com/jrsssb/article-pdf/84/2/496/49322274/jrsssb\_84\_2\_496.pdf">arXiv:https://academic.oup.com/jrsssb/article-pdf/84/2/496/49322274/jrsssb\_84\_2\_496.pdf</a>, <a class="reference external" href="https://doi.org/10.1111/rssb.12482">doi:10.1111/rssb.12482</a>.</p>
 </div>
-<div class="citation" id="id23" role="doc-biblioentry">
+<div class="citation" id="id24" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>LPH+17<span class="fn-bracket">]</span></span>
 <p>Xiaoyu Lu, Valerio Perrone, Leonard Hasenclever, Yee Whye Teh, and Sebastian Vollmer. Relativistic monte carlo. In <em>Artificial Intelligence and Statistics</em>, 1236–1245. PMLR, 2017.</p>
 </div>
-<div class="citation" id="id43" role="doc-biblioentry">
+<div class="citation" id="id44" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>MCF15<span class="fn-bracket">]</span></span>
 <p>Yi-An Ma, Tianqi Chen, and Emily Fox. A complete recipe for stochastic gradient mcmc. <em>Advances in neural information processing systems</em>, 2015.</p>
 </div>
@@ -478,7 +483,7 @@ document.write(`
 <span class="label"><span class="fn-bracket">[</span>MAM10<span class="fn-bracket">]</span></span>
 <p>Iain Murray, Ryan Adams, and David MacKay. Elliptical slice sampling. In <em>Proceedings of the thirteenth international conference on artificial intelligence and statistics</em>, 541–548. JMLR Workshop and Conference Proceedings, 2010.</p>
 </div>
-<div class="citation" id="id27" role="doc-biblioentry">
+<div class="citation" id="id28" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Nea20<span class="fn-bracket">]</span></span>
 <p>Radford M Neal. Non-reversibly updating a uniform [0, 1] value for metropolis accept/reject decisions. <em>arXiv preprint arXiv:2001.11950</em>, 2020.</p>
 </div>
@@ -490,15 +495,15 @@ document.write(`
 <span class="label"><span class="fn-bracket">[</span>Nes09<span class="fn-bracket">]</span></span>
 <p>Yurii Nesterov. Primal-dual subgradient methods for convex problems. <em>Mathematical programming</em>, 120(1):221–259, 2009.</p>
 </div>
-<div class="citation" id="id25" role="doc-biblioentry">
+<div class="citation" id="id26" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>PPJ19<span class="fn-bracket">]</span></span>
 <p>Du Phan, Neeraj Pradhan, and Martin Jankowiak. Composable effects for flexible and accelerated probabilistic programming in numpyro. <em>arXiv preprint arXiv:1912.11554</em>, 2019.</p>
 </div>
-<div class="citation" id="id30" role="doc-biblioentry">
+<div class="citation" id="id31" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>RM51<span class="fn-bracket">]</span></span>
 <p>Herbert Robbins and Sutton Monro. A stochastic approximation method. <em>The annals of mathematical statistics</em>, pages 400–407, 1951.</p>
 </div>
-<div class="citation" id="id38" role="doc-biblioentry">
+<div class="citation" id="id39" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>RWD17<span class="fn-bracket">]</span></span>
 <p>Geoffrey Roeder, Yuhuai Wu, and David K Duvenaud. Sticking the landing: simple, lower-variance gradient estimators for variational inference. <em>Advances in Neural Information Processing Systems</em>, 2017.</p>
 </div>
@@ -506,11 +511,11 @@ document.write(`
 <span class="label"><span class="fn-bracket">[</span>TP18<span class="fn-bracket">]</span></span>
 <p>Michalis K Titsias and Omiros Papaspiliopoulos. Auxiliary gradient-based sampling algorithms. <em>Journal of the Royal Statistical Society. Series B (Statistical Methodology)</em>, 80(4):749–767, 2018.</p>
 </div>
-<div class="citation" id="id40" role="doc-biblioentry">
+<div class="citation" id="id41" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Wan22<span class="fn-bracket">]</span></span>
 <p>Guanyang Wang. Exact convergence analysis of the independent metropolis-hastings algorithms. <em>Bernoulli</em>, 28(3):2012–2033, 2022.</p>
 </div>
-<div class="citation" id="id35" role="doc-biblioentry">
+<div class="citation" id="id36" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>ZCGV22<span class="fn-bracket">]</span></span>
 <p>Lu Zhang, Bob Carpenter, Andrew Gelman, and Aki Vehtari. Pathfinder: parallel quasi-newton variational inference. <em>Journal of Machine Learning Research</em>, 23(306):1–49, 2022.</p>
 </div>

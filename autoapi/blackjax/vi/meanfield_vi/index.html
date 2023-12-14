@@ -196,6 +196,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -466,9 +467,9 @@ document.write(`
 <li><p><strong>num_samples</strong> – The number of samples that are taken from the approximation
 at each step to compute the Kullback-Leibler divergence between
 the approximation and the target log-density.</p></li>
-<li><p><strong>stl_estimator</strong> – Whether to use stick-the-landing (STL) gradient estimator <span id="id1">[<a class="reference internal" href="../../../../bib.html#id38" title="Geoffrey Roeder, Yuhuai Wu, and David K Duvenaud. Sticking the landing: simple, lower-variance gradient estimators for variational inference. Advances in Neural Information Processing Systems, 2017.">RWD17</a>]</span> for gradient estimation.
+<li><p><strong>stl_estimator</strong> – Whether to use stick-the-landing (STL) gradient estimator <span id="id1">[<a class="reference internal" href="../../../../bib.html#id39" title="Geoffrey Roeder, Yuhuai Wu, and David K Duvenaud. Sticking the landing: simple, lower-variance gradient estimators for variational inference. Advances in Neural Information Processing Systems, 2017.">RWD17</a>]</span> for gradient estimation.
 The STL estimator has lower gradient variance by removing the score function term
-from the gradient. It is suggested by <span id="id2">[<a class="reference internal" href="../../../../bib.html#id39" title="Abhinav Agrawal, Daniel R Sheldon, and Justin Domke. Advances in black-box vi: normalizing flows, importance weighting, and optimization. Advances in Neural Information Processing Systems, 33:17358–17369, 2020.">ASD20</a>]</span> to always keep it in order for better results.</p></li>
+from the gradient. It is suggested by <span id="id2">[<a class="reference internal" href="../../../../bib.html#id40" title="Abhinav Agrawal, Daniel R Sheldon, and Justin Domke. Advances in black-box vi: normalizing flows, importance weighting, and optimization. Advances in Neural Information Processing Systems, 33:17358–17369, 2020.">ASD20</a>]</span> to always keep it in order for better results.</p></li>
 </ul>
 </dd>
 </dl>

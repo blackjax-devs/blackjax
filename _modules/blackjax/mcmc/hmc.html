@@ -193,6 +193,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -374,7 +375,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.mcmc.proposal</span> <span class="kn">import</span> <span class="n">safe_energy_diff</span><span class="p">,</span> <span class="n">static_binomial_sampling</span>
 <span class="kn">from</span> <span class="nn">blackjax.mcmc.trajectory</span> <span class="kn">import</span> <span class="n">hmc_energy</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;HMCState&quot;</span><span class="p">,</span>
@@ -453,7 +454,8 @@ document.write(`
 <span class="sd">    integrator</span>
 <span class="sd">        The symplectic integrator to use to integrate the Hamiltonian dynamics.</span>
 <span class="sd">    divergence_threshold</span>
-<span class="sd">        Value of the difference in energy above which we consider that the transition is divergent.</span>
+<span class="sd">        Value of the difference in energy above which we consider that the transition is</span>
+<span class="sd">        divergent.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -468,18 +470,16 @@ document.write(`
         <span class="n">state</span><span class="p">:</span> <span class="n">HMCState</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
         <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">HMCState</span><span class="p">,</span> <span class="n">HMCInfo</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new sample with the HMC kernel.&quot;&quot;&quot;</span>
 
-        <span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">gaussian_euclidean</span><span class="p">(</span>
-            <span class="n">inverse_mass_matrix</span>
-        <span class="p">)</span>
-        <span class="n">symplectic_integrator</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">)</span>
+        <span class="n">metric</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">default_metric</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
+        <span class="n">symplectic_integrator</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">)</span>
         <span class="n">proposal_generator</span> <span class="o">=</span> <span class="n">hmc_proposal</span><span class="p">(</span>
             <span class="n">symplectic_integrator</span><span class="p">,</span>
-            <span class="n">kinetic_energy_fn</span><span class="p">,</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">,</span>
             <span class="n">step_size</span><span class="p">,</span>
             <span class="n">num_integration_steps</span><span class="p">,</span>
             <span class="n">divergence_threshold</span><span class="p">,</span>
@@ -488,7 +488,7 @@ document.write(`
         <span class="n">key_momentum</span><span class="p">,</span> <span class="n">key_integrator</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
         <span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">state</span>
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">momentum_generator</span><span class="p">(</span><span class="n">key_momentum</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+        <span class="n">momentum</span> <span class="o">=</span> <span class="n">metric</span><span class="o">.</span><span class="n">sample_momentum</span><span class="p">(</span><span class="n">key_momentum</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
 
         <span class="n">integrator_state</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span><span class="p">(</span>
             <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span>
@@ -506,10 +506,10 @@ document.write(`
 <div class="viewcode-block" id="hmc"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.hmc">[docs]</a><span class="k">class</span> <span class="nc">hmc</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the HMC kernel.</span>
 
-<span class="sd">    The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias `blackjax.hmc.build_kernel`) can be</span>
-<span class="sd">    cumbersome to manipulate. Since most users only need to specify the kernel</span>
-<span class="sd">    parameters at initialization time, we provide a helper function that</span>
-<span class="sd">    specializes the general kernel.</span>
+<span class="sd">    The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias</span>
+<span class="sd">    `blackjax.hmc.build_kernel`) can be cumbersome to manipulate. Since most users only</span>
+<span class="sd">    need to specify the kernel parameters at initialization time, we provide a helper</span>
+<span class="sd">    function that specializes the general kernel.</span>
 
 <span class="sd">    We also add the general kernel and state generator as an attribute to this class so</span>
 <span class="sd">    users only need to pass `blackjax.hmc` to SMC, adaptation, etc. algorithms.</span>
@@ -521,7 +521,9 @@ document.write(`
 
 <span class="sd">    .. code::</span>
 
-<span class="sd">        hmc = blackjax.hmc(logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)</span>
+<span class="sd">        hmc = blackjax.hmc(</span>
+<span class="sd">            logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps</span>
+<span class="sd">        )</span>
 <span class="sd">        state = hmc.init(position)</span>
 <span class="sd">        new_state, info = hmc.step(rng_key, state)</span>
 
@@ -540,7 +542,14 @@ document.write(`
 
 <span class="sd">       kernel = blackjax.hmc.build_kernel(integrators.mclachlan)</span>
 <span class="sd">       state = blackjax.hmc.init(position, logdensity_fn)</span>
-<span class="sd">       state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)</span>
+<span class="sd">       state, info = kernel(</span>
+<span class="sd">           rng_key,</span>
+<span class="sd">           state,</span>
+<span class="sd">           logdensity_fn,</span>
+<span class="sd">           step_size,</span>
+<span class="sd">           inverse_mass_matrix,</span>
+<span class="sd">           num_integration_steps,</span>
+<span class="sd">       )</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -550,7 +559,9 @@ document.write(`
 <span class="sd">        The value to use for the step size in the symplectic integrator.</span>
 <span class="sd">    inverse_mass_matrix</span>
 <span class="sd">        The value to use for the inverse mass matrix when drawing a value for</span>
-<span class="sd">        the momentum and computing the kinetic energy.</span>
+<span class="sd">        the momentum and computing the kinetic energy. This argument will be</span>
+<span class="sd">        passed to the ``metrics.default_metric`` function so it supports the</span>
+<span class="sd">        full interface presented there.</span>
 <span class="sd">    num_integration_steps</span>
 <span class="sd">        The number of steps we take with the symplectic integrator at each</span>
 <span class="sd">        sample step before returning a sample.</span>
@@ -559,7 +570,8 @@ document.write(`
 <span class="sd">        which we say that the transition is divergent. The default value is</span>
 <span class="sd">        commonly found in other libraries, and yet is arbitrary.</span>
 <span class="sd">    integrator</span>
-<span class="sd">        (algorithm parameter) The symplectic integrator to use to integrate the trajectory.\</span>
+<span class="sd">        (algorithm parameter) The symplectic integrator to use to integrate the</span>
+<span class="sd">        trajectory.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -573,7 +585,7 @@ document.write(`
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
         <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
@@ -600,7 +612,7 @@ document.write(`
 
 <span class="k">def</span> <span class="nf">hmc_proposal</span><span class="p">(</span>
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">kinetic_energy</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">kinetic_energy</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">KineticEnergy</span><span class="p">,</span>
     <span class="n">step_size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">],</span>
     <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>

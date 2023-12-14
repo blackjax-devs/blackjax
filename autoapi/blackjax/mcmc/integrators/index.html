@@ -196,6 +196,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -351,12 +352,17 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.velocity_verlet"><code class="docutils literal notranslate"><span class="pre">velocity_verlet</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.mclachlan"><code class="docutils literal notranslate"><span class="pre">mclachlan</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.yoshida"><code class="docutils literal notranslate"><span class="pre">yoshida</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_leapfrog"><code class="docutils literal notranslate"><span class="pre">noneuclidean_leapfrog</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_yoshida"><code class="docutils literal notranslate"><span class="pre">noneuclidean_yoshida</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_mclachlan"><code class="docutils literal notranslate"><span class="pre">noneuclidean_mclachlan</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#attributes">Attributes</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.velocity_verlet"><code class="docutils literal notranslate"><span class="pre">velocity_verlet</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.mclachlan"><code class="docutils literal notranslate"><span class="pre">mclachlan</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.yoshida"><code class="docutils literal notranslate"><span class="pre">yoshida</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_leapfrog"><code class="docutils literal notranslate"><span class="pre">noneuclidean_leapfrog</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_yoshida"><code class="docutils literal notranslate"><span class="pre">noneuclidean_yoshida</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_mclachlan"><code class="docutils literal notranslate"><span class="pre">noneuclidean_mclachlan</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.implicit_midpoint"><code class="docutils literal notranslate"><span class="pre">implicit_midpoint()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -375,14 +381,48 @@ document.write(`
 <p>Symplectic, time-reversible, integrators for Hamiltonian trajectories.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">#</a></h2>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.implicit_midpoint" title="blackjax.mcmc.integrators.implicit_midpoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">implicit_midpoint</span></code></a>(→ Integrator)</p></td>
+<td><p>The implicit midpoint integrator with support for non-stationary kinetic energy</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="attributes">
+<h3>Attributes<a class="headerlink" href="#attributes" title="Permalink to this heading">#</a></h3>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.velocity_verlet" title="blackjax.mcmc.integrators.velocity_verlet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">velocity_verlet</span></code></a></p></td>
+<td><p>Two-stage palindromic symplectic integrator derived in <span id="id1">[<a class="reference internal" href="../../../../bib.html#id22" title="Sergio Blanes, Fernando Casas, and Jesús Marıa Sanz-Serna. Numerical integrators for the hybrid monte carlo method. SIAM Journal on Scientific Computing, 36(4):A1556–A1580, 2014.">BCSS14</a>]</span>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.mclachlan" title="blackjax.mcmc.integrators.mclachlan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mclachlan</span></code></a></p></td>
+<td><p>Three stages palindromic symplectic integrator derived in <span id="id2">[<a class="reference internal" href="../../../../bib.html#id19" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.yoshida" title="blackjax.mcmc.integrators.yoshida"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yoshida</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.noneuclidean_leapfrog" title="blackjax.mcmc.integrators.noneuclidean_leapfrog"><code class="xref py py-obj docutils literal notranslate"><span class="pre">noneuclidean_leapfrog</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.noneuclidean_yoshida" title="blackjax.mcmc.integrators.noneuclidean_yoshida"><code class="xref py py-obj docutils literal notranslate"><span class="pre">noneuclidean_yoshida</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.noneuclidean_mclachlan" title="blackjax.mcmc.integrators.noneuclidean_mclachlan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">noneuclidean_mclachlan</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
 <dl class="py data">
 <dt class="sig sig-object py" id="blackjax.mcmc.integrators.velocity_verlet">
 <span class="sig-name descname"><span class="pre">velocity_verlet</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#velocity_verlet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.velocity_verlet" title="Permalink to this definition">#</a></dt>
-<dd><p>Two-stage palindromic symplectic integrator derived in <span id="id1">[<a class="reference internal" href="../../../../bib.html#id21" title="Sergio Blanes, Fernando Casas, and Jesús Marıa Sanz-Serna. Numerical integrators for the hybrid monte carlo method. SIAM Journal on Scientific Computing, 36(4):A1556–A1580, 2014.">BCSS14</a>]</span>.</p>
+<dd><p>Two-stage palindromic symplectic integrator derived in <span id="id3">[<a class="reference internal" href="../../../../bib.html#id22" title="Sergio Blanes, Fernando Casas, and Jesús Marıa Sanz-Serna. Numerical integrators for the hybrid monte carlo method. SIAM Journal on Scientific Computing, 36(4):A1556–A1580, 2014.">BCSS14</a>]</span>.</p>
 <p>The integrator is of the form (b1, a1, b2, a1, b1). The choice of the parameters
 determine both the bound on the integration error and the stability of the
 method with respect to the value of <cite>step_size</cite>. The values used here are
-the ones derived in <span id="id2">[<a class="reference internal" href="../../../../bib.html#id19" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span>; note that <span id="id3">[<a class="reference internal" href="../../../../bib.html#id21" title="Sergio Blanes, Fernando Casas, and Jesús Marıa Sanz-Serna. Numerical integrators for the hybrid monte carlo method. SIAM Journal on Scientific Computing, 36(4):A1556–A1580, 2014.">BCSS14</a>]</span>
+the ones derived in <span id="id4">[<a class="reference internal" href="../../../../bib.html#id19" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span>; note that <span id="id5">[<a class="reference internal" href="../../../../bib.html#id22" title="Sergio Blanes, Fernando Casas, and Jesús Marıa Sanz-Serna. Numerical integrators for the hybrid monte carlo method. SIAM Journal on Scientific Computing, 36(4):A1556–A1580, 2014.">BCSS14</a>]</span>
 is more focused on stability and derives different values.</p>
 <p>Also known as the minimal norm integrator.</p>
 </dd></dl>
@@ -390,11 +430,11 @@ is more focused on stability and derives different values.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="blackjax.mcmc.integrators.mclachlan">
 <span class="sig-name descname"><span class="pre">mclachlan</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#mclachlan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.mclachlan" title="Permalink to this definition">#</a></dt>
-<dd><p>Three stages palindromic symplectic integrator derived in <span id="id4">[<a class="reference internal" href="../../../../bib.html#id19" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span></p>
+<dd><p>Three stages palindromic symplectic integrator derived in <span id="id6">[<a class="reference internal" href="../../../../bib.html#id19" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span></p>
 <p>The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of
 the parameters determine both the bound on the integration error and the
 stability of the method with respect to the value of <cite>step_size</cite>. The
-values used here are the ones derived in <span id="id5">[<a class="reference internal" href="../../../../bib.html#id19" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span> which
+values used here are the ones derived in <span id="id7">[<a class="reference internal" href="../../../../bib.html#id19" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span> which
 guarantees a stability interval length approximately equal to 4.67.</p>
 </dd></dl>
 
@@ -418,6 +458,19 @@ guarantees a stability interval length approximately equal to 4.67.</p>
 <span class="sig-name descname"><span class="pre">noneuclidean_mclachlan</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#noneuclidean_mclachlan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.noneuclidean_mclachlan" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.integrators.implicit_midpoint">
+<span class="sig-name descname"><span class="pre">implicit_midpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kinetic_energy_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.mcmc.metrics.KineticEnergy</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FixedPointSolver</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">solve_fixed_point_iteration</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">solver_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Integrator</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#implicit_midpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.implicit_midpoint" title="Permalink to this definition">#</a></dt>
+<dd><p>The implicit midpoint integrator with support for non-stationary kinetic energy</p>
+<p>This is an integrator based on <span id="id8">Brofos and Lederman [<a class="reference internal" href="../../../../bib.html#id20" title="James Brofos and Roy R Lederman. Evaluating the implicit midpoint integrator for riemannian hamiltonian monte carlo. In Marina Meila and Tong Zhang, editors, Proceedings of the 38th International Conference on Machine Learning, volume 139 of Proceedings of Machine Learning Research, 1072–1081. PMLR, 18–24 Jul 2021.">BL21</a>]</span>, which provides
+support for kinetic energies that depend on position. This integrator requires that
+the kinetic energy function takes two arguments: position and momentum.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">solver</span></code> parameter allows overloading of the fixed point solver. By default, a
+simple fixed point iteration is used, but more advanced solvers could be implemented
+in the future.</p>
+</dd></dl>
+
+</section>
 </section>
 </section>
 
@@ -466,12 +519,17 @@ guarantees a stability interval length approximately equal to 4.67.</p>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.velocity_verlet"><code class="docutils literal notranslate"><span class="pre">velocity_verlet</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.mclachlan"><code class="docutils literal notranslate"><span class="pre">mclachlan</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.yoshida"><code class="docutils literal notranslate"><span class="pre">yoshida</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_leapfrog"><code class="docutils literal notranslate"><span class="pre">noneuclidean_leapfrog</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_yoshida"><code class="docutils literal notranslate"><span class="pre">noneuclidean_yoshida</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_mclachlan"><code class="docutils literal notranslate"><span class="pre">noneuclidean_mclachlan</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#attributes">Attributes</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.velocity_verlet"><code class="docutils literal notranslate"><span class="pre">velocity_verlet</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.mclachlan"><code class="docutils literal notranslate"><span class="pre">mclachlan</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.yoshida"><code class="docutils literal notranslate"><span class="pre">yoshida</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_leapfrog"><code class="docutils literal notranslate"><span class="pre">noneuclidean_leapfrog</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_yoshida"><code class="docutils literal notranslate"><span class="pre">noneuclidean_yoshida</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.noneuclidean_mclachlan"><code class="docutils literal notranslate"><span class="pre">noneuclidean_mclachlan</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.implicit_midpoint"><code class="docutils literal notranslate"><span class="pre">implicit_midpoint()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

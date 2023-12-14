@@ -193,6 +193,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -374,29 +375,82 @@ document.write(`
 <span class="sd">For a Newtonian hamiltonian dynamic the kinetic energy is given by:</span>
 
 <span class="sd">.. math::</span>
+
 <span class="sd">    K(p) = \frac{1}{2} p^T M^{-1} p</span>
 
 <span class="sd">We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.scipy</span> <span class="k">as</span> <span class="nn">jscipy</span>
 <span class="kn">from</span> <span class="nn">jax.flatten_util</span> <span class="kn">import</span> <span class="n">ravel_pytree</span>
+<span class="kn">from</span> <span class="nn">jax.scipy</span> <span class="kn">import</span> <span class="n">stats</span> <span class="k">as</span> <span class="n">sp_stats</span>
 
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;gaussian_euclidean&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;default_metric&quot;</span><span class="p">,</span> <span class="s2">&quot;gaussian_euclidean&quot;</span><span class="p">,</span> <span class="s2">&quot;gaussian_riemannian&quot;</span><span class="p">]</span>
 
-<span class="n">EuclideanKineticEnergy</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLikeTree</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span>
+
+<span class="k">class</span> <span class="nc">KineticEnergy</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="o">...</span>
+
+
+<span class="k">class</span> <span class="nc">CheckTurning</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">momentum_left</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">momentum_right</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">momentum_sum</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">position_left</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">position_right</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="o">...</span>
+
+
+<span class="k">class</span> <span class="nc">Metric</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">sample_momentum</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">PRNGKey</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">],</span> <span class="n">ArrayLikeTree</span><span class="p">]</span>
+    <span class="n">kinetic_energy</span><span class="p">:</span> <span class="n">KineticEnergy</span>
+    <span class="n">check_turning</span><span class="p">:</span> <span class="n">CheckTurning</span>
+
+
+<span class="n">MetricTypes</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Metric</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLikeTree</span><span class="p">],</span> <span class="n">Array</span><span class="p">]]</span>
+
+
+<div class="viewcode-block" id="default_metric"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.default_metric">[docs]</a><span class="k">def</span> <span class="nf">default_metric</span><span class="p">(</span><span class="n">metric</span><span class="p">:</span> <span class="n">MetricTypes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metric</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert an input metric into a ``Metric`` object following sensible default rules</span>
+
+<span class="sd">    The metric can be specified in three different ways:</span>
+
+<span class="sd">    - A ``Metric`` object that implements the full interface</span>
+<span class="sd">    - An ``Array`` which is assumed to specify the inverse mass matrix of a static</span>
+<span class="sd">      metric</span>
+<span class="sd">    - A function that takes a coordinate position and returns the mass matrix at that</span>
+<span class="sd">      location</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="n">Metric</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">metric</span>
+
+    <span class="c1"># If the argument is a callable, we assume that it returns the mass matrix</span>
+    <span class="c1"># at the given position and return the corresponding Riemannian metric.</span>
+    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">metric</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">gaussian_riemannian</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span>
+
+    <span class="c1"># If we make it here then the argument should be an array, and we&#39;ll assume</span>
+    <span class="c1"># that it specifies a static inverse mass matrix.</span>
+    <span class="k">return</span> <span class="n">gaussian_euclidean</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="gaussian_euclidean"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.gaussian_euclidean">[docs]</a><span class="k">def</span> <span class="nf">gaussian_euclidean</span><span class="p">(</span>
     <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">EuclideanKineticEnergy</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Hamiltonian dynamic on euclidean manifold with normally-distributed momentum :cite:p:`betancourt2013general`.</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metric</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Hamiltonian dynamic on euclidean manifold with normally-distributed momentum</span>
+<span class="sd">    :cite:p:`betancourt2013general`.</span>
 
 <span class="sd">    The gaussian euclidean metric is a euclidean metric further characterized</span>
 <span class="sd">    by setting the conditional probability density :math:`\pi(momentum|position)`</span>
@@ -443,22 +497,28 @@ document.write(`
             <span class="n">L</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">trans</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
         <span class="c1"># Note that mass_matrix_sqrt is a upper triangular matrix here, with</span>
-        <span class="c1">#   jscipy.linalg.inv(mass_matrix_sqrt @ mass_matrix_sqrt.T) == inverse_mass_matrix</span>
-        <span class="c1"># An alternative is to compute directly the cholesky factor of the inverse mass matrix</span>
-        <span class="c1">#   mass_matrix_sqrt = jscipy.linalg.cholesky(jscipy.linalg.inv(inverse_mass_matrix), lower=True)</span>
+        <span class="c1">#   jscipy.linalg.inv(mass_matrix_sqrt @ mass_matrix_sqrt.T)</span>
+        <span class="c1">#   == inverse_mass_matrix</span>
+        <span class="c1"># An alternative is to compute directly the cholesky factor of the inverse mass</span>
+        <span class="c1"># matrix</span>
+        <span class="c1">#   mass_matrix_sqrt = jscipy.linalg.cholesky(</span>
+        <span class="c1">#       jscipy.linalg.inv(inverse_mass_matrix), lower=True)</span>
         <span class="c1"># which the result would instead be a lower triangular matrix.</span>
         <span class="n">matmul</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">matmul</span>
 
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s2">&quot;The mass matrix has the wrong number of dimensions:&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot; expected 1 or 2, got </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>  <span class="c1"># type: ignore[arg-type]</span>
+            <span class="sa">f</span><span class="s2">&quot; expected 1 or 2, got </span><span class="si">{</span><span class="n">ndim</span><span class="si">}</span><span class="s2">.&quot;</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">momentum_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">mass_matrix_sqrt</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">kinetic_energy</span><span class="p">(</span><span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">kinetic_energy</span><span class="p">(</span>
+        <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">position</span>
         <span class="n">momentum</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
         <span class="n">velocity</span> <span class="o">=</span> <span class="n">matmul</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">momentum</span><span class="p">)</span>
         <span class="n">kinetic_energy_val</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">velocity</span><span class="p">,</span> <span class="n">momentum</span><span class="p">)</span>
@@ -468,6 +528,8 @@ document.write(`
         <span class="n">momentum_left</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
         <span class="n">momentum_right</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
         <span class="n">momentum_sum</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">position_left</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">position_right</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generalized U-turn criterion :cite:p:`betancourt2013generalizing,nuts_uturn`.</span>
 
@@ -481,6 +543,8 @@ document.write(`
 <span class="sd">            Sum of the momenta along the trajectory.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="n">position_left</span><span class="p">,</span> <span class="n">position_right</span>
+
         <span class="n">m_left</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_left</span><span class="p">)</span>
         <span class="n">m_right</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_right</span><span class="p">)</span>
         <span class="n">m_sum</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_sum</span><span class="p">)</span>
@@ -494,7 +558,85 @@ document.write(`
         <span class="n">turning_at_right</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">velocity_right</span><span class="p">,</span> <span class="n">rho</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="n">turning_at_left</span> <span class="o">|</span> <span class="n">turning_at_right</span>
 
-    <span class="k">return</span> <span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">is_turning</span></div>
+    <span class="k">return</span> <span class="n">Metric</span><span class="p">(</span><span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="gaussian_riemannian"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.gaussian_riemannian">[docs]</a><span class="k">def</span> <span class="nf">gaussian_riemannian</span><span class="p">(</span>
+    <span class="n">mass_matrix_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metric</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">momentum_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLikeTree</span><span class="p">:</span>
+        <span class="n">mass_matrix</span> <span class="o">=</span> <span class="n">mass_matrix_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+        <span class="n">ndim</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">mass_matrix_sqrt</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">mass_matrix_sqrt</span> <span class="o">=</span> <span class="n">jscipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;The mass matrix has the wrong number of dimensions:&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; expected 1 or 2, got </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">mass_matrix_sqrt</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">kinetic_energy</span><span class="p">(</span>
+        <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;A Reinmannian kinetic energy function must be called with the &quot;</span>
+                <span class="s2">&quot;position specified; make sure to use a Reinmannian-capable &quot;</span>
+                <span class="s2">&quot;integrator like `implicit_midpoint`.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">momentum</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
+        <span class="n">mass_matrix</span> <span class="o">=</span> <span class="n">mass_matrix_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+        <span class="n">ndim</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sp_stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">momentum</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">)))</span>
+        <span class="k">elif</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">sp_stats</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span>
+                <span class="n">momentum</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">momentum</span><span class="p">),</span> <span class="n">mass_matrix</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;The mass matrix has the wrong number of dimensions:&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; expected 1 or 2, got </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_turning</span><span class="p">(</span>
+        <span class="n">momentum_left</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">momentum_right</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">momentum_sum</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">position_left</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">position_right</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">momentum_left</span><span class="p">,</span> <span class="n">momentum_right</span><span class="p">,</span> <span class="n">momentum_sum</span><span class="p">,</span> <span class="n">position_left</span><span class="p">,</span> <span class="n">position_right</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;NUTS sampling is not yet implemented for Riemannian manifolds&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Here&#39;s a possible implementation of this function, but the NUTS</span>
+        <span class="c1"># proposal will require some refactoring to work properly, since we need</span>
+        <span class="c1"># to be able to access the coordinates at the left and right endpoints</span>
+        <span class="c1"># to compute the mass matrix at those points.</span>
+
+        <span class="c1"># m_left, _ = ravel_pytree(momentum_left)</span>
+        <span class="c1"># m_right, _ = ravel_pytree(momentum_right)</span>
+        <span class="c1"># m_sum, _ = ravel_pytree(momentum_sum)</span>
+
+        <span class="c1"># mass_matrix_left = mass_matrix_fn(position_left)</span>
+        <span class="c1"># mass_matrix_right = mass_matrix_fn(position_right)</span>
+        <span class="c1"># velocity_left = jnp.linalg.solve(mass_matrix_left, m_left)</span>
+        <span class="c1"># velocity_right = jnp.linalg.solve(mass_matrix_right, m_right)</span>
+
+        <span class="c1"># # rho = m_sum</span>
+        <span class="c1"># rho = m_sum - (m_right + m_left) / 2</span>
+        <span class="c1"># turning_at_left = jnp.dot(velocity_left, rho) &lt;= 0</span>
+        <span class="c1"># turning_at_right = jnp.dot(velocity_right, rho) &lt;= 0</span>
+        <span class="c1"># return turning_at_left | turning_at_right</span>
+
+    <span class="k">return</span> <span class="n">Metric</span><span class="p">(</span><span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">)</span></div>
 </pre></div>
 
                 </article>

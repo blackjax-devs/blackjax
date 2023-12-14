@@ -16,6 +16,7 @@
    For a Newtonian hamiltonian dynamic the kinetic energy is given by:
 
    .. math::
+
        K(p) = \frac{1}{2} p^T M^{-1} p
 
    We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
@@ -31,13 +32,29 @@ Functions
 
 .. autoapisummary::
 
+   blackjax.mcmc.metrics.default_metric
    blackjax.mcmc.metrics.gaussian_euclidean
+   blackjax.mcmc.metrics.gaussian_riemannian
 
 
 
-.. py:function:: gaussian_euclidean(inverse_mass_matrix: blackjax.types.Array) -> tuple[Callable, EuclideanKineticEnergy, Callable]
+.. py:function:: default_metric(metric: MetricTypes) -> Metric
 
-   Hamiltonian dynamic on euclidean manifold with normally-distributed momentum :cite:p:`betancourt2013general`.
+   Convert an input metric into a ``Metric`` object following sensible default rules
+
+   The metric can be specified in three different ways:
+
+   - A ``Metric`` object that implements the full interface
+   - An ``Array`` which is assumed to specify the inverse mass matrix of a static
+     metric
+   - A function that takes a coordinate position and returns the mass matrix at that
+     location
+
+
+.. py:function:: gaussian_euclidean(inverse_mass_matrix: blackjax.types.Array) -> Metric
+
+   Hamiltonian dynamic on euclidean manifold with normally-distributed momentum
+   :cite:p:`betancourt2013general`.
 
    The gaussian euclidean metric is a euclidean metric further characterized
    by setting the conditional probability density :math:`\pi(momentum|position)`
@@ -58,5 +75,8 @@ Functions
              * *kinetic_energy* -- A function that returns the kinetic energy given the momentum.
              * *is_turning* -- A function that determines whether a trajectory is turning back on
                itself given the values of the momentum along the trajectory.
+
+
+.. py:function:: gaussian_riemannian(mass_matrix_fn: Callable) -> Metric
 
 

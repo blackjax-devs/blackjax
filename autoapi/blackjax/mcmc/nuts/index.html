@@ -196,6 +196,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -514,9 +515,9 @@ states in the full trajectory.</p>
 with two major differences:</p>
 <ul class="simple">
 <li><p>We do not use slice samplig but multinomial sampling for the proposal
-<span id="id2">[<a class="reference internal" href="../../../../bib.html#id24" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>;</p></li>
-<li><p>The trajectory expansion is not recursive but iterative <span id="id3">[<a class="reference internal" href="../../../../bib.html#id25" title="Du Phan, Neeraj Pradhan, and Martin Jankowiak. Composable effects for flexible and accelerated probabilistic programming in numpyro. arXiv preprint arXiv:1912.11554, 2019.">PPJ19</a>]</span>,
-<span id="id4">[<a class="reference internal" href="../../../../bib.html#id26" title="Junpeng Lao, Christopher Suter, Ian Langmore, Cyril Chimisov, Ashish Saxena, Pavel Sountsov, Dave Moore, Rif A Saurous, Matthew D Hoffman, and Joshua V Dillon. Tfp. mcmc: modern markov chain monte carlo tools built for modern hardware. arXiv preprint arXiv:2002.01184, 2020.">LSL+20</a>]</span>.</p></li>
+<span id="id2">[<a class="reference internal" href="../../../../bib.html#id25" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>;</p></li>
+<li><p>The trajectory expansion is not recursive but iterative <span id="id3">[<a class="reference internal" href="../../../../bib.html#id26" title="Du Phan, Neeraj Pradhan, and Martin Jankowiak. Composable effects for flexible and accelerated probabilistic programming in numpyro. arXiv preprint arXiv:1912.11554, 2019.">PPJ19</a>]</span>,
+<span id="id4">[<a class="reference internal" href="../../../../bib.html#id27" title="Junpeng Lao, Christopher Suter, Ian Langmore, Cyril Chimisov, Ashish Saxena, Pavel Sountsov, Dave Moore, Rif A Saurous, Matthew D Hoffman, and Joshua V Dillon. Tfp. mcmc: modern markov chain monte carlo tools built for modern hardware. arXiv preprint arXiv:2002.01184, 2020.">LSL+20</a>]</span>.</p></li>
 </ul>
 <p>The implementation can seem unusual for those familiar with similar
 algorithms. Indeed, we do not conceptualize the trajectory construction as

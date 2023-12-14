@@ -193,6 +193,7 @@
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -667,6 +668,13 @@ document.write(`
 </li>
       </ul></li>
       <li>
+    blackjax.mcmc.rmhmc
+
+      <ul>
+        <li><a href="autoapi/blackjax/mcmc/rmhmc/index.html#module-blackjax.mcmc.rmhmc">module</a>
+</li>
+      </ul></li>
+      <li>
     blackjax.mcmc.termination
 
       <ul>
@@ -906,6 +914,8 @@ document.write(`
 </li>
         <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.hmc.build_kernel">(hmc attribute)</a>
 </li>
+        <li><a href="autoapi/blackjax/mcmc/rmhmc/index.html#blackjax.mcmc.rmhmc.build_kernel">(in module blackjax.mcmc.rmhmc)</a>
+</li>
         <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.inner_kernel_tuning.build_kernel">(inner_kernel_tuning attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.irmh.build_kernel">(irmh attribute)</a>
@@ -921,6 +931,8 @@ document.write(`
         <li><a href="autoapi/blackjax/mcmc/periodic_orbital/index.html#blackjax.mcmc.periodic_orbital.orbital_hmc.build_kernel">(orbital_hmc attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.rmh.build_kernel">(rmh attribute)</a>
+</li>
+        <li><a href="autoapi/blackjax/mcmc/rmhmc/index.html#blackjax.mcmc.rmhmc.rmhmc.build_kernel">(rmhmc attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/sgmcmc/sghmc/index.html#blackjax.sgmcmc.sghmc.sghmc.build_kernel">(sghmc attribute)</a>
 </li>
@@ -1002,6 +1014,8 @@ document.write(`
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.da_state">da_state (ChEESAdaptationState attribute)</a>
+</li>
+      <li><a href="autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.default_metric">default_metric() (in module blackjax.mcmc.metrics)</a>
 </li>
       <li><a href="autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.delta">delta (MEADSAdaptationState attribute)</a>
 </li>
@@ -1097,12 +1111,14 @@ document.write(`
 </li>
       <li><a href="autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.gaussian_euclidean">gaussian_euclidean() (in module blackjax.mcmc.metrics)</a>
 </li>
-      <li><a href="autoapi/blackjax/util/index.html#blackjax.util.generate_gaussian_noise">generate_gaussian_noise() (in module blackjax.util)</a>
+      <li><a href="autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.gaussian_riemannian">gaussian_riemannian() (in module blackjax.mcmc.metrics)</a>
 </li>
-      <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.generate_meanfield_logdensity">generate_meanfield_logdensity() (in module blackjax.vi.meanfield_vi)</a>
+      <li><a href="autoapi/blackjax/util/index.html#blackjax.util.generate_gaussian_noise">generate_gaussian_noise() (in module blackjax.util)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.generate_meanfield_logdensity">generate_meanfield_logdensity() (in module blackjax.vi.meanfield_vi)</a>
+</li>
       <li><a href="autoapi/blackjax/util/index.html#blackjax.util.generate_unit_vector">generate_unit_vector() (in module blackjax.util)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.ghmc">ghmc (class in blackjax.mcmc.ghmc)</a>
@@ -1145,6 +1161,8 @@ document.write(`
 </li>
       <li><a href="autoapi/blackjax/adaptation/window_adaptation/index.html#blackjax.adaptation.window_adaptation.WindowAdaptationState.imm_state">imm_state (WindowAdaptationState attribute)</a>
 </li>
+      <li><a href="autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.implicit_midpoint">implicit_midpoint() (in module blackjax.mcmc.integrators)</a>
+</li>
       <li><a href="autoapi/blackjax/util/index.html#blackjax.util.index_pytree">index_pytree() (in module blackjax.util)</a>
 </li>
       <li><a href="autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.AdaptationInfo.info">info (AdaptationInfo attribute)</a>
@@ -1170,6 +1188,8 @@ document.write(`
 </li>
         <li><a href="autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.init">(in module blackjax.mcmc.nuts)</a>
 </li>
+        <li><a href="autoapi/blackjax/mcmc/rmhmc/index.html#blackjax.mcmc.rmhmc.init">(in module blackjax.mcmc.rmhmc)</a>
+</li>
         <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.inner_kernel_tuning.init">(inner_kernel_tuning attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.irmh.init">(irmh attribute)</a>
@@ -1188,6 +1208,8 @@ document.write(`
 </li>
         <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.rmh.init">(rmh attribute)</a>
 </li>
+        <li><a href="autoapi/blackjax/mcmc/rmhmc/index.html#blackjax.mcmc.rmhmc.rmhmc.init">(rmhmc attribute)</a>
+</li>
         <li><a href="autoapi/blackjax/base/index.html#blackjax.base.SamplingAlgorithm.init">(SamplingAlgorithm attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/sgmcmc/sghmc/index.html#blackjax.sgmcmc.sghmc.sghmc.init">(sghmc attribute)</a>
@@ -1201,6 +1223,8 @@ document.write(`
         <li><a href="autoapi/blackjax/base/index.html#blackjax.base.VIAlgorithm.init">(VIAlgorithm attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/mcmc/barker/index.html#blackjax.mcmc.barker.init">init() (in module blackjax.mcmc.barker)</a>
 
       <ul>
@@ -1237,8 +1261,6 @@ document.write(`
         <li><a href="autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.init">(in module blackjax.vi.schrodinger_follmer)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/base/index.html#blackjax.base.InitFn">InitFn (class in blackjax.base)</a>
 </li>
       <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.inner_kernel_tuning">inner_kernel_tuning (class in blackjax.smc.inner_kernel_tuning)</a>
@@ -1484,6 +1506,8 @@ document.write(`
         <li><a href="autoapi/blackjax/mcmc/proposal/index.html#module-blackjax.mcmc.proposal">blackjax.mcmc.proposal</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#module-blackjax.mcmc.random_walk">blackjax.mcmc.random_walk</a>
+</li>
+        <li><a href="autoapi/blackjax/mcmc/rmhmc/index.html#module-blackjax.mcmc.rmhmc">blackjax.mcmc.rmhmc</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/termination/index.html#module-blackjax.mcmc.termination">blackjax.mcmc.termination</a>
 </li>
@@ -1761,6 +1785,8 @@ document.write(`
       <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.rmh">rmh (class in blackjax.mcmc.random_walk)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.rmh_proposal">rmh_proposal() (in module blackjax.mcmc.random_walk)</a>
+</li>
+      <li><a href="autoapi/blackjax/mcmc/rmhmc/index.html#blackjax.mcmc.rmhmc.rmhmc">rmhmc (class in blackjax.mcmc.rmhmc)</a>
 </li>
       <li><a href="autoapi/blackjax/base/index.html#blackjax.base.AdaptationAlgorithm.run">run (AdaptationAlgorithm attribute)</a>
 </li>

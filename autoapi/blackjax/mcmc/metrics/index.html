@@ -197,6 +197,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -353,7 +354,9 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.default_metric"><code class="docutils literal notranslate"><span class="pre">default_metric()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_riemannian"><code class="docutils literal notranslate"><span class="pre">gaussian_riemannian()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -376,26 +379,47 @@ document.write(`
 position space in the Euclidean metric. It is defined by a definite positive
 matrix <span class="math notranslate nohighlight">\(M\)</span> with fixed value so that the kinetic energy of the hamiltonian
 dynamic is independent of the position and only depends on the momentum
-<span class="math notranslate nohighlight">\(p\)</span> <span id="id1">[<a class="reference internal" href="../../../../bib.html#id22" title="Michael Betancourt, Simon Byrne, Sam Livingstone, and Mark Girolami. The geometric foundations of hamiltonian monte carlo. arXiv preprint arXiv:arXiv:1410.5110, 2017.">BBLG17</a>]</span>.</p>
+<span class="math notranslate nohighlight">\(p\)</span> <span id="id1">[<a class="reference internal" href="../../../../bib.html#id23" title="Michael Betancourt, Simon Byrne, Sam Livingstone, and Mark Girolami. The geometric foundations of hamiltonian monte carlo. arXiv preprint arXiv:arXiv:1410.5110, 2017.">BBLG17</a>]</span>.</p>
 <p>For a Newtonian hamiltonian dynamic the kinetic energy is given by:</p>
 <div class="math notranslate nohighlight">
 \[K(p) = \frac{1}{2} p^T M^{-1} p\]</div>
-<p>We can also generate a relativistic dynamic <span id="id2">[<a class="reference internal" href="../../../../bib.html#id23" title="Xiaoyu Lu, Valerio Perrone, Leonard Hasenclever, Yee Whye Teh, and Sebastian Vollmer. Relativistic monte carlo. In Artificial Intelligence and Statistics, 1236–1245. PMLR, 2017.">LPH+17</a>]</span>.</p>
+<p>We can also generate a relativistic dynamic <span id="id2">[<a class="reference internal" href="../../../../bib.html#id24" title="Xiaoyu Lu, Valerio Perrone, Leonard Hasenclever, Yee Whye Teh, and Sebastian Vollmer. Relativistic monte carlo. In Artificial Intelligence and Statistics, 1236–1245. PMLR, 2017.">LPH+17</a>]</span>.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">#</a></h2>
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_euclidean" title="blackjax.mcmc.metrics.gaussian_euclidean"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gaussian_euclidean</span></code></a>(→ tuple[Callable, ...)</p></td>
-<td><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum <span id="id3">[<a class="reference internal" href="../../../../bib.html#id33" title="Michael Betancourt. A general metric for riemannian manifold hamiltonian monte carlo. In Geometric Science of Information: First International Conference, GSI 2013, Paris, France, August 28-30, 2013. Proceedings, 327–334. Springer, 2013.">Bet13</a>]</span>.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.default_metric" title="blackjax.mcmc.metrics.default_metric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">default_metric</span></code></a>(→ Metric)</p></td>
+<td><p>Convert an input metric into a <code class="docutils literal notranslate"><span class="pre">Metric</span></code> object following sensible default rules</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_euclidean" title="blackjax.mcmc.metrics.gaussian_euclidean"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gaussian_euclidean</span></code></a>(→ Metric)</p></td>
+<td><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_riemannian" title="blackjax.mcmc.metrics.gaussian_riemannian"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gaussian_riemannian</span></code></a>(→ Metric)</p></td>
+<td><p></p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.metrics.default_metric">
+<span class="sig-name descname"><span class="pre">default_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MetricTypes</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#default_metric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.default_metric" title="Permalink to this definition">#</a></dt>
+<dd><p>Convert an input metric into a <code class="docutils literal notranslate"><span class="pre">Metric</span></code> object following sensible default rules</p>
+<p>The metric can be specified in three different ways:</p>
+<ul class="simple">
+<li><p>A <code class="docutils literal notranslate"><span class="pre">Metric</span></code> object that implements the full interface</p></li>
+<li><p>An <code class="docutils literal notranslate"><span class="pre">Array</span></code> which is assumed to specify the inverse mass matrix of a static
+metric</p></li>
+<li><p>A function that takes a coordinate position and returns the mass matrix at that
+location</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.metrics.gaussian_euclidean">
-<span class="sig-name descname"><span class="pre">gaussian_euclidean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">EuclideanKineticEnergy</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_euclidean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_euclidean" title="Permalink to this definition">#</a></dt>
-<dd><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum <span id="id4">[<a class="reference internal" href="../../../../bib.html#id33" title="Michael Betancourt. A general metric for riemannian manifold hamiltonian monte carlo. In Geometric Science of Information: First International Conference, GSI 2013, Paris, France, August 28-30, 2013. Proceedings, 327–334. Springer, 2013.">Bet13</a>]</span>.</p>
+<span class="sig-name descname"><span class="pre">gaussian_euclidean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_euclidean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_euclidean" title="Permalink to this definition">#</a></dt>
+<dd><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum
+<span id="id3">[<a class="reference internal" href="../../../../bib.html#id34" title="Michael Betancourt. A general metric for riemannian manifold hamiltonian monte carlo. In Geometric Science of Information: First International Conference, GSI 2013, Paris, France, August 28-30, 2013. Proceedings, 327–334. Springer, 2013.">Bet13</a>]</span>.</p>
 <p>The gaussian euclidean metric is a euclidean metric further characterized
 by setting the conditional probability density <span class="math notranslate nohighlight">\(\pi(momentum|position)\)</span>
 to follow a standard gaussian distribution. A Newtonian hamiltonian
@@ -423,6 +447,11 @@ itself given the values of the momentum along the trajectory.</p></li>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.metrics.gaussian_riemannian">
+<span class="sig-name descname"><span class="pre">gaussian_riemannian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mass_matrix_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_riemannian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_riemannian" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
 
 </section>
 </section>
@@ -474,7 +503,9 @@ itself given the values of the momentum along the trajectory.</p></li>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.default_metric"><code class="docutils literal notranslate"><span class="pre">default_metric()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_riemannian"><code class="docutils literal notranslate"><span class="pre">gaussian_riemannian()</span></code></a></li>
 </ul>
 </li>
 </ul>

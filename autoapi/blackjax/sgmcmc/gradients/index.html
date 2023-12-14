@@ -196,6 +196,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -385,7 +386,7 @@ document.write(`
 <td><p>Build a simple estimator for the gradient of the log-density.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgmcmc.gradients.control_variates" title="blackjax.sgmcmc.gradients.control_variates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">control_variates</span></code></a>(→ Callable)</p></td>
-<td><p>Builds a control variate gradient estimator <span id="id1">[<a class="reference internal" href="../../../../bib.html#id31" title="Jack Baker, Paul Fearnhead, Emily B Fox, and Christopher Nemeth. Control variates for stochastic gradient mcmc. Statistics and Computing, 29:599–615, 2019.">BFFN19</a>]</span>.</p></td>
+<td><p>Builds a control variate gradient estimator <span id="id1">[<a class="reference internal" href="../../../../bib.html#id32" title="Jack Baker, Paul Fearnhead, Emily B Fox, and Christopher Nemeth. Control variates for stochastic gradient mcmc. Statistics and Computing, 29:599–615, 2019.">BFFN19</a>]</span>.</p></td>
 </tr>
 </tbody>
 </table>
@@ -393,12 +394,12 @@ document.write(`
 <dt class="sig sig-object py" id="blackjax.sgmcmc.gradients.logdensity_estimator">
 <span class="sig-name descname"><span class="pre">logdensity_estimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprior_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/gradients.html#logdensity_estimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.gradients.logdensity_estimator" title="Permalink to this definition">#</a></dt>
 <dd><p>Builds a simple estimator for the log-density.</p>
-<p>This estimator first appeared in <span id="id2">[<a class="reference internal" href="../../../../bib.html#id30" title="Herbert Robbins and Sutton Monro. A stochastic approximation method. The annals of mathematical statistics, pages 400–407, 1951.">RM51</a>]</span>. The <cite>logprior_fn</cite> function has a
+<p>This estimator first appeared in <span id="id2">[<a class="reference internal" href="../../../../bib.html#id31" title="Herbert Robbins and Sutton Monro. A stochastic approximation method. The annals of mathematical statistics, pages 400–407, 1951.">RM51</a>]</span>. The <cite>logprior_fn</cite> function has a
 single argument:  the current position (value of parameters). The
 <cite>loglikelihood_fn</cite> takes two arguments: the current position and a batch of
 data; if there are several variables (as, for instance, in a supervised
 learning contexts), they are passed in a tuple.</p>
-<p>This algorithm was ported from <span id="id3">[<a class="reference internal" href="../../../../bib.html#id28" title="Jeremie Coullon and Christopher Nemeth. Sgmcmcjax: a lightweight jax library for stochastic gradient markov chain monte carlo algorithms. Journal of Open Source Software, 7(72):4113, 2022.">CN22</a>]</span>.</p>
+<p>This algorithm was ported from <span id="id3">[<a class="reference internal" href="../../../../bib.html#id29" title="Jeremie Coullon and Christopher Nemeth. Sgmcmcjax: a lightweight jax library for stochastic gradient markov chain monte carlo algorithms. Journal of Open Source Software, 7(72):4113, 2022.">CN22</a>]</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -420,8 +421,8 @@ distribution.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.sgmcmc.gradients.control_variates">
 <span class="sig-name descname"><span class="pre">control_variates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_grad_estimator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centering_position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/sgmcmc/gradients.html#control_variates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.sgmcmc.gradients.control_variates" title="Permalink to this definition">#</a></dt>
-<dd><p>Builds a control variate gradient estimator <span id="id4">[<a class="reference internal" href="../../../../bib.html#id31" title="Jack Baker, Paul Fearnhead, Emily B Fox, and Christopher Nemeth. Control variates for stochastic gradient mcmc. Statistics and Computing, 29:599–615, 2019.">BFFN19</a>]</span>.</p>
-<p>This algorithm was ported from <span id="id5">[<a class="reference internal" href="../../../../bib.html#id28" title="Jeremie Coullon and Christopher Nemeth. Sgmcmcjax: a lightweight jax library for stochastic gradient markov chain monte carlo algorithms. Journal of Open Source Software, 7(72):4113, 2022.">CN22</a>]</span>.</p>
+<dd><p>Builds a control variate gradient estimator <span id="id4">[<a class="reference internal" href="../../../../bib.html#id32" title="Jack Baker, Paul Fearnhead, Emily B Fox, and Christopher Nemeth. Control variates for stochastic gradient mcmc. Statistics and Computing, 29:599–615, 2019.">BFFN19</a>]</span>.</p>
+<p>This algorithm was ported from <span id="id5">[<a class="reference internal" href="../../../../bib.html#id29" title="Jeremie Coullon and Christopher Nemeth. Sgmcmcjax: a lightweight jax library for stochastic gradient markov chain monte carlo algorithms. Journal of Open Source Software, 7(72):4113, 2022.">CN22</a>]</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

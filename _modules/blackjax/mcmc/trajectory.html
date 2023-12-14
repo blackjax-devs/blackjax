@@ -193,6 +193,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -970,7 +971,9 @@ document.write(`
 
 <div class="viewcode-block" id="hmc_energy"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.hmc_energy">[docs]</a><span class="k">def</span> <span class="nf">hmc_energy</span><span class="p">(</span><span class="n">kinetic_energy</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">energy</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
-        <span class="k">return</span> <span class="o">-</span><span class="n">state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">+</span> <span class="n">kinetic_energy</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">momentum</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">+</span> <span class="n">kinetic_energy</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">position</span>
+        <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">energy</span></div>
 </pre></div>

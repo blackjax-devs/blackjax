@@ -79,12 +79,12 @@ File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/o
 [1;32m    318[0m [43m    [49m[43mname[49m[38;5;241;43m=[39;49m[38;5;28;43mgetattr[39;49m[43m([49m[43mf[49m[43m,[49m[43m [49m[38;5;124;43m'[39;49m[38;5;124;43m__name__[39;49m[38;5;124;43m'[39;49m[43m,[49m[43m [49m[38;5;124;43m'[39;49m[38;5;124;43m<no name>[39;49m[38;5;124;43m'[39;49m[43m)[49m[43m)[49m
 [1;32m    319[0m [38;5;28;01mreturn[39;00m tree_util[38;5;241m.[39mtree_unflatten(out_tree(), out_flat)
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/core.py:2251[0m, in [0;36mCallPrimitive.bind[0;34m(self, fun, *args, **params)[0m
-[1;32m   2248[0m [38;5;28;01mdef[39;00m [38;5;21mbind[39m([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams):
-[1;32m   2249[0m   call_bind_continuation, top_trace, fun_, tracers, params [38;5;241m=[39m (
-[1;32m   2250[0m       call_bind_with_continuation([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams))
-[0;32m-> 2251[0m   outs [38;5;241m=[39m [43mtop_trace[49m[38;5;241;43m.[39;49m[43mprocess_call[49m[43m([49m[38;5;28;43mself[39;49m[43m,[49m[43m [49m[43mfun_[49m[43m,[49m[43m [49m[43mtracers[49m[43m,[49m[43m [49m[43mparams[49m[43m)[49m
-[1;32m   2252[0m   [38;5;28;01mreturn[39;00m call_bind_continuation(outs)
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/core.py:2309[0m, in [0;36mCallPrimitive.bind[0;34m(self, fun, *args, **params)[0m
+[1;32m   2306[0m [38;5;28;01mdef[39;00m [38;5;21mbind[39m([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams):
+[1;32m   2307[0m   call_bind_continuation, top_trace, fun_, tracers, params [38;5;241m=[39m (
+[1;32m   2308[0m       call_bind_with_continuation([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams))
+[0;32m-> 2309[0m   outs [38;5;241m=[39m [43mtop_trace[49m[38;5;241;43m.[39;49m[43mprocess_call[49m[43m([49m[38;5;28;43mself[39;49m[43m,[49m[43m [49m[43mfun_[49m[43m,[49m[43m [49m[43mtracers[49m[43m,[49m[43m [49m[43mparams[49m[43m)[49m
+[1;32m   2310[0m   [38;5;28;01mreturn[39;00m call_bind_continuation(outs)
 
 File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/oryx/core/interpreters/harvest.py:365[0m, in [0;36mHarvestTrace.process_call[0;34m(self, call_primitive, f, tracers, params)[0m
 [1;32m    363[0m context [38;5;241m=[39m trace_util[38;5;241m.[39mget_dynamic_context([38;5;28mself[39m)
@@ -107,16 +107,16 @@ File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/o
 [1;32m    539[0m out_tree, metadata [38;5;241m=[39m aux()
 [1;32m    540[0m out_vals, reaps [38;5;241m=[39m tree_util[38;5;241m.[39mtree_unflatten(out_tree, out_flat)
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/core.py:2251[0m, in [0;36mCallPrimitive.bind[0;34m(self, fun, *args, **params)[0m
-[1;32m   2248[0m [38;5;28;01mdef[39;00m [38;5;21mbind[39m([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams):
-[1;32m   2249[0m   call_bind_continuation, top_trace, fun_, tracers, params [38;5;241m=[39m (
-[1;32m   2250[0m       call_bind_with_continuation([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams))
-[0;32m-> 2251[0m   outs [38;5;241m=[39m [43mtop_trace[49m[38;5;241;43m.[39;49m[43mprocess_call[49m[43m([49m[38;5;28;43mself[39;49m[43m,[49m[43m [49m[43mfun_[49m[43m,[49m[43m [49m[43mtracers[49m[43m,[49m[43m [49m[43mparams[49m[43m)[49m
-[1;32m   2252[0m   [38;5;28;01mreturn[39;00m call_bind_continuation(outs)
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/core.py:2309[0m, in [0;36mCallPrimitive.bind[0;34m(self, fun, *args, **params)[0m
+[1;32m   2306[0m [38;5;28;01mdef[39;00m [38;5;21mbind[39m([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams):
+[1;32m   2307[0m   call_bind_continuation, top_trace, fun_, tracers, params [38;5;241m=[39m (
+[1;32m   2308[0m       call_bind_with_continuation([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams))
+[0;32m-> 2309[0m   outs [38;5;241m=[39m [43mtop_trace[49m[38;5;241;43m.[39;49m[43mprocess_call[49m[43m([49m[38;5;28;43mself[39;49m[43m,[49m[43m [49m[43mfun_[49m[43m,[49m[43m [49m[43mtracers[49m[43m,[49m[43m [49m[43mparams[49m[43m)[49m
+[1;32m   2310[0m   [38;5;28;01mreturn[39;00m call_bind_continuation(outs)
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/core.py:896[0m, in [0;36mEvalTrace.process_call[0;34m(self, primitive, f, tracers, params)[0m
-[1;32m    895[0m [38;5;28;01mdef[39;00m [38;5;21mprocess_call[39m([38;5;28mself[39m, primitive, f, tracers, params):
-[0;32m--> 896[0m   [38;5;28;01mreturn[39;00m [43mprimitive[49m[38;5;241;43m.[39;49m[43mimpl[49m[43m([49m[43mf[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43mtracers[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mparams[49m[43m)[49m
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/core.py:938[0m, in [0;36mEvalTrace.process_call[0;34m(self, primitive, f, tracers, params)[0m
+[1;32m    937[0m [38;5;28;01mdef[39;00m [38;5;21mprocess_call[39m([38;5;28mself[39m, primitive, f, tracers, params):
+[0;32m--> 938[0m   [38;5;28;01mreturn[39;00m [43mprimitive[49m[38;5;241;43m.[39;49m[43mimpl[49m[43m([49m[43mf[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43mtracers[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mparams[49m[43m)[49m
 
 File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/oryx/core/interpreters/harvest.py:257[0m, in [0;36m_nest_impl[0;34m(f, *args, **_)[0m
 [1;32m    255[0m [38;5;28;01mdef[39;00m [38;5;21m_nest_impl[39m(f, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39m_):
@@ -165,12 +165,12 @@ File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/o
 [1;32m    318[0m [43m    [49m[43mname[49m[38;5;241;43m=[39;49m[38;5;28;43mgetattr[39;49m[43m([49m[43mf[49m[43m,[49m[43m [49m[38;5;124;43m'[39;49m[38;5;124;43m__name__[39;49m[38;5;124;43m'[39;49m[43m,[49m[43m [49m[38;5;124;43m'[39;49m[38;5;124;43m<no name>[39;49m[38;5;124;43m'[39;49m[43m)[49m[43m)[49m
 [1;32m    319[0m [38;5;28;01mreturn[39;00m tree_util[38;5;241m.[39mtree_unflatten(out_tree(), out_flat)
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/core.py:2251[0m, in [0;36mCallPrimitive.bind[0;34m(self, fun, *args, **params)[0m
-[1;32m   2248[0m [38;5;28;01mdef[39;00m [38;5;21mbind[39m([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams):
-[1;32m   2249[0m   call_bind_continuation, top_trace, fun_, tracers, params [38;5;241m=[39m (
-[1;32m   2250[0m       call_bind_with_continuation([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams))
-[0;32m-> 2251[0m   outs [38;5;241m=[39m [43mtop_trace[49m[38;5;241;43m.[39;49m[43mprocess_call[49m[43m([49m[38;5;28;43mself[39;49m[43m,[49m[43m [49m[43mfun_[49m[43m,[49m[43m [49m[43mtracers[49m[43m,[49m[43m [49m[43mparams[49m[43m)[49m
-[1;32m   2252[0m   [38;5;28;01mreturn[39;00m call_bind_continuation(outs)
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/core.py:2309[0m, in [0;36mCallPrimitive.bind[0;34m(self, fun, *args, **params)[0m
+[1;32m   2306[0m [38;5;28;01mdef[39;00m [38;5;21mbind[39m([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams):
+[1;32m   2307[0m   call_bind_continuation, top_trace, fun_, tracers, params [38;5;241m=[39m (
+[1;32m   2308[0m       call_bind_with_continuation([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams))
+[0;32m-> 2309[0m   outs [38;5;241m=[39m [43mtop_trace[49m[38;5;241;43m.[39;49m[43mprocess_call[49m[43m([49m[38;5;28;43mself[39;49m[43m,[49m[43m [49m[43mfun_[49m[43m,[49m[43m [49m[43mtracers[49m[43m,[49m[43m [49m[43mparams[49m[43m)[49m
+[1;32m   2310[0m   [38;5;28;01mreturn[39;00m call_bind_continuation(outs)
 
 File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/oryx/core/interpreters/harvest.py:365[0m, in [0;36mHarvestTrace.process_call[0;34m(self, call_primitive, f, tracers, params)[0m
 [1;32m    363[0m context [38;5;241m=[39m trace_util[38;5;241m.[39mget_dynamic_context([38;5;28mself[39m)
@@ -193,16 +193,16 @@ File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/o
 [1;32m    539[0m out_tree, metadata [38;5;241m=[39m aux()
 [1;32m    540[0m out_vals, reaps [38;5;241m=[39m tree_util[38;5;241m.[39mtree_unflatten(out_tree, out_flat)
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/core.py:2251[0m, in [0;36mCallPrimitive.bind[0;34m(self, fun, *args, **params)[0m
-[1;32m   2248[0m [38;5;28;01mdef[39;00m [38;5;21mbind[39m([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams):
-[1;32m   2249[0m   call_bind_continuation, top_trace, fun_, tracers, params [38;5;241m=[39m (
-[1;32m   2250[0m       call_bind_with_continuation([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams))
-[0;32m-> 2251[0m   outs [38;5;241m=[39m [43mtop_trace[49m[38;5;241;43m.[39;49m[43mprocess_call[49m[43m([49m[38;5;28;43mself[39;49m[43m,[49m[43m [49m[43mfun_[49m[43m,[49m[43m [49m[43mtracers[49m[43m,[49m[43m [49m[43mparams[49m[43m)[49m
-[1;32m   2252[0m   [38;5;28;01mreturn[39;00m call_bind_continuation(outs)
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/core.py:2309[0m, in [0;36mCallPrimitive.bind[0;34m(self, fun, *args, **params)[0m
+[1;32m   2306[0m [38;5;28;01mdef[39;00m [38;5;21mbind[39m([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams):
+[1;32m   2307[0m   call_bind_continuation, top_trace, fun_, tracers, params [38;5;241m=[39m (
+[1;32m   2308[0m       call_bind_with_continuation([38;5;28mself[39m, fun, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mparams))
+[0;32m-> 2309[0m   outs [38;5;241m=[39m [43mtop_trace[49m[38;5;241;43m.[39;49m[43mprocess_call[49m[43m([49m[38;5;28;43mself[39;49m[43m,[49m[43m [49m[43mfun_[49m[43m,[49m[43m [49m[43mtracers[49m[43m,[49m[43m [49m[43mparams[49m[43m)[49m
+[1;32m   2310[0m   [38;5;28;01mreturn[39;00m call_bind_continuation(outs)
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/core.py:896[0m, in [0;36mEvalTrace.process_call[0;34m(self, primitive, f, tracers, params)[0m
-[1;32m    895[0m [38;5;28;01mdef[39;00m [38;5;21mprocess_call[39m([38;5;28mself[39m, primitive, f, tracers, params):
-[0;32m--> 896[0m   [38;5;28;01mreturn[39;00m [43mprimitive[49m[38;5;241;43m.[39;49m[43mimpl[49m[43m([49m[43mf[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43mtracers[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mparams[49m[43m)[49m
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/core.py:938[0m, in [0;36mEvalTrace.process_call[0;34m(self, primitive, f, tracers, params)[0m
+[1;32m    937[0m [38;5;28;01mdef[39;00m [38;5;21mprocess_call[39m([38;5;28mself[39m, primitive, f, tracers, params):
+[0;32m--> 938[0m   [38;5;28;01mreturn[39;00m [43mprimitive[49m[38;5;241;43m.[39;49m[43mimpl[49m[43m([49m[43mf[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43mtracers[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mparams[49m[43m)[49m
 
 File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/oryx/core/interpreters/harvest.py:257[0m, in [0;36m_nest_impl[0;34m(f, *args, **_)[0m
 [1;32m    255[0m [38;5;28;01mdef[39;00m [38;5;21m_nest_impl[39m(f, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39m_):
@@ -252,27 +252,27 @@ File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/o
 [1;32m     68[0m [38;5;28;01melse[39;00m:
 [1;32m     69[0m   pvals [38;5;241m=[39m [pe[38;5;241m.[39mPartialVal[38;5;241m.[39munknown(aval) [38;5;28;01mfor[39;00m aval [38;5;129;01min[39;00m flat_avals]
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/profiler.py:334[0m, in [0;36mannotate_function.<locals>.wrapper[0;34m(*args, **kwargs)[0m
-[1;32m    331[0m [38;5;129m@wraps[39m(func)
-[1;32m    332[0m [38;5;28;01mdef[39;00m [38;5;21mwrapper[39m([38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mkwargs):
-[1;32m    333[0m   [38;5;28;01mwith[39;00m TraceAnnotation(name, [38;5;241m*[39m[38;5;241m*[39mdecorator_kwargs):
-[0;32m--> 334[0m     [38;5;28;01mreturn[39;00m [43mfunc[49m[43m([49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
-[1;32m    335[0m   [38;5;28;01mreturn[39;00m wrapper
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/profiler.py:336[0m, in [0;36mannotate_function.<locals>.wrapper[0;34m(*args, **kwargs)[0m
+[1;32m    333[0m [38;5;129m@wraps[39m(func)
+[1;32m    334[0m [38;5;28;01mdef[39;00m [38;5;21mwrapper[39m([38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mkwargs):
+[1;32m    335[0m   [38;5;28;01mwith[39;00m TraceAnnotation(name, [38;5;241m*[39m[38;5;241m*[39mdecorator_kwargs):
+[0;32m--> 336[0m     [38;5;28;01mreturn[39;00m [43mfunc[49m[43m([49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m    337[0m   [38;5;28;01mreturn[39;00m wrapper
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/interpreters/partial_eval.py:2283[0m, in [0;36mtrace_to_jaxpr_dynamic[0;34m(fun, in_avals, debug_info, keep_inputs)[0m
-[1;32m   2281[0m [38;5;28;01mwith[39;00m core[38;5;241m.[39mnew_main(DynamicJaxprTrace, dynamic[38;5;241m=[39m[38;5;28;01mTrue[39;00m) [38;5;28;01mas[39;00m main:  [38;5;66;03m# type: ignore[39;00m
-[1;32m   2282[0m   main[38;5;241m.[39mjaxpr_stack [38;5;241m=[39m ()  [38;5;66;03m# type: ignore[39;00m
-[0;32m-> 2283[0m   jaxpr, out_avals, consts [38;5;241m=[39m [43mtrace_to_subjaxpr_dynamic[49m[43m([49m
-[1;32m   2284[0m [43m    [49m[43mfun[49m[43m,[49m[43m [49m[43mmain[49m[43m,[49m[43m [49m[43min_avals[49m[43m,[49m[43m [49m[43mkeep_inputs[49m[38;5;241;43m=[39;49m[43mkeep_inputs[49m[43m,[49m[43m [49m[43mdebug_info[49m[38;5;241;43m=[39;49m[43mdebug_info[49m[43m)[49m
-[1;32m   2285[0m   [38;5;28;01mdel[39;00m main, fun
-[1;32m   2286[0m [38;5;28;01mreturn[39;00m jaxpr, out_avals, consts
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/interpreters/partial_eval.py:2288[0m, in [0;36mtrace_to_jaxpr_dynamic[0;34m(fun, in_avals, debug_info, keep_inputs)[0m
+[1;32m   2286[0m [38;5;28;01mwith[39;00m core[38;5;241m.[39mnew_main(DynamicJaxprTrace, dynamic[38;5;241m=[39m[38;5;28;01mTrue[39;00m) [38;5;28;01mas[39;00m main:  [38;5;66;03m# type: ignore[39;00m
+[1;32m   2287[0m   main[38;5;241m.[39mjaxpr_stack [38;5;241m=[39m ()  [38;5;66;03m# type: ignore[39;00m
+[0;32m-> 2288[0m   jaxpr, out_avals, consts [38;5;241m=[39m [43mtrace_to_subjaxpr_dynamic[49m[43m([49m
+[1;32m   2289[0m [43m    [49m[43mfun[49m[43m,[49m[43m [49m[43mmain[49m[43m,[49m[43m [49m[43min_avals[49m[43m,[49m[43m [49m[43mkeep_inputs[49m[38;5;241;43m=[39;49m[43mkeep_inputs[49m[43m,[49m[43m [49m[43mdebug_info[49m[38;5;241;43m=[39;49m[43mdebug_info[49m[43m)[49m
+[1;32m   2290[0m   [38;5;28;01mdel[39;00m main, fun
+[1;32m   2291[0m [38;5;28;01mreturn[39;00m jaxpr, out_avals, consts
 
-File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/interpreters/partial_eval.py:2305[0m, in [0;36mtrace_to_subjaxpr_dynamic[0;34m(fun, main, in_avals, keep_inputs, debug_info)[0m
-[1;32m   2303[0m in_tracers [38;5;241m=[39m _input_type_to_tracers(trace[38;5;241m.[39mnew_arg, in_avals)
-[1;32m   2304[0m in_tracers_ [38;5;241m=[39m [t [38;5;28;01mfor[39;00m t, keep [38;5;129;01min[39;00m [38;5;28mzip[39m(in_tracers, keep_inputs) [38;5;28;01mif[39;00m keep]
-[0;32m-> 2305[0m ans [38;5;241m=[39m [43mfun[49m[38;5;241;43m.[39;49m[43mcall_wrapped[49m[43m([49m[38;5;241;43m*[39;49m[43min_tracers_[49m[43m)[49m
-[1;32m   2306[0m out_tracers [38;5;241m=[39m [38;5;28mmap[39m(trace[38;5;241m.[39mfull_raise, ans)
-[1;32m   2307[0m jaxpr, consts [38;5;241m=[39m frame[38;5;241m.[39mto_jaxpr(out_tracers)
+File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/interpreters/partial_eval.py:2310[0m, in [0;36mtrace_to_subjaxpr_dynamic[0;34m(fun, main, in_avals, keep_inputs, debug_info)[0m
+[1;32m   2308[0m in_tracers [38;5;241m=[39m _input_type_to_tracers(trace[38;5;241m.[39mnew_arg, in_avals)
+[1;32m   2309[0m in_tracers_ [38;5;241m=[39m [t [38;5;28;01mfor[39;00m t, keep [38;5;129;01min[39;00m [38;5;28mzip[39m(in_tracers, keep_inputs) [38;5;28;01mif[39;00m keep]
+[0;32m-> 2310[0m ans [38;5;241m=[39m [43mfun[49m[38;5;241;43m.[39;49m[43mcall_wrapped[49m[43m([49m[38;5;241;43m*[39;49m[43min_tracers_[49m[43m)[49m
+[1;32m   2311[0m out_tracers [38;5;241m=[39m [38;5;28mmap[39m(trace[38;5;241m.[39mfull_raise, ans)
+[1;32m   2312[0m jaxpr, consts [38;5;241m=[39m frame[38;5;241m.[39mto_jaxpr(out_tracers)
 
 File [0;32m/opt/hostedtoolcache/Python/3.9.18/x64/lib/python3.9/site-packages/jax/_src/linear_util.py:191[0m, in [0;36mWrappedFun.call_wrapped[0;34m(self, *args, **kwargs)[0m
 [1;32m    188[0m gen [38;5;241m=[39m gen_static_args [38;5;241m=[39m out_store [38;5;241m=[39m [38;5;28;01mNone[39;00m

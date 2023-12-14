@@ -47,6 +47,7 @@ Classes
    blackjax.additive_step_random_walk
    blackjax.irmh
    blackjax.rmh
+   blackjax.rmhmc
    blackjax.csgld
    blackjax.sghmc
    blackjax.sgld
@@ -82,6 +83,7 @@ Attributes
 .. autoapisummary::
 
    blackjax.__version__
+
 
 
 

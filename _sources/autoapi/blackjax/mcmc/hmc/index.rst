@@ -137,7 +137,8 @@ Functions
    Build a HMC kernel.
 
    :param integrator: The symplectic integrator to use to integrate the Hamiltonian dynamics.
-   :param divergence_threshold: Value of the difference in energy above which we consider that the transition is divergent.
+   :param divergence_threshold: Value of the difference in energy above which we consider that the transition is
+                                divergent.
 
    :returns: * *A kernel that takes a rng_key and a Pytree that contains the current state*
              * *of the chain and that returns a new state of the chain along with*
@@ -149,10 +150,10 @@ Functions
 
    Implements the (basic) user interface for the HMC kernel.
 
-   The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias `blackjax.hmc.build_kernel`) can be
-   cumbersome to manipulate. Since most users only need to specify the kernel
-   parameters at initialization time, we provide a helper function that
-   specializes the general kernel.
+   The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias
+   `blackjax.hmc.build_kernel`) can be cumbersome to manipulate. Since most users only
+   need to specify the kernel parameters at initialization time, we provide a helper
+   function that specializes the general kernel.
 
    We also add the general kernel and state generator as an attribute to this class so
    users only need to pass `blackjax.hmc` to SMC, adaptation, etc. algorithms.
@@ -163,7 +164,9 @@ Functions
 
    .. code::
 
-       hmc = blackjax.hmc(logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
+       hmc = blackjax.hmc(
+           logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps
+       )
        state = hmc.init(position)
        new_state, info = hmc.step(rng_key, state)
 
@@ -182,18 +185,28 @@ Functions
 
       kernel = blackjax.hmc.build_kernel(integrators.mclachlan)
       state = blackjax.hmc.init(position, logdensity_fn)
-      state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
+      state, info = kernel(
+          rng_key,
+          state,
+          logdensity_fn,
+          step_size,
+          inverse_mass_matrix,
+          num_integration_steps,
+      )
 
    :param logdensity_fn: The log-density function we wish to draw samples from.
    :param step_size: The value to use for the step size in the symplectic integrator.
    :param inverse_mass_matrix: The value to use for the inverse mass matrix when drawing a value for
-                               the momentum and computing the kinetic energy.
+                               the momentum and computing the kinetic energy. This argument will be
+                               passed to the ``metrics.default_metric`` function so it supports the
+                               full interface presented there.
    :param num_integration_steps: The number of steps we take with the symplectic integrator at each
                                  sample step before returning a sample.
    :param divergence_threshold: The absolute value of the difference in energy between two states above
                                 which we say that the transition is divergent. The default value is
                                 commonly found in other libraries, and yet is arbitrary.
-   :param integrator: (algorithm parameter) The symplectic integrator to use to integrate the trajectory.
+   :param integrator: (algorithm parameter) The symplectic integrator to use to integrate the
+                      trajectory.
 
    :rtype: A ``SamplingAlgorithm``.
 

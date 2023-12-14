@@ -50,7 +50,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/mcmc/random_walk/index';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
-    <link rel="next" title="blackjax.mcmc.termination" href="../termination/index.html" />
+    <link rel="next" title="blackjax.mcmc.rmhmc" href="../rmhmc/index.html" />
     <link rel="prev" title="blackjax.mcmc.proposal" href="../proposal/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -197,6 +197,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -434,7 +435,7 @@ See ‘Metropolis Algorithm’ in [1].</p>
 </div></blockquote>
 </li>
 </ol>
-<p>Reference: <span id="id1">[<a class="reference internal" href="../../../../bib.html#id41" title="Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. Bayesian data analysis. Chapman and Hall/CRC, 2014.">GCSR14</a>]</span> Section 11.2</p>
+<p>Reference: <span id="id1">[<a class="reference internal" href="../../../../bib.html#id42" title="Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. Bayesian data analysis. Chapman and Hall/CRC, 2014.">GCSR14</a>]</span> Section 11.2</p>
 <p class="rubric">Examples</p>
 <p>The simplest case is:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">random_walk</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">additive_step_random_walk</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mcmc</span><span class="o">.</span><span class="n">random_walk</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">sigma</span><span class="p">))</span>
@@ -645,7 +646,7 @@ to maintain detailed balance. This means that P(step|position) = P(-step | posit
 <dt class="sig sig-object py" id="blackjax.mcmc.random_walk.build_irmh">
 <span class="sig-name descname"><span class="pre">build_irmh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/random_walk.html#build_irmh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.random_walk.build_irmh" title="Permalink to this definition">#</a></dt>
 <dd><p>Build an Independent Random Walk Rosenbluth-Metropolis-Hastings kernel. This implies
-that the proposal distribution does not depend on the particle being mutated <span id="id2">[<a class="reference internal" href="../../../../bib.html#id40" title="Guanyang Wang. Exact convergence analysis of the independent metropolis-hastings algorithms. Bernoulli, 28(3):2012–2033, 2022.">Wan22</a>]</span>.</p>
+that the proposal distribution does not depend on the particle being mutated <span id="id2">[<a class="reference internal" href="../../../../bib.html#id41" title="Guanyang Wang. Exact convergence analysis of the independent metropolis-hastings algorithms. Bernoulli, 28(3):2012–2033, 2022.">Wan22</a>]</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
@@ -797,11 +798,11 @@ the Metropolis-Hastings correction for detailed balance.</p>
       </div>
     </a>
     <a class="right-next"
-       href="../termination/index.html"
+       href="../rmhmc/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></p>
+        <p class="prev-next-title"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

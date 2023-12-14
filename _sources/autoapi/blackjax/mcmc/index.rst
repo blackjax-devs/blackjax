@@ -25,6 +25,7 @@ Submodules
    periodic_orbital/index.rst
    proposal/index.rst
    random_walk/index.rst
+   rmhmc/index.rst
    termination/index.rst
    trajectory/index.rst
 

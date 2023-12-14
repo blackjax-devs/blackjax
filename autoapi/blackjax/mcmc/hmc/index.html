@@ -196,6 +196,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../periodic_orbital/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.periodic_orbital</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../proposal/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.proposal</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../random_walk/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.random_walk</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../rmhmc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.rmhmc</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../termination/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.termination</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../trajectory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a></li>
 </ul>
@@ -526,7 +527,8 @@ momentum.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>integrator</strong> – The symplectic integrator to use to integrate the Hamiltonian dynamics.</p></li>
-<li><p><strong>divergence_threshold</strong> – Value of the difference in energy above which we consider that the transition is divergent.</p></li>
+<li><p><strong>divergence_threshold</strong> – Value of the difference in energy above which we consider that the transition is
+divergent.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -544,15 +546,17 @@ momentum.</p>
 <dt class="sig sig-object py" id="blackjax.mcmc.hmc.hmc">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hmc</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/hmc.html#hmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.hmc.hmc" title="Permalink to this definition">#</a></dt>
 <dd><p>Implements the (basic) user interface for the HMC kernel.</p>
-<p>The general hmc kernel builder (<a class="reference internal" href="#blackjax.mcmc.hmc.build_kernel" title="blackjax.mcmc.hmc.build_kernel"><code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.hmc.build_kernel()</span></code></a>, alias <cite>blackjax.hmc.build_kernel</cite>) can be
-cumbersome to manipulate. Since most users only need to specify the kernel
-parameters at initialization time, we provide a helper function that
-specializes the general kernel.</p>
+<p>The general hmc kernel builder (<a class="reference internal" href="#blackjax.mcmc.hmc.build_kernel" title="blackjax.mcmc.hmc.build_kernel"><code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.hmc.build_kernel()</span></code></a>, alias
+<cite>blackjax.hmc.build_kernel</cite>) can be cumbersome to manipulate. Since most users only
+need to specify the kernel parameters at initialization time, we provide a helper
+function that specializes the general kernel.</p>
 <p>We also add the general kernel and state generator as an attribute to this class so
 users only need to pass <cite>blackjax.hmc</cite> to SMC, adaptation, etc. algorithms.</p>
 <p class="rubric">Examples</p>
 <p>A new HMC kernel can be initialized and used with the following code:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">hmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">hmc</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="p">(</span>
+    <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">num_integration_steps</span>
+<span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
@@ -567,7 +571,14 @@ users only need to pass <cite>blackjax.hmc</cite> to SMC, adaptation, etc. algor
 
 <span class="n">kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrators</span><span class="o">.</span><span class="n">mclachlan</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
-<span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
+<span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">,</span>
+    <span class="n">state</span><span class="p">,</span>
+    <span class="n">logdensity_fn</span><span class="p">,</span>
+    <span class="n">step_size</span><span class="p">,</span>
+    <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+    <span class="n">num_integration_steps</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -576,13 +587,16 @@ users only need to pass <cite>blackjax.hmc</cite> to SMC, adaptation, etc. algor
 <li><p><strong>logdensity_fn</strong> – The log-density function we wish to draw samples from.</p></li>
 <li><p><strong>step_size</strong> – The value to use for the step size in the symplectic integrator.</p></li>
 <li><p><strong>inverse_mass_matrix</strong> – The value to use for the inverse mass matrix when drawing a value for
-the momentum and computing the kinetic energy.</p></li>
+the momentum and computing the kinetic energy. This argument will be
+passed to the <code class="docutils literal notranslate"><span class="pre">metrics.default_metric</span></code> function so it supports the
+full interface presented there.</p></li>
 <li><p><strong>num_integration_steps</strong> – The number of steps we take with the symplectic integrator at each
 sample step before returning a sample.</p></li>
 <li><p><strong>divergence_threshold</strong> – The absolute value of the difference in energy between two states above
 which we say that the transition is divergent. The default value is
 commonly found in other libraries, and yet is arbitrary.</p></li>
-<li><p><strong>integrator</strong> – (algorithm parameter) The symplectic integrator to use to integrate the trajectory.</p></li>
+<li><p><strong>integrator</strong> – (algorithm parameter) The symplectic integrator to use to integrate the
+trajectory.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
