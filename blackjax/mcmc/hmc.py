@@ -22,7 +22,7 @@ import blackjax.mcmc.trajectory as trajectory
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.proposal import safe_energy_diff, static_binomial_sampling
 from blackjax.mcmc.trajectory import hmc_energy
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
     "HMCState",
@@ -101,7 +101,8 @@ def build_kernel(
     integrator
         The symplectic integrator to use to integrate the Hamiltonian dynamics.
     divergence_threshold
-        Value of the difference in energy above which we consider that the transition is divergent.
+        Value of the difference in energy above which we consider that the transition is
+        divergent.
 
     Returns
     -------
@@ -116,18 +117,16 @@ def build_kernel(
         state: HMCState,
         logdensity_fn: Callable,
         step_size: float,
-        inverse_mass_matrix: Array,
+        inverse_mass_matrix: metrics.MetricTypes,
         num_integration_steps: int,
     ) -> tuple[HMCState, HMCInfo]:
         """Generate a new sample with the HMC kernel."""
 
-        momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
-            inverse_mass_matrix
-        )
-        symplectic_integrator = integrator(logdensity_fn, kinetic_energy_fn)
+        metric = metrics.default_metric(inverse_mass_matrix)
+        symplectic_integrator = integrator(logdensity_fn, metric.kinetic_energy)
         proposal_generator = hmc_proposal(
             symplectic_integrator,
-            kinetic_energy_fn,
+            metric.kinetic_energy,
             step_size,
             num_integration_steps,
             divergence_threshold,
@@ -136,7 +135,7 @@ def build_kernel(
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
 
         position, logdensity, logdensity_grad = state
-        momentum = momentum_generator(key_momentum, position)
+        momentum = metric.sample_momentum(key_momentum, position)
 
         integrator_state = integrators.IntegratorState(
             position, momentum, logdensity, logdensity_grad
@@ -154,10 +153,10 @@ def build_kernel(
 class hmc:
     """Implements the (basic) user interface for the HMC kernel.
 
-    The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias `blackjax.hmc.build_kernel`) can be
-    cumbersome to manipulate. Since most users only need to specify the kernel
-    parameters at initialization time, we provide a helper function that
-    specializes the general kernel.
+    The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias
+    `blackjax.hmc.build_kernel`) can be cumbersome to manipulate. Since most users only
+    need to specify the kernel parameters at initialization time, we provide a helper
+    function that specializes the general kernel.
 
     We also add the general kernel and state generator as an attribute to this class so
     users only need to pass `blackjax.hmc` to SMC, adaptation, etc. algorithms.
@@ -169,7 +168,9 @@ class hmc:
 
     .. code::
 
-        hmc = blackjax.hmc(logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
+        hmc = blackjax.hmc(
+            logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps
+        )
         state = hmc.init(position)
         new_state, info = hmc.step(rng_key, state)
 
@@ -188,7 +189,14 @@ class hmc:
 
        kernel = blackjax.hmc.build_kernel(integrators.mclachlan)
        state = blackjax.hmc.init(position, logdensity_fn)
-       state, info = kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix, num_integration_steps)
+       state, info = kernel(
+           rng_key,
+           state,
+           logdensity_fn,
+           step_size,
+           inverse_mass_matrix,
+           num_integration_steps,
+       )
 
     Parameters
     ----------
@@ -198,7 +206,9 @@ class hmc:
         The value to use for the step size in the symplectic integrator.
     inverse_mass_matrix
         The value to use for the inverse mass matrix when drawing a value for
-        the momentum and computing the kinetic energy.
+        the momentum and computing the kinetic energy. This argument will be
+        passed to the ``metrics.default_metric`` function so it supports the
+        full interface presented there.
     num_integration_steps
         The number of steps we take with the symplectic integrator at each
         sample step before returning a sample.
@@ -207,7 +217,8 @@ class hmc:
         which we say that the transition is divergent. The default value is
         commonly found in other libraries, and yet is arbitrary.
     integrator
-        (algorithm parameter) The symplectic integrator to use to integrate the trajectory.\
+        (algorithm parameter) The symplectic integrator to use to integrate the
+        trajectory.
 
     Returns
     -------
@@ -221,7 +232,7 @@ class hmc:
         cls,
         logdensity_fn: Callable,
         step_size: float,
-        inverse_mass_matrix: Array,
+        inverse_mass_matrix: metrics.MetricTypes,
         num_integration_steps: int,
         *,
         divergence_threshold: int = 1000,
@@ -248,7 +259,7 @@ class hmc:
 
 def hmc_proposal(
     integrator: Callable,
-    kinetic_energy: Callable,
+    kinetic_energy: metrics.KineticEnergy,
     step_size: Union[float, ArrayLikeTree],
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,

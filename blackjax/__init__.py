@@ -18,6 +18,7 @@ from .mcmc.mclmc import mclmc
 from .mcmc.nuts import nuts
 from .mcmc.periodic_orbital import orbital_hmc
 from .mcmc.random_walk import additive_step_random_walk, irmh, rmh
+from .mcmc.rmhmc import rmhmc
 from .optimizers import dual_averaging, lbfgs
 from .sgmcmc.csgld import csgld
 from .sgmcmc.sghmc import sghmc
@@ -37,6 +38,7 @@ __all__ = [
     "lbfgs",
     "hmc",  # mcmc
     "dynamic_hmc",
+    "rmhmc",
     "mala",
     "mgrad_gaussian",
     "nuts",

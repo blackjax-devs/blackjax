@@ -618,6 +618,8 @@ def dynamic_multiplicative_expansion(
 
 def hmc_energy(kinetic_energy):
     def energy(state):
-        return -state.logdensity + kinetic_energy(state.momentum)
+        return -state.logdensity + kinetic_energy(
+            state.momentum, position=state.position
+        )
 
     return energy
