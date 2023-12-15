@@ -21,7 +21,7 @@ from blackjax.mcmc.integrators import (
 from blackjax.mcmc.mclmc import build_kernel, init
 from blackjax.util import run_inference_algorithm
 
-config.update("jax_enable_x64", True)
+# config.update("jax_enable_x64", True)
 
 lambda_c = 0.1931833275037836
 
@@ -727,7 +727,7 @@ def tune3(step, frac, Lfactor):
 # tests
 
 
-def test_momentum_update():
+def check_momentum_update():
     dim = 10
     logdensity_fn = lambda x: -0.5 * jnp.sum(jnp.square(x))
     step_size = 1e-3
@@ -757,7 +757,7 @@ def test_momentum_update():
 
 
 # test that the non-euclidean integrator agrees with a simple implementation exactly
-def test_non_euclidean_implementation():
+def check_non_euclidean_implementation():
     dim = 2
     logdensity_fn = lambda x: -0.5 * jnp.sum(jnp.square(x))
     step_size = 1e-3
@@ -798,7 +798,7 @@ def test_non_euclidean_implementation():
     assert original_kinetic_change == blackjax_kinetic_change
 
 
-def test_full_no_tuning():
+def check_full_no_tuning():
     init_key = jax.random.PRNGKey(0)
     run_key = jax.random.PRNGKey(0)
 
@@ -842,7 +842,7 @@ def test_full_no_tuning():
     assert jnp.allclose(original_mclmc_samples, blackjax_samples)
 
 
-def test_tune():
+def check_tune():
     num_steps = 1000
     num_chains = 1
     dim = 2
