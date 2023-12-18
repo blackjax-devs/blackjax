@@ -12,19 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
-from typing import Callable, NamedTuple
+from typing import Any, Callable, NamedTuple, Tuple
 
 import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
-from blackjax.mcmc.metrics import EuclideanKineticEnergy
+from blackjax.mcmc.metrics import KineticEnergy
 from blackjax.types import ArrayTree
 
 __all__ = [
     "mclachlan",
     "velocity_verlet",
     "yoshida",
+    "implicit_midpoint",
     "noneuclidean_leapfrog",
     "noneuclidean_mclachlan",
     "noneuclidean_yoshida",
@@ -170,7 +171,7 @@ def euclidean_position_update_fn(logdensity_fn: Callable):
     return update
 
 
-def euclidean_momentum_update_fn(kinetic_energy_fn: EuclideanKineticEnergy):
+def euclidean_momentum_update_fn(kinetic_energy_fn: KineticEnergy):
     kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def update(
@@ -216,7 +217,7 @@ def generate_euclidean_integrator(cofficients):
     """
 
     def euclidean_integrator(
-        logdensity_fn: Callable, kinetic_energy_fn: EuclideanKineticEnergy
+        logdensity_fn: Callable, kinetic_energy_fn: KineticEnergy
     ) -> Integrator:
         position_update_fn = euclidean_position_update_fn(logdensity_fn)
         momentum_update_fn = euclidean_momentum_update_fn(kinetic_energy_fn)
@@ -306,6 +307,7 @@ def esh_dynamics_momentum_update_one_step(
     There are no exponentials e^delta, which prevents overflows when the gradient norm
     is large.
     """
+    del is_last_call
 
     flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
     flatten_momentum, _ = ravel_pytree(momentum)
@@ -324,11 +326,9 @@ def esh_dynamics_momentum_update_one_step(
         delta
         - jnp.log(2)
         + jnp.log(1 + momentum_proj + (1 - momentum_proj) * zeta**2)
-    )
+    ) * (dims - 1)
     if previous_kinetic_energy_change is not None:
         kinetic_energy_change += previous_kinetic_energy_change
-    if is_last_call:
-        kinetic_energy_change *= dims - 1
     return next_momentum, next_momentum, kinetic_energy_change
 
 
@@ -367,3 +367,115 @@ def generate_noneuclidean_integrator(cofficients):
 noneuclidean_leapfrog = generate_noneuclidean_integrator(velocity_verlet_cofficients)
 noneuclidean_yoshida = generate_noneuclidean_integrator(yoshida_cofficients)
 noneuclidean_mclachlan = generate_noneuclidean_integrator(mclachlan_cofficients)
+
+FixedPointSolver = Callable[
+    [Callable[[ArrayTree], Tuple[ArrayTree, ArrayTree]], ArrayTree],
+    Tuple[ArrayTree, ArrayTree, Any],
+]
+
+
+class FixedPointIterationInfo(NamedTuple):
+    success: bool
+    norm: float
+    iters: int
+
+
+def solve_fixed_point_iteration(
+    func: Callable[[ArrayTree], Tuple[ArrayTree, ArrayTree]],
+    x0: ArrayTree,
+    *,
+    convergence_tol: float = 1e-6,
+    divergence_tol: float = 1e10,
+    max_iters: int = 100,
+    norm_fn: Callable[[ArrayTree], float] = lambda x: jnp.max(jnp.abs(x)),
+) -> Tuple[ArrayTree, ArrayTree, FixedPointIterationInfo]:
+    """Solve for x = func(x) using a fixed point iteration"""
+
+    def compute_norm(x: ArrayTree, xp: ArrayTree) -> float:
+        return norm_fn(ravel_pytree(jax.tree_util.tree_map(jnp.subtract, x, xp))[0])
+
+    def cond_fn(args: Tuple[int, ArrayTree, ArrayTree, float]) -> bool:
+        n, _, _, norm = args
+        return (
+            (n < max_iters)
+            & jnp.isfinite(norm)
+            & (norm < divergence_tol)
+            & (norm > convergence_tol)
+        )
+
+    def body_fn(
+        args: Tuple[int, ArrayTree, ArrayTree, float]
+    ) -> Tuple[int, ArrayTree, ArrayTree, float]:
+        n, x, _, _ = args
+        xn, aux = func(x)
+        norm = compute_norm(xn, x)
+        return n + 1, xn, aux, norm
+
+    x, aux = func(x0)
+    iters, x, aux, norm = jax.lax.while_loop(
+        cond_fn, body_fn, (0, x, aux, compute_norm(x, x0))
+    )
+    success = jnp.isfinite(norm) & (norm <= convergence_tol)
+    return x, aux, FixedPointIterationInfo(success, norm, iters)
+
+
+def implicit_midpoint(
+    logdensity_fn: Callable,
+    kinetic_energy_fn: KineticEnergy,
+    *,
+    solver: FixedPointSolver = solve_fixed_point_iteration,
+    **solver_kwargs: Any,
+) -> Integrator:
+    """The implicit midpoint integrator with support for non-stationary kinetic energy
+
+    This is an integrator based on :cite:t:`brofos2021evaluating`, which provides
+    support for kinetic energies that depend on position. This integrator requires that
+    the kinetic energy function takes two arguments: position and momentum.
+
+    The ``solver`` parameter allows overloading of the fixed point solver. By default, a
+    simple fixed point iteration is used, but more advanced solvers could be implemented
+    in the future.
+    """
+    logdensity_and_grad_fn = jax.value_and_grad(logdensity_fn)
+    kinetic_energy_grad_fn = jax.grad(
+        lambda q, p: kinetic_energy_fn(p, position=q), argnums=(0, 1)
+    )
+
+    def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
+        position, momentum, _, _ = state
+
+        def _update(
+            q: ArrayTree,
+            p: ArrayTree,
+            dUdq: ArrayTree,
+            initial: Tuple[ArrayTree, ArrayTree] = (position, momentum),
+        ) -> Tuple[ArrayTree, ArrayTree]:
+            dTdq, dHdp = kinetic_energy_grad_fn(q, p)
+            dHdq = jax.tree_util.tree_map(jnp.subtract, dTdq, dUdq)
+
+            # Take a step from the _initial coordinates_ using the gradients of the
+            # Hamiltonian evaluated at the current guess for the midpoint
+            q = jax.tree_util.tree_map(
+                lambda q_, d_: q_ + 0.5 * step_size * d_, initial[0], dHdp
+            )
+            p = jax.tree_util.tree_map(
+                lambda p_, d_: p_ - 0.5 * step_size * d_, initial[1], dHdq
+            )
+            return q, p
+
+        # Solve for the midpoint numerically
+        def _step(args: ArrayTree) -> Tuple[ArrayTree, ArrayTree]:
+            q, p = args
+            _, dLdq = logdensity_and_grad_fn(q)
+            return _update(q, p, dLdq), dLdq
+
+        (q, p), dLdq, info = solver(_step, (position, momentum), **solver_kwargs)
+        del info  # TODO: Track the returned info
+
+        # Take an explicit update as recommended by Brofos & Lederman
+        _, dLdq = logdensity_and_grad_fn(q)
+        q, p = _update(q, p, dLdq, initial=(q, p))
+
+        return IntegratorState(q, p, *logdensity_and_grad_fn(q))
+
+    return one_step

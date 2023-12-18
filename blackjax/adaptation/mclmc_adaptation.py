@@ -92,7 +92,7 @@ def mclmc_find_L_and_step_size(
         initial_state = MCMCState(position=0, momentum=1)
 
         # Generate a random number generator key
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
 
         # Find the optimal parameters for the MCLMC algorithm
         final_state, final_params = mclmc_find_L_and_step_size(
@@ -259,14 +259,22 @@ def make_adaptation_L(kernel, frac, Lfactor):
         adaptation_L_keys = jax.random.split(key, num_steps)
 
         # run kernel in the normal way
-        state, info = jax.lax.scan(
-            f=lambda s, k: (
-                kernel(rng_key=k, state=s, L=params.L, step_size=params.step_size)
-            ),
+        def step(state, key):
+            next_state, _ = kernel(
+                rng_key=key,
+                state=state,
+                L=params.L,
+                step_size=params.step_size,
+            )
+
+            return next_state, next_state.position
+
+        state, samples = jax.lax.scan(
+            f=step,
             init=state,
             xs=adaptation_L_keys,
         )
-        samples = info.transformed_position  # tranform is the identity here
+
         flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
         ess = effective_sample_size(flat_samples[None, ...])
 

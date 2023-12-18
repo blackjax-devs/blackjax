@@ -223,7 +223,8 @@ class csgld:
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(num_partitions, energy_gap, min_energy)
 
-        def init_fn(position: ArrayLikeTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position, num_partitions)
 
         def step_fn(

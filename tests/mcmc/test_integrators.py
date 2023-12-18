@@ -7,6 +7,7 @@ import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest, parameterized
 from jax.flatten_util import ravel_pytree
+from scipy.special import ellipj
 
 import blackjax.mcmc.integrators as integrators
 from blackjax.mcmc.integrators import esh_dynamics_momentum_update_one_step
@@ -19,7 +20,8 @@ def HarmonicOscillator(inv_mass_matrix, k=1.0, m=1.0):
     def neg_potential_energy(q):
         return -jnp.sum(0.5 * k * jnp.square(q["x"]))
 
-    def kinetic_energy(p):
+    def kinetic_energy(p, position=None):
+        del position
         v = jnp.multiply(inv_mass_matrix, p["x"])
         return jnp.sum(0.5 * jnp.dot(v, p["x"]))
 
@@ -32,7 +34,8 @@ def FreeFall(inv_mass_matrix, g=1.0):
     def neg_potential_energy(q):
         return -jnp.sum(g * q["x"])
 
-    def kinetic_energy(p):
+    def kinetic_energy(p, position=None):
+        del position
         v = jnp.multiply(inv_mass_matrix, p["x"])
         return jnp.sum(0.5 * jnp.dot(v, p["x"]))
 
@@ -45,7 +48,8 @@ def PlanetaryMotion(inv_mass_matrix):
     def neg_potential_energy(q):
         return 1.0 / jnp.power(q["x"] ** 2 + q["y"] ** 2, 0.5)
 
-    def kinetic_energy(p):
+    def kinetic_energy(p, position=None):
+        del position
         z = jnp.stack([p["x"], p["y"]], axis=-1)
         return 0.5 * jnp.dot(inv_mass_matrix, z**2)
 
@@ -59,7 +63,8 @@ def MultivariateNormal(inv_mass_matrix):
         q, _ = ravel_pytree(q)
         return stats.multivariate_normal.logpdf(q, jnp.zeros_like(q), inv_mass_matrix)
 
-    def kinetic_energy(p):
+    def kinetic_energy(p, position=None):
+        del position
         p, _ = ravel_pytree(p)
         return 0.5 * p.T @ inv_mass_matrix @ p
 
@@ -131,6 +136,10 @@ algorithms = {
     "velocity_verlet": {"algorithm": integrators.velocity_verlet, "precision": 1e-4},
     "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-5},
     "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-6},
+    "implicit_midpoint": {
+        "algorithm": integrators.implicit_midpoint,
+        "precision": 1e-4,
+    },
     "noneuclidean_leapfrog": {"algorithm": integrators.noneuclidean_leapfrog},
     "noneuclidean_mclachlan": {"algorithm": integrators.noneuclidean_mclachlan},
     "noneuclidean_yoshida": {"algorithm": integrators.noneuclidean_yoshida},
@@ -159,6 +168,7 @@ class IntegratorTest(chex.TestCase):
                 "velocity_verlet",
                 "mclachlan",
                 "yoshida",
+                "implicit_midpoint",
             ],
         )
     )
@@ -229,6 +239,59 @@ class IntegratorTest(chex.TestCase):
         np.testing.assert_array_almost_equal(next_momentum, next_momentum1)
 
     @chex.all_variants(with_pmap=False)
+    def test_noneuclidean_leapfrog(self):
+        cov = jnp.asarray([[1.0, 0.5, 0.1], [0.5, 2.0, -0.1], [0.1, -0.1, 3.0]])
+        logdensity_fn = lambda x: stats.multivariate_normal.logpdf(
+            x, jnp.zeros([3]), cov
+        )
+
+        step = self.variant(integrators.noneuclidean_leapfrog(logdensity_fn))
+
+        rng = jax.random.key(4263456)
+        key0, key1 = jax.random.split(rng, 2)
+        position_init = jax.random.normal(key0, (3,))
+        momentum_init = generate_unit_vector(key1, position_init)
+        step_size = 0.0001
+        initial_state = integrators.new_integrator_state(
+            logdensity_fn, position_init, momentum_init
+        )
+        next_state, kinetic_energy_change = step(initial_state, step_size)
+
+        # explicit integration
+        op1 = esh_dynamics_momentum_update_one_step
+        op2 = integrators.euclidean_position_update_fn(logdensity_fn)
+        position, momentum, _, logdensity_grad = initial_state
+        momentum, kinetic_grad, kinetic_energy_change0 = op1(
+            momentum,
+            logdensity_grad,
+            step_size,
+            0.5,
+            None,
+        )
+        position, logdensity, logdensity_grad, position_update_info = op2(
+            position,
+            kinetic_grad,
+            step_size,
+            1.0,
+            None,
+        )
+        momentum, kinetic_grad, kinetic_energy_change1 = op1(
+            momentum,
+            logdensity_grad,
+            step_size,
+            0.5,
+            None,
+        )
+        next_state_ = integrators.IntegratorState(
+            position, momentum, logdensity, logdensity_grad
+        )
+
+        chex.assert_trees_all_close(next_state, next_state_)
+        np.testing.assert_almost_equal(
+            kinetic_energy_change, kinetic_energy_change0 + kinetic_energy_change1
+        )
+
+    @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
         [
             "noneuclidean_leapfrog",
@@ -265,6 +328,54 @@ class IntegratorTest(chex.TestCase):
         potential_energy_change = final_state.logdensity - initial_state.logdensity
         energy_change = kinetic_energy_change[-1] + potential_energy_change
         self.assertAlmostEqual(energy_change, 0, delta=1e-3)
+
+    @chex.all_variants(with_pmap=False)
+    def test_non_separable(self):
+        """Test the integration of a non-separable Hamiltonian with a known
+        closed-form solution, as defined in https://arxiv.org/abs/1609.02212.
+        """
+
+        def neg_potential(q):
+            return -0.5 * (q**2 + 1)
+
+        def kinetic_energy(p, position=None):
+            return 0.5 * p**2 * (1 + position**2)
+
+        step = self.variant(
+            integrators.implicit_midpoint(neg_potential, kinetic_energy)
+        )
+        step_size = 1e-3
+        q = jnp.array(-1.0)
+        p = jnp.array(0.0)
+        initial_state = integrators.IntegratorState(
+            q, p, neg_potential(q), jax.grad(neg_potential)(q)
+        )
+
+        def scan_body(state, _):
+            state = step(state, step_size)
+            return state, state
+
+        final_state, traj = jax.lax.scan(
+            scan_body,
+            initial_state,
+            xs=None,
+            length=10_000,
+        )
+
+        # The closed-form solution is computed as follows:
+        t = step_size * np.arange(len(traj.position))
+        expected = q * ellipj(t * np.sqrt(1 + q**2), q**2 / (1 + q**2))[1]
+
+        # Check that the trajectory matches the closed-form solution to
+        # acceptable precision
+        chex.assert_trees_all_close(traj.position, expected, atol=step_size)
+
+        # And check the conservation of energy
+        energy = -neg_potential(q) + kinetic_energy(p, position=q)
+        new_energy = -neg_potential(final_state.position) + kinetic_energy(
+            final_state.momentum, position=final_state.position
+        )
+        self.assertAlmostEqual(energy, new_energy, delta=1e-4)
 
 
 if __name__ == "__main__":

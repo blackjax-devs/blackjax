@@ -30,6 +30,7 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             self.algorithm,
             self.num_steps,
             progress_bar,
+            transform=lambda x: x.position,
         )
 
     @parameterized.parameters([True, False])

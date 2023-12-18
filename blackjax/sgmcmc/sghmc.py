@@ -123,7 +123,8 @@ class sghmc:
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(alpha, beta)
 
-        def init_fn(position: ArrayLikeTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position)
 
         def step_fn(

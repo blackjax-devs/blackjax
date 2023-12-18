@@ -25,7 +25,7 @@ import blackjax.mcmc.proposal as proposal
 import blackjax.mcmc.termination as termination
 import blackjax.mcmc.trajectory as trajectory
 from blackjax.base import SamplingAlgorithm
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["NUTSInfo", "init", "build_kernel", "nuts"]
 
@@ -115,21 +115,17 @@ def build_kernel(
         state: hmc.HMCState,
         logdensity_fn: Callable,
         step_size: float,
-        inverse_mass_matrix: Array,
+        inverse_mass_matrix: metrics.MetricTypes,
         max_num_doublings: int = 10,
     ) -> tuple[hmc.HMCState, NUTSInfo]:
         """Generate a new sample with the NUTS kernel."""
 
-        (
-            momentum_generator,
-            kinetic_energy_fn,
-            uturn_check_fn,
-        ) = metrics.gaussian_euclidean(inverse_mass_matrix)
-        symplectic_integrator = integrator(logdensity_fn, kinetic_energy_fn)
+        metric = metrics.default_metric(inverse_mass_matrix)
+        symplectic_integrator = integrator(logdensity_fn, metric.kinetic_energy)
         proposal_generator = iterative_nuts_proposal(
             symplectic_integrator,
-            kinetic_energy_fn,
-            uturn_check_fn,
+            metric.kinetic_energy,
+            metric.check_turning,
             max_num_doublings,
             divergence_threshold,
         )
@@ -137,7 +133,7 @@ def build_kernel(
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
 
         position, logdensity, logdensity_grad = state
-        momentum = momentum_generator(key_momentum, position)
+        momentum = metric.sample_momentum(key_momentum, position)
 
         integrator_state = integrators.IntegratorState(
             position, momentum, logdensity, logdensity_grad
@@ -214,7 +210,7 @@ class nuts:
         cls,
         logdensity_fn: Callable,
         step_size: float,
-        inverse_mass_matrix: Array,
+        inverse_mass_matrix: metrics.MetricTypes,
         *,
         max_num_doublings: int = 10,
         divergence_threshold: int = 1000,
@@ -222,7 +218,8 @@ class nuts:
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(integrator, divergence_threshold)
 
-        def init_fn(position: ArrayLikeTree):
+        def init_fn(position: ArrayLikeTree, rng_key=None):
+            del rng_key
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
@@ -240,8 +237,8 @@ class nuts:
 
 def iterative_nuts_proposal(
     integrator: Callable,
-    kinetic_energy: Callable,
-    uturn_check_fn: Callable,
+    kinetic_energy: metrics.KineticEnergy,
+    uturn_check_fn: metrics.CheckTurning,
     max_num_expansions: int = 10,
     divergence_threshold: float = 1000,
 ) -> Callable:

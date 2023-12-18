@@ -287,4 +287,4 @@ class ghmc:
                 delta,
             )
 
-        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+        return SamplingAlgorithm(init_fn, step_fn)

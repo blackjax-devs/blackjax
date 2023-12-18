@@ -10,7 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Optional
 
 from typing_extensions import Protocol
 
@@ -34,7 +34,7 @@ class InitFn(Protocol):
 
     """
 
-    def __call__(self, position: Position) -> State:
+    def __call__(self, position: Position, rng_key: Optional[PRNGKey]) -> State:
         """Initialize the algorithm's state.
 
         Parameters

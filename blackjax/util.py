@@ -1,6 +1,6 @@
 """Utility functions for BlackJax."""
 from functools import partial
-from typing import Union
+from typing import Callable, Union
 
 import jax.numpy as jnp
 from jax import jit, lax
@@ -8,7 +8,7 @@ from jax.flatten_util import ravel_pytree
 from jax.random import normal, split
 from jax.tree_util import tree_leaves
 
-from blackjax.base import Info, State
+from blackjax.base import Info, SamplingAlgorithm, State, VIAlgorithm
 from blackjax.progress_bar import progress_bar_scan
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -141,46 +141,58 @@ def index_pytree(input_pytree: ArrayLikeTree) -> ArrayTree:
 
 
 def run_inference_algorithm(
-    rng_key,
-    initial_state_or_position,
-    inference_algorithm,
-    num_steps,
+    rng_key: PRNGKey,
+    initial_state_or_position: ArrayLikeTree,
+    inference_algorithm: Union[SamplingAlgorithm, VIAlgorithm],
+    num_steps: int,
     progress_bar: bool = False,
+    transform: Callable = lambda x: x,
 ) -> tuple[State, State, Info]:
     """Wrapper to run an inference algorithm.
 
+    Note that this utility function does not work for Stochastic Gradient MCMC samplers
+    like sghmc, as SG-MCMC samplers require additional control flow for batches of data
+    to be passed in during each sample.
+
     Parameters
     ----------
-    rng_key : PRNGKey
+    rng_key
         The random state used by JAX's random numbers generator.
-    initial_state_or_position: ArrayLikeTree
+    initial_state_or_position
         The initial state OR the initial position of the inference algorithm. If an initial position
         is passed in, the function will automatically convert it into an initial state.
-    inference_algorithm : Union[SamplingAlgorithm, VIAlgorithm]
+    inference_algorithm
         One of blackjax's sampling algorithms or variational inference algorithms.
-    num_steps : int
-        Number of learning steps.
+    num_steps
+        Number of MCMC steps.
+    progress_bar
+        Whether to display a progress bar.
+    transform
+        A transformation of the trace of states to be returned. This is useful for
+        computing determinstic variables, or returning a subset of the states.
+        By default, the states are returned as is.
 
     Returns
     -------
     Tuple[State, State, Info]
         1. The final state of the inference algorithm.
-        2. The history of states of the inference algorithm.
-        3. The history of the info of the inference algorithm.
+        2. The trace of states of the inference algorithm (contains the MCMC samples).
+        3. The trace of the info of the inference algorithm for diagnostics.
     """
+    init_key, sample_key = split(rng_key, 2)
     try:
-        initial_state = inference_algorithm.init(initial_state_or_position)
-    except TypeError:
+        initial_state = inference_algorithm.init(initial_state_or_position, init_key)
+    except (TypeError, ValueError, AttributeError):
         # We assume initial_state is already in the right format.
         initial_state = initial_state_or_position
 
-    keys = split(rng_key, num_steps)
+    keys = split(sample_key, num_steps)
 
     @jit
     def _one_step(state, xs):
         _, rng_key = xs
         state, info = inference_algorithm.step(rng_key, state)
-        return state, (state, info)
+        return state, (transform(state), info)
 
     if progress_bar:
         one_step = progress_bar_scan(num_steps)(_one_step)

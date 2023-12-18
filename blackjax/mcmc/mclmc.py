@@ -21,8 +21,8 @@ from jax.random import normal
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.integrators import IntegratorState, noneuclidean_mclachlan
-from blackjax.types import Array, ArrayLike, PRNGKey
-from blackjax.util import generate_unit_vector, pytree_size
+from blackjax.types import ArrayLike, PRNGKey
+from blackjax.util import generate_unit_vector
 
 __all__ = ["MCLMCInfo", "init", "build_kernel", "mclmc"]
 
@@ -31,8 +31,6 @@ class MCLMCInfo(NamedTuple):
     """
     Additional information on the MCLMC transition.
 
-    transformed_position
-        The value of the samples after a transformation. This is typically a projection onto a lower dimensional subspace.
     logdensity
         The log-density of the distribution at the current step of the MCLMC chain.
     kinetic_change
@@ -41,32 +39,29 @@ class MCLMCInfo(NamedTuple):
         The difference in energy between the current and previous step.
     """
 
-    transformed_position: Array
     logdensity: float
     kinetic_change: float
     energy_change: float
 
 
-def init(x_initial: ArrayLike, logdensity_fn, rng_key):
-    l, g = jax.value_and_grad(logdensity_fn)(x_initial)
+def init(position: ArrayLike, logdensity_fn, rng_key):
+    l, g = jax.value_and_grad(logdensity_fn)(position)
 
     return IntegratorState(
-        position=x_initial,
-        momentum=generate_unit_vector(rng_key, x_initial),
+        position=position,
+        momentum=generate_unit_vector(rng_key, position),
         logdensity=l,
         logdensity_grad=g,
     )
 
 
-def build_kernel(logdensity_fn, integrator, transform):
+def build_kernel(logdensity_fn, integrator):
     """Build a HMC kernel.
 
     Parameters
     ----------
     integrator
         The symplectic integrator to use to integrate the Hamiltonian dynamics.
-    transform
-        Value of the difference in energy above which we consider that the transition is divergent.
     L
         the momentum decoherence rate.
     step_size
@@ -88,20 +83,17 @@ def build_kernel(logdensity_fn, integrator, transform):
             state, step_size
         )
 
-        dim = pytree_size(position)
-
         # Langevin-like noise
-        momentum, dim = partially_refresh_momentum(
+        momentum = partially_refresh_momentum(
             momentum=momentum, rng_key=rng_key, L=L, step_size=step_size
         )
 
         return IntegratorState(
             position, momentum, logdensity, logdensitygrad
         ), MCLMCInfo(
-            transformed_position=transform(position),
             logdensity=logdensity,
             energy_change=kinetic_change - logdensity + state.logdensity,
-            kinetic_change=kinetic_change * (dim - 1),
+            kinetic_change=kinetic_change,
         )
 
     return kernel
@@ -125,7 +117,6 @@ class mclmc:
 
         mclmc = blackjax.mcmc.mclmc.mclmc(
             logdensity_fn=logdensity_fn,
-            transform=lambda x: x,
             L=L,
             step_size=step_size
         )
@@ -143,8 +134,6 @@ class mclmc:
     ----------
     logdensity_fn
         The log-density function we wish to draw samples from.
-    transform
-        A function to perform on the samples drawn from the target distribution
     L
         the momentum decoherence rate
     step_size
@@ -165,17 +154,15 @@ class mclmc:
         logdensity_fn: Callable,
         L,
         step_size,
-        transform: Callable = (lambda x: x),
         integrator=noneuclidean_mclachlan,
-        seed=1,
     ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel(logdensity_fn, integrator, transform)
+        kernel = cls.build_kernel(logdensity_fn, integrator)
+
+        def init_fn(position: ArrayLike, rng_key: PRNGKey):
+            return cls.init(position, logdensity_fn, rng_key)
 
         def update_fn(rng_key, state):
             return kernel(rng_key, state, L, step_size)
-
-        def init_fn(position: ArrayLike):
-            return cls.init(position, logdensity_fn, jax.random.PRNGKey(seed))
 
         return SamplingAlgorithm(init_fn, update_fn)
 
@@ -202,4 +189,4 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     dim = m.shape[0]
     nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
     z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
-    return unravel_fn((m + z) / jnp.linalg.norm(m + z)), dim
+    return unravel_fn((m + z) / jnp.linalg.norm(m + z))
