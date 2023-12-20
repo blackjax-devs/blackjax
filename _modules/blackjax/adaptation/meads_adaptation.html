@@ -1,9 +1,8 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../../../" >
 
   <head>
     <meta charset="utf-8" />
@@ -28,23 +27,23 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
   <script src="../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
 
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
-    <script src="../../../_static/design-tabs.js"></script>
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../../../_static/design-tabs.js?v=36754332"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/adaptation/meads_adaptation';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -139,7 +138,18 @@
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
@@ -377,7 +387,9 @@ document.write(`
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MEADSAdaptationState&quot;</span><span class="p">,</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="s2">&quot;maximum_eigenvalue&quot;</span><span class="p">,</span> <span class="s2">&quot;meads_adaptation&quot;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="MEADSAdaptationState"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState">[docs]</a><span class="k">class</span> <span class="nc">MEADSAdaptationState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<div class="viewcode-block" id="MEADSAdaptationState">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState">[docs]</a>
+<span class="k">class</span> <span class="nc">MEADSAdaptationState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the MEADS adaptation scheme.</span>
 
 <span class="sd">    step_size</span>
@@ -393,14 +405,32 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="MEADSAdaptationState.current_iteration"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.current_iteration">[docs]</a>    <span class="n">current_iteration</span><span class="p">:</span> <span class="nb">int</span></div>
-<div class="viewcode-block" id="MEADSAdaptationState.step_size"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.step_size">[docs]</a>    <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span></div>
-<div class="viewcode-block" id="MEADSAdaptationState.position_sigma"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.position_sigma">[docs]</a>    <span class="n">position_sigma</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
-<div class="viewcode-block" id="MEADSAdaptationState.alpha"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.alpha">[docs]</a>    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span></div>
-<div class="viewcode-block" id="MEADSAdaptationState.delta"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.delta">[docs]</a>    <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span></div></div>
+<div class="viewcode-block" id="MEADSAdaptationState.current_iteration">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.current_iteration">[docs]</a>
+    <span class="n">current_iteration</span><span class="p">:</span> <span class="nb">int</span></div>
+
+<div class="viewcode-block" id="MEADSAdaptationState.step_size">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.step_size">[docs]</a>
+    <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="MEADSAdaptationState.position_sigma">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.position_sigma">[docs]</a>
+    <span class="n">position_sigma</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+
+<div class="viewcode-block" id="MEADSAdaptationState.alpha">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.alpha">[docs]</a>
+    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="MEADSAdaptationState.delta">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.delta">[docs]</a>
+    <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span></div>
+</div>
 
 
-<div class="viewcode-block" id="base"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.base">[docs]</a><span class="k">def</span> <span class="nf">base</span><span class="p">():</span>
+
+<div class="viewcode-block" id="base">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.base">[docs]</a>
+<span class="k">def</span> <span class="nf">base</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum-Eigenvalue Adaptation of damping and step size for the generalized</span>
 <span class="sd">    Hamiltonian Monte Carlo kernel :cite:p:`hoffman2022tuning`.</span>
 
@@ -515,7 +545,10 @@ document.write(`
     <span class="k">return</span> <span class="n">init</span><span class="p">,</span> <span class="n">update</span></div>
 
 
-<div class="viewcode-block" id="meads_adaptation"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.meads_adaptation">[docs]</a><span class="k">def</span> <span class="nf">meads_adaptation</span><span class="p">(</span>
+
+<div class="viewcode-block" id="meads_adaptation">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.meads_adaptation">[docs]</a>
+<span class="k">def</span> <span class="nf">meads_adaptation</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">num_chains</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdaptationAlgorithm</span><span class="p">:</span>
@@ -610,7 +643,10 @@ document.write(`
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 
 
-<div class="viewcode-block" id="maximum_eigenvalue"><a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.maximum_eigenvalue">[docs]</a><span class="k">def</span> <span class="nf">maximum_eigenvalue</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+
+<div class="viewcode-block" id="maximum_eigenvalue">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.maximum_eigenvalue">[docs]</a>
+<span class="k">def</span> <span class="nf">maximum_eigenvalue</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Estimate the largest eigenvalues of a matrix.</span>
 
 <span class="sd">    We calculate an unbiased estimate of the ratio between the sum of the</span>
@@ -638,6 +674,7 @@ document.write(`
     <span class="n">lamda</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">diag_S</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>
     <span class="n">lamda_sq</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">S</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">diag_S</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">lamda_sq</span> <span class="o">/</span> <span class="n">lamda</span></div>
+
 </pre></div>
 
                 </article>

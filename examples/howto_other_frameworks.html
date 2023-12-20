@@ -1,13 +1,12 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../" >
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Use a logdensity function that is not compatible with JAX’s primitives</title>
   
@@ -29,23 +28,23 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
   <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
 
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/doctools.js"></script>
-    <script src="../_static/sphinx_highlight.js"></script>
-    <script src="../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
-    <script src="../_static/design-tabs.js"></script>
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../_static/design-tabs.js?v=36754332"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/howto_other_frameworks';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -142,7 +141,18 @@
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
@@ -366,7 +376,7 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <section id="use-a-logdensity-function-that-is-not-compatible-with-jax-s-primitives">
-<h1>Use a logdensity function that is not compatible with JAX’s primitives<a class="headerlink" href="#use-a-logdensity-function-that-is-not-compatible-with-jax-s-primitives" title="Permalink to this heading">#</a></h1>
+<h1>Use a logdensity function that is not compatible with JAX’s primitives<a class="headerlink" href="#use-a-logdensity-function-that-is-not-compatible-with-jax-s-primitives" title="Link to this heading">#</a></h1>
 <p>We obviously recommend to use Blackjax with log-probability functions that are compatible with JAX’s primitives. These can be built manually or with Aesara, Numpyro, Oryx, PyMC, TensorFlow-Probability.</p>
 <p>Nevertheless, you may have a good reason to use a function that is incompatible with JAX’s primitives, whether it is for performance reasons or for compatiblity with an already-implemented model. Who are we to judge?</p>
 <p>In this example we will show you how this can be done using JAX’s experimental <code class="docutils literal notranslate"><span class="pre">host_callback</span></code> API, and hint at a faster solution.</p>
@@ -380,7 +390,7 @@ document.write(`
 </div>
 </div>
 <section id="aesara-model-compiled-to-numba">
-<h2>Aesara model compiled to Numba<a class="headerlink" href="#aesara-model-compiled-to-numba" title="Permalink to this heading">#</a></h2>
+<h2>Aesara model compiled to Numba<a class="headerlink" href="#aesara-model-compiled-to-numba" title="Link to this heading">#</a></h2>
 <p>The following example builds a logdensity function with <a class="reference external" href="https://github.com/aesara-devs/aesara">Aesara</a>, compiles it with <a class="reference external" href="https://numba.pydata.org/">Numba</a> and uses Blackjax to sample from the posterior distribution of the model.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -501,7 +511,7 @@ JAX raised an exception while differentiating!
 </div>
 </section>
 <section id="use-jax-experimental-host-callback-to-call-numba-functions">
-<h2>Use <code class="docutils literal notranslate"><span class="pre">jax.experimental.host_callback</span></code> to call Numba functions<a class="headerlink" href="#use-jax-experimental-host-callback-to-call-numba-functions" title="Permalink to this heading">#</a></h2>
+<h2>Use <code class="docutils literal notranslate"><span class="pre">jax.experimental.host_callback</span></code> to call Numba functions<a class="headerlink" href="#use-jax-experimental-host-callback-to-call-numba-functions" title="Link to this heading">#</a></h2>
 <p>In order to be able to call <code class="docutils literal notranslate"><span class="pre">logdensity_fn</span></code> within JAX, we need to define a function that will call it via JAX’s <code class="docutils literal notranslate"><span class="pre">host_callback</span></code>. Yet, this wrapper function is not differentiable with JAX, and so we will also need to define this functions’ <code class="docutils literal notranslate"><span class="pre">custom_vjp</span></code>, and use <code class="docutils literal notranslate"><span class="pre">host_callback</span></code> to call the gradient-computing function as well:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -560,7 +570,7 @@ JAX raised an exception while differentiating!
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(-1.0731139, dtype=float32, weak_type=True), logdensity=Array(-3.201322, dtype=float32), logdensity_grad=Array(0.49152476, dtype=float32))
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(-0.94257444, dtype=float32, weak_type=True), logdensity=Array(-3.1391902, dtype=float32), logdensity_grad=Array(0.45883846, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -575,8 +585,8 @@ JAX raised an exception while differentiating!
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.77 s, sys: 0 ns, total: 2.77 s
-Wall time: 2.77 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.75 s, sys: 0 ns, total: 2.75 s
+Wall time: 2.75 s
 </pre></div>
 </div>
 </div>
@@ -591,8 +601,8 @@ Wall time: 2.77 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11.5 s, sys: 372 ms, total: 11.8 s
-Wall time: 11.8 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11.3 s, sys: 316 ms, total: 11.6 s
+Wall time: 11.6 s
 </pre></div>
 </div>
 </div>
@@ -601,7 +611,7 @@ Wall time: 11.8 s
 <p>So while the implementation is simple considering what we’re trying to achieve, it is only recommended for workloads where most of the time is spent evaluating the logdensity and its gradient, and where this overhead becomes irrelevant.</p>
 </section>
 <section id="use-custom-xla-calls-to-call-numba-functions-faster">
-<h2>Use custom XLA calls to call Numba functions faster<a class="headerlink" href="#use-custom-xla-calls-to-call-numba-functions-faster" title="Permalink to this heading">#</a></h2>
+<h2>Use custom XLA calls to call Numba functions faster<a class="headerlink" href="#use-custom-xla-calls-to-call-numba-functions-faster" title="Link to this heading">#</a></h2>
 <p>To avoid this kind overhead we can use an XLA custom call to execute Numba functions so there is no callback to Python in loops. Writing a function that performs such custom calls given a Numba function is a bit out of scope for this tutorial, but you can get inspiration from <a class="reference external" href="https://github.com/jax-ml/jax-triton/blob/main/jax_triton/triton_call.py">jax-triton</a> to implement a custom call to a Numba function. You will also need to register a custom vjp, but you already know how to do that.</p>
 </section>
 </section>

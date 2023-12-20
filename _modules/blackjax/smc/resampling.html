@@ -1,9 +1,8 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../../../" >
 
   <head>
     <meta charset="utf-8" />
@@ -28,23 +27,23 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
   <script src="../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
 
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
-    <script src="../../../_static/design-tabs.js"></script>
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../../../_static/design-tabs.js?v=36754332"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/smc/resampling';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -139,7 +138,18 @@
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
@@ -400,13 +410,19 @@ document.write(`
 
 
 <span class="nd">@partial</span><span class="p">(</span><span class="n">_resampling_func</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Systematic&quot;</span><span class="p">)</span>
-<div class="viewcode-block" id="systematic"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.systematic">[docs]</a><span class="k">def</span> <span class="nf">systematic</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<div class="viewcode-block" id="systematic">
+<a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.systematic">[docs]</a>
+<span class="k">def</span> <span class="nf">systematic</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">_systematic_or_stratified</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></div>
 
 
+
 <span class="nd">@partial</span><span class="p">(</span><span class="n">_resampling_func</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Stratified&quot;</span><span class="p">)</span>
-<div class="viewcode-block" id="stratified"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.stratified">[docs]</a><span class="k">def</span> <span class="nf">stratified</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<div class="viewcode-block" id="stratified">
+<a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.stratified">[docs]</a>
+<span class="k">def</span> <span class="nf">stratified</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">_systematic_or_stratified</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></div>
+
 
 
 <span class="nd">@partial</span><span class="p">(</span>
@@ -417,7 +433,9 @@ document.write(`
 <span class="s2">    and should only be used for illustration purposes,</span>
 <span class="s2">    or if your algorithm *REALLY* needs independent samples.&quot;&quot;&quot;</span><span class="p">,</span>
 <span class="p">)</span>
-<div class="viewcode-block" id="multinomial"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.multinomial">[docs]</a><span class="k">def</span> <span class="nf">multinomial</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<div class="viewcode-block" id="multinomial">
+<a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.multinomial">[docs]</a>
+<span class="k">def</span> <span class="nf">multinomial</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
     <span class="c1"># In practice we don&#39;t have to sort the generated uniforms, but searchsorted</span>
     <span class="c1"># works faster and is more stable if both inputs are sorted, so we use the</span>
     <span class="c1"># _sorted_uniforms from N. Chopin, but still use searchsorted instead of his</span>
@@ -431,6 +449,7 @@ document.write(`
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span></div>
 
 
+
 <span class="nd">@partial</span><span class="p">(</span>
     <span class="n">_resampling_func</span><span class="p">,</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Residual&quot;</span><span class="p">,</span>
@@ -442,7 +461,9 @@ document.write(`
 <span class="s2">    compatible. The main difference with Nicolas Chopin&#39;s code lies in the</span>
 <span class="s2">    introduction of N+1 in the array as a &#39;sink state&#39; for unused indices.&quot;&quot;&quot;</span><span class="p">,</span>
 <span class="p">)</span>
-<div class="viewcode-block" id="residual"><a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.residual">[docs]</a><span class="k">def</span> <span class="nf">residual</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<div class="viewcode-block" id="residual">
+<a class="viewcode-back" href="../../../autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.residual">[docs]</a>
+<span class="k">def</span> <span class="nf">residual</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
     <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
     <span class="n">N</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">N_sample_weights</span> <span class="o">=</span> <span class="n">num_samples</span> <span class="o">*</span> <span class="n">weights</span>
@@ -472,6 +493,7 @@ document.write(`
     <span class="n">idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">idx</span> <span class="o">&gt;=</span> <span class="n">sum_integer_part</span><span class="p">,</span> <span class="n">residual_sample</span><span class="p">,</span> <span class="n">integer_idx</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">idx</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_systematic_or_stratified</span><span class="p">(</span>

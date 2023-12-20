@@ -30,9 +30,9 @@ Attributes
    blackjax.mcmc.integrators.velocity_verlet
    blackjax.mcmc.integrators.mclachlan
    blackjax.mcmc.integrators.yoshida
-   blackjax.mcmc.integrators.noneuclidean_leapfrog
-   blackjax.mcmc.integrators.noneuclidean_yoshida
-   blackjax.mcmc.integrators.noneuclidean_mclachlan
+   blackjax.mcmc.integrators.isokinetic_leapfrog
+   blackjax.mcmc.integrators.isokinetic_yoshida
+   blackjax.mcmc.integrators.isokinetic_mclachlan
 
 
 .. py:data:: velocity_verlet
@@ -61,15 +61,15 @@ Attributes
 
    
 
-.. py:data:: noneuclidean_leapfrog
+.. py:data:: isokinetic_leapfrog
 
    
 
-.. py:data:: noneuclidean_yoshida
+.. py:data:: isokinetic_yoshida
 
    
 
-.. py:data:: noneuclidean_mclachlan
+.. py:data:: isokinetic_mclachlan
 
    
 

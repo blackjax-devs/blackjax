@@ -1,9 +1,8 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../../../" >
 
   <head>
     <meta charset="utf-8" />
@@ -28,23 +27,23 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
   <script src="../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
 
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
-    <script src="../../../_static/design-tabs.js"></script>
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../../../_static/design-tabs.js?v=36754332"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/random_walk';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -139,7 +138,18 @@
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
@@ -438,7 +448,9 @@ document.write(`
 <span class="p">]</span>
 
 
-<div class="viewcode-block" id="normal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.normal">[docs]</a><span class="k">def</span> <span class="nf">normal</span><span class="p">(</span><span class="n">sigma</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<div class="viewcode-block" id="normal">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.normal">[docs]</a>
+<span class="k">def</span> <span class="nf">normal</span><span class="p">(</span><span class="n">sigma</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Normal Random Walk proposal.</span>
 
 <span class="sd">    Propose a new position such that its distance to the current position is</span>
@@ -460,7 +472,10 @@ document.write(`
     <span class="k">return</span> <span class="n">propose</span></div>
 
 
-<div class="viewcode-block" id="RWState"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWState">[docs]</a><span class="k">class</span> <span class="nc">RWState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+
+<div class="viewcode-block" id="RWState">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWState">[docs]</a>
+<span class="k">class</span> <span class="nc">RWState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the RW chain.</span>
 
 <span class="sd">    position</span>
@@ -470,11 +485,20 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="RWState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
-<div class="viewcode-block" id="RWState.logdensity"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWState.logdensity">[docs]</a>    <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span></div></div>
+<div class="viewcode-block" id="RWState.position">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWState.position">[docs]</a>
+    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+
+<div class="viewcode-block" id="RWState.logdensity">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWState.logdensity">[docs]</a>
+    <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span></div>
+</div>
 
 
-<div class="viewcode-block" id="RWInfo"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo">[docs]</a><span class="k">class</span> <span class="nc">RWInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+
+<div class="viewcode-block" id="RWInfo">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo">[docs]</a>
+<span class="k">class</span> <span class="nc">RWInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on the RW chain.</span>
 
 <span class="sd">    This additional information can be used for debugging or computing</span>
@@ -491,9 +515,19 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="RWInfo.acceptance_rate"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo.acceptance_rate">[docs]</a>    <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span></div>
-<div class="viewcode-block" id="RWInfo.is_accepted"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo.is_accepted">[docs]</a>    <span class="n">is_accepted</span><span class="p">:</span> <span class="nb">bool</span></div>
-<div class="viewcode-block" id="RWInfo.proposal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo.proposal">[docs]</a>    <span class="n">proposal</span><span class="p">:</span> <span class="n">RWState</span></div></div>
+<div class="viewcode-block" id="RWInfo.acceptance_rate">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo.acceptance_rate">[docs]</a>
+    <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="RWInfo.is_accepted">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo.is_accepted">[docs]</a>
+    <span class="n">is_accepted</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+<div class="viewcode-block" id="RWInfo.proposal">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.RWInfo.proposal">[docs]</a>
+    <span class="n">proposal</span><span class="p">:</span> <span class="n">RWState</span></div>
+</div>
+
 
 
 <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RWState</span><span class="p">:</span>
@@ -511,7 +545,9 @@ document.write(`
     <span class="k">return</span> <span class="n">RWState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">position</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="build_additive_step"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_additive_step">[docs]</a><span class="k">def</span> <span class="nf">build_additive_step</span><span class="p">():</span>
+<div class="viewcode-block" id="build_additive_step">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_additive_step">[docs]</a>
+<span class="k">def</span> <span class="nf">build_additive_step</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Random Walk Rosenbluth-Metropolis-Hastings kernel</span>
 
 <span class="sd">    Returns</span>
@@ -535,7 +571,10 @@ document.write(`
     <span class="k">return</span> <span class="n">kernel</span></div>
 
 
-<div class="viewcode-block" id="additive_step_random_walk"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.additive_step_random_walk">[docs]</a><span class="k">class</span> <span class="nc">additive_step_random_walk</span><span class="p">:</span>
+
+<div class="viewcode-block" id="additive_step_random_walk">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.additive_step_random_walk">[docs]</a>
+<span class="k">class</span> <span class="nc">additive_step_random_walk</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the user interface for the Additive Step RMH</span>
 
 <span class="sd">    Examples</span>
@@ -572,11 +611,19 @@ document.write(`
 <span class="sd">    A ``SamplingAlgorithm``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="additive_step_random_walk.init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.additive_step_random_walk.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="additive_step_random_walk.build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.additive_step_random_walk.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_additive_step</span><span class="p">)</span></div>
+<div class="viewcode-block" id="additive_step_random_walk.init">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.additive_step_random_walk.init">[docs]</a>
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="additive_step_random_walk.build_kernel">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.additive_step_random_walk.build_kernel">[docs]</a>
+    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_additive_step</span><span class="p">)</span></div>
+
 
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="additive_step_random_walk.normal_random_walk"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.additive_step_random_walk.normal_random_walk">[docs]</a>    <span class="k">def</span> <span class="nf">normal_random_walk</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+<div class="viewcode-block" id="additive_step_random_walk.normal_random_walk">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.additive_step_random_walk.normal_random_walk">[docs]</a>
+    <span class="k">def</span> <span class="nf">normal_random_walk</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -590,6 +637,7 @@ document.write(`
 <span class="sd">             A ``SamplingAlgorithm``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">normal</span><span class="p">(</span><span class="n">sigma</span><span class="p">))</span></div>
+
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">random_step</span><span class="p">:</span> <span class="n">Callable</span>
@@ -606,7 +654,10 @@ document.write(`
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="build_irmh"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_irmh">[docs]</a><span class="k">def</span> <span class="nf">build_irmh</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+
+<div class="viewcode-block" id="build_irmh">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_irmh">[docs]</a>
+<span class="k">def</span> <span class="nf">build_irmh</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Build an Independent Random Walk Rosenbluth-Metropolis-Hastings kernel. This implies</span>
 <span class="sd">    that the proposal distribution does not depend on the particle being mutated :cite:p:`wang2022exact`.</span>
@@ -650,7 +701,10 @@ document.write(`
     <span class="k">return</span> <span class="n">kernel</span></div>
 
 
-<div class="viewcode-block" id="irmh"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.irmh">[docs]</a><span class="k">class</span> <span class="nc">irmh</span><span class="p">:</span>
+
+<div class="viewcode-block" id="irmh">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.irmh">[docs]</a>
+<span class="k">class</span> <span class="nc">irmh</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the independent RMH.</span>
 
 <span class="sd">    Examples</span>
@@ -688,8 +742,14 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="irmh.init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.irmh.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="irmh.build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.irmh.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_irmh</span><span class="p">)</span></div>
+<div class="viewcode-block" id="irmh.init">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.irmh.init">[docs]</a>
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="irmh.build_kernel">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.irmh.build_kernel">[docs]</a>
+    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_irmh</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -715,7 +775,10 @@ document.write(`
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="build_rmh"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_rmh">[docs]</a><span class="k">def</span> <span class="nf">build_rmh</span><span class="p">():</span>
+
+<div class="viewcode-block" id="build_rmh">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_rmh">[docs]</a>
+<span class="k">def</span> <span class="nf">build_rmh</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Rosenbluth-Metropolis-Hastings kernel.</span>
 
 <span class="sd">    Returns</span>
@@ -773,7 +836,10 @@ document.write(`
     <span class="k">return</span> <span class="n">kernel</span></div>
 
 
-<div class="viewcode-block" id="rmh"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.rmh">[docs]</a><span class="k">class</span> <span class="nc">rmh</span><span class="p">:</span>
+
+<div class="viewcode-block" id="rmh">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.rmh">[docs]</a>
+<span class="k">class</span> <span class="nc">rmh</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the user interface for the RMH.</span>
 
 <span class="sd">    Examples</span>
@@ -810,8 +876,14 @@ document.write(`
 <span class="sd">    A ``SamplingAlgorithm``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="rmh.init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.rmh.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="rmh.build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.rmh.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_rmh</span><span class="p">)</span></div>
+<div class="viewcode-block" id="rmh.init">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.rmh.init">[docs]</a>
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="rmh.build_kernel">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.rmh.build_kernel">[docs]</a>
+    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_rmh</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -837,7 +909,10 @@ document.write(`
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="build_rmh_transition_energy"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_rmh_transition_energy">[docs]</a><span class="k">def</span> <span class="nf">build_rmh_transition_energy</span><span class="p">(</span><span class="n">proposal_logdensity_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+
+<div class="viewcode-block" id="build_rmh_transition_energy">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_rmh_transition_energy">[docs]</a>
+<span class="k">def</span> <span class="nf">build_rmh_transition_energy</span><span class="p">(</span><span class="n">proposal_logdensity_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">proposal_logdensity_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 
         <span class="k">def</span> <span class="nf">transition_energy</span><span class="p">(</span><span class="n">prev_state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">):</span>
@@ -851,7 +926,10 @@ document.write(`
     <span class="k">return</span> <span class="n">transition_energy</span></div>
 
 
-<div class="viewcode-block" id="rmh_proposal"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.rmh_proposal">[docs]</a><span class="k">def</span> <span class="nf">rmh_proposal</span><span class="p">(</span>
+
+<div class="viewcode-block" id="rmh_proposal">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.rmh_proposal">[docs]</a>
+<span class="k">def</span> <span class="nf">rmh_proposal</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">transition_distribution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">compute_acceptance_ratio</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
@@ -870,6 +948,7 @@ document.write(`
         <span class="k">return</span> <span class="n">accepted_state</span><span class="p">,</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span>
 
     <span class="k">return</span> <span class="n">generate</span></div>
+
 </pre></div>
 
                 </article>

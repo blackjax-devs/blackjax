@@ -1,13 +1,12 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../../../../" >
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>blackjax.mcmc.metrics</title>
   
@@ -29,23 +28,23 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
 <link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
   <script src="../../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
 
-    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
-    <script src="../../../../_static/doctools.js"></script>
-    <script src="../../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
-    <script src="../../../../_static/design-tabs.js"></script>
+    <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../../../../_static/design-tabs.js?v=36754332"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/mcmc/metrics/index';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
@@ -143,7 +142,18 @@
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
@@ -373,7 +383,7 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <section id="module-blackjax.mcmc.metrics">
-<span id="blackjax-mcmc-metrics"></span><h1><a class="reference internal" href="#module-blackjax.mcmc.metrics" title="blackjax.mcmc.metrics"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.metrics</span></code></a><a class="headerlink" href="#module-blackjax.mcmc.metrics" title="Permalink to this heading">#</a></h1>
+<span id="blackjax-mcmc-metrics"></span><h1><a class="reference internal" href="#module-blackjax.mcmc.metrics" title="blackjax.mcmc.metrics"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.metrics</span></code></a><a class="headerlink" href="#module-blackjax.mcmc.metrics" title="Link to this heading">#</a></h1>
 <p>Metric space in which the Hamiltonian dynamic is embedded.</p>
 <p>An important particular case (and the most used in practice) of metric for the
 position space in the Euclidean metric. It is defined by a definite positive
@@ -385,9 +395,9 @@ dynamic is independent of the position and only depends on the momentum
 \[K(p) = \frac{1}{2} p^T M^{-1} p\]</div>
 <p>We can also generate a relativistic dynamic <span id="id2">[<a class="reference internal" href="../../../../bib.html#id24" title="Xiaoyu Lu, Valerio Perrone, Leonard Hasenclever, Yee Whye Teh, and Sebastian Vollmer. Relativistic monte carlo. In Artificial Intelligence and Statistics, 1236–1245. PMLR, 2017.">LPH+17</a>]</span>.</p>
 <section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">#</a></h2>
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
 <section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
+<h3>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.default_metric" title="blackjax.mcmc.metrics.default_metric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">default_metric</span></code></a>(→ Metric)</p></td>
@@ -403,7 +413,7 @@ dynamic is independent of the position and only depends on the momentum
 </table>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.metrics.default_metric">
-<span class="sig-name descname"><span class="pre">default_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MetricTypes</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#default_metric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.default_metric" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">default_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MetricTypes</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#default_metric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.default_metric" title="Link to this definition">#</a></dt>
 <dd><p>Convert an input metric into a <code class="docutils literal notranslate"><span class="pre">Metric</span></code> object following sensible default rules</p>
 <p>The metric can be specified in three different ways:</p>
 <ul class="simple">
@@ -417,7 +427,7 @@ location</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.metrics.gaussian_euclidean">
-<span class="sig-name descname"><span class="pre">gaussian_euclidean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_euclidean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_euclidean" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">gaussian_euclidean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_euclidean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_euclidean" title="Link to this definition">#</a></dt>
 <dd><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum
 <span id="id3">[<a class="reference internal" href="../../../../bib.html#id34" title="Michael Betancourt. A general metric for riemannian manifold hamiltonian monte carlo. In Geometric Science of Information: First International Conference, GSI 2013, Paris, France, August 28-30, 2013. Proceedings, 327–334. Springer, 2013.">Bet13</a>]</span>.</p>
 <p>The gaussian euclidean metric is a euclidean metric further characterized
@@ -450,7 +460,7 @@ itself given the values of the momentum along the trajectory.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.metrics.gaussian_riemannian">
-<span class="sig-name descname"><span class="pre">gaussian_riemannian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mass_matrix_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_riemannian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_riemannian" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">gaussian_riemannian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mass_matrix_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_riemannian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_riemannian" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </section>

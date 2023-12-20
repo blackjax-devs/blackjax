@@ -1,13 +1,12 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../" >
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>A Quick Introduction to Blackjax</title>
   
@@ -29,23 +28,23 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
   <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
 
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/doctools.js"></script>
-    <script src="../_static/sphinx_highlight.js"></script>
-    <script src="../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
-    <script src="../_static/design-tabs.js"></script>
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../_static/design-tabs.js?v=36754332"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/quickstart';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -142,7 +141,18 @@
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Quickstart</a></li>
@@ -375,7 +385,7 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <section id="a-quick-introduction-to-blackjax">
-<h1>A Quick Introduction to Blackjax<a class="headerlink" href="#a-quick-introduction-to-blackjax" title="Permalink to this heading">#</a></h1>
+<h1>A Quick Introduction to Blackjax<a class="headerlink" href="#a-quick-introduction-to-blackjax" title="Link to this heading">#</a></h1>
 <p>BlackJAX is an MCMC sampling library based on <a class="reference external" href="https://github.com/google/jax">JAX</a>. BlackJAX provides well-tested and ready to use sampling algorithms. It is also explicitly designed to be modular: it is easy for advanced users to mix-and-match different metrics, integrators, trajectory integrations, etc.</p>
 <p>In this notebook we provide a simple example based on basic Hamiltonian Monte Carlo and the NUTS algorithm to showcase the architecture and interfaces in the library</p>
 <div class="cell docutils container">
@@ -401,7 +411,7 @@ document.write(`
 </div>
 </div>
 <section id="the-problem">
-<h2>The Problem<a class="headerlink" href="#the-problem" title="Permalink to this heading">#</a></h2>
+<h2>The Problem<a class="headerlink" href="#the-problem" title="Link to this heading">#</a></h2>
 <p>We’ll generate observations from a normal distribution of known <code class="docutils literal notranslate"><span class="pre">loc</span></code> and <code class="docutils literal notranslate"><span class="pre">scale</span></code> to see if we can recover the parameters in sampling. <strong>MCMC algorithms usually assume samples are being drawn from an unconstrained Euclidean space.</strong> Hence why we’ll log transform the scale parameter, so that sampling is done on the real line. Samples can be transformed back to their original space in post-processing. Let’s take a decent-size dataset with 1,000 points:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -427,9 +437,9 @@ document.write(`
 </div>
 </section>
 <section id="hmc">
-<h2>HMC<a class="headerlink" href="#hmc" title="Permalink to this heading">#</a></h2>
+<h2>HMC<a class="headerlink" href="#hmc" title="Link to this heading">#</a></h2>
 <section id="sampler-parameters">
-<h3>Sampler Parameters<a class="headerlink" href="#sampler-parameters" title="Permalink to this heading">#</a></h3>
+<h3>Sampler Parameters<a class="headerlink" href="#sampler-parameters" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inv_mass_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">])</span>
@@ -443,7 +453,7 @@ document.write(`
 </div>
 </section>
 <section id="set-the-initial-state">
-<h3>Set the Initial State<a class="headerlink" href="#set-the-initial-state" title="Permalink to this heading">#</a></h3>
+<h3>Set the Initial State<a class="headerlink" href="#set-the-initial-state" title="Link to this heading">#</a></h3>
 <p>The initial state of the HMC algorithm requires not only an initial position, but also the potential energy and gradient of the potential energy at this position (for example, in the context of Bayesian modeling, the output of the log posterior function evaluated at the initial position). BlackJAX provides a <code class="docutils literal notranslate"><span class="pre">new_state</span></code> function to initialize the state from an initial position.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -454,14 +464,14 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-34906.01, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1174.1078, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(64974.152, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-33233.883, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1238.3069, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(61629.9, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
 </div>
 </section>
 <section id="build-the-kernel-and-inference-loop">
-<h3>Build the Kernel and Inference Loop<a class="headerlink" href="#build-the-kernel-and-inference-loop" title="Permalink to this heading">#</a></h3>
+<h3>Build the Kernel and Inference Loop<a class="headerlink" href="#build-the-kernel-and-inference-loop" title="Link to this heading">#</a></h3>
 <p>The HMC kernel is easy to obtain:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -489,7 +499,7 @@ document.write(`
 </div>
 </section>
 <section id="inference">
-<h3>Inference<a class="headerlink" href="#inference" title="Permalink to this heading">#</a></h3>
+<h3>Inference<a class="headerlink" href="#inference" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
@@ -502,8 +512,8 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.55 s, sys: 10.7 ms, total: 1.56 s
-Wall time: 1.56 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.54 s, sys: 4.65 ms, total: 1.54 s
+Wall time: 1.54 s
 </pre></div>
 </div>
 </div>
@@ -528,13 +538,13 @@ Wall time: 1.56 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/5acb6354be4eb2be6bb34ac1f600dbd8d54f1ce0725addc99446f7d506457b87.png" src="../_images/5acb6354be4eb2be6bb34ac1f600dbd8d54f1ce0725addc99446f7d506457b87.png" />
+<img alt="../_images/214520e4e1cdb836082ebc060218b7f37aff17134028be17b49d0277c31dbd53.png" src="../_images/214520e4e1cdb836082ebc060218b7f37aff17134028be17b49d0277c31dbd53.png" />
 </div>
 </div>
 </section>
 </section>
 <section id="nuts">
-<h2>NUTS<a class="headerlink" href="#nuts" title="Permalink to this heading">#</a></h2>
+<h2>NUTS<a class="headerlink" href="#nuts" title="Link to this heading">#</a></h2>
 <p>NUTS is a <em>dynamic</em> algorithm: the number of integration steps is determined at runtime. We still need to specify a step size and a mass matrix:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -555,7 +565,7 @@ Wall time: 1.56 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-34906.01, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1174.1078, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(64974.152, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-33233.883, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1238.3069, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(61629.9, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -572,8 +582,8 @@ Wall time: 1.56 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.86 s, sys: 19.5 ms, total: 6.88 s
-Wall time: 6.87 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 6.67 s, sys: 16.6 ms, total: 6.69 s
+Wall time: 6.68 s
 </pre></div>
 </div>
 </div>
@@ -598,11 +608,11 @@ Wall time: 6.87 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/f4a9904f76cd82cdb51c643142be1475f6c87300c657dfa61c5c1a6858e90db1.png" src="../_images/f4a9904f76cd82cdb51c643142be1475f6c87300c657dfa61c5c1a6858e90db1.png" />
+<img alt="../_images/166f84101949e9368ccd983b7b3d4d823b0162b2d16b41fb7441ecb7d0a597ac.png" src="../_images/166f84101949e9368ccd983b7b3d4d823b0162b2d16b41fb7441ecb7d0a597ac.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
-<h3>Use Stan’s Window Adaptation<a class="headerlink" href="#use-stan-s-window-adaptation" title="Permalink to this heading">#</a></h3>
+<h3>Use Stan’s Window Adaptation<a class="headerlink" href="#use-stan-s-window-adaptation" title="Link to this heading">#</a></h3>
 <p>Specifying the step size and inverse mass matrix is cumbersome. We can use Stan’s window adaptation to get reasonable values for them so we have, in practice, no parameter to specify.</p>
 <p>The adaptation algorithm takes a function that returns a transition kernel given a step size and an inverse mass matrix:</p>
 <div class="cell docutils container">
@@ -616,8 +626,8 @@ Wall time: 6.87 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.74 s, sys: 15.2 ms, total: 1.76 s
-Wall time: 1.74 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.74 s, sys: 24.4 ms, total: 1.76 s
+Wall time: 1.75 s
 </pre></div>
 </div>
 </div>
@@ -636,7 +646,7 @@ Wall time: 1.74 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.16 s, sys: 12.7 ms, total: 1.18 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.15 s, sys: 21.5 ms, total: 1.17 s
 Wall time: 1.16 s
 </pre></div>
 </div>
@@ -662,7 +672,7 @@ Wall time: 1.16 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/a816b679f0cc2c118a32da17b63dafcb569b3144bbfe1f8ad7bc349ff5bc46d9.png" src="../_images/a816b679f0cc2c118a32da17b63dafcb569b3144bbfe1f8ad7bc349ff5bc46d9.png" />
+<img alt="../_images/3049acaf491b3a3b08169571399617167ba3854543097aa5ec8af59ee192d0d1.png" src="../_images/3049acaf491b3a3b08169571399617167ba3854543097aa5ec8af59ee192d0d1.png" />
 </div>
 </div>
 </section>

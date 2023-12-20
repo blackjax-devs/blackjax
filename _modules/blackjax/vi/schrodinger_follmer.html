@@ -1,9 +1,8 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../../../" >
 
   <head>
     <meta charset="utf-8" />
@@ -28,23 +27,23 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
   <script src="../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
 
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
-    <script src="../../../_static/design-tabs.js"></script>
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../../../_static/design-tabs.js?v=36754332"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/vi/schrodinger_follmer';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -139,7 +138,18 @@
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
@@ -380,7 +390,9 @@ document.write(`
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SchrodingerFollmerState&quot;</span><span class="p">,</span> <span class="s2">&quot;sample&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;step&quot;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="SchrodingerFollmerState"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.SchrodingerFollmerState">[docs]</a><span class="k">class</span> <span class="nc">SchrodingerFollmerState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<div class="viewcode-block" id="SchrodingerFollmerState">
+<a class="viewcode-back" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.SchrodingerFollmerState">[docs]</a>
+<span class="k">class</span> <span class="nc">SchrodingerFollmerState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the Schrödinger-Föllmer algorithm.</span>
 
 <span class="sd">    The Schrödinger-Föllmer algorithm gets samples from the target distribution by</span>
@@ -393,8 +405,15 @@ document.write(`
 <span class="sd">        Current integration time of the SDE</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="SchrodingerFollmerState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.SchrodingerFollmerState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span></div>
-<div class="viewcode-block" id="SchrodingerFollmerState.time"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.SchrodingerFollmerState.time">[docs]</a>    <span class="n">time</span><span class="p">:</span> <span class="n">ArrayLike</span></div></div>
+<div class="viewcode-block" id="SchrodingerFollmerState.position">
+<a class="viewcode-back" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.SchrodingerFollmerState.position">[docs]</a>
+    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span></div>
+
+<div class="viewcode-block" id="SchrodingerFollmerState.time">
+<a class="viewcode-back" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.SchrodingerFollmerState.time">[docs]</a>
+    <span class="n">time</span><span class="p">:</span> <span class="n">ArrayLike</span></div>
+</div>
+
 
 
 <span class="k">class</span> <span class="nc">SchrodingerFollmerInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
@@ -407,12 +426,17 @@ document.write(`
     <span class="n">drift</span><span class="p">:</span> <span class="n">ArrayLikeTree</span>
 
 
-<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">example_position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SchrodingerFollmerState</span><span class="p">:</span>
+<div class="viewcode-block" id="init">
+<a class="viewcode-back" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.init">[docs]</a>
+<span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">example_position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SchrodingerFollmerState</span><span class="p">:</span>
     <span class="n">zero</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">,</span> <span class="n">example_position</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">SchrodingerFollmerState</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="step"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.step">[docs]</a><span class="k">def</span> <span class="nf">step</span><span class="p">(</span>
+
+<div class="viewcode-block" id="step">
+<a class="viewcode-back" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.step">[docs]</a>
+<span class="k">def</span> <span class="nf">step</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">SchrodingerFollmerState</span><span class="p">,</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
@@ -475,7 +499,10 @@ document.write(`
     <span class="k">return</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">SchrodingerFollmerInfo</span><span class="p">(</span><span class="n">drift</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="sample"><a class="viewcode-back" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.sample">[docs]</a><span class="k">def</span> <span class="nf">sample</span><span class="p">(</span>
+
+<div class="viewcode-block" id="sample">
+<a class="viewcode-back" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.sample">[docs]</a>
+<span class="k">def</span> <span class="nf">sample</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
     <span class="n">initial_state</span><span class="p">:</span> <span class="n">SchrodingerFollmerState</span><span class="p">,</span>
     <span class="n">log_density_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
@@ -520,6 +547,7 @@ document.write(`
     <span class="n">_</span><span class="p">,</span> <span class="n">final_states</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">fori_loop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_states</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">final_states</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_log_fn_corrected</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">):</span>

@@ -1,9 +1,8 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../../../" >
 
   <head>
     <meta charset="utf-8" />
@@ -28,23 +27,23 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
   <script src="../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
 
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
-    <script src="../../../_static/design-tabs.js"></script>
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../../../_static/design-tabs.js?v=36754332"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/dynamic_hmc';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -139,7 +138,18 @@
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
@@ -385,7 +395,9 @@ document.write(`
 <span class="p">]</span>
 
 
-<div class="viewcode-block" id="DynamicHMCState"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.DynamicHMCState">[docs]</a><span class="k">class</span> <span class="nc">DynamicHMCState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<div class="viewcode-block" id="DynamicHMCState">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.DynamicHMCState">[docs]</a>
+<span class="k">class</span> <span class="nc">DynamicHMCState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the dynamic HMC algorithm.</span>
 
 <span class="sd">    Adds a utility array for generating a pseudo or quasi-random sequence of</span>
@@ -393,18 +405,36 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="DynamicHMCState.position"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.DynamicHMCState.position">[docs]</a>    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
-<div class="viewcode-block" id="DynamicHMCState.logdensity"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.DynamicHMCState.logdensity">[docs]</a>    <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span></div>
-<div class="viewcode-block" id="DynamicHMCState.logdensity_grad"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.DynamicHMCState.logdensity_grad">[docs]</a>    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
-<div class="viewcode-block" id="DynamicHMCState.random_generator_arg"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.DynamicHMCState.random_generator_arg">[docs]</a>    <span class="n">random_generator_arg</span><span class="p">:</span> <span class="n">Array</span></div></div>
+<div class="viewcode-block" id="DynamicHMCState.position">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.DynamicHMCState.position">[docs]</a>
+    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+
+<div class="viewcode-block" id="DynamicHMCState.logdensity">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.DynamicHMCState.logdensity">[docs]</a>
+    <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="DynamicHMCState.logdensity_grad">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.DynamicHMCState.logdensity_grad">[docs]</a>
+    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+
+<div class="viewcode-block" id="DynamicHMCState.random_generator_arg">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.DynamicHMCState.random_generator_arg">[docs]</a>
+    <span class="n">random_generator_arg</span><span class="p">:</span> <span class="n">Array</span></div>
+</div>
 
 
-<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">random_generator_arg</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
+
+<div class="viewcode-block" id="init">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.init">[docs]</a>
+<span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">random_generator_arg</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
     <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">DynamicHMCState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">,</span> <span class="n">random_generator_arg</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.build_kernel">[docs]</a><span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span>
+
+<div class="viewcode-block" id="build_kernel">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.build_kernel">[docs]</a>
+<span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span>
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="n">next_random_arg_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
@@ -468,7 +498,10 @@ document.write(`
     <span class="k">return</span> <span class="n">kernel</span></div>
 
 
-<div class="viewcode-block" id="dynamic_hmc"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.dynamic_hmc">[docs]</a><span class="k">class</span> <span class="nc">dynamic_hmc</span><span class="p">:</span>
+
+<div class="viewcode-block" id="dynamic_hmc">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.dynamic_hmc">[docs]</a>
+<span class="k">class</span> <span class="nc">dynamic_hmc</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the dynamic HMC kernel.</span>
 
 <span class="sd">    Parameters</span>
@@ -498,8 +531,14 @@ document.write(`
 <span class="sd">    A ``SamplingAlgorithm``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="dynamic_hmc.init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.dynamic_hmc.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="dynamic_hmc.build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.dynamic_hmc.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_kernel</span><span class="p">)</span></div>
+<div class="viewcode-block" id="dynamic_hmc.init">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.dynamic_hmc.init">[docs]</a>
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="dynamic_hmc.build_kernel">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.dynamic_hmc.build_kernel">[docs]</a>
+    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_kernel</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -534,9 +573,13 @@ document.write(`
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="halton_sequence"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.halton_sequence">[docs]</a><span class="k">def</span> <span class="nf">halton_sequence</span><span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">max_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+
+<div class="viewcode-block" id="halton_sequence">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.halton_sequence">[docs]</a>
+<span class="k">def</span> <span class="nf">halton_sequence</span><span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">max_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="n">bit_masks</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">max_bits</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">i</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;i,i-&gt;&quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mod</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">bit_masks</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">bit_masks</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">rescale</span><span class="p">(</span><span class="n">mu</span><span class="p">):</span>

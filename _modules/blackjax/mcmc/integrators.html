@@ -1,9 +1,8 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../../../" >
 
   <head>
     <meta charset="utf-8" />
@@ -28,23 +27,23 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
   <script src="../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
 
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
-    <script src="../../../_static/design-tabs.js"></script>
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../../../_static/design-tabs.js?v=36754332"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/integrators';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -139,7 +138,18 @@
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
@@ -379,9 +389,9 @@ document.write(`
     <span class="s2">&quot;velocity_verlet&quot;</span><span class="p">,</span>
     <span class="s2">&quot;yoshida&quot;</span><span class="p">,</span>
     <span class="s2">&quot;implicit_midpoint&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;noneuclidean_leapfrog&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;noneuclidean_mclachlan&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;noneuclidean_yoshida&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;isokinetic_leapfrog&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;isokinetic_mclachlan&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;isokinetic_yoshida&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -604,7 +614,10 @@ document.write(`
 <span class="sd">clear whether this is the right tradeoff.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="n">velocity_verlet_cofficients</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span>
-<div class="viewcode-block" id="velocity_verlet"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.velocity_verlet">[docs]</a><span class="n">velocity_verlet</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">velocity_verlet_cofficients</span><span class="p">)</span></div>
+<div class="viewcode-block" id="velocity_verlet">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.velocity_verlet">[docs]</a>
+<span class="n">velocity_verlet</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">velocity_verlet_cofficients</span><span class="p">)</span></div>
+
 
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Two-stage palindromic symplectic integrator derived in :cite:p:`blanes2014numerical`.</span>
@@ -621,7 +634,10 @@ document.write(`
 <span class="n">a1</span> <span class="o">=</span> <span class="mf">0.5</span>
 <span class="n">b2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b1</span>
 <span class="n">mclachlan_cofficients</span> <span class="o">=</span> <span class="p">[</span><span class="n">b1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">]</span>
-<div class="viewcode-block" id="mclachlan"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.mclachlan">[docs]</a><span class="n">mclachlan</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">mclachlan_cofficients</span><span class="p">)</span></div>
+<div class="viewcode-block" id="mclachlan">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.mclachlan">[docs]</a>
+<span class="n">mclachlan</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">mclachlan_cofficients</span><span class="p">)</span></div>
+
 
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Three stages palindromic symplectic integrator derived in :cite:p:`mclachlan1995numerical`</span>
@@ -637,7 +653,10 @@ document.write(`
 <span class="n">b2</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">b1</span>
 <span class="n">a2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">a1</span>
 <span class="n">yoshida_cofficients</span> <span class="o">=</span> <span class="p">[</span><span class="n">b1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">]</span>
-<div class="viewcode-block" id="yoshida"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.yoshida">[docs]</a><span class="n">yoshida</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">yoshida_cofficients</span><span class="p">)</span></div>
+<div class="viewcode-block" id="yoshida">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.yoshida">[docs]</a>
+<span class="n">yoshida</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">yoshida_cofficients</span><span class="p">)</span></div>
+
 
 
 <span class="c1"># Intergrators with non Euclidean updates</span>
@@ -685,7 +704,7 @@ document.write(`
     <span class="k">return</span> <span class="n">next_momentum</span><span class="p">,</span> <span class="n">next_momentum</span><span class="p">,</span> <span class="n">kinetic_energy_change</span>
 
 
-<span class="k">def</span> <span class="nf">format_noneuclidean_state_output</span><span class="p">(</span>
+<span class="k">def</span> <span class="nf">format_isokinetic_state_output</span><span class="p">(</span>
     <span class="n">position</span><span class="p">,</span>
     <span class="n">momentum</span><span class="p">,</span>
     <span class="n">logdensity</span><span class="p">,</span>
@@ -701,8 +720,8 @@ document.write(`
     <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">generate_noneuclidean_integrator</span><span class="p">(</span><span class="n">cofficients</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">noneuclidean_integrator</span><span class="p">(</span>
+<span class="k">def</span> <span class="nf">generate_isokinetic_integrator</span><span class="p">(</span><span class="n">cofficients</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">isokinetic_integrator</span><span class="p">(</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneralIntegrator</span><span class="p">:</span>
         <span class="n">position_update_fn</span> <span class="o">=</span> <span class="n">euclidean_position_update_fn</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
@@ -710,16 +729,25 @@ document.write(`
             <span class="n">esh_dynamics_momentum_update_one_step</span><span class="p">,</span>
             <span class="n">position_update_fn</span><span class="p">,</span>
             <span class="n">cofficients</span><span class="p">,</span>
-            <span class="n">format_output_fn</span><span class="o">=</span><span class="n">format_noneuclidean_state_output</span><span class="p">,</span>
+            <span class="n">format_output_fn</span><span class="o">=</span><span class="n">format_isokinetic_state_output</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">one_step</span>
 
-    <span class="k">return</span> <span class="n">noneuclidean_integrator</span>
+    <span class="k">return</span> <span class="n">isokinetic_integrator</span>
 
 
-<div class="viewcode-block" id="noneuclidean_leapfrog"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.noneuclidean_leapfrog">[docs]</a><span class="n">noneuclidean_leapfrog</span> <span class="o">=</span> <span class="n">generate_noneuclidean_integrator</span><span class="p">(</span><span class="n">velocity_verlet_cofficients</span><span class="p">)</span></div>
-<div class="viewcode-block" id="noneuclidean_yoshida"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.noneuclidean_yoshida">[docs]</a><span class="n">noneuclidean_yoshida</span> <span class="o">=</span> <span class="n">generate_noneuclidean_integrator</span><span class="p">(</span><span class="n">yoshida_cofficients</span><span class="p">)</span></div>
-<div class="viewcode-block" id="noneuclidean_mclachlan"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.noneuclidean_mclachlan">[docs]</a><span class="n">noneuclidean_mclachlan</span> <span class="o">=</span> <span class="n">generate_noneuclidean_integrator</span><span class="p">(</span><span class="n">mclachlan_cofficients</span><span class="p">)</span></div>
+<div class="viewcode-block" id="isokinetic_leapfrog">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.isokinetic_leapfrog">[docs]</a>
+<span class="n">isokinetic_leapfrog</span> <span class="o">=</span> <span class="n">generate_isokinetic_integrator</span><span class="p">(</span><span class="n">velocity_verlet_cofficients</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="isokinetic_yoshida">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.isokinetic_yoshida">[docs]</a>
+<span class="n">isokinetic_yoshida</span> <span class="o">=</span> <span class="n">generate_isokinetic_integrator</span><span class="p">(</span><span class="n">yoshida_cofficients</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="isokinetic_mclachlan">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.isokinetic_mclachlan">[docs]</a>
+<span class="n">isokinetic_mclachlan</span> <span class="o">=</span> <span class="n">generate_isokinetic_integrator</span><span class="p">(</span><span class="n">mclachlan_cofficients</span><span class="p">)</span></div>
+
 
 <span class="n">FixedPointSolver</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span>
     <span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayTree</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ArrayTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]],</span> <span class="n">ArrayTree</span><span class="p">],</span>
@@ -772,7 +800,9 @@ document.write(`
     <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">aux</span><span class="p">,</span> <span class="n">FixedPointIterationInfo</span><span class="p">(</span><span class="n">success</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="n">iters</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="implicit_midpoint"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.implicit_midpoint">[docs]</a><span class="k">def</span> <span class="nf">implicit_midpoint</span><span class="p">(</span>
+<div class="viewcode-block" id="implicit_midpoint">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.implicit_midpoint">[docs]</a>
+<span class="k">def</span> <span class="nf">implicit_midpoint</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">kinetic_energy_fn</span><span class="p">:</span> <span class="n">KineticEnergy</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -832,6 +862,7 @@ document.write(`
         <span class="k">return</span> <span class="n">IntegratorState</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="o">*</span><span class="n">logdensity_and_grad_fn</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">one_step</span></div>
+
 </pre></div>
 
                 </article>

@@ -1,9 +1,8 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../../../" >
 
   <head>
     <meta charset="utf-8" />
@@ -28,23 +27,23 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
   <script src="../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
 
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
-    <script src="../../../_static/design-tabs.js"></script>
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../../../_static/design-tabs.js?v=36754332"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/nuts';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -139,7 +138,18 @@
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
@@ -383,10 +393,15 @@ document.write(`
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;NUTSInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;nuts&quot;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.init">[docs]</a><span class="n">init</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init</span></div>
+<div class="viewcode-block" id="init">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.init">[docs]</a>
+<span class="n">init</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init</span></div>
 
 
-<div class="viewcode-block" id="NUTSInfo"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo">[docs]</a><span class="k">class</span> <span class="nc">NUTSInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+
+<div class="viewcode-block" id="NUTSInfo">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo">[docs]</a>
+<span class="k">class</span> <span class="nc">NUTSInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on the NUTS transition.</span>
 
 <span class="sd">    This additional information can be used for debugging or computing</span>
@@ -416,18 +431,48 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="NUTSInfo.momentum"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.momentum">[docs]</a>    <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
-<div class="viewcode-block" id="NUTSInfo.is_divergent"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.is_divergent">[docs]</a>    <span class="n">is_divergent</span><span class="p">:</span> <span class="nb">bool</span></div>
-<div class="viewcode-block" id="NUTSInfo.is_turning"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.is_turning">[docs]</a>    <span class="n">is_turning</span><span class="p">:</span> <span class="nb">bool</span></div>
-<div class="viewcode-block" id="NUTSInfo.energy"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.energy">[docs]</a>    <span class="n">energy</span><span class="p">:</span> <span class="nb">float</span></div>
-<div class="viewcode-block" id="NUTSInfo.trajectory_leftmost_state"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.trajectory_leftmost_state">[docs]</a>    <span class="n">trajectory_leftmost_state</span><span class="p">:</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span></div>
-<div class="viewcode-block" id="NUTSInfo.trajectory_rightmost_state"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.trajectory_rightmost_state">[docs]</a>    <span class="n">trajectory_rightmost_state</span><span class="p">:</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span></div>
-<div class="viewcode-block" id="NUTSInfo.num_trajectory_expansions"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.num_trajectory_expansions">[docs]</a>    <span class="n">num_trajectory_expansions</span><span class="p">:</span> <span class="nb">int</span></div>
-<div class="viewcode-block" id="NUTSInfo.num_integration_steps"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.num_integration_steps">[docs]</a>    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span></div>
-<div class="viewcode-block" id="NUTSInfo.acceptance_rate"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.acceptance_rate">[docs]</a>    <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span></div></div>
+<div class="viewcode-block" id="NUTSInfo.momentum">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.momentum">[docs]</a>
+    <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+
+<div class="viewcode-block" id="NUTSInfo.is_divergent">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.is_divergent">[docs]</a>
+    <span class="n">is_divergent</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+<div class="viewcode-block" id="NUTSInfo.is_turning">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.is_turning">[docs]</a>
+    <span class="n">is_turning</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+<div class="viewcode-block" id="NUTSInfo.energy">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.energy">[docs]</a>
+    <span class="n">energy</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="NUTSInfo.trajectory_leftmost_state">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.trajectory_leftmost_state">[docs]</a>
+    <span class="n">trajectory_leftmost_state</span><span class="p">:</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span></div>
+
+<div class="viewcode-block" id="NUTSInfo.trajectory_rightmost_state">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.trajectory_rightmost_state">[docs]</a>
+    <span class="n">trajectory_rightmost_state</span><span class="p">:</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span></div>
+
+<div class="viewcode-block" id="NUTSInfo.num_trajectory_expansions">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.num_trajectory_expansions">[docs]</a>
+    <span class="n">num_trajectory_expansions</span><span class="p">:</span> <span class="nb">int</span></div>
+
+<div class="viewcode-block" id="NUTSInfo.num_integration_steps">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.num_integration_steps">[docs]</a>
+    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span></div>
+
+<div class="viewcode-block" id="NUTSInfo.acceptance_rate">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.acceptance_rate">[docs]</a>
+    <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span></div>
+</div>
 
 
-<div class="viewcode-block" id="build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.build_kernel">[docs]</a><span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span>
+
+<div class="viewcode-block" id="build_kernel">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.build_kernel">[docs]</a>
+<span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span>
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
 <span class="p">):</span>
@@ -500,7 +545,10 @@ document.write(`
     <span class="k">return</span> <span class="n">kernel</span></div>
 
 
-<div class="viewcode-block" id="nuts"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.nuts">[docs]</a><span class="k">class</span> <span class="nc">nuts</span><span class="p">:</span>
+
+<div class="viewcode-block" id="nuts">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.nuts">[docs]</a>
+<span class="k">class</span> <span class="nc">nuts</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the nuts kernel.</span>
 
 <span class="sd">    Examples</span>
@@ -556,8 +604,14 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="nuts.init"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.nuts.init">[docs]</a>    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
-<div class="viewcode-block" id="nuts.build_kernel"><a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.nuts.build_kernel">[docs]</a>    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_kernel</span><span class="p">)</span></div>
+<div class="viewcode-block" id="nuts.init">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.nuts.init">[docs]</a>
+    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="nuts.build_kernel">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.nuts.build_kernel">[docs]</a>
+    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_kernel</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -586,6 +640,7 @@ document.write(`
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">iterative_nuts_proposal</span><span class="p">(</span>

@@ -1,13 +1,12 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../" >
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Use custom gradients</title>
   
@@ -29,23 +28,23 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
   <script src="../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
 
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/doctools.js"></script>
-    <script src="../_static/sphinx_highlight.js"></script>
-    <script src="../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
-    <script src="../_static/design-tabs.js"></script>
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../_static/design-tabs.js?v=36754332"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/howto_custom_gradients';</script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -143,7 +142,18 @@
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
@@ -372,7 +382,7 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <section id="use-custom-gradients">
-<h1>Use custom gradients<a class="headerlink" href="#use-custom-gradients" title="Permalink to this heading">#</a></h1>
+<h1>Use custom gradients<a class="headerlink" href="#use-custom-gradients" title="Link to this heading">#</a></h1>
 <p>JAX provides a convenient <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> function to evaluate the gradient of any function build with JAX primitives. Which is why Blackjax uses <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> internally whenever it needs to evaluate the gradient. This should be enough for most applications, but sometimes you may need to provide your own gradients to blackjax for several reasons:</p>
 <ul class="simple">
 <li><p>You have a convenient closed-form expression for the gradient that is evaluated faster than the gradient that JAX produces;</p></li>
@@ -381,7 +391,7 @@ document.write(`
 </ul>
 <p>Do not despair! Blackjax covers these use cases using JAX’s <a class="reference external" href="https://jax.readthedocs.io/en/latest/notebooks/Custom_derivative_rules_for_Python_code.html">custom derivative dispatch</a>. In the following we will consider a very academic example, but which should be enough to understand the mechanics of how to set custom gradients with JAX.</p>
 <section id="functions-defined-as-the-minimum-of-another-function">
-<h2>Functions defined as the minimum of another function<a class="headerlink" href="#functions-defined-as-the-minimum-of-another-function" title="Permalink to this heading">#</a></h2>
+<h2>Functions defined as the minimum of another function<a class="headerlink" href="#functions-defined-as-the-minimum-of-another-function" title="Link to this heading">#</a></h2>
 <p>Functions can be defined as the minimum of another one, <span class="math notranslate nohighlight">\(f(x) = min_{y} g(x,y)\)</span>. Computing their gradients may be tedious, especially if the minimisation happens numerically rather than in closed form. We show how automatic derivatives can be modified on such examples, resulting in better overall efficiency and stability.</p>
 <p>Our example is taken from the theory of <a class="reference external" href="https://en.wikipedia.org/wiki/Convex_conjugate">convex conjugates</a>, used for example in optimal transport. Let’s consider the following function:</p>
 <p>$$
@@ -424,7 +434,7 @@ $$</p>
 </div>
 <p>Note the we also return the value of <span class="math notranslate nohighlight">\(y\)</span> where the minimum of <span class="math notranslate nohighlight">\(g\)</span> is achieved (this will be useful later).</p>
 <section id="trying-to-differentate-the-function-with-jax-grad">
-<h3>Trying to differentate the function with <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code><a class="headerlink" href="#trying-to-differentate-the-function-with-jax-grad" title="Permalink to this heading">#</a></h3>
+<h3>Trying to differentate the function with <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code><a class="headerlink" href="#trying-to-differentate-the-function-with-jax-grad" title="Link to this heading">#</a></h3>
 <p>The gradient of the function <span class="math notranslate nohighlight">\(f\)</span> is undefined for JAX, which cannot differentiate through <code class="docutils literal notranslate"><span class="pre">while</span></code> loops, and trying to compute it directly raises an error:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -444,7 +454,7 @@ $$</p>
 </div>
 </section>
 <section id="deriving-the-gradient-mathematically">
-<h3>Deriving the gradient mathematically<a class="headerlink" href="#deriving-the-gradient-mathematically" title="Permalink to this heading">#</a></h3>
+<h3>Deriving the gradient mathematically<a class="headerlink" href="#deriving-the-gradient-mathematically" title="Link to this heading">#</a></h3>
 <p>In order to avoid this, we can leverage the mathematical structure of <span class="math notranslate nohighlight">\(f(x) = -\min_y h(y) - \langle x, y\rangle\)</span>. Indeed, asumming that the minimum is unique and achieved at <span class="math notranslate nohighlight">\(y(x)\)</span> we have</p>
 <div class="math notranslate nohighlight">
 \[\begin{equation*}
@@ -463,7 +473,7 @@ $$</p>
 <p>i.e. the value of the derivative at <span class="math notranslate nohighlight">\(x\)</span> is the value <span class="math notranslate nohighlight">\(y(x)\)</span> at which the minimum of the function <span class="math notranslate nohighlight">\(g\)</span> is achieved.</p>
 </section>
 <section id="telling-jax-to-use-a-custom-gradient">
-<h3>Telling JAX to use a custom gradient<a class="headerlink" href="#telling-jax-to-use-a-custom-gradient" title="Permalink to this heading">#</a></h3>
+<h3>Telling JAX to use a custom gradient<a class="headerlink" href="#telling-jax-to-use-a-custom-gradient" title="Link to this heading">#</a></h3>
 <p>We can thus now tell JAX to compute the derivative of the function using the argmin using <code class="docutils literal notranslate"><span class="pre">jax.custom_vjp</span></code></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -504,7 +514,7 @@ $$</p>
 </div>
 </section>
 <section id="making-sure-the-result-is-correct">
-<h3>Making sure the result is correct<a class="headerlink" href="#making-sure-the-result-is-correct" title="Permalink to this heading">#</a></h3>
+<h3>Making sure the result is correct<a class="headerlink" href="#making-sure-the-result-is-correct" title="Link to this heading">#</a></h3>
 <p>The form of the function <span class="math notranslate nohighlight">\(g\)</span> was specifically chosen because we have a closed-form expression for <span class="math notranslate nohighlight">\(f\)</span> which is differentiable and will allow us to check the value of the previously defined gradient:</p>
 <p>$$
 \begin{align*}
@@ -556,7 +566,7 @@ $$</p>
 <p>They give close enough values! In other words, it suffices to know that the value of the gradient is the argmin to define a custom gradient function that gives good results.</p>
 </section>
 <section id="using-the-function-with-blackjax">
-<h3>Using the function with Blackjax<a class="headerlink" href="#using-the-function-with-blackjax" title="Permalink to this heading">#</a></h3>
+<h3>Using the function with Blackjax<a class="headerlink" href="#using-the-function-with-blackjax" title="Link to this heading">#</a></h3>
 <p>Let us now demonstrate that we can use <code class="docutils literal notranslate"><span class="pre">f_with_gradients</span></code> with Blackjax. We define a toy log-density function and use a gradient-based sampler:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -586,7 +596,7 @@ $$</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(HMCState(position=1.0, logdensity=Array(-2.5600991, dtype=float32), logdensity_grad=Array(-1.6666666, dtype=float32, weak_type=True)),
- HMCState(position=Array(0.85424685, dtype=float32, weak_type=True), logdensity=Array(-2.3412738, dtype=float32), logdensity_grad=Array(-1.3407387, dtype=float32, weak_type=True)))
+ HMCState(position=Array(0.9695572, dtype=float32, weak_type=True), logdensity=Array(-2.5104363, dtype=float32), logdensity_grad=Array(-1.5962516, dtype=float32, weak_type=True)))
 </pre></div>
 </div>
 </div>

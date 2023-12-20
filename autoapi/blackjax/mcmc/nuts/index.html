@@ -1,13 +1,12 @@
 
-
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../../../../" >
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>blackjax.mcmc.nuts</title>
   
@@ -29,23 +28,23 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
 <link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
   <script src="../../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
 
-    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
-    <script src="../../../../_static/doctools.js"></script>
-    <script src="../../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
-    <script src="../../../../_static/design-tabs.js"></script>
+    <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../../../../_static/design-tabs.js?v=36754332"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/mcmc/nuts/index';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
@@ -142,7 +141,18 @@
   
   
 </a></div>
-        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
@@ -390,12 +400,12 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <section id="module-blackjax.mcmc.nuts">
-<span id="blackjax-mcmc-nuts"></span><h1><a class="reference internal" href="#module-blackjax.mcmc.nuts" title="blackjax.mcmc.nuts"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.nuts</span></code></a><a class="headerlink" href="#module-blackjax.mcmc.nuts" title="Permalink to this heading">#</a></h1>
+<span id="blackjax-mcmc-nuts"></span><h1><a class="reference internal" href="#module-blackjax.mcmc.nuts" title="blackjax.mcmc.nuts"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.nuts</span></code></a><a class="headerlink" href="#module-blackjax.mcmc.nuts" title="Link to this heading">#</a></h1>
 <p>Public API for the NUTS Kernel</p>
 <section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">#</a></h2>
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h3>
+<h3>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.nuts.NUTSInfo" title="blackjax.mcmc.nuts.NUTSInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NUTSInfo</span></code></a></p></td>
@@ -408,7 +418,7 @@ document.write(`
 </table>
 </section>
 <section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
+<h3>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.nuts.build_kernel" title="blackjax.mcmc.nuts.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>([integrator, divergence_threshold])</p></td>
@@ -418,7 +428,7 @@ document.write(`
 </table>
 </section>
 <section id="attributes">
-<h3>Attributes<a class="headerlink" href="#attributes" title="Permalink to this heading">#</a></h3>
+<h3>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.nuts.init" title="blackjax.mcmc.nuts.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a></p></td>
@@ -428,12 +438,12 @@ document.write(`
 </table>
 <dl class="py data">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.init">
-<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.init" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.init" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.NUTSInfo">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">NUTSInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">NUTSInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo" title="Link to this definition">#</a></dt>
 <dd><p>Additional information on the NUTS transition.</p>
 <p>This additional information can be used for debugging or computing
 diagnostics.</p>
@@ -462,54 +472,54 @@ states in the full trajectory.</p>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.NUTSInfo.momentum">
-<span class="sig-name descname"><span class="pre">momentum</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.ArrayTree</span></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.momentum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.momentum" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">momentum</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.ArrayTree</span></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.momentum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.momentum" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.NUTSInfo.is_divergent">
-<span class="sig-name descname"><span class="pre">is_divergent</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.is_divergent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.is_divergent" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">is_divergent</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.is_divergent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.is_divergent" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.NUTSInfo.is_turning">
-<span class="sig-name descname"><span class="pre">is_turning</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.is_turning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.is_turning" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">is_turning</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.is_turning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.is_turning" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.NUTSInfo.energy">
-<span class="sig-name descname"><span class="pre">energy</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.energy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.energy" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">energy</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.energy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.energy" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.NUTSInfo.trajectory_leftmost_state">
-<span class="sig-name descname"><span class="pre">trajectory_leftmost_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.mcmc.integrators.IntegratorState</span></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.trajectory_leftmost_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.trajectory_leftmost_state" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">trajectory_leftmost_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.mcmc.integrators.IntegratorState</span></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.trajectory_leftmost_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.trajectory_leftmost_state" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.NUTSInfo.trajectory_rightmost_state">
-<span class="sig-name descname"><span class="pre">trajectory_rightmost_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.mcmc.integrators.IntegratorState</span></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.trajectory_rightmost_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.trajectory_rightmost_state" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">trajectory_rightmost_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.mcmc.integrators.IntegratorState</span></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.trajectory_rightmost_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.trajectory_rightmost_state" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.NUTSInfo.num_trajectory_expansions">
-<span class="sig-name descname"><span class="pre">num_trajectory_expansions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.num_trajectory_expansions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.num_trajectory_expansions" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">num_trajectory_expansions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.num_trajectory_expansions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.num_trajectory_expansions" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.NUTSInfo.num_integration_steps">
-<span class="sig-name descname"><span class="pre">num_integration_steps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.num_integration_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.num_integration_steps" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">num_integration_steps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.num_integration_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.num_integration_steps" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.NUTSInfo.acceptance_rate">
-<span class="sig-name descname"><span class="pre">acceptance_rate</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.acceptance_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.acceptance_rate" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">acceptance_rate</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#NUTSInfo.acceptance_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.NUTSInfo.acceptance_rate" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.build_kernel">
-<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.build_kernel" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.build_kernel" title="Link to this definition">#</a></dt>
 <dd><p>Build an iterative NUTS kernel.</p>
 <p>This algorithm is an iteration on the original NUTS algorithm <span id="id1">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span>
 with two major differences:</p>
@@ -542,7 +552,7 @@ a transition “divergent”.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.nuts">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nuts</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#nuts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.nuts" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nuts</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#nuts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.nuts" title="Link to this definition">#</a></dt>
 <dd><p>Implements the (basic) user interface for the nuts kernel.</p>
 <p class="rubric">Examples</p>
 <p>A new NUTS kernel can be initialized and used with the following code:</p>
@@ -585,12 +595,12 @@ commonly found in other libraries, and yet is arbitrary.</p></li>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.nuts.init">
-<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#nuts.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.nuts.init" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#nuts.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.nuts.init" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.nuts.build_kernel">
-<span class="sig-name descname"><span class="pre">build_kernel</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#nuts.build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.nuts.build_kernel" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#nuts.build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.nuts.build_kernel" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
