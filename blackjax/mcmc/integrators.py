@@ -26,9 +26,9 @@ __all__ = [
     "velocity_verlet",
     "yoshida",
     "implicit_midpoint",
-    "noneuclidean_leapfrog",
-    "noneuclidean_mclachlan",
-    "noneuclidean_yoshida",
+    "isokinetic_leapfrog",
+    "isokinetic_mclachlan",
+    "isokinetic_yoshida",
 ]
 
 
@@ -332,7 +332,7 @@ def esh_dynamics_momentum_update_one_step(
     return next_momentum, next_momentum, kinetic_energy_change
 
 
-def format_noneuclidean_state_output(
+def format_isokinetic_state_output(
     position,
     momentum,
     logdensity,
@@ -348,8 +348,8 @@ def format_noneuclidean_state_output(
     )
 
 
-def generate_noneuclidean_integrator(cofficients):
-    def noneuclidean_integrator(
+def generate_isokinetic_integrator(cofficients):
+    def isokinetic_integrator(
         logdensity_fn: Callable, *args, **kwargs
     ) -> GeneralIntegrator:
         position_update_fn = euclidean_position_update_fn(logdensity_fn)
@@ -357,16 +357,16 @@ def generate_noneuclidean_integrator(cofficients):
             esh_dynamics_momentum_update_one_step,
             position_update_fn,
             cofficients,
-            format_output_fn=format_noneuclidean_state_output,
+            format_output_fn=format_isokinetic_state_output,
         )
         return one_step
 
-    return noneuclidean_integrator
+    return isokinetic_integrator
 
 
-noneuclidean_leapfrog = generate_noneuclidean_integrator(velocity_verlet_cofficients)
-noneuclidean_yoshida = generate_noneuclidean_integrator(yoshida_cofficients)
-noneuclidean_mclachlan = generate_noneuclidean_integrator(mclachlan_cofficients)
+isokinetic_leapfrog = generate_isokinetic_integrator(velocity_verlet_cofficients)
+isokinetic_yoshida = generate_isokinetic_integrator(yoshida_cofficients)
+isokinetic_mclachlan = generate_isokinetic_integrator(mclachlan_cofficients)
 
 FixedPointSolver = Callable[
     [Callable[[ArrayTree], Tuple[ArrayTree, ArrayTree]], ArrayTree],
