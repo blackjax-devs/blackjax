@@ -20,7 +20,7 @@ from jax.flatten_util import ravel_pytree
 from jax.random import normal
 
 from blackjax.base import SamplingAlgorithm
-from blackjax.mcmc.integrators import IntegratorState, noneuclidean_mclachlan
+from blackjax.mcmc.integrators import IntegratorState, isokinetic_mclachlan
 from blackjax.types import ArrayLike, PRNGKey
 from blackjax.util import generate_unit_vector
 
@@ -154,7 +154,7 @@ class mclmc:
         logdensity_fn: Callable,
         L,
         step_size,
-        integrator=noneuclidean_mclachlan,
+        integrator=isokinetic_mclachlan,
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(logdensity_fn, integrator)
 

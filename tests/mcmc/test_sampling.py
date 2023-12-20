@@ -83,7 +83,7 @@ class LinearRegressionTest(chex.TestCase):
 
         kernel = blackjax.mcmc.mclmc.build_kernel(
             logdensity_fn=logdensity_fn,
-            integrator=blackjax.mcmc.integrators.noneuclidean_mclachlan,
+            integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
         )
 
         (
