@@ -27,7 +27,7 @@ from blackjax.mcmc import mclmc
 
 from blackjax.mcmc.integrators import _normalized_flatten_array
 
-#__all__ = ["MCLMCInfo", "init", "build_kernel", "mclmc"]
+#__all__ = ["Hyperparameters", "AdaptationState", "stage1"]
 
 
 class Hyperparameters(NamedTuple):
@@ -41,10 +41,21 @@ class AdaptationState(NamedTuple):
     cond: bool
     steps: int
     eevpd: float
+    eevpd_wanted: float
     history: Array
     
     hyperparameters: Any
     
+
+def to_dict(x):
+    return {'L': x[:, 0], 
+            'stepsize': x[:, 1],
+            'eevpd wanted': x[:, 2],
+            'eevpd observed': x[:, 3],
+            'equi full': x[:, 4],
+            'equi diag': x[:, 5],
+            'expected vals': x[:, 6:]
+            }
     
 
 def init(position, logdensity_fn):
@@ -83,7 +94,7 @@ def init_adap(num_steps, chains, delay_frac, position, alpha, d):
     
     history = jnp.concatenate((jnp.ones(1) * 1e50, jnp.ones(delay_num-1) * jnp.inf)) # loss history
     
-    return AdaptationState(True, 0, 1e-3, history, hyp)
+    return AdaptationState(True, 0, 1e-3, 1e-3, history, hyp)
 
 
 # if fullrank:
@@ -157,7 +168,7 @@ def nan_reject(nonans, old, new):
 
 
 
-def build_kernel1(sequential_mclmc_kerel, chains, fullrank, d, alpha = 1., C = 0.1):
+def build_kernel1(sequential_mclmc_kerel, max_iter, chains, fullrank, d, alpha = 1., C = 0.1):
 
     mclmc_kernel = parallelize_kernel(sequential_mclmc_kerel, chains)
     
@@ -196,17 +207,42 @@ def build_kernel1(sequential_mclmc_kerel, chains, fullrank, d, alpha = 1., C = 0
         
         # determine if we want to finish this stage (= if loss is no longer decreassing)
         history = jnp.concatenate((jnp.ones(1) * bias, adap_state.history[:-1]))
-        cond = adap_state.cond * (history[-1] > history[0])
+        decreasing = (history[-1] > history[0])
+        cond = decreasing and (adap_state.steps < max_iter)
     
-        return _state, AdaptationState(cond, adap_state.steps + 1, eevpd, history, hyp), rng_key_new
+        return _state, AdaptationState(cond, adap_state.steps + 1, eevpd, eevpd_wanted, history, hyp), rng_key_new
     
     
     return kernel
 
 
+def kernel_with_observables(kernel, observables):
 
-def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key):
-    
+
+    def _kernel(_state_all):
+        
+        state, adap, key = _state_all
+        key1, key = jax.random.split(key)
+        state_all = kernel((state, adap, key))    
+        
+        state, adap, key = state_all
+        hyp = adap.hyperparameters
+        
+        equi_full = equipartition_fullrank(state.position, state.logdensity_grad, key1)
+        equi_diag = equipartition_diagonal(state.position, state.logdensity_grad, key1)
+        
+        new_info = jnp.concatenate((jnp.array([hyp.L, hyp.step_size, adap.eevpd_wanted, adap.eevpd, equi_full, equi_diag]), 
+                                    jnp.average(observables(state.position), axis = 0)))
+
+        return state_all, new_info
+        
+
+    return _kernel
+
+
+
+def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, observables= jnp.square):
+    """observable: function taking position x and outputing O(x). We will store ensemble average of O(x) at each step"""
     
     delay_frac = 0.05
     C = 0.1
@@ -222,7 +258,9 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key):
         integrator= noneuclidean_leapfrog
     )
     
-    kernel = build_kernel1(sequential_kernel, chains, fullrank, d, alpha, C)
+    max_iter = num_steps
+    
+    kernel = build_kernel1(sequential_kernel, max_iter, chains, fullrank, d, alpha, C)
 
     # initialize 
     state = init(position=initial_position, logdensity_fn=logdensity_fn)
@@ -230,16 +268,32 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key):
 
     state_all = (state, adap_state, rng_key)
     cond = lambda state_all: state_all[1][0]
-
-    # if verbose:
-    #     diagnostics1 = []
-    #     state_all = mywhile(cond, kernel, state)
-    # else:
     
-    state_all = jax.lax.while_loop(cond, kernel, state_all)
+    if observables != None:
+        
+        num_info = 6 + jnp.average(observables(initial_position), axis = 0).shape[0]
+        _info = jnp.empty(shape = (max_iter, num_info))
+        
+        kernel = kernel_with_observables(kernel, observables)
+        counter = 0
+        while cond(state_all):
+            state_all, new_info = kernel(state_all)
+            _info = _info.at[counter].set(new_info)
+            counter += 1
 
-    state, adap_state, key = state_all
-    steps_left = num_steps - adap_state.steps
+        info = to_dict(_info[:counter])
+    
+        return info
+    
+    
+    else:
+
+        state_all = jax.lax.while_loop(cond, kernel, state_all)
+
+
+
+    # state, adap_state, key = state_all
+    # steps_left = num_steps - adap_state.steps
 
     
         
@@ -247,11 +301,5 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key):
         #hyp['eps'] *= jnp.sqrt(10.)
 
 
-
-def mywhile(cond_fun, body_fun, init_val):
-    val = init_val
-    while cond_fun(val):
-        val = body_fun(val)
-    return val
 
 
