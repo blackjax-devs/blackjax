@@ -185,38 +185,41 @@ def make_L_step_size_adaptation(
         ) * step_size_max  # if the proposed stepsize is above the stepsize where we have seen divergences
         params_new = params._replace(step_size=step_size)
 
-        return state, params_new, params_new, (time, x_average, step_size_max), success
+        adaptive_state = (time, x_average, step_size_max)
 
-    def update_kalman(x, state, outer_weight, success, step_size):
-        """kalman filter to estimate the size of the posterior"""
-        time, x_average, x_squared_average = state
+        return state, params_new, adaptive_state, success
+
+    def streaming_average(O, x, streaming_state, outer_weight, success, step_size):
+        """streaming average of f(x)"""
+        total, average = streaming_state
         weight = outer_weight * step_size * success
         zero_prevention = 1 - outer_weight
-        x_average = (time * x_average + weight * x) / (
-            time + weight + zero_prevention
-        )  # Update <f(x)> with a Kalman filter
-        x_squared_average = (time * x_squared_average + weight * jnp.square(x)) / (
-            time + weight + zero_prevention
-        )  # Update <f(x)> with a Kalman filter
-        time += weight
-        return (time, x_average, x_squared_average)
-
-    adap0 = (0.0, 0.0, jnp.inf)
+        average = (total * average + weight * O(x)) / (total + weight + zero_prevention)
+        total += weight
+        streaming_state = (total, average)
+        return streaming_state
 
     def step(iteration_state, weight_and_key):
         """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
 
         outer_weight, rng_key = weight_and_key
-        state, params, adaptive_state, kalman_state = iteration_state
-        state, params, params_final, adaptive_state, success = predictor(
+        state, params, adaptive_state, streaming_state = iteration_state
+
+        state, params, adaptive_state, success = predictor(
             state, params, adaptive_state, rng_key
         )
-        position, _ = ravel_pytree(state.position)
-        kalman_state = update_kalman(
-            position, kalman_state, outer_weight, success, params.step_size
+
+        # update the running average of x, x^2
+        streaming_state = streaming_average(
+            lambda x: jnp.array([x, jnp.square(x)]),
+            ravel_pytree(state.position)[0],
+            streaming_state,
+            outer_weight,
+            success,
+            params.step_size,
         )
 
-        return (state, params_final, adaptive_state, kalman_state), None
+        return (state, params, adaptive_state, streaming_state), None
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
         num_steps1, num_steps2 = int(num_steps * frac_tune1), int(
@@ -228,22 +231,25 @@ def make_L_step_size_adaptation(
         outer_weights = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
         # initial state of the kalman filter
-        kalman_state = (0.0, jnp.zeros(dim), jnp.zeros(dim))
 
         # run the steps
-        kalman_state = jax.lax.scan(
+        state, params, _, (_, average) = jax.lax.scan(
             step,
-            init=(state, params, adap0, kalman_state),
+            init=(
+                state,
+                params,
+                (0.0, 0.0, jnp.inf),
+                (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
+            ),
             xs=(outer_weights, L_step_size_adaptation_keys),
             length=num_steps1 + num_steps2,
         )[0]
-        state, params, _, kalman_state_output = kalman_state
 
         L = params.L
         # determine L
         if num_steps2 != 0.0:
-            _, F1, F2 = kalman_state_output
-            variances = F2 - jnp.square(F1)
+            x_average, x_squared_average = average[0], average[1]
+            variances = x_squared_average - jnp.square(x_average)
             L = jnp.sqrt(jnp.sum(variances))
 
         return state, MCLMCAdaptationState(L, params.step_size)
@@ -258,7 +264,6 @@ def make_adaptation_L(kernel, frac, Lfactor):
         num_steps = int(num_steps * frac)
         adaptation_L_keys = jax.random.split(key, num_steps)
 
-        # run kernel in the normal way
         def step(state, key):
             next_state, _ = kernel(
                 rng_key=key,
@@ -266,7 +271,6 @@ def make_adaptation_L(kernel, frac, Lfactor):
                 L=params.L,
                 step_size=params.step_size,
             )
-
             return next_state, next_state.position
 
         state, samples = jax.lax.scan(
