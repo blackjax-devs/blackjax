@@ -43,7 +43,7 @@ import jax
 import jax.numpy as jnp
 
 from datetime import date
-rng_key = jax.random.PRNGKey(int(date.today().strftime("%Y%m%d")))
+rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
 ```
 
 Oryx's approach, like Aesara's, is to implement probabilistic models as generative models and then apply transformations to get the log-probability density function. We begin with implementing a dense layer with normal prior probability on the weights and use the function `random_variable` to define random variables:

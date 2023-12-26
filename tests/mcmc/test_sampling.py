@@ -78,12 +78,12 @@ class LinearRegressionTest(chex.TestCase):
         init_key, tune_key, run_key = jax.random.split(key, 3)
 
         initial_state = blackjax.mcmc.mclmc.init(
-            x_initial=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
+            position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
         )
 
         kernel = blackjax.mcmc.mclmc.build_kernel(
             logdensity_fn=logdensity_fn,
-            integrator=blackjax.mcmc.integrators.noneuclidean_mclachlan,
+            integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
         )
 
         (
@@ -513,13 +513,9 @@ class LatentGaussianTest(chex.TestCase):
         from blackjax import mgrad_gaussian
 
         inference_algorithm = mgrad_gaussian(
-            lambda x: -0.5 * jnp.sum((x - 1.0) ** 2), self.C
-        )
-        inference_algorithm = inference_algorithm._replace(
-            step=functools.partial(
-                inference_algorithm.step,
-                delta=self.delta,
-            )
+            lambda x: -0.5 * jnp.sum((x - 1.0) ** 2),
+            covariance=self.C,
+            step_size=self.delta,
         )
 
         initial_state = inference_algorithm.init(jnp.zeros((1,)))
@@ -538,6 +534,11 @@ class LatentGaussianTest(chex.TestCase):
         np.testing.assert_allclose(
             np.mean(states.position[self.burnin :]), 2 / 3, rtol=1e-2, atol=1e-2
         )
+
+
+def rmhmc_static_mass_matrix_fn(position):
+    del position
+    return jnp.array([1.0])
 
 
 normal_test_cases = [
@@ -588,8 +589,8 @@ normal_test_cases = [
         "algorithm": blackjax.mala,
         "initial_position": 1.0,
         "parameters": {"step_size": 1e-1},
-        "num_sampling_steps": 20_000,
-        "burnin": 2_000,
+        "num_sampling_steps": 45_000,
+        "burnin": 5_000,
     },
     {
         "algorithm": blackjax.elliptical_slice,
@@ -624,6 +625,16 @@ normal_test_cases = [
         "num_sampling_steps": 20_000,
         "burnin": 2_000,
     },
+    {
+        "algorithm": blackjax.rmhmc,
+        "initial_position": jnp.array(3.0),
+        "parameters": {
+            "step_size": 1.0,
+            "num_integration_steps": 30,
+        },
+        "num_sampling_steps": 6000,
+        "burnin": 1_000,
+    },
 ]
 
 
@@ -650,6 +661,9 @@ class UnivariateNormalTest(chex.TestCase):
 
         if algorithm == blackjax.rmh:
             parameters["proposal_generator"] = rmh_proposal_distribution
+
+        if algorithm == blackjax.rmhmc:
+            parameters["mass_matrix"] = rmhmc_static_mass_matrix_fn
 
         inference_algorithm = algorithm(self.normal_logprob, **parameters)
         rng_key = self.key

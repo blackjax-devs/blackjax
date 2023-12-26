@@ -20,9 +20,9 @@ from jax.flatten_util import ravel_pytree
 from jax.random import normal
 
 from blackjax.base import SamplingAlgorithm
-from blackjax.mcmc.integrators import IntegratorState, noneuclidean_mclachlan
+from blackjax.mcmc.integrators import IntegratorState, isokinetic_mclachlan
 from blackjax.types import ArrayLike, PRNGKey
-from blackjax.util import generate_unit_vector, pytree_size
+from blackjax.util import generate_unit_vector
 
 __all__ = ["MCLMCInfo", "init", "build_kernel", "mclmc"]
 
@@ -44,12 +44,12 @@ class MCLMCInfo(NamedTuple):
     energy_change: float
 
 
-def init(x_initial: ArrayLike, logdensity_fn, rng_key):
-    l, g = jax.value_and_grad(logdensity_fn)(x_initial)
+def init(position: ArrayLike, logdensity_fn, rng_key):
+    l, g = jax.value_and_grad(logdensity_fn)(position)
 
     return IntegratorState(
-        position=x_initial,
-        momentum=generate_unit_vector(rng_key, x_initial),
+        position=position,
+        momentum=generate_unit_vector(rng_key, position),
         logdensity=l,
         logdensity_grad=g,
     )
@@ -85,7 +85,7 @@ def build_kernel(logdensity_fn, integrator):
 
 
         # Langevin-like noise
-        momentum, dim = partially_refresh_momentum(
+        momentum = partially_refresh_momentum(
             momentum=momentum, rng_key=rng_key, L=L, step_size=step_size
         )
 
@@ -94,7 +94,7 @@ def build_kernel(logdensity_fn, integrator):
         ), MCLMCInfo(
             logdensity=logdensity,
             energy_change=kinetic_change - logdensity + state.logdensity,
-            kinetic_change=kinetic_change * (dim - 1),
+            kinetic_change=kinetic_change,
         )
 
     return kernel
@@ -155,16 +155,15 @@ class mclmc:
         logdensity_fn: Callable,
         L,
         step_size,
-        integrator=noneuclidean_mclachlan,
-        seed=1,
+        integrator=isokinetic_mclachlan,
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(logdensity_fn, integrator)
 
+        def init_fn(position: ArrayLike, rng_key: PRNGKey):
+            return cls.init(position, logdensity_fn, rng_key)
+
         def update_fn(rng_key, state):
             return kernel(rng_key, state, L, step_size)
-
-        def init_fn(position: ArrayLike):
-            return cls.init(position, logdensity_fn, jax.random.PRNGKey(seed))
 
         return SamplingAlgorithm(init_fn, update_fn)
 
@@ -191,4 +190,4 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     dim = m.shape[0]
     nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
     z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
-    return unravel_fn((m + z) / jnp.linalg.norm(m + z)), dim
+    return unravel_fn((m + z) / jnp.linalg.norm(m + z))
