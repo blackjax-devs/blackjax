@@ -83,7 +83,6 @@ def build_kernel(logdensity_fn, integrator):
             state, step_size
         )
 
-
         # Langevin-like noise
         momentum = partially_refresh_momentum(
             momentum=momentum, rng_key=rng_key, L=L, step_size=step_size

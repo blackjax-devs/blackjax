@@ -16,18 +16,18 @@ from typing import Callable, Union
 
 import jax
 import jax.numpy as jnp
+from blackjax.mcmc.dynamic_hmc import DynamicHMCState, halton_sequence
 
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.trajectory as trajectory
 from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.hmc import HMCInfo, HMCState
 from blackjax.mcmc.proposal import safe_energy_diff, static_binomial_sampling
+
 # from blackjax.mcmc.trajectory import mhmchmc_energy
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_unit_vector
-from blackjax.mcmc.hmc import DynamicHMCState, HMCState, HMCInfo
-from blackjax.adaptation.chees_adaptation import _halton_sequence
-
 
 __all__ = [
     "init",
@@ -37,8 +37,6 @@ __all__ = [
     "mhmchmc",
     "dynamic_mhmchmc",
 ]
-
-
 
 
 def init(position: ArrayLikeTree, logdensity_fn: Callable):
@@ -54,7 +52,7 @@ def init_dynamic(
 
 
 def build_kernel(
-    integrator: Callable = integrators.noneuclidean_mclachlan,
+    integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
 ):
     """Build a HMC kernel.
@@ -99,20 +97,21 @@ def build_kernel(
             position, momentum, logdensity, logdensity_grad
         )
         proposal, info, _ = proposal_generator(key_integrator, integrator_state)
-        proposal = HMCState(
+        state = HMCState(
             proposal.position, proposal.logdensity, proposal.logdensity_grad
         )
 
-        return proposal, info
+        return state, info
 
     return kernel
 
 
 def build_dynamic_kernel(
-    integrator: Callable = integrators.noneuclidean_mclachlan,
+    integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+    # integration_steps_fn: Callable = lambda key: 10,
 ):
     """Build a Dynamic HMC kernel where the number of integration steps is chosen randomly.
 
@@ -148,7 +147,9 @@ def build_dynamic_kernel(
         num_integration_steps = integration_steps_fn(
             state.random_generator_arg, **integration_steps_kwargs
         )
-        mhmchmc_state = HMCState(state.position, state.logdensity, state.logdensity_grad)
+        mhmchmc_state = HMCState(
+            state.position, state.logdensity, state.logdensity_grad
+        )
         mhmchmc_proposal, info = mhmchmc_base(
             rng_key,
             mhmchmc_state,
@@ -168,6 +169,7 @@ def build_dynamic_kernel(
         )
 
     return kernel
+
 
 class mhmchmc:
     """Implements the (basic) user interface for the HMC kernel.
@@ -230,11 +232,11 @@ class mhmchmc:
         num_integration_steps: int,
         *,
         divergence_threshold: int = 1000,
-        integrator: Callable = integrators.noneuclidean_mclachlan,
+        integrator: Callable = integrators.isokinetic_mclachlan,
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(integrator, divergence_threshold)
 
-        def init_fn(position: ArrayLikeTree):
+        def init_fn(position: ArrayLikeTree, rng_key: PRNGKey = None):
             return cls.init(position, logdensity_fn)
 
         def step_fn(rng_key: PRNGKey, state):
@@ -285,7 +287,7 @@ class dynamic_mhmchmc:
         step_size: float,
         *,
         divergence_threshold: int = 1000,
-        integrator: Callable = integrators.noneuclidean_mclachlan,
+        integrator: Callable = integrators.isokinetic_mclachlan,
         next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
         integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
     ) -> SamplingAlgorithm:
@@ -293,8 +295,8 @@ class dynamic_mhmchmc:
             integrator, divergence_threshold, next_random_arg_fn, integration_steps_fn
         )
 
-        def init_fn(position: ArrayLikeTree, random_generator_arg: Array):
-            return cls.init(position, logdensity_fn, random_generator_arg)
+        def init_fn(position: ArrayLikeTree, rng_key: Array):
+            return cls.init(position, logdensity_fn, rng_key)
 
         def step_fn(rng_key: PRNGKey, state):
             return kernel(
@@ -305,7 +307,6 @@ class dynamic_mhmchmc:
             )
 
         return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
-
 
 
 def mhmchmc_proposal(
@@ -344,7 +345,12 @@ def mhmchmc_proposal(
     """
 
     def build_trajectory(state, step_size, num_integration_steps):
-        new_state, kinetic_changes = jax.lax.scan(f=lambda s, _: (integrator(s, step_size=step_size)), init=state, xs=None, length=num_integration_steps)
+        new_state, kinetic_changes = jax.lax.scan(
+            f=lambda s, _: (integrator(s, step_size=step_size)),
+            init=state,
+            xs=None,
+            length=num_integration_steps,
+        )
         return new_state, jnp.sum(kinetic_changes)
 
     mhmchmc_energy_fn = lambda state, kinetic_energy: state.logdensity + kinetic_energy
@@ -353,7 +359,9 @@ def mhmchmc_proposal(
         rng_key, state: integrators.IntegratorState
     ) -> tuple[integrators.IntegratorState, HMCInfo, ArrayTree]:
         """Generate a new chain state."""
-        end_state, kinetic_energy = build_trajectory(state, step_size, num_integration_steps)
+        end_state, kinetic_energy = build_trajectory(
+            state, step_size, num_integration_steps
+        )
         end_state = flip_momentum(end_state)
         proposal_energy = mhmchmc_energy_fn(state, kinetic_energy)
         new_energy = mhmchmc_energy_fn(end_state, kinetic_energy)
@@ -398,17 +406,15 @@ def flip_momentum(
 
 
 def rescale(mu):
-    """returns s, such that 
-        round(U(0, 1) * s + 0.5)
-       has expected value mu.    
+    """returns s, such that
+     round(U(0, 1) * s + 0.5)
+    has expected value mu.
     """
-    k = jnp.floor(2 * mu -1)
-    x = k * (mu - 0.5 *(k+1)) / (k + 1 - mu)
+    k = jnp.floor(2 * mu - 1)
+    x = k * (mu - 0.5 * (k + 1)) / (k + 1 - mu)
     return k + x
-    
+
 
 def trajectory_length(t, mu):
     s = rescale(mu)
-    return jnp.rint(0.5 + _halton_sequence(t) * s)
-
-
+    return jnp.rint(0.5 + halton_sequence(t) * s)

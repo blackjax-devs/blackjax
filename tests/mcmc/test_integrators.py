@@ -7,14 +7,15 @@ import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest, parameterized
 from jax.flatten_util import ravel_pytree
-<<<<<<< HEAD
-import blackjax
-=======
+
 from scipy.special import ellipj
->>>>>>> main
+
 
 import blackjax.mcmc.integrators as integrators
-from blackjax.mcmc.integrators import esh_dynamics_momentum_update_one_step, noneuclidean_mclachlan
+from blackjax.mcmc.integrators import (
+    esh_dynamics_momentum_update_one_step,
+    isokinetic_mclachlan,
+)
 from blackjax.util import generate_unit_vector
 
 

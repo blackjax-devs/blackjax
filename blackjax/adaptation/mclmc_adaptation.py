@@ -384,7 +384,7 @@ def mhmchmc_find_L_and_step_size(
     return state, params
 
 
-def make_L_step_size_adaptation(
+def mhmchmc_make_L_step_size_adaptation(
     kernel,
     dim,
     frac_tune1,
@@ -505,7 +505,7 @@ def make_L_step_size_adaptation(
     return L_step_size_adaptation
 
 
-def make_adaptation_L(kernel, frac, Lfactor):
+def mhmchmc_make_adaptation_L(kernel, frac, Lfactor):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
     def adaptation_L(state, params, num_steps, key):
@@ -539,17 +539,3 @@ def make_adaptation_L(kernel, frac, Lfactor):
     return adaptation_L
 
 
-def handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_change):
-    """if there are nans, let's reduce the stepsize, and not update the state. The
-    function returns the old state in this case."""
-
-    reduced_step_size = 0.8
-    p, unravel_fn = ravel_pytree(next_state.position)
-    nonans = jnp.all(jnp.isfinite(p))
-    state, step_size, kinetic_change = jax.tree_util.tree_map(
-        lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old),
-        (next_state, step_size_max, kinetic_change),
-        (previous_state, step_size * reduced_step_size, 0.0),
-    )
-
-    return nonans, state, step_size, kinetic_change
