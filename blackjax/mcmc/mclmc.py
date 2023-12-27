@@ -45,8 +45,10 @@ class MCLMCInfo(NamedTuple):
 
 
 def init(position: ArrayLike, logdensity_fn, rng_key):
-    if pytree_size(position)<2:
-        raise ValueError("The target distribution must have more than 1 dimension for MCLMC.")
+    if pytree_size(position) < 2:
+        raise ValueError(
+            "The target distribution must have more than 1 dimension for MCLMC."
+        )
     l, g = jax.value_and_grad(logdensity_fn)(position)
 
     return IntegratorState(
