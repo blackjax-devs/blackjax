@@ -18,6 +18,7 @@ from typing import NamedTuple
 import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
+from blackjax.adaptation.step_size import dual_averaging_adaptation
 
 from blackjax.diagnostics import effective_sample_size
 from blackjax.util import pytree_size
@@ -299,8 +300,8 @@ def handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_ch
     return nonans, state, step_size, kinetic_change
 
 
-# TODO: currently a duplicate of the above: should be modified
-def mhmchmc_find_L_and_step_size(
+
+def mclmc_find_L_and_step_size(
     mclmc_kernel,
     num_steps,
     state,
@@ -356,7 +357,7 @@ def mhmchmc_find_L_and_step_size(
         initial_state = MCMCState(position=0, momentum=1)
 
         # Generate a random number generator key
-        rng_key = jax.random.PRNGKey(0)
+        rng_key = jax.random.key(0)
 
         # Find the optimal parameters for the MCLMC algorithm
         final_state, final_params = mclmc_find_L_and_step_size(
@@ -388,7 +389,7 @@ def mhmchmc_find_L_and_step_size(
     return state, params
 
 
-def mhmchmc_make_L_step_size_adaptation(
+def make_L_step_size_adaptation(
     kernel,
     dim,
     frac_tune1,
@@ -401,11 +402,25 @@ def mhmchmc_make_L_step_size_adaptation(
 
     decay_rate = (num_effective_samples - 1.0) / (num_effective_samples + 1.0)
 
-    def predictor(previous_state, params, adaptive_state, rng_key):
-        """does one step with the dynamics and updates the prediction for the optimal stepsize
-        Designed for the unadjusted MCHMC"""
+    init, update, final = dual_averaging_adaptation(
+        target_acceptance_rate=0.65
+    )
 
-        time, x_average, step_size_max = adaptive_state
+    def streaming_average(O, x, streaming_state, outer_weight, success, step_size):
+        """streaming average of f(x)"""
+        total, average = streaming_state
+        weight = outer_weight * step_size * success
+        zero_prevention = 1 - outer_weight
+        average = (total * average + weight * O(x)) / (total + weight + zero_prevention)
+        total += weight
+        streaming_state = (total, average)
+        return streaming_state
+
+    def step(iteration_state, weight_and_key):
+        """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
+
+        outer_weight, rng_key = weight_and_key
+        previous_state, params, adaptive_state, streaming_state = iteration_state
 
         # dynamics
         next_state, info = kernel(
@@ -423,58 +438,26 @@ def mhmchmc_make_L_step_size_adaptation(
             info.energy_change,
         )
 
-        # Warning: var = 0 if there were nans, but we will give it a very small weight
-        xi = (
-            jnp.square(energy_change) / (dim * desired_energy_var)
-        ) + 1e-8  # 1e-8 is added to avoid divergences in log xi
-        weight = jnp.exp(
-            -0.5 * jnp.square(jnp.log(xi) / (6.0 * trust_in_estimate))
-        )  # the weight reduces the impact of stepsizes which are much larger on much smaller than the desired one.
-
-        x_average = decay_rate * x_average + weight * (
-            xi / jnp.power(params.step_size, 6.0)
-        )
-        time = decay_rate * time + weight
-        step_size = jnp.power(
-            x_average / time, -1.0 / 6.0
-        )  # We use the Var[E] = O(eps^6) relation here.
-        step_size = (step_size < step_size_max) * step_size + (
-            step_size > step_size_max
-        ) * step_size_max  # if the proposed stepsize is above the stepsize where we have seen divergences
-        params_new = params._replace(step_size=step_size)
-
-        return state, params_new, params_new, (time, x_average, step_size_max), success
-
-    def update_kalman(x, state, outer_weight, success, step_size):
-        """kalman filter to estimate the size of the posterior"""
-        time, x_average, x_squared_average = state
-        weight = outer_weight * step_size * success
-        zero_prevention = 1 - outer_weight
-        x_average = (time * x_average + weight * x) / (
-            time + weight + zero_prevention
-        )  # Update <f(x)> with a Kalman filter
-        x_squared_average = (time * x_squared_average + weight * jnp.square(x)) / (
-            time + weight + zero_prevention
-        )  # Update <f(x)> with a Kalman filter
-        time += weight
-        return (time, x_average, x_squared_average)
-
-    adap0 = (0.0, 0.0, jnp.inf)
-
-    def step(iteration_state, weight_and_key):
-        """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
-
-        outer_weight, rng_key = weight_and_key
-        state, params, adaptive_state, kalman_state = iteration_state
-        state, params, params_final, adaptive_state, success = predictor(
-            state, params, adaptive_state, rng_key
-        )
-        position, _ = ravel_pytree(state.position)
-        kalman_state = update_kalman(
-            position, kalman_state, outer_weight, success, params.step_size
+        adaptive_state = update(
+            adaptive_state, info.acceptance_rate
         )
 
-        return (state, params_final, adaptive_state, kalman_state), None
+        step_size = jnp.exp(adaptive_state.log_step_size)
+
+        # update the running average of x, x^2
+        streaming_state = streaming_average(
+            lambda x: jnp.array([x, jnp.square(x)]),
+            ravel_pytree(state.position)[0],
+            streaming_state,
+            outer_weight,
+            success,
+            step_size,
+        )
+
+        params = params._replace(step_size=step_size)
+
+        return (state, params, adaptive_state, streaming_state), None
+    
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
         num_steps1, num_steps2 = int(num_steps * frac_tune1), int(
@@ -486,22 +469,27 @@ def mhmchmc_make_L_step_size_adaptation(
         outer_weights = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
         # initial state of the kalman filter
-        kalman_state = (0.0, jnp.zeros(dim), jnp.zeros(dim))
+
+        init_adaptive_state = init(params.step_size)
 
         # run the steps
-        kalman_state = jax.lax.scan(
+        state, params, _, (_, average) = jax.lax.scan(
             step,
-            init=(state, params, adap0, kalman_state),
+            init=(
+                state,
+                params,
+                init_adaptive_state,
+                (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
+            ),
             xs=(outer_weights, L_step_size_adaptation_keys),
             length=num_steps1 + num_steps2,
         )[0]
-        state, params, _, kalman_state_output = kalman_state
 
         L = params.L
         # determine L
         if num_steps2 != 0.0:
-            _, F1, F2 = kalman_state_output
-            variances = F2 - jnp.square(F1)
+            x_average, x_squared_average = average[0], average[1]
+            variances = x_squared_average - jnp.square(x_average)
             L = jnp.sqrt(jnp.sum(variances))
 
         return state, MCLMCAdaptationState(L, params.step_size)
@@ -509,14 +497,13 @@ def mhmchmc_make_L_step_size_adaptation(
     return L_step_size_adaptation
 
 
-def mhmchmc_make_adaptation_L(kernel, frac, Lfactor):
+def make_adaptation_L(kernel, frac, Lfactor):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
     def adaptation_L(state, params, num_steps, key):
         num_steps = int(num_steps * frac)
         adaptation_L_keys = jax.random.split(key, num_steps)
 
-        # run kernel in the normal way
         def step(state, key):
             next_state, _ = kernel(
                 rng_key=key,
@@ -524,7 +511,6 @@ def mhmchmc_make_adaptation_L(kernel, frac, Lfactor):
                 L=params.L,
                 step_size=params.step_size,
             )
-
             return next_state, next_state.position
 
         state, samples = jax.lax.scan(
@@ -541,5 +527,10 @@ def mhmchmc_make_adaptation_L(kernel, frac, Lfactor):
         )
 
     return adaptation_L
+
+
+
+
+
 
 
