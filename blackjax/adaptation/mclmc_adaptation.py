@@ -301,7 +301,11 @@ def handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_ch
 
 
 
-def mclmc_find_L_and_step_size(
+
+
+
+
+def mhmchmc_find_L_and_step_size(
     mclmc_kernel,
     num_steps,
     state,
@@ -314,11 +318,11 @@ def mclmc_find_L_and_step_size(
     num_effective_samples=150,
 ):
     """
-    Finds the optimal value of the parameters for the MCLMC algorithm.
+    Finds the optimal value of the parameters for the MH-MCHMC algorithm.
 
     Parameters
     ----------
-    mclmc_kernel
+    mchmc_kernel
         The kernel function used for the MCMC algorithm.
     num_steps
         The number of MCMC steps that will subsequently be run, after tuning.
@@ -342,68 +346,38 @@ def mclmc_find_L_and_step_size(
     Returns
     -------
     A tuple containing the final state of the MCMC algorithm and the final hyperparameters.
-
-
-    Examples
-    -------
-
-    .. code::
-
-        # Define the kernel function
-        def kernel(x):
-            return x ** 2
-
-        # Define the initial state
-        initial_state = MCMCState(position=0, momentum=1)
-
-        # Generate a random number generator key
-        rng_key = jax.random.key(0)
-
-        # Find the optimal parameters for the MCLMC algorithm
-        final_state, final_params = mclmc_find_L_and_step_size(
-            mclmc_kernel=kernel,
-            num_steps=1000,
-            state=initial_state,
-            rng_key=rng_key
-        )
     """
+
     dim = pytree_size(state.position)
     params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.25)
     part1_key, part2_key = jax.random.split(rng_key, 2)
 
-    state, params = make_L_step_size_adaptation(
+    state, params = mhmchmc_make_L_step_size_adaptation(
         kernel=mclmc_kernel,
         dim=dim,
         frac_tune1=frac_tune1,
         frac_tune2=frac_tune2,
-        desired_energy_var=desired_energy_var,
-        trust_in_estimate=trust_in_estimate,
-        num_effective_samples=num_effective_samples,
     )(state, params, num_steps, part1_key)
 
     if frac_tune3 != 0:
-        state, params = make_adaptation_L(mclmc_kernel, frac=frac_tune3, Lfactor=0.4)(
+        state, params = mhmchmc_make_adaptation_L(mclmc_kernel, frac=frac_tune3, Lfactor=0.4)(
             state, params, num_steps, part2_key
         )
 
     return state, params
 
 
-def make_L_step_size_adaptation(
+def mhmchmc_make_L_step_size_adaptation(
     kernel,
     dim,
     frac_tune1,
     frac_tune2,
-    desired_energy_var=1e-3,
-    trust_in_estimate=1.5,
-    num_effective_samples=150,
 ):
     """Adapts the stepsize and L of the MCLMC kernel. Designed for the unadjusted MCLMC"""
 
-    decay_rate = (num_effective_samples - 1.0) / (num_effective_samples + 1.0)
 
     init, update, final = dual_averaging_adaptation(
-        target_acceptance_rate=0.65
+        target=0.65
     )
 
     def streaming_average(O, x, streaming_state, outer_weight, success, step_size):
@@ -422,20 +396,27 @@ def make_L_step_size_adaptation(
         outer_weight, rng_key = weight_and_key
         previous_state, params, adaptive_state, streaming_state = iteration_state
 
+        step_size_max = 1.0
+
         # dynamics
         next_state, info = kernel(
             rng_key=rng_key,
             state=previous_state,
-            L=params.L,
+            # L=params.L,
+            num_integration_steps=50,
+            # params.L//params.step_size,
             step_size=params.step_size,
         )
+
+
+
         # step updating
         success, state, step_size_max, energy_change = handle_nans(
             previous_state,
             next_state,
             params.step_size,
             step_size_max,
-            info.energy_change,
+            info.energy,
         )
 
         adaptive_state = update(
@@ -493,23 +474,25 @@ def make_L_step_size_adaptation(
             L = jnp.sqrt(jnp.sum(variances))
 
         return state, MCLMCAdaptationState(L, params.step_size)
-
+    
     return L_step_size_adaptation
 
 
-def make_adaptation_L(kernel, frac, Lfactor):
+
+def mhmchmc_make_adaptation_L(kernel, frac, Lfactor):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
     def adaptation_L(state, params, num_steps, key):
         num_steps = int(num_steps * frac)
         adaptation_L_keys = jax.random.split(key, num_steps)
 
+
         def step(state, key):
             next_state, _ = kernel(
                 rng_key=key,
                 state=state,
-                L=params.L,
                 step_size=params.step_size,
+                num_integration_steps=5.0,
             )
             return next_state, next_state.position
 
@@ -527,6 +510,9 @@ def make_adaptation_L(kernel, frac, Lfactor):
         )
 
     return adaptation_L
+
+
+
 
 
 

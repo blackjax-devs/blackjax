@@ -55,7 +55,7 @@ def build_kernel(
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
 ):
-    """Build a HMC kernel.
+    """Build an MHMCHMC kernel.
 
     Parameters
     ----------
