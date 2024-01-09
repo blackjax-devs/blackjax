@@ -344,14 +344,23 @@ def mhmchmc_proposal(
 
     """
 
+    def step(i, vars):
+        state, kinetic_energy = vars
+        next_state, next_kinetic_energy = integrator(state, step_size=step_size)
+        return next_state, kinetic_energy + next_kinetic_energy
+
     def build_trajectory(state, step_size, num_integration_steps):
-        new_state, kinetic_changes = jax.lax.scan(
-            f=lambda s, _: (integrator(s, step_size=step_size)),
-            init=state,
-            xs=None,
-            length=num_integration_steps,
-        )
-        return new_state, jnp.sum(kinetic_changes)
+        # new_state, kinetic_changes = jax.lax.scan(
+        #     f=lambda s, _: (integrator(s, step_size=step_size)),
+        #     init=state,
+        #     xs=None,
+        #     length=num_integration_steps,
+        # )
+        
+        # return 
+        print(type(num_integration_steps))
+        return jax.lax.fori_loop(0*num_integration_steps, num_integration_steps, step, (state, 0))
+        # return new_state, jnp.sum(kinetic_changes)
 
     mhmchmc_energy_fn = lambda state, kinetic_energy: state.logdensity + kinetic_energy
 

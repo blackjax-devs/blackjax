@@ -403,8 +403,7 @@ def mhmchmc_make_L_step_size_adaptation(
             rng_key=rng_key,
             state=previous_state,
             # L=params.L,
-            num_integration_steps=50,
-            # params.L//params.step_size,
+            num_integration_steps=params.L//1,
             step_size=params.step_size,
         )
 
@@ -422,6 +421,7 @@ def mhmchmc_make_L_step_size_adaptation(
         adaptive_state = update(
             adaptive_state, info.acceptance_rate
         )
+
 
         step_size = jnp.exp(adaptive_state.log_step_size)
 
@@ -486,13 +486,13 @@ def mhmchmc_make_adaptation_L(kernel, frac, Lfactor):
         num_steps = int(num_steps * frac)
         adaptation_L_keys = jax.random.split(key, num_steps)
 
-
+        
         def step(state, key):
             next_state, _ = kernel(
                 rng_key=key,
                 state=state,
                 step_size=params.step_size,
-                num_integration_steps=5.0,
+                num_integration_steps=params.L//params.step_size,
             )
             return next_state, next_state.position
 
