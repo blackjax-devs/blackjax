@@ -115,12 +115,46 @@ def run_mclmc(logdensity_fn, num_steps, initial_position):
 
     print(blackjax_mclmc_sampler_params)
 
+def compare_static_dynamic():
 
-run_mclmc(logdensity_fn, num_steps, initial_position)
+    step_size = 1e-3
+    L = 1.0
+
+    initial_position = jnp.array([1.0, 1.0])
+
+    alg_static = blackjax.mcmc.mhmchmc.mhmchmc(
+        logdensity_fn=logdensity_fn,
+        step_size=step_size,
+        num_integration_steps=L//step_size,
+    )
+
+    initial_state_static = alg_static.init(initial_position)
+    print(alg_static.step(state=initial_state_static, rng_key=jax.random.PRNGKey(0))[0].position)
+
+
+
+
+
+
+    alg_dynamic = blackjax.mcmc.mhmchmc.dynamic_mhmchmc(
+        logdensity_fn=logdensity_fn,
+        step_size=step_size,
+        # integration_steps_fn = lambda key: jax.random.randint(key, (), 1, 10),
+        integration_steps_fn = lambda key: L//step_size,
+    )
+
+    initial_state_dynamic = alg_dynamic.init(initial_position, jax.random.PRNGKey(0))
+
+    print(alg_dynamic.step(state=initial_state_dynamic, rng_key=jax.random.PRNGKey(0))[0].position)
+
+compare_static_dynamic()
+
+
+# run_mclmc(logdensity_fn, num_steps, initial_position)
 
 # out = run_hmc(initial_position)
-out = run_mhmchmc(initial_position)
-print(out.position.mean(axis=0) )
+# out = run_mhmchmc(initial_position)
+# print(out.position.mean(axis=0) )
 
 
 
