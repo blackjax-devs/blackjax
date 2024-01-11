@@ -150,19 +150,33 @@ def build_dynamic_kernel(
         mhmchmc_state = HMCState(
             state.position, state.logdensity, state.logdensity_grad
         )
-        mhmchmc_proposal, info = mhmchmc_base(
-            rng_key,
-            mhmchmc_state,
-            logdensity_fn,
+
+        proposal_generator = mhmchmc_proposal(
+            integrator(logdensity_fn),
             step_size,
             num_integration_steps,
+            divergence_threshold,
         )
+
+        key_momentum, key_integrator = jax.random.split(rng_key, 2)
+
+        position, logdensity, logdensity_grad = mhmchmc_state
+        momentum = generate_unit_vector(key_momentum, position)
+
+        integrator_state = integrators.IntegratorState(
+            position, momentum, logdensity, logdensity_grad
+        )
+        proposal, info, _ = proposal_generator(key_integrator, integrator_state)
+        proposal = HMCState(
+            proposal.position, proposal.logdensity, proposal.logdensity_grad
+        )
+
         next_random_arg = next_random_arg_fn(state.random_generator_arg)
         return (
             DynamicHMCState(
-                mhmchmc_proposal.position,
-                mhmchmc_proposal.logdensity,
-                mhmchmc_proposal.logdensity_grad,
+                proposal.position,
+                proposal.logdensity,
+                proposal.logdensity_grad,
                 next_random_arg,
             ),
             info,
