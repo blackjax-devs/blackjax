@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 import blackjax
-from blackjax.mcmc.mhmchmc import dynamic_mhmchmc, mhmchmc
+from blackjax.mcmc.mhmchmc import mhmchmc
 from blackjax.mcmc.hmc import hmc
 from blackjax.mcmc.dynamic_hmc import dynamic_hmc
 from blackjax.mcmc.integrators import isokinetic_mclachlan
@@ -41,65 +41,17 @@ def run_hmc(initial_position):
     
     return out
 
-def run_mhmchmc(initial_position):
-
-    key = jax.random.PRNGKey(0)
-    init_key, tune_key, run_key = jax.random.split(key, 3)
-
-
-    initial_state = blackjax.mcmc.mhmchmc.init(
-        position=initial_position, logdensity_fn=logdensity_fn
-    )
-
-    kernel = lambda rng_key, state, num_integration_steps, step_size: blackjax.mcmc.mhmchmc.build_kernel(
-                integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
-            )(rng_key=rng_key, state=state, num_integration_steps=num_integration_steps, step_size=step_size, logdensity_fn=logdensity_fn)
-
-    (
-        blackjax_state_after_tuning,
-        blackjax_mclmc_sampler_params,
-    ) = blackjax.adaptation.mclmc_adaptation.mhmchmc_find_L_and_step_size(
-        mclmc_kernel=kernel,
-        num_steps=num_steps,
-        state=initial_state,
-        rng_key=tune_key,
-    )
-
-
-    # step_size = 1.0784992
-    # L = 1.7056025
-    step_size = blackjax_mclmc_sampler_params.step_size
-    L = blackjax_mclmc_sampler_params.L
-
-
-    alg = blackjax.mcmc.mhmchmc.mhmchmc(
-        logdensity_fn=logdensity_fn,
-        step_size=step_size,
-        num_integration_steps=L//step_size,
-    )
-
-    _, out, info = run_inference_algorithm(
-        rng_key=run_key,
-        initial_state_or_position=initial_position,
-        inference_algorithm=alg,
-        num_steps=num_steps,  
-        progress_bar=True)
-    
-    # print(info.acceptance_rate)
-    
-    return out
-
 def run_mhmchmc_dynamic(initial_position):
 
     key = jax.random.PRNGKey(0)
     init_key, tune_key, run_key = jax.random.split(key, 3)
 
 
-    initial_state = blackjax.mcmc.mhmchmc.init_dynamic(
+    initial_state = blackjax.mcmc.mhmchmc.init(
         position=initial_position, logdensity_fn=logdensity_fn, random_generator_arg=init_key
     )
 
-    kernel = lambda rng_key, state, num_integration_steps, step_size: blackjax.mcmc.mhmchmc.build_dynamic_kernel(
+    kernel = lambda rng_key, state, num_integration_steps, step_size: blackjax.mcmc.mhmchmc.build_kernel(
                 integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
                 integration_steps_fn = lambda key: num_integration_steps, 
             )(
@@ -125,10 +77,10 @@ def run_mhmchmc_dynamic(initial_position):
     L = blackjax_mclmc_sampler_params.L
 
 
-    alg = blackjax.mcmc.mhmchmc.dynamic_mhmchmc(
+    alg = blackjax.mcmc.mhmchmc.mhmchmc(
         logdensity_fn=logdensity_fn,
         step_size=step_size,
-        integration_steps_fn = lambda key: L//step_size,
+        integration_steps_fn = lambda _: L//step_size,
         # num_integration_steps=L//step_size,
     )
 
@@ -169,49 +121,14 @@ def run_mclmc(logdensity_fn, num_steps, initial_position):
 
     print(blackjax_mclmc_sampler_params)
 
-def compare_static_dynamic():
-
-    step_size = 1e-3
-    L = 1.0
-
-    initial_position = jnp.array([1.0, 1.0])
-
-    alg_static = blackjax.mcmc.mhmchmc.mhmchmc(
-        logdensity_fn=logdensity_fn,
-        step_size=step_size,
-        num_integration_steps=L//step_size,
-    )
-
-    initial_state_static = alg_static.init(initial_position)
-    print(alg_static.step(state=initial_state_static, rng_key=jax.random.PRNGKey(0))[0].position)
-
-
-
-
-
-
-    alg_dynamic = blackjax.mcmc.mhmchmc.dynamic_mhmchmc(
-        logdensity_fn=logdensity_fn,
-        step_size=step_size,
-        # integration_steps_fn = lambda key: jax.random.randint(key, (), 1, 10),
-        integration_steps_fn = lambda key: L//step_size,
-    )
-
-    initial_state_dynamic = alg_dynamic.init(initial_position, jax.random.PRNGKey(0))
-
-    print(alg_dynamic.step(state=initial_state_dynamic, rng_key=jax.random.PRNGKey(0))[0].position)
-
 # compare_static_dynamic()
 
 
 # run_mclmc(logdensity_fn, num_steps, initial_position)
 
 # out = run_hmc(initial_position)
-out = run_mhmchmc(initial_position)
-print(out.position.mean(axis=0) )
 out = run_mhmchmc_dynamic(initial_position)
 print(out.position.mean(axis=0) )
-
 
 
 

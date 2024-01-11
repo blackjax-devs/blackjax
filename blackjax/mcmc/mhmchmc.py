@@ -31,82 +31,22 @@ from blackjax.util import generate_unit_vector
 
 __all__ = [
     "init",
-    "init_dynamic",
     "build_kernel",
-    "build_dynamic_kernel",
     "mhmchmc",
-    "dynamic_mhmchmc",
 ]
 
 
-def init(position: ArrayLikeTree, logdensity_fn: Callable):
-    logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
-    return HMCState(position, logdensity, logdensity_grad)
 
-
-def init_dynamic(
+def init(
     position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: Array
 ):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
 
 
+
+
 def build_kernel(
-    integrator: Callable = integrators.isokinetic_mclachlan,
-    divergence_threshold: float = 1000,
-):
-    """Build an MHMCHMC kernel.
-
-    Parameters
-    ----------
-    integrator
-        The integrator to use to integrate the Hamiltonian dynamics.
-    divergence_threshold
-        Value of the difference in energy above which we consider that the transition is divergent.
-
-    Returns
-    -------
-    A kernel that takes a rng_key and a Pytree that contains the current state
-    of the chain and that returns a new state of the chain along with
-    information about the transition.
-
-    """
-
-    def kernel(
-        rng_key: PRNGKey,
-        state: HMCState,
-        logdensity_fn: Callable,
-        step_size: float,
-        num_integration_steps: int,
-    ) -> tuple[HMCState, HMCInfo]:
-        """Generate a new sample with the MHMCHMC kernel."""
-
-        proposal_generator = mhmchmc_proposal(
-            integrator(logdensity_fn),
-            step_size,
-            num_integration_steps,
-            divergence_threshold,
-        )
-
-        key_momentum, key_integrator = jax.random.split(rng_key, 2)
-
-        position, logdensity, logdensity_grad = state
-        momentum = generate_unit_vector(key_momentum, position)
-
-        integrator_state = integrators.IntegratorState(
-            position, momentum, logdensity, logdensity_grad
-        )
-        proposal, info, _ = proposal_generator(key_integrator, integrator_state)
-        state = HMCState(
-            proposal.position, proposal.logdensity, proposal.logdensity_grad
-        )
-
-        return state, info
-
-    return kernel
-
-
-def build_dynamic_kernel(
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
@@ -134,7 +74,6 @@ def build_dynamic_kernel(
     information about the transition.
 
     """
-    mhmchmc_base = build_kernel(integrator, divergence_threshold)
 
     def kernel(
         rng_key: PRNGKey,
@@ -184,88 +123,7 @@ def build_dynamic_kernel(
 
     return kernel
 
-
 class mhmchmc:
-    """Implements the (basic) user interface for the HMC kernel.
-
-    The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias `blackjax.hmc.build_kernel`) can be
-    cumbersome to manipulate. Since most users only need to specify the kernel
-    parameters at initialization time, we provide a helper function that
-    specializes the general kernel.
-
-    We also add the general kernel and state generator as an attribute to this class so
-    users only need to pass `blackjax.hmc` to SMC, adaptation, etc. algorithms.
-
-    Examples
-    --------
-
-    A new MHMCHMC kernel can be initialized and used with the following code:
-
-    .. code::
-
-        mhmchmc = blackjax.mhmchmc(logdensity_fn, step_size, num_integration_steps)
-        state = mhmchmc.init(position)
-        new_state, info = mhmchmc.step(rng_key, state)
-
-    Kernels are not jit-compiled by default so you will need to do it manually:
-
-    .. code::
-
-       step = jax.jit(mhmchmc.step)
-       new_state, info = step(rng_key, state)
-
-
-    Parameters
-    ----------
-    logdensity_fn
-        The log-density function we wish to draw samples from.
-    step_size
-        The value to use for the step size in the integrator.
-    num_integration_steps
-        The number of steps we take with the integrator at each
-        sample step before returning a sample.
-    divergence_threshold
-        The absolute value of the difference in energy between two states above
-        which we say that the transition is divergent. The default value is
-        commonly found in other libraries, and yet is arbitrary.
-    integrator
-        (algorithm parameter) The integrator to use to integrate the trajectory.\
-
-    Returns
-    -------
-    A ``SamplingAlgorithm``.
-    """
-
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_kernel)
-
-    def __new__(  # type: ignore[misc]
-        cls,
-        logdensity_fn: Callable,
-        step_size: float,
-        num_integration_steps: int,
-        *,
-        divergence_threshold: int = 1000,
-        integrator: Callable = integrators.isokinetic_mclachlan,
-    ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel(integrator, divergence_threshold)
-
-        def init_fn(position: ArrayLikeTree, rng_key: PRNGKey = None):
-            return cls.init(position, logdensity_fn)
-
-        def step_fn(rng_key: PRNGKey, state):
-            return kernel(
-                rng_key,
-                state,
-                logdensity_fn,
-                step_size,
-                num_integration_steps,
-            )
-
-        return SamplingAlgorithm(init_fn, step_fn)
-
-
-class dynamic_mhmchmc:
     """Implements the (basic) user interface for the dynamic MHMCHMC kernel.
 
     Parameters
@@ -292,8 +150,8 @@ class dynamic_mhmchmc:
     A ``SamplingAlgorithm``.
     """
 
-    init = staticmethod(init_dynamic)
-    build_kernel = staticmethod(build_dynamic_kernel)
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
 
     def __new__(  # type: ignore[misc]
         cls,
