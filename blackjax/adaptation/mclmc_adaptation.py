@@ -36,6 +36,13 @@ class MCLMCAdaptationState(NamedTuple):
     L: float
     step_size: float
 
+def streaming_average(O, x, streaming_avg, weight, zero_prevention):
+    """streaming average of f(x)"""
+    total, average = streaming_avg
+    average = (total * average + weight * O(x)) / (total + weight + zero_prevention)
+    total += weight
+    streaming_avg = (total, average)
+    return streaming_avg
 
 def mclmc_find_L_and_step_size(
     mclmc_kernel,
@@ -184,37 +191,27 @@ def make_L_step_size_adaptation(
 
         return state, params_new, adaptive_state, success
 
-    def streaming_average(O, x, streaming_state, outer_weight, success, step_size):
-        """streaming average of f(x)"""
-        total, average = streaming_state
-        weight = outer_weight * step_size * success
-        zero_prevention = 1 - outer_weight
-        average = (total * average + weight * O(x)) / (total + weight + zero_prevention)
-        total += weight
-        streaming_state = (total, average)
-        return streaming_state
 
     def step(iteration_state, weight_and_key):
         """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
 
-        outer_weight, rng_key = weight_and_key
-        state, params, adaptive_state, streaming_state = iteration_state
+        mask, rng_key = weight_and_key
+        state, params, adaptive_state, streaming_avg = iteration_state
 
         state, params, adaptive_state, success = predictor(
             state, params, adaptive_state, rng_key
         )
 
         # update the running average of x, x^2
-        streaming_state = streaming_average(
-            lambda x: jnp.array([x, jnp.square(x)]),
-            ravel_pytree(state.position)[0],
-            streaming_state,
-            outer_weight,
-            success,
-            params.step_size,
+        streaming_avg = streaming_average(
+            O=lambda x: jnp.array([x, jnp.square(x)]),
+            x=ravel_pytree(state.position)[0],
+            streaming_avg=streaming_avg,
+            weight=(1-mask)*success*params.step_size,
+            zero_prevention=mask,
         )
 
-        return (state, params, adaptive_state, streaming_state), None
+        return (state, params, adaptive_state, streaming_avg), None
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
         num_steps1, num_steps2 = int(num_steps * frac_tune1), int(
@@ -223,7 +220,7 @@ def make_L_step_size_adaptation(
         L_step_size_adaptation_keys = jax.random.split(rng_key, num_steps1 + num_steps2)
 
         # we use the last num_steps2 to compute the diagonal preconditioner
-        outer_weights = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
+        mask = 1-jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
         # initial state of the kalman filter
 
@@ -236,8 +233,7 @@ def make_L_step_size_adaptation(
                 (0.0, 0.0, jnp.inf),
                 (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
             ),
-            xs=(outer_weights, L_step_size_adaptation_keys),
-            length=num_steps1 + num_steps2,
+            xs=(mask, L_step_size_adaptation_keys),
         )[0]
 
         L = params.L
@@ -313,9 +309,6 @@ def mhmchmc_find_L_and_step_size(
     frac_tune1=0.1,
     frac_tune2=0.1,
     frac_tune3=0.1,
-    desired_energy_var=5e-4,
-    trust_in_estimate=1.5,
-    num_effective_samples=150,
 ):
     """
     Finds the optimal value of the parameters for the MH-MCHMC algorithm.
@@ -380,30 +373,23 @@ def mhmchmc_make_L_step_size_adaptation(
         target=0.65
     )
 
-    def streaming_average(O, x, streaming_state, outer_weight, success, step_size):
-        """streaming average of f(x)"""
-        total, average = streaming_state
-        weight = outer_weight * step_size * success
-        zero_prevention = 1 - outer_weight
-        average = (total * average + weight * O(x)) / (total + weight + zero_prevention)
-        total += weight
-        streaming_state = (total, average)
-        return streaming_state
+
 
     def step(iteration_state, weight_and_key):
         """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
 
-        outer_weight, rng_key = weight_and_key
-        previous_state, params, adaptive_state, streaming_state = iteration_state
+        mask, rng_key = weight_and_key
+        previous_state, params, adaptive_state, streaming_avg = iteration_state
 
         step_size_max = 1.0
+
+        jax.debug.print("{x}",x=(params.step_size, params.L//params.step_size))
 
         # dynamics
         next_state, info = kernel(
             rng_key=rng_key,
             state=previous_state,
-            # L=params.L,
-            num_integration_steps=params.L//1,
+            num_integration_steps=1 + (params.L//params.step_size),
             step_size=params.step_size,
         )
 
@@ -418,6 +404,7 @@ def mhmchmc_make_L_step_size_adaptation(
             info.energy,
         )
 
+        # jax.debug.print("{x}",x=(info.acceptance_rate))
         adaptive_state = update(
             adaptive_state, info.acceptance_rate
         )
@@ -426,18 +413,17 @@ def mhmchmc_make_L_step_size_adaptation(
         step_size = jnp.exp(adaptive_state.log_step_size)
 
         # update the running average of x, x^2
-        streaming_state = streaming_average(
-            lambda x: jnp.array([x, jnp.square(x)]),
-            ravel_pytree(state.position)[0],
-            streaming_state,
-            outer_weight,
-            success,
-            step_size,
+        streaming_avg = streaming_average(
+            O=lambda x: jnp.array([x, jnp.square(x)]),
+            x=ravel_pytree(state.position)[0],
+            streaming_avg=streaming_avg,
+            weight=(1-mask)*success*step_size,
+            zero_prevention=mask,
         )
 
         params = params._replace(step_size=step_size)
 
-        return (state, params, adaptive_state, streaming_state), None
+        return (state, params, adaptive_state, streaming_avg), None
     
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
@@ -446,11 +432,10 @@ def mhmchmc_make_L_step_size_adaptation(
         )
         L_step_size_adaptation_keys = jax.random.split(rng_key, num_steps1 + num_steps2)
 
-        # we use the last num_steps2 to compute the diagonal preconditioner
-        outer_weights = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
+        # determine which steps to ignore in the streaming average
+        mask = 1- jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
-        # initial state of the kalman filter
-
+        # dual averaging initialization
         init_adaptive_state = init(params.step_size)
 
         # run the steps
@@ -459,11 +444,10 @@ def mhmchmc_make_L_step_size_adaptation(
             init=(
                 state,
                 params,
-                init_adaptive_state,
-                (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
+                init_adaptive_state, # state of the dual averaging algorithm
+                (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])), # streaming average of t, x, x^2
             ),
-            xs=(outer_weights, L_step_size_adaptation_keys),
-            length=num_steps1 + num_steps2,
+            xs=(mask, L_step_size_adaptation_keys),
         )[0]
 
         L = params.L

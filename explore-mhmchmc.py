@@ -18,7 +18,7 @@ init_key, tune_key, run_key = jax.random.split(jax.random.PRNGKey(0), 3)
 def logdensity_fn(x):
     return -0.5 * jnp.sum(jnp.square(x))
 
-initial_position = jnp.array([1.0, 1.0])
+initial_position = jnp.array([0.01, 0.01])
 
 def run_hmc(initial_position):
 
@@ -69,6 +69,8 @@ def run_mhmchmc_dynamic(initial_position):
         state=initial_state,
         rng_key=tune_key,
     )
+
+    # raise Exception
 
 
     # step_size = 1.0784992
@@ -121,10 +123,13 @@ def run_mclmc(logdensity_fn, num_steps, initial_position):
 
     print(blackjax_mclmc_sampler_params)
 
+
 # compare_static_dynamic()
 
 
-# run_mclmc(logdensity_fn, num_steps, initial_position)
+out = run_mclmc(logdensity_fn, num_steps, initial_position)
+# print(out.position.mean(axis=0) )
+
 
 # out = run_hmc(initial_position)
 out = run_mhmchmc_dynamic(initial_position)

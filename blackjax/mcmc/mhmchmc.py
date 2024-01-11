@@ -22,7 +22,7 @@ import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.trajectory as trajectory
 from blackjax.base import SamplingAlgorithm
-from blackjax.mcmc.hmc import HMCInfo, HMCState
+from blackjax.mcmc.hmc import HMCInfo, HMCState, flip_momentum
 from blackjax.mcmc.proposal import safe_energy_diff, static_binomial_sampling
 
 # from blackjax.mcmc.trajectory import mhmchmc_energy
@@ -35,23 +35,17 @@ __all__ = [
     "mhmchmc",
 ]
 
-
-
 def init(
     position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: Array
 ):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
 
-
-
-
 def build_kernel(
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
-    # integration_steps_fn: Callable = lambda key: 10,
 ):
     """Build a Dynamic HMC kernel where the number of integration steps is chosen randomly.
 
@@ -83,40 +77,32 @@ def build_kernel(
         **integration_steps_kwargs,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
+        
         num_integration_steps = integration_steps_fn(
             state.random_generator_arg, **integration_steps_kwargs
         )
-        mhmchmc_state = HMCState(
-            state.position, state.logdensity, state.logdensity_grad
-        )
+        key_momentum, key_integrator = jax.random.split(rng_key, 2)
+        momentum = generate_unit_vector(key_momentum, state.position)
 
-        proposal_generator = mhmchmc_proposal(
+
+        proposal, info, _ = mhmchmc_proposal(
             integrator(logdensity_fn),
             step_size,
             num_integration_steps,
             divergence_threshold,
+        )(
+            key_integrator, 
+            integrators.IntegratorState(
+            state.position, momentum, state.logdensity, state.logdensity_grad
+            )
         )
 
-        key_momentum, key_integrator = jax.random.split(rng_key, 2)
-
-        position, logdensity, logdensity_grad = mhmchmc_state
-        momentum = generate_unit_vector(key_momentum, position)
-
-        integrator_state = integrators.IntegratorState(
-            position, momentum, logdensity, logdensity_grad
-        )
-        proposal, info, _ = proposal_generator(key_integrator, integrator_state)
-        proposal = HMCState(
-            proposal.position, proposal.logdensity, proposal.logdensity_grad
-        )
-
-        next_random_arg = next_random_arg_fn(state.random_generator_arg)
         return (
             DynamicHMCState(
                 proposal.position,
                 proposal.logdensity,
                 proposal.logdensity_grad,
-                next_random_arg,
+                next_random_arg_fn(state.random_generator_arg),
             ),
             info,
         )
@@ -221,25 +207,27 @@ def mhmchmc_proposal(
         next_state, next_kinetic_energy = integrator(state, step_size=step_size)
         return next_state, kinetic_energy + next_kinetic_energy
 
-    def build_trajectory(state, step_size, num_integration_steps):
+    def build_trajectory(state, num_integration_steps):
         return jax.lax.fori_loop(0*num_integration_steps, num_integration_steps, step, (state, 0))
 
-    mhmchmc_energy_fn = lambda state, kinetic_energy: state.logdensity + kinetic_energy
+    mhmchmc_energy_fn = lambda state, kinetic_energy: -state.logdensity + kinetic_energy
 
     def generate(
         rng_key, state: integrators.IntegratorState
     ) -> tuple[integrators.IntegratorState, HMCInfo, ArrayTree]:
         """Generate a new chain state."""
         end_state, kinetic_energy = build_trajectory(
-            state, step_size, num_integration_steps
+            state, num_integration_steps
         )
         end_state = flip_momentum(end_state)
         proposal_energy = mhmchmc_energy_fn(state, kinetic_energy)
         new_energy = mhmchmc_energy_fn(end_state, kinetic_energy)
+        # jax.debug.print("mhmchmc 225 {x}", x=(proposal_energy, new_energy))
         delta_energy = safe_energy_diff(proposal_energy, new_energy)
         is_diverging = -delta_energy > divergence_threshold
         sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
         do_accept, p_accept, other_proposal_info = info
+        # jax.debug.print("mhmchmc 230 {x}", x=(do_accept, p_accept))
 
         info = HMCInfo(
             state.momentum,
@@ -256,24 +244,6 @@ def mhmchmc_proposal(
     return generate
 
 
-def flip_momentum(
-    state: integrators.IntegratorState,
-) -> integrators.IntegratorState:
-    """Flip the momentum at the end of the trajectory.
-
-    To guarantee time-reversibility (hence detailed balance) we
-    need to flip the last state's momentum. If we run the hamiltonian
-    dynamics starting from the last state with flipped momentum we
-    should indeed retrieve the initial state (with flipped momentum).
-
-    """
-    flipped_momentum = jax.tree_util.tree_map(lambda m: -1.0 * m, state.momentum)
-    return integrators.IntegratorState(
-        state.position,
-        flipped_momentum,
-        state.logdensity,
-        state.logdensity_grad,
-    )
 
 
 def rescale(mu):
