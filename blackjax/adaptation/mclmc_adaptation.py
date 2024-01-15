@@ -353,9 +353,19 @@ def mhmchmc_find_L_and_step_size(
     )(state, params, num_steps, part1_key)
 
     if frac_tune3 != 0:
+        
+        part2_key1, part2_key2 = jax.random.split(part2_key, 2)
+
         state, params = mhmchmc_make_adaptation_L(mclmc_kernel, frac=frac_tune3, Lfactor=0.4)(
-            state, params, num_steps, part2_key
+            state, params, num_steps, part2_key1
         )
+
+        state, params = mhmchmc_make_L_step_size_adaptation(
+        kernel=mclmc_kernel,
+        dim=dim,
+        frac_tune1=frac_tune1,
+        frac_tune2=frac_tune2,
+        )(state, params, num_steps, part2_key2)
 
     return state, params
 
@@ -381,17 +391,14 @@ def mhmchmc_make_L_step_size_adaptation(
 
         step_size_max = 1.0
 
-        # jax.debug.print("{x}",x=(params.step_size, params.L//params.step_size))
-
         # dynamics
         next_state, info = kernel(
             rng_key=rng_key,
             state=previous_state,
             num_integration_steps=jnp.min(jnp.array([1 + params.L//params.step_size, 1000])),
+            # num_integration_steps=jnp.ceil(params.L/params.step_size),
             step_size=params.step_size,
         )
-
-
 
         # step updating
         success, state, step_size_max, energy_change = handle_nans(
@@ -402,9 +409,6 @@ def mhmchmc_make_L_step_size_adaptation(
             info.energy,
         )
 
-        # foo.append(info.acceptance_rate)
-
-        # jax.debug.print("{x}",x=)
         adaptive_state = update(
             adaptive_state, info.acceptance_rate
         )
@@ -425,41 +429,42 @@ def mhmchmc_make_L_step_size_adaptation(
 
         return (state, params, adaptive_state, streaming_avg), info
     
+    step_size_adaptation = lambda mask, state, params, keys: jax.lax.scan(
+        step,
+        init=(
+            state,
+            params,
+            init(params.step_size),
+            (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
+        ),
+        xs=(mask, keys),
+    )
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
         num_steps1, num_steps2 = int(num_steps * frac_tune1), int(
             num_steps * frac_tune2
         )
-        L_step_size_adaptation_keys = jax.random.split(rng_key, num_steps1 + num_steps2)
+
+        rng_key_pass1, rng_key_pass2 = jax.random.split(rng_key, 2)
+        L_step_size_adaptation_keys_pass1 = jax.random.split(rng_key_pass1, num_steps1 + num_steps2)
+        L_step_size_adaptation_keys_pass2 = jax.random.split(rng_key_pass2, num_steps1 + num_steps2)
 
         # determine which steps to ignore in the streaming average
         mask = 1- jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
-        # dual averaging initialization
-        init_adaptive_state = init(params.step_size)
-
-        # run the steps
-        ((state, params, _, (_, average)), info) = jax.lax.scan(
-            step,
-            init=(
-                state,
-                params,
-                init_adaptive_state, # state of the dual averaging algorithm
-                (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])), # streaming average of t, x, x^2
-            ),
-            xs=(mask, L_step_size_adaptation_keys),
-        )
+        ((state, params, _, (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass1)
 
         jax.debug.print("{x}",x=("mean acceptance rate", jnp.mean(info.acceptance_rate,)))
 
-        L = params.L
         # determine L
         if num_steps2 != 0.0:
             x_average, x_squared_average = average[0], average[1]
             variances = x_squared_average - jnp.square(x_average)
-            L = jnp.sqrt(jnp.sum(variances))
+            params = params._replace(L=jnp.sqrt(jnp.sum(variances)))
+        
+            ((state, params, _, (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass2)
 
-        return state, MCLMCAdaptationState(L, params.step_size)
+        return state, params
     
     return L_step_size_adaptation
 
