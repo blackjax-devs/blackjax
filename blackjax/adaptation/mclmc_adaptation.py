@@ -21,6 +21,7 @@ from jax.flatten_util import ravel_pytree
 from blackjax.adaptation.step_size import dual_averaging_adaptation
 
 from blackjax.diagnostics import effective_sample_size
+from blackjax.mcmc.mhmchmc import rescale
 from blackjax.util import pytree_size
 
 
@@ -387,18 +388,29 @@ def mhmchmc_make_L_step_size_adaptation(
         """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
 
         mask, rng_key = weight_and_key
-        previous_state, params, adaptive_state, streaming_avg = iteration_state
+        kernel_key, num_steps_key = jax.random.split(rng_key, 2)
+        previous_state, params, (adaptive_state, step_size_max), streaming_avg = iteration_state
 
-        step_size_max = 1.0
+
+        # num_integration_steps = jnp.min(jnp.array([jax.random.poisson(num_steps_key, params.L/params.step_size)+1, 1000]))
+        num_integration_steps = jnp.min(jnp.array([jax.random.poisson(num_steps_key, params.L/params.step_size), 1000]))
+        # num_integration_steps = jnp.round(jax.random.uniform(num_steps_key) * rescale(params.L/params.step_size + 0.5))
+
+        jax.debug.print("{x} num_integration_steps",x=(params.L/params.step_size, num_integration_steps))
 
         # dynamics
         next_state, info = kernel(
-            rng_key=rng_key,
+            rng_key=kernel_key,
             state=previous_state,
-            num_integration_steps=jnp.min(jnp.array([1 + params.L//params.step_size, 1000])),
+            # num_integration_steps=jnp.min(jnp.array([1 + params.L//params.step_size, 1000])),
+            num_integration_steps=num_integration_steps,
+            # num_integration_steps=jnp.min(jnp.array([jax.random.uniform(num_steps_key) * rescale(params.L/params.step_size + 0.5), 1000])),
+            # num_integration_steps=jax.random.uniform(num_steps_key) * rescale(params.L/params.step_size + 0.5),
             # num_integration_steps=jnp.ceil(params.L/params.step_size),
             step_size=params.step_size,
         )
+
+        jax.debug.print("{x}",x=(info.acceptance_rate,))
 
         # step updating
         success, state, step_size_max, energy_change = handle_nans(
@@ -413,7 +425,6 @@ def mhmchmc_make_L_step_size_adaptation(
             adaptive_state, info.acceptance_rate
         )
 
-
         step_size = jnp.exp(adaptive_state.log_step_size)
 
         # update the running average of x, x^2
@@ -425,16 +436,20 @@ def mhmchmc_make_L_step_size_adaptation(
             zero_prevention=mask,
         )
 
-        params = params._replace(step_size=step_size)
+        # n = L/eps
+        # eps -> eps * new_eps/eps 
 
-        return (state, params, adaptive_state, streaming_avg), info
+        params = params._replace(step_size=step_size, L=params.L/params.step_size * step_size)
+
+
+        return (state, params, (adaptive_state, step_size_max), streaming_avg), info
     
     step_size_adaptation = lambda mask, state, params, keys: jax.lax.scan(
         step,
         init=(
             state,
             params,
-            init(params.step_size),
+            (init(params.step_size), jnp.inf),
             (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
         ),
         xs=(mask, keys),
