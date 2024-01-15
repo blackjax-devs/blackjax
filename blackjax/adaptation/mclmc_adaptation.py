@@ -373,8 +373,6 @@ def mhmchmc_make_L_step_size_adaptation(
         target=0.65
     )
 
-
-
     def step(iteration_state, weight_and_key):
         """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
 
@@ -383,13 +381,13 @@ def mhmchmc_make_L_step_size_adaptation(
 
         step_size_max = 1.0
 
-        jax.debug.print("{x}",x=(params.step_size, params.L//params.step_size))
+        # jax.debug.print("{x}",x=(params.step_size, params.L//params.step_size))
 
         # dynamics
         next_state, info = kernel(
             rng_key=rng_key,
             state=previous_state,
-            num_integration_steps=1 + (params.L//params.step_size),
+            num_integration_steps=jnp.min(jnp.array([1 + params.L//params.step_size, 1000])),
             step_size=params.step_size,
         )
 
@@ -404,7 +402,9 @@ def mhmchmc_make_L_step_size_adaptation(
             info.energy,
         )
 
-        # jax.debug.print("{x}",x=(info.acceptance_rate))
+        # foo.append(info.acceptance_rate)
+
+        # jax.debug.print("{x}",x=)
         adaptive_state = update(
             adaptive_state, info.acceptance_rate
         )
@@ -423,7 +423,7 @@ def mhmchmc_make_L_step_size_adaptation(
 
         params = params._replace(step_size=step_size)
 
-        return (state, params, adaptive_state, streaming_avg), None
+        return (state, params, adaptive_state, streaming_avg), info
     
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
@@ -439,7 +439,7 @@ def mhmchmc_make_L_step_size_adaptation(
         init_adaptive_state = init(params.step_size)
 
         # run the steps
-        state, params, _, (_, average) = jax.lax.scan(
+        ((state, params, _, (_, average)), info) = jax.lax.scan(
             step,
             init=(
                 state,
@@ -448,7 +448,9 @@ def mhmchmc_make_L_step_size_adaptation(
                 (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])), # streaming average of t, x, x^2
             ),
             xs=(mask, L_step_size_adaptation_keys),
-        )[0]
+        )
+
+        jax.debug.print("{x}",x=("mean acceptance rate", jnp.mean(info.acceptance_rate,)))
 
         L = params.L
         # determine L

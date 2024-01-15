@@ -47,7 +47,7 @@ def build_kernel(
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
 ):
-    """Build a Dynamic HMC kernel where the number of integration steps is chosen randomly.
+    """Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
     Parameters
     ----------
@@ -222,12 +222,10 @@ def mhmchmc_proposal(
         end_state = flip_momentum(end_state)
         proposal_energy = mhmchmc_energy_fn(state, kinetic_energy)
         new_energy = mhmchmc_energy_fn(end_state, kinetic_energy)
-        # jax.debug.print("mhmchmc 225 {x}", x=(proposal_energy, new_energy))
         delta_energy = safe_energy_diff(proposal_energy, new_energy)
         is_diverging = -delta_energy > divergence_threshold
         sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
         do_accept, p_accept, other_proposal_info = info
-        # jax.debug.print("mhmchmc 230 {x}", x=(do_accept, p_accept))
 
         info = HMCInfo(
             state.momentum,
