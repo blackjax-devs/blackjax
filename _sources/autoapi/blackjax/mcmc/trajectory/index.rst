@@ -7,7 +7,8 @@
 
    Procedures to build trajectories for algorithms in the HMC family.
 
-   To propose a new state, algorithms in the HMC family generally proceed by :cite:p:`betancourt2017conceptual`:
+   To propose a new state, algorithms in the HMC family generally proceed by
+   :cite:p:`betancourt2017conceptual`:
 
    1. Sampling a trajectory starting from the initial point;
    2. Sampling a new state from this sampled trajectory.
@@ -149,16 +150,19 @@ Functions
    Integrate a trajectory and update the proposal recursively in Python
    until the termination criterion is met.
 
-   This is the implementation of Algorithm 6 from :cite:p:`hoffman2014no` with multinomial sampling.
-   The implemenation here is mostly for validating the progressive implementation
-   to make sure the two are equivalent. The recursive implementation should not
-   be used for actually sampling as it cannot be jitted and thus likely slow.
+   This is the implementation of Algorithm 6 from :cite:p:`hoffman2014no` with
+   multinomial sampling. The implemenation here is mostly for validating the
+   progressive implementation to make sure the two are equivalent. The recursive
+   implementation should not be used for actually sampling as it cannot be jitted and
+   thus likely slow.
 
    :param integrator: The symplectic integrator used to integrate the hamiltonian trajectory.
    :param kinetic_energy: Function to compute the current value of the kinetic energy.
    :param uturn_check_fn: Determines whether the termination criterion has been met.
-   :param divergence_threshold: Value of the difference of energy between two consecutive states above which we say a transition is divergent.
-   :param use_robust_uturn_check: Bool to indicate whether to perform additional U turn check between two trajectory.
+   :param divergence_threshold: Value of the difference of energy between two consecutive states above which we
+                                say a transition is divergent.
+   :param use_robust_uturn_check: Bool to indicate whether to perform additional U turn check between two
+                                  trajectory.
 
 
 .. py:class:: DynamicExpansionState

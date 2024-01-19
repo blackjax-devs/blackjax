@@ -51,7 +51,7 @@ Functions
       
 
 
-.. py:function:: iterative_uturn_numpyro(is_turning)
+.. py:function:: iterative_uturn_numpyro(is_turning: blackjax.mcmc.metrics.CheckTurning)
 
    Numpyro style dynamic U-Turn criterion.
 

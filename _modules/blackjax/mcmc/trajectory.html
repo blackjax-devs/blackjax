@@ -17,15 +17,15 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
-<link href="../../../_static/styles/bootstrap.css?digest=5b4479735964841361fd" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
 
   
-  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=5b4479735964841361fd" rel="stylesheet" />
-  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
-<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+  <link href="../../../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
@@ -35,9 +35,9 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
-  <script src="../../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../_static/doctools.js?v=888ff710"></script>
@@ -56,10 +56,9 @@
 
   
   
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
   
   <div id="pst-scroll-pixel-helper"></div>
-
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>
@@ -100,11 +99,16 @@
 </form></div>
   </div>
   
-    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
-    </nav>
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    </header>
   
+
   <div class="bd-container">
     <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
       
       <div class="bd-sidebar-primary bd-sidebar">
         
@@ -358,7 +362,7 @@ document.write(`
               
                 
 <div id="searchbox"></div>
-                <article class="bd-article" role="main">
+                <article class="bd-article">
                   
   <h1>Source code for blackjax.mcmc.trajectory</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
@@ -376,7 +380,8 @@ document.write(`
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;Procedures to build trajectories for algorithms in the HMC family.</span>
 
-<span class="sd">To propose a new state, algorithms in the HMC family generally proceed by :cite:p:`betancourt2017conceptual`:</span>
+<span class="sd">To propose a new state, algorithms in the HMC family generally proceed by</span>
+<span class="sd">:cite:p:`betancourt2017conceptual`:</span>
 
 <span class="sd">1. Sampling a trajectory starting from the initial point;</span>
 <span class="sd">2. Sampling a new state from this sampled trajectory.</span>
@@ -709,10 +714,11 @@ document.write(`
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Integrate a trajectory and update the proposal recursively in Python</span>
 <span class="sd">    until the termination criterion is met.</span>
 
-<span class="sd">    This is the implementation of Algorithm 6 from :cite:p:`hoffman2014no` with multinomial sampling.</span>
-<span class="sd">    The implemenation here is mostly for validating the progressive implementation</span>
-<span class="sd">    to make sure the two are equivalent. The recursive implementation should not</span>
-<span class="sd">    be used for actually sampling as it cannot be jitted and thus likely slow.</span>
+<span class="sd">    This is the implementation of Algorithm 6 from :cite:p:`hoffman2014no` with</span>
+<span class="sd">    multinomial sampling. The implemenation here is mostly for validating the</span>
+<span class="sd">    progressive implementation to make sure the two are equivalent. The recursive</span>
+<span class="sd">    implementation should not be used for actually sampling as it cannot be jitted and</span>
+<span class="sd">    thus likely slow.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -723,9 +729,11 @@ document.write(`
 <span class="sd">    uturn_check_fn</span>
 <span class="sd">        Determines whether the termination criterion has been met.</span>
 <span class="sd">    divergence_threshold</span>
-<span class="sd">        Value of the difference of energy between two consecutive states above which we say a transition is divergent.</span>
+<span class="sd">        Value of the difference of energy between two consecutive states above which we</span>
+<span class="sd">        say a transition is divergent.</span>
 <span class="sd">    use_robust_uturn_check</span>
-<span class="sd">        Bool to indicate whether to perform additional U turn check between two trajectory.</span>
+<span class="sd">        Bool to indicate whether to perform additional U turn check between two</span>
+<span class="sd">        trajectory.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">generate_proposal</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="n">hmc_energy</span><span class="p">(</span><span class="n">kinetic_energy</span><span class="p">))</span>
@@ -758,7 +766,8 @@ document.write(`
 <span class="sd">        step_size</span>
 <span class="sd">            The step size of the symplectic integrator.</span>
 <span class="sd">        initial_energy</span>
-<span class="sd">            Initial energy H0 of the HMC step (not to confused with the initial energy of the subtree)</span>
+<span class="sd">            Initial energy H0 of the HMC step (not to confused with the initial energy</span>
+<span class="sd">            of the subtree)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">tree_depth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -989,9 +998,9 @@ document.write(`
             <span class="c1"># Update the proposal</span>
             <span class="c1">#</span>
             <span class="c1"># We do not accept proposals that come from diverging or turning</span>
-            <span class="c1"># subtrajectories.  However the definition of the acceptance</span>
-            <span class="c1"># probability is such that the acceptance probability needs to be</span>
-            <span class="c1"># computed across the entire trajectory.</span>
+            <span class="c1"># subtrajectories. However the definition of the acceptance probability is</span>
+            <span class="c1"># such that the acceptance probability needs to be computed across the</span>
+            <span class="c1"># entire trajectory.</span>
             <span class="k">def</span> <span class="nf">update_sum_log_p_accept</span><span class="p">(</span><span class="n">inputs</span><span class="p">):</span>
                 <span class="n">_</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span> <span class="o">=</span> <span class="n">inputs</span>
                 <span class="k">return</span> <span class="n">Proposal</span><span class="p">(</span>
@@ -1074,6 +1083,8 @@ document.write(`
             
             
               
+                <div class="bd-sidebar-secondary bd-toc"></div>
+              
             
           </div>
           <footer class="bd-footer-content">
@@ -1093,7 +1104,7 @@ By The Blackjax developers
 
   <p class="copyright">
     
-      © Copyright 2023, The Blackjax developers.
+      © Copyright 2024, The Blackjax developers.
       <br/>
     
   </p>
@@ -1117,8 +1128,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd"></script>
-<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd"></script>
+  <script src="../../../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
 
   <footer class="bd-footer">
   </footer>
