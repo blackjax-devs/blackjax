@@ -18,6 +18,7 @@ import jax
 import jax.numpy as jnp
 
 from blackjax.types import Array
+from blackjax.mcmc.metrics import CheckTurning
 
 
 class IterativeUTurnState(NamedTuple):
@@ -27,7 +28,7 @@ class IterativeUTurnState(NamedTuple):
     idx_max: int
 
 
-def iterative_uturn_numpyro(is_turning):
+def iterative_uturn_numpyro(is_turning: CheckTurning):
     """Numpyro style dynamic U-Turn criterion."""
 
     def new_state(chain_state, max_num_doublings) -> IterativeUTurnState:
