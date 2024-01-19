@@ -17,8 +17,8 @@ from typing import NamedTuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.types import Array
 from blackjax.mcmc.metrics import CheckTurning
+from blackjax.types import Array
 
 
 class IterativeUTurnState(NamedTuple):
