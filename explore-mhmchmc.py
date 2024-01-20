@@ -9,7 +9,7 @@ from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
 
 
-num_steps = 1000
+num_steps = 5000
 
 
 
