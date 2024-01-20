@@ -71,5 +71,65 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, key):
     return samples
 
 
+def run_mhmchmc(logdensity_fn, num_steps, initial_position, key):
+
+    init_key, tune_key, run_key = jax.random.split(key, 3)
+
+
+    initial_state = blackjax.mcmc.mhmchmc.init(
+        position=initial_position, logdensity_fn=logdensity_fn, random_generator_arg=init_key
+    )
+
+    kernel = lambda rng_key, state, num_integration_steps, step_size: blackjax.mcmc.mhmchmc.build_kernel(
+                integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
+                integration_steps_fn = lambda key: num_integration_steps, 
+            )(
+                rng_key=rng_key, 
+                state=state, 
+                step_size=step_size, 
+                logdensity_fn=logdensity_fn)
+
+    (
+        blackjax_state_after_tuning,
+        blackjax_mclmc_sampler_params,
+    ) = blackjax.adaptation.mclmc_adaptation.mhmchmc_find_L_and_step_size(
+        mclmc_kernel=kernel,
+        num_steps=num_steps,
+        state=initial_state,
+        rng_key=tune_key,
+        # frac_tune2=0,
+        # frac_tune3=0,
+    )
+
+    # raise Exception
+
+
+    # step_size = 1.0784992
+    # L = 1.7056025
+    step_size = blackjax_mclmc_sampler_params.step_size
+    L = blackjax_mclmc_sampler_params.L
+
+    jax.debug.print("{x}", x=(jnp.ceil(L/step_size), L, step_size))
+
+
+    alg = blackjax.mcmc.mhmchmc.mhmchmc(
+        logdensity_fn=logdensity_fn,
+        step_size=step_size,
+        integration_steps_fn = lambda _: jnp.ceil(L/step_size),
+    )
+
+    _, out, info = run_inference_algorithm(
+        rng_key=run_key,
+        initial_state_or_position=initial_position,
+        inference_algorithm=alg,
+        num_steps=num_steps, 
+        transform=lambda x: x.position, 
+        progress_bar=True)
+    
+    # print(info.acceptance_rate)
+    
+    return out
+
+# we should do at least: mclmc, nuts, unadjusted hmc, mhmchmc, langevin
 
 samplers = {'mclmc' : run_mclmc} # , 'mhmchmc': run_mhmchmc}
