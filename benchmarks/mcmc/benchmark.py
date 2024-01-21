@@ -29,6 +29,7 @@ def err(f_true, var_f, contract = jnp.max):
     
     def _err(f):
         bsq = jnp.square(f - f_true) / var_f
+        # print(bsq.shape, "shape ASDFADSF \n\n")
         return contract(bsq)
     
     return jax.vmap(_err)
@@ -61,20 +62,8 @@ def ess(err_t, neff= 100, grad_evals_per_step = 1):
 def find_crossing(array, cutoff):
     """the smallest M such that array[m] < cutoff for all m > M"""
 
-    def step(carry, element):
-        """carry = (, 1 if (array[i] > cutoff for all i < current index) else 0"""
-        above_threshold = element > cutoff
-        # jax.debug.print("{x}", x=(carry))
-        never_been_below = carry[1] * above_threshold  #1 if (array[i] > cutoff for all i < current index) else 0
-        return (carry[0] + never_been_below, never_been_below), above_threshold
-
-    state, track = jax.lax.scan(step, init=(0, 1), xs=array, length=len(array))
-    
-
-    return state[0]
-    #return jnp.sum(track) #total number of indices for which array[m] < cutoff
-
-
+    indices = jnp.argwhere(array > cutoff)
+    return jnp.max(indices)+1
 
 def cumulative_avg(samples):
     return jnp.cumsum(samples, axis = 0) / jnp.arange(1, samples.shape[0] + 1)[:, None]
@@ -84,40 +73,50 @@ def cumulative_avg(samples):
 def benchmark(model, sampler):
 
     # print(find_crossing(jnp.array([0.4, 0.2, 0.3, 0.4, 0.5, 0.2, 0.2]), 0.3))
+    # print(cumulative_avg(jnp.array([[1., 2.], [1.,2.]]).T))
     # raise Exception
 
     n = 20000
 
-    # model = gym.targets.IllConditionedGaussian()
     identity_fn = model.sample_transformations['identity']
     # print('True mean', identity_fn.ground_truth_mean)
     # print('True std', identity_fn.ground_truth_standard_deviation)
-
-    logdensity_fn = model.unnormalized_log_prob
-    # logdensity_fn = banana
-
-    d = get_num_latents(model)
-    # d = 100
-    initial_position = jnp.zeros(d,)
-    keys = jax.random.split(jax.random.PRNGKey(0), 2)
-
-    samples = jnp.mean(jax.vmap(lambda pos, key: sampler(logdensity_fn, n, pos, key))(jnp.zeros((2, d)), keys), axis=0)
-    # samples = sampler(logdensity_fn, n, initial_position, jax.random.PRNGKey(0))
-    print("samples shape", samples.shape)
-    # (sampler(logdensity_fn, n, initial_position)) # num_chains=max(1000//d, d)
     # print("Empirical mean", samples.mean(axis=0))
     # print("Empirical std", samples.std(axis=0))
 
+    logdensity_fn = model.unnormalized_log_prob
+    d = get_num_latents(model)
+    initial_position = jnp.zeros(d,)
+    samples = sampler(logdensity_fn, n, initial_position, jax.random.PRNGKey(0))
+    # print(samples[-1], samples[0], "samps", samples.shape)
 
     favg, fvar = identity_fn.ground_truth_mean, identity_fn.ground_truth_standard_deviation**2
-    
-    # error after using some number of samples
     err_t = err(favg, fvar, jnp.average)(cumulative_avg(samples))
-    
-    # effective sample size
+    # print(err_t[-1], "benchmark err_t[0]")
     ess_per_sample = ess(err_t, grad_evals_per_step=2)
     
-    print("Effective sample size / sample: {0:.3}".format(ess_per_sample))
+    return ess_per_sample
+
+def benchmark_chains(model, sampler):
+
+    n = 100000
+
+    identity_fn = model.sample_transformations['identity']
+    logdensity_fn = model.unnormalized_log_prob
+    d = get_num_latents(model)
+    batch = np.ceil(1000 / d).astype(int)
+    keys = jax.random.split(jax.random.PRNGKey(1), batch)
+    # keys = jnp.array([jax.random.PRNGKey(0)])
+
+    samples = jax.vmap(lambda pos, key: sampler(logdensity_fn, n, pos, key))(jnp.zeros((batch, d)), keys)
+    # print(samples[0][-1], samples[0][0], "samps chain", samples.shape)
+    favg, fvar = identity_fn.ground_truth_mean, identity_fn.ground_truth_standard_deviation**2
+    full = lambda arr : err(favg, fvar, jnp.average)(cumulative_avg(arr))
+    err_t = jnp.mean(jax.vmap(full)(samples), axis=0)
+    # err_t = jax.vmap(full)(samples)[1]
+    # print(err_t[-1], "benchmark chains err_t[0]")
+    ess_per_sample = ess(err_t, grad_evals_per_step=2)
+    
     return ess_per_sample
 
 
@@ -132,7 +131,9 @@ results = defaultdict(float)
 # Run the benchmark for each model and sampler
 for model in models:
     for sampler in samplers:
-        result = benchmark(models[model], samplers[sampler])
+        # result = benchmark(models[model], samplers[sampler])
+        result = benchmark_chains(models[model], samplers[sampler])
+        # print(result, result2, "results")
         results[(model, sampler)] = result
 
 print(results)
