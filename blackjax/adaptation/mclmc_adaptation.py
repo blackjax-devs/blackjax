@@ -21,7 +21,7 @@ from jax.flatten_util import ravel_pytree
 from blackjax.adaptation.step_size import dual_averaging_adaptation
 
 from blackjax.diagnostics import effective_sample_size
-from blackjax.mcmc.mhmchmc import rescale
+from blackjax.mcmc.mhmclmc import rescale
 from blackjax.util import pytree_size
 
 
@@ -302,7 +302,7 @@ def handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_ch
 
 
 
-def mhmchmc_find_L_and_step_size(
+def mhmclmc_find_L_and_step_size(
     mclmc_kernel,
     num_steps,
     state,
@@ -316,7 +316,7 @@ def mhmchmc_find_L_and_step_size(
 
     Parameters
     ----------
-    mchmc_kernel
+    mclmc_kernel
         The kernel function used for the MCMC algorithm.
     num_steps
         The number of MCMC steps that will subsequently be run, after tuning.
@@ -346,7 +346,7 @@ def mhmchmc_find_L_and_step_size(
     params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.25)
     part1_key, part2_key = jax.random.split(rng_key, 2)
 
-    state, params = mhmchmc_make_L_step_size_adaptation(
+    state, params = mhmclmc_make_L_step_size_adaptation(
         kernel=mclmc_kernel,
         dim=dim,
         frac_tune1=frac_tune1,
@@ -357,11 +357,11 @@ def mhmchmc_find_L_and_step_size(
         
         part2_key1, part2_key2 = jax.random.split(part2_key, 2)
 
-        state, params = mhmchmc_make_adaptation_L(mclmc_kernel, frac=frac_tune3, Lfactor=0.4)(
+        state, params = mhmclmc_make_adaptation_L(mclmc_kernel, frac=frac_tune3, Lfactor=0.4)(
             state, params, num_steps, part2_key1
         )
 
-        state, params = mhmchmc_make_L_step_size_adaptation(
+        state, params = mhmclmc_make_L_step_size_adaptation(
         kernel=mclmc_kernel,
         dim=dim,
         frac_tune1=frac_tune1,
@@ -371,7 +371,7 @@ def mhmchmc_find_L_and_step_size(
     return state, params
 
 
-def mhmchmc_make_L_step_size_adaptation(
+def mhmclmc_make_L_step_size_adaptation(
     kernel,
     dim,
     frac_tune1,
@@ -494,7 +494,7 @@ def mhmchmc_make_L_step_size_adaptation(
 
 
 
-def mhmchmc_make_adaptation_L(kernel, frac, Lfactor):
+def mhmclmc_make_adaptation_L(kernel, frac, Lfactor):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
     def adaptation_L(state, params, num_steps, key):
