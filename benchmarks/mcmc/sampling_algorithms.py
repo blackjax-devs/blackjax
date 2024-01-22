@@ -71,16 +71,16 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, key):
     return samples
 
 
-def run_mhmchmc(logdensity_fn, num_steps, initial_position, key):
+def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
 
     init_key, tune_key, run_key = jax.random.split(key, 3)
 
 
-    initial_state = blackjax.mcmc.mhmchmc.init(
+    initial_state = blackjax.mcmc.mhmclmc.init(
         position=initial_position, logdensity_fn=logdensity_fn, random_generator_arg=init_key
     )
 
-    kernel = lambda rng_key, state, num_integration_steps, step_size: blackjax.mcmc.mhmchmc.build_kernel(
+    kernel = lambda rng_key, state, num_integration_steps, step_size: blackjax.mcmc.mhmclmc.build_kernel(
                 integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
                 integration_steps_fn = lambda key: num_integration_steps, 
             )(
@@ -92,7 +92,7 @@ def run_mhmchmc(logdensity_fn, num_steps, initial_position, key):
     (
         blackjax_state_after_tuning,
         blackjax_mclmc_sampler_params,
-    ) = blackjax.adaptation.mclmc_adaptation.mhmchmc_find_L_and_step_size(
+    ) = blackjax.adaptation.mclmc_adaptation.mhmclmc_find_L_and_step_size(
         mclmc_kernel=kernel,
         num_steps=num_steps,
         state=initial_state,
@@ -112,7 +112,7 @@ def run_mhmchmc(logdensity_fn, num_steps, initial_position, key):
     jax.debug.print("{x}", x=(jnp.ceil(L/step_size), L, step_size))
 
 
-    alg = blackjax.mcmc.mhmchmc.mhmchmc(
+    alg = blackjax.mcmc.mhmclmc.mhmclmc(
         logdensity_fn=logdensity_fn,
         step_size=step_size,
         integration_steps_fn = lambda _: jnp.ceil(L/step_size),
@@ -130,6 +130,6 @@ def run_mhmchmc(logdensity_fn, num_steps, initial_position, key):
     
     return out
 
-# we should do at least: mclmc, nuts, unadjusted hmc, mhmchmc, langevin
+# we should do at least: mclmc, nuts, unadjusted hmc, mhmclmc, langevin
 
-samplers = {'mclmc' : run_mclmc, 'mhmchmc': run_mhmchmc}
+samplers = {'mclmc' : run_mclmc, 'mhmclmc': run_mhmclmc}

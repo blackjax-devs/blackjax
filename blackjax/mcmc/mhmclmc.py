@@ -25,14 +25,14 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.hmc import HMCInfo, HMCState, flip_momentum
 from blackjax.mcmc.proposal import safe_energy_diff, static_binomial_sampling
 
-# from blackjax.mcmc.trajectory import mhmchmc_energy
+# from blackjax.mcmc.trajectory import mhmclmc_energy
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_unit_vector
 
 __all__ = [
     "init",
     "build_kernel",
-    "mhmchmc",
+    "mhmclmc",
 ]
 
 def init(
@@ -74,6 +74,7 @@ def build_kernel(
         state: DynamicHMCState,
         logdensity_fn: Callable,
         step_size: float,
+        L_proposal : float = 0.6,
         **integration_steps_kwargs,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
@@ -85,10 +86,10 @@ def build_kernel(
         momentum = generate_unit_vector(key_momentum, state.position)
 
 
-        proposal, info, _ = mhmchmc_proposal(
+        proposal, info, _ = mhmclmc_proposal(
             integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
             step_size,
-            1.,
+            L_proposal,
             num_integration_steps,
             divergence_threshold,
         )(
@@ -110,7 +111,7 @@ def build_kernel(
 
     return kernel
 
-class mhmchmc:
+class mhmclmc:
     """Implements the (basic) user interface for the dynamic MHMCHMC kernel.
 
     Parameters
@@ -144,6 +145,7 @@ class mhmchmc:
         cls,
         logdensity_fn: Callable,
         step_size: float,
+        L_proposal : float = 0.6,
         *,
         divergence_threshold: int = 1000,
         integrator: Callable = integrators.isokinetic_mclachlan,
@@ -163,16 +165,16 @@ class mhmchmc:
                 state,
                 logdensity_fn,
                 step_size,
+                L_proposal,
             )
 
         return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
 
 
-def mhmchmc_proposal(
+def mhmclmc_proposal(
     integrator: Callable,
     step_size: Union[float, ArrayLikeTree],
     L: float,
-    rng_key,
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,
     *,
@@ -215,7 +217,7 @@ def mhmchmc_proposal(
     def build_trajectory(state, num_integration_steps, rng_key):
         return jax.lax.fori_loop(0*num_integration_steps, num_integration_steps, step, (state, 0, rng_key))
 
-    mhmchmc_energy_fn = lambda state, kinetic_energy: -state.logdensity + kinetic_energy
+    mhmclmc_energy_fn = lambda state, kinetic_energy: -state.logdensity + kinetic_energy
 
     def generate(
         rng_key, state: integrators.IntegratorState
@@ -225,8 +227,8 @@ def mhmchmc_proposal(
             state, num_integration_steps, rng_key
         )
         end_state = flip_momentum(end_state)
-        proposal_energy = mhmchmc_energy_fn(state, kinetic_energy)
-        new_energy = mhmchmc_energy_fn(end_state, kinetic_energy)
+        proposal_energy = mhmclmc_energy_fn(state, kinetic_energy)
+        new_energy = mhmclmc_energy_fn(end_state, kinetic_energy)
         delta_energy = safe_energy_diff(proposal_energy, new_energy)
         is_diverging = -delta_energy > divergence_threshold
         sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
