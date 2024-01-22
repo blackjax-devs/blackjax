@@ -45,7 +45,7 @@ def grads_to_low_error(err_t, low_error= 0.01, grad_evals_per_step= 1):
     
     
     
-def ess(err_t, neff= 100, grad_evals_per_step = 1):
+def ess(err_t, neff= 10, grad_evals_per_step = 1):
     
     low_error = 1./neff
     cutoff_reached = err_t[-1] < low_error
