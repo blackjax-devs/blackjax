@@ -7,10 +7,15 @@ import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest, parameterized
 from jax.flatten_util import ravel_pytree
+
 from scipy.special import ellipj
 
+
 import blackjax.mcmc.integrators as integrators
-from blackjax.mcmc.integrators import esh_dynamics_momentum_update_one_step
+from blackjax.mcmc.integrators import (
+    esh_dynamics_momentum_update_one_step,
+    isokinetic_mclachlan,
+)
 from blackjax.util import generate_unit_vector
 
 
@@ -140,9 +145,9 @@ algorithms = {
         "algorithm": integrators.implicit_midpoint,
         "precision": 1e-4,
     },
-    "noneuclidean_leapfrog": {"algorithm": integrators.noneuclidean_leapfrog},
-    "noneuclidean_mclachlan": {"algorithm": integrators.noneuclidean_mclachlan},
-    "noneuclidean_yoshida": {"algorithm": integrators.noneuclidean_yoshida},
+    "isokinetic_leapfrog": {"algorithm": integrators.isokinetic_leapfrog},
+    "isokinetic_mclachlan": {"algorithm": integrators.isokinetic_mclachlan},
+    "isokinetic_yoshida": {"algorithm": integrators.isokinetic_yoshida},
 }
 
 
@@ -239,13 +244,13 @@ class IntegratorTest(chex.TestCase):
         np.testing.assert_array_almost_equal(next_momentum, next_momentum1)
 
     @chex.all_variants(with_pmap=False)
-    def test_noneuclidean_leapfrog(self):
+    def test_isokinetic_leapfrog(self):
         cov = jnp.asarray([[1.0, 0.5, 0.1], [0.5, 2.0, -0.1], [0.1, -0.1, 3.0]])
         logdensity_fn = lambda x: stats.multivariate_normal.logpdf(
             x, jnp.zeros([3]), cov
         )
 
-        step = self.variant(integrators.noneuclidean_leapfrog(logdensity_fn))
+        step = self.variant(integrators.isokinetic_leapfrog(logdensity_fn))
 
         rng = jax.random.key(4263456)
         key0, key1 = jax.random.split(rng, 2)
@@ -294,12 +299,12 @@ class IntegratorTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
         [
-            "noneuclidean_leapfrog",
-            "noneuclidean_mclachlan",
-            "noneuclidean_yoshida",
+            "isokinetic_leapfrog",
+            "isokinetic_mclachlan",
+            "isokinetic_yoshida",
         ],
     )
-    def test_noneuclidean_integrator(self, integrator_name):
+    def test_isokinetic_integrator(self, integrator_name):
         integrator = algorithms[integrator_name]
         cov = jnp.asarray([[1.0, 0.5], [0.5, 2.0]])
         logdensity_fn = lambda x: stats.multivariate_normal.logpdf(
