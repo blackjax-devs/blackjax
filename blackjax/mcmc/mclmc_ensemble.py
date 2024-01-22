@@ -19,11 +19,11 @@ from jax.flatten_util import ravel_pytree
 from typing import Callable, NamedTuple, Any
 
 from blackjax.base import SamplingAlgorithm
-from blackjax.mcmc.integrators import IntegratorState, noneuclidean_mclachlan, noneuclidean_leapfrog
+from blackjax.mcmc.integrators import IntegratorState, isokinetic_mclachlan, isokinetic_leapfrog
 from blackjax.types import Array, ArrayLike, PRNGKey
 from blackjax.util import pytree_size
 
-from blackjax.mcmc import mclmc
+from blackjax.mcmc import mclmc, mhmchmc
 
 from blackjax.mcmc.integrators import _normalized_flatten_array
 
@@ -168,6 +168,8 @@ def nan_reject(nonans, old, new):
 
 
 
+
+
 def build_kernel1(sequential_mclmc_kerel, max_iter, chains, fullrank, d, alpha = 1., C = 0.1):
 
     mclmc_kernel = parallelize_kernel(sequential_mclmc_kerel, chains)
@@ -216,6 +218,9 @@ def build_kernel1(sequential_mclmc_kerel, max_iter, chains, fullrank, d, alpha =
     return kernel
 
 
+
+    
+
 def kernel_with_observables(kernel, observables):
 
 
@@ -251,11 +256,11 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, observab
     
     
     # kernel    
-    d = ravel_pytree(initial_position)[0].shape[0] //chains # number of dimensions
+    d = ravel_pytree(initial_position)[0].shape[0] // chains # number of dimensions
 
     sequential_kernel = mclmc.build_kernel(
         logdensity_fn=logdensity_fn,
-        integrator= noneuclidean_leapfrog
+        integrator= isokinetic_leapfrog
     )
     
     max_iter = num_steps
@@ -283,13 +288,14 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, observab
 
         info = to_dict(_info[:counter])
     
-        return info
+        return state_all, info
     
     
     else:
 
         state_all = jax.lax.while_loop(cond, kernel, state_all)
 
+        return state_all, None
 
 
     # state, adap_state, key = state_all
@@ -303,3 +309,38 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, observab
 
 
 
+def build_kernel2():
+
+    mamclmc_kernel = parallelize_kernel(sequential_mamclmc_kerel, chains)
+
+
+    
+    
+
+def stage2(logdensity_fn, num_steps, initial_position, chains, rng_key, observables= jnp.square):
+    """observable: function taking position x and outputing O(x). We will store ensemble average of O(x) at each step"""
+    
+    
+    # kernel    
+    d = ravel_pytree(initial_position)[0].shape[0] //chains # number of dimensions
+
+    sequential_kernel = mhmchmc.build_kernel(
+        integration_steps_fn= lambda key: 10
+    )
+    
+    kernel = build_kernel2(sequential_kernel, chains, d)
+    
+    
+    
+    
+
+def algorithm(logdensity_fn, num_steps, initial_position, chains, rng_key, observables= jnp.square):
+    
+    
+    key1, key2 = jax.random.split(rng_key)
+    
+    state_all, info = stage1(logdensity_fn, num_steps, initial_position, chains, key1, observables)
+
+    state_all_info = stage2(logdensity_fn, num_steps, initial_position, chains, key2, observables)
+    
+    
