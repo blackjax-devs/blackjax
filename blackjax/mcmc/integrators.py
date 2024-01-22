@@ -401,13 +401,13 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
 
 def with_isokinetic_maruyama(integrator):
     
-    def stochastic_integrator(state, step_size, L, rng_key):
+    def stochastic_integrator(state, step_size, Lpartial, rng_key):
         # partial refreshment
-        _state = state._replace(momentum=partially_refresh_momentum(momentum=state.momentum, rng_key=rng_key, L=L, step_size=step_size * 0.5))
+        _state = state._replace(momentum=partially_refresh_momentum(momentum=state.momentum, rng_key=rng_key, L=Lpartial, step_size=step_size * 0.5))
         # one step of the deterministic dynamics
         _state, info = integrator(_state, step_size)
         # partial refreshment
-        _state = state._replace(momentum=partially_refresh_momentum(momentum=_state.momentum, rng_key=rng_key, L=L, step_size=step_size * 0.5))
+        _state = state._replace(momentum=partially_refresh_momentum(momentum=_state.momentum, rng_key=rng_key, L=Lpartial, step_size=step_size * 0.5))
         return _state, info
     
     return stochastic_integrator
