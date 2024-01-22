@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 import blackjax
-from blackjax.mcmc.mhmchmc import mhmchmc
+from blackjax.mcmc.mhmchmc import mhmchmc, rescale
 from blackjax.mcmc.hmc import hmc
 from blackjax.mcmc.dynamic_hmc import dynamic_hmc
 from blackjax.mcmc.integrators import isokinetic_mclachlan
@@ -83,10 +83,13 @@ def run_mhmchmc_dynamic(initial_position):
     jax.debug.print("{x}", x=(jnp.ceil(L/step_size), L, step_size))
 
 
+
+    
     alg = blackjax.mcmc.mhmchmc.mhmchmc(
         logdensity_fn=logdensity_fn,
         step_size=step_size,
-        integration_steps_fn = lambda _: jnp.ceil(L/step_size),
+        # integration_steps_fn = lambda _: jnp.ceil(L/step_size),
+        integration_steps_fn = lambda key: jnp.round(jax.random.uniform(key) * rescale(L/step_size + 0.5)) ,
         # num_integration_steps=L//step_size,
     )
 

@@ -86,8 +86,9 @@ def build_kernel(
 
 
         proposal, info, _ = mhmchmc_proposal(
-            integrator(logdensity_fn),
+            integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
             step_size,
+            1.,
             num_integration_steps,
             divergence_threshold,
         )(
@@ -170,6 +171,8 @@ class mhmchmc:
 def mhmchmc_proposal(
     integrator: Callable,
     step_size: Union[float, ArrayLikeTree],
+    L: float,
+    rng_key,
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,
     *,
@@ -203,12 +206,14 @@ def mhmchmc_proposal(
     """
 
     def step(i, vars):
-        state, kinetic_energy = vars
-        next_state, next_kinetic_energy = integrator(state, step_size=step_size)
-        return next_state, kinetic_energy + next_kinetic_energy
+        state, kinetic_energy, rng_key = vars
+        rng_key, next_rng_key = jax.random.split(rng_key)
+        next_state, next_kinetic_energy = integrator(state, step_size=step_size, L=L, rng_key=rng_key)
 
-    def build_trajectory(state, num_integration_steps):
-        return jax.lax.fori_loop(0*num_integration_steps, num_integration_steps, step, (state, 0))
+        return next_state, kinetic_energy + next_kinetic_energy, next_rng_key
+
+    def build_trajectory(state, num_integration_steps, rng_key):
+        return jax.lax.fori_loop(0*num_integration_steps, num_integration_steps, step, (state, 0, rng_key))
 
     mhmchmc_energy_fn = lambda state, kinetic_energy: -state.logdensity + kinetic_energy
 
@@ -216,8 +221,8 @@ def mhmchmc_proposal(
         rng_key, state: integrators.IntegratorState
     ) -> tuple[integrators.IntegratorState, HMCInfo, ArrayTree]:
         """Generate a new chain state."""
-        end_state, kinetic_energy = build_trajectory(
-            state, num_integration_steps
+        end_state, kinetic_energy, rng_key = build_trajectory(
+            state, num_integration_steps, rng_key
         )
         end_state = flip_momentum(end_state)
         proposal_energy = mhmchmc_energy_fn(state, kinetic_energy)

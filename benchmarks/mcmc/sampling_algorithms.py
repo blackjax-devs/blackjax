@@ -97,8 +97,8 @@ def run_mhmchmc(logdensity_fn, num_steps, initial_position, key):
         num_steps=num_steps,
         state=initial_state,
         rng_key=tune_key,
-        # frac_tune2=0,
-        # frac_tune3=0,
+        frac_tune2=0,
+        frac_tune3=0,
     )
 
     # raise Exception
@@ -132,4 +132,4 @@ def run_mhmchmc(logdensity_fn, num_steps, initial_position, key):
 
 # we should do at least: mclmc, nuts, unadjusted hmc, mhmchmc, langevin
 
-samplers = {'mclmc' : run_mclmc} # , 'mhmchmc': run_mhmchmc}
+samplers = {'mclmc' : run_mclmc, 'mhmchmc': run_mhmchmc}
