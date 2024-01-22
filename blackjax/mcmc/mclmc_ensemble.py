@@ -21,7 +21,7 @@ from jax.flatten_util import ravel_pytree, pytree_size
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import Array, ArrayLike, PRNGKey
-from blackjax.mcmc.integrators import IntegratorState, isokinetic_mclachlan, isokinetic_leapfrog, _normalized_flatten_array
+from blackjax.mcmc.integrators import IntegratorState, isokinetic_mclachlan, isokinetic_leapfrog, _normalized_flatten_array, with_isokinetic_maruyama
 from blackjax.mcmc import mclmc, mhmclmc
 
 
@@ -32,6 +32,15 @@ class Hyperparameters(NamedTuple):
     
     L: float
     step_size: float
+    
+
+
+class HyperparametersMALT(NamedTuple):
+    
+    Lfull: float
+    Lpartial: float
+    step_size: float
+
 
 
 class AdaptationState(NamedTuple):
@@ -296,51 +305,49 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, observab
         return state_all, None
 
 
-    # state, adap_state, key = state_all
-    # steps_left = num_steps - adap_state.steps
-
-    
-        
-    # if self.integrator == 'MN':
-        #hyp['eps'] *= jnp.sqrt(10.)
 
 
 
-
-def build_kernel2(logdensity_fn, chains, logdensity_fn, step_size, ):
-    
-    sequential_kernel = mhmclmc.build(isokinetic_mclachlan, integration_steps_fn = L/step_size)
-
-    mamclmc_kernel = parallelize_kernel(sequential_kernel, chains, (0, 0, None, None, None))
-    
-    return lambda state, rng_key: mamclmc_kernel(rng_key, state, logdensity_fn, step_size, L_propsal)
-
-
-
-def stage2(logdensity_fn, num_steps, initial_position, chains, rng_key, observables= jnp.square):
+def stage2(logdensity_fn, integrator, num_steps, initial_position, chains, rng_key, steps_per_sample, step_size, Lpartial):
     """observable: function taking position x and outputing O(x). We will store ensemble average of O(x) at each step"""
     
     
-    # kernel    
-    d = ravel_pytree(initial_position)[0].shape[0] //chains # number of dimensions
+    sequential_kernel = mhmclmc.mhmchmc_proposal(
+            with_isokinetic_maruyama(integrator(logdensity_fn)),
+            step_size, Lpartial, steps_per_sample,
+        )
 
-    sequential_kernel = mhmchmc.build_kernel(
-        integration_steps_fn= lambda key: 10
-    )
+    kernel = parallelize_kernel(sequential_kernel, chains, (0, 0))
     
-    kernel = build_kernel2(sequential_kernel, chains, d)
+    return jax.lax.scan(lambda state, key: kernel(key, state)[0], init= initial_position, xs = jax.random.split(rng_key, num_steps))[0]
+    
     
     
     
     
 
-def algorithm(logdensity_fn, num_steps, initial_position, chains, rng_key, observables= jnp.square):
+def algorithm(logdensity_fn, num_steps, initial_position, chains, rng_key, observables= jnp.square, mclachlan = True):
     
     
-    key1, key2 = jax.random.split(rng_key)
-    
-    state_all, info = stage1(logdensity_fn, num_steps, initial_position, chains, key1, observables)
+    state_all, info = stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, observables)
 
-    state_all_info = stage2(logdensity_fn, num_steps, initial_position, chains, key2, observables)
+    state, adap_state, key = state_all
+    Lfull, step_size = adap_state.hyperparameters.L, adap_state.hyperparameters.step_size
+    if mclachlan:
+        integrator = isokinetic_mclachlan 
+        grads_per_step = 2
+        step_size *= jnp.sqrt(10.) #if we switched to the more accurate integrator we can use longer step size
+        
+    else:
+        integrator = isokinetic_leapfrog
+        grads_per_step = 1
+        
+    # adjust the stepsize to the adjusted method !!!
+    
+    Lpartial = Lfull * 0.6
+    steps_per_sample = (int)(Lfull / step_size)
+    num_samples = (num_steps - adap_state.steps) // (grads_per_step * steps_per_sample)
+    
+    state_final = stage2(logdensity_fn, integrator, num_samples, state, chains, key, steps_per_sample, step_size, Lpartial)
     
     
