@@ -12,7 +12,7 @@ myst_nb>=1.0.0
 numba
 numpyro
 optax
-oryx @ git+https://github.com/jax-ml/oryx.git@main  # remove after oryx release
+oryx
 pymc
 scikit-learn
 sphinx
