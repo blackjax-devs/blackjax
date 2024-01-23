@@ -87,8 +87,8 @@ def build_kernel(
 
 
         proposal, info, _ = mhmclmc_proposal(
-            # integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
-            lambda state, step_size, x, y : (integrator(logdensity_fn))(state, step_size),
+            integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
+            # lambda state, step_size, x, y : (integrator(logdensity_fn))(state, step_size),
             step_size,
             L_proposal,
             num_integration_steps,
