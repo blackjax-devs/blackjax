@@ -99,7 +99,7 @@ def benchmark(model, sampler):
 
 def benchmark_chains(model, sampler):
 
-    n = 100000
+    n = 10000
 
     identity_fn = model.sample_transformations['identity']
     logdensity_fn = model.unnormalized_log_prob
@@ -108,7 +108,7 @@ def benchmark_chains(model, sampler):
     keys = jax.random.split(jax.random.PRNGKey(1), batch)
     # keys = jnp.array([jax.random.PRNGKey(0)])
 
-    samples = jax.vmap(lambda pos, key: sampler(logdensity_fn, n, pos, key))(jnp.zeros((batch, d)), keys)
+    samples = jax.vmap(lambda pos, key: sampler(logdensity_fn, n, pos, key))(jnp.ones((batch, d)), keys)
     # print(samples[0][-1], samples[0][0], "samps chain", samples.shape)
     favg, fvar = identity_fn.ground_truth_mean, identity_fn.ground_truth_standard_deviation**2
     full = lambda arr : err(favg, fvar, jnp.average)(cumulative_avg(arr))

@@ -3,6 +3,7 @@
 import jax
 import jax.numpy as jnp
 import blackjax
+from blackjax.mcmc.mhmclmc import rescale
 from blackjax.util import run_inference_algorithm
 import blackjax
 
@@ -97,7 +98,7 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
         num_steps=num_steps,
         state=initial_state,
         rng_key=tune_key,
-        frac_tune2=0,
+        # frac_tune2=0,
         frac_tune3=0,
     )
 
@@ -109,13 +110,14 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
     step_size = blackjax_mclmc_sampler_params.step_size
     L = blackjax_mclmc_sampler_params.L
 
-    jax.debug.print("{x}", x=(jnp.ceil(L/step_size), L, step_size))
+    jax.debug.print("{x} num_steps, L, step_size", x=(jnp.ceil(L/step_size), L, step_size))
 
 
     alg = blackjax.mcmc.mhmclmc.mhmclmc(
         logdensity_fn=logdensity_fn,
         step_size=step_size,
-        integration_steps_fn = lambda _: jnp.ceil(L/step_size),
+        integration_steps_fn = lambda key: jnp.round(jax.random.uniform(key) * rescale(L/step_size + 0.5)) ,
+
     )
 
     _, out, info = run_inference_algorithm(
