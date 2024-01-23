@@ -426,7 +426,7 @@ def mhmclmc_make_L_step_size_adaptation(
             adaptive_state, info.acceptance_rate
         )
 
-        step_size = jnp.exp(adaptive_state.log_step_size)
+        step_size = jax.lax.clamp(1e-3, jnp.exp(adaptive_state.log_step_size), 1e0)
 
         # update the running average of x, x^2
         streaming_avg = streaming_average(
@@ -444,7 +444,8 @@ def mhmclmc_make_L_step_size_adaptation(
         #                         L=mask * (params.L/params.step_size * step_size) + (1-mask)*params.L
         #                         )
         params = params._replace(step_size=step_size, 
-                                L=(params.L/params.step_size * step_size))
+                                # L=(params.L/params.step_size * step_size)
+                                )
 
 
         return (state, params, (adaptive_state, step_size_max), streaming_avg), info
@@ -475,6 +476,7 @@ def mhmclmc_make_L_step_size_adaptation(
         ((state, params, _, (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass1)
 
         jax.debug.print("{x}",x=("mean acceptance rate", jnp.mean(info.acceptance_rate,)))
+        jax.debug.print("{x} params",x=(params))
         # raise Exception
 
         # determine L
@@ -482,11 +484,13 @@ def mhmclmc_make_L_step_size_adaptation(
             x_average, x_squared_average = average[0], average[1]
             variances = x_squared_average - jnp.square(x_average)
             change = jax.lax.clamp(0.5, jnp.sqrt(jnp.sum(variances))/params.L, 2.0)
-            jax.debug.print("{x} L ratio",x=(change))
+            jax.debug.print("{x} L ratio, old val,  new val",x=(change, params.L, params.L*change))
             params = params._replace(L=params.L*change)
 
         
             ((state, params, _, (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass2)
+            jax.debug.print("{x}",x=("mean acceptance rate", jnp.mean(info.acceptance_rate,)))
+            jax.debug.print("{x} params",x=(params))
 
         return state, params
     

@@ -45,7 +45,7 @@ def grads_to_low_error(err_t, low_error= 0.01, grad_evals_per_step= 1):
     
     
     
-def ess(err_t, neff= 10, grad_evals_per_step = 1):
+def ess(err_t, neff= 10, grad_evals_per_step = 2):
     
     low_error = 1./neff
     cutoff_reached = err_t[-1] < low_error
@@ -63,6 +63,9 @@ def find_crossing(array, cutoff):
     """the smallest M such that array[m] < cutoff for all m > M"""
 
     indices = jnp.argwhere(array > cutoff)
+    if indices.shape[0] == 0:
+        raise Exception("No crossing found")
+    # print(jnp.argwhere(array))
     return jnp.max(indices)+1
 
 def cumulative_avg(samples):
@@ -76,7 +79,7 @@ def benchmark(model, sampler):
     # print(cumulative_avg(jnp.array([[1., 2.], [1.,2.]]).T))
     # raise Exception
 
-    n = 20000
+    n = 10000
 
     identity_fn = model.sample_transformations['identity']
     # print('True mean', identity_fn.ground_truth_mean)
@@ -86,7 +89,7 @@ def benchmark(model, sampler):
 
     logdensity_fn = model.unnormalized_log_prob
     d = get_num_latents(model)
-    initial_position = jnp.zeros(d,)
+    initial_position = jax.random.normal(jax.random.PRNGKey(0), (d,))
     samples = sampler(logdensity_fn, n, initial_position, jax.random.PRNGKey(0))
     # print(samples[-1], samples[0], "samps", samples.shape)
 
@@ -99,7 +102,7 @@ def benchmark(model, sampler):
 
 def benchmark_chains(model, sampler):
 
-    n = 10000
+    n = 100000
 
     identity_fn = model.sample_transformations['identity']
     logdensity_fn = model.unnormalized_log_prob

@@ -25,12 +25,12 @@ class SimpleModel(gym.targets.Model):
       return -0.5 * jnp.sum(jnp.square(value))
 
 models = {}
-# for target_name in gym.targets.__all__:
-#   if target_name in ['Banana', 'IllConditionedGaussian']:
-#   # if target_name in ['Banana']:
-#     try:
-#       models[target_name] = getattr(gym.targets, target_name)()
-#     except:
-#       pass
+for target_name in gym.targets.__all__:
+  if target_name in ['Banana', 'IllConditionedGaussian']:
+  # if target_name in ['Banana']:
+    try:
+      models[target_name] = getattr(gym.targets, target_name)()
+    except:
+      pass
 
-models['simple'] = SimpleModel(100)
+# models['simple'] = SimpleModel(10)
