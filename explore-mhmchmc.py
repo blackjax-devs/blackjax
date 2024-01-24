@@ -9,7 +9,6 @@ from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
 
 
-num_steps = 5000
 
 
 
@@ -72,12 +71,12 @@ def run_mclmc(logdensity_fn, num_steps, initial_position):
 # compare_static_dynamic()
 
 
-out = run_mclmc(logdensity_fn, num_steps, initial_position)
+# out = run_mclmc(logdensity_fn, num_steps, initial_position)
 # print(out.position.mean(axis=0) )
 
 
 # out = run_hmc(initial_position)
-out = samplers["mhmclmc"](logdensity_fn=logdensity_fn, num_steps=1000, initial_position=initial_position, key=jax.random.PRNGKey(0))
+out = samplers["mhmclmc"](logdensity_fn=logdensity_fn, num_steps=5000, initial_position=initial_position, key=jax.random.PRNGKey(0))
 print(out.mean(axis=0) )
 
 

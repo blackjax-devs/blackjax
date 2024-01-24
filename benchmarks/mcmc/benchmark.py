@@ -102,7 +102,7 @@ def benchmark(model, sampler):
 
 def benchmark_chains(model, sampler):
 
-    n = 100000
+    n = 1000
 
     identity_fn = model.sample_transformations['identity']
     logdensity_fn = model.unnormalized_log_prob

@@ -307,8 +307,8 @@ def mhmclmc_find_L_and_step_size(
     num_steps,
     state,
     rng_key,
-    frac_tune1=0.1,
-    frac_tune2=0.1,
+    frac_tune1=0.2,
+    frac_tune2=0.2,
     frac_tune3=0.1,
 ):
     """
@@ -426,7 +426,8 @@ def mhmclmc_make_L_step_size_adaptation(
             adaptive_state, info.acceptance_rate
         )
 
-        step_size = jax.lax.clamp(1e-3, jnp.exp(adaptive_state.log_step_size), 1e0)
+        # step_size = jax.lax.clamp(1e-3, jnp.exp(adaptive_state.log_step_size), 1e0)
+        step_size = jnp.exp(adaptive_state.log_step_size)
 
         # update the running average of x, x^2
         streaming_avg = streaming_average(
@@ -440,12 +441,14 @@ def mhmclmc_make_L_step_size_adaptation(
         # n = L/eps
         # eps -> eps * new_eps/eps 
 
-        # params = params._replace(step_size=mask * step_size + (1-mask)*params.step_size, 
-        #                         L=mask * (params.L/params.step_size * step_size) + (1-mask)*params.L
-        #                         )
-        params = params._replace(step_size=step_size, 
-                                # L=(params.L/params.step_size * step_size)
+        params = params._replace(step_size=mask * step_size + (1-mask)*params.step_size, 
+                                # L=(params.L/params.step_size * step_size),
+                                L=mask * (params.L/params.step_size * step_size) + (1-mask)*params.L
+                                # L=mask * (params.L/params.step_size * step_size) + (1-mask)*params.L
                                 )
+        # params = params._replace(step_size=step_size, 
+        #                         L=(params.L/params.step_size * step_size)
+        #                         )
 
 
         return (state, params, (adaptive_state, step_size_max), streaming_avg), info

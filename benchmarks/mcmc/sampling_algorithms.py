@@ -98,7 +98,7 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
         num_steps=num_steps,
         state=initial_state,
         rng_key=tune_key,
-        # frac_tune2=0,
+        frac_tune2=0,
         frac_tune3=0,
     )
 
@@ -117,21 +117,22 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
         logdensity_fn=logdensity_fn,
         step_size=step_size,
         integration_steps_fn = lambda key: jnp.round(jax.random.uniform(key) * rescale(L/step_size + 0.5)) ,
+        # integration_steps_fn = lambda key: jnp.ceil(jax.random.poisson(key, L/step_size )) ,
 
     )
 
     _, out, info = run_inference_algorithm(
         rng_key=run_key,
-        initial_state_or_position=initial_position,
+        initial_state_or_position=blackjax_state_after_tuning,
         inference_algorithm=alg,
         num_steps=num_steps, 
         transform=lambda x: x.position, 
         progress_bar=True)
     
-    # print(info.acceptance_rate)
+    jax.debug.print("ACCEPTANCE {x}", x = (info.acceptance_rate.shape, jnp.mean(info.acceptance_rate,)))
     
     return out
 
 # we should do at least: mclmc, nuts, unadjusted hmc, mhmclmc, langevin
 
-samplers = {'mclmc' : run_mclmc,} # 'mhmclmc': run_mhmclmc}
+samplers = {'mclmc' : run_mclmc, 'mhmclmc': run_mhmclmc}
