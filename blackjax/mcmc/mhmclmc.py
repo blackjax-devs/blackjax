@@ -87,8 +87,8 @@ def build_kernel(
 
 
         proposal, info, _ = mhmclmc_proposal(
-            integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
-            # lambda state, step_size, x, y : (integrator(logdensity_fn))(state, step_size),
+            # integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
+            lambda state, step_size, x, y : (integrator(logdensity_fn))(state, step_size),
             step_size,
             L_proposal,
             num_integration_steps,
@@ -212,6 +212,7 @@ def mhmclmc_proposal(
         state, kinetic_energy, rng_key = vars
         rng_key, next_rng_key = jax.random.split(rng_key)
         next_state, next_kinetic_energy = integrator(state, step_size, L, rng_key)
+        # jax.debug.print("{x} pos, grad", x=(next_state.position, state.logdensity_grad))
 
         return next_state, kinetic_energy + next_kinetic_energy, next_rng_key
 
@@ -234,6 +235,7 @@ def mhmclmc_proposal(
         is_diverging = -delta_energy > divergence_threshold
         sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
         do_accept, p_accept, other_proposal_info = info
+        # jax.debug.print("{x} delta_energy, acceptance rate", x=(delta_energy, p_accept))
 
         info = HMCInfo(
             state.momentum,
