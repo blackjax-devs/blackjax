@@ -75,12 +75,11 @@ def build_kernel(
         logdensity_fn: Callable,
         step_size: float,
         L_proposal : float = 1.0,
-        **integration_steps_kwargs,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
         
         num_integration_steps = integration_steps_fn(
-            state.random_generator_arg, **integration_steps_kwargs
+            state.random_generator_arg
         )
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)

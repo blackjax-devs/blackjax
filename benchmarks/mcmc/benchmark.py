@@ -132,7 +132,7 @@ def benchmark_chains(model, sampler, n=10000, batch=None):
     print("Empirical mean", samples.mean(axis=[0,1]))
     print("Empirical std", samples.std(axis=[0,1]))
     
-    return ess_per_sample
+    return ess_per_sample, err_t[-1]
 
 
 if __name__ == "__main__":
@@ -184,7 +184,7 @@ if __name__ == "__main__":
         for sampler in ["mhmclmc"]:
             # result = benchmark(models[model], samplers[sampler])
             
-            result = benchmark_chains(models[model], samplers[sampler], batch=1, n=1000000)
+            result = benchmark_chains(models[model], samplers[sampler], batch=10, n=10000)
             # print(result, result2, "results")
             results[(model, sampler)] = result
 

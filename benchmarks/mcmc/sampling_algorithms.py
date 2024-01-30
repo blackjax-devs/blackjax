@@ -55,6 +55,8 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, key):
         rng_key=tune_key,
     )
 
+    jax.debug.print("params {x}", x=blackjax_mclmc_sampler_params)
+
     sampling_alg = blackjax.mclmc(
         logdensity_fn,
         L=blackjax_mclmc_sampler_params.L,
