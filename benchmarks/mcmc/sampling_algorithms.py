@@ -100,8 +100,8 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
         num_steps=num_steps,
         state=initial_state,
         rng_key=tune_key,
-        # frac_tune2=0,
-        # frac_tune3=0,
+        frac_tune2=0,
+        frac_tune3=0,
     )
 
     # raise Exception
@@ -130,6 +130,7 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
         num_steps=num_steps, 
         transform=lambda x: x.position, 
         progress_bar=True)
+    
     
     jax.debug.print("ACCEPTANCE {x}", x = (info.acceptance_rate.shape, jnp.mean(info.acceptance_rate,)))
     

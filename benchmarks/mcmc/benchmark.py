@@ -66,7 +66,7 @@ def find_crossing(array, cutoff):
 
     indices = jnp.argwhere(array > cutoff)
     if indices.shape[0] == 0:
-        raise Exception("No crossing found")
+        raise Exception("No crossing found", array, cutoff)
     # print(jnp.argwhere(array))
     return jnp.max(indices)+1
 
@@ -126,6 +126,11 @@ def benchmark_chains(model, sampler, n=10000, batch=None):
     # print(avg_num_steps_per_traj, "AVG\n\n")
     # raise Exception
     ess_per_sample = ess(err_t, grad_evals_per_step=2 * avg_num_steps_per_traj)
+
+    print('True mean', identity_fn.ground_truth_mean)
+    print('True std', identity_fn.ground_truth_standard_deviation)
+    print("Empirical mean", samples.mean(axis=[0,1]))
+    print("Empirical std", samples.std(axis=[0,1]))
     
     return ess_per_sample
 
@@ -157,9 +162,9 @@ if __name__ == "__main__":
             transform=lambda x: x.position, 
             progress_bar=True)
 
-            jax.debug.print("{x}",x=info.is_accepted)
-            jax.debug.print("{x}",x=info.proposal.position.mean())
-            jax.debug.print("{x}",x=info.energy)
+            # jax.debug.print("{x}",x=info.is_accepted)
+            # jax.debug.print("{x}",x=info.proposal.position.mean())
+            # jax.debug.print("{x}",x=info.energy)
 
             return out, num_steps_per_traj
         
@@ -175,9 +180,11 @@ if __name__ == "__main__":
     # Run the benchmark for each model and sampler
     for model in ["Banana"]:
         # for sampler in samplers:
+        print("MODEL", model, "DIM", get_num_latents(models[model]))
         for sampler in ["mhmclmc"]:
             # result = benchmark(models[model], samplers[sampler])
-            result = benchmark_chains(models[model], samplers[sampler], batch=10, n=100000)
+            
+            result = benchmark_chains(models[model], samplers[sampler], batch=1, n=1000000)
             # print(result, result2, "results")
             results[(model, sampler)] = result
 

@@ -85,6 +85,8 @@ def build_kernel(
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
 
+        # jax.debug.print("{x} num_integration_steps", x=(num_integration_steps, step_size, num_integration_steps*step_size))
+
 
         proposal, info, _ = mhmclmc_proposal(
             # integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
