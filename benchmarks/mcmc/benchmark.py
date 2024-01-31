@@ -31,6 +31,7 @@ def err(f_true, var_f, contract = jnp.max):
     
     def _err(f):
         bsq = jnp.square(f - f_true) / var_f
+        # jax.debug.print("bsq {x}", x=(f - f_true, f_true, f))
         # print(bsq.shape, "shape ASDFADSF \n\n")
         return contract(bsq)
     
@@ -66,7 +67,8 @@ def find_crossing(array, cutoff):
 
     indices = jnp.argwhere(array > cutoff)
     if indices.shape[0] == 0:
-        raise Exception("No crossing found", array, cutoff)
+        print("\n\n\nNO CROSSING FOUND!!!\n\n\n", array, cutoff)
+        return 1
     # print(jnp.argwhere(array))
     return jnp.max(indices)+1
 
@@ -105,7 +107,12 @@ def cumulative_avg(samples):
 def benchmark_chains(model, sampler, n=10000, batch=None):
 
 
-    identity_fn = model.sample_transformations['identity']
+    # print(model)
+    # print(model.sample_transformations.keys())
+    # raise Exception
+    x2 = model.sample_transformations
+    print(x2.keys())
+    raise Exception
     logdensity_fn = model.unnormalized_log_prob
     d = get_num_latents(model)
     if batch is None:
@@ -118,7 +125,7 @@ def benchmark_chains(model, sampler, n=10000, batch=None):
     samples, avg_num_steps_per_traj = jax.vmap(lambda pos, key: sampler(logdensity_fn, n, pos, key))(init_pos, keys)
     avg_num_steps_per_traj = jnp.mean(avg_num_steps_per_traj, axis=0)
     # print(samples[0][-1], samples[0][0], "samps chain", samples.shape)
-    favg, fvar = identity_fn.ground_truth_mean, identity_fn.ground_truth_standard_deviation**2
+    favg, fvar = x2.ground_truth_mean, x2.ground_truth_standard_deviation**2
     full = lambda arr : err(favg, fvar, jnp.average)(cumulative_avg(arr))
     err_t = jnp.mean(jax.vmap(full)(samples), axis=0)
     # err_t = jax.vmap(full)(samples)[1]
@@ -127,11 +134,14 @@ def benchmark_chains(model, sampler, n=10000, batch=None):
     # raise Exception
     ess_per_sample = ess(err_t, grad_evals_per_step=2 * avg_num_steps_per_traj)
 
-    print('True mean', identity_fn.ground_truth_mean)
-    print('True std', identity_fn.ground_truth_standard_deviation)
+    print('True mean', x2.ground_truth_mean)
+    print('True std', x2.ground_truth_standard_deviation)
     print("Empirical mean", samples.mean(axis=[0,1]))
     print("Empirical std", samples.std(axis=[0,1]))
     
+    print('True E[x^2]', x2.ground_truth_mean)
+    print('True std[x^2]', x2.ground_truth_standard_deviation)
+
     return ess_per_sample, err_t[-1]
 
 
@@ -178,7 +188,7 @@ if __name__ == "__main__":
     results = defaultdict(float)
 
     # Run the benchmark for each model and sampler
-    for model in ["Banana"]:
+    for model in ["simple"]:
         # for sampler in samplers:
         print("MODEL", model, "DIM", get_num_latents(models[model]))
         for sampler in ["mhmclmc"]:

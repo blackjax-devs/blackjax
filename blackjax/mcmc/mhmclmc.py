@@ -222,7 +222,7 @@ def mhmclmc_proposal(
     def build_trajectory(state, num_integration_steps, rng_key):
         return jax.lax.fori_loop(0*num_integration_steps, num_integration_steps, step, (state, 0, rng_key))
 
-    mhmclmc_energy_fn = lambda state, kinetic_energy: -state.logdensity + kinetic_energy
+    # mhmclmc_energy_fn = lambda state, kinetic_energy: -state.logdensity
 
     def generate(
         rng_key, state: integrators.IntegratorState
@@ -231,10 +231,13 @@ def mhmclmc_proposal(
         end_state, kinetic_energy, rng_key = build_trajectory(
             state, num_integration_steps, rng_key
         )
-        end_state = flip_momentum(end_state)
-        proposal_energy = mhmclmc_energy_fn(state, kinetic_energy)
-        new_energy = mhmclmc_energy_fn(end_state, kinetic_energy)
-        delta_energy = safe_energy_diff(proposal_energy, new_energy)
+        # end_state = flip_momentum(end_state)
+        # proposal_energy = mhmclmc_energy_fn(state, kinetic_energy)
+        # new_energy = mhmclmc_energy_fn(end_state, kinetic_energy)
+        # delta_energy = safe_energy_diff(proposal_energy, new_energy)
+        new_energy = -end_state.logdensity ## TODO: note that this is the POTENTIAL energy only
+        delta_energy = -state.logdensity + end_state.logdensity - kinetic_energy
+        delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
         is_diverging = -delta_energy > divergence_threshold
         sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
         do_accept, p_accept, other_proposal_info = info

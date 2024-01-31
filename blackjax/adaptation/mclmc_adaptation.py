@@ -402,7 +402,7 @@ def mhmclmc_make_L_step_size_adaptation(
         # num_integration_steps = jnp.round(jax.random.uniform(num_steps_key) * rescale(params.L/params.step_size + 0.5))
         avg_num_integration_steps = params.L/params.step_size
 
-        # jax.debug.print("{x} avg_",x=(params.L/params.step_size, num_integration_steps))
+        # jax.debug.print("{x} avg_",x=(params.L/params.step_size, params))
 
         # dynamics
         state, info = kernel(
@@ -436,12 +436,13 @@ def mhmclmc_make_L_step_size_adaptation(
         #     mask * mu + (1-mask)*adaptive_state.mu,
         #     )
 
+        # jax.debug.print("{x} step_size before",x=(adaptive_state.log_step_size, info.acceptance_rate,))
         adaptive_state = update(adaptive_state, info.acceptance_rate)
+        # jax.debug.print("{x} step_size after",x=(adaptive_state.log_step_size,))
         
 
         # step_size = jax.lax.clamp(1e-3, jnp.exp(adaptive_state.log_step_size), 1e0)
         # step_size = jax.lax.clamp(1e-5, jnp.exp(adaptive_state.log_step_size), step_size_max)
-        # jax.debug.print("{x} num steps",x=(params.L/params.step_size,))
         step_size = jax.lax.clamp(1e-5, jnp.exp(adaptive_state.log_step_size), step_size_max)
         # step_size = 1e-3
 
@@ -460,17 +461,17 @@ def mhmclmc_make_L_step_size_adaptation(
         # params = params._replace(step_size=step_size)
         # jax.debug.print("new step size {x}", x=step_size)
 
-        params = params._replace(
-                step_size=step_size, 
-                L = params.L * (step_size / params.step_size)
-                )
         # params = params._replace(
-        #         step_size=mask * step_size + (1-mask)*params.step_size, 
-        #         # step_size=step_size, 
-        #         # L=(params.L/params.step_size * step_size),
-        #         # L=mask * ((params.L * (step_size / params.step_size))) + (1-mask)*params.L
-        #         # L=mask * (params.L/params.step_size * step_size) + (1-mask)*params.L
+        #         step_size=step_size, 
+        #         L = params.L * (step_size / params.step_size)
         #         )
+        params = params._replace(
+                step_size=mask * step_size + (1-mask)*params.step_size, 
+                # step_size=step_size, 
+                # L=(params.L/params.step_size * step_size),
+                L=mask * ((params.L * (step_size / params.step_size))) + (1-mask)*params.L
+                # L=mask * (params.L/params.step_size * step_size) + (1-mask)*params.L
+                )
         # params = params._replace(step_size=step_size, 
         #                         L=(params.L/params.step_size * step_size)
         #                         )

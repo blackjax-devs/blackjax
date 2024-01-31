@@ -18,11 +18,22 @@ class SimpleModel(gym.targets.Model):
                   ground_truth_mean=jnp.zeros(ndims),
                   # Variance of Chi2 with one degree of freedom is 2.
                   ground_truth_standard_deviation=jnp.ones(ndims)
-              ),),
+              ),
+              
+              ),
       )
 
     def _unnormalized_log_prob(self, value):
       return -0.5 * jnp.sum(jnp.square(value))
+
+
+# square=gym.targets.Model.SampleTransformation(
+#                   fn=lambda x: x**2,
+#                   pretty_name='x^2',
+#                   ground_truth_mean=jnp.array([100.0, 19.0]),
+#                   # Variance of Chi2 with one degree of freedom is 2.
+#                   ground_truth_standard_deviation=jnp.sqrt(jnp.array([20000.0, 4600.898]))
+#               ),
 
 models = {}
 for target_name in gym.targets.__all__:
@@ -33,4 +44,5 @@ for target_name in gym.targets.__all__:
     except:
       pass
 
-models['simple'] = SimpleModel(10)
+models['simple'] = SimpleModel(2)
+
