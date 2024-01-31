@@ -310,6 +310,7 @@ def mhmclmc_find_L_and_step_size(
     frac_tune1=0.2,
     frac_tune2=0.2,
     frac_tune3=0.1,
+    params=None
 ):
     """
     Finds the optimal value of the parameters for the MH-MCHMC algorithm.
@@ -343,7 +344,10 @@ def mhmclmc_find_L_and_step_size(
     """
 
     dim = pytree_size(state.position)
-    params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.25)
+    if params is None:
+        params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.25)
+    else:
+        params = params
     jax.debug.print("initial params {x}", x=params)
     part1_key, part2_key = jax.random.split(rng_key, 2)
 
@@ -395,40 +399,45 @@ def mhmclmc_make_L_step_size_adaptation(
 
         # num_integration_steps = jnp.min(jnp.array([jax.random.poisson(num_steps_key, params.L/params.step_size)+1, 1000]))
         # num_integration_steps = jnp.min(jnp.array([jax.random.poisson(num_steps_key, params.L/params.step_size), 1000]))
-        num_integration_steps = jnp.round(jax.random.uniform(num_steps_key) * rescale(params.L/params.step_size + 0.5))
+        # num_integration_steps = jnp.round(jax.random.uniform(num_steps_key) * rescale(params.L/params.step_size + 0.5))
+        avg_num_integration_steps = params.L/params.step_size
 
-        # jax.debug.print("{x} num_integration_steps",x=(params.L/params.step_size, num_integration_steps))
+        # jax.debug.print("{x} avg_",x=(params.L/params.step_size, num_integration_steps))
 
         # dynamics
-        next_state, info = kernel(
+        state, info = kernel(
             rng_key=kernel_key,
             state=previous_state,
-            num_integration_steps=num_integration_steps,
+            avg_num_integration_steps=avg_num_integration_steps,
             step_size=params.step_size,
         )
 
         # step updating
         success, state, step_size_max, energy_change = handle_nans(
             previous_state,
-            next_state,
+            state,
             params.step_size,
             step_size_max,
             info.energy,
         )
 
+        # jax.debug.print("info acc rate {x}", x=(info,))
+        # jax.debug.print("state {x}", x=(state.position,))
 
 
-
-        log_step_size, log_step_size_avg, step, avg_error, mu = update(
-            adaptive_state, info.acceptance_rate)
+        # log_step_size, log_step_size_avg, step, avg_error, mu = update(
+            # adaptive_state, info.acceptance_rate)
         
-        adaptive_state = DualAveragingAdaptationState(
-            mask * log_step_size + (1-mask)*adaptive_state.log_step_size, 
-            mask * log_step_size_avg + (1-mask)*adaptive_state.log_step_size_avg,
-            mask * step + (1-mask)*adaptive_state.step,
-            mask * avg_error + (1-mask)*adaptive_state.avg_error,
-            mask * mu + (1-mask)*adaptive_state.mu,
-            )
+        # adaptive_state = DualAveragingAdaptationState(
+        #     mask * log_step_size + (1-mask)*adaptive_state.log_step_size, 
+        #     mask * log_step_size_avg + (1-mask)*adaptive_state.log_step_size_avg,
+        #     mask * step + (1-mask)*adaptive_state.step,
+        #     mask * avg_error + (1-mask)*adaptive_state.avg_error,
+        #     mask * mu + (1-mask)*adaptive_state.mu,
+        #     )
+
+        adaptive_state = update(adaptive_state, info.acceptance_rate)
+        
 
         # step_size = jax.lax.clamp(1e-3, jnp.exp(adaptive_state.log_step_size), 1e0)
         # step_size = jax.lax.clamp(1e-5, jnp.exp(adaptive_state.log_step_size), step_size_max)
@@ -448,13 +457,20 @@ def mhmclmc_make_L_step_size_adaptation(
         # n = L/eps
         # eps -> eps * new_eps/eps 
 
+        # params = params._replace(step_size=step_size)
+        # jax.debug.print("new step size {x}", x=step_size)
+
         params = params._replace(
-                step_size=mask * step_size + (1-mask)*params.step_size, 
-                # step_size=step_size, 
-                # L=(params.L/params.step_size * step_size),
-                L=mask * ((params.L * (step_size / params.step_size))) + (1-mask)*params.L
-                # L=mask * (params.L/params.step_size * step_size) + (1-mask)*params.L
+                step_size=step_size, 
+                L = params.L * (step_size / params.step_size)
                 )
+        # params = params._replace(
+        #         step_size=mask * step_size + (1-mask)*params.step_size, 
+        #         # step_size=step_size, 
+        #         # L=(params.L/params.step_size * step_size),
+        #         # L=mask * ((params.L * (step_size / params.step_size))) + (1-mask)*params.L
+        #         # L=mask * (params.L/params.step_size * step_size) + (1-mask)*params.L
+        #         )
         # params = params._replace(step_size=step_size, 
         #                         L=(params.L/params.step_size * step_size)
         #                         )
@@ -468,7 +484,7 @@ def mhmclmc_make_L_step_size_adaptation(
             state,
             params,
             (init(params.step_size), jnp.inf), # step size max
-            # (init(params.step_size), 1e0),
+            # (init(params.step_size), params.L/4),
             (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
         ),
         xs=(mask, keys),
@@ -487,13 +503,14 @@ def mhmclmc_make_L_step_size_adaptation(
         mask = 1 - jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
         ((state, params, (dual_avg_state, step_size_max), (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass1)
-        # params = params._replace(step_size=final(dual_avg_state))
+        params = params._replace(step_size=final(dual_avg_state))
         
 
-        # jax.debug.print("{x}",x=("mean acceptance rate", jnp.mean(info.acceptance_rate,)))
+        jax.debug.print("{x}",x=("mean acceptance rate", jnp.mean(info.acceptance_rate,)))
         # jax.debug.print("{x} params",x=(params))
         # jax.debug.print("{x} step size max",x=(step_size_max))
-        jax.debug.print("{x} final",x=(final(dual_avg_state)))
+        # jax.debug.print("{x} final",x=(final(dual_avg_state)))
+
         # raise Exception
 
         # determine L

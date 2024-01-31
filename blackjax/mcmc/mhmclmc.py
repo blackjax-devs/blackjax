@@ -81,10 +81,12 @@ def build_kernel(
         num_integration_steps = integration_steps_fn(
             state.random_generator_arg
         )
+
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
 
         # jax.debug.print("{x} num_integration_steps", x=(num_integration_steps, step_size, num_integration_steps*step_size))
+        # jax.debug.print("{x} step size\n\n", x=(step_size))
 
 
         proposal, info, _ = mhmclmc_proposal(
@@ -236,7 +238,7 @@ def mhmclmc_proposal(
         is_diverging = -delta_energy > divergence_threshold
         sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
         do_accept, p_accept, other_proposal_info = info
-        # jax.debug.print("{x} delta_energy, acceptance rate", x=(delta_energy, p_accept))
+        # jax.debug.print("{x} delta\n", x=(end_state.position-state.position, num_integration_steps, step_size, p_accept))
 
         info = HMCInfo(
             state.momentum,
