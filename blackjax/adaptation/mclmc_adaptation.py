@@ -345,7 +345,7 @@ def mhmclmc_find_L_and_step_size(
 
     dim = pytree_size(state.position)
     if params is None:
-        params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.25)
+        params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.1)
     else:
         params = params
     jax.debug.print("initial params {x}", x=params)
@@ -461,17 +461,18 @@ def mhmclmc_make_L_step_size_adaptation(
         # params = params._replace(step_size=step_size)
         # jax.debug.print("new step size {x}", x=step_size)
 
-        # params = params._replace(
-        #         step_size=step_size, 
-        #         L = params.L * (step_size / params.step_size)
-        #         )
         params = params._replace(
-                step_size=mask * step_size + (1-mask)*params.step_size, 
-                # step_size=step_size, 
-                # L=(params.L/params.step_size * step_size),
-                L=mask * ((params.L * (step_size / params.step_size))) + (1-mask)*params.L
-                # L=mask * (params.L/params.step_size * step_size) + (1-mask)*params.L
+                step_size=step_size, 
+                L = params.L * (step_size / params.step_size)
                 )
+        
+        # params = params._replace(
+        #         step_size=mask * step_size + (1-mask)*params.step_size, 
+        #         # step_size=step_size, 
+        #         # L=(params.L/params.step_size * step_size),
+        #         L=mask * ((params.L * (step_size / params.step_size))) + (1-mask)*params.L
+        #         # L=mask * (params.L/params.step_size * step_size) + (1-mask)*params.L
+        #         )
         # params = params._replace(step_size=step_size, 
         #                         L=(params.L/params.step_size * step_size)
         #                         )
@@ -523,7 +524,8 @@ def mhmclmc_make_L_step_size_adaptation(
             params = params._replace(L=params.L*change)
 
         
-            ((state, params, _, (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass2)
+            ((state, params, (dual_avg_state, step_size_max), (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass2)
+            params = params._replace(step_size=final(dual_avg_state))
             # jax.debug.print("{x}",x=("mean acceptance rate", jnp.mean(info.acceptance_rate,)))
             # jax.debug.print("{x} params",x=(params))
 

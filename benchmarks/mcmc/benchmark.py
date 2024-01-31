@@ -104,15 +104,13 @@ def cumulative_avg(samples):
     
 #     return ess_per_sample
 
-def benchmark_chains(model, sampler, n=10000, batch=None):
+def benchmark_chains(model, sampler, favg, fvar, n=10000, batch=None):
 
 
     # print(model)
     # print(model.sample_transformations.keys())
     # raise Exception
-    x2 = model.sample_transformations
-    print(x2.keys())
-    raise Exception
+    identity_fn = model.sample_transformations['identity']
     logdensity_fn = model.unnormalized_log_prob
     d = get_num_latents(model)
     if batch is None:
@@ -125,22 +123,23 @@ def benchmark_chains(model, sampler, n=10000, batch=None):
     samples, avg_num_steps_per_traj = jax.vmap(lambda pos, key: sampler(logdensity_fn, n, pos, key))(init_pos, keys)
     avg_num_steps_per_traj = jnp.mean(avg_num_steps_per_traj, axis=0)
     # print(samples[0][-1], samples[0][0], "samps chain", samples.shape)
-    favg, fvar = x2.ground_truth_mean, x2.ground_truth_standard_deviation**2
+              
+        # identity_fn.ground_truth_mean, identity_fn.ground_truth_standard_deviation**2
     full = lambda arr : err(favg, fvar, jnp.average)(cumulative_avg(arr))
-    err_t = jnp.mean(jax.vmap(full)(samples), axis=0)
+    err_t = jnp.mean(jax.vmap(full)(samples**2), axis=0)
     # err_t = jax.vmap(full)(samples)[1]
     # print(err_t[-1], "benchmark chains err_t[0]")
     # print(avg_num_steps_per_traj, "AVG\n\n")
     # raise Exception
     ess_per_sample = ess(err_t, grad_evals_per_step=2 * avg_num_steps_per_traj)
 
-    print('True mean', x2.ground_truth_mean)
-    print('True std', x2.ground_truth_standard_deviation)
+    print('True mean', identity_fn.ground_truth_mean)
+    print('True std', identity_fn.ground_truth_standard_deviation)
     print("Empirical mean", samples.mean(axis=[0,1]))
     print("Empirical std", samples.std(axis=[0,1]))
     
-    print('True E[x^2]', x2.ground_truth_mean)
-    print('True std[x^2]', x2.ground_truth_standard_deviation)
+    # print('True E[x^2]', identity_fn.ground_truth_mean)
+    # print('True std[x^2]', identity_fn.ground_truth_standard_deviation)
 
     return ess_per_sample, err_t[-1]
 
