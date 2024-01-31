@@ -118,7 +118,7 @@ for model in ["Banana"]:
     # for step_size, L in itertools.product([16.866055/10], [16.866055]):
     for sampler in samplers:
         # result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(step_size, L), n=1000000, batch=1)
-        result, bias = benchmark_chains(models[model], samplers[sampler], n=100000, batch=20, favg= jnp.array([100.0, 19.0]), fvar =jnp.array([20000.0, 4600.898]))
+        result, bias = benchmark_chains(models[model], samplers[sampler], n=10000, batch=200, favg= jnp.array([100.0, 19.0]), fvar =jnp.array([20000.0, 4600.898]))
         # result, bias = benchmark_chains(models[model], sampler_mhmclmc(1e-2, 2), n=10000, batch=1, favg= jnp.array([100.0, 19.0]), fvar =jnp.array([20000.0, 4600.898]))
         # result, bias = benchmark_chains(models[model], samplers["mhmclmc"], n=1000000, batch=10)
         results[(model, sampler)] = result.item()

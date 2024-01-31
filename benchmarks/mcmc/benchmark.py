@@ -48,14 +48,14 @@ def grads_to_low_error(err_t, low_error= 0.01, grad_evals_per_step= 1):
     
     
     
-def ess(err_t, neff= 100, grad_evals_per_step = 2):
+def ess(err_t, grad_evals_per_step, neff= 100):
     
     low_error = 1./neff
     cutoff_reached = err_t[-1] < low_error
     crossing = find_crossing(err_t, low_error)
     # print(len(err_t), "len err t")
 
-    print("crossing", crossing)
+    print("crossing", crossing, (crossing * grad_evals_per_step), neff / (crossing * grad_evals_per_step))
     # print((err_t)[-100:], "le")
     
     return (neff / (crossing * grad_evals_per_step)) * cutoff_reached
@@ -115,13 +115,14 @@ def benchmark_chains(model, sampler, favg, fvar, n=10000, batch=None):
     d = get_num_latents(model)
     if batch is None:
         batch = np.ceil(1000 / d).astype(int)
-    key, init_key = jax.random.split(jax.random.PRNGKey(2), 2)
+    key, init_key = jax.random.split(jax.random.PRNGKey(0), 2)
     keys = jax.random.split(key, batch)
     # keys = jnp.array([jax.random.PRNGKey(0)])
     init_pos = jax.random.normal(key=init_key, shape=(batch, d))
 
     samples, avg_num_steps_per_traj = jax.vmap(lambda pos, key: sampler(logdensity_fn, n, pos, key))(init_pos, keys)
     avg_num_steps_per_traj = jnp.mean(avg_num_steps_per_traj, axis=0)
+    print("\n\n\n\nAVG NUM STEPS PER TRAJ", avg_num_steps_per_traj)
     # print(samples[0][-1], samples[0][0], "samps chain", samples.shape)
               
         # identity_fn.ground_truth_mean, identity_fn.ground_truth_standard_deviation**2
@@ -145,40 +146,6 @@ def benchmark_chains(model, sampler, favg, fvar, n=10000, batch=None):
 
 
 if __name__ == "__main__":
-
-    def large_normal():
-
-        logdensity_fn = lambda x: -0.5 * jnp.sum(jnp.square(x))
-        step_size = 16.
-        num_steps_per_traj = 1.44
-
-        def s(logdensity_fn, num_steps, initial_position, key):
-
-            alg = blackjax.mcmc.mhmclmc.mhmclmc(
-                logdensity_fn=logdensity_fn,
-                step_size=step_size,
-                integration_steps_fn = lambda key: jnp.round(jax.random.uniform(key) * rescale(num_steps_per_traj + 0.5)) ,
-                # integration_steps_fn = lambda _ : 5,
-                # integration_steps_fn = lambda key: jnp.ceil(jax.random.poisson(key, L/step_size )) ,
-
-                )
-                
-            _, out, info = run_inference_algorithm(
-            rng_key=key,
-            initial_state_or_position=initial_position,
-            inference_algorithm=alg,
-            num_steps=num_steps, 
-            transform=lambda x: x.position, 
-            progress_bar=True)
-
-            # jax.debug.print("{x}",x=info.is_accepted)
-            # jax.debug.print("{x}",x=info.proposal.position.mean())
-            # jax.debug.print("{x}",x=info.energy)
-
-            return out, num_steps_per_traj
-        
-        print(benchmark_chains(models["simple"], s, batch=1), "ESS")
-
 
     # Define the models and samplers
     # models = {'icg' : gym.targets.IllConditionedGaussian(), 'banana' : gym.targets.Banana()}
