@@ -3,6 +3,7 @@
 import jax
 import jax.numpy as jnp
 import blackjax
+from blackjax.adaptation.mclmc_adaptation import MCLMCAdaptationState
 from blackjax.mcmc.mhmclmc import rescale
 from blackjax.util import run_inference_algorithm
 import blackjax
@@ -104,6 +105,7 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
         rng_key=tune_key,
         frac_tune2=0,
         frac_tune3=0,
+        # params=MCLMCAdaptationState(L=16.765137, step_size=1.005)
     )
 
     # raise Exception

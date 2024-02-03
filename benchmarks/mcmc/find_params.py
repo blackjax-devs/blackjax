@@ -23,8 +23,8 @@ def sampler_mhmclmc_with_tuning(step_size, L):
         )
         kernel = lambda rng_key, state, avg_num_integration_steps, step_size: blackjax.mcmc.mhmclmc.build_kernel(
                 integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
-                # integration_steps_fn = lambda key: jnp.round(jax.random.uniform(key) * rescale(avg_num_integration_steps + 0.5)), 
-                integration_steps_fn = lambda key: avg_num_integration_steps, 
+                integration_steps_fn = lambda key: jnp.round(jax.random.uniform(key) * rescale(avg_num_integration_steps + 0.5)), 
+                # integration_steps_fn = lambda key: avg_num_integration_steps, 
             )(
                 rng_key=rng_key, 
                 state=state, 
@@ -40,8 +40,8 @@ def sampler_mhmclmc_with_tuning(step_size, L):
             num_steps=num_steps,
             state=initial_state,
             rng_key=tune_key,
-            # frac_tune2=0,
-            # frac_tune3=0,
+            frac_tune2=0,
+            frac_tune3=0,
             params=MCLMCAdaptationState(L=L, step_size=step_size)
         )
 
@@ -55,8 +55,8 @@ def sampler_mhmclmc_with_tuning(step_size, L):
         alg = blackjax.mcmc.mhmclmc.mhmclmc(
         logdensity_fn=logdensity_fn,
         step_size=blackjax_mclmc_sampler_params.step_size,
-        # integration_steps_fn = lambda k: jnp.round(jax.random.uniform(k) * rescale(num_steps_per_traj+ 0.5)) ,
-        integration_steps_fn = lambda k: num_steps_per_traj ,
+        integration_steps_fn = lambda k: jnp.round(jax.random.uniform(k) * rescale(num_steps_per_traj+ 0.5)) ,
+        # integration_steps_fn = lambda k: num_steps_per_traj ,
         # integration_steps_fn = lambda _ : 5,
         # integration_steps_fn = lambda key: jnp.ceil(jax.random.poisson(key, L/step_size )) ,
 
@@ -81,17 +81,11 @@ def sampler_mhmclmc(step_size, L):
 
     def s(logdensity_fn, num_steps, initial_position, key):
 
-
-       
-
         num_steps_per_traj = L/step_size
         alg = blackjax.mcmc.mhmclmc.mhmclmc(
         logdensity_fn=logdensity_fn,
         step_size=step_size,
         integration_steps_fn = lambda k: jnp.round(jax.random.uniform(k) * rescale(num_steps_per_traj+ 0.5)) ,
-        # integration_steps_fn = lambda _ : 5,
-        # integration_steps_fn = lambda key: jnp.ceil(jax.random.poisson(key, L/step_size )) ,
-
         )
         
         _, out, info = run_inference_algorithm(
@@ -109,20 +103,24 @@ def sampler_mhmclmc(step_size, L):
 
     return s
 
-results = defaultdict(float)
 
 # Empirical mean [ 2.6572839e-05 -4.0523437e-06]
 # Empirical std [0.07159886 0.07360378]
 
-for model in ["Banana"]:
-    # for step_size, L in itertools.product([16.866055/10], [16.866055]):
-    for sampler in samplers:
-        # result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(step_size, L), n=1000000, batch=1)
-        result, bias = benchmark_chains(models[model], samplers[sampler], n=10000, batch=200, favg= jnp.array([100.0, 19.0]), fvar =jnp.array([20000.0, 4600.898]))
-        # result, bias = benchmark_chains(models[model], sampler_mhmclmc(1e-2, 2), n=10000, batch=1, favg= jnp.array([100.0, 19.0]), fvar =jnp.array([20000.0, 4600.898]))
-        # result, bias = benchmark_chains(models[model], samplers["mhmclmc"], n=1000000, batch=10)
-        results[(model, sampler)] = result.item()
-print(results)
+def grid_search():
+
+    results = defaultdict(float)
+    for model in ["Banana"]:
+        # for step_size, L in itertools.product([16.866055/10], [16.866055]):
+        for sampler in ["mhmclmc"]:
+            # result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(step_size, L), n=1000000, batch=1)
+            # result, bias = benchmark_chains(models[model], samplers[sampler], n=100000, batch=100, favg= jnp.array([100.0, 19.0]), fvar =jnp.array([20000.0, 4600.898]))
+            result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(1.2222222222222223, 13.777777777777779), n=100000, batch=10, favg= jnp.array([100.0, 19.0]), fvar =jnp.array([20000.0, 4600.898]))
+            # result, bias = benchmark_chains(models[model], samplers["mhmclmc"], n=1000000, batch=10)
+            results[(model, sampler)] = result.item()
+    return results
+
+print(grid_search())
 
 # for model in ["simple"]:
 #     for sampler in ["mhmclmc", "mclmc"]:
