@@ -250,7 +250,6 @@ def mhmclmc_proposal(
 
 
 
-
 def rescale(mu):
     """returns s, such that
      round(U(0, 1) * s + 0.5)
