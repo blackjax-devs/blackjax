@@ -74,20 +74,24 @@ def build_kernel(
         state: DynamicHMCState,
         logdensity_fn: Callable,
         step_size: float,
-        L_proposal : float = 0.6 * 5,
-        **integration_steps_kwargs,
+        L_proposal : float = 1.0,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
         
         num_integration_steps = integration_steps_fn(
-            state.random_generator_arg, **integration_steps_kwargs
+            state.random_generator_arg
         )
+
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
 
+        # jax.debug.print("{x} num_integration_steps", x=(num_integration_steps, step_size, num_integration_steps*step_size))
+        # jax.debug.print("{x} step size\n\n", x=(step_size))
+
 
         proposal, info, _ = mhmclmc_proposal(
-            integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
+            # integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
+            lambda state, step_size, x, y : (integrator(logdensity_fn))(state, step_size),
             step_size,
             L_proposal,
             num_integration_steps,
@@ -210,14 +214,15 @@ def mhmclmc_proposal(
     def step(i, vars):
         state, kinetic_energy, rng_key = vars
         rng_key, next_rng_key = jax.random.split(rng_key)
-        next_state, next_kinetic_energy = integrator(state, step_size=step_size, L=L, rng_key=rng_key)
+        next_state, next_kinetic_energy = integrator(state, step_size, L, rng_key)
+        # jax.debug.print("{x} pos, grad", x=(next_state.position, state.logdensity_grad))
 
         return next_state, kinetic_energy + next_kinetic_energy, next_rng_key
 
     def build_trajectory(state, num_integration_steps, rng_key):
         return jax.lax.fori_loop(0*num_integration_steps, num_integration_steps, step, (state, 0, rng_key))
 
-    mhmclmc_energy_fn = lambda state, kinetic_energy: -state.logdensity + kinetic_energy
+    # mhmclmc_energy_fn = lambda state, kinetic_energy: -state.logdensity
 
     def generate(
         rng_key, state: integrators.IntegratorState
@@ -226,13 +231,17 @@ def mhmclmc_proposal(
         end_state, kinetic_energy, rng_key = build_trajectory(
             state, num_integration_steps, rng_key
         )
-        end_state = flip_momentum(end_state)
-        proposal_energy = mhmclmc_energy_fn(state, kinetic_energy)
-        new_energy = mhmclmc_energy_fn(end_state, kinetic_energy)
-        delta_energy = safe_energy_diff(proposal_energy, new_energy)
+        # end_state = flip_momentum(end_state)
+        # proposal_energy = mhmclmc_energy_fn(state, kinetic_energy)
+        # new_energy = mhmclmc_energy_fn(end_state, kinetic_energy)
+        # delta_energy = safe_energy_diff(proposal_energy, new_energy)
+        new_energy = -end_state.logdensity ## TODO: note that this is the POTENTIAL energy only
+        delta_energy = -state.logdensity + end_state.logdensity - kinetic_energy
+        delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
         is_diverging = -delta_energy > divergence_threshold
         sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
         do_accept, p_accept, other_proposal_info = info
+        # jax.debug.print("{x} delta\n", x=(end_state.position-state.position, num_integration_steps, step_size, p_accept))
 
         info = HMCInfo(
             state.momentum,

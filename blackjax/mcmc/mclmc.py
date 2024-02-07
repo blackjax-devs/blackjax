@@ -20,7 +20,7 @@ from jax.flatten_util import ravel_pytree
 from jax.random import normal
 
 from blackjax.base import SamplingAlgorithm
-from blackjax.mcmc.integrators import IntegratorState, isokinetic_mclachlan, with_isokinetic_maruyama
+from blackjax.mcmc.integrators import IntegratorState, isokinetic_mclachlan, partially_refresh_momentum, with_isokinetic_maruyama
 from blackjax.types import ArrayLike, PRNGKey
 from blackjax.util import generate_unit_vector, pytree_size
 
@@ -88,6 +88,9 @@ def build_kernel(logdensity_fn, integrator):
             state, step_size, L, rng_key
         )
 
+        # (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
+        #     state, step_size,
+        # )
         # Langevin-like noise
         # momentum = partially_refresh_momentum(
         #     momentum=momentum, rng_key=rng_key, L=L, step_size=step_size
