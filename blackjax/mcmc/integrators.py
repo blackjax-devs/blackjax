@@ -403,12 +403,22 @@ def with_isokinetic_maruyama(integrator):
     
     def stochastic_integrator(state, step_size, Lpartial, rng_key):
         # partial refreshment
+<<<<<<< HEAD
         _state = state._replace(momentum=partially_refresh_momentum(momentum=state.momentum, rng_key=rng_key, L=Lpartial, step_size=step_size * 0.5))
+=======
+        key1, key2 = jax.random.split(rng_key)
+        state = state._replace(momentum=partially_refresh_momentum(momentum=state.momentum, rng_key=key1, L=L, step_size=step_size * 0.5))
+>>>>>>> mhmclmc
         # one step of the deterministic dynamics
-        _state, info = integrator(_state, step_size)
+        state, info = integrator(state, step_size)
         # partial refreshment
+<<<<<<< HEAD
         _state = state._replace(momentum=partially_refresh_momentum(momentum=_state.momentum, rng_key=rng_key, L=Lpartial, step_size=step_size * 0.5))
         return _state, info
+=======
+        state = state._replace(momentum=partially_refresh_momentum(momentum=state.momentum, rng_key=key2, L=L, step_size=step_size * 0.5))
+        return state, info
+>>>>>>> mhmclmc
     
     return stochastic_integrator
 
