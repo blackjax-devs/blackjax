@@ -399,26 +399,19 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
     return unravel_fn((m + z) / jnp.linalg.norm(m + z))
 
+
 def with_isokinetic_maruyama(integrator):
     
-    def stochastic_integrator(state, step_size, Lpartial, rng_key):
-        # partial refreshment
-<<<<<<< HEAD
-        _state = state._replace(momentum=partially_refresh_momentum(momentum=state.momentum, rng_key=rng_key, L=Lpartial, step_size=step_size * 0.5))
-=======
+    def stochastic_integrator(init_state, step_size, Lpartial, rng_key):
+        
         key1, key2 = jax.random.split(rng_key)
-        state = state._replace(momentum=partially_refresh_momentum(momentum=state.momentum, rng_key=key1, L=L, step_size=step_size * 0.5))
->>>>>>> mhmclmc
+        # partial refreshment
+        state = init_state._replace(momentum=partially_refresh_momentum(momentum=init_state.momentum, rng_key=key1, L=Lpartial, step_size=step_size * 0.5))
         # one step of the deterministic dynamics
         state, info = integrator(state, step_size)
         # partial refreshment
-<<<<<<< HEAD
-        _state = state._replace(momentum=partially_refresh_momentum(momentum=_state.momentum, rng_key=rng_key, L=Lpartial, step_size=step_size * 0.5))
-        return _state, info
-=======
-        state = state._replace(momentum=partially_refresh_momentum(momentum=state.momentum, rng_key=key2, L=L, step_size=step_size * 0.5))
+        state = state._replace(momentum=partially_refresh_momentum(momentum=state.momentum, rng_key=key2, L=Lpartial, step_size=step_size * 0.5))
         return state, info
->>>>>>> mhmclmc
     
     return stochastic_integrator
 

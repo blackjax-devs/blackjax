@@ -17,7 +17,8 @@ from typing import Callable, NamedTuple, Any
 
 import jax
 import jax.numpy as jnp
-from jax.flatten_util import ravel_pytree, pytree_size
+from jax.flatten_util import ravel_pytree
+from blackjax.util import pytree_size
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import Array, ArrayLike, PRNGKey
@@ -34,15 +35,6 @@ class Hyperparameters(NamedTuple):
     step_size: float
     
 
-
-class HyperparametersMALT(NamedTuple):
-    
-    Lfull: float
-    Lpartial: float
-    step_size: float
-
-
-
 class AdaptationState(NamedTuple):
     
     cond: bool
@@ -52,7 +44,7 @@ class AdaptationState(NamedTuple):
     history: Array
     
     hyperparameters: Any
-    
+
 
 def to_dict(x):
     return {'L': x[:, 0], 
@@ -160,7 +152,6 @@ def computeL(alpha, chains, position):
     return alpha * jnp.sqrt(jnp.sum(jnp.square(x))/chains) #average over the ensemble, sum over dimensions
 
 
-
 def no_nans(a):
     flat_a, unravel_fn = ravel_pytree(a)
     return jnp.all(jnp.isfinite(flat_a))
@@ -172,8 +163,6 @@ def nan_reject(nonans, old, new):
     
     # TODO: jnp.nan_to_num(new)?
     return jax.lax.cond(nonans, lambda _: new, lambda _: old, operand=None)
-
-
 
 
 
@@ -231,8 +220,6 @@ def build_kernel1(logdensity_fn, max_iter, chains, fullrank, d, alpha = 1., C = 
 
 
 
-    
-
 def kernel_with_observables(kernel, observables):
 
 
@@ -258,7 +245,7 @@ def kernel_with_observables(kernel, observables):
 
 
 
-def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, observables= jnp.square):
+def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, d, observables= jnp.square):
     """observable: function taking position x and outputing O(x). We will store ensemble average of O(x) at each step"""
     
     delay_frac = 0.05
@@ -266,9 +253,6 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, observab
     alpha = 1. 
     fullrank = False
     
-    
-    # kernel    
-    d = ravel_pytree(initial_position)[0].shape[0] // chains # number of dimensions
 
     max_iter = num_steps
     
@@ -305,49 +289,3 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, observab
         return state_all, None
 
 
-
-
-
-def stage2(logdensity_fn, integrator, num_steps, initial_position, chains, rng_key, steps_per_sample, step_size, Lpartial):
-    """observable: function taking position x and outputing O(x). We will store ensemble average of O(x) at each step"""
-    
-    
-    sequential_kernel = mhmclmc.mhmchmc_proposal(
-            with_isokinetic_maruyama(integrator(logdensity_fn)),
-            step_size, Lpartial, steps_per_sample,
-        )
-
-    kernel = parallelize_kernel(sequential_kernel, chains, (0, 0))
-    
-    return jax.lax.scan(lambda state, key: kernel(key, state)[0], init= initial_position, xs = jax.random.split(rng_key, num_steps))[0]
-    
-    
-    
-    
-    
-
-def algorithm(logdensity_fn, num_steps, initial_position, chains, rng_key, observables= jnp.square, mclachlan = True):
-    
-    
-    state_all, info = stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, observables)
-
-    state, adap_state, key = state_all
-    Lfull, step_size = adap_state.hyperparameters.L, adap_state.hyperparameters.step_size
-    if mclachlan:
-        integrator = isokinetic_mclachlan 
-        grads_per_step = 2
-        step_size *= jnp.sqrt(10.) #if we switched to the more accurate integrator we can use longer step size
-        
-    else:
-        integrator = isokinetic_leapfrog
-        grads_per_step = 1
-        
-    # adjust the stepsize to the adjusted method !!!
-    
-    Lpartial = Lfull * 0.6
-    steps_per_sample = (int)(Lfull / step_size)
-    num_samples = (num_steps - adap_state.steps) // (grads_per_step * steps_per_sample)
-    
-    state_final = stage2(logdensity_fn, integrator, num_samples, state, chains, key, steps_per_sample, step_size, Lpartial)
-    
-    
