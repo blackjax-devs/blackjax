@@ -115,7 +115,7 @@ def benchmark_chains(model, sampler, favg, fvar, n=10000, batch=None):
     d = get_num_latents(model)
     if batch is None:
         batch = np.ceil(1000 / d).astype(int)
-    key, init_key = jax.random.split(jax.random.PRNGKey(0), 2)
+    key, init_key = jax.random.split(jax.random.PRNGKey(42), 2)
     keys = jax.random.split(key, batch)
     # keys = jnp.array([jax.random.PRNGKey(0)])
     init_pos = jax.random.normal(key=init_key, shape=(batch, d))

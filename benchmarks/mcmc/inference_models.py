@@ -2,10 +2,10 @@ from inference_gym import using_jax as gym
 import jax.numpy as jnp
 
 
-class SimpleModel(gym.targets.Model):
+class Normal(gym.targets.Model):
 
     def __init__(self, ndims):
-      super(SimpleModel, self).__init__(
+      super(Normal, self).__init__(
           default_event_space_bijector=lambda x: x,
           event_shape=(ndims,),
           dtype=jnp.float32,
@@ -22,10 +22,18 @@ class SimpleModel(gym.targets.Model):
               
               ),
       )
+      self.E_x2 = jnp.ones(ndims)
+      self.Var_x2 = 2 * self.E_x2
 
     def _unnormalized_log_prob(self, value):
       return -0.5 * jnp.sum(jnp.square(value))
 
+class Banana(gym.targets.Banana):
+  def __init__(self):
+      super(Banana, self).__init__()
+    
+      self.E_x2 = jnp.array([100.0, 19.0])
+      self.Var_x2 = jnp.array([20000.0, 4600.898])
 
 # square=gym.targets.Model.SampleTransformation(
 #                   fn=lambda x: x**2,
@@ -35,14 +43,14 @@ class SimpleModel(gym.targets.Model):
 #                   ground_truth_standard_deviation=jnp.sqrt(jnp.array([20000.0, 4600.898]))
 #               ),
 
-models = {}
-for target_name in gym.targets.__all__:
-  if target_name in ['Banana', 'IllConditionedGaussian']:
-  # if target_name in ['Banana']:
-    try:
-      models[target_name] = getattr(gym.targets, target_name)()
-    except:
-      pass
+# models = {}
+# for target_name in gym.targets.__all__:
+#   if target_name in ['Banana', 'IllConditionedGaussian']:
+#   # if target_name in ['Banana']:
+#     try:
+#       models[target_name] = getattr(gym.targets, target_name)()
+#     except:
+#       pass
 
-models['simple'] = SimpleModel(2)
+models = {'normal': Normal(10), 'banana': Banana()}
 
