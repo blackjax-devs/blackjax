@@ -57,6 +57,7 @@ def to_dict(x):
             }
     
 
+
 def init(position, logdensity_fn):
     """initialize the chains based on the equipartition of the initial condition.
        We initialize the velocity along grad log p if E_ii > 1 and along -grad log p if E_ii < 1.
@@ -91,8 +92,8 @@ def init_adap(num_steps, chains, delay_frac, position, alpha, d):
     L = computeL(alpha, chains, position)
     hyp = Hyperparameters(L, step_size)
     
-    history = jnp.concatenate((jnp.ones(1) * 1e50, jnp.ones(delay_num-1) * jnp.inf)) # loss history
-    
+    history = jnp.inf * jnp.ones(delay_num-1) # so that we ensure at least the lenght of history number of steps
+
     return AdaptationState(True, 0, 1e-3, 1e-3, history, hyp)
 
 
@@ -210,11 +211,9 @@ def build_kernel1(logdensity_fn, max_iter, chains, fullrank, d, alpha = 1., C = 
         
         # determine if we want to finish this stage (= if loss is no longer decreassing)
         history = jnp.concatenate((jnp.ones(1) * bias, adap_state.history[:-1]))
-        decreasing = (history[-1] > history[0])
-        cond = decreasing and (adap_state.steps < max_iter)
+        cond = adap_state.cond * (history[-1] > history[0])
     
-        return _state, AdaptationState(cond, adap_state.steps + 1, eevpd, eevpd_wanted, history, hyp), rng_key_new
-    
+        return _state, AdaptationState(cond, adap_state.steps + 1, eevpd, history, hyp), rng_key_new
     
     return kernel
 
@@ -251,20 +250,22 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, d, obser
     delay_frac = 0.05
     C = 0.1
     alpha = 1. 
-    fullrank = False
+    fullrank = True
     
 
-    max_iter = num_steps
+    max_iter = (num_steps * 4) // 5
     
     kernel = build_kernel1(logdensity_fn, max_iter, chains, fullrank, d, alpha, C)
 
     # initialize 
     state = init(position=initial_position, logdensity_fn=logdensity_fn)
+
     adap_state = init_adap(num_steps, chains, delay_frac, state.position, alpha, d)
 
     state_all = (state, adap_state, rng_key)
     cond = lambda state_all: state_all[1][0]
     
+
     if observables != None:
         
         num_info = 6 + jnp.average(observables(initial_position), axis = 0).shape[0]
@@ -283,7 +284,6 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, d, obser
     
     
     else:
-
         state_all = jax.lax.while_loop(cond, kernel, state_all)
 
         return state_all, None

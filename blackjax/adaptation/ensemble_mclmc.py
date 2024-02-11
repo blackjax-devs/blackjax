@@ -37,10 +37,13 @@ class AdaptationState(NamedTuple):
 
 def to_dict(x):
     return {
-            'stepsize': x[:, 0],
-            'acc prob': x[:, 1],
-            'expected vals': x[:, 2:]
-            }
+            'L': x[:, 0],
+            'stepsize': x[:, 1],
+            'acc prob': x[:, 2],
+            'equi full': x[:, 3],
+            'equi diag': x[:, 4],
+            'expected vals': x[:, 5:]
+        }
 
 
 
@@ -62,9 +65,11 @@ def init(num_steps, adap_state, d, mclachlan):
     # With the current eps, we had sigma^2 = eevpd * d for N = 1. 
     # Combining the two we have eevpd * d / 0.82 = eps^6 / eps_new^4 L^2
     step_size *= jnp.power(0.82 / (d * adap_state.eevpd), 0.25) / jnp.sqrt(Lfull / step_size)
-        
+    
     Lpartial = Lfull * 0.6
     steps_per_sample = (int)(Lfull / step_size)
+    steps_per_sample = 10
+    
     num_samples = (num_steps - adap_state.steps) // (grads_per_step * steps_per_sample)
     
     return integrator, num_samples, steps_per_sample, step_size, Lpartial
@@ -82,12 +87,13 @@ def stage2(logdensity_fn, integrator, num_steps, state, chains, rng_key, d, step
     
     def step(state_all, key):
         state, adap = state_all
-    
+        key1, key2 = jax.random.split(key)
+
         # dynamics
         sequential_kernel = mhmclmc.mhmclmc_proposal(with_isokinetic_maruyama(integrator(logdensity_fn)),
                                                      adap.step_size, adap.Lpartial, steps_per_sample)
         kernel = umclmc.parallelize_kernel(sequential_kernel, chains, (0, 0))
-        state, info, _ = kernel(jax.random.split(key, chains), state)
+        state, info, _ = kernel(jax.random.split(key1, chains), state)
 
         # change the stepsize
         acc_prob = jnp.average(info.acceptance_rate)
@@ -95,7 +101,10 @@ def stage2(logdensity_fn, integrator, num_steps, state, chains, rng_key, d, step
         step_size = jnp.exp(da_state.log_step_size)
     
         # additional information
-        new_info = jnp.concatenate((jnp.array([step_size, acc_prob]), 
+        
+        equi_full = umclmc.equipartition_fullrank(state.position, state.logdensity_grad, key2)
+        equi_diag = umclmc.equipartition_diagonal(state.position, state.logdensity_grad, key2)
+        new_info = jnp.concatenate((jnp.array([steps_per_sample * step_size, step_size, acc_prob, equi_full, equi_diag]), 
                                     jnp.average(observables(state.position), axis = 0)))
         
         return (state, AdaptationState(steps_per_sample, Lpartial, step_size, da_state)), new_info
@@ -121,11 +130,11 @@ def algorithm(logdensity_fn, num_steps, initial_position, chains, rng_key, obser
     # readjust the hyperparameters
     integrator, num_samples, steps_per_sample, step_size, Lpartial = init(num_steps, adap_state, d, mclachlan)
 
+    
     # refine the results with the adjusted method
     state_final, _info2 = stage2(logdensity_fn, integrator, num_samples, state, chains, key, d, steps_per_sample, step_size, Lpartial, observables)
     
     info2 = to_dict(_info2)
-    
     
     return info1, info2
     
