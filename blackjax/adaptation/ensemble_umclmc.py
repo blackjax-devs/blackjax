@@ -13,18 +13,18 @@
 # limitations under the License.
 #"""Public API for the MCLMC Kernel"""
 
-from typing import Callable, NamedTuple, Any
-
 import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
+from typing import Callable, NamedTuple, Any
+
+from blackjax.mcmc.integrators import IntegratorState, isokinetic_mclachlan, isokinetic_leapfrog
+from blackjax.types import Array, ArrayLike, PRNGKey
 from blackjax.util import pytree_size
 
-from blackjax.base import SamplingAlgorithm
-from blackjax.types import Array, ArrayLike, PRNGKey
-from blackjax.mcmc.integrators import IntegratorState, isokinetic_mclachlan, isokinetic_leapfrog, _normalized_flatten_array, with_isokinetic_maruyama
-from blackjax.mcmc import mclmc, mhmclmc
+from blackjax.mcmc import mclmc
 
+from blackjax.mcmc.integrators import _normalized_flatten_array
 
 #__all__ = ["Hyperparameters", "AdaptationState", "stage1"]
 
@@ -33,7 +33,7 @@ class Hyperparameters(NamedTuple):
     
     L: float
     step_size: float
-    
+
 
 class AdaptationState(NamedTuple):
     
@@ -44,7 +44,7 @@ class AdaptationState(NamedTuple):
     history: Array
     
     hyperparameters: Any
-
+    
 
 def to_dict(x):
     return {'L': x[:, 0], 
@@ -56,7 +56,6 @@ def to_dict(x):
             'expected vals': x[:, 6:]
             }
     
-
 
 def init(position, logdensity_fn):
     """initialize the chains based on the equipartition of the initial condition.
@@ -92,8 +91,9 @@ def init_adap(num_steps, chains, delay_frac, position, alpha, d):
     L = computeL(alpha, chains, position)
     hyp = Hyperparameters(L, step_size)
     
-    history = jnp.inf * jnp.ones(delay_num-1) # so that we ensure at least the lenght of history number of steps
-
+    history = jnp.inf * jnp.ones(delay_num)
+    #history = jnp.concatenate((jnp.ones(1) * 1e50, jnp.ones(delay_num-1) * jnp.inf)) # loss history
+    
     return AdaptationState(True, 0, 1e-3, 1e-3, history, hyp)
 
 
@@ -140,9 +140,9 @@ def equipartition_diagonal(position, logdensity_grad, rng_key):
     
 
 
-def parallelize_kernel(func, chains, in_axes):
+def parallelize_kernel(func, chains):
     # we should also have pmap and a combination pmap(vmap())
-    return jax.vmap(func, in_axes)
+    return jax.vmap(func, (0, 0, None, None))
 
 
 
@@ -151,6 +151,7 @@ def computeL(alpha, chains, position):
     x, unravel_fn = ravel_pytree(position)
 
     return alpha * jnp.sqrt(jnp.sum(jnp.square(x))/chains) #average over the ensemble, sum over dimensions
+
 
 
 def no_nans(a):
@@ -167,14 +168,9 @@ def nan_reject(nonans, old, new):
 
 
 
-def build_kernel1(logdensity_fn, max_iter, chains, fullrank, d, alpha = 1., C = 0.1):
+def build_kernel1(sequential_mclmc_kerel, max_iter, chains, fullrank, d, alpha = 1., C = 0.1):
 
-    sequential_kernel = mclmc.build_kernel(
-        logdensity_fn=logdensity_fn,
-        integrator= isokinetic_leapfrog
-    )
-    
-    mclmc_kernel = parallelize_kernel(sequential_kernel, chains, (0, 0, None, None))
+    mclmc_kernel = parallelize_kernel(sequential_mclmc_kerel, chains)
     
     equi = equipartition_fullrank if fullrank else equipartition_diagonal
     
@@ -211,12 +207,13 @@ def build_kernel1(logdensity_fn, max_iter, chains, fullrank, d, alpha = 1., C = 
         
         # determine if we want to finish this stage (= if loss is no longer decreassing)
         history = jnp.concatenate((jnp.ones(1) * bias, adap_state.history[:-1]))
-        cond = adap_state.cond * (history[-1] > history[0])
+        decreasing = (history[-1] > history[0]) or (adap_state.steps < adap_state.history.shape[0])
+        cond = decreasing and (adap_state.steps < max_iter)
     
-        return _state, AdaptationState(cond, adap_state.steps + 1, eevpd, history, hyp), rng_key_new
+        return _state, AdaptationState(cond, adap_state.steps + 1, eevpd, eevpd_wanted, history, hyp), rng_key_new
+    
     
     return kernel
-
 
 
 def kernel_with_observables(kernel, observables):
@@ -250,22 +247,25 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, d, obser
     delay_frac = 0.05
     C = 0.1
     alpha = 1. 
-    fullrank = True
+    fullrank = False
     
-
-    max_iter = (num_steps * 4) // 5
+    # kernel    
+    sequential_kernel = mclmc.build_kernel(
+        logdensity_fn=logdensity_fn,
+        integrator= isokinetic_leapfrog
+    )
     
-    kernel = build_kernel1(logdensity_fn, max_iter, chains, fullrank, d, alpha, C)
+    max_iter = num_steps
+    
+    kernel = build_kernel1(sequential_kernel, max_iter, chains, fullrank, d, alpha, C)
 
     # initialize 
     state = init(position=initial_position, logdensity_fn=logdensity_fn)
-
     adap_state = init_adap(num_steps, chains, delay_frac, state.position, alpha, d)
 
     state_all = (state, adap_state, rng_key)
     cond = lambda state_all: state_all[1][0]
     
-
     if observables != None:
         
         num_info = 6 + jnp.average(observables(initial_position), axis = 0).shape[0]
@@ -284,8 +284,12 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, d, obser
     
     
     else:
+
         state_all = jax.lax.while_loop(cond, kernel, state_all)
+        return state_all
 
-        return state_all, None
-
-
+    # state, adap_state, key = state_all
+    # steps_left = num_steps - adap_state.steps
+        
+    # if self.integrator == 'MN':
+        #hyp['eps'] *= jnp.sqrt(10.)
