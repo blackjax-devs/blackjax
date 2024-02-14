@@ -37,7 +37,7 @@ class AdaptationState(NamedTuple):
 
 def to_dict(x):
     return {
-            'L': x[:, 0],
+            'steps_per_sample': x[:, 0],
             'stepsize': x[:, 1],
             'acc prob': x[:, 2],
             'equi full': x[:, 3],
@@ -67,16 +67,15 @@ def init(num_steps, adap_state, d, mclachlan):
     step_size *= jnp.power(0.82 / (d * adap_state.eevpd), 0.25) / jnp.sqrt(Lfull / step_size)
     
     Lpartial = Lfull * 0.6
-    steps_per_sample = (int)(Lfull / step_size)
-    steps_per_sample = 10
-    
+    steps_left = (num_steps - adap_state.steps) // grads_per_step
+    steps_per_sample = (int)(jnp.clip(Lfull / step_size, 1, steps_left / 10.))
     num_samples = (num_steps - adap_state.steps) // (grads_per_step * steps_per_sample)
     
     return integrator, num_samples, steps_per_sample, step_size, Lpartial
 
 
 
-def stage2(logdensity_fn, integrator, num_steps, state, chains, rng_key, d, steps_per_sample, step_size, Lpartial, observables= jnp.square):
+def stage2(logdensity_fn, integrator, num_samples, state, chains, rng_key, steps_per_sample, step_size, Lpartial, observables= jnp.square):
     """observables: function taking position x and outputing O(x), can be vector valued. We will store ensemble average of O(x) at each step"""
     
     
@@ -104,16 +103,17 @@ def stage2(logdensity_fn, integrator, num_steps, state, chains, rng_key, d, step
         
         equi_full = umclmc.equipartition_fullrank(state.position, state.logdensity_grad, key2)
         equi_diag = umclmc.equipartition_diagonal(state.position, state.logdensity_grad, key2)
-        new_info = jnp.concatenate((jnp.array([steps_per_sample * step_size, step_size, acc_prob, equi_full, equi_diag]), 
+        new_info = jnp.concatenate((jnp.array([steps_per_sample, step_size, acc_prob, equi_full, equi_diag]), 
                                     jnp.average(observables(state.position), axis = 0)))
         
         return (state, AdaptationState(steps_per_sample, Lpartial, step_size, da_state)), new_info
-
-    final_state, info = jax.lax.scan(step, init= (state, adap), xs = jax.random.split(rng_key, num_steps))
+   
+    keys = jax.random.split(rng_key, num_samples)
+    final_state, info = jax.lax.scan(step, init= (state, adap), xs = keys)
 
     #step_size = da_final(da_state)
     
-    return final_state, info    
+    return final_state, to_dict(info)
     
     
 
@@ -130,17 +130,11 @@ def algorithm(logdensity_fn, num_steps, initial_position, chains, rng_key, obser
     # readjust the hyperparameters
     integrator, num_samples, steps_per_sample, step_size, Lpartial = init(num_steps, adap_state, d, mclachlan)
 
-    
+
     # refine the results with the adjusted method
-    state_final, _info2 = stage2(logdensity_fn, integrator, num_samples, state, chains, key, d, steps_per_sample, step_size, Lpartial, observables)
-    
-    info2 = to_dict(_info2)
+    state_final, info2 = stage2(logdensity_fn, integrator, num_samples, state, chains, key, steps_per_sample, step_size, Lpartial, observables)
+        
     
     return info1, info2
-    
-    
-    
-    
-    
     
     

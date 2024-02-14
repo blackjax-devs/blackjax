@@ -140,9 +140,9 @@ def equipartition_diagonal(position, logdensity_grad, rng_key):
     
 
 
-def parallelize_kernel(func, chains):
+def parallelize_kernel(func, chains, in_axes):
     # we should also have pmap and a combination pmap(vmap())
-    return jax.vmap(func, (0, 0, None, None))
+    return jax.vmap(func, in_axes)
 
 
 
@@ -170,7 +170,7 @@ def nan_reject(nonans, old, new):
 
 def build_kernel1(sequential_mclmc_kerel, max_iter, chains, fullrank, d, alpha = 1., C = 0.1):
 
-    mclmc_kernel = parallelize_kernel(sequential_mclmc_kerel, chains)
+    mclmc_kernel = parallelize_kernel(sequential_mclmc_kerel, chains, (0, 0, None, None))
     
     equi = equipartition_fullrank if fullrank else equipartition_diagonal
     
@@ -287,9 +287,3 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, d, obser
 
         state_all = jax.lax.while_loop(cond, kernel, state_all)
         return state_all
-
-    # state, adap_state, key = state_all
-    # steps_left = num_steps - adap_state.steps
-        
-    # if self.integrator == 'MN':
-        #hyp['eps'] *= jnp.sqrt(10.)
