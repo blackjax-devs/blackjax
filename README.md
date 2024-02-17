@@ -4,6 +4,8 @@
 ![PyPI version](https://img.shields.io/pypi/v/blackjax)
 
 
+![BlackJAX animation: sampling BlackJAX with BlackJAX](./docs/examples/scatter.gif)
+
 ## What is BlackJAX?
 
 BlackJAX is a library of samplers for [JAX](https://github.com/google/jax) that
