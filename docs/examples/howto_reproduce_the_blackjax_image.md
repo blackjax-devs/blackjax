@@ -18,7 +18,7 @@ The front page image of the repository is a sampled version of the following ima
 
 ![front_page_image](./data/blackjax.png)
 
-Here we show how we can sample from the uniform distribution corresponding to black pixels in the image.  
+Here we show how we can sample from the uniform distribution corresponding to black pixels in the image.
 
 
 ## Make the image into a numpy array
