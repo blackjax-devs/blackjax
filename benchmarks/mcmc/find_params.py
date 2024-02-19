@@ -12,7 +12,7 @@ import jax.numpy as jnp
 from sampling_algorithms import samplers
 from inference_models import models
 
-def sampler_mhmclmc_with_tuning(step_size, L):
+def sampler_mhmclmc_with_tuning(step_size, L, frac_tune2, frac_tune3):
 
     def s(logdensity_fn, num_steps, initial_position, key):
 
@@ -40,8 +40,8 @@ def sampler_mhmclmc_with_tuning(step_size, L):
             num_steps=num_steps,
             state=initial_state,
             rng_key=tune_key,
-            # frac_tune2=0,
-            # frac_tune3=0,
+            frac_tune2=frac_tune2,
+            frac_tune3=frac_tune3,
             params=MCLMCAdaptationState(L=L, step_size=step_size)
         )
 
@@ -73,7 +73,7 @@ def sampler_mhmclmc_with_tuning(step_size, L):
         print(info.acceptance_rate.mean(), "acceptance probability\n\n\n\n")
         # print(out.var(axis=0), "acceptance probability")
 
-        return out, num_steps_per_traj
+        return out, blackjax_mclmc_sampler_params, num_steps_per_traj
 
     return s
 
@@ -99,7 +99,7 @@ def sampler_mhmclmc(step_size, L):
         print(info.acceptance_rate.mean(), "acceptance probability\n\n\n\n")
         # print(out.var(axis=0), "acceptance probability")
 
-        return out, num_steps_per_traj
+        return out, MCLMCAdaptationState(L=L, step_size=step_size), num_steps_per_traj
 
     return s
 
@@ -111,20 +111,33 @@ def grid_search():
 
     results = defaultdict(float)
     for model in ["banana"]:
-        # for step_size, L in itertools.product([16.866055/10], [16.866055]):
         # result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(step_size, L), n=1000000, batch=1)
         # result, bias = benchmark_chains(models[model], samplers['mclmc'], n=1000000, batch=10, favg=models[model].E_x2, fvar=models[model].Var_x2)
         # results[(model, "mclmc")] = result.item()
 
 
-        result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(jnp.sqrt(2)/4, jnp.sqrt(2)), n=1000000, batch=10,favg=models[model].E_x2, fvar=models[model].Var_x2)
-        # result, bias = benchmark_chains(models[model], samplers["mhmclmc"], n=1000000, batch=10)
+        result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(jnp.sqrt(2)/4, jnp.sqrt(2), frac_tune2=10.0, frac_tune3=10.0), n=10000, batch=100,favg=models[model].E_x2, fvar=models[model].Var_x2)
+        # # result, bias = benchmark_chains(models[model], samplers["mhmclmc"], n=1000000, batch=10)
         results[(model, "mhmclmc")] = result.item()
+
+        # for step_size, L in make_grid(center_L=21.48713, center_step_size= 2.2340074):
+        #     result, bias = benchmark_chains(models[model], sampler_mhmclmc(step_size=step_size, L=L), n=10000, batch=100,favg=models[model].E_x2, fvar=models[model].Var_x2)
+        #     # result, bias = benchmark_chains(models[model], samplers["mhmclmc"], n=1000000, batch=10)
+            # results[(model, "mhmclmc")] = result.item()
+
+    # for step in grid:
+
 
 
     return results
 
-print(grid_search())
+def make_grid(center_L, center_step_size):
+    return itertools.product(np.linspace(center_step_size-1, center_step_size+1, 10), np.linspace(center_L-1, center_L+1, 10))
+
+if __name__ == "__main__":
+    print(grid_search())
+
+# print(grid_search())
 
 # for model in ["simple"]:
 #     for sampler in ["mhmclmc", "mclmc"]:

@@ -103,7 +103,7 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
         num_steps=num_steps,
         state=initial_state,
         rng_key=tune_key,
-        frac_tune2=0,
+        # frac_tune2=0,
         frac_tune3=0,
         # params=MCLMCAdaptationState(L=16.765137, step_size=1.005)
     )
