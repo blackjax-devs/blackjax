@@ -139,7 +139,7 @@ To cite this repository:
 
 ```
 @misc{cabezas2024blackjax,
-      title={BlackJAX: Composable {B}ayesian inference in {JAX}}, 
+      title={BlackJAX: Composable {B}ayesian inference in {JAX}},
       author={Alberto Cabezas and Adrien Corenflos and Junpeng Lao and Rémi Louf},
       year={2024},
       eprint={2402.10797},
