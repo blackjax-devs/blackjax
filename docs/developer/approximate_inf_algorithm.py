@@ -19,7 +19,7 @@ from optax import GradientTransformation
 # import basic compoments that are already implemented
 # or that you have implemented with a general structure
 from blackjax.base import VIAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
     "ApproxInfState",
@@ -49,7 +49,7 @@ class ApproxInfInfo(NamedTuple):
     ...
 
 
-def init(position: PyTree, logdensity_fn: Callable, *args, **kwargs):
+def init(position: ArrayLikeTree, logdensity_fn: Callable, *args, **kwargs):
     # build an inital state
     state = ApproxInfState(...)
     return state
@@ -116,7 +116,7 @@ class approx_inf_algorithm:
         *args,
         **kwargs,
     ) -> VIAlgorithm:
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position, optimizer, ...)
 
         def step_fn(rng_key: PRNGKey, state):
