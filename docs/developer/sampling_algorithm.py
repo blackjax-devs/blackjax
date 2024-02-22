@@ -19,8 +19,8 @@ import jax
 # or that you have implemented with a general structure
 # for example, if you do a Metropolis-Hastings accept/reject step:
 import blackjax.mcmc.proposal as proposal
-from blackjax.base import MCMCSamplingAlgorithm
-from blackjax.types import PRNGKey, PyTree
+from blackjax.base import SamplingAlgorithm
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
     "SamplingAlgoState",
@@ -49,7 +49,7 @@ class SamplingAlgoInfo(NamedTuple):
     ...
 
 
-def init(position: PyTree, logdensity_fn: Callable, *args, **kwargs):
+def init(position: ArrayLikeTree, logdensity_fn: Callable, *args, **kwargs):
     # build an inital state
     state = SamplingAlgoState(...)
     return state
@@ -117,10 +117,10 @@ class sampling_algorithm:
         logdensity_fn: Callable,
         *args,
         **kwargs,
-    ) -> MCMCSamplingAlgorithm:
+    ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(...)
 
-        def init_fn(position: PyTree):
+        def init_fn(position: ArrayLikeTree):
             return cls.init(position, logdensity_fn, ...)
 
         def step_fn(rng_key: PRNGKey, state):
@@ -131,7 +131,7 @@ class sampling_algorithm:
                 ...,
             )
 
-        return MCMCSamplingAlgorithm(init_fn, step_fn)
+        return SamplingAlgorithm(init_fn, step_fn)
 
 
 # and other functions that help make `init` and/or `build_kernel` easier to read and understand
@@ -148,20 +148,21 @@ def sampling_algorithm_proposal(*args, **kwags) -> Callable:
     -------
     Describe what is returned.
     """
-    # as an example, a Metropolis-Hastings step would look like this:
-    init_proposal, generate_proposal = proposal.proposal_generator(...)
-    sample_proposal = proposal.static_binomial_sampling(...)
+    # as an example, a Metropolis-Hastings step with symmetric a symmetric transition would look like this:
+    acceptance_ratio = proposal.safe_energy_diff
+    sample_proposal = proposal.static_binomial_sampling
 
     def generate(rng_key, state):
         # propose a new sample
         proposal_state = ...
 
         # accept or reject the proposed sample
-        proposal = init_proposal(state)
-        new_proposal, is_diverging = generate_proposal(proposal.energy, proposal_state)
-        sampled_proposal, *info = sample_proposal(rng_key, proposal, new_proposal)
+        initial_energy = ...
+        proposal_energy = ...
+        new_proposal, is_diverging = acceptance_ratio(initial_energy, proposal_energy)
+        sampled_state, info = sample_proposal(rng_key, proposal, new_proposal)
 
-        # build a new state and collect useful information
+        # maybe add to the returned state and collect more useful information
         sampled_state, info = ...
 
         return sampled_state, info

@@ -131,7 +131,7 @@ passing parameters.
 
 ### New algorithms
 
-We hope to make implementing and testing new algorithms easy with BlackJAX. Many basic methods are already implemented in the library, and you can use them to test new algorithms. Follow the [guidelines](https://blackjax-devs.github.io/blackjax/developer/guidelines.html) to implement your own method and test new ideas on existing methods without writing everything from scratch!
+We want to make implementing and testing new algorithms easy with BlackJAX. You can test new algorithms by reusing the basic components of the many known methods already implemented in the library. Follow the [guidelines](https://blackjax-devs.github.io/blackjax/developer/guidelines.html) to implement your method and test new ideas on existing methods without writing everything from scratch.
 
 ## Contributions
 
