@@ -12,7 +12,6 @@ from scipy.special import ellipj
 
 import blackjax.mcmc.integrators as integrators
 from blackjax.mcmc.integrators import (
-    IntegratorState,
     esh_dynamics_momentum_update_one_step,
 )
 from blackjax.mcmc.metrics import gaussian_euclidean

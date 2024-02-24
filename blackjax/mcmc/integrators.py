@@ -18,7 +18,6 @@ import chex
 import jax
 import jax.numpy as jnp
 import jax.tree_util as jtu
-import jaxopt
 from jax.flatten_util import ravel_pytree
 
 from blackjax.mcmc.metrics import KineticEnergy
