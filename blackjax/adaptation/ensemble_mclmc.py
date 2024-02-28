@@ -42,7 +42,7 @@ def to_dict(x):
             'acc prob': x[:, 2],
             'equi full': x[:, 3],
             'equi diag': x[:, 4],
-            'expected vals': x[:, 5:]
+            'summary': x[:, 5:]
         }
 
 
@@ -67,19 +67,25 @@ def init(num_steps, adap_state, d, mclachlan):
     step_size *= jnp.power(0.82 / (d * adap_state.eevpd), 0.25) / jnp.sqrt(Lfull / step_size)
     
     Lpartial = Lfull * 0.6
-    steps_left = (num_steps - adap_state.steps) // grads_per_step
-    steps_per_sample = (int)(jnp.clip(Lfull / step_size, 1, steps_left / 10.))
+    #steps_left = (num_steps - adap_state.steps) // grads_per_step
+    #steps_per_sample = (int)(jnp.clip(Lfull / step_size, 1, steps_left / 10.))
+    print(Lfull/step_size)
+    steps_per_sample = 30
     num_samples = (num_steps - adap_state.steps) // (grads_per_step * steps_per_sample)
     
     return integrator, num_samples, steps_per_sample, step_size, Lpartial
 
 
 
-def stage2(logdensity_fn, integrator, num_samples, state, chains, rng_key, steps_per_sample, step_size, Lpartial, observables= jnp.square):
-    """observables: function taking position x and outputing O(x), can be vector valued. We will store ensemble average of O(x) at each step"""
+def stage2(logdensity_fn, integrator, num_samples, chains, 
+           init_state, rng_key, 
+           steps_per_sample, step_size, Lpartial, 
+           acc_prob_target= 0.7,
+           observables= jnp.square):
+    """observables: function taking position x and outputing O(x), can be vector valued."""
     
     
-    da_init, da_update, da_final = dual_averaging_adaptation(target= 0.7)
+    da_init, da_update, da_final = dual_averaging_adaptation(target= acc_prob_target)
     da_state = da_init(step_size)
     adap = AdaptationState(steps_per_sample, Lpartial, step_size, da_state)
         
@@ -104,12 +110,12 @@ def stage2(logdensity_fn, integrator, num_samples, state, chains, rng_key, steps
         equi_full = umclmc.equipartition_fullrank(state.position, state.logdensity_grad, key2)
         equi_diag = umclmc.equipartition_diagonal(state.position, state.logdensity_grad, key2)
         new_info = jnp.concatenate((jnp.array([steps_per_sample, step_size, acc_prob, equi_full, equi_diag]), 
-                                    jnp.average(observables(state.position), axis = 0)))
+                                    observables(state.position)))
         
         return (state, AdaptationState(steps_per_sample, Lpartial, step_size, da_state)), new_info
    
     keys = jax.random.split(rng_key, num_samples)
-    final_state, info = jax.lax.scan(step, init= (state, adap), xs = keys)
+    final_state, info = jax.lax.scan(step, init= (init_state, adap), xs = keys)
 
     #step_size = da_final(da_state)
     
@@ -117,13 +123,17 @@ def stage2(logdensity_fn, integrator, num_samples, state, chains, rng_key, steps
     
     
 
-def algorithm(logdensity_fn, num_steps, initial_position, chains, rng_key, observables= jnp.square, mclachlan = True):
+def algorithm(logdensity_fn, num_steps, chains, 
+              initial_position, rng_key, 
+              mclachlan = True,
+              observables= jnp.square):
     
-    
+
     d = ravel_pytree(initial_position)[0].shape[0] // chains # number of dimensions
 
-    # burn-in with the unadjusted method    
-    state_all, info1 = umclmc.stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, d, observables)
+    # burn-in with the unadjusted method    def stage1(logdensity_fn, num_steps, chains, initial_position, rng_key, 
+
+    state_all, info1 = umclmc.stage1(logdensity_fn, num_steps, chains, initial_position, rng_key, observables= observables)
 
     state, adap_state, key = state_all
     
@@ -132,8 +142,11 @@ def algorithm(logdensity_fn, num_steps, initial_position, chains, rng_key, obser
 
 
     # refine the results with the adjusted method
-    state_final, info2 = stage2(logdensity_fn, integrator, num_samples, state, chains, key, steps_per_sample, step_size, Lpartial, observables)
-        
+    state_final, info2 = stage2(logdensity_fn, integrator, num_samples, chains, 
+                                state, key, 
+                                steps_per_sample, step_size, Lpartial, 
+                                observables= observables)
+    
     
     return info1, info2
     

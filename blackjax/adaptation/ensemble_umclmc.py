@@ -53,7 +53,7 @@ def to_dict(x):
             'eevpd observed': x[:, 3],
             'equi full': x[:, 4],
             'equi diag': x[:, 5],
-            'expected vals': x[:, 6:]
+            'summary': x[:, 6:]
             }
     
 
@@ -81,8 +81,7 @@ def init(position, logdensity_fn):
 
 def init_adap(num_steps, chains, delay_frac, position, alpha, d):
     
-    delay_num = jnp.rint(delay_frac * num_steps).astype(int)
-    
+    delay_num = (int)(jnp.rint(delay_frac * num_steps))
     #flat_pytree, unravel_fn = ravel_pytree(sequential_pytree)
     
     #sigma = unravel_fn(jnp.ones(flat_pytree.shape, dtype = flat_pytree.dtype))
@@ -111,6 +110,7 @@ def init_adap(num_steps, chains, delay_frac, position, alpha, d):
 #     jax.tree_util.tree_map(lambda z, g: z * g)
 
 
+
 def equipartition_fullrank(position, logdensity_grad, rng_key):
     """loss = Tr[(1 - E)^T (1 - E)] / d^2
         where Eij = <xi gj> is the equipartition patrix.
@@ -134,7 +134,7 @@ def equipartition_fullrank(position, logdensity_grad, rng_key):
 def equipartition_diagonal(position, logdensity_grad, rng_key):
     """Ei = E_ensemble (- grad log p_i x_i ). Ei is 1 if we have converged. 
     virial_loss = average over parameters (Ei)"""
-    E = jax.tree_util.tree_map(lambda x, g: jnp.square(1 - jnp.average(-x * g, axis = 0)), position, logdensity_grad)
+    E = jax.tree_util.tree_map(lambda x, g: jnp.square(1 + jnp.average(x * g, axis = 0)), position, logdensity_grad)
     
     return jnp.average(ravel_pytree(E)[0])
     
@@ -208,7 +208,8 @@ def build_kernel1(sequential_mclmc_kerel, max_iter, chains, fullrank, d, alpha =
         # determine if we want to finish this stage (= if loss is no longer decreassing)
         history = jnp.concatenate((jnp.ones(1) * bias, adap_state.history[:-1]))
         decreasing = (history[-1] > history[0]) or (adap_state.steps < adap_state.history.shape[0])
-        cond = decreasing and (adap_state.steps < max_iter)
+        #cond = decreasing and (adap_state.steps < max_iter)
+        cond = (adap_state.steps < max_iter)
     
         return _state, AdaptationState(cond, adap_state.steps + 1, eevpd, eevpd_wanted, history, hyp), rng_key_new
     
@@ -232,7 +233,7 @@ def kernel_with_observables(kernel, observables):
         equi_diag = equipartition_diagonal(state.position, state.logdensity_grad, key1)
         
         new_info = jnp.concatenate((jnp.array([hyp.L, hyp.step_size, adap.eevpd_wanted, adap.eevpd, equi_full, equi_diag]), 
-                                    jnp.average(observables(state.position), axis = 0)))
+                                    observables(state.position)))
 
         return state_all, new_info
         
@@ -241,21 +242,21 @@ def kernel_with_observables(kernel, observables):
 
 
 
-def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, d, observables= jnp.square):
-    """observable: function taking position x and outputing O(x). We will store ensemble average of O(x) at each step"""
+def stage1(logdensity_fn, num_steps, chains, initial_position, rng_key, 
+            delay_frac = 0.05,
+            C = 0.1,
+            alpha = 1.,
+            fullrank = False,
+            observables= jnp.square):
+    """observable: function taking position x and outputing O(x)."""
     
-    delay_frac = 0.05
-    C = 0.1
-    alpha = 1. 
-    fullrank = False
+
+    d = ravel_pytree(initial_position)[0].shape[0] // chains # number of dimensions
     
     # kernel    
-    sequential_kernel = mclmc.build_kernel(
-        logdensity_fn=logdensity_fn,
-        integrator= isokinetic_leapfrog
-    )
+    sequential_kernel = mclmc.build_kernel(logdensity_fn= logdensity_fn, integrator= isokinetic_leapfrog)
     
-    max_iter = num_steps
+    max_iter = 500#num_steps // 4
     
     kernel = build_kernel1(sequential_kernel, max_iter, chains, fullrank, d, alpha, C)
 
@@ -264,11 +265,11 @@ def stage1(logdensity_fn, num_steps, initial_position, chains, rng_key, d, obser
     adap_state = init_adap(num_steps, chains, delay_frac, state.position, alpha, d)
 
     state_all = (state, adap_state, rng_key)
-    cond = lambda state_all: state_all[1][0]
+    cond = lambda state_all: state_all[1].cond
     
     if observables != None:
         
-        num_info = 6 + jnp.average(observables(initial_position), axis = 0).shape[0]
+        num_info = 6 + len(observables(initial_position))
         _info = jnp.empty(shape = (max_iter, num_info))
         
         kernel = kernel_with_observables(kernel, observables)
