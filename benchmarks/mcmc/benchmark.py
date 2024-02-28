@@ -123,53 +123,56 @@ def benchmark_chains(model, sampler):
     return ess_per_sample
 
 
+if __name__ == "__main__":
 
+    out = benchmark(models['banana'], samplers['nuts'])
+    print(out)
 
-# Define the models and samplers
-# models = {'icg' : gym.targets.IllConditionedGaussian(), 'banana' : gym.targets.Banana()}
+    # Define the models and samplers
+    # models = {'icg' : gym.targets.IllConditionedGaussian(), 'banana' : gym.targets.Banana()}
 
-# Create an empty list to store the results
-results = defaultdict(float)
+    # Create an empty list to store the results
+    # results = defaultdict(float)
 
-# Run the benchmark for each model and sampler
-for model in models:
-    for sampler in samplers:
-        # result = benchmark(models[model], samplers[sampler])
-        result = benchmark_chains(models[model], samplers[sampler])
-        # print(result, result2, "results")
-        results[(model, sampler)] = result
+    # # Run the benchmark for each model and sampler
+    # for model in models:
+    #     for sampler in samplers:
+    #         # result = benchmark(models[model], samplers[sampler])
+    #         result = benchmark_chains(models[model], samplers[sampler])
+    #         # print(result, result2, "results")
+    #         results[(model, sampler)] = result
 
-print(results)
+    # print(results)
 
-raise Exception
+    # raise Exception
 
-# Extract the models and samplers from the results dictionary
-models = [model for model, _ in results.keys()]
-samplers = [sampler for _, sampler in results.keys()]
+# # Extract the models and samplers from the results dictionary
+# models = [model for model, _ in results.keys()]
+# samplers = [sampler for _, sampler in results.keys()]
 
-# Extract the corresponding results
-results_values = list(results.values())
+# # Extract the corresponding results
+# results_values = list(results.values())
 
-# Create a figure with two subplots
-fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+# # Create a figure with two subplots
+# fig, axs = plt.subplots(1, 2, figsize=(10, 5))
 
-# Plot the results in the first subplot
-axs[0].bar(range(len(results)), results_values)
-axs[0].set_xticks(range(len(results)))
-axs[0].set_xticklabels(['{} - {}'.format(model, sampler) for model, sampler in zip(models, samplers)], rotation=90)
-axs[0].set_title('Benchmark Results')
+# # Plot the results in the first subplot
+# axs[0].bar(range(len(results)), results_values)
+# axs[0].set_xticks(range(len(results)))
+# axs[0].set_xticklabels(['{} - {}'.format(model, sampler) for model, sampler in zip(models, samplers)], rotation=90)
+# axs[0].set_title('Benchmark Results')
 
-# Plot the results in the second subplot
-axs[1].bar(range(len(results)), results_values, color='orange')
-axs[1].set_xticks(range(len(results)))
-axs[1].set_xticklabels(['{} - {}'.format(model, sampler) for model, sampler in zip(models, samplers)], rotation=90)
-axs[1].set_title('Benchmark Results')
+# # Plot the results in the second subplot
+# axs[1].bar(range(len(results)), results_values, color='orange')
+# axs[1].set_xticks(range(len(results)))
+# axs[1].set_xticklabels(['{} - {}'.format(model, sampler) for model, sampler in zip(models, samplers)], rotation=90)
+# axs[1].set_title('Benchmark Results')
 
-# Adjust the layout of the subplots
-plt.tight_layout()
+# # Adjust the layout of the subplots
+# plt.tight_layout()
 
-# Show the plot
-plt.show()
+# # Show the plot
+# plt.show()
 
 
 

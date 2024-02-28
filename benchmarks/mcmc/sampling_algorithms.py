@@ -3,6 +3,7 @@
 import jax
 import jax.numpy as jnp
 import blackjax
+from blackjax import adaptation
 from blackjax.mcmc.mhmclmc import rescale
 from blackjax.util import run_inference_algorithm
 import blackjax
@@ -12,26 +13,30 @@ __all__ = ["samplers"]
 
 
 
-# def run_hmc(
-#     rng_key, initial_states, tuned_params, logdensity_fn, num_samples):
+def run_nuts(
+    logdensity_fn, num_steps, initial_position, key):
     
-#     warmup = blackjax.window_adaptation(blackjax.nuts, logdensity_fn)
+    warmup = blackjax.window_adaptation(blackjax.nuts, logdensity_fn)
 
-#     # we use 4 chains for sampling
-#     rng_key, init_key, warmup_key = jax.random.split(rng_key, 3)
-#     # init_keys = jax.random.split(init_key, num_chains)
-#     # init_params = jax.vmap(init_param_fn)(init_keys)
-
-#     (initial_states, tuned_params), _ = warmup.run(warmup_key, init_params, 1000)
+    # we use 4 chains for sampling
+    rng_key, warmup_key = jax.random.split(key, 2)
 
 
-#     states, infos = run_inference_algorithm(
-#         rng_key=rng_key,
-#         initial_state_or_position=initial_states,
-#         inference_algorithm=blackjax.nuts,
-#         num_steps=num_samples,
-#         transform=lambda x: x.position,
-#     )
+    (state, params), _ = warmup.run(warmup_key, initial_position, num_steps // 10)
+
+
+    print(params)
+    nuts = blackjax.nuts(logdensity_fn=logdensity_fn, step_size=params['step_size'], inverse_mass_matrix= params['inverse_mass_matrix'])
+
+    final_state, state_history, info_history = run_inference_algorithm(
+        rng_key=rng_key,
+        initial_state_or_position=state,
+        inference_algorithm=nuts,
+        num_steps=num_steps,
+        transform=lambda x: x.position,
+    )
+
+    return state_history
 
 def run_mclmc(logdensity_fn, num_steps, initial_position, key):
     init_key, tune_key, run_key = jax.random.split(key, 3)
@@ -135,4 +140,4 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
 
 # we should do at least: mclmc, nuts, unadjusted hmc, mhmclmc, langevin
 
-samplers = {'mclmc' : run_mclmc, 'mhmclmc': run_mhmclmc}
+samplers = {'mclmc' : run_mclmc, 'mhmclmc': run_mhmclmc, 'nuts' : run_nuts}
