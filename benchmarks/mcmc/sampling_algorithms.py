@@ -56,7 +56,7 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, key):
         rng_key=tune_key,
     )
 
-    jax.debug.print("params {x}", x=blackjax_mclmc_sampler_params)
+    # jax.debug.print("params {x}", x=blackjax_mclmc_sampler_params)
 
     sampling_alg = blackjax.mclmc(
         logdensity_fn,
@@ -73,7 +73,7 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, key):
     )
 
     avg_steps_per_traj = 1
-    return samples, avg_steps_per_traj
+    return samples, blackjax_mclmc_sampler_params, avg_steps_per_traj
 
 
 def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
@@ -88,7 +88,7 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
 
     kernel = lambda rng_key, state, avg_num_integration_steps, step_size: blackjax.mcmc.mhmclmc.build_kernel(
                 integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
-                integration_steps_fn = lambda key: jnp.round(jax.random.uniform(key) * rescale(avg_num_integration_steps + 0.5)), 
+                integration_steps_fn = lambda k : jnp.ceil(jax.random.uniform(k) * rescale(avg_num_integration_steps))
             )(
                 rng_key=rng_key, 
                 state=state, 
@@ -140,7 +140,7 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
     
     # jax.debug.print("THING\n\n {x}",x=jnp.mean(info.num_integration_steps))
     # raise Exception
-    return out, L/step_size
+    return out, blackjax_mclmc_sampler_params, L/step_size
 
 # we should do at least: mclmc, nuts, unadjusted hmc, mhmclmc, langevin
 
