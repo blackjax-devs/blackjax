@@ -15,7 +15,8 @@ import matplotlib.pyplot as plt
 
 
 def get_num_latents(target):
-  return int(sum(map(np.prod, list(jax.tree_flatten(target.event_shape)[0]))))
+  return target.ndims
+#   return int(sum(map(np.prod, list(jax.tree_flatten(target.event_shape)[0]))))
 
 def err(f_true, var_f, contract = jnp.max):
     """Computes the error b^2 = (f - f_true)^2 / var_f
@@ -55,7 +56,7 @@ def ess(err_t, grad_evals_per_step, neff= 100):
     crossing = find_crossing(err_t, low_error)
     # print(len(err_t), "len err t")
 
-    print("crossing", crossing, (crossing * grad_evals_per_step), neff / (crossing * grad_evals_per_step))
+    # print("crossing", crossing, (crossing * grad_evals_per_step), neff / (crossing * grad_evals_per_step))
     # print((err_t)[-100:], "le")
     
     return (neff / (crossing * grad_evals_per_step)) * cutoff_reached
@@ -65,7 +66,8 @@ def ess(err_t, grad_evals_per_step, neff= 100):
 def find_crossing(array, cutoff):
     """the smallest M such that array[m] < cutoff for all m > M"""
 
-    indices = jnp.argwhere(array > cutoff)
+    b = array > cutoff
+    indices = jnp.argwhere(b)
     if indices.shape[0] == 0:
         print("\n\n\nNO CROSSING FOUND!!!\n\n\n", array, cutoff)
         return 1
@@ -110,19 +112,20 @@ def benchmark_chains(model, sampler, favg, fvar, n=10000, batch=None):
     # print(model)
     # print(model.sample_transformations.keys())
     # raise Exception
-    identity_fn = model.sample_transformations['identity']
+    # identity_fn = model.sample_transformations['identity']
     logdensity_fn = model.unnormalized_log_prob
     d = get_num_latents(model)
     if batch is None:
         batch = np.ceil(1000 / d).astype(int)
-    key, init_key = jax.random.split(jax.random.PRNGKey(0), 2)
+    key, init_key = jax.random.split(jax.random.PRNGKey(44), 2)
     keys = jax.random.split(key, batch)
     # keys = jnp.array([jax.random.PRNGKey(0)])
     init_pos = jax.random.normal(key=init_key, shape=(batch, d))
 
-    samples, avg_num_steps_per_traj = jax.vmap(lambda pos, key: sampler(logdensity_fn, n, pos, key))(init_pos, keys)
+    samples, params, avg_num_steps_per_traj = jax.vmap(lambda pos, key: sampler(logdensity_fn, n, pos, key))(init_pos, keys)
     avg_num_steps_per_traj = jnp.mean(avg_num_steps_per_traj, axis=0)
-    print("\n\n\n\nAVG NUM STEPS PER TRAJ", avg_num_steps_per_traj)
+    # print(samples, samples.shape)
+    # print("\n\n\n\nAVG NUM STEPS PER TRAJ", avg_num_steps_per_traj)
     # print(samples[0][-1], samples[0][0], "samps chain", samples.shape)
               
         # identity_fn.ground_truth_mean, identity_fn.ground_truth_standard_deviation**2
@@ -134,10 +137,12 @@ def benchmark_chains(model, sampler, favg, fvar, n=10000, batch=None):
     # raise Exception
     ess_per_sample = ess(err_t, grad_evals_per_step=2 * avg_num_steps_per_traj)
 
-    print('True mean', identity_fn.ground_truth_mean)
-    print('True std', identity_fn.ground_truth_standard_deviation)
-    print("Empirical mean", samples.mean(axis=[0,1]))
-    print("Empirical std", samples.std(axis=[0,1]))
+    # print('True mean', identity_fn.ground_truth_mean)
+    # print('True std', identity_fn.ground_truth_standard_deviation)
+    # print("Empirical mean", samples.mean(axis=[0,1]))
+    # print("Empirical std", samples.std(axis=[0,1]))
+
+    # print(params.L.mean(), params.step_size.mean(), "params")
     
     # print('True E[x^2]', identity_fn.ground_truth_mean)
     # print('True std[x^2]', identity_fn.ground_truth_standard_deviation)
@@ -154,13 +159,13 @@ if __name__ == "__main__":
     results = defaultdict(float)
 
     # Run the benchmark for each model and sampler
-    for model in ["simple"]:
+    for model in ["normal"]:
         # for sampler in samplers:
         print("MODEL", model, "DIM", get_num_latents(models[model]))
-        for sampler in ["mhmclmc"]:
+        for sampler in ["nuts"]:
             # result = benchmark(models[model], samplers[sampler])
             
-            result = benchmark_chains(models[model], samplers[sampler], batch=1, n=100000)
+            result = benchmark_chains(models[model], samplers[sampler], batch=100, n=10000, favg=models[model].E_x2, fvar=models[model].Var_x2)
             # print(result, result2, "results")
             results[(model, sampler)] = result
 
@@ -195,26 +200,4 @@ if __name__ == "__main__":
 
     # Show the plot
     plt.show()
-
-
-
-    # # Create a list of colors for the samplers
-    # colors = ['blue', 'red', 'green', 'orange']
-
-    # results2 = [1,1]
-
-    # # Create a barplot for results
-    # plt.bar(range(len(results)), results, label='Results')
-
-    # # Create a barplot for results2 with a different color
-    # plt.bar(range(len(results2)), results2, label='Results2', color='orange')
-
-    # # Add labels to the x-axis
-    # plt.xticks(range(len(results)), ['Model 1 - Sampler 1', 'Model 2 - Sampler 1'])
-
-    # # Add a title to the plot
-    # plt.title('Benchmark Results')
-
-    # # Add a legend to indicate the difference between results and results2
-    # plt.legend()
 
