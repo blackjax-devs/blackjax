@@ -115,7 +115,7 @@ def grid_search(n=10000, model='icg'):
 
     results = defaultdict(float)
             
-    result, _, center_L, center_step_size = benchmark_chains(models[model], samplers["mclmc"], n=100000, batch=10, favg=models[model].E_x2, fvar=models[model].Var_x2)
+    # result, _, center_L, center_step_size = benchmark_chains(models[model], samplers["mclmc"], n=100000, batch=10, favg=models[model].E_x2, fvar=models[model].Var_x2)
 
     print(f"initial params found by MCLMC {center_step_size, center_L} (with ESS {result.item()})")
     

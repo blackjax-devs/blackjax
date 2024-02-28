@@ -147,7 +147,7 @@ def benchmark_chains(model, sampler, favg, fvar, n=10000, batch=None):
     # print('True E[x^2]', identity_fn.ground_truth_mean)
     # print('True std[x^2]', identity_fn.ground_truth_standard_deviation)
 
-    return ess_per_sample, err_t[-1], params.L.mean(), params.step_size.mean()
+    return ess_per_sample, err_t[-1]
 
 
 if __name__ == "__main__":
@@ -159,13 +159,13 @@ if __name__ == "__main__":
     results = defaultdict(float)
 
     # Run the benchmark for each model and sampler
-    for model in ["simple"]:
+    for model in ["normal"]:
         # for sampler in samplers:
         print("MODEL", model, "DIM", get_num_latents(models[model]))
-        for sampler in ["mhmclmc"]:
+        for sampler in ["nuts"]:
             # result = benchmark(models[model], samplers[sampler])
             
-            result = benchmark_chains(models[model], samplers[sampler], batch=1, n=100000)
+            result = benchmark_chains(models[model], samplers[sampler], batch=100, n=10000, favg=models[model].E_x2, fvar=models[model].Var_x2)
             # print(result, result2, "results")
             results[(model, sampler)] = result
 
@@ -200,26 +200,4 @@ if __name__ == "__main__":
 
     # Show the plot
     plt.show()
-
-
-
-    # # Create a list of colors for the samplers
-    # colors = ['blue', 'red', 'green', 'orange']
-
-    # results2 = [1,1]
-
-    # # Create a barplot for results
-    # plt.bar(range(len(results)), results, label='Results')
-
-    # # Create a barplot for results2 with a different color
-    # plt.bar(range(len(results2)), results2, label='Results2', color='orange')
-
-    # # Add labels to the x-axis
-    # plt.xticks(range(len(results)), ['Model 1 - Sampler 1', 'Model 2 - Sampler 1'])
-
-    # # Add a title to the plot
-    # plt.title('Benchmark Results')
-
-    # # Add a legend to indicate the difference between results and results2
-    # plt.legend()
 
