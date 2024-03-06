@@ -113,14 +113,18 @@ def benchmark_chains(model, sampler, favg, fvar, n=10000, batch=None):
     # print(model.sample_transformations.keys())
     # raise Exception
     # identity_fn = model.sample_transformations['identity']
-    logdensity_fn = model.unnormalized_log_prob
+    logdensity_fn = lambda x : -model.nlogp(x)
     d = get_num_latents(model)
     if batch is None:
         batch = np.ceil(1000 / d).astype(int)
     key, init_key = jax.random.split(jax.random.PRNGKey(44), 2)
     keys = jax.random.split(key, batch)
     # keys = jnp.array([jax.random.PRNGKey(0)])
-    init_pos = jax.random.normal(key=init_key, shape=(batch, d))
+    init_keys = jax.random.split(init_key, batch)
+    # print(init_keys.shape,)
+    # raise Exception
+    init_pos = jax.vmap(model.sample)(init_keys) # jax.random.normal(key=init_key, shape=(batch, d))
+    # print(init_pos.shape, "init pos")
 
     samples, params, avg_num_steps_per_traj = jax.vmap(lambda pos, key: sampler(logdensity_fn, n, pos, key))(init_pos, keys)
     avg_num_steps_per_traj = jnp.mean(avg_num_steps_per_traj, axis=0)
@@ -147,7 +151,7 @@ def benchmark_chains(model, sampler, favg, fvar, n=10000, batch=None):
     # print('True E[x^2]', identity_fn.ground_truth_mean)
     # print('True std[x^2]', identity_fn.ground_truth_standard_deviation)
 
-    return ess_per_sample, err_t[-1]
+    return ess_per_sample, err_t[-1], params.L.mean(), params.step_size.mean()
 
 
 if __name__ == "__main__":
