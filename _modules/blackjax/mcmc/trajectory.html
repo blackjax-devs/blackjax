@@ -800,7 +800,7 @@ document.write(`
                 <span class="n">initial_energy</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="c1"># Note that is_diverging and is_turning is inplace updated</span>
-            <span class="k">if</span> <span class="o">~</span><span class="n">is_diverging</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">is_turning</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">is_diverging</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="ow">not</span> <span class="n">is_turning</span><span class="p">):</span>
                 <span class="n">start_state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
                     <span class="n">direction</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
                     <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="p">,</span>
@@ -826,7 +826,7 @@ document.write(`
                 <span class="p">)</span>
                 <span class="n">trajectory</span> <span class="o">=</span> <span class="n">merge_trajectories</span><span class="p">(</span><span class="n">left_trajectory</span><span class="p">,</span> <span class="n">right_trajectory</span><span class="p">)</span>
 
-                <span class="k">if</span> <span class="o">~</span><span class="n">is_turning</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">is_turning</span><span class="p">:</span>
                     <span class="n">is_turning</span> <span class="o">=</span> <span class="n">uturn_check_fn</span><span class="p">(</span>
                         <span class="n">trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
                         <span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
