@@ -385,7 +385,7 @@ def dynamic_recursive_integration(
                 initial_energy,
             )
             # Note that is_diverging and is_turning is inplace updated
-            if ~is_diverging & ~is_turning:
+            if (not is_diverging) & (not is_turning):
                 start_state = jax.lax.cond(
                     direction > 0,
                     lambda _: trajectory.rightmost_state,
@@ -411,7 +411,7 @@ def dynamic_recursive_integration(
                 )
                 trajectory = merge_trajectories(left_trajectory, right_trajectory)
 
-                if ~is_turning:
+                if not is_turning:
                     is_turning = uturn_check_fn(
                         trajectory.leftmost_state.momentum,
                         trajectory.rightmost_state.momentum,
