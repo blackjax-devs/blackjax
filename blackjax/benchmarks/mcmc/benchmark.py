@@ -1,4 +1,5 @@
 from collections import defaultdict
+import itertools
 from inference_gym import using_jax as gym
 import jax
 import jax.numpy as jnp
@@ -151,57 +152,50 @@ def benchmark_chains(model, sampler, favg, fvar, n=10000, batch=None):
     # print('True E[x^2]', identity_fn.ground_truth_mean)
     # print('True std[x^2]', identity_fn.ground_truth_standard_deviation)
 
-    return ess_per_sample, err_t[-1], params.L.mean(), params.step_size.mean()
+
+
+    return ess_per_sample, err_t[-1], params
+
+def run_benchmarks(n):
+
+    for model, sampler in itertools.product(models, samplers):
+
+        print(f"\nModel: {model}, Sampler: {sampler}\n")
+
+
+        result, bias, _ = benchmark_chains(models[model], samplers[sampler], n=n, batch=100//models[model].ndims,favg=models[model].E_x2, fvar=models[model].Var_x2)
+        print(f"ESS: {result.item()}")
 
 
 if __name__ == "__main__":
 
-    # Define the models and samplers
-    # models = {'icg' : gym.targets.IllConditionedGaussian(), 'banana' : gym.targets.Banana()}
+    run_benchmarks(5000)
 
-    # Create an empty list to store the results
-    results = defaultdict(float)
+    # # Extract the models and samplers from the results dictionary
+    # models = [model for model, _ in results.keys()]
+    # samplers = [sampler for _, sampler in results.keys()]
 
-    # Run the benchmark for each model and sampler
-    for model in ["normal"]:
-        # for sampler in samplers:
-        print("MODEL", model, "DIM", get_num_latents(models[model]))
-        for sampler in ["nuts"]:
-            # result = benchmark(models[model], samplers[sampler])
-            
-            result = benchmark_chains(models[model], samplers[sampler], batch=100, n=10000, favg=models[model].E_x2, fvar=models[model].Var_x2)
-            # print(result, result2, "results")
-            results[(model, sampler)] = result
+    # # Extract the corresponding results
+    # results_values = list(results.values())
 
-    print(results)
+    # # Create a figure with two subplots
+    # fig, axs = plt.subplots(1, 2, figsize=(10, 5))
 
-    raise Exception
+    # # Plot the results in the first subplot
+    # axs[0].bar(range(len(results)), results_values)
+    # axs[0].set_xticks(range(len(results)))
+    # axs[0].set_xticklabels(['{} - {}'.format(model, sampler) for model, sampler in zip(models, samplers)], rotation=90)
+    # axs[0].set_title('Benchmark Results')
 
-    # Extract the models and samplers from the results dictionary
-    models = [model for model, _ in results.keys()]
-    samplers = [sampler for _, sampler in results.keys()]
+    # # Plot the results in the second subplot
+    # axs[1].bar(range(len(results)), results_values, color='orange')
+    # axs[1].set_xticks(range(len(results)))
+    # axs[1].set_xticklabels(['{} - {}'.format(model, sampler) for model, sampler in zip(models, samplers)], rotation=90)
+    # axs[1].set_title('Benchmark Results')
 
-    # Extract the corresponding results
-    results_values = list(results.values())
+    # # Adjust the layout of the subplots
+    # plt.tight_layout()
 
-    # Create a figure with two subplots
-    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
-
-    # Plot the results in the first subplot
-    axs[0].bar(range(len(results)), results_values)
-    axs[0].set_xticks(range(len(results)))
-    axs[0].set_xticklabels(['{} - {}'.format(model, sampler) for model, sampler in zip(models, samplers)], rotation=90)
-    axs[0].set_title('Benchmark Results')
-
-    # Plot the results in the second subplot
-    axs[1].bar(range(len(results)), results_values, color='orange')
-    axs[1].set_xticks(range(len(results)))
-    axs[1].set_xticklabels(['{} - {}'.format(model, sampler) for model, sampler in zip(models, samplers)], rotation=90)
-    axs[1].set_title('Benchmark Results')
-
-    # Adjust the layout of the subplots
-    plt.tight_layout()
-
-    # Show the plot
-    plt.show()
+    # # Show the plot
+    # plt.show()
 

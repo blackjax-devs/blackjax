@@ -115,7 +115,8 @@ def grid_search(n, model):
 
     results = defaultdict(float)
             
-    result, _, center_L, center_step_size = benchmark_chains(models[model], samplers["mclmc"], n=n*100, batch=10, favg=models[model].E_x2, fvar=models[model].Var_x2)
+    result, _, params = benchmark_chains(models[model], samplers["mclmc"], n=n*100, batch=10, favg=models[model].E_x2, fvar=models[model].Var_x2)
+    center_L, center_step_size = params.L.mean(), params.step_size.mean()
 
     # nuts result
 
@@ -206,6 +207,19 @@ if __name__ == "__main__":
     initial_position = m.sample(jax.random.PRNGKey(0))
     _, blackjax_mclmc_sampler_params, _ = sampler_mhmclmc_with_tuning(L=4.291135699906666, step_size=1.005, frac_tune2=0, frac_tune3=0)(lambda x: -m.nlogp(x), 100000, initial_position, jax.random.PRNGKey(0))
     print(blackjax_mclmc_sampler_params)
+
+# if __name__ == "__main__":
+
+#     benchmarks(5000)
+
+    # grid_search(n=25, model='banana')
+    # grid_search(n=2500, model='icg')
+    # grid_search(n=2500, model='normal')
+
+    # m = models['icg']
+    # initial_position = m.sample(jax.random.PRNGKey(0))
+    # _, blackjax_mclmc_sampler_params, _ = sampler_mhmclmc_with_tuning(L=4.291135699906666, step_size=1.005, frac_tune2=0, frac_tune3=0)(lambda x: -m.nlogp(x), 100000, initial_position, jax.random.PRNGKey(0))
+    # print(blackjax_mclmc_sampler_params)
 
     # out = benchmark_chains(models['icg'], sampler_mhmclmc(step_size=4.475385912886005, L=2.2708939161637853), n=100, batch=10,favg=models['icg'].E_x2, fvar=models['icg'].Var_x2)
     # print(out)

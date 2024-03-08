@@ -147,4 +147,7 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, key):
 
 # we should do at least: mclmc, nuts, unadjusted hmc, mhmclmc, langevin
 
-samplers = {'mclmc' : run_mclmc, 'mhmclmc': run_mhmclmc, 'nuts' : run_nuts}
+samplers = {
+    'mclmc' : run_mclmc, 
+    # 'mhmclmc': run_mhmclmc, 
+    'nuts' : run_nuts}
