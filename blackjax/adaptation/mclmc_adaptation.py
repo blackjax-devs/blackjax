@@ -30,10 +30,14 @@ class MCLMCAdaptationState(NamedTuple):
         The momentum decoherent rate for the MCLMC algorithm.
     step_size
         The step size used for the MCLMC algorithm.
+    std_mat
+        A matrix used for preconditioning.
     """
+
 
     L: float
     step_size: float
+    std_mat : float
 
 
 def mclmc_find_L_and_step_size(
@@ -47,6 +51,7 @@ def mclmc_find_L_and_step_size(
     desired_energy_var=5e-4,
     trust_in_estimate=1.5,
     num_effective_samples=150,
+    diagonal_preconditioning=True
 ):
     """
     Finds the optimal value of the parameters for the MCLMC algorithm.
@@ -109,7 +114,7 @@ def mclmc_find_L_and_step_size(
         )
     """
     dim = pytree_size(state.position)
-    params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.25)
+    params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.25, std_mat=jnp.ones((dim,)))
     part1_key, part2_key = jax.random.split(rng_key, 2)
 
     state, params = make_L_step_size_adaptation(
@@ -120,6 +125,7 @@ def mclmc_find_L_and_step_size(
         desired_energy_var=desired_energy_var,
         trust_in_estimate=trust_in_estimate,
         num_effective_samples=num_effective_samples,
+        diagonal_preconditioning=diagonal_preconditioning
     )(state, params, num_steps, part1_key)
 
     if frac_tune3 != 0:
@@ -135,6 +141,7 @@ def make_L_step_size_adaptation(
     dim,
     frac_tune1,
     frac_tune2,
+    diagonal_preconditioning,
     desired_energy_var=1e-3,
     trust_in_estimate=1.5,
     num_effective_samples=150,
@@ -246,7 +253,20 @@ def make_L_step_size_adaptation(
             variances = F2 - jnp.square(F1)
             L = jnp.sqrt(jnp.sum(variances))
 
-        return state, MCLMCAdaptationState(L, params.step_size)
+            # determine sigma 
+            # sigma = sqrt(variances)
+            if diagonal_preconditioning:
+
+                # diagonal preconditioning
+                std_mat = jnp.sqrt(variances)
+                L = jnp.sqrt(dim)
+
+                #readjust the stepsize
+                # steps = num_steps2 // 3 #we do some small number of steps
+                # state = jax.lax.scan(step, init= state, xs= jnp.ones(steps), length= steps)[0]
+                # dyn, _, hyp, adap, kalman_state = state
+
+        return state, MCLMCAdaptationState(L, params.step_size, std_mat)
 
     return L_step_size_adaptation
 

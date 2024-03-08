@@ -144,6 +144,22 @@ def generalized_two_stage_integrator(
     return one_step
 
 
+# E = \frac{1}{2}uM^{-1}u - log(p(x)) -> \frac{dE}{du} = M^{-1}u = \dot x
+
+# x -> M^{\frac{1}{2}}x
+
+# p = M^{-\frac{1}{2}}u
+
+# M^{-\frac{1}{2}}p = u
+
+# x in the original space has Cov = Sigma
+# y = Sigma^{-\frac{1}{2}}x in the transformed space has Cov = I
+# in turn equivalent to original x but new momentum: 
+
+# (y, oldP) -> (x, newP)
+
+## y \mapsto Sigma^{\frac{1}{2}}y,   p \mapsto Sigma^{-\frac{1}{2}}p 
+
 def new_integrator_state(logdensity_fn, position, momentum):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return IntegratorState(position, momentum, logdensity, logdensity_grad)
@@ -292,44 +308,51 @@ def _normalized_flatten_array(x, tol=1e-13):
     norm = jnp.linalg.norm(x)
     return jnp.where(norm > tol, x / norm, x), norm
 
+def esh_dynamics_momentum_update_one_step(std_mat):
+    def update(
+        momentum: ArrayTree,
+        logdensity_grad: ArrayTree,
+        step_size: float,
+        coef: float,
+        previous_kinetic_energy_change=None,
+        is_last_call=False,
+    ):
+        """Momentum update based on Esh dynamics.
 
-def esh_dynamics_momentum_update_one_step(
-    momentum: ArrayTree,
-    logdensity_grad: ArrayTree,
-    step_size: float,
-    coef: float,
-    previous_kinetic_energy_change=None,
-    is_last_call=False,
-):
-    """Momentum update based on Esh dynamics.
+        The momentum updating map of the esh dynamics as derived in :cite:p:`steeg2021hamiltonian`
+        There are no exponentials e^delta, which prevents overflows when the gradient norm
+        is large.
+        """
+        del is_last_call
 
-    The momentum updating map of the esh dynamics as derived in :cite:p:`steeg2021hamiltonian`
-    There are no exponentials e^delta, which prevents overflows when the gradient norm
-    is large.
-    """
-    del is_last_call
-
-    flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
-    flatten_momentum, _ = ravel_pytree(momentum)
-    dims = flatten_momentum.shape[0]
-    normalized_gradient, gradient_norm = _normalized_flatten_array(flatten_grads)
-    momentum_proj = jnp.dot(flatten_momentum, normalized_gradient)
-    delta = step_size * coef * gradient_norm / (dims - 1)
-    zeta = jnp.exp(-delta)
-    new_momentum_raw = (
-        normalized_gradient * (1 - zeta) * (1 + zeta + momentum_proj * (1 - zeta))
-        + 2 * zeta * flatten_momentum
-    )
-    new_momentum_normalized, _ = _normalized_flatten_array(new_momentum_raw)
-    next_momentum = unravel_fn(new_momentum_normalized)
-    kinetic_energy_change = (
-        delta
-        - jnp.log(2)
-        + jnp.log(1 + momentum_proj + (1 - momentum_proj) * zeta**2)
-    ) * (dims - 1)
-    if previous_kinetic_energy_change is not None:
-        kinetic_energy_change += previous_kinetic_energy_change
-    return next_momentum, next_momentum, kinetic_energy_change
+        logdensity_grad = logdensity_grad * std_mat
+        flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
+        flatten_momentum, _ = ravel_pytree(momentum)
+        dims = flatten_momentum.shape[0]
+        normalized_gradient, gradient_norm = _normalized_flatten_array(flatten_grads)
+        momentum_proj = jnp.dot(flatten_momentum, normalized_gradient)
+        delta = step_size * coef * gradient_norm / (dims - 1)
+        zeta = jnp.exp(-delta)
+        new_momentum_raw = (
+            normalized_gradient * (1 - zeta) * (1 + zeta + momentum_proj * (1 - zeta))
+            + 2 * zeta * flatten_momentum
+        )
+        new_momentum_normalized, _ = _normalized_flatten_array(new_momentum_raw)
+        next_momentum = unravel_fn(new_momentum_normalized)
+        kinetic_energy_change = (
+            delta
+            - jnp.log(2)
+            + jnp.log(1 + momentum_proj + (1 - momentum_proj) * zeta**2)
+        ) * (dims - 1)
+        if previous_kinetic_energy_change is not None:
+            kinetic_energy_change += previous_kinetic_energy_change
+        if std_mat is None:
+            gr = next_momentum
+        else:
+            gr = std_mat * next_momentum
+        return next_momentum, gr, kinetic_energy_change
+    
+    return update
 
 
 def format_isokinetic_state_output(
@@ -350,11 +373,11 @@ def format_isokinetic_state_output(
 
 def generate_isokinetic_integrator(cofficients):
     def isokinetic_integrator(
-        logdensity_fn: Callable, *args, **kwargs
+        logdensity_fn: Callable, std_mat : ArrayTree, *args, **kwargs
     ) -> GeneralIntegrator:
         position_update_fn = euclidean_position_update_fn(logdensity_fn)
         one_step = generalized_two_stage_integrator(
-            esh_dynamics_momentum_update_one_step,
+            esh_dynamics_momentum_update_one_step(std_mat),
             position_update_fn,
             cofficients,
             format_output_fn=format_isokinetic_state_output,

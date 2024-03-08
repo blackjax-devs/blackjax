@@ -1,0 +1,114 @@
+import jax
+
+from datetime import date
+
+rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
+
+import blackjax
+import numpy as np
+import jax.numpy as jnp
+
+def run_mclmc(logdensity_fn, num_steps, initial_position, key, transform, std_mat):
+    init_key, tune_key, run_key = jax.random.split(key, 3)
+
+    # create an initial state for the sampler
+    initial_state = blackjax.mcmc.mclmc.init(
+        position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
+    )
+
+
+    # use the quick wrapper to build a new kernel with the tuned parameters
+    sampling_alg = blackjax.mclmc(
+        logdensity_fn,
+        L=4.0,
+        step_size=1.,
+        std_mat=std_mat,
+    )
+
+    # run the sampler
+    _, samples, _ = blackjax.util.run_inference_algorithm(
+        rng_key=run_key,
+        initial_state_or_position=initial_state,
+        inference_algorithm=sampling_alg,
+        num_steps=num_steps,
+        transform=transform,
+        progress_bar=True,
+    )
+
+    return samples
+
+
+def run_mclmc_with_tuning(logdensity_fn, num_steps, initial_position, key, transform):
+    init_key, tune_key, run_key = jax.random.split(key, 3)
+
+    # create an initial state for the sampler
+    initial_state = blackjax.mcmc.mclmc.init(
+        position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
+    )
+
+    kernel = blackjax.mcmc.mclmc.build_kernel(
+        logdensity_fn=logdensity_fn,
+        integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
+        std_mat=jnp.ones((initial_position.shape[0],)),
+    )
+
+    # find values for L and step_size
+    (
+        blackjax_state_after_tuning,
+        blackjax_mclmc_sampler_params,
+    ) = blackjax.mclmc_find_L_and_step_size(
+        mclmc_kernel=kernel,
+        num_steps=num_steps,
+        state=initial_state,
+        rng_key=tune_key,
+    )
+
+    print(blackjax_mclmc_sampler_params)
+
+
+
+    # use the quick wrapper to build a new kernel with the tuned parameters
+    sampling_alg = blackjax.mclmc(
+        logdensity_fn,
+        L=4.0,
+        step_size=1.,
+        std_mat=std_mat,
+    )
+
+    # run the sampler
+    _, samples, _ = blackjax.util.run_inference_algorithm(
+        rng_key=run_key,
+        initial_state_or_position=initial_state,
+        inference_algorithm=sampling_alg,
+        num_steps=num_steps,
+        transform=transform,
+        progress_bar=True,
+    )
+
+    return samples
+# run the algorithm on a high dimensional gaussian, and show two of the dimensions
+
+# sigma = .5
+
+sample_key, rng_key = jax.random.split(rng_key)
+# samples = run_mclmc(
+#     logdensity_fn=lambda x: -0.5 * jnp.sum(jnp.square(x)),
+#     num_steps=100000,
+#     initial_position=jnp.ones((2,)),
+#     key=sample_key,
+#     std_mat=jnp.ones((2,))*sigma,
+#     # std_mat=None,
+#     transform=lambda x: x.position, # x.position[:2],
+# )
+# print(samples.var(axis=0))
+
+# den = lambda x: jax.scipy.stats.norm.logpdf(x, loc=0., scale=jnp.sqrt(sigma)).sum()
+
+samples = run_mclmc_with_tuning(
+    logdensity_fn=lambda x: -0.5 * jnp.sum(jnp.square(x)),
+    num_steps=10000,
+    initial_position=jnp.ones((2,)),
+    key=sample_key,
+    transform=lambda x: x.position[:2],
+)
+print(samples.var())

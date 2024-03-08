@@ -59,7 +59,7 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
     )
 
 
-def build_kernel(logdensity_fn, integrator):
+def build_kernel(logdensity_fn, std_mat, integrator):
     """Build a HMC kernel.
 
     Parameters
@@ -78,7 +78,7 @@ def build_kernel(logdensity_fn, integrator):
     information about the transition.
 
     """
-    step = integrator(logdensity_fn)
+    step = integrator(logdensity_fn, std_mat)
 
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
@@ -158,9 +158,10 @@ class mclmc:
         logdensity_fn: Callable,
         L,
         step_size,
+        std_mat=None,
         integrator=isokinetic_mclachlan,
     ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel(logdensity_fn, integrator)
+        kernel = cls.build_kernel(logdensity_fn, std_mat, integrator)
 
         def init_fn(position: ArrayLike, rng_key: PRNGKey):
             return cls.init(position, logdensity_fn, rng_key)
