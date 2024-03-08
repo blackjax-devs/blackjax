@@ -124,9 +124,10 @@ def grid_search(n, model):
     
     print("\nBeginning grid search:\n")
 
+    grid_size = 5
 
     for i in range(1):
-        for step_size, L in itertools.product(np.logspace(np.log10(center_step_size/2), np.log10(center_step_size*2), 19), np.logspace(np.log10(center_L/2), np.log10(center_L*2),19)):
+        for step_size, L in itertools.product(np.logspace(np.log10(center_step_size/2), np.log10(center_step_size*2), grid_size), np.logspace(np.log10(center_L/2), np.log10(center_L*2),grid_size)):
         
         # result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(step_size, L), n=n00, batch=1)
         # result, bias = benchmark_chains(models[model], samplers['mclmc'], n=n00, batch=10, favg=models[model].E_x2, fvar=models[model].Var_x2)
@@ -136,7 +137,7 @@ def grid_search(n, model):
         # result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(jnp.sqrt(models[model].ndims)/4, jnp.sqrt(models[model].ndims), frac_tune2=0.1, frac_tune3=0.1), n=n, batch=10,favg=models[model].E_x2, fvar=models[model].Var_x2)
         # result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(step_size=3.4392192, L=2.7043579, frac_tune2=0.1, frac_tune3=0.1), n=n, batch=10,favg=models[model].E_x2, fvar=models[model].Var_x2)
             
-            result, bias, _, _ = benchmark_chains(models[model], sampler_mhmclmc(step_size=step_size, L=L), n=n, batch=1000//models[model].ndims,favg=models[model].E_x2, fvar=models[model].Var_x2)
+            result, bias, _, = benchmark_chains(models[model], sampler_mhmclmc(step_size=step_size, L=L), n=n, batch=10//models[model].ndims,favg=models[model].E_x2, fvar=models[model].Var_x2)
             # result, bias = benchmark_chains(models[model], samplers[sampler], n=10000, batch=200, favg=models[model].E_x2, fvar=models[model].Var_x2)
             results[(step_size, L)] = result.item()
         
@@ -200,13 +201,13 @@ def make_grid(center_L, center_step_size):
 if __name__ == "__main__":
 
     # grid_search(n=2500, model='banana')
-    # grid_search(n=2500, model='icg')
+    grid_search(n=25, model='icg')
     # grid_search(n=2500, model='normal')
 
-    m = models['icg']
-    initial_position = m.sample(jax.random.PRNGKey(0))
-    _, blackjax_mclmc_sampler_params, _ = sampler_mhmclmc_with_tuning(L=4.291135699906666, step_size=1.005, frac_tune2=0, frac_tune3=0)(lambda x: -m.nlogp(x), 100000, initial_position, jax.random.PRNGKey(0))
-    print(blackjax_mclmc_sampler_params)
+    # m = models['icg']
+    # initial_position = m.sample(jax.random.PRNGKey(0))
+    # _, blackjax_mclmc_sampler_params, _ = sampler_mhmclmc_with_tuning(L=4.291135699906666, step_size=1.005, frac_tune2=0, frac_tune3=0)(lambda x: -m.nlogp(x), 100000, initial_position, jax.random.PRNGKey(0))
+    # print(blackjax_mclmc_sampler_params)
 
 # if __name__ == "__main__":
 
