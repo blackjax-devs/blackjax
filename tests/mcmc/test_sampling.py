@@ -13,7 +13,7 @@ from absl.testing import absltest, parameterized
 import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
-from blackjax.util import run_inference_algorithm
+from blackjax.util import pytree_size, run_inference_algorithm
 
 
 def orbit_samples(orbits, weights, rng_key):
@@ -84,6 +84,7 @@ class LinearRegressionTest(chex.TestCase):
         kernel = blackjax.mcmc.mclmc.build_kernel(
             logdensity_fn=logdensity_fn,
             integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
+            std_mat=jnp.ones((pytree_size(initial_position),)),
         )
 
         (
@@ -100,6 +101,7 @@ class LinearRegressionTest(chex.TestCase):
             logdensity_fn,
             L=blackjax_mclmc_sampler_params.L,
             step_size=blackjax_mclmc_sampler_params.step_size,
+            std_mat=blackjax_mclmc_sampler_params.std_mat,
         )
 
         _, samples, _ = run_inference_algorithm(

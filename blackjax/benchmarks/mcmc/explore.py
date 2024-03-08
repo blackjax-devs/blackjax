@@ -1,14 +1,19 @@
 import jax
 
 from datetime import date
+from blackjax.benchmarks.mcmc.benchmark import benchmark_chains
+
+from blackjax.benchmarks.mcmc.inference_models import IllConditionedGaussian
 
 rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
 
 import blackjax
 import numpy as np
 import jax.numpy as jnp
+from sampling_algorithms import samplers
+from inference_models import StandardNormal, models
 
-def run_mclmc(logdensity_fn, num_steps, initial_position, key, transform, std_mat):
+def run_mclmc(logdensity_fn, num_steps, initial_position, key, transform, std_mat, L, step_size):
     init_key, tune_key, run_key = jax.random.split(key, 3)
 
     # create an initial state for the sampler
@@ -20,8 +25,8 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, key, transform, std_ma
     # use the quick wrapper to build a new kernel with the tuned parameters
     sampling_alg = blackjax.mclmc(
         logdensity_fn,
-        L=4.0,
-        step_size=1.,
+        L=L,
+        step_size=step_size,
         std_mat=std_mat,
     )
 
@@ -35,7 +40,7 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, key, transform, std_ma
         progress_bar=True,
     )
 
-    return samples
+    return samples, None, 1
 
 
 def run_mclmc_with_tuning(logdensity_fn, num_steps, initial_position, key, transform):
@@ -70,9 +75,9 @@ def run_mclmc_with_tuning(logdensity_fn, num_steps, initial_position, key, trans
     # use the quick wrapper to build a new kernel with the tuned parameters
     sampling_alg = blackjax.mclmc(
         logdensity_fn,
-        L=4.0,
-        step_size=1.,
-        std_mat=std_mat,
+        L=blackjax_mclmc_sampler_params.L,
+        step_size=blackjax_mclmc_sampler_params.step_size,
+        std_mat=blackjax_mclmc_sampler_params.std_mat,
     )
 
     # run the sampler
@@ -103,12 +108,25 @@ sample_key, rng_key = jax.random.split(rng_key)
 # print(samples.var(axis=0))
 
 # den = lambda x: jax.scipy.stats.norm.logpdf(x, loc=0., scale=jnp.sqrt(sigma)).sum()
+# print(IllConditionedGaussian(2, 2).E_x2)
+# samples = run_mclmc_with_tuning(
+#     logdensity_fn=lambda x : - IllConditionedGaussian(2, 2).nlogp(x),
+#     num_steps=1000000,
+#     initial_position=jnp.ones((2,)),
+#     key=sample_key,
+#     transform=lambda x: x.position[:2],
+# )
+# print(samples.var(axis=0))
+m = IllConditionedGaussian(2, 5)
+# m = StandardNormal(10)
+# sampler = lambda logdensity_fn, num_steps, initial_position, key: run_mclmc(logdensity_fn=logdensity_fn, num_steps=num_steps, initial_position=initial_position, key=key, transform=lambda x:x.position, 
+#      std_mat=jnp.ones((2,))
+#     #  std_mat=m.E_x2
+#      , L=1.7296296, step_size=0.814842)
+print(m.E_x2)
 
-samples = run_mclmc_with_tuning(
-    logdensity_fn=lambda x: -0.5 * jnp.sum(jnp.square(x)),
-    num_steps=10000,
-    initial_position=jnp.ones((2,)),
-    key=sample_key,
-    transform=lambda x: x.position[:2],
-)
-print(samples.var())
+sampler = 'mclmc'
+
+result, bias, _ = benchmark_chains(m, samplers[sampler], n=5000, batch=1000//m.ndims,favg=m.E_x2, fvar=m.Var_x2)
+
+print(result)
