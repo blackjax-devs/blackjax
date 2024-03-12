@@ -182,7 +182,7 @@ def run_inference_algorithm(
     init_key, sample_key = split(rng_key, 2)
     try:
         initial_state = inference_algorithm.init(initial_state_or_position, init_key)
-    except (TypeError, ValueError, AttributeError):
+    except (TypeError, ValueError, AttributeError, IndexError):
         # We assume initial_state is already in the right format.
         initial_state = initial_state_or_position
 

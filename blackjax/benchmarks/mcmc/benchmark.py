@@ -1,22 +1,22 @@
-from collections import defaultdict
-from inference_gym import using_jax as gym
+import os
 import jax
 import jax.numpy as jnp
-import numpy as np
-from blackjax.mcmc.mhmclmc import rescale
-from sampling_algorithms import samplers
-from inference_models import models
-import blackjax
-from blackjax.util import run_inference_algorithm
-# from jax import config
-# config.update("jax_debug_nans", True)
 
-import matplotlib.pyplot as plt
+os.environ["XLA_FLAGS"] = '--xla_force_host_platform_device_count=' + str(128)
+num_cores = jax.local_device_count()
+print(num_cores, jax.lib.xla_bridge.get_backend().platform)
+
+import itertools
+
+from blackjax.benchmarks.mcmc.sampling_algorithms import samplers
+from blackjax.benchmarks.mcmc.inference_models import models
+
 
 
 def get_num_latents(target):
   return target.ndims
 #   return int(sum(map(np.prod, list(jax.tree_flatten(target.event_shape)[0]))))
+
 
 def err(f_true, var_f, contract = jnp.max):
     """Computes the error b^2 = (f - f_true)^2 / var_f
@@ -30,37 +30,23 @@ def err(f_true, var_f, contract = jnp.max):
             contract(b^2)
     """    
     
-    def _err(f):
-        bsq = jnp.square(f - f_true) / var_f
-        # jax.debug.print("bsq {x}", x=(f - f_true, f_true, f))
-        # print(bsq.shape, "shape ASDFADSF \n\n")
-        return contract(bsq)
-    
-    return jax.vmap(_err)
+    return jax.vmap(lambda f: contract(jnp.square(f - f_true) / var_f))
 
 
 
-def grads_to_low_error(err_t, low_error= 0.01, grad_evals_per_step= 1):
+def grads_to_low_error(err_t, grad_evals_per_step= 1, low_error= 0.01):
     """Uses the error of the expectation values to compute the effective sample size neff
         b^2 = 1/neff"""
     
     cutoff_reached = err_t[-1] < low_error
     return find_crossing(err_t, low_error) * grad_evals_per_step, cutoff_reached
     
-    
-    
+        
 def ess(err_t, grad_evals_per_step, neff= 100):
     
-    low_error = 1./neff
-    cutoff_reached = err_t[-1] < low_error
-    crossing = find_crossing(err_t, low_error)
-    # print(len(err_t), "len err t")
-
-    # print("crossing", crossing, (crossing * grad_evals_per_step), neff / (crossing * grad_evals_per_step))
-    # print((err_t)[-100:], "le")
+    grads_to_low, cutoff_reached = grads_to_low_error(err_t, grad_evals_per_step, 1./neff)
     
-    return (neff / (crossing * grad_evals_per_step)) * cutoff_reached
-
+    return (neff / grads_to_low) * cutoff_reached
 
 
 def find_crossing(array, cutoff):
@@ -71,133 +57,54 @@ def find_crossing(array, cutoff):
     if indices.shape[0] == 0:
         print("\n\n\nNO CROSSING FOUND!!!\n\n\n", array, cutoff)
         return 1
-    # print(jnp.argwhere(array))
+
     return jnp.max(indices)+1
+
 
 def cumulative_avg(samples):
     return jnp.cumsum(samples, axis = 0) / jnp.arange(1, samples.shape[0] + 1)[:, None]
 
 
 
-# def benchmark(model, sampler):
+def benchmark_chains(model, sampler, n=10000, batch=None, contract = jnp.average):
 
-#     # print(find_crossing(jnp.array([0.4, 0.2, 0.3, 0.4, 0.5, 0.2, 0.2]), 0.3))
-#     # print(cumulative_avg(jnp.array([[1., 2.], [1.,2.]]).T))
-#     # raise Exception
-
-#     n = 10000
-
-#     identity_fn = model.sample_transformations['identity']
-#     # print('True mean', identity_fn.ground_truth_mean)
-#     # print('True std', identity_fn.ground_truth_standard_deviation)
-#     # print("Empirical mean", samples.mean(axis=0))
-#     # print("Empirical std", samples.std(axis=0))
-
-#     logdensity_fn = model.unnormalized_log_prob
-#     d = get_num_latents(model)
-#     initial_position = jax.random.normal(jax.random.PRNGKey(0), (d,))
-#     samples, num_steps_per_traj = sampler(logdensity_fn, n, initial_position, jax.random.PRNGKey(0))
-#     # print(samples[-1], samples[0], "samps", samples.shape)
-
-#     favg, fvar = identity_fn.ground_truth_mean, identity_fn.ground_truth_standard_deviation**2
-#     err_t = err(favg, fvar, jnp.average)(cumulative_avg(samples))
-#     # print(err_t[-1], "benchmark err_t[0]")
-#     ess_per_sample = ess(err_t, grad_evals_per_step=2)
     
-#     return ess_per_sample
-
-def benchmark_chains(model, sampler, favg, fvar, n=10000, batch=None):
-
-
-    # print(model)
-    # print(model.sample_transformations.keys())
-    # raise Exception
-    # identity_fn = model.sample_transformations['identity']
-    logdensity_fn = model.unnormalized_log_prob
     d = get_num_latents(model)
-    if batch is None:
-        batch = np.ceil(1000 / d).astype(int)
+    # if batch is None:
+    #     batch = np.ceil(1000 / d).astype(int)
     key, init_key = jax.random.split(jax.random.PRNGKey(44), 2)
     keys = jax.random.split(key, batch)
-    # keys = jnp.array([jax.random.PRNGKey(0)])
-    init_pos = jax.random.normal(key=init_key, shape=(batch, d))
 
-    samples, params, avg_num_steps_per_traj = jax.vmap(lambda pos, key: sampler(logdensity_fn, n, pos, key))(init_pos, keys)
+    init_keys = jax.random.split(init_key, batch)
+    init_pos = jax.vmap(model.sample_init)(init_keys)
+
+    samples, params, avg_num_steps_per_traj = jax.pmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
     avg_num_steps_per_traj = jnp.mean(avg_num_steps_per_traj, axis=0)
-    # print(samples, samples.shape)
-    # print("\n\n\n\nAVG NUM STEPS PER TRAJ", avg_num_steps_per_traj)
-    # print(samples[0][-1], samples[0][0], "samps chain", samples.shape)
-              
-        # identity_fn.ground_truth_mean, identity_fn.ground_truth_standard_deviation**2
-    full = lambda arr : err(favg, fvar, jnp.average)(cumulative_avg(arr))
-    err_t = jnp.mean(jax.vmap(full)(samples**2), axis=0)
-    # err_t = jax.vmap(full)(samples)[1]
-    # print(err_t[-1], "benchmark chains err_t[0]")
-    # print(avg_num_steps_per_traj, "AVG\n\n")
-    # raise Exception
-    ess_per_sample = ess(err_t, grad_evals_per_step=2 * avg_num_steps_per_traj)
-
-    # print('True mean', identity_fn.ground_truth_mean)
-    # print('True std', identity_fn.ground_truth_standard_deviation)
-    # print("Empirical mean", samples.mean(axis=[0,1]))
-    # print("Empirical std", samples.std(axis=[0,1]))
-
-    # print(params.L.mean(), params.step_size.mean(), "params")
     
-    # print('True E[x^2]', identity_fn.ground_truth_mean)
-    # print('True std[x^2]', identity_fn.ground_truth_standard_deviation)
+    full = lambda arr : err(model.E_x2, model.Var_x2, contract)(cumulative_avg(arr))
+    err_t = jnp.mean(jax.vmap(full)(samples**2), axis=0)
+    
+    return grads_to_low_error(err_t, avg_num_steps_per_traj)[0]
 
-    return ess_per_sample, err_t[-1]
+    ess_per_sample = ess(err_t, grad_evals_per_step= avg_num_steps_per_traj)
+
+    return ess_per_sample, err_t[-1], params
+
+
+def run_benchmarks():
+
+    for model, sampler in itertools.product(models, samplers):
+
+        print(f"\nModel: {model}, Sampler: {sampler}\n")
+
+        Model = models[model][0]
+        result = benchmark_chains(Model, samplers[sampler], n= models[model][1][sampler], batch= 128)
+        #print(f"ESS: {result.item()}")
+        print(f"grads to low bias: " + str(result))
 
 
 if __name__ == "__main__":
 
-    # Define the models and samplers
-    # models = {'icg' : gym.targets.IllConditionedGaussian(), 'banana' : gym.targets.Banana()}
+    run_benchmarks()
 
-    # Create an empty list to store the results
-    results = defaultdict(float)
-
-    # Run the benchmark for each model and sampler
-    for model in ["normal"]:
-        # for sampler in samplers:
-        print("MODEL", model, "DIM", get_num_latents(models[model]))
-        for sampler in ["nuts"]:
-            # result = benchmark(models[model], samplers[sampler])
-            
-            result = benchmark_chains(models[model], samplers[sampler], batch=100, n=10000, favg=models[model].E_x2, fvar=models[model].Var_x2)
-            # print(result, result2, "results")
-            results[(model, sampler)] = result
-
-    print(results)
-
-    raise Exception
-
-    # Extract the models and samplers from the results dictionary
-    models = [model for model, _ in results.keys()]
-    samplers = [sampler for _, sampler in results.keys()]
-
-    # Extract the corresponding results
-    results_values = list(results.values())
-
-    # Create a figure with two subplots
-    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
-
-    # Plot the results in the first subplot
-    axs[0].bar(range(len(results)), results_values)
-    axs[0].set_xticks(range(len(results)))
-    axs[0].set_xticklabels(['{} - {}'.format(model, sampler) for model, sampler in zip(models, samplers)], rotation=90)
-    axs[0].set_title('Benchmark Results')
-
-    # Plot the results in the second subplot
-    axs[1].bar(range(len(results)), results_values, color='orange')
-    axs[1].set_xticks(range(len(results)))
-    axs[1].set_xticklabels(['{} - {}'.format(model, sampler) for model, sampler in zip(models, samplers)], rotation=90)
-    axs[1].set_title('Benchmark Results')
-
-    # Adjust the layout of the subplots
-    plt.tight_layout()
-
-    # Show the plot
-    plt.show()
 
