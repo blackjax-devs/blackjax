@@ -116,30 +116,30 @@ sample_key, rng_key = jax.random.split(rng_key)
 #     key=sample_key,
 #     transform=lambda x: x.position[:2],
 # )
-# print(samples.var(axis=0))
-m = IllConditionedGaussian(10, 5)
-sampler = lambda logdensity_fn, num_steps, initial_position, key: run_mclmc(logdensity_fn=logdensity_fn, num_steps=num_steps, initial_position=initial_position, key=key, transform=lambda x:x.position, 
-    #  std_mat=jnp.ones((10,))
-     std_mat=jnp.sqrt(m.E_x2)
-     , L=2.6576319, step_size=3.40299)
-print(m.E_x2, "var")
-
-# sampler = 'mclmc'
-# samplers[sampler]
-result, bias, _ = benchmark_chains(m, sampler, n=5000, batch=1000//m.ndims,favg=m.E_x2, fvar=m.Var_x2)
-
-print(result)
-
-
-m = StandardNormal(10)
-sampler = lambda logdensity_fn, num_steps, initial_position, key: run_mclmc(logdensity_fn=logdensity_fn, num_steps=num_steps, initial_position=initial_position, key=key, transform=lambda x:x.position, 
-     std_mat=jnp.ones((10,))
-     , L=2.6576319, step_size=3.40299)
+# # print(samples.var(axis=0))
+# m = IllConditionedGaussian(10, 5)
+# sampler = lambda logdensity_fn, num_steps, initial_position, key: run_mclmc(logdensity_fn=logdensity_fn, num_steps=num_steps, initial_position=initial_position, key=key, transform=lambda x:x.position, 
+#     #  std_mat=jnp.ones((10,))
+#      std_mat=jnp.sqrt(m.E_x2)
+#      , L=2.6576319, step_size=3.40299)
 # print(m.E_x2, "var")
 
-# sampler = 'mclmc'
-# samplers[sampler]
-result, bias, _ = benchmark_chains(m, sampler, n=5000, batch=1000//m.ndims,favg=m.E_x2, fvar=m.Var_x2)
+# # sampler = 'mclmc'
+# # samplers[sampler]
+# result, bias, _ = benchmark_chains(m, sampler, n=5000, batch=1000//m.ndims,favg=m.E_x2, fvar=m.Var_x2)
 
-print(result)
+# print(result)
+
+
+# m = StandardNormal(10)
+# sampler = lambda logdensity_fn, num_steps, initial_position, key: run_mclmc(logdensity_fn=logdensity_fn, num_steps=num_steps, initial_position=initial_position, key=key, transform=lambda x:x.position, 
+#      std_mat=jnp.ones((10,))
+#      , L=2.6576319, step_size=3.40299)
+# # print(m.E_x2, "var")
+
+# # sampler = 'mclmc'
+# # samplers[sampler]
+# result, bias, _ = benchmark_chains(m, sampler, n=5000, batch=1000//m.ndims,favg=m.E_x2, fvar=m.Var_x2)
+
+# print(result)
 

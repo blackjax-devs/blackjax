@@ -44,10 +44,11 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, key):
         position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
     )
 
-    kernel = blackjax.mcmc.mclmc.build_kernel(
+    kernel = lambda std_mat : blackjax.mcmc.mclmc.build_kernel(
         logdensity_fn=logdensity_fn,
         integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
-        std_mat=jnp.ones((initial_position.shape[0],)),
+        # std_mat=jnp.ones((initial_position.shape[0],)),
+        std_mat=std_mat,
     )
 
     (
