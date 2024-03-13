@@ -238,6 +238,7 @@ def make_L_step_size_adaptation(
 
                 # diagonal preconditioning
                 std_mat = jnp.sqrt(variances)
+                params = params._replace(std_mat=std_mat)
                 L = jnp.sqrt(dim)
 
                 #readjust the stepsize
