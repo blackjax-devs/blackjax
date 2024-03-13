@@ -35,6 +35,7 @@ __all__ = [
     "isokinetic_leapfrog",
     "isokinetic_mclachlan",
     "isokinetic_yoshida",
+    "calls_per_integrator_step"
 ]
 
 
@@ -397,6 +398,8 @@ isokinetic_leapfrog = generate_isokinetic_integrator(velocity_verlet_coefficient
 isokinetic_yoshida = generate_isokinetic_integrator(yoshida_coefficients)
 isokinetic_mclachlan = generate_isokinetic_integrator(mclachlan_coefficients)
 
+
+calls_per_integrator_step = {isokinetic_leapfrog: 1, isokinetic_mclachlan: 2, isokinetic_yoshida: 3, velocity_verlet: 1, mclachlan: 2, yoshida: 3}
 
 def partially_refresh_momentum(momentum, rng_key, step_size, L):
     """Adds a small noise to momentum and normalizes.

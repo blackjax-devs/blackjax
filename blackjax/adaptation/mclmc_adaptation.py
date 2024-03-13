@@ -356,7 +356,7 @@ def mhmclmc_find_L_and_step_size(
 
     dim = pytree_size(state.position)
     if params is None:
-        params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.1)
+        params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.1, std_mat=jnp.ones((dim,)))
     else:
         params = params
     # jax.debug.print("initial params {x}", x=params)
@@ -451,7 +451,7 @@ def mhmclmc_make_L_step_size_adaptation(
 
             # jax.debug.print("{x} step_size before",x=(adaptive_state.log_step_size, info.acceptance_rate,))
             # adaptive_state = update(adaptive_state, info.acceptance_rate)
-            jax.debug.print("{x} step_size after",x=(adaptive_state.log_step_size,))
+            # jax.debug.print("{x} step_size after",x=(adaptive_state.log_step_size,))
             
 
             # step_size = jax.lax.clamp(1e-3, jnp.exp(adaptive_state.log_step_size), 1e0)
@@ -479,7 +479,7 @@ def mhmclmc_make_L_step_size_adaptation(
             #         L = params.L * (step_size / params.step_size)
             #         )
             
-            if True:
+            if fix_L:
                 params = params._replace(
                         step_size=mask * step_size + (1-mask)*params.step_size, 
 

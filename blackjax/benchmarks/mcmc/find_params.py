@@ -4,14 +4,14 @@ import operator
 import jax
 import numpy as np
 
-from benchmark import benchmark_chains, cumulative_avg, err, ess, get_num_latents
+from benchmark import benchmark_chains, cumulative_avg, err, ess, get_num_latents, grads_to_low_error
 import blackjax
 from blackjax.adaptation.mclmc_adaptation import MCLMCAdaptationState
 from blackjax.mcmc.mhmclmc import rescale
 from blackjax.util import run_inference_algorithm
 import jax.numpy as jnp 
 from sampling_algorithms import samplers
-from inference_models import models
+from inference_models import IllConditionedGaussian, models
 
 def sampler_mhmclmc_with_tuning(step_size, L, frac_tune2, frac_tune3):
 
@@ -80,7 +80,7 @@ def sampler_mhmclmc_with_tuning(step_size, L, frac_tune2, frac_tune3):
 
 def sampler_mhmclmc(step_size, L):
 
-    def s(logdensity_fn, num_steps, initial_position, key):
+    def s(logdensity_fn, num_steps, initial_position, transform, key):
 
         num_steps_per_traj = L/step_size
         alg = blackjax.mcmc.mhmclmc.mhmclmc(
@@ -95,13 +95,13 @@ def sampler_mhmclmc(step_size, L):
         initial_state_or_position=initial_position,
         inference_algorithm=alg,
         num_steps=num_steps, 
-        transform=lambda x: x.position, 
+        transform=lambda x: transform(x.position), 
         progress_bar=False)
 
         # print(info.acceptance_rate.mean(), "acceptance probability\n\n\n\n")
         # print(out.var(axis=0), "acceptance probability")
 
-        return out, MCLMCAdaptationState(L=L, step_size=step_size), num_steps_per_traj
+        return out, MCLMCAdaptationState(L=L, step_size=step_size, std_mat=1.), num_steps_per_traj
 
     return s
 
@@ -114,13 +114,24 @@ def grid_search(n, model):
     print(f"\nModel: {model}")
 
     results = defaultdict(float)
+
+    batch = 1
+    init_key, sample_key = jax.random.split(jax.random.PRNGKey(0), 2)
+    init_keys = jax.random.split(init_key, batch)
+    init_pos = jax.vmap(model.sample_init)(init_keys)
+    sample_keys = jax.random.split(sample_key, batch)
             
-    result, _, params = benchmark_chains(models[model], samplers["mclmc"], n=n*100, batch=10, favg=models[model].E_x2, fvar=models[model].Var_x2)
+    samples, params, _ = jax.vmap(lambda pos, key: samplers["mclmc"](model.logdensity_fn, n*100, pos, model.transform, key))(init_pos, sample_keys)
+    full = lambda arr : err(model.E_x2, model.Var_x2, jnp.average)(cumulative_avg(arr))
+    err_t = jnp.mean(jax.vmap(full)(samples**2), axis=0)
+    
+    avg_num_steps_per_traj = 2
+    ess = grads_to_low_error(err_t, avg_num_steps_per_traj)[0]
     center_L, center_step_size = params.L.mean(), params.step_size.mean()
 
     # nuts result
 
-    print(f"initial params found by MCLMC {center_step_size, center_L} (with ESS {result.item()})")
+    print(f"initial params found by MCLMC {center_step_size, center_L} (with grad calls {ess.item()})")
     
     print("\nBeginning grid search:\n")
 
@@ -129,35 +140,23 @@ def grid_search(n, model):
     for i in range(1):
         for step_size, L in itertools.product(np.logspace(np.log10(center_step_size/2), np.log10(center_step_size*2), grid_size), np.logspace(np.log10(center_L/2), np.log10(center_L*2),grid_size)):
         
-        # result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(step_size, L), n=n00, batch=1)
-        # result, bias = benchmark_chains(models[model], samplers['mclmc'], n=n00, batch=10, favg=models[model].E_x2, fvar=models[model].Var_x2)
-        # results[(model, "mclmc")] = result.item()
-
-
-        # result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(jnp.sqrt(models[model].ndims)/4, jnp.sqrt(models[model].ndims), frac_tune2=0.1, frac_tune3=0.1), n=n, batch=10,favg=models[model].E_x2, fvar=models[model].Var_x2)
-        # result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(step_size=3.4392192, L=2.7043579, frac_tune2=0.1, frac_tune3=0.1), n=n, batch=10,favg=models[model].E_x2, fvar=models[model].Var_x2)
             
-            result, bias, _, _ = benchmark_chains(models[model], sampler_mhmclmc(step_size=step_size, L=L), n=n, batch=1000//models[model].ndims,favg=models[model].E_x2, fvar=models[model].Var_x2)
-            # result, bias = benchmark_chains(models[model], samplers[sampler], n=10000, batch=200, favg=models[model].E_x2, fvar=models[model].Var_x2)
+            result = benchmark_chains(model, sampler_mhmclmc(step_size=step_size, L=L), n=n, batch =batch) # batch=1000//model.ndims)
             results[(step_size, L)] = result.item()
         
         val, (step_size, L) = max([(results[r], r) for r in results], key=operator.itemgetter(0))
 
         center_L, center_step_size = L, step_size
 
-        print(f"best params on iteration {i} are {step_size, L} with ESS {val}")
+        print(f"best params on iteration {i} are {step_size, L} with Grad Calls until Convergence {val}")
         print(f"L from ESS (0.4 * step_size/ESS): {0.4 * step_size/val}")
 
 
     tune_key, init_key, sample_key = jax.random.split(jax.random.PRNGKey(0), 3)
-    initial_position = models[model].sample(sample_key)
-    # print(initial_position, "initial position")
-    # raise Exception
-
-    logdensity_fn = lambda x : -models[model].nlogp(x)
+    initial_position = model.sample_init(sample_key)
 
     initial_state = blackjax.mcmc.mhmclmc.init(
-    position=initial_position, logdensity_fn=logdensity_fn, random_generator_arg=init_key
+    position=initial_position, logdensity_fn=model.logdensity_fn, random_generator_arg=init_key
     )
 
     kernel = lambda rng_key, state, avg_num_integration_steps, step_size: blackjax.mcmc.mhmclmc.build_kernel(
@@ -167,7 +166,7 @@ def grid_search(n, model):
                 rng_key=rng_key, 
                 state=state, 
                 step_size=step_size, 
-                logdensity_fn=logdensity_fn)
+                logdensity_fn=model.logdensity_fn)
 
     (
         blackjax_state_after_tuning,
@@ -177,33 +176,17 @@ def grid_search(n, model):
         num_steps=n*50,
         state=initial_state,
         rng_key=tune_key,
-        # frac_tune2=0,
-        # frac_tune3=0,
-        # params=MCLMCAdaptationState(L=16.765137, step_size=1.005)
     )
     print(f"params found by mhmclmc tuning are L {blackjax_mclmc_sampler_params.L} and step_size {blackjax_mclmc_sampler_params.step_size}")
 
-
-        # for step_size, L in make_grid(center_L=21.48713, center_step_size= 2.2340074):
-        #     result, bias = benchmark_chains(models[model], sampler_mhmclmc(step_size=step_size, L=L), n=10000, batch=100,favg=models[model].E_x2, fvar=models[model].Var_x2)
-        #     # result, bias = benchmark_chains(models[model], samplers["mhmclmc"], n=1000000, batch=10)
-            # results[(model, "mhmclmc")] = result.item()
-
-    # for step in grid:
-
-
-
     return results
-
-def make_grid(center_L, center_step_size):
-    return itertools.product(np.linspace(center_step_size-1, center_step_size+1, 10), np.linspace(center_L-1, center_L+1, 10))
 
 
 if __name__ == "__main__":
 
 #     benchmarks(5000)
 
-    grid_search(n=25, model='banana')
+    grid_search(n=25, model=IllConditionedGaussian(10, 2))
     # grid_search(n=2500, model='icg')
     # grid_search(n=2500, model='normal')
 
@@ -219,7 +202,7 @@ if __name__ == "__main__":
 
 # for model in ["simple"]:
 #     for sampler in ["mhmclmc", "mclmc"]:
-#         # result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(step_size, L), n=1000000, batch=1)
+#         # result, bias = benchmark_chains(model, sampler_mhmclmc_with_tuning(step_size, L), n=1000000, batch=1)
 #         # result, bias = benchmark_chains(models[model], samplers["mhmclmc"], n=1000000, batch=10)
 #         result, bias = benchmark_chains(models[model], samplers[sampler], n=100000, batch=1)
         
