@@ -8,6 +8,8 @@ import jax.numpy as jnp
 
 import itertools
 
+import numpy as np
+
 from blackjax.benchmarks.mcmc.sampling_algorithms import samplers
 from blackjax.benchmarks.mcmc.inference_models import models
 
@@ -46,7 +48,7 @@ def ess(err_t, grad_evals_per_step, neff= 100):
     
     grads_to_low, cutoff_reached = grads_to_low_error(err_t, grad_evals_per_step, 1./neff)
     
-    return (neff / grads_to_low) * cutoff_reached
+    return (neff / grads_to_low) * cutoff_reached, grads_to_low*(1/cutoff_reached)
 
 
 def find_crossing(array, cutoff):
@@ -70,8 +72,8 @@ def benchmark_chains(model, sampler, n=10000, batch=None, contract = jnp.average
 
     
     d = get_num_latents(model)
-    # if batch is None:
-    #     batch = np.ceil(1000 / d).astype(int)
+    if batch is None:
+        batch = np.ceil(1000 / d).astype(int)
     key, init_key = jax.random.split(jax.random.PRNGKey(44), 2)
     keys = jax.random.split(key, batch)
 
@@ -79,17 +81,18 @@ def benchmark_chains(model, sampler, n=10000, batch=None, contract = jnp.average
     init_pos = jax.vmap(model.sample_init)(init_keys)
 
     # samples, params, avg_num_steps_per_traj = jax.pmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
-    samples, params, avg_num_steps_per_traj = jax.vmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
-    avg_num_steps_per_traj = jnp.mean(avg_num_steps_per_traj, axis=0)
+    samples, params, grad_calls_per_traj = jax.vmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
+    avg_grad_calls_per_traj = jnp.mean(grad_calls_per_traj, axis=0)
     
     full = lambda arr : err(model.E_x2, model.Var_x2, contract)(cumulative_avg(arr))
     err_t = jnp.mean(jax.vmap(full)(samples**2), axis=0)
     
-    return grads_to_low_error(err_t, avg_num_steps_per_traj)[0]
+    # return grads_to_low_error(err_t, avg_grad_calls_per_traj)[0]
+    ess_per_sample = ess(err_t, grad_evals_per_step=avg_grad_calls_per_traj)
+    return ess_per_sample
+    # , err_t[-1], params
 
-    ess_per_sample = ess(err_t, grad_evals_per_step= avg_num_steps_per_traj)
 
-    return ess_per_sample, err_t[-1], params
 
 
 def run_benchmarks():
@@ -101,7 +104,7 @@ def run_benchmarks():
         Model = models[model][0]
         result = benchmark_chains(Model, samplers[sampler], n= models[model][1][sampler], batch= 1)
         #print(f"ESS: {result.item()}")
-        print(f"grads to low bias: " + str(result))
+        print(f"grads to low bias: " + str(result[1]))
 
 
 if __name__ == "__main__":

@@ -84,7 +84,7 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, transform, key):
         transform=lambda x: transform(x.position),
     )
 
-    return samples, blackjax_mclmc_sampler_params, calls_per_integrator_step[integrator]
+    return samples, blackjax_mclmc_sampler_params, 2 #  calls_per_integrator_step[integrator]
 
 
 def run_mhmclmc(logdensity_fn, num_steps, initial_position, transform, key):
@@ -161,5 +161,6 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, transform, key):
 
 samplers = {
     'mclmc' : run_mclmc, 
-    # 'mhmclmc': run_mhmclmc, 
-    'nuts' : run_nuts}
+    'mhmclmc': run_mhmclmc, 
+    # 'nuts' : run_nuts
+    }

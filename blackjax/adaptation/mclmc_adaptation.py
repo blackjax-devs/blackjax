@@ -456,7 +456,8 @@ def mhmclmc_make_L_step_size_adaptation(
 
             # step_size = jax.lax.clamp(1e-3, jnp.exp(adaptive_state.log_step_size), 1e0)
             # step_size = jax.lax.clamp(1e-5, jnp.exp(adaptive_state.log_step_size), step_size_max)
-            step_size = jax.lax.clamp(1e-5, jnp.exp(adaptive_state.log_step_size), params.L)
+            step_size = jax.lax.clamp(1e-5, jnp.exp(adaptive_state.log_step_size), params.L/1.1)
+            adaptive_state = adaptive_state._replace(log_step_size=jnp.log(step_size))
             # step_size = 1e-3
 
             # update the running average of x, x^2
@@ -478,6 +479,10 @@ def mhmclmc_make_L_step_size_adaptation(
             #         step_size=step_size, 
             #         L = params.L * (step_size / params.step_size)
             #         )
+
+            
+
+
             
             if fix_L:
                 params = params._replace(
@@ -532,13 +537,14 @@ def mhmclmc_make_L_step_size_adaptation(
         initial_da, update_da, final_da = dual_averaging_adaptation(target=0.65)
 
         ((state, params, (dual_avg_state, step_size_max), (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass1, fix_L=fix_L_first_da, initial_da=initial_da, update_da=update_da)
-        params = params._replace(step_size=final_da(dual_avg_state))
+        params = params._replace(step_size=final_da(dual_avg_state)) # TODO: put back
         
 
         # jax.debug.print("{x}",x=("mean acceptance rate", jnp.mean(info.acceptance_rate,)))
         # jax.debug.print("{x} params after a round of tuning",x=(params))
         # jax.debug.print("{x} step size max",x=(step_size_max))
         # jax.debug.print("{x} final",x=(final(dual_avg_state)))
+        jax.debug.print("{x} params",x=(params))
 
         # raise Exception
 
@@ -546,9 +552,13 @@ def mhmclmc_make_L_step_size_adaptation(
         if num_steps2 != 0.0:
             x_average, x_squared_average = average[0], average[1]
             variances = x_squared_average - jnp.square(x_average)
-            change = jax.lax.clamp(Lratio_lowerbound, jnp.sqrt(jnp.sum(variances))/params.L, Lratio_upperbound)
+            # change = jax.lax.clamp(Lratio_lowerbound, jnp.sqrt(jnp.sum(variances))/params.L, Lratio_upperbound)
+            change = jnp.sqrt(jnp.sum(variances))/params.L
             # jax.debug.print("{x} L ratio, old val,  new val",x=(change, params.L, params.L*change))
-            params = params._replace(L=params.L*change)
+            jax.debug.print("{x} variance",x=(jnp.sqrt(jnp.sum(variances))))
+            params = params._replace(L=params.L*change, step_size=params.step_size*change)
+            # params = params._replace(L=jnp.sqrt(jnp.sum(variances))) # todo change back
+            jax.debug.print("{x} params after a round of tuning",x=(params))
 
         
             # jax.debug.print("{x} params before second round",x=(params))
@@ -556,7 +566,7 @@ def mhmclmc_make_L_step_size_adaptation(
             ((state, params, (dual_avg_state, step_size_max), (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass2, fix_L=True, update_da=update_da, initial_da=initial_da)
             params = params._replace(step_size=final_da(dual_avg_state))
             # jax.debug.print("{x}",x=("mean acceptance rate", jnp.mean(info.acceptance_rate,)))
-            # jax.debug.print("{x} params after a round of tuning",x=(params))
+            jax.debug.print("{x} params after a round of tuning",x=(params))
 
         return state, params
     
