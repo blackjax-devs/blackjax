@@ -137,7 +137,7 @@ def grid_search(n, model):
         # result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(jnp.sqrt(models[model].ndims)/4, jnp.sqrt(models[model].ndims), frac_tune2=0.1, frac_tune3=0.1), n=n, batch=10,favg=models[model].E_x2, fvar=models[model].Var_x2)
         # result, bias = benchmark_chains(models[model], sampler_mhmclmc_with_tuning(step_size=3.4392192, L=2.7043579, frac_tune2=0.1, frac_tune3=0.1), n=n, batch=10,favg=models[model].E_x2, fvar=models[model].Var_x2)
             
-            result, bias, _, = benchmark_chains(models[model], sampler_mhmclmc(step_size=step_size, L=L), n=n, batch=10//models[model].ndims,favg=models[model].E_x2, fvar=models[model].Var_x2)
+            result, bias, _, _ = benchmark_chains(models[model], sampler_mhmclmc(step_size=step_size, L=L), n=n, batch=1000//models[model].ndims,favg=models[model].E_x2, fvar=models[model].Var_x2)
             # result, bias = benchmark_chains(models[model], samplers[sampler], n=10000, batch=200, favg=models[model].E_x2, fvar=models[model].Var_x2)
             results[(step_size, L)] = result.item()
         
@@ -198,22 +198,12 @@ def grid_search(n, model):
 def make_grid(center_L, center_step_size):
     return itertools.product(np.linspace(center_step_size-1, center_step_size+1, 10), np.linspace(center_L-1, center_L+1, 10))
 
+
 if __name__ == "__main__":
-
-    # grid_search(n=2500, model='banana')
-    grid_search(n=25, model='icg')
-    # grid_search(n=2500, model='normal')
-
-    # m = models['icg']
-    # initial_position = m.sample(jax.random.PRNGKey(0))
-    # _, blackjax_mclmc_sampler_params, _ = sampler_mhmclmc_with_tuning(L=4.291135699906666, step_size=1.005, frac_tune2=0, frac_tune3=0)(lambda x: -m.nlogp(x), 100000, initial_position, jax.random.PRNGKey(0))
-    # print(blackjax_mclmc_sampler_params)
-
-# if __name__ == "__main__":
 
 #     benchmarks(5000)
 
-    # grid_search(n=25, model='banana')
+    grid_search(n=25, model='banana')
     # grid_search(n=2500, model='icg')
     # grid_search(n=2500, model='normal')
 

@@ -1,4 +1,4 @@
-from inference_gym import using_jax as gym
+#from inference_gym import using_jax as gym
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -14,19 +14,17 @@ class StandardNormal():
         self.ndims = d
         self.E_x2 = jnp.ones(d)
         self.Var_x2 = 2 * self.E_x2
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        
 
-        self.name= 'stn'
-
-    def nlogp(self, x):
+    def logdensity_fn(self, x):
         """- log p of the target distribution"""
-        return 0.5 * jnp.sum(jnp.square(x), axis= -1)
+        return -0.5 * jnp.sum(jnp.square(x), axis= -1)
 
 
     def transform(self, x):
         return x
 
-    def sample(self, key):
+    def sample_init(self, key):
         return jax.random.normal(key, shape = (self.ndims, ))
 
 
@@ -39,7 +37,6 @@ class IllConditionedGaussian():
         """numpy_seed is used to generate a random rotation for the covariance matrix.
             If None, the covariance matrix is diagonal."""
 
-        self.name = 'icg'
         self.ndims = d
         self.condition_number = condition_number
         eigs = jnp.logspace(-0.5 * jnp.log10(condition_number), 0.5 * jnp.log10(condition_number), d)
@@ -67,19 +64,18 @@ class IllConditionedGaussian():
         self.Var_x2 = 2 * jnp.square(self.E_x2)
 
 
-        self.nlogp = lambda x: 0.5 * x.T @ self.Hessian @ x
+        self.logdensity_fn = lambda x: -0.5 * x.T @ self.Hessian @ x
         self.transform = lambda x: x
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
-
+        
 
         if prior == 'map':
-            self.sample = lambda key: jnp.zeros(self.ndims)
+            self.sample_init = lambda key: jnp.zeros(self.ndims)
 
         elif prior == 'posterior':
-            self.sample = lambda key: self.R @ (jax.random.normal(key, shape=(self.ndims,)) * jnp.sqrt(eigs))
+            self.sample_init = lambda key: self.R @ (jax.random.normal(key, shape=(self.ndims,)) * jnp.sqrt(eigs))
 
         else: # N(0, sigma_true_max)
-            self.sample = lambda key: jax.random.normal(key, shape=(self.ndims,)) * jnp.max(jnp.sqrt(eigs))
+            self.sample_init = lambda key: jax.random.normal(key, shape=(self.ndims,)) * jnp.max(jnp.sqrt(eigs))
 
 
 
@@ -90,12 +86,12 @@ class IllConditionedESH():
         self.ndims = 50
         self.variance = jnp.linspace(0.01, 1, self.ndims)
 
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        
 
 
-    def nlogp(self, x):
+    def logdensity_fn(self, x):
         """- log p of the target distribution"""
-        return 0.5 * jnp.sum(jnp.square(x) / self.variance, axis= -1)
+        return -0.5 * jnp.sum(jnp.square(x) / self.variance, axis= -1)
 
 
     def transform(self, x):
@@ -104,7 +100,7 @@ class IllConditionedESH():
     def draw(self, key):
         return jax.random.normal(key, shape = (self.ndims, )) * jnp.sqrt(self.variance)
 
-    def sample(self, key):
+    def sample_init(self, key):
         return jax.random.normal(key, shape = (self.ndims, ))
 
 
@@ -114,7 +110,6 @@ class IllConditionedGaussianGamma():
     """Inference gym's Ill conditioned Gaussian"""
 
     def __init__(self, prior = 'prior'):
-        self.name = 'ICG'
         self.ndims = 100
 
         # define the Hessian
@@ -137,20 +132,20 @@ class IllConditionedGaussianGamma():
         # print(np.linalg.cond(reduced), np.linalg.cond(Sigma))
         
         # gradient
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        
 
         if prior == 'map':
-            self.sample = lambda key: jnp.zeros(self.ndims)
+            self.sample_init = lambda key: jnp.zeros(self.ndims)
 
         elif prior == 'posterior':
-            self.sample = lambda key: R @ (jax.random.normal(key, shape=(self.ndims,)) / jnp.sqrt(eigs))
+            self.sample_init = lambda key: R @ (jax.random.normal(key, shape=(self.ndims,)) / jnp.sqrt(eigs))
 
         else: # N(0, sigma_true_max)
-            self.sample = lambda key: jax.random.normal(key, shape=(self.ndims,)) * jnp.max(1.0/jnp.sqrt(eigs))
+            self.sample_init = lambda key: jax.random.normal(key, shape=(self.ndims,)) * jnp.max(1.0/jnp.sqrt(eigs))
             
-    def nlogp(self, x):
+    def logdensity_fn(self, x):
         """- log p of the target distribution"""
-        return 0.5 * x.T @ self.Hessian @ x
+        return -0.5 * x.T @ self.Hessian @ x
 
     def transform(self, x):
         return x
@@ -162,26 +157,25 @@ class Banana():
     """Banana target fromm the Inference Gym"""
 
     def __init__(self, prior = 'map'):
-        self.name = 'Banana'
         self.curvature = 0.03
         self.ndims = 2
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        
         self.transform = lambda x: x
         self.E_x2 = jnp.array([100.0, 19.0]) #the first is analytic the second is by drawing 10^8 samples from the generative model. Relative accuracy is around 10^-5.
         self.Var_x2 = jnp.array([20000.0, 4600.898])
 
         if prior == 'map':
-            self.sample = lambda key: jnp.array([0, -100.0 * self.curvature])
+            self.sample_init = lambda key: jnp.array([0, -100.0 * self.curvature])
         elif prior == 'posterior':
-            self.sample = lambda key: self.posterior_draw(key)
+            self.sample_init = lambda key: self.posterior_draw(key)
         elif prior == 'prior':
-            self.sample = lambda key: jax.random.normal(key, shape=(self.ndims,)) * jnp.array([10.0, 5.0]) * 2
+            self.sample_init = lambda key: jax.random.normal(key, shape=(self.ndims,)) * jnp.array([10.0, 5.0]) * 2
         else:
             raise ValueError('prior = '+prior +' is not defined.')
 
-    def nlogp(self, x):
+    def logdensity_fn(self, x):
         mu2 = self.curvature * (x[0] ** 2 - 100)
-        return 0.5 * (jnp.square(x[0] / 10.0) + jnp.square(x[1] - mu2))
+        return -0.5 * (jnp.square(x[0] / 10.0) - jnp.square(x[1] - mu2))
 
     def posterior_draw(self, key):
         z = jax.random.normal(key, shape = (2, ))
@@ -217,10 +211,10 @@ class Cauchy():
     def __init__(self, d):
         self.ndims = d
 
-        self.nlogp = lambda x: jnp.sum(jnp.log(1. + jnp.square(x)))
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        self.logdensity_fn = lambda x: -jnp.sum(jnp.log(1. + jnp.square(x)))
+        
         self.transform = lambda x: x        
-        self.sample = lambda key: jax.random.normal(key, shape=(self.ndims,))
+        self.sample_init = lambda key: jax.random.normal(key, shape=(self.ndims,))
 
 
 
@@ -232,8 +226,8 @@ class HardConvex():
         self.ndims = d
         self.theta, self.kappa = theta, kappa
         C = jnp.power(d-1, 0.25 - theta)
-        self.nlogp = lambda x: 0.5 * jnp.sum(jnp.square(x[:-1])) + (0.75 / kappa)* x[-1]**2 - 0.5 * jnp.sum(jnp.cos(C * x[:-1])) / C**2
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        self.logdensity_fn = lambda x: -0.5 * jnp.sum(jnp.square(x[:-1])) - (0.75 / kappa)* x[-1]**2 + 0.5 * jnp.sum(jnp.cos(C * x[:-1])) / C**2
+        
         self.transform = lambda x: x
 
         # numerically precomputed variances
@@ -252,7 +246,7 @@ class HardConvex():
             None
 
 
-    def sample(self, key):
+    def sample_init(self, key):
         """Gaussian prior with approximately estimating the variance along each dimension"""
         scale = jnp.concatenate((jnp.ones(self.ndims-1), jnp.ones(1) * jnp.sqrt(2.0 * self.kappa / 3.0)))
         return jax.random.normal(key, shape=(self.ndims,)) * scale
@@ -272,16 +266,16 @@ class BiModal():
         self.sigma1, self.sigma2 = sigma1, sigma2
         self.f = f
         self.variance = jnp.insert(jnp.ones(d-1) * ((1 - f) * sigma1**2 + f * sigma2**2), 0, (1-f)*(sigma1**2 + mu1**2) + f*(sigma2**2 + mu2**2))
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        
 
 
-    def nlogp(self, x):
+    def logdensity_fn(self, x):
         """- log p of the target distribution"""
 
         N1 = (1.0 - self.f) * jnp.exp(-0.5 * jnp.sum(jnp.square(x - self.mu1), axis= -1) / self.sigma1 ** 2) / jnp.power(2 * jnp.pi * self.sigma1 ** 2, self.ndims * 0.5)
         N2 = self.f * jnp.exp(-0.5 * jnp.sum(jnp.square(x - self.mu2), axis= -1) / self.sigma2 ** 2) / jnp.power(2 * jnp.pi * self.sigma2 ** 2, self.ndims * 0.5)
 
-        return -jnp.log(N1 + N2)
+        return jnp.log(N1 + N2)
 
 
     def draw(self, num_samples):
@@ -297,7 +291,7 @@ class BiModal():
     def transform(self, x):
         return x
 
-    def sample(self, key):
+    def sample_init(self, key):
         z = jax.random.normal(key, shape = (self.ndims, )) *self.sigma1
         #z= z.at[0].set(self.mu1 + z[0])
         return z
@@ -311,13 +305,13 @@ class BiModalEqual():
 
         self.ndims = d
         self.mu = mu
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        
 
 
-    def nlogp(self, x):
+    def logdensity_fn(self, x):
         """- log p of the target distribution"""
 
-        return 0.5 * jnp.sum(jnp.square(x), axis= -1) - jnp.log(jnp.cosh(0.5*self.mu*x[0])) + 0.5* self.ndims * jnp.log(2 * jnp.pi) + self.mu**2 / 8.0
+        return -0.5 * jnp.sum(jnp.square(x), axis= -1) + jnp.log(jnp.cosh(0.5*self.mu*x[0])) - 0.5* self.ndims * jnp.log(2 * jnp.pi) - self.mu**2 / 8.0
 
 
     def draw(self, num_samples):
@@ -341,16 +335,16 @@ class Funnel():
         self.ndims = d
         self.sigma_theta= 3.0
         self.variance = jnp.ones(d)
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        
 
 
-    def nlogp(self, x):
+    def logdensity_fn(self, x):
         """ - log p of the target distribution
                 x = [z_0, z_1, ... z_{d-1}, theta] """
         theta = x[-1]
         X = x[..., :- 1]
 
-        return 0.5* jnp.square(theta / self.sigma_theta) + 0.5 * (self.ndims - 1) * theta + 0.5 * jnp.exp(-theta) * jnp.sum(jnp.square(X), axis = -1)
+        return -0.5* jnp.square(theta / self.sigma_theta) - 0.5 * (self.ndims - 1) * theta - 0.5 * jnp.exp(-theta) * jnp.sum(jnp.square(X), axis = -1)
 
     def inverse_transform(self, xtilde):
         theta = 3 * xtilde[-1]
@@ -365,7 +359,7 @@ class Funnel():
         return xtilde.T
 
 
-    def sample(self, key):
+    def sample_init(self, key):
         return self.inverse_transform(jax.random.normal(key, shape = (self.ndims, )))
 
 
@@ -379,7 +373,7 @@ class Funnel_with_Data():
         self.sigma_theta= 3.0
         self.theta_true = 0.0
         self.sigma_data = sigma
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        
 
         self.data = self.simulate_data()
 
@@ -392,7 +386,7 @@ class Funnel_with_Data():
         self.data = z_true + norm[self.ndims-1:] * self.sigma_data
 
 
-    def nlogp(self, x, subset):
+    def logdensity_fn(self, x, subset):
         """ - log p of the target distribution
                 x = [z_0, z_1, ... z_{d-1}, theta] """
         theta = x[-1]
@@ -402,14 +396,14 @@ class Funnel_with_Data():
         prior_z = jnp.sum(subset) * theta + jnp.exp(-theta) * jnp.sum(jnp.square(z*subset))
         likelihood = jnp.sum(jnp.square((z - self.data)*subset / self.sigma_data))
 
-        return 0.5 * (prior_theta + prior_z + likelihood)
+        return -0.5 * (prior_theta + prior_z + likelihood)
 
 
     def transform(self, x):
         """gaussianization"""
         return x
 
-    def sample(self, key):
+    def sample_init(self, key):
         key1, key2 = jax.random.split(key)
         theta = jax.random.normal(key1) * self.sigma_theta
         z = jax.random.normal(key2, shape = (self.ndims-1, )) * jnp.exp(theta * 0.5)
@@ -424,7 +418,6 @@ class Rosenbrock():
 
         self.ndims = d
         self.Q = Q
-        self.name = 'rosenbrock'
         #ground truth moments
         var_x = 2.0
 
@@ -438,13 +431,13 @@ class Rosenbrock():
 
         self.variance = jnp.concatenate((var_x * jnp.ones(d//2), var_y * jnp.ones(d//2)))
 
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        
 
 
-    def nlogp(self, x):
+    def logdensity_fn(self, x):
         """- log p of the target distribution"""
         X, Y = x[..., :self.ndims//2], x[..., self.ndims//2:]
-        return 0.5 * jnp.sum(jnp.square(X - 1.0) + jnp.square(jnp.square(X) - Y) / self.Q, axis= -1)
+        return -0.5 * jnp.sum(jnp.square(X - 1.0) + jnp.square(jnp.square(X) - Y) / self.Q, axis= -1)
 
 
 
@@ -461,7 +454,7 @@ class Rosenbrock():
         return x
 
 
-    def sample(self, key):
+    def sample_init(self, key):
         return jax.random.normal(key, shape = (self.ndims, ))
 
 
@@ -496,9 +489,8 @@ class Brownian():
     def __init__(self):
         self.num_data = 30
         self.ndims = self.num_data + 2
-        self.name = 'brownian'
 
-        ground_truth_moments = jnp.load(dirr + '/ground_truth/' + self.name + '/ground_truth.npy')
+        ground_truth_moments = jnp.load(dirr + '/ground_truth/brownian/ground_truth.npy')
         self.E_x2, self.Var_x2 = ground_truth_moments[0], ground_truth_moments[1]
 
         self.data = jnp.array([0.21592641, 0.118771404, -0.07945447, 0.037677474, -0.27885845, -0.1484156, -0.3250906, -0.22957903,
@@ -508,9 +500,9 @@ class Brownian():
 
         self.observable = jnp.concatenate((jnp.ones(10), jnp.zeros(10), jnp.ones(10)))
         self.num_observable = jnp.sum(self.observable)  # = 20
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        
 
-    def nlogp(self, x):
+    def logdensity_fn(self, x):
         # y = softplus_to_log(x[:2])
 
         lik = 0.5 * jnp.exp(-2 * x[1]) * jnp.sum(self.observable * jnp.square(x[2:] - self.data)) + x[
@@ -518,18 +510,14 @@ class Brownian():
         prior_x = 0.5 * jnp.exp(-2 * x[0]) * (x[2] ** 2 + jnp.sum(jnp.square(x[3:] - x[2:-1]))) + x[0] * self.num_data
         prior_logsigma = 0.5 * jnp.sum(jnp.square(x / 2.0))
 
-        return lik + prior_x + prior_logsigma
+        return -lik - prior_x - prior_logsigma
 
 
     def transform(self, x):
         return jnp.concatenate((jnp.exp(x[:2]), x[2:]))
 
-    # def sample(self, key):
-    #     """draws x from the prior"""
 
-    #     return jax.scipy.optimize.minimize(self.nlogp, x0 = jnp.zeros(self.d), method = 'BFGS', options = {'maxiter': 100}).x
-
-    def sample(self, key):
+    def sample_init(self, key):
         key_walk, key_sigma = jax.random.split(key)
 
         # original prior
@@ -574,21 +562,20 @@ class GermanCredit:
 
     def __init__(self):
         self.ndims = 51 #global scale + 25 local scales + 25 weights
-        self.name = 'GC'
 
         self.labels = jnp.load(dirr + '/data/gc_labels.npy')
         self.features = jnp.load(dirr + '/data/gc_features.npy')
 
-        truth = jnp.load(dirr+'/ground_truth/' + self.name + '/ground_truth.npy')
+        truth = jnp.load(dirr+'/ground_truth/german_credit/ground_truth.npy')
         self.E_x2, self.Var_x2 = truth[0], truth[1]
 
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        
 
 
     def transform(self, x):
         return jnp.concatenate((jnp.exp(x[:26]), x[26:]))
 
-    def nlogp(self, x):
+    def logdensity_fn(self, x):
 
         scales = jnp.exp(x[:26])
 
@@ -603,9 +590,9 @@ class GermanCredit:
         logits = self.features @ weights # = jnp.einsum('nd,...d->...n', self.features, weights)
         lik = jnp.sum(self.labels * jnp.logaddexp(0., -logits) + (1-self.labels)* jnp.logaddexp(0., logits))
 
-        return lik + pr + transform
+        return -(lik + pr + transform)
     #
-    # def sample(self, key):
+    # def sample_init(self, key):
     #     key1, key2 = jax.random.split(key)
     #
     #     scales = jax.random.gamma(key1, 0.5, shape=(26,)) * 2.  # we divided by beta = 0.5
@@ -614,7 +601,7 @@ class GermanCredit:
     #     return jnp.concatenate((scales, unscaled_weights))
     #
 
-    def sample(self, key):
+    def sample_init(self, key):
         weights = jax.random.normal(key, shape = (25, ))
         return jnp.concatenate((jnp.zeros(26), weights))
 
@@ -626,20 +613,19 @@ class ItemResponseTheory:
 
     def __init__(self):
         self.ndims = 501
-        self.name = 'IRT'
         self.students = 400
         self.questions = 100
 
         self.mask = jnp.load(dirr + '/data/irt_mask.npy')
         self.labels = jnp.load(dirr + '/data/irt_labels.npy')
 
-        truth = jnp.load(dirr+'/ground_truth/' + self.name + '/ground_truth.npy')
+        truth = jnp.load(dirr+'/ground_truth/item_response_theory/ground_truth.npy')
         self.E_x2, self.Var_x2 = truth[0], truth[1]
 
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        
         self.transform = lambda x: x
 
-    def nlogp(self, x):
+    def logdensity_fn(self, x):
 
         students = x[:self.students]
         mean = x[self.students]
@@ -654,10 +640,10 @@ class ItemResponseTheory:
         bern = jnp.where(self.mask, bern, jnp.zeros_like(bern))
         lik = jnp.sum(bern)
 
-        return lik + pr
+        return -lik - pr
 
 
-    def sample(self, key):
+    def sample_init(self, key):
         x = jax.random.normal(key, shape = (self.ndims,))
         x = x.at[self.students].add(0.75)
         return x
@@ -671,7 +657,6 @@ class StochasticVolatility():
     def __init__(self):
         self.SP500_returns = jnp.load(dirr + '/data/SP500.npy')
 
-        self.name = 'SV'
         self.ndims = 2429
 
         self.typical_sigma, self.typical_nu = 0.02, 10.0 # := 1 / lambda
@@ -679,10 +664,10 @@ class StochasticVolatility():
         data = jnp.load(dirr + '/ground_truth/stochastic_volatility/ground_truth_0.npy')
         self.E_x2 = data[0]
         self.Var_x2 = data[1]
-        self.grad_nlogp = jax.value_and_grad(self.nlogp)
+        
 
 
-    def nlogp(self, x):
+    def logdensity_fn(self, x):
         """- log p of the target distribution
             x=  [s1, s2, ... s2427, log sigma / typical_sigma, log nu / typical_nu]"""
 
@@ -693,7 +678,7 @@ class StochasticVolatility():
         l2 = (self.ndims - 2) * jnp.log(sigma) + 0.5 * (jnp.square(x[0]) + jnp.sum(jnp.square(x[1:-2] - x[:-3]))) / jnp.square(sigma)
         l3 = jnp.sum(nlogp_StudentT(self.SP500_returns, nu, jnp.exp(x[:-2])))
 
-        return l1 + l2 + l3
+        return -(l1 + l2 + l3)
 
 
     def transform(self, x):
@@ -707,7 +692,7 @@ class StochasticVolatility():
         return z
 
 
-    def sample(self, key):
+    def sample_init(self, key):
         """draws x from the prior"""
 
         key_walk, key_exp = jax.random.split(key)
@@ -757,31 +742,7 @@ def random_walk(key, num):
 
 
 
-class DiagonalPreconditioned():
-    """A target instance which takes some other target and preconditions it"""
+#models = {'normal': StandardNormal(10), 'banana': Banana(), 'icg' : IllConditionedGaussian(10, 2), }
 
-    def __init__(self, Target, a):
-        """ Target: original target
-            a: scaling vector (sqrt(variance of x)), such that x' = x / a"""
-
-        self.Target = Target
-        self.ndims= Target.d
-        self.a = a
-        self.variance = Target.variance / jnp.square(a)
-
-
-    def nlogp(self, x):
-        return self.Target.nlogp(self.a * x)
-
-    def grad_nlogp(self, x):
-        return self.Target.grad_nlogp(self.a * x) * self.a
-
-    def draw(self, num):
-        return self.Target.draw(num) / self.a
-
-    def transform(self, x):
-        return x
-
-
-models = {'normal': StandardNormal(10), 'banana': Banana(), 'icg' : IllConditionedGaussian(10, 2), }
-
+models = {'Brownian Motion': (Brownian(), {'mclmc': 50000, 'nuts': 1000}),
+          'Item Response Theory': (ItemResponseTheory(), {'mclmc': 50000, 'nuts': 1000})}
