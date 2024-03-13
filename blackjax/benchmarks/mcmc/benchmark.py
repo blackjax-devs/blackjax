@@ -99,7 +99,7 @@ def run_benchmarks():
         print(f"\nModel: {model}, Sampler: {sampler}\n")
 
         Model = models[model][0]
-        result = benchmark_chains(Model, samplers[sampler], n= models[model][1][sampler], batch= 128)
+        result = benchmark_chains(Model, samplers[sampler], n= models[model][1][sampler], batch= 1)
         #print(f"ESS: {result.item()}")
         print(f"grads to low bias: " + str(result))
 
