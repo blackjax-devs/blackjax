@@ -215,7 +215,7 @@ def make_L_step_size_adaptation(
 
         # run the steps
         state, params, _, (_, average) = jax.lax.scan(
-            make_step(1.),
+            make_step(params.std_mat),
             init=(
                 state,
                 params,
