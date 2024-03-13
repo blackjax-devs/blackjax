@@ -4,7 +4,7 @@ import operator
 import jax
 import numpy as np
 
-from benchmark import benchmark_chains, cumulative_avg, err, ess, get_num_latents, grads_to_low_error
+from benchmark import benchmark_chains, cumulative_avg, err, calculate_ess, get_num_latents, grads_to_low_error
 import blackjax
 from blackjax.adaptation.mclmc_adaptation import MCLMCAdaptationState
 from blackjax.mcmc.integrators import calls_per_integrator_step
@@ -12,7 +12,7 @@ from blackjax.mcmc.mhmclmc import rescale
 from blackjax.util import run_inference_algorithm
 import jax.numpy as jnp 
 from sampling_algorithms import run_mclmc, run_mhmclmc, samplers
-from inference_models import IllConditionedGaussian, models
+from inference_models import Brownian, IllConditionedGaussian, models
 
 def sampler_mhmclmc_with_tuning(step_size, L, frac_tune2, frac_tune3):
 
@@ -116,35 +116,42 @@ def sampler_mhmclmc(step_size, L):
 # Empirical std [0.07159886 0.07360378]
 
 def grid_search(n, model):
+    
 
     print(f"\nModel: {model}")
 
     results = defaultdict(float)
 
     batch = 10
-    init_key, sample_key = jax.random.split(jax.random.PRNGKey(0), 2)
+    init_key, sample_key = jax.random.split(jax.random.PRNGKey(1), 2)
     init_keys = jax.random.split(init_key, batch)
     init_pos = jax.vmap(model.sample_init)(init_keys)
     sample_keys = jax.random.split(sample_key, batch)
             
-    samples, params, _ = jax.vmap(lambda pos, key: samplers["mclmc"](model.logdensity_fn, n*100, pos, model.transform, key))(init_pos, sample_keys)
+    avg_num_steps_per_traj = 2
+    samples, params, _ = jax.vmap(lambda pos, key: samplers["nuts"](model.logdensity_fn, n*100, pos, model.transform, key))(init_pos, sample_keys)
+
+    # avg_num_steps_per_traj = 1
+    # samples, params, _ = jax.vmap(lambda pos, key: samplers["nuts"](model.logdensity_fn, 1000, pos, model.transform, key))(init_pos, sample_keys)
+    
     full = lambda arr : err(model.E_x2, model.Var_x2, jnp.average)(cumulative_avg(arr))
     err_t = jnp.mean(jax.vmap(full)(samples**2), axis=0)
     
-    avg_num_steps_per_traj = 2
-    ess = grads_to_low_error(err_t, avg_num_steps_per_traj)[0]
+    ess_val, grads_to_low_error = calculate_ess(err_t, avg_num_steps_per_traj)
+    print(ess_val, grads_to_low_error)
+    raise Exception
     center_L, center_step_size = params.L.mean(), params.step_size.mean()
 
     # nuts result
 
-    print(f"initial params found by MCLMC {center_step_size, center_L} (with grad calls {ess.item()})")
+    print(f"initial params found by MCLMC are step size {center_step_size} and L {center_L}, with grad calls {ess.item()}")
     
     print("\nBeginning grid search:\n")
 
-    grid_size = 15
+    grid_size = 20
 
     # best params on iteration 0 are stepsize 5.103655551427525 and L 5.408820389035896 with Grad Calls until Convergence 216.19784545898438
-    for i in range(0):
+    for i in range(1):
         for step_size, L in itertools.product(np.logspace(np.log10(center_step_size/2), np.log10(center_step_size*2), grid_size), np.logspace(np.log10(center_L/2), np.log10(center_L*2),grid_size)):
         
             
@@ -186,9 +193,9 @@ def grid_search(n, model):
         state=initial_state,
         rng_key=tune_key,
         frac_tune3=0,
-        # params = MCLMCAdaptationState(L=center_L, step_size=center_step_size, std_mat=1.),
+        params = MCLMCAdaptationState(L=center_L, step_size=center_step_size, std_mat=1.),
         # params = MCLMCAdaptationState(L=10., step_size=3.3454525677773526, std_mat=1.),
-        params = MCLMCAdaptationState(L=10., step_size=5.103655551427525, std_mat=1.),
+        # params = MCLMCAdaptationState(L=10., step_size=5.103655551427525, std_mat=1.),
     )
 
     ess, grad_calls_until_convergence = benchmark_chains(model, sampler_mhmclmc(step_size=blackjax_mclmc_sampler_params.step_size, L=blackjax_mclmc_sampler_params.L), n=n, batch = batch) # batch=1000//model.ndims)
@@ -233,7 +240,8 @@ if __name__ == "__main__":
 
 #     benchmarks(5000)
 
-    grid_search(n=2500, model=IllConditionedGaussian(10, 2))
+    # grid_search(n=2500, model=IllConditionedGaussian(10, 2))
+    grid_search(n=10000, model=Brownian())
     # grid_search(n=2500, model='icg')
     # grid_search(n=2500, model='normal')
 

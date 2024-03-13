@@ -23,7 +23,7 @@ def run_nuts(
     rng_key, warmup_key = jax.random.split(key, 2)
 
 
-    (state, params), _ = warmup.run(warmup_key, initial_position, 500)
+    (state, params), _ = warmup.run(warmup_key, initial_position, 2000)
 
     nuts = blackjax.nuts(logdensity_fn=logdensity_fn, step_size=params['step_size'], inverse_mass_matrix= params['inverse_mass_matrix'])
 
@@ -160,7 +160,7 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, transform, key):
 # we should do at least: mclmc, nuts, unadjusted hmc, mhmclmc, langevin
 
 samplers = {
+    'nuts' : run_nuts,
     'mclmc' : run_mclmc, 
-    'mhmclmc': run_mhmclmc, 
-    # 'nuts' : run_nuts
+    # 'mhmclmc': run_mhmclmc, 
     }

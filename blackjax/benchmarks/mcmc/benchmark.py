@@ -44,7 +44,7 @@ def grads_to_low_error(err_t, grad_evals_per_step= 1, low_error= 0.01):
     return find_crossing(err_t, low_error) * grad_evals_per_step, cutoff_reached
     
         
-def ess(err_t, grad_evals_per_step, neff= 100):
+def calculate_ess(err_t, grad_evals_per_step, neff= 100):
     
     grads_to_low, cutoff_reached = grads_to_low_error(err_t, grad_evals_per_step, 1./neff)
     
@@ -88,7 +88,7 @@ def benchmark_chains(model, sampler, n=10000, batch=None, contract = jnp.average
     err_t = jnp.mean(jax.vmap(full)(samples**2), axis=0)
     
     # return grads_to_low_error(err_t, avg_grad_calls_per_traj)[0]
-    ess_per_sample = ess(err_t, grad_evals_per_step=avg_grad_calls_per_traj)
+    ess_per_sample = calculate_ess(err_t, grad_evals_per_step=avg_grad_calls_per_traj)
     return ess_per_sample
     # , err_t[-1], params
 
@@ -102,7 +102,7 @@ def run_benchmarks():
         print(f"\nModel: {model}, Sampler: {sampler}\n")
 
         Model = models[model][0]
-        result = benchmark_chains(Model, samplers[sampler], n= models[model][1][sampler], batch= 1)
+        result = benchmark_chains(Model, samplers[sampler], n=models[model][1][sampler], batch=10)
         #print(f"ESS: {result.item()}")
         print(f"grads to low bias: " + str(result[1]))
 
