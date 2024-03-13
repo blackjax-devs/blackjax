@@ -108,7 +108,7 @@ def mclmc_find_L_and_step_size(
     )(state, params, num_steps, part1_key)
 
     if frac_tune3 != 0:
-        state, params = make_adaptation_L(mclmc_kernel, frac=frac_tune3, Lfactor=0.4)(
+        state, params = make_adaptation_L(mclmc_kernel(params.std_mat), frac=frac_tune3, Lfactor=0.4)(
             state, params, num_steps, part2_key
         )
 
@@ -129,14 +129,14 @@ def make_L_step_size_adaptation(
 
     decay_rate = (num_effective_samples - 1.0) / (num_effective_samples + 1.0)
 
-    def predictor(previous_state, params, adaptive_state, rng_key):
+    def predictor(previous_state, params, adaptive_state, rng_key, std_mat):
         """does one step with the dynamics and updates the prediction for the optimal stepsize
         Designed for the unadjusted MCHMC"""
 
         time, x_average, step_size_max = adaptive_state
 
         # dynamics
-        next_state, info = kernel(
+        next_state, info = kernel(std_mat)(
             rng_key=rng_key,
             state=previous_state,
             L=params.L,
@@ -176,26 +176,30 @@ def make_L_step_size_adaptation(
         return state, params_new, adaptive_state, success
 
 
-    def step(iteration_state, weight_and_key):
-        """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
+    def make_step(std_mat):
+    
+        def step(iteration_state, weight_and_key):
+            """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
 
-        mask, rng_key = weight_and_key
-        state, params, adaptive_state, streaming_avg = iteration_state
+            mask, rng_key = weight_and_key
+            state, params, adaptive_state, streaming_avg = iteration_state
 
-        state, params, adaptive_state, success = predictor(
-            state, params, adaptive_state, rng_key
-        )
+            state, params, adaptive_state, success = predictor(
+                state, params, adaptive_state, rng_key, std_mat
+            )
 
-        # update the running average of x, x^2
-        streaming_avg = streaming_average(
-            O=lambda x: jnp.array([x, jnp.square(x)]),
-            x=ravel_pytree(state.position)[0],
-            streaming_avg=streaming_avg,
-            weight=(1-mask)*success*params.step_size,
-            zero_prevention=mask,
-        )
+            # update the running average of x, x^2
+            streaming_avg = streaming_average(
+                O=lambda x: jnp.array([x, jnp.square(x)]),
+                x=ravel_pytree(state.position)[0],
+                streaming_avg=streaming_avg,
+                weight=(1-mask)*success*params.step_size,
+                zero_prevention=mask,
+            )
 
-        return (state, params, adaptive_state, streaming_avg), None
+            return (state, params, adaptive_state, streaming_avg), None
+    
+        return step 
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
         num_steps1, num_steps2 = int(num_steps * frac_tune1), int(
@@ -211,7 +215,7 @@ def make_L_step_size_adaptation(
 
         # run the steps
         state, params, _, (_, average) = jax.lax.scan(
-            step,
+            make_step(1.),
             init=(
                 state,
                 params,
@@ -240,7 +244,7 @@ def make_L_step_size_adaptation(
                 steps = num_steps2 // 3 #we do some small number of steps
                 keys = jax.random.split(final_key, steps)
                 state, params, _, (_, average) = jax.lax.scan(
-                    step,
+                    make_step(std_mat),
                     init=(
                         state,
                         params,

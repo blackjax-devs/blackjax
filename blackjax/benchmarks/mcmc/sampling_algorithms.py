@@ -47,11 +47,11 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, transform, key):
     )
 
     integrator = blackjax.mcmc.integrators.isokinetic_mclachlan
-
-    kernel = blackjax.mcmc.mclmc.build_kernel(
+    kernel = lambda std_mat : blackjax.mcmc.mclmc.build_kernel(
         logdensity_fn=logdensity_fn,
         integrator=integrator,
-        std_mat=jnp.ones((initial_position.shape[0],)),
+        # std_mat=jnp.ones((initial_position.shape[0],)),
+        std_mat=std_mat,
     )
 
     (
@@ -62,7 +62,7 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, transform, key):
         num_steps=num_steps,
         state=initial_state,
         rng_key=tune_key,
-        diagonal_preconditioning=False
+        diagonal_preconditioning=True
     )
 
     # jax.debug.print("params {x}", x=blackjax_mclmc_sampler_params)
