@@ -83,7 +83,11 @@ def benchmark_chains(model, sampler, n=10000, batch=None, contract = jnp.average
     
     full = lambda arr : err(model.E_x2, model.Var_x2, contract)(cumulative_avg(arr))
     err_t = jnp.mean(jax.vmap(full)(samples**2), axis=0)
-    
+    import matplotlib.pyplot as plt
+    plt.plot(err_t)
+    plt.yscale('log')
+    plt.savefig('neki.png')
+    plt.close()
     return grads_to_low_error(err_t, avg_num_steps_per_traj)[0]
 
     ess_per_sample = ess(err_t, grad_evals_per_step= avg_num_steps_per_traj)
@@ -101,10 +105,10 @@ def run_benchmarks():
         result = benchmark_chains(Model, samplers[sampler], n= models[model][1][sampler], batch= 128)
         #print(f"ESS: {result.item()}")
         print(f"grads to low bias: " + str(result))
-
+        exit()
 
 if __name__ == "__main__":
-
+    
     run_benchmarks()
 
 
