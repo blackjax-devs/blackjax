@@ -742,7 +742,8 @@ def random_walk(key, num):
 
 
 
-#models = {'normal': StandardNormal(10), 'banana': Banana(), 'icg' : IllConditionedGaussian(10, 2), }
+# models = {'normal': StandardNormal(10), 'banana': Banana(), 'icg' : IllConditionedGaussian(10, 2), }
 
-models = {'Brownian Motion': (Brownian(), {'mclmc': 50000, 'nuts': 1000}),
-          'Item Response Theory': (ItemResponseTheory(), {'mclmc': 50000, 'nuts': 1000})}
+models = {'Brownian Motion': (Brownian(), {'mclmc': 50000, 'mhmclmc' : 50000, 'nuts': 1000}),
+        #   'Item Response Theory': (ItemResponseTheory(), {'mclmc': 50000, 'mhmclmc' : 50000, 'nuts': 1000})
+          }

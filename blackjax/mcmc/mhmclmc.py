@@ -75,6 +75,7 @@ def build_kernel(
         logdensity_fn: Callable,
         step_size: float,
         L_proposal : float = 1.0,
+        std_mat=1.,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
         
@@ -91,7 +92,7 @@ def build_kernel(
 
         proposal, info, _ = mhmclmc_proposal(
             # integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
-            lambda state, step_size, x, y : (integrator(logdensity_fn))(state, step_size),
+            lambda state, step_size, x, y : (integrator(logdensity_fn, std_mat))(state, step_size),
             step_size,
             L_proposal,
             num_integration_steps,
