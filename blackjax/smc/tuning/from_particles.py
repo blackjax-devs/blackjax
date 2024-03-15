@@ -48,3 +48,4 @@ def particles_as_rows(particles):
     as a matrix where each column is a variable, each row a particle.
     """
     return jax.vmap(lambda x: ravel_pytree(x)[0])(particles)
+

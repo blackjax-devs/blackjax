@@ -8,8 +8,14 @@ from blackjax.types import ArrayTree, PRNGKey
 
 
 class StateWithParameterOverride(NamedTuple):
+    """
+    Stores both the sampling status and also a dictionary
+    that contains an dictionary with parameter names as key
+    and (n_particles, *) arrays as meanings. The latter
+    represent a parameter per chain for the next mutation step.
+    """
     sampler_state: ArrayTree
-    parameter_override: ArrayTree
+    parameter_override: Dict[str, ArrayTree]
 
 
 def init(alg_init_fn, position, initial_parameter_value):
@@ -42,7 +48,7 @@ def build_kernel(
     loglikelihood_fn
         A function that returns the probability at a given position.
     mcmc_factory
-        A callable that can construct an inner kernel out of the newly-computed parameter
+        A callable that can construct an array of kernels out of newly-computed parameters.
     mcmc_init_fn
         A callable that initializes the inner kernel
     mcmc_parameters
@@ -59,7 +65,7 @@ def build_kernel(
         step_fn = smc_algorithm(
             logprior_fn=logprior_fn,
             loglikelihood_fn=loglikelihood_fn,
-            mcmc_step_fn=mcmc_factory(state.parameter_override),
+            mcmc_step_fn=mcmc_factory(**state.parameter_override),
             mcmc_init_fn=mcmc_init_fn,
             mcmc_parameters=mcmc_parameters,
             resampling_fn=resampling_fn,

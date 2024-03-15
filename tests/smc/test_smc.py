@@ -1,4 +1,6 @@
 """Test the generic SMC sampler"""
+import unittest
+
 import chex
 import jax
 import jax.numpy as jnp
@@ -9,6 +11,7 @@ from absl.testing import absltest
 import blackjax
 import blackjax.smc.resampling as resampling
 from blackjax.smc.base import init, step
+from blackjax.smc.tuning import extend_params_inner_kernel
 
 
 def logdensity_fn(position):
@@ -31,14 +34,8 @@ class SMCTest(chex.TestCase):
         num_mcmc_steps = 20
         num_particles = 1000
 
-        hmc = blackjax.hmc(
-            logdensity_fn,
-            step_size=1e-2,
-            inverse_mass_matrix=jnp.eye(1),
-            num_integration_steps=50,
-        )
-
-        def update_fn(rng_key, position):
+        def update_fn(rng_key, position, update_params):
+            hmc = blackjax.hmc(logdensity_fn,**update_params)
             state = hmc.init(position)
 
             def body_fn(state, rng_key):
@@ -53,7 +50,10 @@ class SMCTest(chex.TestCase):
 
         # Initialize the state of the SMC sampler
         init_particles = 0.25 + jax.random.normal(init_key, shape=(num_particles,))
-        state = init(init_particles)
+        same_for_all_params = dict(step_size=1e-2,
+             inverse_mass_matrix=jnp.eye(1),
+             num_integration_steps=50)
+        state = init(init_particles, extend_params_inner_kernel(num_particles, same_for_all_params))
 
         # Run the SMC sampler once
         new_state, info = self.variant(step, static_argnums=(2, 3, 4))(
@@ -74,15 +74,12 @@ class SMCTest(chex.TestCase):
         num_particles = 1000
         num_resampled = num_particles // num_mcmc_steps
 
-        hmc = blackjax.hmc(
-            logdensity_fn,
-            step_size=1e-2,
-            inverse_mass_matrix=jnp.eye(1),
-            num_integration_steps=100,
-        )
-
-        def waste_free_update_fn(keys, particles):
-            def one_particle_fn(rng_key, position):
+        def waste_free_update_fn(keys, particles, update_params):
+            def one_particle_fn(rng_key, position, particle_update_params):
+                hmc = blackjax.hmc(
+                    logdensity_fn,
+                    **particle_update_params
+                )
                 state = hmc.init(position)
 
                 def body_fn(state, rng_key):
@@ -93,7 +90,7 @@ class SMCTest(chex.TestCase):
                 _, (states, info) = jax.lax.scan(body_fn, state, keys)
                 return states.position, info
 
-            particles, info = jax.vmap(one_particle_fn)(keys, particles)
+            particles, info = jax.vmap(one_particle_fn)(keys, particles, update_params)
             particles = particles.reshape((num_particles,))
             return particles, info
 
@@ -101,7 +98,9 @@ class SMCTest(chex.TestCase):
 
         # Initialize the state of the SMC sampler
         init_particles = 0.25 + jax.random.normal(init_key, shape=(num_particles,))
-        state = init(init_particles)
+        state = init(init_particles, extend_params_inner_kernel(num_resampled, dict(step_size=1e-2,
+            inverse_mass_matrix=jnp.eye(1),
+            num_integration_steps=100)))
 
         # Run the SMC sampler once
         new_state, info = self.variant(step, static_argnums=(2, 3, 4, 5))(
@@ -116,6 +115,23 @@ class SMCTest(chex.TestCase):
         mean, std = _weighted_avg_and_std(new_state.particles, state.weights)
         np.testing.assert_allclose(0.0, mean, atol=1e-1)
         np.testing.assert_allclose(1.0, std, atol=1e-1)
+
+
+class ExtendToParticlesTest(unittest.TestCase):
+    def test_extend_params_inner_kernel(self):
+        extended = extend_params_inner_kernel(3, {"a":50,
+                                                   "b": np.array([50]),
+                                                   "c": np.array([50, 60]),
+                                                   "d": np.array([[1,2],[3,4]])
+                                                   })
+        np.testing.assert_allclose(extended["a"], np.ones((3,))*50)
+        np.testing.assert_allclose(extended["b"], np.array([[50],[50],[50]]))
+        np.testing.assert_allclose(extended["c"], np.array([[50, 60], [50, 60], [50, 60]]))
+        np.testing.assert_allclose(extended["d"], np.array([[[1,2],[3,4]],
+                                                            [[1, 2], [3, 4]],
+                                                            [[1, 2], [3, 4]]
+                                                            ]))
+
 
 
 if __name__ == "__main__":

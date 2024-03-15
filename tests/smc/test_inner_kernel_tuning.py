@@ -92,18 +92,18 @@ class SMCParameterTuningTest(chex.TestCase):
         proposal_factory.return_value = 100
 
         def mcmc_parameter_update_fn(state, info):
-            return 100
+            return {"mean":100}
 
         mcmc_factory = MagicMock()
         sampling_algorithm = MagicMock()
         mcmc_factory.return_value = sampling_algorithm
         prior = lambda x: stats.norm.logpdf(x)
 
-        def kernel_factory(proposal_distribution):
+        def kernel_factory(mean):
             kernel = blackjax.irmh.build_kernel()
 
             def wrapped_kernel(rng_key, state, logdensity):
-                return kernel(rng_key, state, logdensity, proposal_distribution)
+                return kernel(rng_key, state, logdensity, functools.partial(irmh_proposal_distribution, mean=mean))
 
             return wrapped_kernel
 
@@ -116,14 +116,14 @@ class SMCParameterTuningTest(chex.TestCase):
             smc_algorithm=smc_algorithm,
             mcmc_parameters={},
             mcmc_parameter_update_fn=mcmc_parameter_update_fn,
-            initial_parameter_value=irmh_proposal_distribution,
+            initial_parameter_value={"mean":1.0},
             **smc_parameters,
         )
 
         new_state, new_info = kernel.step(
             self.key, state=kernel.init(init_particles), **step_parameters
         )
-        assert new_state.parameter_override == 100
+        assert new_state.parameter_override == {"mean":100}
 
 
 class MeanAndStdFromParticlesTest(chex.TestCase):
@@ -294,10 +294,9 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
             blackjax.hmc.init,
             {},
             resampling.systematic,
-            mcmc_parameter_update_fn=lambda state, info: mass_matrix_from_particles(
-                state.particles
-            ),
-            initial_parameter_value=jnp.eye(2),
+            mcmc_parameter_update_fn=lambda state, info: {"mass_matrix":
+                                                              mass_matrix_from_particles(state.particles)},
+            initial_parameter_value={"mass_matrix":jnp.eye(2)},
             num_mcmc_steps=10,
             target_ess=0.5,
         )
@@ -319,7 +318,7 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
 
         state, _ = inference_loop(smc_kernel, self.key, init_state)
 
-        assert state.parameter_override.shape == (2, 2)
+        assert state.parameter_override["mass_matrix"].shape == (2, 2)
         self.assert_linear_regression_test_case(state.sampler_state)
 
     @chex.all_variants(with_pmap=False)
@@ -339,10 +338,10 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
             blackjax.hmc.init,
             {},
             resampling.systematic,
-            mcmc_parameter_update_fn=lambda state, info: mass_matrix_from_particles(
+            mcmc_parameter_update_fn=lambda state, info: {"mass_matrix":mass_matrix_from_particles(
                 state.particles
-            ),
-            initial_parameter_value=jnp.eye(2),
+            )},
+            initial_parameter_value={"mass_matrix":jnp.eye(2)},
             num_mcmc_steps=10,
         )
 
