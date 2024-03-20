@@ -3,6 +3,7 @@
 import jax
 import jax.numpy as jnp
 import blackjax
+from blackjax.adaptation.mclmc_adaptation import MCLMCAdaptationState
 from blackjax.mcmc.integrators import calls_per_integrator_step
 from blackjax.mcmc.mhmclmc import rescale
 from blackjax.util import run_inference_algorithm
@@ -84,7 +85,7 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, transform, key):
         transform=lambda x: transform(x.position),
     )
 
-    return samples, blackjax_mclmc_sampler_params, 2 #  calls_per_integrator_step[integrator]
+    return samples, blackjax_mclmc_sampler_params, calls_per_integrator_step[integrator]
 
 
 def run_mhmclmc(logdensity_fn, num_steps, initial_position, transform, key):
@@ -116,9 +117,10 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, transform, key):
         num_steps=num_steps,
         state=initial_state,
         rng_key=tune_key,
-        # frac_tune2=0,
+        frac_tune1=0.1,
+        frac_tune2=0.1,
         frac_tune3=0,
-        # params=MCLMCAdaptationState(L=16.765137, step_size=1.005)
+        # params=MCLMCAdaptationState(L=16.765137, step_size=4.005, std_mat=jnp.ones((initial_position.shape[0],))),
     )
 
     # raise Exception
@@ -150,7 +152,7 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, transform, key):
         progress_bar=True)
     
     
-    jax.debug.print("ACCEPTANCE {x}", x = (info.acceptance_rate.shape, jnp.mean(info.acceptance_rate,)))
+    # jax.debug.print("ACCEPTANCE {x}", x = (info.acceptance_rate.shape, jnp.mean(info.acceptance_rate,)))
     
     # jax.debug.print("THING\n\n {x}",x=jnp.mean(info.num_integration_steps))
     # raise Exception
@@ -162,5 +164,5 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, transform, key):
 samplers = {
     'nuts' : run_nuts,
     'mclmc' : run_mclmc, 
-    # 'mhmclmc': run_mhmclmc, 
+    'mhmclmc': run_mhmclmc, 
     }

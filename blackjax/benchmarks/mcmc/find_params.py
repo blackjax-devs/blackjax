@@ -129,7 +129,7 @@ def grid_search(n, model):
     sample_keys = jax.random.split(sample_key, batch)
             
     avg_num_steps_per_traj = 2
-    samples, params, _ = jax.vmap(lambda pos, key: samplers["nuts"](model.logdensity_fn, n*100, pos, model.transform, key))(init_pos, sample_keys)
+    samples, params, _ = jax.vmap(lambda pos, key: samplers["mclmc"](model.logdensity_fn, n*100, pos, model.transform, key))(init_pos, sample_keys)
 
     # avg_num_steps_per_traj = 1
     # samples, params, _ = jax.vmap(lambda pos, key: samplers["nuts"](model.logdensity_fn, 1000, pos, model.transform, key))(init_pos, sample_keys)
@@ -137,25 +137,26 @@ def grid_search(n, model):
     full = lambda arr : err(model.E_x2, model.Var_x2, jnp.average)(cumulative_avg(arr))
     err_t = jnp.mean(jax.vmap(full)(samples**2), axis=0)
     
-    ess_val, grads_to_low_error = calculate_ess(err_t, avg_num_steps_per_traj)
+    ess_val, grads_to_low_error, _ = calculate_ess(err_t, avg_num_steps_per_traj)
     print(ess_val, grads_to_low_error)
-    raise Exception
     center_L, center_step_size = params.L.mean(), params.step_size.mean()
 
     # nuts result
 
-    print(f"initial params found by MCLMC are step size {center_step_size} and L {center_L}, with grad calls {ess.item()}")
+    print(f"initial params found by MCLMC are step size {center_step_size} and L {center_L}, with grad calls {grads_to_low_error}")
     
     print("\nBeginning grid search:\n")
 
-    grid_size = 20
+    grid_size = 5
 
     # best params on iteration 0 are stepsize 5.103655551427525 and L 5.408820389035896 with Grad Calls until Convergence 216.19784545898438
-    for i in range(1):
-        for step_size, L in itertools.product(np.logspace(np.log10(center_step_size/2), np.log10(center_step_size*2), grid_size), np.logspace(np.log10(center_L/2), np.log10(center_L*2),grid_size)):
+    iterations=2
+    keys = jax.random.split(jax.random.PRNGKey(0), iterations+1)
+    for i in range(iterations):
+        for j, (step_size, L) in enumerate(itertools.product(np.logspace(np.log10(center_step_size/2), np.log10(center_step_size*2), grid_size), np.logspace(np.log10(center_L/2), np.log10(center_L*2),grid_size))):
+            print(j)
         
-            
-            ess, grad_calls_until_convergence = benchmark_chains(model, sampler_mhmclmc(step_size=step_size, L=L), n=n, batch =batch) # batch=1000//model.ndims)
+            ess, grad_calls_until_convergence, _ = benchmark_chains(model, sampler_mhmclmc(step_size=step_size, L=L), keys[i], n=n, batch = batch) # batch=1000//model.ndims)
             results[(step_size, L)] = (ess.item(), grad_calls_until_convergence.item())
         
         best_ess, best_grads, (step_size, L) = max([(results[r][0], results[r][1], r) for r in results], key=operator.itemgetter(0))
@@ -195,10 +196,13 @@ def grid_search(n, model):
         frac_tune3=0,
         params = MCLMCAdaptationState(L=center_L, step_size=center_step_size, std_mat=1.),
         # params = MCLMCAdaptationState(L=10., step_size=3.3454525677773526, std_mat=1.),
+        # params = MCLMCAdaptationState(L=16., step_size=1., std_mat=1.),
         # params = MCLMCAdaptationState(L=10., step_size=5.103655551427525, std_mat=1.),
     )
+    
+    print(f"params found by mhmclmc tuning are L {blackjax_mclmc_sampler_params.L} and step_size {blackjax_mclmc_sampler_params.step_size}")
 
-    ess, grad_calls_until_convergence = benchmark_chains(model, sampler_mhmclmc(step_size=blackjax_mclmc_sampler_params.step_size, L=blackjax_mclmc_sampler_params.L), n=n, batch = batch) # batch=1000//model.ndims)
+    ess, grad_calls_until_convergence, _ = benchmark_chains(model, sampler_mhmclmc(step_size=blackjax_mclmc_sampler_params.step_size, L=blackjax_mclmc_sampler_params.L),  keys[-1], n=n, batch = batch) # batch=1000//model.ndims)
     print(f"ess from tuning is {ess} and num grad calls is {grad_calls_until_convergence}")
 
     # step_size = blackjax_mclmc_sampler_params.step_size
@@ -224,7 +228,6 @@ def grid_search(n, model):
     #     transform=lambda x: transform(x.position), 
     #     progress_bar=True)
     
-    print(f"params found by mhmclmc tuning are L {blackjax_mclmc_sampler_params.L} and step_size {blackjax_mclmc_sampler_params.step_size}")
 
     
 
@@ -241,7 +244,7 @@ if __name__ == "__main__":
 #     benchmarks(5000)
 
     # grid_search(n=2500, model=IllConditionedGaussian(10, 2))
-    grid_search(n=10000, model=Brownian())
+    grid_search(n=2000, model=Brownian())
     # grid_search(n=2500, model='icg')
     # grid_search(n=2500, model='normal')
 

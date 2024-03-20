@@ -48,7 +48,7 @@ def calculate_ess(err_t, grad_evals_per_step, neff= 100):
     
     grads_to_low, cutoff_reached = grads_to_low_error(err_t, grad_evals_per_step, 1./neff)
     
-    return (neff / grads_to_low) * cutoff_reached, grads_to_low*(1/cutoff_reached)
+    return (neff / grads_to_low) * cutoff_reached, grads_to_low*(1/cutoff_reached), cutoff_reached
 
 
 def find_crossing(array, cutoff):
@@ -68,13 +68,13 @@ def cumulative_avg(samples):
 
 
 
-def benchmark_chains(model, sampler, n=10000, batch=None, contract = jnp.average):
+def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.average,):
 
     
     d = get_num_latents(model)
     if batch is None:
         batch = np.ceil(1000 / d).astype(int)
-    key, init_key = jax.random.split(jax.random.PRNGKey(44), 2)
+    key, init_key = jax.random.split(key, 2)
     keys = jax.random.split(key, batch)
 
     init_keys = jax.random.split(init_key, batch)
@@ -101,14 +101,30 @@ def run_benchmarks():
 
         print(f"\nModel: {model}, Sampler: {sampler}\n")
 
+        results = []
         Model = models[model][0]
-        result = benchmark_chains(Model, samplers[sampler], n=models[model][1][sampler], batch=200)
-        #print(f"ESS: {result.item()}")
-        print(f"grads to low bias: " + str(result[1]))
+        key = jax.random.PRNGKey(1)
+        for i in range(100):
+            key1, key = jax.random.split(key)
+            result = benchmark_chains(Model, samplers[sampler],key1, n=models[model][1][sampler], batch=100)
+            #print(f"ESS: {result.item()}")
+            print(f"grads to low bias: " + str(result[1:]))
+            results.append(result[1])
 
+        # import matplotlib.pyplot as plt
+
+        # # ... existing code ...
+
+        # # Plot the second_elements in a scatterplot
+        # plt.scatter([0.5]*len(results), results)
+        # plt.xlabel("Iteration")
+        # plt.ylabel("Second Element of Results")
+        # plt.title("Scatterplot of Second Element of Results")
+        # plt.savefig("scatterplot_mclmc.png")  # Save the plot as scatterplot.png
+        # plt.show()
 
 if __name__ == "__main__":
-
     run_benchmarks()
+
 
 
