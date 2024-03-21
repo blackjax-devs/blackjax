@@ -148,3 +148,16 @@ def step(
     return SMCState(particles, weights, state.update_parameters), SMCInfo(
         resampling_idx, normalizing_constant, update_info
     )
+
+def extend_params_inner_kernel(n_particles, params):
+    """
+    Given a dictionary of params, repeats them for every single particle. The expected
+    usage is in cases where the aim is to repeat the same parameters for all chains within SMC.
+    """
+    def extend(param):
+        if jnp.isscalar(param):
+            return jnp.repeat(param, n_particles, axis=0)
+        else:
+            return jnp.repeat(jnp.atleast_1d(param)[jnp.newaxis, :], n_particles, axis=0)
+
+    return jax.tree_map(extend, params)

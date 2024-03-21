@@ -12,7 +12,7 @@ import blackjax
 import blackjax.smc.resampling as resampling
 import blackjax.smc.solver as solver
 from blackjax import adaptive_tempered_smc, tempered_smc
-from blackjax.smc.tuning import extend_params_inner_kernel
+from blackjax.smc import extend_params_inner_kernel
 from tests.smc import SMCLinearRegressionTestCase
 
 

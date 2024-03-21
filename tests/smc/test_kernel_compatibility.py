@@ -7,7 +7,7 @@ from jax.scipy.stats import multivariate_normal
 import blackjax
 from blackjax import adaptive_tempered_smc
 from blackjax.mcmc.random_walk import normal
-from blackjax.smc.tuning import extend_params_inner_kernel
+from blackjax.smc import extend_params_inner_kernel
 
 
 class SMCAndMCMCIntegrationTest(unittest.TestCase):
