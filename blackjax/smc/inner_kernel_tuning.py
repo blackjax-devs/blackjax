@@ -14,6 +14,7 @@ class StateWithParameterOverride(NamedTuple):
     and (n_particles, *) arrays as meanings. The latter
     represent a parameter per chain for the next mutation step.
     """
+
     sampler_state: ArrayTree
     parameter_override: Dict[str, ArrayTree]
 
@@ -29,7 +30,7 @@ def build_kernel(
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
-    mcmc_parameter_update_fn: Callable[[SMCState, SMCInfo], ArrayTree],
+    mcmc_parameter_update_fn: Callable[[SMCState, SMCInfo], Dict[str, ArrayTree]],
     num_mcmc_steps: int = 10,
     **extra_parameters,
 ) -> Callable:

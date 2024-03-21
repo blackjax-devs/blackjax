@@ -657,7 +657,9 @@ class UnivariateNormalTest(chex.TestCase):
         self, algorithm, initial_position, parameters, num_sampling_steps, burnin
     ):
         if algorithm == blackjax.irmh:
-            parameters["proposal_distribution"] = functools.partial(irmh_proposal_distribution, mean=1.0)
+            parameters["proposal_distribution"] = functools.partial(
+                irmh_proposal_distribution, mean=1.0
+            )
 
         if algorithm == blackjax.rmh:
             parameters["proposal_generator"] = rmh_proposal_distribution

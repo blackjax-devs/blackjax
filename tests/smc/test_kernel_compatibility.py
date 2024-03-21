@@ -24,7 +24,6 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
             self.key, jnp.zeros(2), jnp.eye(2), (self.n_particles,)
         )
 
-
     def check_compatible(self, mcmc_step_fn, mcmc_init_fn, mcmc_parameters):
         """
         Runs one SMC step
@@ -51,66 +50,76 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
         self.check_compatible(
             kernel,
             blackjax.additive_step_random_walk.init,
-            extend_params_inner_kernel(self.n_particles, {"proposal_mean": 1.0})
+            extend_params_inner_kernel(self.n_particles, {"proposal_mean": 1.0}),
         )
 
     def test_compatible_with_rmh(self):
         rmh = blackjax.rmh.build_kernel()
 
         def kernel(
+            rng_key, state, logdensity_fn, proposal_mean, proposal_logdensity_fn=None
+        ):
+            return rmh(
                 rng_key,
                 state,
                 logdensity_fn,
-                proposal_mean,
-                proposal_logdensity_fn=None
-        ):
-            return rmh(rng_key,
-                              state,
-                              logdensity_fn,
-                              lambda a, b: blackjax.mcmc.random_walk.normal(proposal_mean)(a, b),
-                              proposal_logdensity_fn)
+                lambda a, b: blackjax.mcmc.random_walk.normal(proposal_mean)(a, b),
+                proposal_logdensity_fn,
+            )
+
         self.check_compatible(
             kernel,
             blackjax.rmh.init,
-            extend_params_inner_kernel(self.n_particles, {"proposal_mean":1.0})
+            extend_params_inner_kernel(self.n_particles, {"proposal_mean": 1.0}),
         )
 
     def test_compatible_with_hmc(self):
         self.check_compatible(
             blackjax.hmc.build_kernel(),
             blackjax.hmc.init,
-            extend_params_inner_kernel(self.n_particles,{
-                "step_size": 0.3,
-                "inverse_mass_matrix": jnp.array([1.]),
-                "num_integration_steps": 1,
-            }),
+            extend_params_inner_kernel(
+                self.n_particles,
+                {
+                    "step_size": 0.3,
+                    "inverse_mass_matrix": jnp.array([1.0]),
+                    "num_integration_steps": 1,
+                },
+            ),
         )
 
     def test_compatible_with_irmh(self):
         def kernel(rng_key, state, logdensity_fn, mean, proposal_logdensity_fn=None):
-            return blackjax.irmh.build_kernel()(rng_key,
-                                         state,
-                                         logdensity_fn,
-                                         lambda key: mean + jax.random.normal(key), proposal_logdensity_fn)
+            return blackjax.irmh.build_kernel()(
+                rng_key,
+                state,
+                logdensity_fn,
+                lambda key: mean + jax.random.normal(key),
+                proposal_logdensity_fn,
+            )
 
         self.check_compatible(
             kernel,
             blackjax.irmh.init,
-            extend_params_inner_kernel(self.n_particles,{
-                "mean":  jnp.array([1.0, 1.0])
-            })
+            extend_params_inner_kernel(
+                self.n_particles, {"mean": jnp.array([1.0, 1.0])}
+            ),
         )
 
     def test_compatible_with_nuts(self):
         self.check_compatible(
             blackjax.nuts.build_kernel(),
             blackjax.nuts.init,
-            extend_params_inner_kernel(self.n_particles, {"step_size": 1e-10, "inverse_mass_matrix": jnp.eye(2)}),
+            extend_params_inner_kernel(
+                self.n_particles,
+                {"step_size": 1e-10, "inverse_mass_matrix": jnp.eye(2)},
+            ),
         )
 
     def test_compatible_with_mala(self):
         self.check_compatible(
-            blackjax.mala.build_kernel(), blackjax.mala.init, extend_params_inner_kernel(self.n_particles,{"step_size": 1e-10})
+            blackjax.mala.build_kernel(),
+            blackjax.mala.init,
+            extend_params_inner_kernel(self.n_particles, {"step_size": 1e-10}),
         )
 
     @staticmethod
