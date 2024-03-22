@@ -154,6 +154,7 @@ def extend_params_inner_kernel(n_particles, params):
     """Given a dictionary of params, repeats them for every single particle. The expected
     usage is in cases where the aim is to repeat the same parameters for all chains within SMC.
     """
+
     def extend(param):
         return jnp.repeat(jnp.asarray(param)[None, ...], n_particles, axis=0)
 
