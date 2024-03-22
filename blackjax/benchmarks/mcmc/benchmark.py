@@ -97,16 +97,17 @@ def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.av
 
 def run_benchmarks():
 
-    for model, sampler in itertools.product(models, samplers):
+    # for model, sampler in itertools.product(models, samplers):
+    for model, sampler in itertools.product(["Brownian Motion"], ["mclmc"]):
 
         print(f"\nModel: {model}, Sampler: {sampler}\n")
 
         results = []
         Model = models[model][0]
-        key = jax.random.PRNGKey(1)
-        for i in range(100):
+        key = jax.random.PRNGKey(2)
+        for i in range(1000):
             key1, key = jax.random.split(key)
-            result = benchmark_chains(Model, samplers[sampler],key1, n=models[model][1][sampler], batch=100)
+            result = benchmark_chains(Model, samplers[sampler],key1, n=models[model][1][sampler], batch=1)
             #print(f"ESS: {result.item()}")
             print(f"grads to low bias: " + str(result[1:]))
             results.append(result[1])

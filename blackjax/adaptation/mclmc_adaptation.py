@@ -488,7 +488,6 @@ def mhmclmc_make_L_step_size_adaptation(
             
 
 
-            
             if fix_L:
                 params = params._replace(
                         step_size=mask * step_size + (1-mask)*params.step_size, 
@@ -557,6 +556,9 @@ def mhmclmc_make_L_step_size_adaptation(
         if num_steps2 != 0.0:
             x_average, x_squared_average = average[0], average[1]
             variances = x_squared_average - jnp.square(x_average)
+            # jax.debug.print("{x} frac tune 2 guess",x=(jnp.sqrt(jnp.sum(variances))))
+            
+            
             # change = jax.lax.clamp(Lratio_lowerbound, jnp.sqrt(jnp.sum(variances))/params.L, Lratio_upperbound)
             change = jnp.sqrt(jnp.sum(variances))/params.L
             # jax.debug.print("{x} L ratio, old val,  new val",x=(change, params.L, params.L*change))

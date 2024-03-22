@@ -66,7 +66,7 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, transform, key):
         diagonal_preconditioning=True
     )
 
-    # jax.debug.print("params {x}", x=blackjax_mclmc_sampler_params)
+    # jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.L, blackjax_mclmc_sampler_params.step_size))
 
     sampling_alg = blackjax.mclmc(
         logdensity_fn,
@@ -131,7 +131,7 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, transform, key):
     step_size = blackjax_mclmc_sampler_params.step_size
     L = blackjax_mclmc_sampler_params.L
 
-    jax.debug.print("{x} num_steps, L, step_size", x=(jnp.ceil(L/step_size), L, step_size))
+    jax.debug.print("{x} L, step_size", x=(L, step_size))
 
 
     alg = blackjax.mcmc.mhmclmc.mhmclmc(

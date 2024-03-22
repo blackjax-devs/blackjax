@@ -16,7 +16,7 @@ from inference_models import Brownian, IllConditionedGaussian, models
 
 def sampler_mhmclmc_with_tuning(step_size, L, frac_tune2, frac_tune3):
 
-    def s(logdensity_fn, num_steps, initial_position, key):
+    def s(logdensity_fn, num_steps, initial_position, transform, key):
 
         init_key, tune_key, key = jax.random.split(key, 3)
 
@@ -33,7 +33,7 @@ def sampler_mhmclmc_with_tuning(step_size, L, frac_tune2, frac_tune3):
                 step_size=step_size, 
                 logdensity_fn=logdensity_fn)
 
-        jax.debug.print("params before tuning {x}", x=MCLMCAdaptationState(L=L, step_size=step_size))
+        # jax.debug.print("params before tuning {x}", x=MCLMCAdaptationState(L=L, step_size=step_size))
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
@@ -44,7 +44,7 @@ def sampler_mhmclmc_with_tuning(step_size, L, frac_tune2, frac_tune3):
             rng_key=tune_key,
             frac_tune2=frac_tune2,
             frac_tune3=frac_tune3,
-            params=MCLMCAdaptationState(L=L, step_size=step_size)
+            params=MCLMCAdaptationState(L=L, step_size=step_size, std_mat=1.)
         )
 
         jax.debug.print("params {x}", x=blackjax_mclmc_sampler_params)
@@ -69,7 +69,7 @@ def sampler_mhmclmc_with_tuning(step_size, L, frac_tune2, frac_tune3):
         initial_state_or_position=blackjax_state_after_tuning,
         inference_algorithm=alg,
         num_steps=num_steps, 
-        transform=lambda x: x.position, 
+        transform=lambda x: transform(x.position), 
         progress_bar=True)
 
         print(info.acceptance_rate.mean(), "acceptance probability\n\n\n\n")
@@ -102,7 +102,8 @@ def sampler_mhmclmc(step_size, L):
         inference_algorithm=alg,
         num_steps=num_steps, 
         transform=lambda x: transform(x.position), 
-        progress_bar=False)
+        progress_bar=True)
+        print(info.acceptance_rate.mean(), "acceptance probability\n\n\n\n")
 
         # print(info.acceptance_rate.mean(), "acceptance probability\n\n\n\n")
         # print(out.var(axis=0), "acceptance probability")
@@ -139,7 +140,12 @@ def grid_search(n, model):
     
     ess_val, grads_to_low_error, _ = calculate_ess(err_t, avg_num_steps_per_traj)
     print(ess_val, grads_to_low_error)
-    center_L, center_step_size = params.L.mean(), params.step_size.mean()
+
+
+
+    # center_L, center_step_size = params.L.mean(), params.step_size.mean()
+    center_L, center_step_size = 0.5755017, 0.7676609
+    print(f"Initial params hard coded as L {center_L} and step size as {center_step_size}")
 
     # nuts result
 
@@ -148,9 +154,10 @@ def grid_search(n, model):
     print("\nBeginning grid search:\n")
 
     grid_size = 5
+    batch = 100
 
     # best params on iteration 0 are stepsize 5.103655551427525 and L 5.408820389035896 with Grad Calls until Convergence 216.19784545898438
-    iterations=2
+    iterations=0
     keys = jax.random.split(jax.random.PRNGKey(0), iterations+1)
     for i in range(iterations):
         for j, (step_size, L) in enumerate(itertools.product(np.logspace(np.log10(center_step_size/2), np.log10(center_step_size*2), grid_size), np.logspace(np.log10(center_L/2), np.log10(center_L*2),grid_size))):
@@ -190,16 +197,17 @@ def grid_search(n, model):
         blackjax_mclmc_sampler_params,
     ) = blackjax.adaptation.mclmc_adaptation.mhmclmc_find_L_and_step_size(
         mclmc_kernel=kernel,
-        num_steps=n*100,
+        num_steps=n,
         state=initial_state,
         rng_key=tune_key,
         frac_tune3=0,
-        params = MCLMCAdaptationState(L=center_L, step_size=center_step_size, std_mat=1.),
+        # params = MCLMCAdaptationState(L=center_L, step_size=center_step_size, std_mat=1.),
         # params = MCLMCAdaptationState(L=10., step_size=3.3454525677773526, std_mat=1.),
         # params = MCLMCAdaptationState(L=16., step_size=1., std_mat=1.),
         # params = MCLMCAdaptationState(L=10., step_size=5.103655551427525, std_mat=1.),
     )
     
+    print(f"initial params are L {center_L} and step_size {center_step_size}")
     print(f"params found by mhmclmc tuning are L {blackjax_mclmc_sampler_params.L} and step_size {blackjax_mclmc_sampler_params.step_size}")
 
     ess, grad_calls_until_convergence, _ = benchmark_chains(model, sampler_mhmclmc(step_size=blackjax_mclmc_sampler_params.step_size, L=blackjax_mclmc_sampler_params.L),  keys[-1], n=n, batch = batch) # batch=1000//model.ndims)
@@ -236,6 +244,14 @@ def grid_search(n, model):
 
 if __name__ == "__main__":
 
+    for i in range(100):
+
+        ess, grad_calls_until_convergence, _ = benchmark_chains(Brownian(), sampler_mhmclmc_with_tuning(step_size=0.1, L=14.8, frac_tune2=0.1, frac_tune3=0),  jax.random.PRNGKey(i), n=50000, batch = 1) # batch=1000//model.ndims)
+
+        # ess, grad_calls_until_convergence, _ = benchmark_chains(Brownian(), sampler_mhmclmc(step_size=0.4, L=14.8,),  jax.random.PRNGKey(i), n=40000, batch = 10) # batch=1000//model.ndims)
+        print(f"ess from tuning is {ess} and num grad calls is {grad_calls_until_convergence}")
+        print(f"L from ESS (0.4 * step_size/ESS): {0.4 * 0.4/ess}")
+
     # model=IllConditionedGaussian(10, 2)
     # ess, grad_calls_until_convergence = benchmark_chains(model, run_mclmc, n=2500, batch =10) # batch=1000//model.ndims)
     # print(ess)
@@ -244,7 +260,7 @@ if __name__ == "__main__":
 #     benchmarks(5000)
 
     # grid_search(n=2500, model=IllConditionedGaussian(10, 2))
-    grid_search(n=2000, model=Brownian())
+    # grid_search(n=10000, model=Brownian())
     # grid_search(n=2500, model='icg')
     # grid_search(n=2500, model='normal')
 
