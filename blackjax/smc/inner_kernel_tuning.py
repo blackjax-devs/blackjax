@@ -49,6 +49,7 @@ def build_kernel(
         A function that returns the probability at a given position.
     mcmc_step_fn:
         The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
+        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
     mcmc_init_fn
         A callable that initializes the inner kernel
     mcmc_parameter_update_fn
