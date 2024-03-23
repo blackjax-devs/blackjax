@@ -175,7 +175,7 @@ class Banana():
 
     def logdensity_fn(self, x):
         mu2 = self.curvature * (x[0] ** 2 - 100)
-        return -0.5 * (jnp.square(x[0] / 10.0) - jnp.square(x[1] - mu2))
+        return -0.5 * (jnp.square(x[0] / 10.0) + jnp.square(x[1] - mu2))
 
     def posterior_draw(self, key):
         z = jax.random.normal(key, shape = (2, ))
@@ -742,8 +742,8 @@ def random_walk(key, num):
 
 
 
-# models = {'normal': StandardNormal(10), 'banana': Banana(), 'icg' : IllConditionedGaussian(10, 2), }
+models = {'banana': (Banana(), {'mclmc': 100000, 'nuts': 10000})}
 
-models = {'Brownian Motion': (Brownian(), {'mclmc': 50000, 'mhmclmc' : 50000, 'nuts': 1000}),
-        #   'Item Response Theory': (ItemResponseTheory(), {'mclmc': 50000, 'mhmclmc' : 50000, 'nuts': 1000})
-          }
+# models = {#'Brownian Motion': (Brownian(), {'mclmc': 50000, 'mhmclmc' : 50000, 'nuts': 1000})}
+#           'Item Response Theory': (ItemResponseTheory(), {'mclmc': 10000, 'mhmclmc' : 50000, 'nuts': 1000})
+#           }

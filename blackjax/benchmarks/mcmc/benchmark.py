@@ -2,9 +2,9 @@ import os
 import jax
 import jax.numpy as jnp
 
-# os.environ["XLA_FLAGS"] = '--xla_force_host_platform_device_count=' + str(128)
-# num_cores = jax.local_device_count()
-# print(num_cores, jax.lib.xla_bridge.get_backend().platform)
+os.environ["XLA_FLAGS"] = '--xla_force_host_platform_device_count=' + str(128)
+num_cores = jax.local_device_count()
+print(num_cores, jax.lib.xla_bridge.get_backend().platform)
 
 import itertools
 
@@ -80,14 +80,17 @@ def benchmark_chains(model, sampler, n=10000, batch=None, contract = jnp.average
     init_keys = jax.random.split(init_key, batch)
     init_pos = jax.vmap(model.sample_init)(init_keys)
 
-    # samples, params, avg_num_steps_per_traj = jax.pmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
-    samples, params, grad_calls_per_traj = jax.vmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
+    samples, _, grad_calls_per_traj = jax.pmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
+    #samples, params, grad_calls_per_traj = jax.vmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
     avg_grad_calls_per_traj = jnp.mean(grad_calls_per_traj, axis=0)
     
     full = lambda arr : err(model.E_x2, model.Var_x2, contract)(cumulative_avg(arr))
     err_t = jnp.mean(jax.vmap(full)(samples**2), axis=0)
     
-    return grads_to_low_error(err_t, avg_grad_calls_per_traj)[0]
+    grads, reached = grads_to_low_error(err_t, avg_grad_calls_per_traj)
+    print(reached)
+    return grads
+
     ess_per_sample = calculate_ess(err_t, grad_evals_per_step=avg_grad_calls_per_traj)
     return ess_per_sample
     # , err_t[-1], params
@@ -102,9 +105,9 @@ def run_benchmarks():
         print(f"\nModel: {model}, Sampler: {sampler}\n")
 
         Model = models[model][0]
-        result = benchmark_chains(Model, samplers[sampler], n=models[model][1][sampler], batch=200)
+        result = benchmark_chains(Model, samplers[sampler], n=models[model][1][sampler], batch=128)
         #print(f"ESS: {result.item()}")
-        print(f"grads to low bias: " + str(result[1]))
+        print(f"grads to low bias: " + str(result))
 
 
 if __name__ == "__main__":

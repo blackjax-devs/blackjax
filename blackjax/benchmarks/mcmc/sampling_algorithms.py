@@ -23,7 +23,7 @@ def run_nuts(
     rng_key, warmup_key = jax.random.split(key, 2)
 
 
-    (state, params), _ = warmup.run(warmup_key, initial_position, 2000)
+    (state, params), _ = warmup.run(warmup_key, initial_position, 1000)
 
     nuts = blackjax.nuts(logdensity_fn=logdensity_fn, step_size=params['step_size'], inverse_mass_matrix= params['inverse_mass_matrix'])
 
