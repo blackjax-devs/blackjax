@@ -37,12 +37,12 @@ class AdaptationState(NamedTuple):
 
 def to_dict(x):
     return {
-            'steps_per_sample': x[:, 0],
-            'stepsize': x[:, 1],
-            'acc prob': x[:, 2],
-            'equi full': x[:, 3],
-            'equi diag': x[:, 4],
-            'summary': x[:, 5:]
+            'steps_per_sample': x[..., 0],
+            'stepsize': x[..., 1],
+            'acc prob': x[..., 2],
+            'equi full': x[..., 3],
+            'equi diag': x[..., 4],
+            'summary': x[..., 5:]
         }
 
 
@@ -75,7 +75,7 @@ def init(num_steps, steps_per_sample, adap_state, d, mclachlan):
 
 
 
-def stage2(logdensity_fn, integrator, num_samples, chains, 
+def stage2(logdensity_fn, integrator, num_samples, parallelization, 
            init_state, rng_key, 
            steps_per_sample, Lpartial, step_size,
            acc_prob_target= 0.7,
@@ -94,8 +94,8 @@ def stage2(logdensity_fn, integrator, num_samples, chains,
         # dynamics
         sequential_kernel = mhmclmc.mhmclmc_proposal(with_isokinetic_maruyama(integrator(logdensity_fn)),
                                                      adap.step_size, adap.Lpartial, steps_per_sample)
-        kernel = umclmc.parallelize_kernel(sequential_kernel, chains, (0, 0))
-        state, info, _ = kernel(jax.random.split(key1, chains), state)
+        kernel = parallelization.pvmap(sequential_kernel, (0, 0))
+        state, info, _ = kernel(jax.random.split(key1, parallelization.shape), state)
 
         # change the stepsize
         acc_prob = jnp.average(info.acceptance_rate)
@@ -104,8 +104,8 @@ def stage2(logdensity_fn, integrator, num_samples, chains,
     
         # additional information
         
-        equi_full = umclmc.equipartition_fullrank(state.position, state.logdensity_grad, key2)
-        equi_diag = umclmc.equipartition_diagonal(state.position, state.logdensity_grad, key2)
+        equi_full = umclmc.equipartition_fullrank(state.position, state.logdensity_grad, key2, parallelization)
+        equi_diag = umclmc.equipartition_diagonal(state.position, state.logdensity_grad, key2, parallelization)
         new_info = jnp.concatenate((jnp.array([steps_per_sample, step_size, acc_prob, equi_full, equi_diag]), 
                                     observables(state.position)))
         
@@ -120,17 +120,18 @@ def stage2(logdensity_fn, integrator, num_samples, chains,
     
     
 
-def algorithm(logdensity_fn, num_steps, chains, 
+def algorithm(logdensity_fn, num_steps, parallelization, 
               initial_position, rng_key,
               num_steps_per_sample, 
               mclachlan = True,
               observables= jnp.square):
+    """chain_shape: an integer or tuple with two integers. If it is a tuple, """
     
-    d = ravel_pytree(initial_position)[0].shape[0] // chains # number of dimensions
+    d = ravel_pytree(initial_position)[0].shape[0] // parallelization.num_chains # number of dimensions
 
     # burn-in with the unadjusted method    def stage1(logdensity_fn, num_steps, chains, initial_position, rng_key, 
 
-    state_all, info1 = umclmc.stage1(logdensity_fn, num_steps, chains, initial_position, rng_key, observables= observables)
+    state_all, info1 = umclmc.stage1(logdensity_fn, num_steps, parallelization, initial_position, rng_key, observables= observables)
 
     state, adap_state, key = state_all
     
@@ -141,7 +142,7 @@ def algorithm(logdensity_fn, num_steps, chains,
     integrator, num_samples, steps_per_sample, step_size, Lpartial = init(num_steps, num_steps_per_sample, adap_state, d, mclachlan)
 
     # refine the results with the adjusted method
-    state_final, info2 = stage2(logdensity_fn, integrator, num_samples, chains, 
+    state_final, info2 = stage2(logdensity_fn, integrator, num_samples, parallelization, 
                                 state, key, 
                                 steps_per_sample, Lpartial, step_size,
                                 observables= observables)

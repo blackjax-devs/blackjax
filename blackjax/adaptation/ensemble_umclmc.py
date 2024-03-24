@@ -44,7 +44,32 @@ class AdaptationState(NamedTuple):
     history: Array
     
     hyperparameters: Any
+
+
+class Parallelization():
     
+    def __init__(self, pmap_chains= 1, vmap_chains= 1):
+        
+        self.num_chains = pmap_chains * vmap_chains
+        
+        if (pmap_chains != 1) and (vmap_chains != 1): # both vmap and pmap are to be applied
+            self.pvmap = lambda func, in_axes: jax.pmap(jax.vmap(func, in_axes= in_axes), in_axes= in_axes)
+            self.axis = (0, 1)
+            self.shape = (pmap_chains, vmap_chains)
+            self.flatten = lambda x: x.reshape(self.num_chains, *x.shape[2:])
+            
+        else:
+            self.axis = 0
+            self.shape = self.num_chains
+            self.flatten = lambda x: x
+            
+            if vmap_chains == 1:
+                self.pvmap = lambda func, in_axes: jax.pmap(func, in_axes= in_axes)
+            else:
+                self.pvmap = lambda func, in_axes: jax.vmap(func, in_axes= in_axes)
+            
+        
+            
 
 def to_dict(x):
     return {'L': x[:, 0], 
@@ -57,7 +82,7 @@ def to_dict(x):
             }
     
 
-def init(position, logdensity_fn):
+def init(position, logdensity_fn, parallelization):
     """initialize the chains based on the equipartition of the initial condition.
        We initialize the velocity along grad log p if E_ii > 1 and along -grad log p if E_ii < 1.
     """
@@ -69,17 +94,17 @@ def init(position, logdensity_fn):
         u = unravel_fn(_normalized_flatten_array(flat_g)[0]) # = grad logp/ |grad logp|
         return u, l, g
 
-    velocity, logdensity, logdensity_grad = jax.vmap(_init)(position)
+    velocity, logdensity, logdensity_grad = parallelization.pvmap(_init)(position)
     
     # flip the velocity, depending on the equipartition condition
     to_sign = lambda equipartition: -2. * (equipartition < 1.) + 1.    
-    velocity = jax.tree_util.tree_map(lambda x, u, g: to_sign(jnp.average(-x * g, axis = 0))* u, position, velocity, logdensity_grad)
+    velocity = jax.tree_util.tree_map(lambda x, u, g: to_sign(jnp.average(-x * g, axis= parallelization.axis))* u, position, velocity, logdensity_grad)
     
     return IntegratorState(position, velocity, logdensity, logdensity_grad)
     
     
 
-def init_adap(num_steps, chains, delay_frac, position, alpha, d):
+def init_adap(num_steps, parallelization, delay_frac, position, alpha, d):
     
     delay_num = (int)(jnp.rint(delay_frac * num_steps))
     #flat_pytree, unravel_fn = ravel_pytree(sequential_pytree)
@@ -87,7 +112,7 @@ def init_adap(num_steps, chains, delay_frac, position, alpha, d):
     #sigma = unravel_fn(jnp.ones(flat_pytree.shape, dtype = flat_pytree.dtype))
     
     step_size = 0.01 * jnp.sqrt(d)
-    L = computeL(alpha, chains, position)
+    L = computeL(alpha, parallelization, position)
     hyp = Hyperparameters(L, step_size)
     
     history = jnp.inf * jnp.ones(delay_num)
@@ -111,14 +136,17 @@ def init_adap(num_steps, chains, delay_frac, position, alpha, d):
 
 
 
-def equipartition_fullrank(position, logdensity_grad, rng_key):
+def equipartition_fullrank(position, logdensity_grad, rng_key, parallelization):
     """loss = Tr[(1 - E)^T (1 - E)] / d^2
         where Eij = <xi gj> is the equipartition patrix.
         Loss is computed with the Hutchinson's trick."""
     
-    chains, d = position.shape
+    _position = parallelization.flatten(position)
+    
+    d = ravel_pytree(_position)[0].shape[0] // parallelization.chains # number of dimensions
+
     z = jax.random.rademacher(rng_key, (100, d)) # <z_i z_j> = delta_ij
-    X = z + (logdensity_grad @ z.T).T @ position / chains
+    X = z + (logdensity_grad @ z.T).T @ _position / parallelization.chains
     return jnp.average(jnp.square(X)) / d
 
     
@@ -131,26 +159,21 @@ def equipartition_fullrank(position, logdensity_grad, rng_key):
     # return jnp.average(jnp.square(X)) / dim
 
 
-def equipartition_diagonal(position, logdensity_grad, rng_key):
+def equipartition_diagonal(position, logdensity_grad, rng_key, parallelization):
     """Ei = E_ensemble (- grad log p_i x_i ). Ei is 1 if we have converged. 
     virial_loss = average over parameters (Ei)"""
-    E = jax.tree_util.tree_map(lambda x, g: jnp.square(1 + jnp.average(x * g, axis = 0)), position, logdensity_grad)
+    E = jax.tree_util.tree_map(lambda x, g: jnp.square(1 + jnp.average(x * g, axis= parallelization.axis)), position, logdensity_grad)
     
     return jnp.average(ravel_pytree(E)[0])
     
 
 
-def parallelize_kernel(func, chains, in_axes):
-    # we should also have pmap and a combination pmap(vmap())
-    return jax.vmap(func, in_axes)
 
-
-
-def computeL(alpha, chains, position):
+def computeL(alpha, parallelization, position):
     
     x, unravel_fn = ravel_pytree(position)
 
-    return alpha * jnp.sqrt(jnp.sum(jnp.square(x))/chains) #average over the ensemble, sum over dimensions
+    return alpha * jnp.sqrt(jnp.sum(jnp.square(x))/parallelization.num_chains) #average over the ensemble, sum over dimensions
 
 
 
@@ -168,9 +191,9 @@ def nan_reject(nonans, old, new):
 
 
 
-def build_kernel1(sequential_mclmc_kerel, max_iter, chains, fullrank, d, alpha = 1., C = 0.1):
+def build_kernel1(sequential_mclmc_kerel, max_iter, parallelization, fullrank, d, alpha = 1., C = 0.1):
 
-    mclmc_kernel = parallelize_kernel(sequential_mclmc_kerel, chains, (0, 0, None, None))
+    mclmc_kernel = parallelization.pvmap(sequential_mclmc_kerel, (0, 0, None, None))
     
     equi = equipartition_fullrank if fullrank else equipartition_diagonal
     
@@ -180,7 +203,7 @@ def build_kernel1(sequential_mclmc_kerel, max_iter, chains, fullrank, d, alpha =
         state, adap_state, rng_key = state_all
         hyp = adap_state.hyperparameters
         rng_key_new, key_kernel, key_hutchinson = jax.random.split(rng_key, 3)
-        keys_kernel = jax.random.split(key_kernel, chains)
+        keys_kernel = jax.random.split(key_kernel, parallelization.shape)
         
         # apply one step of the dynamics
         _state, info = mclmc_kernel(keys_kernel, state, hyp.L, hyp.step_size)
@@ -193,7 +216,7 @@ def build_kernel1(sequential_mclmc_kerel, max_iter, chains, fullrank, d, alpha =
 
         
         # hyperparameter adaptation                                              
-        bias = equi(state.position, state.logdensity_grad, key_hutchinson) #estimate the bias from the equipartition loss
+        bias = equi(state.position, state.logdensity_grad, key_hutchinson, parallelization) #estimate the bias from the equipartition loss
 
         eevpd_wanted = C * jnp.power(bias, 3./8.)
         
@@ -201,7 +224,7 @@ def build_kernel1(sequential_mclmc_kerel, max_iter, chains, fullrank, d, alpha =
         eps_factor = nonans * eps_factor + (1-nonans) * 0.5
         eps_factor = jnp.clip(eps_factor, 0.3, 3.)
         
-        L = computeL(alpha, chains, state.position)
+        L = computeL(alpha, parallelization, state.position)
         
         hyp = Hyperparameters(L, hyp.step_size * eps_factor)
         
@@ -217,7 +240,7 @@ def build_kernel1(sequential_mclmc_kerel, max_iter, chains, fullrank, d, alpha =
     return kernel
 
 
-def kernel_with_observables(kernel, observables):
+def kernel_with_observables(kernel, observables, parallelization):
 
 
     def _kernel(_state_all):
@@ -229,8 +252,8 @@ def kernel_with_observables(kernel, observables):
         state, adap, key = state_all
         hyp = adap.hyperparameters
         
-        equi_full = equipartition_fullrank(state.position, state.logdensity_grad, key1)
-        equi_diag = equipartition_diagonal(state.position, state.logdensity_grad, key1)
+        equi_full = equipartition_fullrank(state.position, state.logdensity_grad, key1, parallelization)
+        equi_diag = equipartition_diagonal(state.position, state.logdensity_grad, key1, parallelization)
         
         new_info = jnp.concatenate((jnp.array([hyp.L, hyp.step_size, adap.eevpd_wanted, adap.eevpd, equi_full, equi_diag]), 
                                     observables(state.position)))
@@ -242,7 +265,7 @@ def kernel_with_observables(kernel, observables):
 
 
 
-def stage1(logdensity_fn, num_steps, chains, initial_position, rng_key, 
+def stage1(logdensity_fn, num_steps, parallelization, initial_position, rng_key, 
             delay_frac = 0.05,
             C = 0.1,
             alpha = 1.,
@@ -251,18 +274,18 @@ def stage1(logdensity_fn, num_steps, chains, initial_position, rng_key,
     """observable: function taking position x and outputing O(x)."""
     
 
-    d = ravel_pytree(initial_position)[0].shape[0] // chains # number of dimensions
+    d = ravel_pytree(initial_position)[0].shape[0] // parallelization.chains # number of dimensions
     
     # kernel    
     sequential_kernel = mclmc.build_kernel(logdensity_fn= logdensity_fn, integrator= isokinetic_leapfrog)
     
     max_iter = 500#num_steps // 4
     
-    kernel = build_kernel1(sequential_kernel, max_iter, chains, fullrank, d, alpha, C)
+    kernel = build_kernel1(sequential_kernel, max_iter, parallelization, fullrank, d, alpha, C)
 
     # initialize 
-    state = init(position=initial_position, logdensity_fn=logdensity_fn)
-    adap_state = init_adap(num_steps, chains, delay_frac, state.position, alpha, d)
+    state = init(position=initial_position, logdensity_fn=logdensity_fn, parallelization= parallelization)
+    adap_state = init_adap(num_steps, parallelization, delay_frac, state.position, alpha, d)
 
     state_all = (state, adap_state, rng_key)
     cond = lambda state_all: state_all[1].cond
@@ -272,7 +295,7 @@ def stage1(logdensity_fn, num_steps, chains, initial_position, rng_key,
         num_info = 6 + len(observables(initial_position))
         _info = jnp.empty(shape = (max_iter, num_info))
         
-        kernel = kernel_with_observables(kernel, observables)
+        kernel = kernel_with_observables(kernel, observables, parallelization)
         counter = 0
         while cond(state_all):
             state_all, new_info = kernel(state_all)
