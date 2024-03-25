@@ -40,6 +40,7 @@ class SMCState(NamedTuple):
 
     particles: ArrayTree
     weights: Array
+    update_parameters: ArrayTree
 
 
 class SMCInfo(NamedTuple):
@@ -59,12 +60,12 @@ class SMCInfo(NamedTuple):
     update_info: NamedTuple
 
 
-def init(particles: ArrayLikeTree):
+def init(particles: ArrayLikeTree, init_update_params):
     # Infer the number of particles from the size of the leading dimension of
     # the first leaf of the inputted PyTree.
     num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
     weights = jnp.ones(num_particles) / num_particles
-    return SMCState(particles, weights)
+    return SMCState(particles, weights, init_update_params)
 
 
 def step(
@@ -137,13 +138,24 @@ def step(
     particles = jax.tree_map(lambda x: x[resampling_idx], state.particles)
 
     keys = jax.random.split(updating_key, num_resampled)
-    particles, update_info = update_fn(keys, particles)
+    particles, update_info = update_fn(keys, particles, state.update_parameters)
 
     log_weights = weight_fn(particles)
     logsum_weights = jax.scipy.special.logsumexp(log_weights)
     normalizing_constant = logsum_weights - jnp.log(num_particles)
     weights = jnp.exp(log_weights - logsum_weights)
 
-    return SMCState(particles, weights), SMCInfo(
+    return SMCState(particles, weights, state.update_parameters), SMCInfo(
         resampling_idx, normalizing_constant, update_info
     )
+
+
+def extend_params(n_particles, params):
+    """Given a dictionary of params, repeats them for every single particle. The expected
+    usage is in cases where the aim is to repeat the same parameters for all chains within SMC.
+    """
+
+    def extend(param):
+        return jnp.repeat(jnp.asarray(param)[None, ...], n_particles, axis=0)
+
+    return jax.tree_map(extend, params)
