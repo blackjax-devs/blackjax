@@ -122,8 +122,8 @@ class SMCTest(chex.TestCase):
         np.testing.assert_allclose(1.0, std, atol=1e-1)
 
 
-class ExtendToParticlesTest(chex.TestCase):
-    def test_extend_params_inner_kernel(self):
+class ExtendParamsTest(chex.TestCase):
+    def test_extend_params(self):
         extended = extend_params(
             3,
             {
