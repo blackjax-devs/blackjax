@@ -100,9 +100,7 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
         self.check_compatible(
             kernel,
             blackjax.irmh.init,
-            extend_params(
-                self.n_particles, {"mean": jnp.array([1.0, 1.0])}
-            ),
+            extend_params(self.n_particles, {"mean": jnp.array([1.0, 1.0])}),
         )
 
     def test_compatible_with_nuts(self):
