@@ -378,13 +378,20 @@ document.write(`
 <div class="viewcode-block" id="StateWithParameterOverride">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.StateWithParameterOverride">[docs]</a>
 <span class="k">class</span> <span class="nc">StateWithParameterOverride</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores both the sampling status and also a dictionary</span>
+<span class="sd">    that contains an dictionary with parameter names as key</span>
+<span class="sd">    and (n_particles, *) arrays as meanings. The latter</span>
+<span class="sd">    represent a parameter per chain for the next mutation step.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
 <div class="viewcode-block" id="StateWithParameterOverride.sampler_state">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.StateWithParameterOverride.sampler_state">[docs]</a>
     <span class="n">sampler_state</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 
 <div class="viewcode-block" id="StateWithParameterOverride.parameter_override">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.StateWithParameterOverride.parameter_override">[docs]</a>
-    <span class="n">parameter_override</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+    <span class="n">parameter_override</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]</span></div>
 </div>
 
 
@@ -402,11 +409,10 @@ document.write(`
     <span class="n">smc_algorithm</span><span class="p">,</span>
     <span class="n">logprior_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">loglikelihood_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">mcmc_factory</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">mcmc_step_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
     <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">mcmc_parameter_update_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">SMCState</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">],</span> <span class="n">ArrayTree</span><span class="p">],</span>
+    <span class="n">mcmc_parameter_update_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">SMCState</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]],</span>
     <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
@@ -423,12 +429,11 @@ document.write(`
 <span class="sd">        A function that computes the log density of the prior distribution</span>
 <span class="sd">    loglikelihood_fn</span>
 <span class="sd">        A function that returns the probability at a given position.</span>
-<span class="sd">    mcmc_factory</span>
-<span class="sd">        A callable that can construct an inner kernel out of the newly-computed parameter</span>
+<span class="sd">    mcmc_step_fn:</span>
+<span class="sd">        The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.</span>
+<span class="sd">        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())</span>
 <span class="sd">    mcmc_init_fn</span>
 <span class="sd">        A callable that initializes the inner kernel</span>
-<span class="sd">    mcmc_parameters</span>
-<span class="sd">        Other (fixed across SMC iterations) parameters for the inner kernel</span>
 <span class="sd">    mcmc_parameter_update_fn</span>
 <span class="sd">        A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the inner kernel in i+1 iteration.</span>
 <span class="sd">    extra_parameters:</span>
@@ -441,9 +446,9 @@ document.write(`
         <span class="n">step_fn</span> <span class="o">=</span> <span class="n">smc_algorithm</span><span class="p">(</span>
             <span class="n">logprior_fn</span><span class="o">=</span><span class="n">logprior_fn</span><span class="p">,</span>
             <span class="n">loglikelihood_fn</span><span class="o">=</span><span class="n">loglikelihood_fn</span><span class="p">,</span>
-            <span class="n">mcmc_step_fn</span><span class="o">=</span><span class="n">mcmc_factory</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">parameter_override</span><span class="p">),</span>
+            <span class="n">mcmc_step_fn</span><span class="o">=</span><span class="n">mcmc_step_fn</span><span class="p">,</span>
             <span class="n">mcmc_init_fn</span><span class="o">=</span><span class="n">mcmc_init_fn</span><span class="p">,</span>
-            <span class="n">mcmc_parameters</span><span class="o">=</span><span class="n">mcmc_parameters</span><span class="p">,</span>
+            <span class="n">mcmc_parameters</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">parameter_override</span><span class="p">,</span>
             <span class="n">resampling_fn</span><span class="o">=</span><span class="n">resampling_fn</span><span class="p">,</span>
             <span class="n">num_mcmc_steps</span><span class="o">=</span><span class="n">num_mcmc_steps</span><span class="p">,</span>
             <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
@@ -474,17 +479,15 @@ document.write(`
 <span class="sd">        A function that computes the log density of the prior distribution</span>
 <span class="sd">    loglikelihood_fn</span>
 <span class="sd">        A function that returns the probability at a given position.</span>
-<span class="sd">    mcmc_factory</span>
-<span class="sd">        A callable that can construct an inner kernel out of the newly-computed parameter</span>
+<span class="sd">    mcmc_step_fn</span>
+<span class="sd">        The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.</span>
 <span class="sd">    mcmc_init_fn</span>
 <span class="sd">        A callable that initializes the inner kernel</span>
-<span class="sd">    mcmc_parameters</span>
-<span class="sd">        Other (fixed across SMC iterations) parameters for the inner kernel step</span>
 <span class="sd">    mcmc_parameter_update_fn</span>
 <span class="sd">        A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the</span>
 <span class="sd">        inner kernel in i+1 iteration.</span>
 <span class="sd">    initial_parameter_value</span>
-<span class="sd">        Paramter to be used by the mcmc_factory before the first iteration.</span>
+<span class="sd">        Parameter to be used by the mcmc_factory before the first iteration.</span>
 <span class="sd">    extra_parameters:</span>
 <span class="sd">        parameters to be used for the creation of the smc_algorithm.</span>
 
@@ -508,9 +511,8 @@ document.write(`
         <span class="n">smc_algorithm</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">adaptive_tempered_smc</span><span class="p">,</span> <span class="n">tempered_smc</span><span class="p">],</span>
         <span class="n">logprior_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">loglikelihood_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">mcmc_factory</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">mcmc_step_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
         <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">mcmc_parameter_update_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">SMCState</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">],</span> <span class="n">ArrayTree</span><span class="p">],</span>
         <span class="n">initial_parameter_value</span><span class="p">,</span>
@@ -521,9 +523,8 @@ document.write(`
             <span class="n">smc_algorithm</span><span class="p">,</span>
             <span class="n">logprior_fn</span><span class="p">,</span>
             <span class="n">loglikelihood_fn</span><span class="p">,</span>
-            <span class="n">mcmc_factory</span><span class="p">,</span>
+            <span class="n">mcmc_step_fn</span><span class="p">,</span>
             <span class="n">mcmc_init_fn</span><span class="p">,</span>
-            <span class="n">mcmc_parameters</span><span class="p">,</span>
             <span class="n">resampling_fn</span><span class="p">,</span>
             <span class="n">mcmc_parameter_update_fn</span><span class="p">,</span>
             <span class="n">num_mcmc_steps</span><span class="p">,</span>

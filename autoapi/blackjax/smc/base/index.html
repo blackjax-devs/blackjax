@@ -371,6 +371,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.SMCState"><code class="docutils literal notranslate"><span class="pre">SMCState</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.SMCState.particles"><code class="docutils literal notranslate"><span class="pre">SMCState.particles</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.SMCState.weights"><code class="docutils literal notranslate"><span class="pre">SMCState.weights</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.SMCState.update_parameters"><code class="docutils literal notranslate"><span class="pre">SMCState.update_parameters</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.SMCInfo"><code class="docutils literal notranslate"><span class="pre">SMCInfo</span></code></a><ul class="nav section-nav flex-column">
@@ -381,6 +382,7 @@ document.write(`
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.step"><code class="docutils literal notranslate"><span class="pre">step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.extend_params"><code class="docutils literal notranslate"><span class="pre">extend_params()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -417,11 +419,14 @@ document.write(`
 <h3>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h3>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.base.init" title="blackjax.smc.base.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(particles)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.base.init" title="blackjax.smc.base.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(particles, init_update_params)</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.base.step" title="blackjax.smc.base.step"><code class="xref py py-obj docutils literal notranslate"><span class="pre">step</span></code></a>(→ tuple[SMCState, SMCInfo])</p></td>
 <td><p>General SMC sampling step.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.base.extend_params" title="blackjax.smc.base.extend_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extend_params</span></code></a>(n_particles, params)</p></td>
+<td><p>Given a dictionary of params, repeats them for every single particle. The expected</p></td>
 </tr>
 </tbody>
 </table>
@@ -468,6 +473,11 @@ Array([[50., 51., 52., 51], [51., 52., 52. ,54.], [55., 60, 60, 70]]) ]</p>
 <span class="sig-name descname"><span class="pre">weights</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCState.weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCState.weights" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.smc.base.SMCState.update_parameters">
+<span class="sig-name descname"><span class="pre">update_parameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.ArrayTree</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCState.update_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCState.update_parameters" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -502,7 +512,7 @@ by the resampling step.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.smc.base.init">
-<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">particles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.init" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">particles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_update_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.init" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -550,6 +560,13 @@ transition.</p></li>
 </p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.base.extend_params">
+<span class="sig-name descname"><span class="pre">extend_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_particles</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#extend_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.extend_params" title="Link to this definition">#</a></dt>
+<dd><p>Given a dictionary of params, repeats them for every single particle. The expected
+usage is in cases where the aim is to repeat the same parameters for all chains within SMC.</p>
 </dd></dl>
 
 </section>
@@ -607,6 +624,7 @@ transition.</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.SMCState"><code class="docutils literal notranslate"><span class="pre">SMCState</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.SMCState.particles"><code class="docutils literal notranslate"><span class="pre">SMCState.particles</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.SMCState.weights"><code class="docutils literal notranslate"><span class="pre">SMCState.weights</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.SMCState.update_parameters"><code class="docutils literal notranslate"><span class="pre">SMCState.update_parameters</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.SMCInfo"><code class="docutils literal notranslate"><span class="pre">SMCInfo</span></code></a><ul class="nav section-nav flex-column">
@@ -617,6 +635,7 @@ transition.</p></li>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.step"><code class="docutils literal notranslate"><span class="pre">step()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.extend_params"><code class="docutils literal notranslate"><span class="pre">extend_params()</span></code></a></li>
 </ul>
 </li>
 </ul>

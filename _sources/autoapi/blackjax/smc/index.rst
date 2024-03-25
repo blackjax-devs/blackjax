@@ -28,3 +28,17 @@ Submodules
    tempered/index.rst
 
 
+Package Contents
+----------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   blackjax.smc.extend_params
+
+
+
+
