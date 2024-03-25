@@ -1,6 +1,4 @@
 """Test the generic SMC sampler"""
-import unittest
-
 import chex
 import jax
 import jax.numpy as jnp
@@ -10,7 +8,7 @@ from absl.testing import absltest
 
 import blackjax
 import blackjax.smc.resampling as resampling
-from blackjax.smc.base import extend_params_inner_kernel, init, step
+from blackjax.smc.base import extend_params, init, step
 
 
 def logdensity_fn(position):
@@ -54,7 +52,7 @@ class SMCTest(chex.TestCase):
         )
         state = init(
             init_particles,
-            extend_params_inner_kernel(num_particles, same_for_all_params),
+            extend_params(num_particles, same_for_all_params),
         )
 
         # Run the SMC sampler once
@@ -99,7 +97,7 @@ class SMCTest(chex.TestCase):
         init_particles = 0.25 + jax.random.normal(init_key, shape=(num_particles,))
         state = init(
             init_particles,
-            extend_params_inner_kernel(
+            extend_params(
                 num_resampled,
                 dict(
                     step_size=1e-2,
@@ -124,9 +122,9 @@ class SMCTest(chex.TestCase):
         np.testing.assert_allclose(1.0, std, atol=1e-1)
 
 
-class ExtendToParticlesTest(unittest.TestCase):
+class ExtendToParticlesTest(chex.TestCase):
     def test_extend_params_inner_kernel(self):
-        extended = extend_params_inner_kernel(
+        extended = extend_params(
             3,
             {
                 "a": 50,

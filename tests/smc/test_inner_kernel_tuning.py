@@ -13,7 +13,7 @@ import blackjax
 import blackjax.smc.resampling as resampling
 from blackjax import adaptive_tempered_smc, tempered_smc
 from blackjax.mcmc.random_walk import build_irmh
-from blackjax.smc import extend_params_inner_kernel
+from blackjax.smc import extend_params
 from blackjax.smc.inner_kernel_tuning import inner_kernel_tuning
 from blackjax.smc.tuning.from_kernel_info import update_scale_from_acceptance_rate
 from blackjax.smc.tuning.from_particles import (
@@ -94,7 +94,7 @@ class SMCParameterTuningTest(chex.TestCase):
         proposal_factory.return_value = 100
 
         def mcmc_parameter_update_fn(state, info):
-            return extend_params_inner_kernel(1000, {"mean": 100})
+            return extend_params(1000, {"mean": 100})
 
         prior = lambda x: stats.norm.logpdf(x)
 
@@ -114,7 +114,7 @@ class SMCParameterTuningTest(chex.TestCase):
             resampling_fn=resampling.systematic,
             smc_algorithm=smc_algorithm,
             mcmc_parameter_update_fn=mcmc_parameter_update_fn,
-            initial_parameter_value=extend_params_inner_kernel(1000, {"mean": 1.0}),
+            initial_parameter_value=extend_params(1000, {"mean": 1.0}),
             **smc_parameters,
         )
 
@@ -280,7 +280,7 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
         ) = self.particles_prior_loglikelihood()
 
         def parameter_update(state, info):
-            return extend_params_inner_kernel(
+            return extend_params(
                 100,
                 {
                     "inverse_mass_matrix": mass_matrix_from_particles(state.particles),
@@ -297,7 +297,7 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
             blackjax.hmc.init,
             resampling.systematic,
             mcmc_parameter_update_fn=parameter_update,
-            initial_parameter_value=extend_params_inner_kernel(
+            initial_parameter_value=extend_params(
                 100,
                 dict(
                     inverse_mass_matrix=jnp.eye(2),
@@ -339,7 +339,7 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
         ) = self.particles_prior_loglikelihood()
 
         def parameter_update(state, info):
-            return extend_params_inner_kernel(
+            return extend_params(
                 100,
                 {
                     "inverse_mass_matrix": mass_matrix_from_particles(state.particles),
@@ -356,7 +356,7 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
             blackjax.hmc.init,
             resampling.systematic,
             mcmc_parameter_update_fn=parameter_update,
-            initial_parameter_value=extend_params_inner_kernel(
+            initial_parameter_value=extend_params(
                 100,
                 dict(
                     inverse_mass_matrix=jnp.eye(2),

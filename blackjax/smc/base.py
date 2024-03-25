@@ -150,7 +150,7 @@ def step(
     )
 
 
-def extend_params_inner_kernel(n_particles, params):
+def extend_params(n_particles, params):
     """Given a dictionary of params, repeats them for every single particle. The expected
     usage is in cases where the aim is to repeat the same parameters for all chains within SMC.
     """

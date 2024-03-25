@@ -12,7 +12,7 @@ import blackjax
 import blackjax.smc.resampling as resampling
 import blackjax.smc.solver as solver
 from blackjax import adaptive_tempered_smc, tempered_smc
-from blackjax.smc import extend_params_inner_kernel
+from blackjax.smc import extend_params
 from tests.smc import SMCLinearRegressionTestCase
 
 
@@ -65,7 +65,7 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
 
         hmc_kernel = blackjax.hmc.build_kernel()
         hmc_init = blackjax.hmc.init
-        hmc_parameters = extend_params_inner_kernel(
+        hmc_parameters = extend_params(
             num_particles,
             {
                 "step_size": 10e-2,
@@ -114,7 +114,7 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
         lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
         hmc_init = blackjax.hmc.init
         hmc_kernel = blackjax.hmc.build_kernel()
-        hmc_parameters = extend_params_inner_kernel(
+        hmc_parameters = extend_params(
             100,
             {
                 "step_size": 10e-2,
@@ -181,7 +181,7 @@ class NormalizingConstantTest(chex.TestCase):
 
         hmc_init = blackjax.hmc.init
         hmc_kernel = blackjax.hmc.build_kernel()
-        hmc_parameters = extend_params_inner_kernel(
+        hmc_parameters = extend_params(
             num_particles,
             {
                 "step_size": 10e-2,

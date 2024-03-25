@@ -7,7 +7,7 @@ from jax.scipy.stats import multivariate_normal
 import blackjax
 from blackjax import adaptive_tempered_smc
 from blackjax.mcmc.random_walk import normal
-from blackjax.smc import extend_params_inner_kernel
+from blackjax.smc import extend_params
 
 
 class SMCAndMCMCIntegrationTest(unittest.TestCase):
@@ -50,7 +50,7 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
         self.check_compatible(
             kernel,
             blackjax.additive_step_random_walk.init,
-            extend_params_inner_kernel(self.n_particles, {"proposal_mean": 1.0}),
+            extend_params(self.n_particles, {"proposal_mean": 1.0}),
         )
 
     def test_compatible_with_rmh(self):
@@ -70,14 +70,14 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
         self.check_compatible(
             kernel,
             blackjax.rmh.init,
-            extend_params_inner_kernel(self.n_particles, {"proposal_mean": 1.0}),
+            extend_params(self.n_particles, {"proposal_mean": 1.0}),
         )
 
     def test_compatible_with_hmc(self):
         self.check_compatible(
             blackjax.hmc.build_kernel(),
             blackjax.hmc.init,
-            extend_params_inner_kernel(
+            extend_params(
                 self.n_particles,
                 {
                     "step_size": 0.3,
@@ -100,7 +100,7 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
         self.check_compatible(
             kernel,
             blackjax.irmh.init,
-            extend_params_inner_kernel(
+            extend_params(
                 self.n_particles, {"mean": jnp.array([1.0, 1.0])}
             ),
         )
@@ -109,7 +109,7 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
         self.check_compatible(
             blackjax.nuts.build_kernel(),
             blackjax.nuts.init,
-            extend_params_inner_kernel(
+            extend_params(
                 self.n_particles,
                 {"step_size": 1e-10, "inverse_mass_matrix": jnp.eye(2)},
             ),
@@ -119,7 +119,7 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
         self.check_compatible(
             blackjax.mala.build_kernel(),
             blackjax.mala.init,
-            extend_params_inner_kernel(self.n_particles, {"step_size": 1e-10}),
+            extend_params(self.n_particles, {"step_size": 1e-10}),
         )
 
     @staticmethod
