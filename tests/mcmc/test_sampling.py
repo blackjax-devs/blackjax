@@ -27,12 +27,12 @@ def orbit_samples(orbits, weights, rng_key):
     return samples
 
 
-def irmh_proposal_distribution(rng_key):
+def irmh_proposal_distribution(rng_key, mean):
     """
     The proposal distribution is chosen to be wider than the target, so that the RMH rejection
     doesn't make the sample overemphasize the center of the target distribution.
     """
-    return 1.0 + jax.random.normal(rng_key) * 25.0
+    return mean + jax.random.normal(rng_key) * 25.0
 
 
 def rmh_proposal_distribution(rng_key, position):
@@ -657,7 +657,9 @@ class UnivariateNormalTest(chex.TestCase):
         self, algorithm, initial_position, parameters, num_sampling_steps, burnin
     ):
         if algorithm == blackjax.irmh:
-            parameters["proposal_distribution"] = irmh_proposal_distribution
+            parameters["proposal_distribution"] = functools.partial(
+                irmh_proposal_distribution, mean=1.0
+            )
 
         if algorithm == blackjax.rmh:
             parameters["proposal_generator"] = rmh_proposal_distribution

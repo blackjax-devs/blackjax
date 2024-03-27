@@ -127,12 +127,12 @@ def build_kernel(
             tempered_loglikelihood = state.lmbda * loglikelihood_fn(position)
             return logprior + tempered_loglikelihood
 
-        def mcmc_kernel(rng_key, position):
+        def mcmc_kernel(rng_key, position, step_parameters):
             state = mcmc_init_fn(position, tempered_logposterior_fn)
 
             def body_fn(state, rng_key):
                 new_state, info = mcmc_step_fn(
-                    rng_key, state, tempered_logposterior_fn, **mcmc_parameters
+                    rng_key, state, tempered_logposterior_fn, **step_parameters
                 )
                 return new_state, info
 
@@ -142,7 +142,7 @@ def build_kernel(
 
         smc_state, info = smc.base.step(
             rng_key,
-            SMCState(state.particles, state.weights),
+            SMCState(state.particles, state.weights, mcmc_parameters),
             jax.vmap(mcmc_kernel),
             jax.vmap(log_weights_fn),
             resampling_fn,
