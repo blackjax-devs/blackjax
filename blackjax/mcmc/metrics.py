@@ -28,8 +28,10 @@ For a Newtonian hamiltonian dynamic the kinetic energy is given by:
 We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
 
 """
+from functools import partial
 from typing import Callable, NamedTuple, Optional, Protocol, Union
 
+import jax
 import jax.numpy as jnp
 import jax.scipy as jscipy
 from jax.flatten_util import ravel_pytree
@@ -282,5 +284,92 @@ def gaussian_riemannian(
         # turning_at_left = jnp.dot(velocity_left, rho) <= 0
         # turning_at_right = jnp.dot(velocity_right, rho) <= 0
         # return turning_at_left | turning_at_right
+
+    return Metric(momentum_generator, kinetic_energy, is_turning)
+
+
+
+def gaussian_implicit_riemannian(
+    mass_matrix_fn: Callable,
+    constrain_fn: Callable
+) -> Metric:
+
+    def factorize_mass(position: ArrayLikeTree):
+        M = mass_matrix_fn(position)
+        cholesky = jscipy.linalg.cholesky(M, True)
+        inverse = jscipy.linalg.solve_triangular(cholesky.T,
+                                                 jscipy.linalg.solve_triangular(
+                                                     cholesky,
+                                                     jnp.eye(*M.shape),
+                                                     lower=True),
+                                                 lower=False)
+        return cholesky, inverse
+
+    @partial(jax.vmap, in_axes=(None, 1), out_axes=1)
+    def jmp(x, v):
+        """# Jacobian matrix product"""
+        return jax.jvp(constrain_fn, (x,), (v,))[1]
+
+    # https://github.com/krzysztofrusek/jax_chmc/blob/d8c12e4b55b8a9877228de1c130937a971de5b52/jax_chmc/kernels.py#L81
+    def momentum_generator(rng_key: PRNGKey,
+                           position: ArrayLikeTree) -> ArrayLikeTree:
+        flat_position, unflaten = ravel_pytree(position)
+        cholesky, inverse = factorize_mass(position)
+
+        z = jax.random.normal(rng_key, shape=flat_position.shape)
+        p0 = cholesky @ z
+
+        # dc/dq . m^-1
+        # Jacobian matrix product, TODO handle diagonala and scalar
+        D = jmp(position, inverse)
+        #dc = jax.jacobian(constrain_fn)(position)
+        #DD = dc@inverse
+
+        #TODO check jaxopt projection here
+        p0 = p0 - D.T @ jnp.linalg.solve(D @ D.T, D @ p0)
+        return unflaten(p0)
+
+
+    # https://github.com/krzysztofrusek/jax_chmc/blob/d8c12e4b55b8a9877228de1c130937a971de5b52/jax_chmc/kernels.py#L54C1-L62C1
+    def kinetic_energy(
+        momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+    ) -> float:
+        cholesky, inverse = factorize_mass(position)
+        flat_p, _ = ravel_pytree(momentum)
+
+
+        D = jmp(position, inverse)
+        cholMhat = cholesky - D.T @ jnp.linalg.solve(D @ D.T,
+                                                          D @ cholesky)
+        d = jnp.linalg.svd(cholMhat, compute_uv=False, hermitian=True)
+
+        def _shape_fn(position):
+            x,_ = ravel_pytree(position)
+            c,_ = ravel_pytree(constrain_fn(position))
+            return (x,c)
+
+        dc_shape = jax.eval_shape(_shape_fn, position)
+
+        top_d, _ = jax.lax.top_k(d, dc_shape[0].shape[0] - dc_shape[1].shape[0])
+        pseudo_log_det = jnp.sum(jnp.log(top_d))
+
+        T = flat_p.T@ inverse@flat_p/2.
+
+        return T + pseudo_log_det
+
+
+
+    def is_turning(
+        momentum_left: ArrayLikeTree,
+        momentum_right: ArrayLikeTree,
+        momentum_sum: ArrayLikeTree,
+        position_left: Optional[ArrayLikeTree] = None,
+        position_right: Optional[ArrayLikeTree] = None,
+    ) -> bool:
+        del momentum_left, momentum_right, momentum_sum, position_left, position_right
+        raise NotImplementedError(
+            "NUTS sampling is not yet implemented for implicitly defined "
+            "manifolds"
+        )
 
     return Metric(momentum_generator, kinetic_energy, is_turning)

@@ -142,6 +142,33 @@ class GaussianRiemannianMetricsTest(chex.TestCase):
         np.testing.assert_allclose(expected_momentum_val, momentum_val)
         np.testing.assert_allclose(kinetic_energy_val, expected_kinetic_energy_val)
 
+class GaussianImplicitRiemannianMetricsTest(chex.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.key = random.key(0)
+        self.dtype = "float32"
+
+    @chex.all_variants(with_pmap=False)
+    def test_metric(self):
+        condfun = lambda x: x.sum(keepdims=True)
+        M = 3.0 * jnp.diag(jnp.ones(4))
+
+        g = metrics.gaussian_implicit_riemannian(lambda q: M, condfun)
+
+        q0 = jnp.zeros(4)
+        p0 = self.variant(g.sample_momentum)(self.key, q0)
+        v = self.variant(g.kinetic_energy)(p0,q0)
+
+    @chex.all_variants(with_pmap=False)
+    def test_metric_tree(self):
+        condfun = lambda x: x['var'].sum(keepdims=True)
+        M = 3.0 * jnp.diag(jnp.ones(4))
+
+        g = metrics.gaussian_implicit_riemannian(lambda q: M, condfun)
+
+        q0 = dict(var=jnp.zeros(4))
+        p0 = self.variant(g.sample_momentum)(self.key, q0)
+        v = self.variant(g.kinetic_energy)(p0,q0)
 
 if __name__ == "__main__":
     absltest.main()

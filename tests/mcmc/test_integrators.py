@@ -1,3 +1,4 @@
+import functools
 import itertools
 
 import chex
@@ -10,7 +11,10 @@ from jax.flatten_util import ravel_pytree
 from scipy.special import ellipj
 
 import blackjax.mcmc.integrators as integrators
-from blackjax.mcmc.integrators import esh_dynamics_momentum_update_one_step
+from blackjax.mcmc.integrators import (
+    esh_dynamics_momentum_update_one_step,
+)
+from blackjax.mcmc.metrics import gaussian_euclidean
 from blackjax.util import generate_unit_vector
 
 
@@ -143,6 +147,10 @@ algorithms = {
     "isokinetic_leapfrog": {"algorithm": integrators.isokinetic_leapfrog},
     "isokinetic_mclachlan": {"algorithm": integrators.isokinetic_mclachlan},
     "isokinetic_yoshida": {"algorithm": integrators.isokinetic_yoshida},
+    "rattle": {
+        "algorithm": functools.partial(integrators.rattle, constrain_fn=lambda x: None),
+        "precision": 1e-4,
+    },
 }
 
 
@@ -164,12 +172,7 @@ class IntegratorTest(chex.TestCase):
                 "planetary_motion",
                 "multivariate_normal",
             ],
-            [
-                "velocity_verlet",
-                "mclachlan",
-                "yoshida",
-                "implicit_midpoint",
-            ],
+            ["velocity_verlet", "mclachlan", "yoshida", "implicit_midpoint", "rattle"],
         )
     )
     def test_euclidean_integrator(self, example_name, integrator_name):
@@ -376,6 +379,101 @@ class IntegratorTest(chex.TestCase):
             final_state.momentum, position=final_state.position
         )
         self.assertAlmostEqual(energy, new_energy, delta=1e-4)
+
+
+class ConstrainedIntegratorTest(chex.TestCase):
+    @chex.all_variants(with_pmap=False)
+    def test_rattle(self):
+        @self.variant
+        def constrain(q):
+            return jnp.sqrt(jnp.sum(q**2)) - 1.0
+
+        p0, q0 = (jnp.asarray([1.0, 0.0]), jnp.asarray([0.0, 1.0]))
+        t1 = 2 * jnp.pi / 4
+        n = 2**10
+        dt = t1 / n
+
+        g = gaussian_euclidean(jnp.ones(2))
+
+        def logdensity_fn(q):
+            return 0.0
+
+        one_step = integrators.rattle(
+            logdensity_fn, kinetic_energy_fn=g.kinetic_energy, constrain_fn=constrain
+        )
+        one_step = self.variant(one_step)
+
+        state = integrators.new_integrator_state(
+            position=q0, momentum=p0, logdensity_fn=logdensity_fn
+        )
+
+        final_state = jax.lax.fori_loop(0, n, lambda i, x: one_step(x, dt), state)
+        q1 = final_state.position
+        p1 = final_state.momentum
+        self.assertTrue(
+            jnp.allclose(p1, jnp.asarray([0.0, -1.0]), rtol=1e-4, atol=1e-4)
+        )
+        self.assertTrue(jnp.allclose(q1, jnp.asarray([1.0, 0.0]), rtol=1e-4, atol=1e-4))
+        ...
+
+    @chex.all_variants(with_pmap=False)
+    def test_rattle_inclined_plane(self):
+        def constrain(q):
+            return jnp.sum(q) - 1.0
+
+        m = 1
+        g = 9.81
+        sqrt2 = np.sqrt(2)
+        a = g / sqrt2
+        l = sqrt2
+
+        # l=a t^2/2 => t = sqrt(2 l/a)
+
+        p0 = m * jnp.asarray([0.0, 0.0])
+        q0 = jnp.asarray([0.0, 1.0])
+
+        t1 = np.sqrt(2 * l / a)
+        n = 2**10
+        dt = t1 / n
+
+        ge = gaussian_euclidean(jnp.asarray([m, m]))
+
+        def logdensity_fn(q):
+            return -m * g * q[1]
+
+        one_step = integrators.rattle(
+            logdensity_fn, kinetic_energy_fn=ge.kinetic_energy, constrain_fn=constrain
+        )
+        one_step = self.variant(one_step)
+
+        state = integrators.new_integrator_state(
+            position=q0, momentum=p0, logdensity_fn=logdensity_fn
+        )
+
+        final_state = jax.lax.fori_loop(0, n, lambda i, x: one_step(x, dt), state)
+        q1 = final_state.position
+        self.assertTrue(jnp.allclose(q1, jnp.asarray([1.0, 0.0]), rtol=1e-4, atol=1e-4))
+
+        p1 = final_state.momentum
+        # mgh = p^2/2m => p=m sqrt(2gh)
+        p_expected = jnp.asarray([jnp.sqrt(g), -jnp.sqrt(g)])
+        self.assertTrue(jnp.allclose(p1, p_expected, rtol=1e-4, atol=1e-4))
+
+    @chex.all_variants(with_pmap=False)
+    def test_newton_solver_2d(self):
+        def f(x):
+            return dict(y=(x - 2.0) * (x - 3)), None
+
+        x0 = jnp.asarray([1.0, 4.0])
+
+        @self.variant
+        def _solve(x0):
+            sol = integrators.solve_newton(jax.vmap(f), x0, max_iters=20)
+            return sol
+
+        sol = _solve(x0)
+
+        self.assertTrue(jnp.allclose(sol.x, jnp.asarray([2, 3])))
 
 
 if __name__ == "__main__":
