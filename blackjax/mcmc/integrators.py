@@ -25,7 +25,6 @@ from blackjax.types import ArrayTree
 
 __all__ = [
     "mclachlan",
-    "omelyan",
     "velocity_verlet",
     "velocity_verlet_coefficients"
     "mclachlan_coefficients"
@@ -35,7 +34,6 @@ __all__ = [
     "implicit_midpoint",
     "isokinetic_leapfrog",
     "isokinetic_mclachlan",
-    "isokinetic_omelyan",
     "isokinetic_yoshida",
 ]
 
@@ -295,20 +293,6 @@ yoshida_coefficients = [b1, a1, b2, a2, b2, a1, b1]
 yoshida = generate_euclidean_integrator(yoshida_coefficients)
 
 
-"""11 stage Omelyan integrator [I.P. Omelyan, I.M. Mryglod and R. Folk, Comput. Phys. Commun. 151 (2003) 272.], 
-4MN5FV in [Takaishi, Tetsuya, and Philippe De Forcrand. "Testing and tuning symplectic integrators for the hybrid Monte Carlo algorithm in lattice QCD." Physical Review E 73.3 (2006): 036706.]
-popular in LQCD"""
-b1 = 0.08398315262876693
-a1 = 0.2539785108410595
-b2 = 0.6822365335719091
-a2 = -0.03230286765269967
-b3  = 0.5 - b1 - b2
-a3 = 1 - 2 * (a1 + a2)
-omelyan_coefficients = [b1, a1, b2, a2, b3, a3, b3, a2, b2, a1, b1]
-omelyan = generate_euclidean_integrator(omelyan_coefficients)
-
-
-
 # Intergrators with non Euclidean updates
 def _normalized_flatten_array(x, tol=1e-13):
     norm = jnp.linalg.norm(x)
@@ -389,7 +373,7 @@ def generate_isokinetic_integrator(coefficients):
 isokinetic_leapfrog = generate_isokinetic_integrator(velocity_verlet_coefficients)
 isokinetic_yoshida = generate_isokinetic_integrator(yoshida_coefficients)
 isokinetic_mclachlan = generate_isokinetic_integrator(mclachlan_coefficients)
-isokinetic_omelyan = generate_isokinetic_integrator(omelyan_coefficients)
+
 
 def partially_refresh_momentum(momentum, rng_key, step_size, L):
     """Adds a small noise to momentum and normalizes.
