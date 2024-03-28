@@ -41,9 +41,7 @@ def progress_bar_scan(num_samples, print_rate=None):
         "Updates progress bar of a JAX scan or loop"
         _ = lax.cond(
             iter_num == 0,
-            lambda _: io_callback(
-                _define_bar,
-                None, iter_num),
+            lambda _: io_callback(_define_bar, None, iter_num),
             lambda _: None,
             operand=None,
         )
@@ -51,8 +49,7 @@ def progress_bar_scan(num_samples, print_rate=None):
         _ = lax.cond(
             # update every multiple of `print_rate` except at the end
             (iter_num % print_rate == 0),
-            lambda _: io_callback(
-                _update_bar, None, iter_num),
+            lambda _: io_callback(_update_bar, None, iter_num),
             lambda _: None,
             operand=None,
         )
@@ -60,8 +57,7 @@ def progress_bar_scan(num_samples, print_rate=None):
         _ = lax.cond(
             # update by `remainder`
             iter_num == num_samples - 1,
-            lambda _: io_callback(
-                _update_bar, None, iter_num),
+            lambda _: io_callback(_update_bar, None, iter_num),
             lambda _: None,
             operand=None,
         )
@@ -74,8 +70,7 @@ def progress_bar_scan(num_samples, print_rate=None):
     def close_bar(result, iter_num):
         return lax.cond(
             iter_num == num_samples - 1,
-            lambda _: io_callback(
-                _close_bar, None, None),
+            lambda _: io_callback(_close_bar, None, None),
             lambda _: None,
             operand=None,
         )
