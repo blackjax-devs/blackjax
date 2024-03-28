@@ -384,7 +384,7 @@ document.write(`
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">fastprogress.fastprogress</span> <span class="kn">import</span> <span class="n">progress_bar</span>
 <span class="kn">from</span> <span class="nn">jax</span> <span class="kn">import</span> <span class="n">lax</span>
-<span class="kn">from</span> <span class="nn">jax.experimental</span> <span class="kn">import</span> <span class="n">host_callback</span>
+<span class="kn">from</span> <span class="nn">jax.experimental</span> <span class="kn">import</span> <span class="n">io_callback</span>
 
 
 <div class="viewcode-block" id="progress_bar_scan">
@@ -399,55 +399,39 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="n">print_rate</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># if you run the sampler for less than 20 iterations</span>
 
-    <span class="k">def</span> <span class="nf">_define_bar</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_define_bar</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
+        <span class="k">del</span> <span class="n">arg</span>
         <span class="n">progress_bars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">progress_bar</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_samples</span><span class="p">))</span>
         <span class="n">progress_bars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_update_bar</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
-        <span class="n">progress_bars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">update_bar</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_update_bar</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
+        <span class="n">progress_bars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">update_bar</span><span class="p">(</span><span class="n">arg</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_close_bar</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
+        <span class="k">del</span> <span class="n">arg</span>
+        <span class="n">progress_bars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">on_iter_end</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_update_progress_bar</span><span class="p">(</span><span class="n">iter_num</span><span class="p">):</span>
         <span class="s2">&quot;Updates progress bar of a JAX scan or loop&quot;</span>
         <span class="n">_</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
             <span class="n">iter_num</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">host_callback</span><span class="o">.</span><span class="n">id_tap</span><span class="p">(</span>
-                <span class="n">_define_bar</span><span class="p">,</span> <span class="n">iter_num</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="n">iter_num</span><span class="p">,</span> <span class="n">tap_with_device</span><span class="o">=</span><span class="kc">True</span>
-            <span class="p">),</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">iter_num</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">io_callback</span><span class="p">(</span><span class="n">_define_bar</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">iter_num</span><span class="p">),</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">_</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
             <span class="c1"># update every multiple of `print_rate` except at the end</span>
-            <span class="p">(</span><span class="n">iter_num</span> <span class="o">%</span> <span class="n">print_rate</span> <span class="o">==</span> <span class="mi">0</span><span class="p">),</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">host_callback</span><span class="o">.</span><span class="n">id_tap</span><span class="p">(</span>
-                <span class="n">_update_bar</span><span class="p">,</span> <span class="n">iter_num</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="n">iter_num</span><span class="p">,</span> <span class="n">tap_with_device</span><span class="o">=</span><span class="kc">True</span>
-            <span class="p">),</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">iter_num</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">iter_num</span> <span class="o">%</span> <span class="n">print_rate</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">iter_num</span> <span class="o">==</span> <span class="p">(</span><span class="n">num_samples</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)),</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">io_callback</span><span class="p">(</span><span class="n">_update_bar</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">iter_num</span><span class="p">),</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">_</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
-            <span class="c1"># update by `remainder`</span>
             <span class="n">iter_num</span> <span class="o">==</span> <span class="n">num_samples</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">host_callback</span><span class="o">.</span><span class="n">id_tap</span><span class="p">(</span>
-                <span class="n">_update_bar</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="n">iter_num</span><span class="p">,</span> <span class="n">tap_with_device</span><span class="o">=</span><span class="kc">True</span>
-            <span class="p">),</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">iter_num</span><span class="p">,</span>
-            <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_close_bar</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
-        <span class="n">progress_bars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">on_iter_end</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">close_bar</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">iter_num</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
-            <span class="n">iter_num</span> <span class="o">==</span> <span class="n">num_samples</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">host_callback</span><span class="o">.</span><span class="n">id_tap</span><span class="p">(</span>
-                <span class="n">_close_bar</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span> <span class="n">tap_with_device</span><span class="o">=</span><span class="kc">True</span>
-            <span class="p">),</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">result</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">io_callback</span><span class="p">(</span><span class="n">_close_bar</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -464,8 +448,7 @@ document.write(`
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">iter_num</span> <span class="o">=</span> <span class="n">x</span>
             <span class="n">_update_progress_bar</span><span class="p">(</span><span class="n">iter_num</span><span class="p">)</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">close_bar</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">iter_num</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">wrapper_progress_bar</span>
 
