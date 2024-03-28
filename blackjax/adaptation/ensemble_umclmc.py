@@ -94,7 +94,7 @@ def init(position, logdensity_fn, parallelization):
         u = unravel_fn(_normalized_flatten_array(flat_g)[0]) # = grad logp/ |grad logp|
         return u, l, g
 
-    velocity, logdensity, logdensity_grad = parallelization.pvmap(_init)(position)
+    velocity, logdensity, logdensity_grad = parallelization.pvmap(_init, 0)(position)
     
     # flip the velocity, depending on the equipartition condition
     to_sign = lambda equipartition: -2. * (equipartition < 1.) + 1.    
@@ -143,10 +143,10 @@ def equipartition_fullrank(position, logdensity_grad, rng_key, parallelization):
     
     _position = parallelization.flatten(position)
     
-    d = ravel_pytree(_position)[0].shape[0] // parallelization.chains # number of dimensions
+    d = ravel_pytree(_position)[0].shape[0] // parallelization.num_chains # number of dimensions
 
     z = jax.random.rademacher(rng_key, (100, d)) # <z_i z_j> = delta_ij
-    X = z + (logdensity_grad @ z.T).T @ _position / parallelization.chains
+    X = z + (logdensity_grad @ z.T).T @ _position / parallelization.num_chains
     return jnp.average(jnp.square(X)) / d
 
     
@@ -274,7 +274,7 @@ def stage1(logdensity_fn, num_steps, parallelization, initial_position, rng_key,
     """observable: function taking position x and outputing O(x)."""
     
 
-    d = ravel_pytree(initial_position)[0].shape[0] // parallelization.chains # number of dimensions
+    d = ravel_pytree(initial_position)[0].shape[0] // parallelization.num_chains # number of dimensions
     
     # kernel    
     sequential_kernel = mclmc.build_kernel(logdensity_fn= logdensity_fn, integrator= isokinetic_leapfrog)
