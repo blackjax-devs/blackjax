@@ -21,6 +21,7 @@ from jax.flatten_util import ravel_pytree
 from blackjax.adaptation.step_size import DualAveragingAdaptationState, dual_averaging_adaptation
 
 from blackjax.diagnostics import effective_sample_size
+from blackjax.mcmc.integrators import isokinetic_leapfrog, isokinetic_mclachlan, isokinetic_omelyan, isokinetic_yoshida, mclachlan_coefficients, omelyan_coefficients, velocity_verlet_coefficients, yoshida_coefficients
 from blackjax.mcmc.mhmclmc import rescale
 from blackjax.util import pytree_size
 
@@ -40,6 +41,19 @@ class MCLMCAdaptationState(NamedTuple):
     L: float
     step_size: float
     std_mat : float
+
+def integrator_order(c):
+    if c==velocity_verlet_coefficients: return 2
+    if c==mclachlan_coefficients: return 2
+    if c==yoshida_coefficients: return 4
+    if c==omelyan_coefficients: return 4
+    
+
+    else: raise Exception(c)
+
+
+
+target_acceptance_rate_of_order = {2 : 0.65, 4: 0.8}
 
 def streaming_average(O, x, streaming_avg, weight, zero_prevention):
     """streaming average of f(x)"""
@@ -323,6 +337,7 @@ def mhmclmc_find_L_and_step_size(
     num_steps,
     state,
     rng_key,
+    target,
     frac_tune1=0.1,
     frac_tune2=0.1,
     frac_tune3=0.1,
@@ -341,6 +356,8 @@ def mhmclmc_find_L_and_step_size(
         The initial state of the MCMC algorithm.
     rng_key
         The random number generator key.
+    target
+        The target acceptance rate for the step size adaptation.
     frac_tune1
         The fraction of tuning for the first step of the adaptation.
     frac_tune2
@@ -372,6 +389,7 @@ def mhmclmc_find_L_and_step_size(
         dim=dim,
         frac_tune1=frac_tune1,
         frac_tune2=frac_tune2,
+        target=target
     )(state, params, num_steps, part1_key)
 
     if frac_tune3 != 0:
@@ -387,6 +405,7 @@ def mhmclmc_find_L_and_step_size(
         dim=dim,
         frac_tune1=frac_tune1,
         frac_tune2=0,
+        target=target,
         fix_L_first_da=True,
         )(state, params, num_steps, part2_key2)
 
@@ -398,6 +417,7 @@ def mhmclmc_make_L_step_size_adaptation(
     dim,
     frac_tune1,
     frac_tune2,
+    target,
     fix_L_first_da=False,
 ):
     """Adapts the stepsize and L of the MCLMC kernel. Designed for the unadjusted MCLMC"""
@@ -538,7 +558,7 @@ def mhmclmc_make_L_step_size_adaptation(
         # determine which steps to ignore in the streaming average
         mask = 1 - jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
-        initial_da, update_da, final_da = dual_averaging_adaptation(target=0.65)
+        initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
 
         ((state, params, (dual_avg_state, step_size_max), (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass1, fix_L=fix_L_first_da, initial_da=initial_da, update_da=update_da)
         params = params._replace(step_size=final_da(dual_avg_state)) # TODO: put back
@@ -570,7 +590,7 @@ def mhmclmc_make_L_step_size_adaptation(
 
         
             # jax.debug.print("{x} params before second round",x=(params))
-            initial_da, update_da, final_da = dual_averaging_adaptation(target=0.65)
+            initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
             ((state, params, (dual_avg_state, step_size_max), (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass2, fix_L=True, update_da=update_da, initial_da=initial_da)
             params = params._replace(step_size=final_da(dual_avg_state))
             # jax.debug.print("{x}",x=("mean acceptance rate", jnp.mean(info.acceptance_rate,)))

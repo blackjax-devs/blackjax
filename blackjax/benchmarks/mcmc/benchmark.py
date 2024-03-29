@@ -1,3 +1,5 @@
+from collections import defaultdict
+from functools import partial
 import math
 import os
 from statistics import mean, median
@@ -14,6 +16,7 @@ import numpy as np
 
 from blackjax.benchmarks.mcmc.sampling_algorithms import samplers
 from blackjax.benchmarks.mcmc.inference_models import models
+from blackjax.mcmc.integrators import generate_euclidean_integrator, generate_isokinetic_integrator, isokinetic_mclachlan, mclachlan_coefficients, omelyan_coefficients, velocity_verlet, velocity_verlet_coefficients, yoshida_coefficients
 
 
 
@@ -22,7 +25,7 @@ def get_num_latents(target):
 #   return int(sum(map(np.prod, list(jax.tree_flatten(target.event_shape)[0]))))
 
 
-def err(f_true, var_f, contract = jnp.max):
+def err(f_true, var_f, contract):
     """Computes the error b^2 = (f - f_true)^2 / var_f
         Args:
             f: E_sampler[f(x)], can be a vector
@@ -83,34 +86,37 @@ def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.av
     init_pos = jax.vmap(model.sample_init)(init_keys)
 
     # samples, params, avg_num_steps_per_traj = jax.pmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
-    samples, params, grad_calls_per_traj = jax.vmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
+    samples, params, grad_calls_per_traj = jax.vmap(lambda pos, key: sampler(logdensity_fn=model.logdensity_fn, num_steps=n, initial_position= pos,transform= model.transform, key=key))(init_pos, keys)
     # avg_grad_calls_per_traj = jnp.mean(jnp.where(jnp.isnan(grad_calls_per_traj), 1, grad_calls_per_traj), axis=0)
     avg_grad_calls_per_traj = jnp.nanmean(grad_calls_per_traj, axis=0)
-    print(jnp.nanmean(params.step_size,axis=0), jnp.nanmean(params.L,axis=0))
-
+    try:
+        print(jnp.nanmean(params.step_size,axis=0), jnp.nanmean(params.L,axis=0))
+    except: pass
     # print("grad calls", avg_grad_calls_per_traj)
     
     full = lambda arr : err(model.E_x2, model.Var_x2, contract)(cumulative_avg(arr))
     # err_t = jnp.mean(jax.vmap(full)(samples**2), axis=0)
     err_t = jax.vmap(full)(samples**2)
-    # print(err_t)
+    err_t_median = jnp.median(err_t, axis=0)
     # raise Exception
     # print(err_t.shape)
     # foo = jax.vmap(lambda x: calculate_ess(x, grad_evals_per_step=avg_grad_calls_per_traj))(err_t)
     # print(foo.shape)
-    outs = [calculate_ess(b, grad_evals_per_step=avg_grad_calls_per_traj) for b in err_t]
+    # outs = [calculate_ess(b, grad_evals_per_step=avg_grad_calls_per_traj) for b in err_t]
     # print(outs[:10])
-    esses = [i[0].item() for i in outs if not math.isnan(i[0].item())]
-    grad_calls = [i[1].item() for i in outs if not math.isnan(i[1].item())]
+    # esses = [i[0].item() for i in outs if not math.isnan(i[0].item())]
+    # grad_calls = [i[1].item() for i in outs if not math.isnan(i[1].item())]
     # print(grad_calls)
     # raise Exception
+
+    esses, grad_calls, _ = calculate_ess(err_t_median, grad_evals_per_step=avg_grad_calls_per_traj)
 
     # print(mean(esses), median(esses))
     # print(mean(grad_calls), median(grad_calls))
     
     # return grads_to_low_error(err_t, avg_grad_calls_per_traj)[0]
     # ess_per_sample = calculate_ess(err_t, grad_evals_per_step=avg_grad_calls_per_traj)
-    return median(esses), median(grad_calls)
+    return esses, grad_calls
     # , err_t[-1], params
 
 
@@ -118,21 +124,30 @@ def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.av
 
 def run_benchmarks():
 
+    results = defaultdict(tuple)
 
     # for model, sampler in itertools.product(models, samplers):
-    for model, sampler in itertools.product(["Brownian Motion"], ["mhmclmc",]):
+    for variables in itertools.product(["Brownian Motion"], ["mhmclmc", "nuts", "mclmc", ], [velocity_verlet_coefficients, mclachlan_coefficients, yoshida_coefficients, omelyan_coefficients]):
 
-        print(f"\nModel: {model}, Sampler: {sampler}\n")
+        model, sampler, coefficients = variables
+        print(f"\nModel: {model}, Sampler: {sampler}\n Coefficients: {coefficients}\n") 
+        # sampler_to_integrator_type = {
+        #     "mclmc": generate_isokinetic_integrator,
+        #     "mhmclmc": generate_isokinetic_integrator,
+        #     "nuts": generate_euclidean_integrator,
+        # }
+       
 
-        results = []
         Model = models[model][0]
         key = jax.random.PRNGKey(2)
         for i in range(1):
             key1, key = jax.random.split(key)
-            result = benchmark_chains(Model, samplers[sampler],key1, n=models[model][1][sampler], batch=250)
+            # integrator = sampler_to_integrator_type[sampler](coefficients)
+            ess, grad_calls = benchmark_chains(Model, partial(samplers[sampler], coefficients=coefficients),key1, n=models[model][1][sampler], batch=2)
             #print(f"ESS: {result.item()}")
-            print(f"grads to low bias: " + str(result[1:]))
-            results.append(result[1])
+            print(f"grads to low bias: {grad_calls}")
+            # results.append(result[1])
+            results[(model, sampler, tuple(coefficients))] = (ess, grad_calls) 
 
         # import matplotlib.pyplot as plt
 
@@ -145,6 +160,16 @@ def run_benchmarks():
         # plt.title("Scatterplot of Second Element of Results")
         # plt.savefig("scatterplot_mclmc.png")  # Save the plot as scatterplot.png
         # plt.show()
+            
+    print(results)
+            
+    import pandas as pd
+
+    df = pd.DataFrame(results)
+    df.to_csv("results.csv", index=False)  # Save the DataFrame to a CSV file
+
+if __name__ == "__main__":
+    run_benchmarks()
 
 if __name__ == "__main__":
     run_benchmarks()

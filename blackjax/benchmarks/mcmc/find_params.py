@@ -13,6 +13,8 @@ from blackjax.util import run_inference_algorithm
 import jax.numpy as jnp 
 from sampling_algorithms import run_mclmc, run_mhmclmc, samplers
 from inference_models import Brownian, IllConditionedGaussian, models
+from blackjax.adaptation.mclmc_adaptation import MCLMCAdaptationState, target_acceptance_rate_of_order, mhmclmc_integrator_order
+
 
 def sampler_mhmclmc_with_tuning(step_size, L, frac_tune2, frac_tune3):
 
@@ -23,8 +25,9 @@ def sampler_mhmclmc_with_tuning(step_size, L, frac_tune2, frac_tune3):
         initial_state = blackjax.mcmc.mhmclmc.init(
         position=initial_position, logdensity_fn=logdensity_fn, random_generator_arg=init_key
         )
+        integrator = blackjax.mcmc.integrators.isokinetic_mclachlan
         kernel = lambda rng_key, state, avg_num_integration_steps, step_size: blackjax.mcmc.mhmclmc.build_kernel(
-                integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
+                integrator=integrator,
                 integration_steps_fn = lambda key : jnp.ceil(jax.random.uniform(key) * rescale(avg_num_integration_steps)),
                 # integration_steps_fn = lambda key: avg_num_integration_steps, 
             )(
@@ -42,6 +45,7 @@ def sampler_mhmclmc_with_tuning(step_size, L, frac_tune2, frac_tune3):
             num_steps=num_steps,
             state=initial_state,
             rng_key=tune_key,
+            target=target_acceptance_rate_of_order[mhmclmc_integrator_order[integrator]],
             frac_tune2=frac_tune2,
             frac_tune3=frac_tune3,
             params=MCLMCAdaptationState(L=L, step_size=step_size, std_mat=1.)
@@ -75,7 +79,7 @@ def sampler_mhmclmc_with_tuning(step_size, L, frac_tune2, frac_tune3):
         print(info.acceptance_rate.mean(), "acceptance probability\n\n\n\n")
         # print(out.var(axis=0), "acceptance probability")
 
-        return out, blackjax_mclmc_sampler_params, num_steps_per_traj
+        return out, blackjax_mclmc_sampler_params, num_steps_per_traj * calls_per_integrator_step(coefficients)
 
     return s
 
@@ -108,7 +112,7 @@ def sampler_mhmclmc(step_size, L):
         # print(info.acceptance_rate.mean(), "acceptance probability\n\n\n\n")
         # print(out.var(axis=0), "acceptance probability")
 
-        return out, MCLMCAdaptationState(L=L, step_size=step_size, std_mat=1.), num_steps_per_traj * calls_per_integrator_step[integrator]
+        return out, MCLMCAdaptationState(L=L, step_size=step_size, std_mat=1.), num_steps_per_traj * calls_per_integrator_step(coefficients)
 
     return s
 

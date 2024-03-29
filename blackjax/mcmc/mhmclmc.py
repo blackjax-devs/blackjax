@@ -92,7 +92,7 @@ def build_kernel(
 
         proposal, info, _ = mhmclmc_proposal(
             # integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
-            lambda state, step_size, x, y : (integrator(logdensity_fn, std_mat))(state, step_size),
+            lambda state, step_size, L_prop, key : (integrator(logdensity_fn, std_mat))(state, step_size),
             step_size,
             L_proposal,
             num_integration_steps,
@@ -215,7 +215,7 @@ def mhmclmc_proposal(
     def step(i, vars):
         state, kinetic_energy, rng_key = vars
         rng_key, next_rng_key = jax.random.split(rng_key)
-        next_state, next_kinetic_energy = integrator(state, step_size=step_size, L_proposal=L_proposal, rng_key=rng_key)
+        next_state, next_kinetic_energy = integrator(state, step_size, L_proposal, rng_key)
 
         return next_state, kinetic_energy + next_kinetic_energy, next_rng_key
 

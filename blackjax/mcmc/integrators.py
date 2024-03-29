@@ -24,6 +24,10 @@ from blackjax.mcmc.metrics import KineticEnergy
 from blackjax.types import ArrayTree
 
 __all__ = [
+    "velocity_verlet_coefficients",
+    "mclachlan_coefficients",
+    "yoshida_coefficients",
+    "omelyan_coefficients",
     "mclachlan",
     "omelyan",
     "velocity_verlet",
@@ -415,7 +419,14 @@ isokinetic_yoshida = generate_isokinetic_integrator(yoshida_coefficients)
 isokinetic_mclachlan = generate_isokinetic_integrator(mclachlan_coefficients)
 isokinetic_omelyan = generate_isokinetic_integrator(omelyan_coefficients)
 
-calls_per_integrator_step = {isokinetic_leapfrog: 1, isokinetic_mclachlan: 2, isokinetic_yoshida: 3, velocity_verlet: 1, mclachlan: 2, yoshida: 3, isokinetic_omelyan: 5}
+# calls_per_integrator_step = {isokinetic_leapfrog: 1, isokinetic_mclachlan: 2, isokinetic_yoshida: 3, velocity_verlet: 1, mclachlan: 2, yoshida: 3, isokinetic_omelyan: 5}
+def calls_per_integrator_step(c):
+    if c==velocity_verlet_coefficients: return 1
+    if c==mclachlan_coefficients: return 2
+    if c==yoshida_coefficients: return 3
+    if c==omelyan_coefficients: return 5
+
+    else: raise Exception
 
 def partially_refresh_momentum(momentum, rng_key, step_size, L):
     """Adds a small noise to momentum and normalizes.
@@ -444,15 +455,15 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
 
 def with_isokinetic_maruyama(integrator):
     
-    def stochastic_integrator(init_state, step_size, Lpartial, rng_key):
+    def stochastic_integrator(init_state, step_size, L_proposal, rng_key):
         
         key1, key2 = jax.random.split(rng_key)
         # partial refreshment
-        state = init_state._replace(momentum=partially_refresh_momentum(momentum=init_state.momentum, rng_key=key1, L=Lpartial, step_size=step_size * 0.5))
+        state = init_state._replace(momentum=partially_refresh_momentum(momentum=init_state.momentum, rng_key=key1, L=L_proposal, step_size=step_size * 0.5))
         # one step of the deterministic dynamics
         state, info = integrator(state, step_size)
         # partial refreshment
-        state = state._replace(momentum=partially_refresh_momentum(momentum=state.momentum, rng_key=key2, L=Lpartial, step_size=step_size * 0.5))
+        state = state._replace(momentum=partially_refresh_momentum(momentum=state.momentum, rng_key=key2, L=L_proposal, step_size=step_size * 0.5))
         return state, info
     
     return stochastic_integrator
