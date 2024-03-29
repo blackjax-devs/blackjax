@@ -167,12 +167,9 @@ def run_benchmarks():
 
     df = pd.DataFrame(results)
     df.to_csv("results.csv", index=False)  # Save the DataFrame to a CSV file
+    return results
 
 if __name__ == "__main__":
     run_benchmarks()
-
-if __name__ == "__main__":
-    run_benchmarks()
-
 
 
