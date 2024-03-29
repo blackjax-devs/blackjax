@@ -180,11 +180,11 @@ def run_inference_algorithm(
         3. The trace of the info of the inference algorithm for diagnostics.
     """
     init_key, sample_key = split(rng_key, 2)
-    try:
-        initial_state = inference_algorithm.init(initial_state_or_position, init_key)
-    except (TypeError, ValueError, AttributeError):
-        # We assume initial_state is already in the right format.
-        initial_state = initial_state_or_position
+    # try:
+    #     initial_state = inference_algorithm.init(initial_state_or_position, init_key)
+    #except (TypeError, ValueError, AttributeError, IndexError):
+    # We assume initial_state is already in the right format.
+    initial_state = initial_state_or_position
 
     keys = split(sample_key, num_steps)
 

@@ -17,17 +17,25 @@ from typing import Any, Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
+from jax.random import normal
+
 
 from blackjax.mcmc.metrics import KineticEnergy
 from blackjax.types import ArrayTree
 
 __all__ = [
     "mclachlan",
+    "omelyan",
     "velocity_verlet",
+    "velocity_verlet_coefficients"
+    "mclachlan_coefficients"
+    "yoshida_coefficients"
     "yoshida",
+    "with_isokinetic_maruyama",
     "implicit_midpoint",
     "isokinetic_leapfrog",
     "isokinetic_mclachlan",
+    "isokinetic_omelyan",
     "isokinetic_yoshida",
 ]
 
@@ -209,7 +217,7 @@ def format_euclidean_state_output(
     return IntegratorState(position, momentum, logdensity, logdensity_grad)
 
 
-def generate_euclidean_integrator(cofficients):
+def generate_euclidean_integrator(coefficients):
     """Generate symplectic integrator for solving a Hamiltonian system.
 
     The resulting integrator is volume-preserve and preserves the symplectic structure
@@ -224,7 +232,7 @@ def generate_euclidean_integrator(cofficients):
         one_step = generalized_two_stage_integrator(
             momentum_update_fn,
             position_update_fn,
-            cofficients,
+            coefficients,
             format_output_fn=format_euclidean_state_output,
         )
         return one_step
@@ -250,8 +258,8 @@ By choosing the velocity verlet we avoid two computations of the gradient
 of the kinetic energy. We are trading accuracy in exchange, and it is not
 clear whether this is the right tradeoff.
 """
-velocity_verlet_cofficients = [0.5, 1.0, 0.5]
-velocity_verlet = generate_euclidean_integrator(velocity_verlet_cofficients)
+velocity_verlet_coefficients = [0.5, 1.0, 0.5]
+velocity_verlet = generate_euclidean_integrator(velocity_verlet_coefficients)
 
 """
 Two-stage palindromic symplectic integrator derived in :cite:p:`blanes2014numerical`.
@@ -267,8 +275,8 @@ Also known as the minimal norm integrator.
 b1 = 0.1931833275037836
 a1 = 0.5
 b2 = 1 - 2 * b1
-mclachlan_cofficients = [b1, a1, b2, a1, b1]
-mclachlan = generate_euclidean_integrator(mclachlan_cofficients)
+mclachlan_coefficients = [b1, a1, b2, a1, b1]
+mclachlan = generate_euclidean_integrator(mclachlan_coefficients)
 
 """
 Three stages palindromic symplectic integrator derived in :cite:p:`mclachlan1995numerical`
@@ -283,8 +291,22 @@ b1 = 0.11888010966548
 a1 = 0.29619504261126
 b2 = 0.5 - b1
 a2 = 1 - 2 * a1
-yoshida_cofficients = [b1, a1, b2, a2, b2, a1, b1]
-yoshida = generate_euclidean_integrator(yoshida_cofficients)
+yoshida_coefficients = [b1, a1, b2, a2, b2, a1, b1]
+yoshida = generate_euclidean_integrator(yoshida_coefficients)
+
+
+"""11 stage Omelyan integrator [I.P. Omelyan, I.M. Mryglod and R. Folk, Comput. Phys. Commun. 151 (2003) 272.], 
+4MN5FV in [Takaishi, Tetsuya, and Philippe De Forcrand. "Testing and tuning symplectic integrators for the hybrid Monte Carlo algorithm in lattice QCD." Physical Review E 73.3 (2006): 036706.]
+popular in LQCD"""
+b1 = 0.08398315262876693
+a1 = 0.2539785108410595
+b2 = 0.6822365335719091
+a2 = -0.03230286765269967
+b3  = 0.5 - b1 - b2
+a3 = 1 - 2 * (a1 + a2)
+omelyan_coefficients = [b1, a1, b2, a2, b3, a3, b3, a2, b2, a1, b1]
+omelyan = generate_euclidean_integrator(omelyan_coefficients)
+
 
 
 # Intergrators with non Euclidean updates
@@ -348,7 +370,7 @@ def format_isokinetic_state_output(
     )
 
 
-def generate_isokinetic_integrator(cofficients):
+def generate_isokinetic_integrator(coefficients):
     def isokinetic_integrator(
         logdensity_fn: Callable, *args, **kwargs
     ) -> GeneralIntegrator:
@@ -356,7 +378,7 @@ def generate_isokinetic_integrator(cofficients):
         one_step = generalized_two_stage_integrator(
             esh_dynamics_momentum_update_one_step,
             position_update_fn,
-            cofficients,
+            coefficients,
             format_output_fn=format_isokinetic_state_output,
         )
         return one_step
@@ -364,9 +386,51 @@ def generate_isokinetic_integrator(cofficients):
     return isokinetic_integrator
 
 
-isokinetic_leapfrog = generate_isokinetic_integrator(velocity_verlet_cofficients)
-isokinetic_yoshida = generate_isokinetic_integrator(yoshida_cofficients)
-isokinetic_mclachlan = generate_isokinetic_integrator(mclachlan_cofficients)
+isokinetic_leapfrog = generate_isokinetic_integrator(velocity_verlet_coefficients)
+isokinetic_yoshida = generate_isokinetic_integrator(yoshida_coefficients)
+isokinetic_mclachlan = generate_isokinetic_integrator(mclachlan_coefficients)
+isokinetic_omelyan = generate_isokinetic_integrator(omelyan_coefficients)
+
+def partially_refresh_momentum(momentum, rng_key, step_size, L):
+    """Adds a small noise to momentum and normalizes.
+
+    Parameters
+    ----------
+    rng_key
+        The pseudo-random number generator key used to generate random numbers.
+    momentum
+        PyTree that the structure the output should to match.
+    step_size
+        Step size
+    L
+        controls rate of momentum change
+
+    Returns
+    -------
+    momentum with random change in angle
+    """
+    m, unravel_fn = ravel_pytree(momentum)
+    dim = m.shape[0]
+    nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
+    z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
+    return unravel_fn((m + z) / jnp.linalg.norm(m + z))
+
+
+def with_isokinetic_maruyama(integrator):
+    
+    def stochastic_integrator(init_state, step_size, Lpartial, rng_key):
+        
+        key1, key2 = jax.random.split(rng_key)
+        # partial refreshment
+        state = init_state._replace(momentum=partially_refresh_momentum(momentum=init_state.momentum, rng_key=key1, L=Lpartial, step_size=step_size * 0.5))
+        # one step of the deterministic dynamics
+        state, info = integrator(state, step_size)
+        # partial refreshment
+        state = state._replace(momentum=partially_refresh_momentum(momentum=state.momentum, rng_key=key2, L=Lpartial, step_size=step_size * 0.5))
+        return state, info
+    
+    return stochastic_integrator
+
 
 FixedPointSolver = Callable[
     [Callable[[ArrayTree], Tuple[ArrayTree, ArrayTree]], ArrayTree],
