@@ -559,8 +559,8 @@ def mhmclmc_make_L_step_size_adaptation(
             # jax.debug.print("{x} frac tune 2 guess",x=(jnp.sqrt(jnp.sum(variances))))
             
             
-            # change = jax.lax.clamp(Lratio_lowerbound, jnp.sqrt(jnp.sum(variances))/params.L, Lratio_upperbound)
-            change = jnp.sqrt(jnp.sum(variances))/params.L
+            change = jax.lax.clamp(Lratio_lowerbound, jnp.sqrt(jnp.sum(variances))/params.L, Lratio_upperbound)
+            # change = jnp.sqrt(jnp.sum(variances))/params.L
             # jax.debug.print("{x} L ratio, old val,  new val",x=(change, params.L, params.L*change))
             # jax.debug.print("{x} variance",x=(jnp.sqrt(jnp.sum(variances))))
             params = params._replace(L=params.L*change, step_size=params.step_size*change)
@@ -610,6 +610,7 @@ def mhmclmc_make_adaptation_L(kernel, frac, Lfactor):
         ess = effective_sample_size(flat_samples[None, ...])
 
         change = jax.lax.clamp(Lratio_lowerbound, (Lfactor * params.step_size * jnp.mean(num_steps / ess))/params.L, Lratio_upperbound)
+        # change = (Lfactor * params.step_size * jnp.mean(num_steps / ess))/params.L
 
         # jax.debug.print("tune 3\n\n {x}", x=(params.L*change, change))
         return state, params._replace(

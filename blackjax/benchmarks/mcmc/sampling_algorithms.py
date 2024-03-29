@@ -74,6 +74,7 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, transform, key):
         step_size=blackjax_mclmc_sampler_params.step_size,
         std_mat=blackjax_mclmc_sampler_params.std_mat,
         integrator = integrator,
+
         # std_mat=jnp.ones((initial_position.shape[0],)),
     )
 
@@ -83,6 +84,7 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, transform, key):
         inference_algorithm=sampling_alg,
         num_steps=num_steps,
         transform=lambda x: transform(x.position),
+        progress_bar=True,
     )
 
     return samples, blackjax_mclmc_sampler_params, calls_per_integrator_step[integrator]
@@ -119,7 +121,7 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, transform, key):
         rng_key=tune_key,
         frac_tune1=0.1,
         frac_tune2=0.1,
-        frac_tune3=0,
+        frac_tune3=0.0,
         # params=MCLMCAdaptationState(L=16.765137, step_size=4.005, std_mat=jnp.ones((initial_position.shape[0],))),
     )
 
@@ -131,14 +133,15 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, transform, key):
     step_size = blackjax_mclmc_sampler_params.step_size
     L = blackjax_mclmc_sampler_params.L
 
-    jax.debug.print("{x} L, step_size", x=(L, step_size))
+    # jax.debug.print("{x} L, step_size", x=(L, step_size))
 
 
     alg = blackjax.mcmc.mhmclmc.mhmclmc(
         logdensity_fn=logdensity_fn,
         step_size=step_size,
-        integration_steps_fn = lambda key: jnp.round(jax.random.uniform(key) * rescale(L/step_size + 0.5)) ,
+        integration_steps_fn = lambda key: jnp.ceil(jax.random.uniform(key) * rescale(L/step_size)) ,
         integrator=integrator,
+        
         # integration_steps_fn = lambda key: jnp.ceil(jax.random.poisson(key, L/step_size )) ,
 
     )
@@ -166,3 +169,8 @@ samplers = {
     'mclmc' : run_mclmc, 
     'mhmclmc': run_mhmclmc, 
     }
+
+
+# foo = lambda k : jnp.ceil(jax.random.uniform(k) * rescale(20.56))
+
+# print(jnp.mean(jax.vmap(foo)(jax.random.split(jax.random.PRNGKey(1), 10000000))))

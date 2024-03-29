@@ -1,4 +1,6 @@
+import math
 import os
+from statistics import mean, median
 import jax
 import jax.numpy as jnp
 
@@ -82,14 +84,33 @@ def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.av
 
     # samples, params, avg_num_steps_per_traj = jax.pmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
     samples, params, grad_calls_per_traj = jax.vmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
-    avg_grad_calls_per_traj = jnp.mean(grad_calls_per_traj, axis=0)
+    # avg_grad_calls_per_traj = jnp.mean(jnp.where(jnp.isnan(grad_calls_per_traj), 1, grad_calls_per_traj), axis=0)
+    avg_grad_calls_per_traj = jnp.nanmean(grad_calls_per_traj, axis=0)
+    print(jnp.nanmean(params.step_size,axis=0), jnp.nanmean(params.L,axis=0))
+
+    # print("grad calls", avg_grad_calls_per_traj)
     
     full = lambda arr : err(model.E_x2, model.Var_x2, contract)(cumulative_avg(arr))
-    err_t = jnp.mean(jax.vmap(full)(samples**2), axis=0)
+    # err_t = jnp.mean(jax.vmap(full)(samples**2), axis=0)
+    err_t = jax.vmap(full)(samples**2)
+    # print(err_t)
+    # raise Exception
+    # print(err_t.shape)
+    # foo = jax.vmap(lambda x: calculate_ess(x, grad_evals_per_step=avg_grad_calls_per_traj))(err_t)
+    # print(foo.shape)
+    outs = [calculate_ess(b, grad_evals_per_step=avg_grad_calls_per_traj) for b in err_t]
+    # print(outs[:10])
+    esses = [i[0].item() for i in outs if not math.isnan(i[0].item())]
+    grad_calls = [i[1].item() for i in outs if not math.isnan(i[1].item())]
+    # print(grad_calls)
+    # raise Exception
+
+    # print(mean(esses), median(esses))
+    # print(mean(grad_calls), median(grad_calls))
     
     # return grads_to_low_error(err_t, avg_grad_calls_per_traj)[0]
-    ess_per_sample = calculate_ess(err_t, grad_evals_per_step=avg_grad_calls_per_traj)
-    return ess_per_sample
+    # ess_per_sample = calculate_ess(err_t, grad_evals_per_step=avg_grad_calls_per_traj)
+    return median(esses), median(grad_calls)
     # , err_t[-1], params
 
 
@@ -97,17 +118,18 @@ def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.av
 
 def run_benchmarks():
 
+
     # for model, sampler in itertools.product(models, samplers):
-    for model, sampler in itertools.product(["Brownian Motion"], ["mclmc"]):
+    for model, sampler in itertools.product(["Brownian Motion"], ["mhmclmc",]):
 
         print(f"\nModel: {model}, Sampler: {sampler}\n")
 
         results = []
         Model = models[model][0]
         key = jax.random.PRNGKey(2)
-        for i in range(1000):
+        for i in range(1):
             key1, key = jax.random.split(key)
-            result = benchmark_chains(Model, samplers[sampler],key1, n=models[model][1][sampler], batch=1)
+            result = benchmark_chains(Model, samplers[sampler],key1, n=models[model][1][sampler], batch=250)
             #print(f"ESS: {result.item()}")
             print(f"grads to low bias: " + str(result[1:]))
             results.append(result[1])
