@@ -179,7 +179,7 @@ class mhmclmc:
 def mhmclmc_proposal(
     integrator: Callable,
     step_size: Union[float, ArrayLikeTree],
-    L: float,
+    L_proposal: float,
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,
     *,
@@ -215,8 +215,7 @@ def mhmclmc_proposal(
     def step(i, vars):
         state, kinetic_energy, rng_key = vars
         rng_key, next_rng_key = jax.random.split(rng_key)
-        next_state, next_kinetic_energy = integrator(state, step_size, L, rng_key)
-        # jax.debug.print("{x} pos, grad", x=(next_state.position, state.logdensity_grad))
+        next_state, next_kinetic_energy = integrator(state, step_size=step_size, L_proposal=L_proposal, rng_key=rng_key)
 
         return next_state, kinetic_energy + next_kinetic_energy, next_rng_key
 
