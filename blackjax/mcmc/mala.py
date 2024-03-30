@@ -80,14 +80,14 @@ def build_kernel():
         """Transition energy to go from `state` to `new_state`"""
         theta = jax.tree_util.tree_map(
             lambda new_x, x, g: new_x - x - step_size * g,
-            new_state.position,
             state.position,
-            state.logdensity_grad,
+            new_state.position,
+            new_state.logdensity_grad,
         )
         theta_dot = jax.tree_util.tree_reduce(
             operator.add, jax.tree_util.tree_map(lambda x: jnp.sum(x * x), theta)
         )
-        return state.logdensity - 0.25 * (1.0 / step_size) * theta_dot
+        return -new_state.logdensity + 0.25 * (1.0 / step_size) * theta_dot
 
     compute_acceptance_ratio = proposal.compute_asymmetric_acceptance_ratio(
         transition_energy
