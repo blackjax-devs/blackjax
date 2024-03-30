@@ -14,6 +14,7 @@ class StandardNormal():
         self.ndims = d
         self.E_x2 = jnp.ones(d)
         self.Var_x2 = 2 * self.E_x2
+        self.name = 'StandardNormal'
         
 
     def logdensity_fn(self, x):
@@ -38,6 +39,7 @@ class IllConditionedGaussian():
             If None, the covariance matrix is diagonal."""
 
         self.ndims = d
+        self.name = 'IllConditionedGaussian'
         self.condition_number = condition_number
         eigs = jnp.logspace(-0.5 * jnp.log10(condition_number), 0.5 * jnp.log10(condition_number), d)
 
@@ -84,6 +86,7 @@ class IllConditionedESH():
 
     def __init__(self):
         self.ndims = 50
+        self.name = 'IllConditionedESH'
         self.variance = jnp.linspace(0.01, 1, self.ndims)
 
         
@@ -111,6 +114,7 @@ class IllConditionedGaussianGamma():
 
     def __init__(self, prior = 'prior'):
         self.ndims = 100
+        self.name = 'IllConditionedGaussianGamma'
 
         # define the Hessian
         rng = np.random.RandomState(seed=10 & (2 ** 32 - 1))
@@ -159,6 +163,7 @@ class Banana():
     def __init__(self, prior = 'map'):
         self.curvature = 0.03
         self.ndims = 2
+        self.name = 'Banana'
         
         self.transform = lambda x: x
         self.E_x2 = jnp.array([100.0, 19.0]) #the first is analytic the second is by drawing 10^8 samples from the generative model. Relative accuracy is around 10^-5.
@@ -189,19 +194,6 @@ class Banana():
         print(jnp.average(jnp.square(x), axis=0))
         print(jnp.std(jnp.square(x[:, 0])) ** 2, jnp.std(jnp.square(x[:, 1])) ** 2)
 
-    def plott(self):
-        xmin, xmax = -20.0, 20.0
-        ymin, ymax = -10.0, 10.0
-        X, Y, Z = get_contour_plot(self, jnp.linspace(xmin, xmax, 100), jnp.linspace(ymin, ymax, 100))
-
-        import matplotlib.pyplot as plt
-        plt.figure(figsize=(10, 5))
-        plt.contourf(X, Y, jnp.exp(-Z))
-
-        x = np.linspace(xmin, xmax, 100)
-        plt.plot(x, 0.03 * (x ** 2 - 100), color='tab:red')
-        plt.savefig('../tst_ensamble/Banana/banana.png')
-        plt.show()
 
 
 
@@ -210,6 +202,7 @@ class Cauchy():
 
     def __init__(self, d):
         self.ndims = d
+        self.name = 'Cauchy'
 
         self.logdensity_fn = lambda x: -jnp.sum(jnp.log(1. + jnp.square(x)))
         
@@ -224,6 +217,7 @@ class HardConvex():
     def __init__(self, d, kappa, theta = 0.1):
         """d is the dimension, kappa = condition number, 0 < theta < 1/4"""
         self.ndims = d
+        self.name = 'HardConvex'
         self.theta, self.kappa = theta, kappa
         C = jnp.power(d-1, 0.25 - theta)
         self.logdensity_fn = lambda x: -0.5 * jnp.sum(jnp.square(x[:-1])) - (0.75 / kappa)* x[-1]**2 + 0.5 * jnp.sum(jnp.cos(C * x[:-1])) / C**2
@@ -260,6 +254,7 @@ class BiModal():
     def __init__(self, d = 50, mu1 = 0.0, mu2 = 8.0, sigma1 = 1.0, sigma2 = 1.0, f = 0.2):
 
         self.ndims = d
+        self.name = 'BiModal'
 
         self.mu1 = jnp.insert(jnp.zeros(d-1), 0, mu1)
         self.mu2 = jnp.insert(jnp.zeros(d - 1), 0, mu2)
@@ -304,6 +299,7 @@ class BiModalEqual():
     def __init__(self, d, mu):
 
         self.ndims = d
+        self.name = 'BiModalEqual'
         self.mu = mu
         
 
@@ -333,6 +329,7 @@ class Funnel():
     def __init__(self, d = 20):
 
         self.ndims = d
+        self.name = 'Funnel'
         self.sigma_theta= 3.0
         self.variance = jnp.ones(d)
         
@@ -370,6 +367,7 @@ class Funnel_with_Data():
     def __init__(self, d, sigma, minibatch_size, key):
 
         self.ndims = d
+        self.name = 'Funnel_with_Data'
         self.sigma_theta= 3.0
         self.theta_true = 0.0
         self.sigma_data = sigma
@@ -417,6 +415,7 @@ class Rosenbrock():
     def __init__(self, d = 36, Q = 0.1):
 
         self.ndims = d
+        self.name = 'Rosenbrock'
         self.Q = Q
         #ground truth moments
         var_x = 2.0
@@ -488,6 +487,7 @@ class Brownian():
 
     def __init__(self):
         self.num_data = 30
+        self.name = 'Brownian'
         self.ndims = self.num_data + 2
 
         ground_truth_moments = jnp.load(dirr + '/ground_truth/brownian/ground_truth.npy')
@@ -562,6 +562,7 @@ class GermanCredit:
 
     def __init__(self):
         self.ndims = 51 #global scale + 25 local scales + 25 weights
+        self.name = 'GermanCredit'
 
         self.labels = jnp.load(dirr + '/data/gc_labels.npy')
         self.features = jnp.load(dirr + '/data/gc_features.npy')
@@ -591,15 +592,6 @@ class GermanCredit:
         lik = jnp.sum(self.labels * jnp.logaddexp(0., -logits) + (1-self.labels)* jnp.logaddexp(0., logits))
 
         return -(lik + pr + transform)
-    #
-    # def sample_init(self, key):
-    #     key1, key2 = jax.random.split(key)
-    #
-    #     scales = jax.random.gamma(key1, 0.5, shape=(26,)) * 2.  # we divided by beta = 0.5
-    #     unscaled_weights = jax.random.normal(key2, shape=(25,))
-    #
-    #     return jnp.concatenate((scales, unscaled_weights))
-    #
 
     def sample_init(self, key):
         weights = jax.random.normal(key, shape = (25, ))
@@ -613,6 +605,7 @@ class ItemResponseTheory:
 
     def __init__(self):
         self.ndims = 501
+        self.name = 'ItemResponseTheory'
         self.students = 400
         self.questions = 100
 
@@ -658,6 +651,7 @@ class StochasticVolatility():
         self.SP500_returns = jnp.load(dirr + '/data/SP500.npy')
 
         self.ndims = 2429
+        self.name = 'StochasticVolatility'
 
         self.typical_sigma, self.typical_nu = 0.02, 10.0 # := 1 / lambda
 
@@ -743,7 +737,7 @@ def random_walk(key, num):
 
 
 models = {
-    # 'normal': StandardNormal(10), 
+    # 'normal': (StandardNormal(10), {'mclmc': 2000, 'mhmclmc' : 2000, 'nuts': 2000}), 
     # 'banana': Banana(), 
     # 'icg' : (IllConditionedGaussian(10, 2),   {'mclmc': 2000, 'mhmclmc' : 2000, 'nuts': 2000}),
     'Brownian Motion': (Brownian(), {'mclmc': 20000, 'mhmclmc' : 10000, 'nuts': 5000})

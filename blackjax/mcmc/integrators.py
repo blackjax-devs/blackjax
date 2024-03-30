@@ -24,6 +24,7 @@ from blackjax.mcmc.metrics import KineticEnergy
 from blackjax.types import ArrayTree
 
 __all__ = [
+    "name_integrator",
     "velocity_verlet_coefficients",
     "mclachlan_coefficients",
     "yoshida_coefficients",
@@ -425,6 +426,14 @@ def calls_per_integrator_step(c):
     if c==mclachlan_coefficients: return 2
     if c==yoshida_coefficients: return 3
     if c==omelyan_coefficients: return 5
+
+    else: raise Exception
+
+def name_integrator(c):
+    if c==velocity_verlet_coefficients: return "leapfrog"
+    if c==mclachlan_coefficients: return "mclachlan"
+    if c==yoshida_coefficients: return "yoshida"
+    if c==omelyan_coefficients: return "omelyan"
 
     else: raise Exception
 

@@ -15,8 +15,8 @@ import itertools
 import numpy as np
 
 from blackjax.benchmarks.mcmc.sampling_algorithms import samplers
-from blackjax.benchmarks.mcmc.inference_models import models
-from blackjax.mcmc.integrators import generate_euclidean_integrator, generate_isokinetic_integrator, isokinetic_mclachlan, mclachlan_coefficients, omelyan_coefficients, velocity_verlet, velocity_verlet_coefficients, yoshida_coefficients
+from blackjax.benchmarks.mcmc.inference_models import StandardNormal, models
+from blackjax.mcmc.integrators import generate_euclidean_integrator, generate_isokinetic_integrator, isokinetic_mclachlan, mclachlan_coefficients, name_integrator, omelyan_coefficients, velocity_verlet, velocity_verlet_coefficients, yoshida_coefficients
 
 
 
@@ -126,28 +126,31 @@ def run_benchmarks(batch_size):
 
     results = defaultdict(tuple)
 
-    # for model, sampler in itertools.product(models, samplers):
-    for variables in itertools.product(["Brownian Motion"], ["mhmclmc", "nuts", "mclmc", ], [velocity_verlet_coefficients, mclachlan_coefficients, yoshida_coefficients, omelyan_coefficients]):
+    sampling_algs = ["mhmclmc", "nuts", "mclmc", ]
+    coeffs = [velocity_verlet_coefficients, mclachlan_coefficients, yoshida_coefficients, omelyan_coefficients]
+    models = [StandardNormal(d) for d in np.ceil(np.logspace(np.log10(10), np.log10(100000), 5)).astype(int)]
+
+    # for model, sampler in itertools.product(models, sampling_algs):
+    for variables in itertools.product(models, sampling_algs, coeffs):
 
         model, sampler, coefficients = variables
-        print(f"\nModel: {model}, Sampler: {sampler}\n Coefficients: {coefficients}\n") 
+        print(f"\nModel: {model.name}, Sampler: {sampler}\n Coefficients: {coefficients}\n") 
         # sampler_to_integrator_type = {
         #     "mclmc": generate_isokinetic_integrator,
         #     "mhmclmc": generate_isokinetic_integrator,
         #     "nuts": generate_euclidean_integrator,
         # }
-       
 
-        Model = models[model][0]
+        # Model = models[model][0]
         key = jax.random.PRNGKey(2)
         for i in range(1):
             key1, key = jax.random.split(key)
             # integrator = sampler_to_integrator_type[sampler](coefficients)
-            ess, grad_calls = benchmark_chains(Model, partial(samplers[sampler], coefficients=coefficients),key1, n=models[model][1][sampler], batch=batch_size, contract=jnp.max)
+            ess, grad_calls = benchmark_chains(model, partial(samplers[sampler], coefficients=coefficients),key1, n=1000, batch=1 + 1000//model.ndims, contract=jnp.average)
             #print(f"ESS: {result.item()}")
             print(f"grads to low bias: {grad_calls}")
             # results.append(result[1])
-            results[(model, sampler, tuple(coefficients))] = (ess, grad_calls) 
+            results[((model.name, model.ndims), sampler, name_integrator(coefficients))] = (ess, grad_calls) 
 
         # import matplotlib.pyplot as plt
 
@@ -165,11 +168,15 @@ def run_benchmarks(batch_size):
             
     import pandas as pd
 
-    df = pd.DataFrame(results)
-    df.to_csv("results.csv", index=False)  # Save the DataFrame to a CSV file
+    df = pd.Series(results).reset_index()
+    df.columns = ["model", "sampler", "coeffs", "result"] 
+    df.result = df.result.apply(lambda x: x[1].item())
+    df.model = df.model.apply(lambda x: x[1])
+    df.to_csv("results.csv", index=False)
+
     return results
 
 if __name__ == "__main__":
-    run_benchmarks(batch_size=1)
+    run_benchmarks(batch_size=100)
 
 
