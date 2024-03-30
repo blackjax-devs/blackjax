@@ -122,7 +122,7 @@ def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.av
 
 
 
-def run_benchmarks():
+def run_benchmarks(batch_size):
 
     results = defaultdict(tuple)
 
@@ -143,7 +143,7 @@ def run_benchmarks():
         for i in range(1):
             key1, key = jax.random.split(key)
             # integrator = sampler_to_integrator_type[sampler](coefficients)
-            ess, grad_calls = benchmark_chains(Model, partial(samplers[sampler], coefficients=coefficients),key1, n=models[model][1][sampler], batch=2)
+            ess, grad_calls = benchmark_chains(Model, partial(samplers[sampler], coefficients=coefficients),key1, n=models[model][1][sampler], batch=batch_size, contract=jnp.max)
             #print(f"ESS: {result.item()}")
             print(f"grads to low bias: {grad_calls}")
             # results.append(result[1])
@@ -170,6 +170,6 @@ def run_benchmarks():
     return results
 
 if __name__ == "__main__":
-    run_benchmarks()
+    run_benchmarks(batch_size=1)
 
 

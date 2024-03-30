@@ -746,7 +746,7 @@ models = {
     # 'normal': StandardNormal(10), 
     # 'banana': Banana(), 
     # 'icg' : (IllConditionedGaussian(10, 2),   {'mclmc': 2000, 'mhmclmc' : 2000, 'nuts': 2000}),
-    'Brownian Motion': (Brownian(), {'mclmc': 10000, 'mhmclmc' : 10000, 'nuts': 2000})
+    'Brownian Motion': (Brownian(), {'mclmc': 20000, 'mhmclmc' : 10000, 'nuts': 5000})
     }
 
 # models = {'Brownian Motion': (Brownian(), {'mclmc': 50000, 'mhmclmc' : 40000, 'nuts': 1000}),
