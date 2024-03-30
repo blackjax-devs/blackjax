@@ -87,7 +87,7 @@ def build_kernel():
         theta_dot = jax.tree_util.tree_reduce(
             operator.add, jax.tree_util.tree_map(lambda x: jnp.sum(x * x), theta)
         )
-        return -state.logdensity + 0.25 * (1.0 / step_size) * theta_dot
+        return state.logdensity - 0.25 * (1.0 / step_size) * theta_dot
 
     compute_acceptance_ratio = proposal.compute_asymmetric_acceptance_ratio(
         transition_energy
