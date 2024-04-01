@@ -4,7 +4,7 @@ import operator
 import jax
 import numpy as np
 
-from benchmark import benchmark_chains, cumulative_avg, err, calculate_ess, get_num_latents, grads_to_low_error
+from benchmark import benchmark_chains, cumulative_avg, err, calculate_ess, get_num_latents, grads_to_low_error, gridsearch_tune, sampler_mhmclmc
 import blackjax
 from blackjax.adaptation.mclmc_adaptation import MCLMCAdaptationState
 from blackjax.mcmc.integrators import calls_per_integrator_step
@@ -83,49 +83,19 @@ def sampler_mhmclmc_with_tuning(step_size, L, frac_tune2, frac_tune3):
 
     return s
 
-def sampler_mhmclmc(step_size, L):
-
-    def s(logdensity_fn, num_steps, initial_position, transform, key):
-
-        integrator =  blackjax.mcmc.integrators.isokinetic_mclachlan
-
-        
-        num_steps_per_traj = L/step_size
-        alg = blackjax.mcmc.mhmclmc.mhmclmc(
-        logdensity_fn=logdensity_fn,
-        step_size=step_size,
-        integration_steps_fn = lambda k : jnp.ceil(jax.random.uniform(k) * rescale(num_steps_per_traj)) ,
-        integrator=integrator,
-        )
-
-        
-        
-        _, out, info = run_inference_algorithm(
-        rng_key=key,
-        initial_state_or_position=initial_position,
-        inference_algorithm=alg,
-        num_steps=num_steps, 
-        transform=lambda x: transform(x.position), 
-        progress_bar=True)
-        # print(info.acceptance_rate.mean(), "acceptance probability\n\n\n\n")
-
-        # print(info.acceptance_rate.mean(), "acceptance probability\n\n\n\n")
-        # print(out.var(axis=0), "acceptance probability")
-
-        return out, MCLMCAdaptationState(L=L, step_size=step_size, std_mat=1.), num_steps_per_traj * calls_per_integrator_step(coefficients)
-
-    return s
 
 
 # Empirical mean [ 2.6572839e-05 -4.0523437e-06]
 # Empirical std [0.07159886 0.07360378]
+
+
 
 def grid_search(n, model):
     
 
     print(f"\nModel: {model}")
 
-    results = defaultdict(float)
+    
 
     if True:
         batch = 10
@@ -165,29 +135,7 @@ def grid_search(n, model):
     batch = 100
 
     # best params on iteration 0 are stepsize 5.103655551427525 and L 5.408820389035896 with Grad Calls until Convergence 216.19784545898438
-    iterations=2
-    keys = jax.random.split(jax.random.PRNGKey(0), iterations+1)
-    for i in range(iterations):
-        # width = 2
-        width = 2
-        step_sizes = np.logspace(np.log10(center_step_size/width), np.log10(center_step_size*width), grid_size)
-        Ls = np.logspace(np.log10(center_L/2), np.log10(center_L*2),grid_size)
-        # Ls = np.array([center_L])
-        for j, (step_size, L) in enumerate(itertools.product(step_sizes , Ls)):
-        
-            ess, grad_calls_until_convergence = benchmark_chains(model, sampler_mhmclmc(step_size=step_size, L=L), keys[i], n=n, batch = batch) # batch=1000//model.ndims)
-            results[(step_size, L)] = (ess, grad_calls_until_convergence)
-            print(j, grad_calls_until_convergence, step_size, L)
-
-        
-        best_ess, best_grads, (step_size, L) = max([(results[r][0], results[r][1], r) for r in results], key=operator.itemgetter(0))
-        # raise Exception
-
-        center_L, center_step_size = L, step_size
-
-        # print(results)
-        print(f"best params on iteration {i} are stepsize {step_size} and L {L} with Grad Calls until Convergence {best_grads}")
-        print(f"L from ESS (0.4 * step_size/ESS): {0.4 * step_size/best_ess}")
+    center_L, center_step_size = gridsearch_tune(iterations=2, grid_size=grid_size, model=model, sampler=sampler_mhmclmc, batch=batch, num_steps=n, center_L=center_L, center_step_size=center_step_size)
 
 
     tune_key, init_key, init_pos_key, run_key = jax.random.split(jax.random.PRNGKey(0), 4)

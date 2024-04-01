@@ -99,16 +99,11 @@ def run_mclmc(coefficients, logdensity_fn, num_steps, initial_position, transfor
 def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transform, key):
     integrator = generate_isokinetic_integrator(coefficients)
 
-
     init_key, tune_key, run_key = jax.random.split(key, 3)
-
 
     initial_state = blackjax.mcmc.mhmclmc.init(
         position=initial_position, logdensity_fn=logdensity_fn, random_generator_arg=init_key
     )
-    
-    # integrator = blackjax.mcmc.integrators.isokinetic_mclachlan
-    # integrator = blackjax.mcmc.integrators.isokinetic_omelyan
 
     kernel = lambda rng_key, state, avg_num_integration_steps, step_size: blackjax.mcmc.mhmclmc.build_kernel(
                 integrator=integrator,
@@ -131,18 +126,10 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
         frac_tune1=0.1,
         frac_tune2=0.1,
         frac_tune3=0.0,
-        # params=MCLMCAdaptationState(L=16.765137, step_size=4.005, std_mat=jnp.ones((initial_position.shape[0],))),
     )
 
-    # raise Exception
-
-
-    # step_size = 1.0784992
-    # L = 1.7056025
     step_size = blackjax_mclmc_sampler_params.step_size
     L = blackjax_mclmc_sampler_params.L
-
-    # jax.debug.print("{x} L, step_size", x=(L, step_size))
 
 
     alg = blackjax.mcmc.mhmclmc.mhmclmc(
@@ -151,7 +138,6 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
         integration_steps_fn = lambda key: jnp.ceil(jax.random.uniform(key) * rescale(L/step_size)) ,
         integrator=integrator,
         
-        # integration_steps_fn = lambda key: jnp.ceil(jax.random.poisson(key, L/step_size )) ,
 
     )
 
@@ -162,12 +148,7 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
         num_steps=num_steps, 
         transform=lambda x: transform(x.position), 
         progress_bar=True)
-    
-    
-    # jax.debug.print("ACCEPTANCE {x}", x = (info.acceptance_rate.shape, jnp.mean(info.acceptance_rate,)))
-    
-    # jax.debug.print("THING\n\n {x}",x=jnp.mean(info.num_integration_steps))
-    # raise Exception
+
 
     return out, blackjax_mclmc_sampler_params, calls_per_integrator_step(coefficients) * (L/step_size)
 

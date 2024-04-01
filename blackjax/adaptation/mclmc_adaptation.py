@@ -328,7 +328,7 @@ def handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_ch
 
 
 
-Lratio_lowerbound = 0.5
+Lratio_lowerbound = 0.01
 Lratio_upperbound = 1 / Lratio_lowerbound
 
 
