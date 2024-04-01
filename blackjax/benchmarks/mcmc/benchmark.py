@@ -21,7 +21,7 @@ import numpy as np
 
 import blackjax
 from blackjax.benchmarks.mcmc.sampling_algorithms import samplers
-from blackjax.benchmarks.mcmc.inference_models import StandardNormal, models
+from blackjax.benchmarks.mcmc.inference_models import MixedLogit, StandardNormal, models
 from blackjax.mcmc.integrators import calls_per_integrator_step, generate_euclidean_integrator, generate_isokinetic_integrator, isokinetic_mclachlan, mclachlan_coefficients, name_integrator, omelyan_coefficients, velocity_verlet, velocity_verlet_coefficients, yoshida_coefficients
 from blackjax.mcmc.mhmclmc import rescale
 from blackjax.util import run_inference_algorithm
@@ -176,7 +176,8 @@ def run_benchmarks(batch_size):
     for variables in itertools.product(
         # ["mhmclmc", "nuts", "mclmc", ], 
         ["mhmclmc",], 
-        [StandardNormal(d) for d in np.ceil(np.logspace(np.log10(10), np.log10(10000), 10)).astype(int)],
+        # [StandardNormal(d) for d in np.ceil(np.logspace(np.log10(10), np.log10(10000), 10)).astype(int)],
+        [MixedLogit()],
         # [velocity_verlet_coefficients, mclachlan_coefficients, yoshida_coefficients, omelyan_coefficients], 
         [mclachlan_coefficients], 
         ):
@@ -288,7 +289,7 @@ def run_grid_search_benchmarks(batch_size):
 
 if __name__ == "__main__":
 
-    run_grid_search_benchmarks(batch_size=1000)
-    # run_benchmarks(batch_size=10000)
+    # run_grid_search_benchmarks(batch_size=1000)
+    run_benchmarks(batch_size=10000)
 
 

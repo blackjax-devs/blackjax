@@ -3,6 +3,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import os
+import numpyro.distributions as dist
 dirr = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -698,6 +699,136 @@ class StochasticVolatility():
         return jnp.concatenate((walk, jnp.log(params/scales)))
     
 
+class MixedLogit():
+
+    def __init__(self):
+
+        key = jax.random.PRNGKey(0)
+        key_poisson, key_x, key_beta, key_logit = jax.random.split(key, 4)
+
+        self.ndims = 2014
+        self.name = "Mixed Logit"
+        self.nind = 500
+        self.nsessions = jax.random.poisson(key_poisson, lam=1.0, shape=(self.nind,)) + 10
+        self.nbeta = 4
+        nobs = jnp.sum(self.nsessions)
+
+        mu_true = jnp.array([-1.5, -0.3, 0.8, 1.2])
+        sigma_true = jnp.array([[0.5, 0.1, 0.1, 0.1], [0.1, 0.5, 0.1, 0.1], [0.1, 0.1, 0.5, 0.1], [0.1, 0.1, 0.1, 0.5]])
+        beta_true = jax.random.multivariate_normal(key_beta, mu_true, sigma_true, shape=(self.nind,))
+        beta_true_repeat = jnp.repeat(beta_true, self.nsessions, axis=0)
+
+        self.x = jax.random.normal(key_x, (nobs, self.nbeta))
+        self.y = 1 * jax.random.bernoulli(key_logit, (jax.nn.sigmoid(jax.vmap(lambda vec1, vec2: jnp.dot(vec1, vec2))(self.x, beta_true_repeat))))
+
+        self.d = self.nbeta + self.nbeta + (self.nbeta * (self.nbeta-1) // 2) + self.nbeta * self.nind # mu, tau, omega_chol, and (beta for each i)
+        self.prior_mean_mu = jnp.zeros(self.nbeta)
+        self.prior_var_mu = 10.0 * jnp.eye(self.nbeta)
+        self.prior_scale_tau = 5.0
+        self.prior_concentration_omega = 1.0
+
+        self.grad_logp = jax.value_and_grad(self.logdensity_fn)
+
+    def corrchol_to_reals(self,x):
+        '''Converts a Cholesky-correlation (lower-triangular) matrix to a vector of unconstrained reals'''
+        dim = x.shape[0]
+        z = jnp.zeros((dim, dim))
+        for i in range(dim):
+            for j in range(i):
+                z = z.at[i, j].set(x[i,j] / jnp.sqrt(1.0 - jnp.sum(x[i, :j] ** 2.0)))
+        z_lower_triang = z[jnp.tril_indices(dim, -1)]
+        y = 0.5 * (jnp.log(1.0 + z_lower_triang) - jnp.log(1.0 - z_lower_triang))
+
+        return y
+
+    def reals_to_corrchol(self,y):
+        '''Converts a vector of unconstrained reals to a Cholesky-correlation (lower-triangular) matrix'''
+        len_vec = len(y)
+        dim = int(0.5 * (1 + 8 * len_vec) ** 0.5 + 0.5)
+        assert dim * (dim - 1) // 2 == len_vec
+
+        z = jnp.zeros((dim, dim))
+        z = z.at[jnp.tril_indices(dim, -1)].set(jnp.tanh(y))
+
+        x = jnp.zeros((dim, dim))
+        for i in range(dim):
+            for j in range(i+1):
+                if i == j:
+                    x = x.at[i, j].set(jnp.sqrt(1.0 - jnp.sum(x[i, :j] ** 2.0)))
+                else:
+                    x = x.at[i, j].set(z[i,j] * jnp.sqrt(1.0 - jnp.sum(x[i, :j] ** 2.0)))
+        return x
+
+
+    def logdensity_fn(self, pars):
+        """log p of the target distribution, i.e., log posterior distribution up to a constant"""
+
+        mu = pars[:self.nbeta]
+        dim1 = self.nbeta + self.nbeta
+        log_tau = pars[self.nbeta:dim1]
+        dim2 = self.nbeta + self.nbeta + self.nbeta * (self.nbeta - 1) // 2
+        omega_chol_realvec = pars[dim1:dim2]
+        beta = pars[dim2:].reshape(self.nind, self.nbeta)
+
+        omega_chol = self.reals_to_corrchol(omega_chol_realvec)
+        omega = jnp.dot(omega_chol, jnp.transpose(omega_chol))
+        tau = jnp.exp(log_tau)
+        tau_diagmat = jnp.diag(tau)
+        sigma = jnp.dot(tau_diagmat, jnp.dot(omega, tau_diagmat))
+
+        beta_repeat = jnp.repeat(beta, self.nsessions, axis=0)
+
+        log_lik = jnp.sum(self.y * jax.nn.log_sigmoid(jax.vmap(lambda vec1, vec2: jnp.dot(vec1, vec2))(self.x, beta_repeat)) + (1 - self.y) * jax.nn.log_sigmoid(-jax.vmap(lambda vec1, vec2: jnp.dot(vec1, vec2))(self.x, beta_repeat)))
+
+        log_density_beta_popdist = -0.5 * self.nind * jnp.log(jnp.linalg.det(sigma)) - 0.5 * jnp.sum(jax.vmap(lambda vec, mat: jnp.dot(vec, jnp.linalg.solve(mat, vec)), in_axes=(0, None))(beta - mu, sigma))
+
+        muMinusPriorMean = mu - self.prior_mean_mu
+        log_prior_mu = -0.5 * jnp.log(jnp.linalg.det(self.prior_var_mu)) - 0.5 * jnp.dot(muMinusPriorMean, jnp.linalg.solve(self.prior_var_mu, muMinusPriorMean))
+
+        log_prior_tau = jnp.sum(dist.HalfCauchy(scale=self.prior_scale_tau).log_prob(tau))
+        #log_prior_tau = jnp.sum(jax.vmap(lambda arg: -jnp.log(1.0 + (arg / self.prior_scale_tau) ** 2.0))(tau))
+        log_prior_omega_chol = dist.LKJCholesky(self.nbeta, concentration=self.prior_concentration_omega).log_prob(omega_chol)
+        #log_prior_omega_chol = jnp.dot(nbeta - jnp.arange(2, nbeta+1) + 2.0 * self.prior_concentration_omega - 2.0, jnp.log(jnp.diag(omega_chol)[1:]))
+
+        return log_lik + log_density_beta_popdist + log_prior_mu + log_prior_tau + log_prior_omega_chol
+
+
+    def transform(self, pars):
+        """transform pars to the original (possibly constrained) pars"""
+        mu = pars[:self.nbeta]
+        dim1 = self.nbeta + self.nbeta
+        log_tau = pars[self.nbeta:dim1]
+        dim2 = self.nbeta + self.nbeta + self.nbeta * (self.nbeta - 1) // 2
+        omega_chol_realvec = pars[dim1:dim2]
+        beta_flattened = pars[dim2:]
+
+        omega_chol = self.reals_to_corrchol(omega_chol_realvec)
+        omega = jnp.dot(omega_chol, jnp.transpose(omega_chol))
+        tau = jnp.exp(log_tau)
+        tau_diagmat = jnp.diag(tau)
+        sigma = jnp.dot(tau_diagmat, jnp.dot(omega, tau_diagmat))
+
+        return jnp.concatenate((mu, sigma.flatten(), beta_flattened))
+
+    def sample_init(self, key):
+        """draws pars from the prior"""
+
+        key_mu, key_omega_chol, key_tau, key_beta = jax.random.split(key, 4)
+        mu = jax.random.multivariate_normal(key_mu, self.prior_mean_mu, self.prior_var_mu)
+        omega_chol = dist.LKJCholesky(self.nbeta, concentration=self.prior_concentration_omega).sample(key_omega_chol)
+        tau = dist.HalfCauchy(scale=self.prior_scale_tau).sample(key_tau, (self.nbeta,))
+
+        omega_chol_realvec = self.corrchol_to_reals(omega_chol)
+        log_tau = jnp.log(tau)
+
+        omega = jnp.dot(omega_chol, jnp.transpose(omega_chol))
+        tau_diagmat = jnp.diag(tau)
+        sigma = jnp.dot(tau_diagmat, jnp.dot(omega, tau_diagmat))
+
+        beta = jax.random.multivariate_normal(key_beta, mu, sigma, shape=(self.nind,))
+
+        pars = jnp.concatenate((mu, log_tau, omega_chol_realvec, beta.flatten()))
+        return pars
 
 
 
