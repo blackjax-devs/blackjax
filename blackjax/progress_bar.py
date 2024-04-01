@@ -14,10 +14,9 @@
 """Progress bar decorators for use with step functions.
 Adapted from Jeremie Coullon's blog post :cite:p:`progress_bar`.
 """
-import tqdm
-from tqdm.auto import tqdm as tqdm_auto
 import jax
 from jax import lax
+from tqdm.auto import tqdm as tqdm_auto
 
 
 def progress_bar_scan(num_samples, num_chains=1, print_rate=None):
