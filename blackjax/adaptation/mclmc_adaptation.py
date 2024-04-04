@@ -143,14 +143,14 @@ def make_L_step_size_adaptation(
 
     decay_rate = (num_effective_samples - 1.0) / (num_effective_samples + 1.0)
 
-    def predictor(previous_state, params, adaptive_state, rng_key, std_mat):
+    def predictor(previous_state, params, adaptive_state, rng_key):
         """does one step with the dynamics and updates the prediction for the optimal stepsize
         Designed for the unadjusted MCHMC"""
 
         time, x_average, step_size_max = adaptive_state
 
         # dynamics
-        next_state, info = kernel(std_mat)(
+        next_state, info = kernel(params.std_mat)(
             rng_key=rng_key,
             state=previous_state,
             L=params.L,
@@ -190,30 +190,28 @@ def make_L_step_size_adaptation(
         return state, params_new, adaptive_state, success
 
 
-    def make_step(std_mat):
     
-        def step(iteration_state, weight_and_key):
-            """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
+    def step(iteration_state, weight_and_key):
+        """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
 
-            mask, rng_key = weight_and_key
-            state, params, adaptive_state, streaming_avg = iteration_state
+        mask, rng_key = weight_and_key
+        state, params, adaptive_state, streaming_avg = iteration_state
 
-            state, params, adaptive_state, success = predictor(
-                state, params, adaptive_state, rng_key, std_mat
-            )
+        state, params, adaptive_state, success = predictor(
+            state, params, adaptive_state, rng_key
+        )
 
-            # update the running average of x, x^2
-            streaming_avg = streaming_average(
-                O=lambda x: jnp.array([x, jnp.square(x)]),
-                x=ravel_pytree(state.position)[0],
-                streaming_avg=streaming_avg,
-                weight=(1-mask)*success*params.step_size,
-                zero_prevention=mask,
-            )
+        # update the running average of x, x^2
+        streaming_avg = streaming_average(
+            O=lambda x: jnp.array([x, jnp.square(x)]),
+            x=ravel_pytree(state.position)[0],
+            streaming_avg=streaming_avg,
+            weight=(1-mask)*success*params.step_size,
+            zero_prevention=mask,
+        )
 
-            return (state, params, adaptive_state, streaming_avg), None
-    
-        return step 
+        return (state, params, adaptive_state, streaming_avg), None
+
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
         num_steps1, num_steps2 = int(num_steps * frac_tune1), int(
@@ -229,7 +227,7 @@ def make_L_step_size_adaptation(
 
         # run the steps
         state, params, _, (_, average) = jax.lax.scan(
-            make_step(params.std_mat),
+            step,
             init=(
                 state,
                 params,
@@ -259,7 +257,7 @@ def make_L_step_size_adaptation(
                 steps = num_steps2 // 3 #we do some small number of steps
                 keys = jax.random.split(final_key, steps)
                 state, params, _, (_, average) = jax.lax.scan(
-                    make_step(std_mat),
+                    step,
                     init=(
                         state,
                         params,
@@ -328,7 +326,7 @@ def handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_ch
 
 
 
-Lratio_lowerbound = 0.01
+Lratio_lowerbound = 0.5
 Lratio_upperbound = 1 / Lratio_lowerbound
 
 
@@ -341,6 +339,7 @@ def mhmclmc_find_L_and_step_size(
     frac_tune1=0.1,
     frac_tune2=0.1,
     frac_tune3=0.1,
+    diagonal_preconditioning=True,
     params=None
 ):
     """
@@ -389,7 +388,8 @@ def mhmclmc_find_L_and_step_size(
         dim=dim,
         frac_tune1=frac_tune1,
         frac_tune2=frac_tune2,
-        target=target
+        target=target,
+        diagonal_preconditioning=diagonal_preconditioning
     )(state, params, num_steps, part1_key)
 
     if frac_tune3 != 0:
@@ -407,6 +407,7 @@ def mhmclmc_find_L_and_step_size(
         frac_tune2=0,
         target=target,
         fix_L_first_da=True,
+        diagonal_preconditioning=diagonal_preconditioning
         )(state, params, num_steps, part2_key2)
 
     return state, params
@@ -418,6 +419,7 @@ def mhmclmc_make_L_step_size_adaptation(
     frac_tune1,
     frac_tune2,
     target,
+    diagonal_preconditioning,
     fix_L_first_da=False,
 ):
     """Adapts the stepsize and L of the MCLMC kernel. Designed for the unadjusted MCLMC"""
@@ -448,6 +450,7 @@ def mhmclmc_make_L_step_size_adaptation(
                 state=previous_state,
                 avg_num_integration_steps=avg_num_integration_steps,
                 step_size=params.step_size,
+                std_mat=params.std_mat,
             )
 
             # step updating
@@ -588,6 +591,14 @@ def mhmclmc_make_L_step_size_adaptation(
             # params = params._replace(L=jnp.sqrt(jnp.sum(variances))) # todo change back
             # jax.debug.print("{x} params after a round of tuning",x=(params))
 
+            if diagonal_preconditioning:
+
+                    # diagonal preconditioning
+                    params = params._replace(std_mat=jnp.sqrt(variances))
+
+                    # state = jax.lax.scan(step, init= state, xs= jnp.ones(steps), length= steps)[0]
+                    # dyn, _, hyp, adap, kalman_state = state
+
         
             # jax.debug.print("{x} params before second round",x=(params))
             initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
@@ -609,6 +620,8 @@ def mhmclmc_make_adaptation_L(kernel, frac, Lfactor):
         num_steps = int(num_steps * frac)
         adaptation_L_keys = jax.random.split(key, num_steps)
 
+        jax.debug.print("tune 1\n\n {x}", x=(params.std_mat, params.step_size))
+
         
         def step(state, key):
             next_state, _ = kernel(
@@ -616,6 +629,7 @@ def mhmclmc_make_adaptation_L(kernel, frac, Lfactor):
                 state=state,
                 step_size=params.step_size,
                 avg_num_integration_steps=params.L/params.step_size,
+                std_mat=params.std_mat,
             )
             return next_state, next_state.position
 

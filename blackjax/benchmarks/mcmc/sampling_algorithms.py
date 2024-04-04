@@ -69,7 +69,8 @@ def run_mclmc(coefficients, logdensity_fn, num_steps, initial_position, transfor
         num_steps=num_steps,
         state=initial_state,
         rng_key=tune_key,
-        diagonal_preconditioning=False
+        # frac_tune3=0.0,
+        diagonal_preconditioning=True
     )
 
     # jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.L, blackjax_mclmc_sampler_params.step_size))
@@ -105,9 +106,10 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
         position=initial_position, logdensity_fn=logdensity_fn, random_generator_arg=init_key
     )
 
-    kernel = lambda rng_key, state, avg_num_integration_steps, step_size: blackjax.mcmc.mhmclmc.build_kernel(
+    kernel = lambda rng_key, state, avg_num_integration_steps, step_size, std_mat: blackjax.mcmc.mhmclmc.build_kernel(
                 integrator=integrator,
-                integration_steps_fn = lambda k : jnp.ceil(jax.random.uniform(k) * rescale(avg_num_integration_steps))
+                integration_steps_fn = lambda k : jnp.ceil(jax.random.uniform(k) * rescale(avg_num_integration_steps)),
+                std_mat=std_mat,
             )(
                 rng_key=rng_key, 
                 state=state, 
@@ -125,11 +127,13 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
         target=target_acceptance_rate_of_order[integrator_order(coefficients)],
         frac_tune1=0.1,
         frac_tune2=0.1,
-        frac_tune3=0.0,
+        frac_tune3=0.1,
+        diagonal_preconditioning=True,
     )
 
     step_size = blackjax_mclmc_sampler_params.step_size
     L = blackjax_mclmc_sampler_params.L
+    jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.std_mat))
 
 
     alg = blackjax.mcmc.mhmclmc.mhmclmc(
@@ -137,6 +141,7 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
         step_size=step_size,
         integration_steps_fn = lambda key: jnp.ceil(jax.random.uniform(key) * rescale(L/step_size)) ,
         integrator=integrator,
+        std_mat=blackjax_mclmc_sampler_params.std_mat,
         
 
     )

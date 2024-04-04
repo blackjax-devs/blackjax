@@ -46,6 +46,7 @@ def build_kernel(
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+    std_mat=1.,
 ):
     """Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
@@ -75,7 +76,6 @@ def build_kernel(
         logdensity_fn: Callable,
         step_size: float,
         L_proposal : float = 1.0,
-        std_mat=1.,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
         
@@ -151,6 +151,7 @@ class mhmclmc:
         logdensity_fn: Callable,
         step_size: float,
         L_proposal : float = 0.6,
+        std_mat=1.0,
         *,
         divergence_threshold: int = 1000,
         integrator: Callable = integrators.isokinetic_mclachlan,
@@ -158,7 +159,7 @@ class mhmclmc:
         integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(
-            integrator, divergence_threshold, next_random_arg_fn, integration_steps_fn
+            integrator, divergence_threshold, next_random_arg_fn, integration_steps_fn, std_mat
         )
 
         def init_fn(position: ArrayLikeTree, rng_key: Array):

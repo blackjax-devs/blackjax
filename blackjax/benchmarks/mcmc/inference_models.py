@@ -871,7 +871,10 @@ models = {
     # 'normal': (StandardNormal(10), {'mclmc': 2000, 'mhmclmc' : 2000, 'nuts': 2000}), 
     # 'banana': Banana(), 
     # 'icg' : (IllConditionedGaussian(10, 2),   {'mclmc': 2000, 'mhmclmc' : 2000, 'nuts': 2000}),
-    'Brownian Motion': (Brownian(), {'mclmc': 20000, 'mhmclmc' : 10000, 'nuts': 5000})
+    Brownian() : {'mclmc': 20000, 'mhmclmc' : 20000, 'nuts': 20000},
+    # GermanCredit(): {'mclmc': 20000, 'mhmclmc' : 20000, 'nuts': 20000},
+    # ItemResponseTheory(): {'mclmc': 20000, 'mhmclmc' : 20000, 'nuts': 20000},
+    # StochasticVolatility(): {'mclmc': 20000, 'mhmclmc' : 20000, 'nuts': 20000}
     }
 
 # models = {'Brownian Motion': (Brownian(), {'mclmc': 50000, 'mhmclmc' : 40000, 'nuts': 1000}),
