@@ -36,8 +36,8 @@ class MFVITest(chex.TestCase):
         state = mfvi.init(initial_position)
 
         rng_key = self.key
-        for _ in range(num_steps):
-            rng_key, subkey = jax.random.split(rng_key)
+        for i in range(num_steps):
+            subkey = jax.random.fold_in(rng_key, i)
             state, _ = jax.jit(mfvi.step)(subkey, state)
 
         loc_1, loc_2 = state.mu["x_1"], state.mu["x_2"]

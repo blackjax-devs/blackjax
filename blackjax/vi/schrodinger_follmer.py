@@ -156,15 +156,15 @@ def sample(
     )
     initial_states = SchrodingerFollmerState(initial_positions, jnp.zeros((n_samples,)))
 
-    def body(_, carry):
-        key, states = carry
-        keys = jax.random.split(key, 1 + n_samples)
-        states, _ = jax.vmap(step, [0, 0, None, None, None])(
-            keys[1:], states, log_density_fn, dt, n_inner_samples
+    def body(i, states):
+        subkey = jax.random.fold_in(rng_key, i)
+        keys = jax.random.split(subkey, n_samples)
+        next_states, _ = jax.vmap(step, [0, 0, None, None, None])(
+            keys, states, log_density_fn, dt, n_inner_samples
         )
-        return keys[0], states
+        return next_states
 
-    _, final_states = jax.lax.fori_loop(0, n_steps, body, (rng_key, initial_states))
+    final_states = jax.lax.fori_loop(0, n_steps, body, initial_states)
 
     return final_states
 

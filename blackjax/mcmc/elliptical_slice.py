@@ -208,7 +208,7 @@ def elliptical_proposal(
         rng_key: PRNGKey, state: EllipSliceState
     ) -> tuple[EllipSliceState, EllipSliceInfo]:
         position, logdensity = state
-        key_momentum, key_uniform, key_theta = jax.random.split(rng_key, 3)
+        key_slice, key_momentum, key_uniform, key_theta = jax.random.split(rng_key, 4)
         # step 1: sample momentum
         momentum = momentum_generator(key_momentum, position)
         # step 2: get slice (y)
@@ -235,20 +235,20 @@ def elliptical_proposal(
             likelihood is continuous with respect to the parameter being sampled.
 
             """
-            rng, _, subiter, theta, theta_min, theta_max, *_ = vals
-            rng, thetak = jax.random.split(rng)
+            _, subiter, theta, theta_min, theta_max, *_ = vals
+            thetak = jax.random.fold_in(key_slice, subiter)
             theta = jax.random.uniform(thetak, minval=theta_min, maxval=theta_max)
             p, m = ellipsis(position, momentum, theta, mean)
             logdensity = logdensity_fn(p)
             theta_min = jnp.where(theta < 0, theta, theta_min)
             theta_max = jnp.where(theta > 0, theta, theta_max)
             subiter += 1
-            return rng, logdensity, subiter, theta, theta_min, theta_max, p, m
+            return logdensity, subiter, theta, theta_min, theta_max, p, m
 
-        _, logdensity, subiter, theta, *_, position, momentum = jax.lax.while_loop(
-            lambda vals: vals[1] <= logy,
+        logdensity, subiter, theta, *_, position, momentum = jax.lax.while_loop(
+            lambda vals: vals[0] <= logy,
             slice_fn,
-            (rng_key, logdensity, 1, theta, theta_min, theta_max, p, m),
+            (logdensity, 1, theta, theta_min, theta_max, p, m),
         )
         return (
             EllipSliceState(position, logdensity),
