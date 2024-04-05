@@ -142,7 +142,7 @@ def smc_inference_loop(loop_key, smc_kernel, init_state, schedule):
         i, state = carry
         subkey = jax.random.fold_in(loop_key, i)
         new_state, info = smc_kernel(subkey, state, lmbda)
-        return (i+1, new_state), (new_state, info)
+        return (i + 1, new_state), (new_state, info)
 
     _, (all_samples, _) = jax.lax.scan(body_fn, (0, init_state), schedule)
 
