@@ -55,7 +55,7 @@ class SchrodingerFollmerInfo(NamedTuple):
 
 
 def init(example_position: ArrayLikeTree) -> SchrodingerFollmerState:
-    zero = jax.tree_map(jnp.zeros_like, example_position)
+    zero = jax.tree.map(jnp.zeros_like, example_position)
     return SchrodingerFollmerState(zero, 0.0)
 
 
@@ -95,7 +95,7 @@ def step(
     eps_drift = jax.random.normal(drift_key, (n_samples,) + ravelled_position.shape)
     eps_drift = jax.vmap(unravel_fn)(eps_drift)
 
-    perturbed_position = jax.tree_map(
+    perturbed_position = jax.tree.map(
         lambda a, b: a[None, ...] + scale * b, state.position, eps_drift
     )
 
@@ -105,14 +105,14 @@ def step(
     log_pdf -= jnp.max(log_pdf, axis=0, keepdims=True)
     pdf = jnp.exp(log_pdf)
 
-    num = jax.tree_map(lambda a: pdf @ a, eps_drift)
+    num = jax.tree.map(lambda a: pdf @ a, eps_drift)
     den = scale * jnp.sum(pdf, axis=0)
 
-    drift = jax.tree_map(lambda a: a / den, num)
+    drift = jax.tree.map(lambda a: a / den, num)
 
     eps_sde = jax.random.normal(sde_key, ravelled_position.shape)
     eps_sde = unravel_fn(eps_sde)
-    next_position = jax.tree_map(
+    next_position = jax.tree.map(
         lambda a, b, c: a + step_size * b + step_size**0.5 * c,
         state.position,
         drift,
@@ -151,7 +151,7 @@ def sample(
     dt = 1.0 / n_steps
 
     initial_position = initial_state.position
-    initial_positions = jax.tree_map(
+    initial_positions = jax.tree.map(
         lambda a: jnp.zeros([n_samples, *a.shape], dtype=a.dtype), initial_position
     )
     initial_states = SchrodingerFollmerState(initial_positions, jnp.zeros((n_samples,)))
@@ -176,7 +176,7 @@ def _log_fn_corrected(position, logdensity_fn):
     This corrects the gradient of the log-density function to account for this.
     """
     log_pdf_val = logdensity_fn(position)
-    norm = jax.tree_map(lambda a: 0.5 * jnp.sum(a**2), position)
+    norm = jax.tree.map(lambda a: 0.5 * jnp.sum(a**2), position)
     norm = sum(tree_leaves(norm))
     return log_pdf_val + norm
 

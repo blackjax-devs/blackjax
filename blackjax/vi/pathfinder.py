@@ -197,7 +197,7 @@ def approximate(
     )
 
     max_elbo_idx = jnp.argmax(elbo)
-    return jax.tree_map(lambda x: x[max_elbo_idx], pathfinder_result), PathfinderInfo(
+    return jax.tree.map(lambda x: x[max_elbo_idx], pathfinder_result), PathfinderInfo(
         pathfinder_result
     )
 

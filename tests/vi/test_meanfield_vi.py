@@ -41,7 +41,7 @@ class MFVITest(chex.TestCase):
             state, _ = jax.jit(mfvi.step)(subkey, state)
 
         loc_1, loc_2 = state.mu["x_1"], state.mu["x_2"]
-        scale = jax.tree_map(jnp.exp, state.rho)
+        scale = jax.tree.map(jnp.exp, state.rho)
         scale_1, scale_2 = scale["x_1"], scale["x_2"]
         self.assertAlmostEqual(loc_1, ground_truth[0][0], delta=0.01)
         self.assertAlmostEqual(scale_1, ground_truth[0][1], delta=0.01)
