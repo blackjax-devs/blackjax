@@ -44,7 +44,7 @@ def test_chees_adaptation():
     num_chains = 16
     step_size = 0.1
 
-    init_key, warmup_key, inference_key = jax.random.split(jax.random.key(62), 3)
+    init_key, warmup_key, inference_key = jax.random.split(jax.random.key(346), 3)
 
     warmup = blackjax.chees_adaptation(
         logprob_fn, num_chains=num_chains, target_acceptance_rate=0.75
