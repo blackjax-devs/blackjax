@@ -325,7 +325,7 @@ positions_general = sampling_loop_general(
 ### Check Result
 
 ```{code-cell} ipython3
-jax.tree_map(lambda x, y: jnp.max(jnp.abs(x-y)), positions, positions_general)
+jax.tree.map(lambda x, y: jnp.max(jnp.abs(x-y)), positions, positions_general)
 ```
 
 ## Developer Notes

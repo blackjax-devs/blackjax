@@ -201,7 +201,7 @@ def dynamic_progressive_integration(
 
         def do_keep_integrating(loop_state):
             """Decide whether we should continue integrating the trajectory"""
-            _, integration_state, (is_diverging, has_terminated) = loop_state
+            integration_state, (is_diverging, has_terminated) = loop_state
             return (
                 (integration_state.step < max_num_steps)
                 & ~has_terminated
@@ -209,9 +209,9 @@ def dynamic_progressive_integration(
             )
 
         def add_one_state(loop_state):
-            rng_key, integration_state, _ = loop_state
+            integration_state, _ = loop_state
             step, proposal, trajectory, termination_state = integration_state
-            rng_key, proposal_key = jax.random.split(rng_key)
+            proposal_key = jax.random.fold_in(rng_key, step)
 
             new_state = integrator(trajectory.rightmost_state, direction * step_size)
             new_proposal = generate_proposal(initial_energy, new_state)
@@ -246,7 +246,7 @@ def dynamic_progressive_integration(
                 new_termination_state,
             )
 
-            return (rng_key, new_integration_state, (is_diverging, has_terminated))
+            return (new_integration_state, (is_diverging, has_terminated))
 
         proposal_placeholder = generate_proposal(initial_energy, initial_state)
         trajectory_placeholder = Trajectory(
@@ -259,12 +259,12 @@ def dynamic_progressive_integration(
             termination_state,
         )
 
-        _, integration_state, (is_diverging, has_terminated) = jax.lax.while_loop(
+        new_integration_state, (is_diverging, has_terminated) = jax.lax.while_loop(
             do_keep_integrating,
             add_one_state,
-            (rng_key, integration_state_placeholder, (False, False)),
+            (integration_state_placeholder, (False, False)),
         )
-        step, proposal, trajectory, termination_state = integration_state
+        _, proposal, trajectory, termination_state = new_integration_state
 
         # In the while_loop we always extend on the right most direction.
         new_trajectory = jax.lax.cond(
@@ -496,8 +496,7 @@ def dynamic_multiplicative_expansion(
     step_size
         The step size used by the symplectic integrator.
     max_num_expansions
-        The maximum number of trajectory expansions until the proposal is
-        returned.
+        The maximum number of trajectory expansions until the proposal is returned.
     rate
         The rate of the geometrical expansion. Typically 2 in NUTS, this is why
         the literature often refers to "tree doubling".
@@ -513,7 +512,7 @@ def dynamic_multiplicative_expansion(
     ):
         def do_keep_expanding(loop_state) -> bool:
             """Determine whether we need to keep expanding the trajectory."""
-            _, expansion_state, (is_diverging, is_turning) = loop_state
+            expansion_state, (is_diverging, is_turning) = loop_state
             return (
                 (expansion_state.step < max_num_expansions)
                 & ~is_diverging
@@ -531,12 +530,11 @@ def dynamic_multiplicative_expansion(
             the subtrajectory.
 
             """
-            rng_key, expansion_state, _ = loop_state
+            expansion_state, _ = loop_state
             step, proposal, trajectory, termination_state = expansion_state
 
-            rng_key, direction_key, trajectory_key, proposal_key = jax.random.split(
-                rng_key, 4
-            )
+            subkey = jax.random.fold_in(rng_key, step)
+            direction_key, trajectory_key, proposal_key = jax.random.split(subkey, 3)
 
             # create new subtrajectory that is twice as long as the current
             # trajectory.
@@ -608,12 +606,12 @@ def dynamic_multiplicative_expansion(
             )
             info = (is_diverging, is_turning_subtree | is_turning)
 
-            return (rng_key, new_state, info)
+            return (new_state, info)
 
-        _, expansion_state, (is_diverging, is_turning) = jax.lax.while_loop(
+        expansion_state, (is_diverging, is_turning) = jax.lax.while_loop(
             do_keep_expanding,
             expand_once,
-            (rng_key, initial_expansion_state, (False, False)),
+            (initial_expansion_state, (False, False)),
         )
 
         return expansion_state, (is_diverging, is_turning)
