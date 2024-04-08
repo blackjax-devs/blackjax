@@ -613,12 +613,12 @@ document.write(`
         <span class="n">kalman_state</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span>
 
         <span class="c1"># run the steps</span>
-        <span class="n">kalman_state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+        <span class="n">kalman_state</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
             <span class="n">step</span><span class="p">,</span>
             <span class="n">init</span><span class="o">=</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">adap0</span><span class="p">,</span> <span class="n">kalman_state</span><span class="p">),</span>
             <span class="n">xs</span><span class="o">=</span><span class="p">(</span><span class="n">outer_weights</span><span class="p">,</span> <span class="n">L_step_size_adaptation_keys</span><span class="p">),</span>
             <span class="n">length</span><span class="o">=</span><span class="n">num_steps1</span> <span class="o">+</span> <span class="n">num_steps2</span><span class="p">,</span>
-        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">kalman_state_output</span> <span class="o">=</span> <span class="n">kalman_state</span>
 
         <span class="n">L</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">L</span>

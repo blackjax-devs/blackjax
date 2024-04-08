@@ -588,7 +588,7 @@ document.write(`
     <span class="p">)</span>
 
     <span class="n">max_elbo_idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">elbo</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">max_elbo_idx</span><span class="p">],</span> <span class="n">pathfinder_result</span><span class="p">),</span> <span class="n">PathfinderInfo</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">max_elbo_idx</span><span class="p">],</span> <span class="n">pathfinder_result</span><span class="p">),</span> <span class="n">PathfinderInfo</span><span class="p">(</span>
         <span class="n">pathfinder_result</span>
     <span class="p">)</span></div>
 

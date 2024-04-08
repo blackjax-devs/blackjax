@@ -207,8 +207,7 @@ Functions
                                  and the integrated trajectory.
    :param uturn_check_fn: Function used to check the U-Turn criterion.
    :param step_size: The step size used by the symplectic integrator.
-   :param max_num_expansions: The maximum number of trajectory expansions until the proposal is
-                              returned.
+   :param max_num_expansions: The maximum number of trajectory expansions until the proposal is returned.
    :param rate: The rate of the geometrical expansion. Typically 2 in NUTS, this is why
                 the literature often refers to "tree doubling".
 

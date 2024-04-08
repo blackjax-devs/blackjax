@@ -604,7 +604,7 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.01 s, sys: 45.4 ms, total: 1.06 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.02 s, sys: 45.5 ms, total: 1.06 s
 Wall time: 1.05 s
 </pre></div>
 </div>
@@ -622,7 +622,7 @@ Wall time: 1.05 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/ef9f3a2e20410436e2ee718043fcbc863b3c7777f550e5b9feb53a15deae8a6c.png" src="../_images/ef9f3a2e20410436e2ee718043fcbc863b3c7777f550e5b9feb53a15deae8a6c.png" />
+<img alt="../_images/2875ed7733fd1f5cf1ee77ef175b1d1cad67c57616128bc5cb18e869e4c273ba.png" src="../_images/2875ed7733fd1f5cf1ee77ef175b1d1cad67c57616128bc5cb18e869e4c273ba.png" />
 </div>
 </div>
 </section>
@@ -743,8 +743,8 @@ Wall time: 1.05 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 706 ms, sys: 24 ms, total: 730 ms
-Wall time: 721 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 708 ms, sys: 15.7 ms, total: 723 ms
+Wall time: 715 ms
 </pre></div>
 </div>
 </div>
@@ -754,7 +754,7 @@ Wall time: 721 ms
 <h3>Check Result<a class="headerlink" href="#check-result" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">y</span><span class="p">)),</span> <span class="n">positions</span><span class="p">,</span> <span class="n">positions_general</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">y</span><span class="p">)),</span> <span class="n">positions</span><span class="p">,</span> <span class="n">positions_general</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

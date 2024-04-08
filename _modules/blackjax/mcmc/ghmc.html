@@ -577,7 +577,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">state</span>
 
-    <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
+    <span class="n">momentum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
         <span class="k">lambda</span> <span class="n">prev_momentum</span><span class="p">,</span> <span class="n">shifted_momentum</span><span class="p">:</span> <span class="n">prev_momentum</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span>
         <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">shifted_momentum</span><span class="p">,</span>
         <span class="n">momentum</span><span class="p">,</span>

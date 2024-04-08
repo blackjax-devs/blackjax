@@ -613,7 +613,7 @@ document.write(`
 
         <span class="k">def</span> <span class="nf">do_keep_integrating</span><span class="p">(</span><span class="n">loop_state</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Decide whether we should continue integrating the trajectory&quot;&quot;&quot;</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">integration_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">has_terminated</span><span class="p">)</span> <span class="o">=</span> <span class="n">loop_state</span>
+            <span class="n">integration_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">has_terminated</span><span class="p">)</span> <span class="o">=</span> <span class="n">loop_state</span>
             <span class="k">return</span> <span class="p">(</span>
                 <span class="p">(</span><span class="n">integration_state</span><span class="o">.</span><span class="n">step</span> <span class="o">&lt;</span> <span class="n">max_num_steps</span><span class="p">)</span>
                 <span class="o">&amp;</span> <span class="o">~</span><span class="n">has_terminated</span>
@@ -621,9 +621,9 @@ document.write(`
             <span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">add_one_state</span><span class="p">(</span><span class="n">loop_state</span><span class="p">):</span>
-            <span class="n">rng_key</span><span class="p">,</span> <span class="n">integration_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">loop_state</span>
+            <span class="n">integration_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">loop_state</span>
             <span class="n">step</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">trajectory</span><span class="p">,</span> <span class="n">termination_state</span> <span class="o">=</span> <span class="n">integration_state</span>
-            <span class="n">rng_key</span><span class="p">,</span> <span class="n">proposal_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+            <span class="n">proposal_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">fold_in</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
 
             <span class="n">new_state</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="p">,</span> <span class="n">direction</span> <span class="o">*</span> <span class="n">step_size</span><span class="p">)</span>
             <span class="n">new_proposal</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">new_state</span><span class="p">)</span>
@@ -658,7 +658,7 @@ document.write(`
                 <span class="n">new_termination_state</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="k">return</span> <span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">new_integration_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">has_terminated</span><span class="p">))</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">new_integration_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">has_terminated</span><span class="p">))</span>
 
         <span class="n">proposal_placeholder</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">)</span>
         <span class="n">trajectory_placeholder</span> <span class="o">=</span> <span class="n">Trajectory</span><span class="p">(</span>
@@ -671,12 +671,12 @@ document.write(`
             <span class="n">termination_state</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">_</span><span class="p">,</span> <span class="n">integration_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">has_terminated</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
+        <span class="n">new_integration_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">has_terminated</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
             <span class="n">do_keep_integrating</span><span class="p">,</span>
             <span class="n">add_one_state</span><span class="p">,</span>
-            <span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">integration_state_placeholder</span><span class="p">,</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+            <span class="p">(</span><span class="n">integration_state_placeholder</span><span class="p">,</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
         <span class="p">)</span>
-        <span class="n">step</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">trajectory</span><span class="p">,</span> <span class="n">termination_state</span> <span class="o">=</span> <span class="n">integration_state</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">trajectory</span><span class="p">,</span> <span class="n">termination_state</span> <span class="o">=</span> <span class="n">new_integration_state</span>
 
         <span class="c1"># In the while_loop we always extend on the right most direction.</span>
         <span class="n">new_trajectory</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
@@ -929,8 +929,7 @@ document.write(`
 <span class="sd">    step_size</span>
 <span class="sd">        The step size used by the symplectic integrator.</span>
 <span class="sd">    max_num_expansions</span>
-<span class="sd">        The maximum number of trajectory expansions until the proposal is</span>
-<span class="sd">        returned.</span>
+<span class="sd">        The maximum number of trajectory expansions until the proposal is returned.</span>
 <span class="sd">    rate</span>
 <span class="sd">        The rate of the geometrical expansion. Typically 2 in NUTS, this is why</span>
 <span class="sd">        the literature often refers to &quot;tree doubling&quot;.</span>
@@ -946,7 +945,7 @@ document.write(`
     <span class="p">):</span>
         <span class="k">def</span> <span class="nf">do_keep_expanding</span><span class="p">(</span><span class="n">loop_state</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Determine whether we need to keep expanding the trajectory.&quot;&quot;&quot;</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">expansion_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">)</span> <span class="o">=</span> <span class="n">loop_state</span>
+            <span class="n">expansion_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">)</span> <span class="o">=</span> <span class="n">loop_state</span>
             <span class="k">return</span> <span class="p">(</span>
                 <span class="p">(</span><span class="n">expansion_state</span><span class="o">.</span><span class="n">step</span> <span class="o">&lt;</span> <span class="n">max_num_expansions</span><span class="p">)</span>
                 <span class="o">&amp;</span> <span class="o">~</span><span class="n">is_diverging</span>
@@ -964,12 +963,11 @@ document.write(`
 <span class="sd">            the subtrajectory.</span>
 
 <span class="sd">            &quot;&quot;&quot;</span>
-            <span class="n">rng_key</span><span class="p">,</span> <span class="n">expansion_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">loop_state</span>
+            <span class="n">expansion_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">loop_state</span>
             <span class="n">step</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">trajectory</span><span class="p">,</span> <span class="n">termination_state</span> <span class="o">=</span> <span class="n">expansion_state</span>
 
-            <span class="n">rng_key</span><span class="p">,</span> <span class="n">direction_key</span><span class="p">,</span> <span class="n">trajectory_key</span><span class="p">,</span> <span class="n">proposal_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
-                <span class="n">rng_key</span><span class="p">,</span> <span class="mi">4</span>
-            <span class="p">)</span>
+            <span class="n">subkey</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">fold_in</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+            <span class="n">direction_key</span><span class="p">,</span> <span class="n">trajectory_key</span><span class="p">,</span> <span class="n">proposal_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">subkey</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 
             <span class="c1"># create new subtrajectory that is twice as long as the current</span>
             <span class="c1"># trajectory.</span>
@@ -1041,12 +1039,12 @@ document.write(`
             <span class="p">)</span>
             <span class="n">info</span> <span class="o">=</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">is_turning_subtree</span> <span class="o">|</span> <span class="n">is_turning</span><span class="p">)</span>
 
-            <span class="k">return</span> <span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
 
-        <span class="n">_</span><span class="p">,</span> <span class="n">expansion_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
+        <span class="n">expansion_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
             <span class="n">do_keep_expanding</span><span class="p">,</span>
             <span class="n">expand_once</span><span class="p">,</span>
-            <span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_expansion_state</span><span class="p">,</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+            <span class="p">(</span><span class="n">initial_expansion_state</span><span class="p">,</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">expansion_state</span><span class="p">,</span> <span class="p">(</span><span class="n">is_diverging</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">)</span>

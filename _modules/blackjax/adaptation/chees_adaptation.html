@@ -764,20 +764,18 @@ document.write(`
         <span class="p">),</span> <span class="s2">&quot;initial `positions` leading dimension must be equal to the `num_chains`&quot;</span>
         <span class="n">num_dim</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span> <span class="o">//</span> <span class="n">num_chains</span>
 
-        <span class="n">key_init</span><span class="p">,</span> <span class="n">key_step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+        <span class="n">next_random_arg_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">init_random_arg</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="k">if</span> <span class="n">jitter_generator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">jitter_gn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">jitter_generator</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">*</span> <span class="n">jitter_amount</span> <span class="o">+</span> <span class="p">(</span>
-                <span class="mf">1.0</span> <span class="o">-</span> <span class="n">jitter_amount</span>
-            <span class="p">)</span>
-            <span class="n">next_random_arg_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">init_random_arg</span> <span class="o">=</span> <span class="n">key_init</span>
+            <span class="n">rng_key</span><span class="p">,</span> <span class="n">carry_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+            <span class="n">jitter_gn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">jitter_generator</span><span class="p">(</span>
+                <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">fold_in</span><span class="p">(</span><span class="n">carry_key</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="p">)</span> <span class="o">*</span> <span class="n">jitter_amount</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">jitter_amount</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">jitter_gn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">dynamic_hmc</span><span class="o">.</span><span class="n">halton_sequence</span><span class="p">(</span>
                 <span class="n">i</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">+</span> <span class="n">max_sampling_steps</span><span class="p">))</span>
             <span class="p">)</span> <span class="o">*</span> <span class="n">jitter_amount</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">jitter_amount</span><span class="p">)</span>
-            <span class="n">next_random_arg_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
-            <span class="n">init_random_arg</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="k">def</span> <span class="nf">integration_steps_fn</span><span class="p">(</span><span class="n">random_generator_arg</span><span class="p">,</span> <span class="n">trajectory_length_adjusted</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
@@ -828,7 +826,7 @@ document.write(`
         <span class="n">init_states</span> <span class="o">=</span> <span class="n">batch_init</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
         <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">init_random_arg</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
 
-        <span class="n">keys_step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key_step</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
+        <span class="n">keys_step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
         <span class="p">(</span><span class="n">last_states</span><span class="p">,</span> <span class="n">last_adaptation_state</span><span class="p">),</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
             <span class="n">one_step</span><span class="p">,</span> <span class="p">(</span><span class="n">init_states</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">),</span> <span class="n">keys_step</span>
         <span class="p">)</span>
