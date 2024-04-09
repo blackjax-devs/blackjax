@@ -12,6 +12,7 @@ import blackjax
 import blackjax.smc.resampling as resampling
 import blackjax.smc.solver as solver
 from blackjax import adaptive_tempered_smc, tempered_smc
+from blackjax.smc import extend_params
 from tests.smc import SMCLinearRegressionTestCase
 
 
@@ -21,13 +22,13 @@ def inference_loop(kernel, rng_key, initial_state):
         return state.lmbda < 1
 
     def body(carry):
-        i, state, op_key, curr_loglikelihood = carry
-        op_key, subkey = jax.random.split(op_key, 2)
+        i, state, curr_loglikelihood = carry
+        subkey = jax.random.fold_in(rng_key, i)
         state, info = kernel(subkey, state)
-        return i + 1, state, op_key, curr_loglikelihood + info.log_likelihood_increment
+        return i + 1, state, curr_loglikelihood + info.log_likelihood_increment
 
-    total_iter, final_state, _, log_likelihood = jax.lax.while_loop(
-        cond, body, (0, initial_state, rng_key, 0.0)
+    total_iter, final_state, log_likelihood = jax.lax.while_loop(
+        cond, body, (0, initial_state, 0.0)
     )
 
     return total_iter, final_state, log_likelihood
@@ -64,11 +65,14 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
 
         hmc_kernel = blackjax.hmc.build_kernel()
         hmc_init = blackjax.hmc.init
-        hmc_parameters = {
-            "step_size": 10e-2,
-            "inverse_mass_matrix": jnp.eye(2),
-            "num_integration_steps": 50,
-        }
+        hmc_parameters = extend_params(
+            num_particles,
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(2),
+                "num_integration_steps": 50,
+            },
+        )
 
         for target_ess in [0.5, 0.75]:
             tempering = adaptive_tempered_smc(
@@ -110,11 +114,14 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
         lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
         hmc_init = blackjax.hmc.init
         hmc_kernel = blackjax.hmc.build_kernel()
-        hmc_parameters = {
-            "step_size": 10e-2,
-            "inverse_mass_matrix": jnp.eye(2),
-            "num_integration_steps": 50,
-        }
+        hmc_parameters = extend_params(
+            100,
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(2),
+                "num_integration_steps": 50,
+            },
+        )
 
         tempering = tempered_smc(
             logprior_fn,
@@ -129,12 +136,12 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
         smc_kernel = self.variant(tempering.step)
 
         def body_fn(carry, lmbda):
-            rng_key, state = carry
-            rng_key, subkey = jax.random.split(rng_key)
+            i, state = carry
+            subkey = jax.random.fold_in(self.key, i)
             new_state, info = smc_kernel(subkey, state, lmbda)
-            return (rng_key, new_state), (new_state, info)
+            return (i + 1, new_state), (new_state, info)
 
-        (_, result), _ = jax.lax.scan(body_fn, (self.key, init_state), lambda_schedule)
+        (_, result), _ = jax.lax.scan(body_fn, (0, init_state), lambda_schedule)
         self.assert_linear_regression_test_case(result)
 
 
@@ -174,11 +181,14 @@ class NormalizingConstantTest(chex.TestCase):
 
         hmc_init = blackjax.hmc.init
         hmc_kernel = blackjax.hmc.build_kernel()
-        hmc_parameters = {
-            "step_size": 10e-2,
-            "inverse_mass_matrix": jnp.eye(num_dim),
-            "num_integration_steps": 50,
-        }
+        hmc_parameters = extend_params(
+            num_particles,
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(num_dim),
+                "num_integration_steps": 50,
+            },
+        )
 
         tempering = adaptive_tempered_smc(
             logprior_fn,

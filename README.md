@@ -81,8 +81,8 @@ state = nuts.init(initial_position)
 
 # Iterate
 rng_key = jax.random.key(0)
-for _ in range(100):
-    rng_key, nuts_key = jax.random.split(rng_key)
+for step in range(100):
+    nuts_key = jax.random.fold_in(rng_key, step)
     state, _ = nuts.step(nuts_key, state)
 ```
 
