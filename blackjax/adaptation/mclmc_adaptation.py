@@ -620,7 +620,7 @@ def mhmclmc_make_adaptation_L(kernel, frac, Lfactor):
         num_steps = int(num_steps * frac)
         adaptation_L_keys = jax.random.split(key, num_steps)
 
-        jax.debug.print("tune 1\n\n {x}", x=(params.std_mat, params.step_size))
+        # jax.debug.print("tune 1\n\n {x}", x=(params.L, params.step_size))
 
         
         def step(state, key):

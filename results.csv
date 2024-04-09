@@ -1,2 +1,4 @@
-model,sampler,coeffs,result
-32,mclmc,mclachlan,0.011030223220586777
+model,sampler,integrator,tuning,result
+32,mhmclmc,mclachlan,standard,0.0011602808954194188
+32,mhmclmc,mclachlan,gridsearch:True,0.004926599562168121
+32,nuts,leapfrog,standard,0.0016948239644989371

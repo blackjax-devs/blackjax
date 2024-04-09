@@ -70,7 +70,7 @@ def run_mclmc(coefficients, logdensity_fn, num_steps, initial_position, transfor
         state=initial_state,
         rng_key=tune_key,
         # frac_tune3=0.0,
-        diagonal_preconditioning=True
+        diagonal_preconditioning=False
     )
 
     # jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.L, blackjax_mclmc_sampler_params.step_size))
@@ -128,12 +128,12 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
         frac_tune1=0.1,
         frac_tune2=0.1,
         frac_tune3=0.1,
-        diagonal_preconditioning=True,
+        diagonal_preconditioning=False,
     )
 
     step_size = blackjax_mclmc_sampler_params.step_size
     L = blackjax_mclmc_sampler_params.L
-    jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.std_mat))
+    # jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.std_mat))
 
 
     alg = blackjax.mcmc.mhmclmc.mhmclmc(
