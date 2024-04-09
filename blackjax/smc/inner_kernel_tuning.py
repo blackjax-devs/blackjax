@@ -8,8 +8,15 @@ from blackjax.types import ArrayTree, PRNGKey
 
 
 class StateWithParameterOverride(NamedTuple):
+    """
+    Stores both the sampling status and also a dictionary
+    that contains an dictionary with parameter names as key
+    and (n_particles, *) arrays as meanings. The latter
+    represent a parameter per chain for the next mutation step.
+    """
+
     sampler_state: ArrayTree
-    parameter_override: ArrayTree
+    parameter_override: Dict[str, ArrayTree]
 
 
 def init(alg_init_fn, position, initial_parameter_value):
@@ -20,11 +27,10 @@ def build_kernel(
     smc_algorithm,
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
-    mcmc_factory: Callable,
+    mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
-    mcmc_parameters: Dict,
     resampling_fn: Callable,
-    mcmc_parameter_update_fn: Callable[[SMCState, SMCInfo], ArrayTree],
+    mcmc_parameter_update_fn: Callable[[SMCState, SMCInfo], Dict[str, ArrayTree]],
     num_mcmc_steps: int = 10,
     **extra_parameters,
 ) -> Callable:
@@ -41,12 +47,11 @@ def build_kernel(
         A function that computes the log density of the prior distribution
     loglikelihood_fn
         A function that returns the probability at a given position.
-    mcmc_factory
-        A callable that can construct an inner kernel out of the newly-computed parameter
+    mcmc_step_fn:
+        The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
+        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
     mcmc_init_fn
         A callable that initializes the inner kernel
-    mcmc_parameters
-        Other (fixed across SMC iterations) parameters for the inner kernel
     mcmc_parameter_update_fn
         A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the inner kernel in i+1 iteration.
     extra_parameters:
@@ -59,9 +64,9 @@ def build_kernel(
         step_fn = smc_algorithm(
             logprior_fn=logprior_fn,
             loglikelihood_fn=loglikelihood_fn,
-            mcmc_step_fn=mcmc_factory(state.parameter_override),
+            mcmc_step_fn=mcmc_step_fn,
             mcmc_init_fn=mcmc_init_fn,
-            mcmc_parameters=mcmc_parameters,
+            mcmc_parameters=state.parameter_override,
             resampling_fn=resampling_fn,
             num_mcmc_steps=num_mcmc_steps,
             **extra_parameters,
@@ -89,17 +94,15 @@ class inner_kernel_tuning:
         A function that computes the log density of the prior distribution
     loglikelihood_fn
         A function that returns the probability at a given position.
-    mcmc_factory
-        A callable that can construct an inner kernel out of the newly-computed parameter
+    mcmc_step_fn
+        The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
     mcmc_init_fn
         A callable that initializes the inner kernel
-    mcmc_parameters
-        Other (fixed across SMC iterations) parameters for the inner kernel step
     mcmc_parameter_update_fn
         A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the
         inner kernel in i+1 iteration.
     initial_parameter_value
-        Paramter to be used by the mcmc_factory before the first iteration.
+        Parameter to be used by the mcmc_factory before the first iteration.
     extra_parameters:
         parameters to be used for the creation of the smc_algorithm.
 
@@ -117,9 +120,8 @@ class inner_kernel_tuning:
         smc_algorithm: Union[adaptive_tempered_smc, tempered_smc],
         logprior_fn: Callable,
         loglikelihood_fn: Callable,
-        mcmc_factory: Callable,
+        mcmc_step_fn: Callable,
         mcmc_init_fn: Callable,
-        mcmc_parameters: Dict,
         resampling_fn: Callable,
         mcmc_parameter_update_fn: Callable[[SMCState, SMCInfo], ArrayTree],
         initial_parameter_value,
@@ -130,9 +132,8 @@ class inner_kernel_tuning:
             smc_algorithm,
             logprior_fn,
             loglikelihood_fn,
-            mcmc_factory,
+            mcmc_step_fn,
             mcmc_init_fn,
-            mcmc_parameters,
             resampling_fn,
             mcmc_parameter_update_fn,
             num_mcmc_steps,

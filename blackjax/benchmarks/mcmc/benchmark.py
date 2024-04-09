@@ -162,7 +162,7 @@ if __name__ == "__main__":
     for model in ["normal"]:
         # for sampler in samplers:
         print("MODEL", model, "DIM", get_num_latents(models[model]))
-        for sampler in ["nuts"]:
+        for sampler in ["mclmc"]:
             # result = benchmark(models[model], samplers[sampler])
             
             result = benchmark_chains(models[model], samplers[sampler], batch=100, n=10000, favg=models[model].E_x2, fvar=models[model].Var_x2)

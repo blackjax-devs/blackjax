@@ -40,8 +40,8 @@ class CompilationTest(chex.TestCase):
         )
         step = jax.jit(kernel.step)
 
-        for _ in range(10):
-            rng_key, sample_key = jax.random.split(rng_key)
+        for i in range(10):
+            sample_key = jax.random.fold_in(rng_key, i)
             state, _ = step(sample_key, state)
 
     def test_nuts(self):
@@ -66,8 +66,8 @@ class CompilationTest(chex.TestCase):
         )
         step = jax.jit(kernel.step)
 
-        for _ in range(10):
-            rng_key, sample_key = jax.random.split(rng_key)
+        for i in range(10):
+            sample_key = jax.random.fold_in(rng_key, i)
             state, _ = step(sample_key, state)
 
     def test_hmc_warmup(self):
@@ -94,8 +94,8 @@ class CompilationTest(chex.TestCase):
         (state, parameters), _ = warmup.run(rng_key, 1.0, num_steps=100)
         kernel = jax.jit(blackjax.hmc(logdensity_fn, **parameters).step)
 
-        for _ in range(10):
-            rng_key, sample_key = jax.random.split(rng_key)
+        for i in range(10):
+            sample_key = jax.random.fold_in(rng_key, i)
             state, _ = kernel(sample_key, state)
 
     def test_nuts_warmup(self):
@@ -121,8 +121,8 @@ class CompilationTest(chex.TestCase):
         (state, parameters), _ = warmup.run(rng_key, 1.0, num_steps=100)
         step = jax.jit(blackjax.nuts(logdensity_fn, **parameters).step)
 
-        for _ in range(10):
-            rng_key, sample_key = jax.random.split(rng_key)
+        for i in range(10):
+            sample_key = jax.random.fold_in(rng_key, i)
             state, _ = step(sample_key, state)
 
 
