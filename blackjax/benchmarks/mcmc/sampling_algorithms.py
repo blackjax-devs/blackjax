@@ -4,6 +4,7 @@ import jax
 import jax.numpy as jnp
 import blackjax
 from blackjax.adaptation.mclmc_adaptation import MCLMCAdaptationState, integrator_order, target_acceptance_rate_of_order
+from blackjax.adaptation.window_adaptation import da_adaptation
 from blackjax.mcmc.integrators import calls_per_integrator_step, generate_euclidean_integrator, generate_isokinetic_integrator
 from blackjax.mcmc.mhmclmc import rescale
 from blackjax.util import run_inference_algorithm
@@ -19,13 +20,19 @@ def run_nuts(
     
     integrator = generate_euclidean_integrator(coefficients)
     # integrator = blackjax.mcmc.integrators.velocity_verlet # note: defaulted to in nuts
-    warmup = blackjax.window_adaptation(blackjax.nuts, logdensity_fn, integrator=integrator)
+    # warmup = blackjax.window_adaptation(blackjax.nuts, logdensity_fn, integrator=integrator)
 
     # we use 4 chains for sampling
     rng_key, warmup_key = jax.random.split(key, 2)
 
-
-    (state, params), _ = warmup.run(warmup_key, initial_position, 2000)
+    state, params = da_adaptation(
+        rng_key=warmup_key, 
+        initial_position=initial_position, 
+        algorithm=blackjax.nuts,
+        logdensity_fn=logdensity_fn)
+    
+    print(params["inverse_mass_matrix"], "inv\n\n")
+    # (state, params), _ = warmup.run(warmup_key, initial_position, 2000)
 
     nuts = blackjax.nuts(logdensity_fn=logdensity_fn, step_size=params['step_size'], inverse_mass_matrix= params['inverse_mass_matrix'], integrator=integrator)
 

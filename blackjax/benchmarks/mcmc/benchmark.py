@@ -184,7 +184,7 @@ def run_benchmarks(batch_size):
     results = defaultdict(tuple)
     for variables in itertools.product(
         # ["mhmclmc", "nuts", "mclmc", ], 
-        ["mclmc"], 
+        ["nuts"], 
         # [StandardNormal(d) for d in np.ceil(np.logspace(np.log10(10), np.log10(10000), 10)).astype(int)],
         [Brownian()],
         # [velocity_verlet_coefficients, mclachlan_coefficients, yoshida_coefficients, omelyan_coefficients], 
@@ -210,11 +210,11 @@ def run_benchmarks(batch_size):
     print(results)
             
 
-    df = pd.Series(results).reset_index()
-    df.columns = ["model", "sampler", "coeffs", "result"] 
-    df.result = df.result.apply(lambda x: x[0].item())
-    df.model = df.model.apply(lambda x: x[1])
-    df.to_csv("results.csv", index=False)
+    # df = pd.Series(results).reset_index()
+    # df.columns = ["model", "sampler", "coeffs", "result"] 
+    # df.result = df.result.apply(lambda x: x[0].item())
+    # df.model = df.model.apply(lambda x: x[1])
+    # df.to_csv("results.csv", index=False)
 
     return results
 
@@ -331,9 +331,9 @@ def benchmark_mhmchmc(batch_size):
 
 if __name__ == "__main__":
 
-    # run_benchmarks(1)
+    run_benchmarks(1)
 
-    benchmark_mhmchmc(batch_size=200)
+    # benchmark_mhmchmc(batch_size=200)
     # run_benchmarks(batch_size=1000)
 
 
