@@ -135,7 +135,7 @@ def step(
         num_resampled = num_particles
 
     resampling_idx = resample_fn(resampling_key, state.weights, num_resampled)
-    particles = jax.tree_map(lambda x: x[resampling_idx], state.particles)
+    particles = jax.tree.map(lambda x: x[resampling_idx], state.particles)
 
     keys = jax.random.split(updating_key, num_resampled)
     particles, update_info = update_fn(keys, particles, state.update_parameters)
@@ -158,4 +158,4 @@ def extend_params(n_particles, params):
     def extend(param):
         return jnp.repeat(jnp.asarray(param)[None, ...], n_particles, axis=0)
 
-    return jax.tree_map(extend, params)
+    return jax.tree.map(extend, params)

@@ -55,7 +55,7 @@ class SchrodingerFollmerInfo(NamedTuple):
 
 
 def init(example_position: ArrayLikeTree) -> SchrodingerFollmerState:
-    zero = jax.tree_map(jnp.zeros_like, example_position)
+    zero = jax.tree.map(jnp.zeros_like, example_position)
     return SchrodingerFollmerState(zero, 0.0)
 
 
@@ -95,7 +95,7 @@ def step(
     eps_drift = jax.random.normal(drift_key, (n_samples,) + ravelled_position.shape)
     eps_drift = jax.vmap(unravel_fn)(eps_drift)
 
-    perturbed_position = jax.tree_map(
+    perturbed_position = jax.tree.map(
         lambda a, b: a[None, ...] + scale * b, state.position, eps_drift
     )
 
@@ -105,14 +105,14 @@ def step(
     log_pdf -= jnp.max(log_pdf, axis=0, keepdims=True)
     pdf = jnp.exp(log_pdf)
 
-    num = jax.tree_map(lambda a: pdf @ a, eps_drift)
+    num = jax.tree.map(lambda a: pdf @ a, eps_drift)
     den = scale * jnp.sum(pdf, axis=0)
 
-    drift = jax.tree_map(lambda a: a / den, num)
+    drift = jax.tree.map(lambda a: a / den, num)
 
     eps_sde = jax.random.normal(sde_key, ravelled_position.shape)
     eps_sde = unravel_fn(eps_sde)
-    next_position = jax.tree_map(
+    next_position = jax.tree.map(
         lambda a, b, c: a + step_size * b + step_size**0.5 * c,
         state.position,
         drift,
@@ -151,20 +151,20 @@ def sample(
     dt = 1.0 / n_steps
 
     initial_position = initial_state.position
-    initial_positions = jax.tree_map(
+    initial_positions = jax.tree.map(
         lambda a: jnp.zeros([n_samples, *a.shape], dtype=a.dtype), initial_position
     )
     initial_states = SchrodingerFollmerState(initial_positions, jnp.zeros((n_samples,)))
 
-    def body(_, carry):
-        key, states = carry
-        keys = jax.random.split(key, 1 + n_samples)
-        states, _ = jax.vmap(step, [0, 0, None, None, None])(
-            keys[1:], states, log_density_fn, dt, n_inner_samples
+    def body(i, states):
+        subkey = jax.random.fold_in(rng_key, i)
+        keys = jax.random.split(subkey, n_samples)
+        next_states, _ = jax.vmap(step, [0, 0, None, None, None])(
+            keys, states, log_density_fn, dt, n_inner_samples
         )
-        return keys[0], states
+        return next_states
 
-    _, final_states = jax.lax.fori_loop(0, n_steps, body, (rng_key, initial_states))
+    final_states = jax.lax.fori_loop(0, n_steps, body, initial_states)
 
     return final_states
 
@@ -176,7 +176,7 @@ def _log_fn_corrected(position, logdensity_fn):
     This corrects the gradient of the log-density function to account for this.
     """
     log_pdf_val = logdensity_fn(position)
-    norm = jax.tree_map(lambda a: 0.5 * jnp.sum(a**2), position)
+    norm = jax.tree.map(lambda a: 0.5 * jnp.sum(a**2), position)
     norm = sum(tree_leaves(norm))
     return log_pdf_val + norm
 
