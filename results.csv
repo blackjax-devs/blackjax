@@ -1,4 +1,4 @@
-model,sampler,integrator,tuning,result
-32,mhmclmc,mclachlan,standard,0.0011602808954194188
-32,mhmclmc,mclachlan,gridsearch:True,0.004926599562168121
-32,nuts,leapfrog,standard,0.0016948239644989371
+model,dims,sampler,L,step_size,integrator,tuning,result
+r,32,mhmclmc,[1.1372266],[0.6380187],mclachlan,standard,0.0
+r,32,mhmclmc,4.1409723723296485,0.30288591304087137,mclachlan,gridsearch:True,0.004090809263288975
+r,32,nuts,n/a,n/a,leapfrog,standard,0.0005216322024352849

@@ -21,7 +21,7 @@ import itertools
 import numpy as np
 
 import blackjax
-from blackjax.benchmarks.mcmc.sampling_algorithms import run_mhmclmc, run_nuts, samplers
+from blackjax.benchmarks.mcmc.sampling_algorithms import run_mclmc, run_mhmclmc, run_nuts, samplers
 from blackjax.benchmarks.mcmc.inference_models import Brownian, GermanCredit, ItemResponseTheory, MixedLogit, StandardNormal, StochasticVolatility, models
 from blackjax.mcmc.integrators import calls_per_integrator_step, generate_euclidean_integrator, generate_isokinetic_integrator, isokinetic_mclachlan, mclachlan_coefficients, name_integrator, omelyan_coefficients, velocity_verlet, velocity_verlet_coefficients, yoshida_coefficients
 from blackjax.mcmc.mhmclmc import rescale
@@ -81,24 +81,23 @@ def cumulative_avg(samples):
     return jnp.cumsum(samples, axis = 0) / jnp.arange(1, samples.shape[0] + 1)[:, None]
 
 
-def gridsearch_tune(iterations, grid_size, model, sampler, batch, num_steps, center_L, center_step_size):
+def gridsearch_tune(key, iterations, grid_size, model, sampler, batch, num_steps, center_L, center_step_size):
     results = defaultdict(float)
     converged = False
-    keys = jax.random.split(jax.random.PRNGKey(0), iterations+1)
+    keys = jax.random.split(key, iterations+1)
     for i in range(iterations):
         print(f"EPOCH {i}")
-        # width = 2
         width = 2
         step_sizes = np.logspace(np.log10(center_step_size/width), np.log10(center_step_size*width), grid_size)
         Ls = np.logspace(np.log10(center_L/2), np.log10(center_L*2),grid_size)
         # print(list(itertools.product(step_sizes , Ls)))
+
+        grid_keys = jax.random.split(keys[i], grid_size^2)
         print(f"center step size {center_step_size}, center L {center_L}")
         for j, (step_size, L) in enumerate(itertools.product(step_sizes , Ls)):
-            ess, grad_calls_until_convergence = benchmark_chains(model, sampler(step_size=step_size, L=L), keys[i], n=num_steps, batch = batch, contract=jnp.max) # batch=1000//model.ndims)
+            ess, grad_calls_until_convergence, _ = benchmark_chains(model, sampler(step_size=step_size, L=L), grid_keys[j], n=num_steps, batch = batch, contract=jnp.max)
             results[(step_size, L)] = (ess, grad_calls_until_convergence)
-            # print(j, grad_calls_until_convergence, step_size, L)
 
-        
         best_ess, best_grads, (step_size, L) = max([(results[r][0], results[r][1], r) for r in results], key=operator.itemgetter(0))
         # raise Exception
         print(f"best params on iteration {i} are stepsize {step_size} and L {L} with Grad Calls until Convergence {best_grads}")
@@ -174,7 +173,7 @@ def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.av
 
     err_t_median = jnp.median(err_t, axis=0)
     esses, grad_calls, _ = calculate_ess(err_t_median, grad_evals_per_step=avg_grad_calls_per_traj)
-    return esses, grad_calls
+    return esses, grad_calls, params
 
 
 
@@ -184,9 +183,9 @@ def run_benchmarks(batch_size):
     results = defaultdict(tuple)
     for variables in itertools.product(
         # ["mhmclmc", "nuts", "mclmc", ], 
-        ["nuts"], 
+        ["mclmc"], 
         # [StandardNormal(d) for d in np.ceil(np.logspace(np.log10(10), np.log10(10000), 10)).astype(int)],
-        [Brownian()],
+        [GermanCredit()],
         # [velocity_verlet_coefficients, mclachlan_coefficients, yoshida_coefficients, omelyan_coefficients], 
         [mclachlan_coefficients], 
         ):
@@ -199,7 +198,7 @@ def run_benchmarks(batch_size):
         key = jax.random.PRNGKey(3)
         for i in range(1):
             key1, key = jax.random.split(key)
-            ess, grad_calls = benchmark_chains(model, partial(samplers[sampler], coefficients=coefficients),key1, n=20000, batch=num_chains, contract=jnp.max)
+            ess, grad_calls, _ = benchmark_chains(model, partial(samplers[sampler], coefficients=coefficients),key1, n=20000, batch=num_chains, contract=jnp.max)
 
             print(f"grads to low bias: {grad_calls}")
 
@@ -222,27 +221,31 @@ def run_benchmarks(batch_size):
 
 def benchmark_mhmchmc(batch_size):
 
-    key1, key2, key3 = jax.random.split(jax.random.PRNGKey(1), 3)
+    key1, key2, key3 = jax.random.split(jax.random.PRNGKey(0), 3)
     results = defaultdict(tuple)
 
     for model in models:
         
         num_chains = 1 + batch_size//model.ndims
+        print(f"NUMBER OF CHAINS for {model.name} and MHMCLMC is {num_chains}")
         num_steps = models[model]["mhmclmc"]
+        print(f"NUMBER OF STEPS for {model.name} and MHCMLMC is {num_steps}")
 
         ####### run mhmclmc with standard tuning 
 
         coeffs = mclachlan_coefficients
-        ess, grad_calls = benchmark_chains(model, partial(run_mhmclmc,coefficients=coeffs),key1, n=num_steps, batch=num_chains, contract=jnp.max)
-        results[((model.name, model.ndims), "mhmclmc", name_integrator(coeffs), "standard")] = (ess, grad_calls)
-
-        print(model, grad_calls, num_steps)
-        # raise Exception
+        ess, grad_calls, params = benchmark_chains(
+            model, 
+            partial(run_mhmclmc,coefficients=coeffs), 
+            key1, 
+            n=num_steps, 
+            batch=num_chains, 
+            contract=jnp.max)
+        results[(model.name, model.ndims, "mhmclmc", str(params.L), str(params.step_size), name_integrator(coeffs), "standard")] = (ess, grad_calls)
 
         ####### run mhmclmc with standard tuning + grid search
 
-
-        init_pos_key, init_key, tune_key, bench_key = jax.random.split(key2, 4)
+        init_pos_key, init_key, tune_key, grid_key, bench_key = jax.random.split(key2, 5)
         initial_position = model.sample_init(init_pos_key)
 
         initial_state = blackjax.mcmc.mhmclmc.init(
@@ -274,43 +277,25 @@ def benchmark_mhmchmc(batch_size):
             diagonal_preconditioning=False
         )
 
-        # print(blackjax_mhmclmc_sampler_params.std_mat)
-        # raise Exception
-
         print(f"target acceptance rate {target_acceptance_rate_of_order[integrator_order(coeffs)]}")
-        # print(f"\nModel: {model.name,model.ndims}, Sampler: {sampler}\n Coefficients: {coefficients}\nNumber of chains {num_chains}",) 
         print(f"params after initial tuning are L={blackjax_mhmclmc_sampler_params.L}, step_size={blackjax_mhmclmc_sampler_params.step_size}")
 
-        ess, grad_calls = benchmark_chains(model, run_mhmclmc_no_tuning(coefficients=coeffs, L=blackjax_mhmclmc_sampler_params.L, step_size=blackjax_mhmclmc_sampler_params.step_size,std_mat=blackjax_mhmclmc_sampler_params.std_mat, initial_state=state),bench_key, n=num_steps, batch=num_chains, contract=jnp.max)
 
-        print(f"grads to low bias for tune params: {grad_calls}")
-
-        # for i in range(100):
-
-        #     ess, grad_calls = benchmark_chains(model, run_mhmclmc_no_tuning(coefficients=coeffs, L=blackjax_mhmclmc_sampler_params.L, step_size=blackjax_mhmclmc_sampler_params.step_size, initial_state=state),jax.random.PRNGKey(i), n=num_steps, batch=num_chains, contract=jnp.max)
-
-        #     print(f"grads to low bias for tune params: {grad_calls}")
-        # raise Exception
-
-        # ess, grad_calls = benchmark_chains(model, run_mhmclmc_no_tuning(coefficients=coeffs, L=blackjax_mhmclmc_sampler_params.L, step_size=blackjax_mhmclmc_sampler_params.step_size),bench_key_pre_grid, n=num_steps, batch=num_chains, contract=jnp.max)
-        # results[((model.name, model.ndims), sampler, name_integrator(coefficients), "without grid search")] = (ess, grad_calls) 
-
-
-        L, step_size, convergence = gridsearch_tune(iterations=10, grid_size=5, model=model, sampler=partial(run_mhmclmc_no_tuning, coefficients=coeffs, initial_state=state, std_mat=1.), batch=num_chains, num_steps=num_steps, center_L=blackjax_mhmclmc_sampler_params.L, center_step_size=blackjax_mhmclmc_sampler_params.step_size)
+        L, step_size, convergence = gridsearch_tune(grid_key, iterations=10, grid_size=5, model=model, sampler=partial(run_mhmclmc_no_tuning, coefficients=coeffs, initial_state=state, std_mat=1.), batch=num_chains, num_steps=num_steps, center_L=blackjax_mhmclmc_sampler_params.L, center_step_size=blackjax_mhmclmc_sampler_params.step_size)
         # print(f"params after grid tuning are L={L}, step_size={step_size}")
 
 
-        ess, grad_calls = benchmark_chains(model, run_mhmclmc_no_tuning(coefficients=coeffs, L=L, step_size=step_size, initial_state=state, std_mat=1.),bench_key, n=num_steps, batch=num_chains, contract=jnp.max)
+        ess, grad_calls, _ = benchmark_chains(model, run_mhmclmc_no_tuning(coefficients=coeffs, L=L, step_size=step_size, initial_state=state, std_mat=1.),bench_key, n=num_steps, batch=num_chains, contract=jnp.max)
 
         print(f"grads to low bias: {grad_calls}")
 
-        results[((model.name, model.ndims), "mhmclmc", name_integrator(coeffs), f"gridsearch:{convergence}")] = (ess, grad_calls) 
+        results[(model.name, model.ndims, "mhmclmc", str(L), str(step_size), name_integrator(coeffs), f"gridsearch:{convergence}")] = (ess, grad_calls) 
 
         ####### run nuts
 
         coeffs = velocity_verlet_coefficients
-        ess, grad_calls = benchmark_chains(model, partial(run_nuts,coefficients=coeffs),key3, n=models[model]["nuts"], batch=num_chains, contract=jnp.max)
-        results[((model.name, model.ndims), "nuts", name_integrator(coeffs), "standard")] = (ess, grad_calls)
+        ess, grad_calls, _ = benchmark_chains(model, partial(run_nuts,coefficients=coeffs),key3, n=models[model]["nuts"], batch=num_chains, contract=jnp.max)
+        results[(model.name, model.ndims, "nuts", "n/a", "n/a", name_integrator(coeffs), "standard")] = (ess, grad_calls)
         
 
 
@@ -322,20 +307,17 @@ def benchmark_mhmchmc(batch_size):
             
 
     df = pd.Series(results).reset_index()
-    df.columns = ["model", "sampler", "integrator", "tuning", "result"] 
+    df.columns = ["model", "dims", "sampler", "L", "step_size", "integrator", "tuning", "result"] 
     df.result = df.result.apply(lambda x: x[0].item())
-    df.model = df.model.apply(lambda x: x[1])
+    # df.model = df.model.apply(lambda x: x[1])
     df.to_csv("results.csv", index=False)
 
     return results
 
 if __name__ == "__main__":
 
-    run_benchmarks(1)
-
-    # benchmark_mhmchmc(batch_size=200)
-    # run_benchmarks(batch_size=1000)
-
+    benchmark_mhmchmc(batch_size=1)
+    # run_benchmarks(1)
 
 
 
@@ -396,7 +378,7 @@ if __name__ == "__main__":
 #         print(f"\nModel: {model.name,model.ndims}, Sampler: {sampler}\n Coefficients: {coefficients}\nNumber of chains {num_chains}",) 
 #         print(f"params after initial tuning are L={blackjax_mclmc_sampler_params.L}, step_size={blackjax_mclmc_sampler_params.step_size}")
 
-#         ess, grad_calls = benchmark_chains(model, run_mhmclmc_no_tuning(coefficients=coefficients, L=blackjax_mclmc_sampler_params.L, step_size=blackjax_mclmc_sampler_params.step_size),bench_key_pre_grid, n=1000, batch=num_chains, contract=jnp.max)
+#         ess, grad_calls, _ = benchmark_chains(model, run_mhmclmc_no_tuning(coefficients=coefficients, L=blackjax_mclmc_sampler_params.L, step_size=blackjax_mclmc_sampler_params.step_size),bench_key_pre_grid, n=1000, batch=num_chains, contract=jnp.max)
 
 #         results[((model.name, model.ndims), sampler, name_integrator(coefficients), "without grid search")] = (ess, grad_calls) 
 
@@ -405,7 +387,7 @@ if __name__ == "__main__":
 
 
 #         key1, bench_key = jax.random.split(bench_key)
-#         ess, grad_calls = benchmark_chains(model, run_mhmclmc_no_tuning(coefficients=coefficients, L=L, step_size=step_size),key1, n=1000, batch=num_chains, contract=jnp.max)
+#         ess, grad_calls, _ = benchmark_chains(model, run_mhmclmc_no_tuning(coefficients=coefficients, L=L, step_size=step_size),key1, n=1000, batch=num_chains, contract=jnp.max)
 
 #         print(f"grads to low bias: {grad_calls}")
 

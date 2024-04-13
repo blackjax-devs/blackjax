@@ -59,12 +59,10 @@ def run_mclmc(coefficients, logdensity_fn, num_steps, initial_position, transfor
         position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
     )
 
-    # integrator = blackjax.mcmc.integrators.isokinetic_mclachlan
     
     kernel = lambda std_mat : blackjax.mcmc.mclmc.build_kernel(
         logdensity_fn=logdensity_fn,
         integrator=integrator,
-        # std_mat=jnp.ones((initial_position.shape[0],)),
         std_mat=std_mat,
     )
 
@@ -138,6 +136,7 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
         diagonal_preconditioning=False,
     )
 
+
     step_size = blackjax_mclmc_sampler_params.step_size
     L = blackjax_mclmc_sampler_params.L
     # jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.std_mat))
@@ -153,6 +152,7 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
 
     )
 
+
     _, out, info = run_inference_algorithm(
         rng_key=run_key,
         initial_state_or_position=blackjax_state_after_tuning,
@@ -160,6 +160,7 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
         num_steps=num_steps, 
         transform=lambda x: transform(x.position), 
         progress_bar=True)
+    
 
 
     return out, blackjax_mclmc_sampler_params, calls_per_integrator_step(coefficients) * (L/step_size)
