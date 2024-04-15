@@ -46,7 +46,7 @@ def run_nuts(
 
     # print("INFO\n\n",info_history.num_integration_steps)
 
-    return state_history, params, info_history.num_integration_steps.mean() * calls_per_integrator_step(coefficients)
+    return state_history, params, info_history.num_integration_steps.mean() * calls_per_integrator_step(coefficients), info_history.acceptance_rate.mean()
 
 def run_mclmc(coefficients, logdensity_fn, num_steps, initial_position, transform, key):
 
@@ -99,7 +99,8 @@ def run_mclmc(coefficients, logdensity_fn, num_steps, initial_position, transfor
         progress_bar=True,
     )
 
-    return samples, blackjax_mclmc_sampler_params, calls_per_integrator_step(coefficients)
+    acceptance_rate = 1.
+    return samples, blackjax_mclmc_sampler_params, calls_per_integrator_step(coefficients), acceptance_rate
 
 
 def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transform, key):
@@ -139,7 +140,7 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
 
     step_size = blackjax_mclmc_sampler_params.step_size
     L = blackjax_mclmc_sampler_params.L
-    # jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.std_mat))
+    jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.step_size, blackjax_mclmc_sampler_params.L))
 
 
     alg = blackjax.mcmc.mhmclmc.mhmclmc(
@@ -163,7 +164,7 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
     
 
 
-    return out, blackjax_mclmc_sampler_params, calls_per_integrator_step(coefficients) * (L/step_size)
+    return out, blackjax_mclmc_sampler_params, calls_per_integrator_step(coefficients) * (L/step_size), info.acceptance_rate.mean()
 
 # we should do at least: mclmc, nuts, unadjusted hmc, mhmclmc, langevin
 

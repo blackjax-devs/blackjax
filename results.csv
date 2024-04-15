@@ -1,4 +1,5 @@
-model,dims,sampler,L,step_size,integrator,tuning,result
-r,32,mhmclmc,[1.1372266],[0.6380187],mclachlan,standard,0.0
-r,32,mhmclmc,4.1409723723296485,0.30288591304087137,mclachlan,gridsearch:True,0.004090809263288975
-r,32,nuts,n/a,n/a,leapfrog,standard,0.0005216322024352849
+model,dims,sampler,L,step_size,integrator,tuning,acc_rate,result
+Brownian,32,mclmc,2.2765254974365234,0.31508031487464905,mclachlan,standard,1.0,0.012370114214718342
+Brownian,32,mhmclmc,2.1781280040740967,0.5665650367736816,mclachlan,standard,0.551268458366394,0.0018382471753284335
+Brownian,32,mhmclmc,1.9426684155260523,0.3121571748554022,mclachlan,gridsearch:True,0.9083413481712341,0.005626214202493429
+Brownian,32,nuts,0.0,0.0,leapfrog,standard,0.7896021008491516,0.0031631924211978912
