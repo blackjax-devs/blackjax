@@ -60,7 +60,6 @@ __all__ = [
     "rmhmc",
     "mala",
     "mgrad_gaussian",
-    "nuts",
     "orbital_hmc",
     "additive_step_random_walk",
     "rmh",
