@@ -1,3 +1,6 @@
+import dataclasses
+from typing import Callable, Union
+
 from blackjax._version import __version__
 
 from .adaptation.chees_adaptation import chees_adaptation
@@ -5,17 +8,16 @@ from .adaptation.mclmc_adaptation import mclmc_find_L_and_step_size
 from .adaptation.meads_adaptation import meads_adaptation
 from .adaptation.pathfinder_adaptation import pathfinder_adaptation
 from .adaptation.window_adaptation import window_adaptation
+from .base import SamplingAlgorithm
 from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
 from .mcmc.barker import barker_proposal
 from .mcmc.dynamic_hmc import dynamic_hmc
 from .mcmc.elliptical_slice import elliptical_slice
 from .mcmc.ghmc import ghmc
-from .mcmc.hmc import hmc
 from .mcmc.mala import mala
 from .mcmc.marginal_latent_gaussian import mgrad_gaussian
 from .mcmc.mclmc import mclmc
-from .mcmc.nuts import nuts
 from .mcmc.periodic_orbital import orbital_hmc
 from .mcmc.random_walk import additive_step_random_walk, irmh, rmh
 from .mcmc.rmhmc import rmhmc
@@ -31,12 +33,29 @@ from .vi.meanfield_vi import meanfield_vi
 from .vi.pathfinder import pathfinder
 from .vi.schrodinger_follmer import schrodinger_follmer
 from .vi.svgd import svgd
+from .mcmc import hmc as _hmc
+from .mcmc import nuts as _nuts
+
+
+@dataclasses.dataclass
+class SamplingAlgorithmFactory:
+    differentiable_callable: Callable
+    init: Callable
+    build_kernel: Callable
+
+    def __call__(self, *args, **kwargs) -> SamplingAlgorithm:
+        return self.differentiable_callable(*args, **kwargs)
+
+
+hmc = SamplingAlgorithmFactory(_hmc.as_sampling_algorithm, _hmc.init, _hmc.build_kernel)
+nuts = SamplingAlgorithmFactory(_nuts.as_sampling_algorithm, _nuts.init, _nuts.build_kernel)
+
+hmc_family = [hmc, nuts]
 
 __all__ = [
     "__version__",
     "dual_averaging",  # optimizers
     "lbfgs",
-    "hmc",  # mcmc
     "dynamic_hmc",
     "rmhmc",
     "mala",
