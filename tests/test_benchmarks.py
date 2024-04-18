@@ -36,7 +36,6 @@ def run_regression(algorithm, **parameters):
     logdensity_fn = lambda x: logdensity_fn_(**x)
 
     warmup_key, inference_key = jax.random.split(rng_key, 2)
-
     warmup = blackjax.window_adaptation(
         algorithm,
         logdensity_fn,
@@ -46,7 +45,7 @@ def run_regression(algorithm, **parameters):
     (state, parameters), _ = warmup.run(
         warmup_key, {"log_scale": 0.0, "coefs": 2.0}, 1000
     )
-    inference_algorithm = algorithm(logdensity_fn, **parameters)
+    inference_algorithm = algorithm.as_sampling_algorithm(logdensity_fn, **parameters)
 
     _, states, _ = run_inference_algorithm(
         inference_key, state, inference_algorithm, 10_000

@@ -11,7 +11,7 @@ from .mcmc.barker import barker_proposal
 from .mcmc.dynamic_hmc import dynamic_hmc
 from .mcmc.elliptical_slice import elliptical_slice
 from .mcmc.ghmc import ghmc
-from .mcmc.hmc import hmc
+from .mcmc import hmc
 from .mcmc.mala import mala
 from .mcmc.marginal_latent_gaussian import mgrad_gaussian
 from .mcmc.mclmc import mclmc

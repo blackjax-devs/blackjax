@@ -243,7 +243,7 @@ def base(
 
 
 def window_adaptation(
-    algorithm: Union[mcmc.hmc.hmc, mcmc.nuts.nuts],
+    algorithm,
     logdensity_fn: Callable,
     is_mass_matrix_diagonal: bool = True,
     initial_step_size: float = 1.0,

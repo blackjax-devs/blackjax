@@ -138,7 +138,7 @@ def base(
 
 
 def pathfinder_adaptation(
-    algorithm: Union[mcmc.hmc.hmc, mcmc.nuts.nuts],
+    algorithm,
     logdensity_fn: Callable,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,

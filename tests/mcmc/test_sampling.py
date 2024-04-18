@@ -41,7 +41,7 @@ def rmh_proposal_distribution(rng_key, position):
 
 regression_test_cases = [
     {
-        "algorithm": blackjax.hmc,
+        "algorithm": blackjax.hmc.as_sampling_algorithm,
         "initial_position": {"log_scale": 0.0, "coefs": 4.0},
         "parameters": {"num_integration_steps": 90},
         "num_warmup_steps": 1_000,
