@@ -88,7 +88,7 @@ class OptimizerTest(chex.TestCase):
                 minimize_lbfgs, objective_fn, maxiter=maxiter, maxcor=maxcor
             )
         )(b0_flatten)
-        history = jax.tree_map(lambda x: x[: status.iter_num + 1], history)
+        history = jax.tree.map(lambda x: x[: status.iter_num + 1], history)
 
         # Test recover alpha
         S = jnp.diff(history.x, axis=0)
@@ -138,7 +138,7 @@ class OptimizerTest(chex.TestCase):
         (result, status), history = self.variant(
             functools.partial(minimize_lbfgs, loss_fn, maxiter=50)
         )(np.zeros(nd))
-        history = jax.tree_map(lambda x: x[: status.iter_num + 1], history)
+        history = jax.tree.map(lambda x: x[: status.iter_num + 1], history)
 
         np.testing.assert_allclose(result, mean, rtol=0.01)
 

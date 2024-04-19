@@ -125,7 +125,7 @@ def control_variates(
         grad_estimate = logdensity_grad_estimator(position, minibatch)
         center_grad_estimate = logdensity_grad_estimator(centering_position, minibatch)
 
-        return jax.tree_map(
+        return jax.tree.map(
             lambda grad_est, cv_grad_est, cv_grad: cv_grad + grad_est - cv_grad_est,
             grad_estimate,
             center_grad_estimate,
