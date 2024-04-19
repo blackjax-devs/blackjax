@@ -26,7 +26,7 @@ __all__ = [
     "EllipSliceInfo",
     "init",
     "build_kernel",
-    "elliptical_slice",
+    "as_sampling_algorithm",
 ]
 
 
@@ -119,7 +119,11 @@ def build_kernel(cov_matrix: Array, mean: Array):
     return kernel
 
 
-class elliptical_slice:
+def as_sampling_algorithm(loglikelihood_fn: Callable,
+        *,
+        mean: Array,
+        cov: Array,
+    ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Elliptical Slice sampling kernel.
 
     Examples
@@ -151,31 +155,20 @@ class elliptical_slice:
     -------
     A ``SamplingAlgorithm``.
     """
+    kernel = build_kernel(cov, mean)
 
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_kernel)
+    def init_fn(position: ArrayLikeTree, rng_key=None):
+        del rng_key
+        return init(position, loglikelihood_fn)
 
-    def __new__(  # type: ignore[misc]
-        cls,
-        loglikelihood_fn: Callable,
-        *,
-        mean: Array,
-        cov: Array,
-    ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel(cov, mean)
+    def step_fn(rng_key: PRNGKey, state):
+        return kernel(
+            rng_key,
+            state,
+            loglikelihood_fn,
+        )
 
-        def init_fn(position: ArrayLikeTree, rng_key=None):
-            del rng_key
-            return cls.init(position, loglikelihood_fn)
-
-        def step_fn(rng_key: PRNGKey, state):
-            return kernel(
-                rng_key,
-                state,
-                loglikelihood_fn,
-            )
-
-        return SamplingAlgorithm(init_fn, step_fn)
+    return SamplingAlgorithm(init_fn, step_fn)
 
 
 def elliptical_proposal(

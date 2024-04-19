@@ -206,7 +206,12 @@ def build_kernel(cov_svd: CovarianceSVD):
     return kernel
 
 
-class mgrad_gaussian:
+def as_sampling_algorithm(logdensity_fn: Callable,
+        covariance: Optional[Array] = None,
+        mean: Optional[Array] = None,
+        cov_svd: Optional[CovarianceSVD] = None,
+        step_size: float = 1.0,
+    ) -> SamplingAlgorithm:
     """Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.
 
     It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
@@ -247,41 +252,30 @@ class mgrad_gaussian:
 
     """
 
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_kernel)
+    if cov_svd is None:
+        if covariance is None:
+            raise ValueError("Either covariance or cov_svd must be provided.")
+        cov_svd = svd_from_covariance(covariance)
 
-    def __new__(  # type: ignore[misc]
-        cls,
-        logdensity_fn: Callable,
-        covariance: Optional[Array] = None,
-        mean: Optional[Array] = None,
-        cov_svd: Optional[CovarianceSVD] = None,
-        step_size: float = 1.0,
-    ) -> SamplingAlgorithm:
-        if cov_svd is None:
-            if covariance is None:
-                raise ValueError("Either covariance or cov_svd must be provided.")
-            cov_svd = svd_from_covariance(covariance)
+    U, Gamma, U_t = cov_svd
 
-        U, Gamma, U_t = cov_svd
+    if mean is not None:
+        logdensity_fn = generate_mean_shifted_logprob(
+            logdensity_fn, mean, covariance
+        )
 
-        if mean is not None:
-            logdensity_fn = generate_mean_shifted_logprob(
-                logdensity_fn, mean, covariance
-            )
+    kernel = build_kernel(cov_svd)
 
-        kernel = cls.build_kernel(cov_svd)
+    def init_fn(position: Array, rng_key=None):
+        del rng_key
+        return init(position, logdensity_fn, U_t)
 
-        def init_fn(position: Array, rng_key=None):
-            del rng_key
-            return init(position, logdensity_fn, U_t)
+    def step_fn(rng_key: PRNGKey, state):
+        return kernel(
+            rng_key,
+            state,
+            logdensity_fn,
+            step_size,
+        )
 
-        def step_fn(rng_key: PRNGKey, state):
-            return kernel(
-                rng_key,
-                state,
-                logdensity_fn,
-                step_size,
-            )
-
-        return SamplingAlgorithm(init_fn, step_fn)
+    return SamplingAlgorithm(init_fn, step_fn)

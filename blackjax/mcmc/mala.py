@@ -117,7 +117,9 @@ def build_kernel():
     return kernel
 
 
-class mala:
+def as_sampling_algorithm(   logdensity_fn: Callable,
+        step_size: float,
+    ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the MALA kernel.
 
     The general mala kernel builder (:meth:`blackjax.mcmc.mala.build_kernel`, alias `blackjax.mala.build_kernel`) can be
@@ -167,21 +169,13 @@ class mala:
 
     """
 
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_kernel)
+    kernel = build_kernel()
 
-    def __new__(  # type: ignore[misc]
-        cls,
-        logdensity_fn: Callable,
-        step_size: float,
-    ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel()
+    def init_fn(position: ArrayLikeTree, rng_key=None):
+        del rng_key
+        return init(position, logdensity_fn)
 
-        def init_fn(position: ArrayLikeTree, rng_key=None):
-            del rng_key
-            return cls.init(position, logdensity_fn)
+    def step_fn(rng_key: PRNGKey, state):
+        return kernel(rng_key, state, logdensity_fn, step_size)
 
-        def step_fn(rng_key: PRNGKey, state):
-            return kernel(rng_key, state, logdensity_fn, step_size)
-
-        return SamplingAlgorithm(init_fn, step_fn)
+    return SamplingAlgorithm(init_fn, step_fn)

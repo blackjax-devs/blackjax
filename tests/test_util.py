@@ -2,16 +2,15 @@ import chex
 import jax
 import jax.numpy as jnp
 from absl.testing import absltest, parameterized
-
-from blackjax.mcmc.hmc import hmc
 from blackjax.util import run_inference_algorithm
+import blackjax
 
 
 class RunInferenceAlgorithmTest(chex.TestCase):
     def setUp(self):
         super().setUp()
         self.key = jax.random.key(42)
-        self.algorithm = hmc(
+        self.algorithm = blackjax.hmc(
             logdensity_fn=self.logdensity_fn,
             inverse_mass_matrix=jnp.eye(2),
             step_size=1.0,

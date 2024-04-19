@@ -27,7 +27,7 @@ __all__ = [
     "sample",
     "generate_meanfield_logdensity",
     "step",
-    "meanfield_vi",
+    "as_vi_algorithm",
 ]
 
 
@@ -109,7 +109,10 @@ def sample(rng_key: PRNGKey, state: MFVIState, num_samples: int = 1):
     return _sample(rng_key, state.mu, state.rho, num_samples)
 
 
-class meanfield_vi:
+def as_vi_algorithm(logdensity_fn: Callable,
+        optimizer: GradientTransformation,
+        num_samples: int = 100,
+    ):
     """High-level implementation of Mean-Field Variational Inference.
 
     Parameters
@@ -128,26 +131,16 @@ class meanfield_vi:
 
     """
 
-    init = staticmethod(init)
-    step = staticmethod(step)
-    sample = staticmethod(sample)
+    def init_fn(position: ArrayLikeTree):
+        return init(position, optimizer)
 
-    def __new__(
-        cls,
-        logdensity_fn: Callable,
-        optimizer: GradientTransformation,
-        num_samples: int = 100,
-    ):  # type: ignore[misc]
-        def init_fn(position: ArrayLikeTree):
-            return cls.init(position, optimizer)
+    def step_fn(rng_key: PRNGKey, state: MFVIState) -> tuple[MFVIState, MFVIInfo]:
+        return step(rng_key, state, logdensity_fn, optimizer, num_samples)
 
-        def step_fn(rng_key: PRNGKey, state: MFVIState) -> tuple[MFVIState, MFVIInfo]:
-            return cls.step(rng_key, state, logdensity_fn, optimizer, num_samples)
+    def sample_fn(rng_key: PRNGKey, state: MFVIState, num_samples: int):
+        return sample(rng_key, state, num_samples)
 
-        def sample_fn(rng_key: PRNGKey, state: MFVIState, num_samples: int):
-            return cls.sample(rng_key, state, num_samples)
-
-        return VIAlgorithm(init_fn, step_fn, sample_fn)
+    return VIAlgorithm(init_fn, step_fn, sample_fn)
 
 
 def _sample(rng_key, mu, rho, num_samples):

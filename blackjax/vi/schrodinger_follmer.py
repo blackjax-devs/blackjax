@@ -181,7 +181,7 @@ def _log_fn_corrected(position, logdensity_fn):
     return log_pdf_val + norm
 
 
-class schrodinger_follmer:
+def as_vi_algorithm(logdensity_fn: Callable, n_steps: int, n_inner_samples: int) -> VIAlgorithm:  # type: ignore[misc]
     """Implements the (basic) user interface for the Schrödinger-Föllmer algortithm :cite:p:`huang2021schrodingerfollmer`.
 
     The Schrödinger-Föllmer algorithm obtains (approximate) samples from the target distribution by means of a diffusion with
@@ -202,22 +202,17 @@ class schrodinger_follmer:
 
     """
 
-    init = staticmethod(init)
-    step = staticmethod(step)
-    sample = staticmethod(sample)
+    def init_fn(position: ArrayLikeTree):
+        return init(position)
 
-    def __new__(cls, logdensity_fn: Callable, n_steps: int, n_inner_samples: int) -> VIAlgorithm:  # type: ignore[misc]
-        def init_fn(position: ArrayLikeTree):
-            return cls.init(position)
+    def step_fn(
+        rng_key: PRNGKey, state: SchrodingerFollmerState
+    ) -> tuple[SchrodingerFollmerState, SchrodingerFollmerInfo]:
+        return step(rng_key, state, logdensity_fn, 1 / n_steps, n_inner_samples)
 
-        def step_fn(
-            rng_key: PRNGKey, state: SchrodingerFollmerState
-        ) -> tuple[SchrodingerFollmerState, SchrodingerFollmerInfo]:
-            return cls.step(rng_key, state, logdensity_fn, 1 / n_steps, n_inner_samples)
+    def sample_fn(rng_key: PRNGKey, state: SchrodingerFollmerState, n_samples: int):
+        return sample(
+            rng_key, state, logdensity_fn, n_steps, n_inner_samples, n_samples
+        )
 
-        def sample_fn(rng_key: PRNGKey, state: SchrodingerFollmerState, n_samples: int):
-            return cls.sample(
-                rng_key, state, logdensity_fn, n_steps, n_inner_samples, n_samples
-            )
-
-        return VIAlgorithm(init_fn, step_fn, sample_fn)
+    return VIAlgorithm(init_fn, step_fn, sample_fn)

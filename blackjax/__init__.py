@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Callable, Union
+from typing import Callable
 
 from blackjax._version import __version__
 
@@ -8,37 +8,29 @@ from .adaptation.mclmc_adaptation import mclmc_find_L_and_step_size
 from .adaptation.meads_adaptation import meads_adaptation
 from .adaptation.pathfinder_adaptation import pathfinder_adaptation
 from .adaptation.window_adaptation import window_adaptation
-from .base import SamplingAlgorithm
+from .base import SamplingAlgorithm, VIAlgorithm
 from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
-from .mcmc.barker import barker_proposal
-from .mcmc.dynamic_hmc import dynamic_hmc
-from .mcmc.elliptical_slice import elliptical_slice
-from .mcmc.ghmc import ghmc
-from .mcmc.mala import mala
-from .mcmc.marginal_latent_gaussian import mgrad_gaussian
-from .mcmc.mclmc import mclmc
-from .mcmc.periodic_orbital import orbital_hmc
-from .mcmc.random_walk import additive_step_random_walk, irmh, rmh
-from .mcmc.rmhmc import rmhmc
+from .mcmc.random_walk import additive_step_random_walk, rmh_as_sampling_algorithm, irmh_as_sampling_algorithm, normal, \
+    normal_random_walk
 from .optimizers import dual_averaging, lbfgs
-from .sgmcmc.csgld import csgld
-from .sgmcmc.sghmc import sghmc
-from .sgmcmc.sgld import sgld
-from .sgmcmc.sgnht import sgnht
-from .smc.adaptive_tempered import adaptive_tempered_smc
-from .smc.inner_kernel_tuning import inner_kernel_tuning
-from .smc.tempered import tempered_smc
-from .vi.meanfield_vi import meanfield_vi
-from .vi.pathfinder import pathfinder
-from .vi.schrodinger_follmer import schrodinger_follmer
-from .vi.svgd import svgd
-from .mcmc import hmc as _hmc
+from .sgmcmc import csgld, sghmc, sgld, sgnht
+from .vi  import meanfield_vi, pathfinder, schrodinger_follmer, svgd
+from .mcmc import hmc as _hmc, marginal_latent_gaussian, periodic_orbital, mclmc, rmhmc, mala, random_walk,elliptical_slice,ghmc,barker
 from .mcmc import nuts as _nuts
+from .mcmc import dynamic_hmc as _dynamic_hmc
+from .smc import inner_kernel_tuning as _inner_kernel_tuning, adaptive_tempered, tempered
+from .vi.pathfinder import PathFinderAlgorithm
+
+"""
+The above three classes exist as a backwards compatible way of exposing both the high level, differentiable
+factory and the low level components, which may not be differentiable. Moreover, this design allows for the lower
+level to be mostly functional programming in nature and reducing boilerplate code.
+"""
 
 
 @dataclasses.dataclass
-class SamplingAlgorithmFactory:
+class SamplingAlgorithmFactories:
     differentiable_callable: Callable
     init: Callable
     build_kernel: Callable
@@ -46,44 +38,89 @@ class SamplingAlgorithmFactory:
     def __call__(self, *args, **kwargs) -> SamplingAlgorithm:
         return self.differentiable_callable(*args, **kwargs)
 
+    def register_factory(self, name, callable):
+        setattr(self, name, callable)
 
-hmc = SamplingAlgorithmFactory(_hmc.as_sampling_algorithm, _hmc.init, _hmc.build_kernel)
-nuts = SamplingAlgorithmFactory(_nuts.as_sampling_algorithm, _nuts.init, _nuts.build_kernel)
+
+@dataclasses.dataclass
+class VIAlgorithmFactories:
+    differentiable_callable: Callable
+    init: Callable
+    step: Callable
+    sample: Callable
+
+    def __call__(self, *args, **kwargs) -> VIAlgorithm:
+        return self.differentiable_callable(*args, **kwargs)
+
+
+@dataclasses.dataclass
+class PathfinderAlgorithmFactories:
+    differentiable_callable: Callable
+    approximate: Callable
+    sample: Callable
+
+    def __call__(self, *args, **kwargs) -> PathFinderAlgorithm:
+        return self.differentiable_callable(*args, **kwargs)
+
+
+def sampling_factory_from_module(module):
+    return SamplingAlgorithmFactories(module.as_sampling_algorithm, module.init, module.build_kernel)
+
+
+# MCMC
+hmc = sampling_factory_from_module(_hmc)
+nuts = sampling_factory_from_module(_nuts)
+rmh = SamplingAlgorithmFactories(rmh_as_sampling_algorithm, random_walk.init, random_walk.build_rmh)
+irmh = SamplingAlgorithmFactories(irmh_as_sampling_algorithm, random_walk.init, random_walk.build_irmh)
+dynamic_hmc = sampling_factory_from_module(_dynamic_hmc)
+rmhmc = sampling_factory_from_module(rmhmc)
+mala = sampling_factory_from_module(mala)
+mgrad_gaussian = sampling_factory_from_module(marginal_latent_gaussian)
+orbital_hmc = sampling_factory_from_module(periodic_orbital)
+
+additive_step_random_walk = SamplingAlgorithmFactories(additive_step_random_walk,
+                                                       random_walk.init,
+                                                       random_walk.build_additive_step)
+
+additive_step_random_walk.register_factory("normal_random_walk", normal_random_walk)
+mclmc = sampling_factory_from_module(mclmc)
+elliptical_slice = sampling_factory_from_module(elliptical_slice)
+ghmc = sampling_factory_from_module(ghmc)
+barker_proposal = sampling_factory_from_module(barker)
 
 hmc_family = [hmc, nuts]
+
+# SMC
+adaptive_tempered_smc = sampling_factory_from_module(adaptive_tempered)
+tempered_smc = sampling_factory_from_module(tempered)
+inner_kernel_tuning = sampling_factory_from_module(_inner_kernel_tuning)
+
+smc_family = [tempered_smc, adaptive_tempered_smc]
+"Step_fn returning state has a .particles attribute"
+
+# stochastic gradient mcmc
+sgld = sampling_factory_from_module(sgld)
+sghmc = sampling_factory_from_module(sghmc)
+sgnht = sampling_factory_from_module(sgnht)
+csgld = sampling_factory_from_module(csgld)
+svgd = sampling_factory_from_module(svgd)
+
+# variational inference
+meanfield_vi = VIAlgorithmFactories(meanfield_vi.as_vi_algorithm, meanfield_vi.init, meanfield_vi.step, meanfield_vi.sample)
+schrodinger_follmer = VIAlgorithmFactories(schrodinger_follmer.as_vi_algorithm, schrodinger_follmer.init, schrodinger_follmer.step, schrodinger_follmer.sample)
+
+pathfinder = PathfinderAlgorithmFactories(pathfinder.as_pathfinder_algorithm, pathfinder.approximate, pathfinder.sample)
+
 
 __all__ = [
     "__version__",
     "dual_averaging",  # optimizers
     "lbfgs",
-    "dynamic_hmc",
-    "rmhmc",
-    "mala",
-    "mgrad_gaussian",
-    "orbital_hmc",
-    "additive_step_random_walk",
-    "rmh",
-    "irmh",
-    "mclmc",
-    "elliptical_slice",
-    "ghmc",
-    "barker_proposal",
-    "sgld",  # stochastic gradient mcmc
-    "sghmc",
-    "sgnht",
-    "csgld",
     "window_adaptation",  # mcmc adaptation
     "meads_adaptation",
     "chees_adaptation",
     "pathfinder_adaptation",
     "mclmc_find_L_and_step_size",  # mclmc adaptation
-    "adaptive_tempered_smc",  # smc
-    "tempered_smc",
-    "inner_kernel_tuning",
-    "meanfield_vi",  # variational inference
-    "pathfinder",
-    "schrodinger_follmer",
-    "svgd",
     "ess",  # diagnostics
     "rhat",
 ]
