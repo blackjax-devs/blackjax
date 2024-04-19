@@ -133,7 +133,7 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
         target=target_acceptance_rate_of_order[integrator_order(coefficients)],
         frac_tune1=0.1,
         frac_tune2=0.1,
-        frac_tune3=0.1,
+        frac_tune3=0.0,
         diagonal_preconditioning=False,
     )
 

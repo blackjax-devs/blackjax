@@ -326,8 +326,8 @@ def handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_ch
 
 
 
-Lratio_lowerbound = 0.5
-Lratio_upperbound = 1 / Lratio_lowerbound
+Lratio_lowerbound = 0.0
+Lratio_upperbound = 2.
 
 
 def mhmclmc_find_L_and_step_size(
@@ -436,15 +436,8 @@ def mhmclmc_make_L_step_size_adaptation(
             kernel_key, num_steps_key = jax.random.split(rng_key, 2)
             previous_state, params, (adaptive_state, step_size_max), streaming_avg = iteration_state
 
-
-            # num_integration_steps = jnp.min(jnp.array([jax.random.poisson(num_steps_key, params.L/params.step_size)+1, 1000]))
-            # num_integration_steps = jnp.min(jnp.array([jax.random.poisson(num_steps_key, params.L/params.step_size), 1000]))
-            # num_integration_steps = jnp.round(jax.random.uniform(num_steps_key) * rescale(params.L/params.step_size + 0.5))
             avg_num_integration_steps = params.L/params.step_size
 
-            # jax.debug.print("{x} avg_",x=(params.L/params.step_size, params))
-
-            # dynamics
             state, info = kernel(
                 rng_key=kernel_key,
                 state=previous_state,
@@ -452,6 +445,8 @@ def mhmclmc_make_L_step_size_adaptation(
                 step_size=params.step_size,
                 std_mat=params.std_mat,
             )
+
+            # jax.debug.print("step size during {x}",x=(params.step_size, params.L))
 
             # step updating
             success, state, step_size_max, energy_change = handle_nans(
@@ -462,7 +457,7 @@ def mhmclmc_make_L_step_size_adaptation(
                 info.energy,
             )
 
-            # jax.debug.print("info acc rate {x}", x=(info,))
+            # jax.debug.print("info acc rate {x}", x=(info.acceptance_rate,))
             # jax.debug.print("state {x}", x=(state.position,))
 
 
@@ -497,18 +492,7 @@ def mhmclmc_make_L_step_size_adaptation(
                 zero_prevention=mask,
             )
 
-            # n = L/eps
-            # eps -> eps * new_eps/eps 
-
-            # params = params._replace(step_size=step_size)
-            # jax.debug.print("new step size {x}", x=step_size)
-
-            # params = params._replace(
-            #         step_size=step_size, 
-            #         L = params.L * (step_size / params.step_size)
-            #         )
-
-            
+        
 
 
             if fix_L:
@@ -558,23 +542,23 @@ def mhmclmc_make_L_step_size_adaptation(
 
         rng_key_pass1, rng_key_pass2 = jax.random.split(rng_key, 2)
         L_step_size_adaptation_keys_pass1 = jax.random.split(rng_key_pass1, num_steps1 + num_steps2)
-        L_step_size_adaptation_keys_pass2 = jax.random.split(rng_key_pass2, num_steps1 + num_steps2)
+        L_step_size_adaptation_keys_pass2 = jax.random.split(rng_key_pass2, num_steps1)
 
         # determine which steps to ignore in the streaming average
         mask = 1 - jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
         initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
 
-        jax.debug.print("{x} initial num steps",x=(params.L/params.step_size))
+        # jax.debug.print("{x} initial num steps",x=(params.L/params.step_size))
 
         ((state, params, (dual_avg_state, step_size_max), (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass1, fix_L=fix_L_first_da, initial_da=initial_da, update_da=update_da)
         params = params._replace(L=params.L * (final_da(dual_avg_state)/params.step_size)) 
         params = params._replace(step_size=final_da(dual_avg_state)) 
 
-        jax.debug.print("{x} new num steps",x=(params.L/params.step_size))
+        # jax.debug.print("{x} new num steps",x=(params.L/params.step_size))
         
 
-        jax.debug.print("{x}",x=("mean acceptance rate", (jnp.mean(info.acceptance_rate), params.L, params.step_size)))
+        # jax.debug.print("{x}",x=("mean acceptance rate", (jnp.mean(info.acceptance_rate[:num_steps1]), jnp.mean(info.acceptance_rate[num_steps1:]), params.L, params.step_size)))
 
         
         # jax.debug.print("{x} params after a round of tuning",x=(params))
@@ -590,6 +574,7 @@ def mhmclmc_make_L_step_size_adaptation(
             x_average, x_squared_average = average[0], average[1]
             variances = x_squared_average - jnp.square(x_average)
             # jax.debug.print("{x} frac tune 2 guess",x=(jnp.sqrt(jnp.sum(variances))))
+            # jax.debug.print("{x} frac tune 2 before",x=(params.L))
             
             
             change = jax.lax.clamp(Lratio_lowerbound, jnp.sqrt(jnp.sum(variances))/params.L, Lratio_upperbound)
@@ -611,11 +596,14 @@ def mhmclmc_make_L_step_size_adaptation(
 
         
             # jax.debug.print("{x} params before second round",x=(params))
+            # jax.debug.print("{x}",x=("L before", params.L))
+            # jax.debug.print("{x}",x=("target", target))
             initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
-            ((state, params, (dual_avg_state, step_size_max), (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass2, fix_L=True, update_da=update_da, initial_da=initial_da)
-            params = params._replace(L=params.L * (final_da(dual_avg_state)/params.step_size)) 
+            ((state, params, (dual_avg_state, step_size_max), (_, average)), info) = step_size_adaptation(jnp.ones(num_steps1), state, params, L_step_size_adaptation_keys_pass2, fix_L=True, update_da=update_da, initial_da=initial_da)
+            # params = params._replace(L=params.L * (final_da(dual_avg_state)/params.step_size)) 
             params = params._replace(step_size=final_da(dual_avg_state))
-            jax.debug.print("{x}",x=("mean acceptance rate post fractune2", jnp.mean(info.acceptance_rate,)))
+            # jax.debug.print("{x}",x=("mean acceptance rate post fractune2", jnp.mean(info.acceptance_rate,)))
+            # jax.debug.print("{x}",x=("L after", params.L))
             # jax.debug.print("{x} params after a round of tuning",x=(params))
 
         return state, params
