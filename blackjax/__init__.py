@@ -32,7 +32,7 @@ from .smc import tempered
 from .vi import meanfield_vi as _meanfield_vi
 from .vi import pathfinder as _pathfinder
 from .vi import schrodinger_follmer as _schrodinger_follmer
-from .vi import svgd
+from .vi import svgd as _svgd
 from .vi.pathfinder import PathFinderAlgorithm
 
 """
@@ -123,7 +123,7 @@ sgld = sampling_factory_from_module(sgld)
 sghmc = sampling_factory_from_module(sghmc)
 sgnht = sampling_factory_from_module(sgnht)
 csgld = sampling_factory_from_module(csgld)
-svgd = sampling_factory_from_module(svgd)
+svgd = sampling_factory_from_module(_svgd)
 
 # variational inference
 meanfield_vi = VIAlgorithmFactories(
