@@ -48,8 +48,8 @@ def init(
     **optimizer_kwargs,
 ) -> MFVIState:
     """Initialize the mean-field VI state."""
-    mu = jax.tree_map(jnp.zeros_like, position)
-    rho = jax.tree_map(lambda x: -2.0 * jnp.ones_like(x), position)
+    mu = jax.tree.map(jnp.zeros_like, position)
+    rho = jax.tree.map(lambda x: -2.0 * jnp.ones_like(x), position)
     opt_state = optimizer.init((mu, rho))
     return MFVIState(mu, rho, opt_state)
 
@@ -99,7 +99,7 @@ def step(
 
     elbo, elbo_grad = jax.value_and_grad(kl_divergence_fn)(parameters)
     updates, new_opt_state = optimizer.update(elbo_grad, state.opt_state, parameters)
-    new_parameters = jax.tree_map(lambda p, u: p + u, parameters, updates)
+    new_parameters = jax.tree.map(lambda p, u: p + u, parameters, updates)
     new_state = MFVIState(new_parameters[0], new_parameters[1], new_opt_state)
     return new_state, MFVIInfo(elbo)
 
@@ -145,7 +145,7 @@ def as_vi_algorithm(
 
 
 def _sample(rng_key, mu, rho, num_samples):
-    sigma = jax.tree_map(jnp.exp, rho)
+    sigma = jax.tree.map(jnp.exp, rho)
     mu_flatten, unravel_fn = jax.flatten_util.ravel_pytree(mu)
     sigma_flat, _ = jax.flatten_util.ravel_pytree(sigma)
     flatten_sample = (
@@ -156,11 +156,11 @@ def _sample(rng_key, mu, rho, num_samples):
 
 
 def generate_meanfield_logdensity(mu, rho):
-    sigma_param = jax.tree_map(jnp.exp, rho)
+    sigma_param = jax.tree.map(jnp.exp, rho)
 
     def meanfield_logdensity(position):
-        logq_pytree = jax.tree_map(jsp.stats.norm.logpdf, position, mu, sigma_param)
-        logq = jax.tree_map(jnp.sum, logq_pytree)
+        logq_pytree = jax.tree.map(jsp.stats.norm.logpdf, position, mu, sigma_param)
+        logq = jax.tree.map(jnp.sum, logq_pytree)
         return jax.tree_util.tree_reduce(jnp.add, logq)
 
     return meanfield_logdensity

@@ -185,7 +185,7 @@ def update_momentum(rng_key, state, alpha, momentum_generator):
     """
     position, momentum, *_ = state
 
-    momentum = jax.tree_map(
+    momentum = jax.tree.map(
         lambda prev_momentum, shifted_momentum: prev_momentum * jnp.sqrt(1.0 - alpha)
         + jnp.sqrt(alpha) * shifted_momentum,
         momentum,

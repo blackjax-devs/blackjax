@@ -158,8 +158,8 @@ def dual_averaging_adaptation(
 class ReasonableStepSizeState(NamedTuple):
     """State carried through the search for a reasonable first step size.
 
-    rng_key
-        Key used by JAX's random number generator.
+    step
+        The current iteration step.
     direction: {-1, 1}
         Determines whether the step size should be increased or decreased during the
         previous step search. If direction = 1 it will be increased, otherwise decreased.
@@ -171,7 +171,7 @@ class ReasonableStepSizeState(NamedTuple):
 
     """
 
-    rng_key: PRNGKey
+    step: int
     direction: int
     previous_direction: int
     step_size: float
@@ -243,17 +243,17 @@ def find_reasonable_step_size(
 
     def update(rss_state: ReasonableStepSizeState) -> ReasonableStepSizeState:
         """Perform one step of the step size search."""
-        rng_key, direction, _, step_size = rss_state
-        rng_key, subkey = jax.random.split(rng_key)
+        i, direction, _, step_size = rss_state
+        subkey = jax.random.fold_in(rng_key, i)
 
         step_size = (2.0**direction) * step_size
         kernel = kernel_generator(step_size)
         _, info = kernel(subkey, reference_state)
 
         new_direction = jnp.where(target_accept < info.acceptance_rate, 1, -1)
-        return ReasonableStepSizeState(rng_key, new_direction, direction, step_size)
+        return ReasonableStepSizeState(i + 1, new_direction, direction, step_size)
 
-    rss_state = ReasonableStepSizeState(rng_key, 0, 0, initial_step_size)
+    rss_state = ReasonableStepSizeState(0, 0, 0, initial_step_size)
     rss_state = jax.lax.while_loop(do_continue, update, rss_state)
 
     return rss_state.step_size

@@ -139,7 +139,7 @@ def minimize_lbfgs(
         f=history_raveled.f,
         g=unravel_fn_mapped(history_raveled.g),
         alpha=unravel_fn_mapped(history_raveled.alpha),
-        update_mask=jax.tree_map(
+        update_mask=jax.tree.map(
             lambda x: x.astype(history_raveled.update_mask.dtype),
             unravel_fn_mapped(history_raveled.update_mask.astype(x0_raveled.dtype)),
         ),
@@ -230,7 +230,7 @@ def _minimize_lbfgs(
         scan_body, ((init_step, initial_history), True), jnp.arange(maxiter)
     )
     # Append initial state to history.
-    history = jax.tree_map(
+    history = jax.tree.map(
         lambda x, y: jnp.concatenate([x[None, ...], y], axis=0),
         initial_history,
         history,
