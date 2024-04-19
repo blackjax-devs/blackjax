@@ -174,13 +174,14 @@ def build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
     return kernel
 
 
-def as_sampling_algorithm(logdensity_estimator: Callable,
-        gradient_estimator: Callable,
-        zeta: float = 1,
-        num_partitions: int = 512,
-        energy_gap: float = 100,
-        min_energy: float = 0,
-    ) -> SamplingAlgorithm:
+def as_sampling_algorithm(
+    logdensity_estimator: Callable,
+    gradient_estimator: Callable,
+    zeta: float = 1,
+    num_partitions: int = 512,
+    energy_gap: float = 100,
+    min_energy: float = 0,
+) -> SamplingAlgorithm:
     r"""Implements the (basic) user interface for the Contour SGLD kernel.
 
     Parameters

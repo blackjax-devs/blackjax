@@ -67,9 +67,10 @@ def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
     return kernel
 
 
-def as_sampling_algorithm(grad_estimator: Callable,
-        alpha: float = 0.01,
-        beta: float = 0.0,
+def as_sampling_algorithm(
+    grad_estimator: Callable,
+    alpha: float = 0.01,
+    beta: float = 0.0,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the SGNHT kernel.
 
@@ -140,8 +141,6 @@ def as_sampling_algorithm(grad_estimator: Callable,
         step_size: float,
         temperature: float = 1,
     ) -> SGNHTState:
-        return kernel(
-            rng_key, state, grad_estimator, minibatch, step_size, temperature
-        )
+        return kernel(rng_key, state, grad_estimator, minibatch, step_size, temperature)
 
     return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

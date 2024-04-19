@@ -58,11 +58,12 @@ def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
     return kernel
 
 
-def as_sampling_algorithm(grad_estimator: Callable,
-        num_integration_steps: int = 10,
-        alpha: float = 0.01,
-        beta: float = 0,
-    ) -> SamplingAlgorithm:
+def as_sampling_algorithm(
+    grad_estimator: Callable,
+    num_integration_steps: int = 10,
+    alpha: float = 0.01,
+    beta: float = 0,
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the SGHMC kernel.
 
     The general sghmc kernel builder (:meth:`blackjax.sgmcmc.sghmc.build_kernel`, alias

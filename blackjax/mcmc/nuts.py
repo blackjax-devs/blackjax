@@ -27,7 +27,7 @@ import blackjax.mcmc.trajectory as trajectory
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["NUTSInfo", "init", "build_kernel", "as"]
+__all__ = ["NUTSInfo", "init", "build_kernel", "as_sampling_algorithm"]
 
 
 init = hmc.init
@@ -147,14 +147,15 @@ def build_kernel(
     return kernel
 
 
-def as_sampling_algorithm(logdensity_fn: Callable,
-        step_size: float,
-        inverse_mass_matrix: metrics.MetricTypes,
-        *,
-        max_num_doublings: int = 10,
-        divergence_threshold: int = 1000,
-        integrator: Callable = integrators.velocity_verlet,
-    ) -> SamplingAlgorithm:
+def as_sampling_algorithm(
+    logdensity_fn: Callable,
+    step_size: float,
+    inverse_mass_matrix: metrics.MetricTypes,
+    *,
+    max_num_doublings: int = 10,
+    divergence_threshold: int = 1000,
+    integrator: Callable = integrators.velocity_verlet,
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the nuts kernel.
 
     Examples

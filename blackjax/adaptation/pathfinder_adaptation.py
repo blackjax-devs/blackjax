@@ -16,6 +16,7 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
+
 import blackjax.vi as vi
 from blackjax.adaptation.base import AdaptationInfo, AdaptationResults
 from blackjax.adaptation.step_size import (

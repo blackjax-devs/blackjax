@@ -25,7 +25,7 @@ from blackjax.mcmc.proposal import nonreversible_slice_sampling
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["GHMCState", "init", "build_kernel", "ghmc"]
+__all__ = ["GHMCState", "init", "build_kernel", "as_sampling_algorithm"]
 
 
 class GHMCState(NamedTuple):
@@ -195,15 +195,16 @@ def update_momentum(rng_key, state, alpha, momentum_generator):
     return momentum
 
 
-def as_sampling_algorithm(logdensity_fn: Callable,
-        step_size: float,
-        momentum_inverse_scale: ArrayLikeTree,
-        alpha: float,
-        delta: float,
-        *,
-        divergence_threshold: int = 1000,
-        noise_gn: Callable = lambda _: 0.0,
-    ) -> SamplingAlgorithm:
+def as_sampling_algorithm(
+    logdensity_fn: Callable,
+    step_size: float,
+    momentum_inverse_scale: ArrayLikeTree,
+    alpha: float,
+    delta: float,
+    *,
+    divergence_threshold: int = 1000,
+    noise_gn: Callable = lambda _: 0.0,
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Generalized HMC kernel.
 
     The Generalized HMC kernel performs a similar procedure to the standard HMC

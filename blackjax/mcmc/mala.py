@@ -23,7 +23,7 @@ import blackjax.mcmc.proposal as proposal
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["MALAState", "MALAInfo", "init", "build_kernel", "mala"]
+__all__ = ["MALAState", "MALAInfo", "init", "build_kernel", "as_sampling_algorithm"]
 
 
 class MALAState(NamedTuple):
@@ -117,9 +117,10 @@ def build_kernel():
     return kernel
 
 
-def as_sampling_algorithm(   logdensity_fn: Callable,
-        step_size: float,
-    ) -> SamplingAlgorithm:
+def as_sampling_algorithm(
+    logdensity_fn: Callable,
+    step_size: float,
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the MALA kernel.
 
     The general mala kernel builder (:meth:`blackjax.mcmc.mala.build_kernel`, alias `blackjax.mala.build_kernel`) can be

@@ -20,21 +20,22 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc import hmc
 from blackjax.types import ArrayTree, PRNGKey
 
-__all__ = ["init", "build_kernel", "rmhmc"]
+__all__ = ["init", "build_kernel", "as_sampling_algorithm"]
 
 
 init = hmc.init
 build_kernel = hmc.build_kernel
 
 
-def as_sampling_algorithm(logdensity_fn: Callable,
-        step_size: float,
-        mass_matrix: Union[metrics.Metric, Callable],
-        num_integration_steps: int,
-        *,
-        divergence_threshold: int = 1000,
-        integrator: Callable = integrators.implicit_midpoint,
-    ) -> SamplingAlgorithm:
+def as_sampling_algorithm(
+    logdensity_fn: Callable,
+    step_size: float,
+    mass_matrix: Union[metrics.Metric, Callable],
+    num_integration_steps: int,
+    *,
+    divergence_threshold: int = 1000,
+    integrator: Callable = integrators.implicit_midpoint,
+) -> SamplingAlgorithm:
     """A Riemannian Manifold Hamiltonian Monte Carlo kernel
 
     Of note, this kernel is simply an alias of the ``hmc`` kernel with a

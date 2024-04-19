@@ -109,10 +109,11 @@ def sample(rng_key: PRNGKey, state: MFVIState, num_samples: int = 1):
     return _sample(rng_key, state.mu, state.rho, num_samples)
 
 
-def as_vi_algorithm(logdensity_fn: Callable,
-        optimizer: GradientTransformation,
-        num_samples: int = 100,
-    ):
+def as_vi_algorithm(
+    logdensity_fn: Callable,
+    optimizer: GradientTransformation,
+    num_samples: int = 100,
+):
     """High-level implementation of Mean-Field Variational Inference.
 
     Parameters

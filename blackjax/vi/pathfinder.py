@@ -25,7 +25,7 @@ from blackjax.optimizers.lbfgs import (
 )
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["PathfinderState", "approximate", "sample", "pathfinder"]
+__all__ = ["PathfinderState", "approximate", "sample", "as_pathfinder_algorithm"]
 
 
 class PathfinderState(NamedTuple):

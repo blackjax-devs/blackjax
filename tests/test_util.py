@@ -2,8 +2,9 @@ import chex
 import jax
 import jax.numpy as jnp
 from absl.testing import absltest, parameterized
-from blackjax.util import run_inference_algorithm
+
 import blackjax
+from blackjax.util import run_inference_algorithm
 
 
 class RunInferenceAlgorithmTest(chex.TestCase):

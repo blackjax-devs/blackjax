@@ -128,9 +128,10 @@ def build_kernel():
     return kernel
 
 
-def as_sampling_algorithm(logdensity_fn: Callable,
-        step_size: float,
-    ) -> SamplingAlgorithm:
+def as_sampling_algorithm(
+    logdensity_fn: Callable,
+    step_size: float,
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Barker's proposal :cite:p:`Livingstone2022Barker` kernel with a
     Gaussian base kernel.
 

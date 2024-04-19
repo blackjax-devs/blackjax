@@ -22,7 +22,13 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.proposal import static_binomial_sampling
 from blackjax.types import Array, PRNGKey
 
-__all__ = ["MarginalState", "MarginalInfo", "init", "build_kernel", "mgrad_gaussian"]
+__all__ = [
+    "MarginalState",
+    "MarginalInfo",
+    "init",
+    "build_kernel",
+    "as_sampling_algorithm",
+]
 
 
 # [TODO](https://github.com/blackjax-devs/blackjax/issues/237)
@@ -206,12 +212,13 @@ def build_kernel(cov_svd: CovarianceSVD):
     return kernel
 
 
-def as_sampling_algorithm(logdensity_fn: Callable,
-        covariance: Optional[Array] = None,
-        mean: Optional[Array] = None,
-        cov_svd: Optional[CovarianceSVD] = None,
-        step_size: float = 1.0,
-    ) -> SamplingAlgorithm:
+def as_sampling_algorithm(
+    logdensity_fn: Callable,
+    covariance: Optional[Array] = None,
+    mean: Optional[Array] = None,
+    cov_svd: Optional[CovarianceSVD] = None,
+    step_size: float = 1.0,
+) -> SamplingAlgorithm:
     """Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.
 
     It uses a first order approximation to the log_likelihood of a model with Gaussian prior.
@@ -260,9 +267,7 @@ def as_sampling_algorithm(logdensity_fn: Callable,
     U, Gamma, U_t = cov_svd
 
     if mean is not None:
-        logdensity_fn = generate_mean_shifted_logprob(
-            logdensity_fn, mean, covariance
-        )
+        logdensity_fn = generate_mean_shifted_logprob(logdensity_fn, mean, covariance)
 
     kernel = build_kernel(cov_svd)
 

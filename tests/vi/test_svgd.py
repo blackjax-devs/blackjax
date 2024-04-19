@@ -20,7 +20,9 @@ def svgd_training_loop(
     *,
     num_iterations=500,
 ) -> SVGDState:
-    svgd = blackjax.svgd(jax.grad(log_p), optimizer, kernel, update_median_heuristic)
+    svgd = blackjax.svgd.as_sampling_algorithm(
+        jax.grad(log_p), optimizer, kernel, update_median_heuristic
+    )
     state = svgd.init(initial_position, initial_kernel_parameters)
     step = jax.jit(svgd.step)  # type: ignore[attr-defined]
 

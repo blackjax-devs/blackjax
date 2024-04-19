@@ -119,11 +119,12 @@ def build_kernel(cov_matrix: Array, mean: Array):
     return kernel
 
 
-def as_sampling_algorithm(loglikelihood_fn: Callable,
-        *,
-        mean: Array,
-        cov: Array,
-    ) -> SamplingAlgorithm:
+def as_sampling_algorithm(
+    loglikelihood_fn: Callable,
+    *,
+    mean: Array,
+    cov: Array,
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Elliptical Slice sampling kernel.
 
     Examples

@@ -156,14 +156,15 @@ def build_kernel(
     return kernel
 
 
-def as_sampling_algorithm(logprior_fn: Callable,
-        loglikelihood_fn: Callable,
-        mcmc_step_fn: Callable,
-        mcmc_init_fn: Callable,
-        mcmc_parameters: dict,
-        resampling_fn: Callable,
-        num_mcmc_steps: int = 10,
-    ) -> SamplingAlgorithm:
+def as_sampling_algorithm(
+    logprior_fn: Callable,
+    loglikelihood_fn: Callable,
+    mcmc_step_fn: Callable,
+    mcmc_init_fn: Callable,
+    mcmc_parameters: dict,
+    resampling_fn: Callable,
+    num_mcmc_steps: int = 10,
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
 
     Parameters

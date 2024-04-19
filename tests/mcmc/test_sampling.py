@@ -572,7 +572,7 @@ normal_test_cases = [
         "burnin": 15_000,
     },
     {
-        "algorithm": blackjax.additive_step_random_walk.normal_random_walk,
+        "algorithm": blackjax.additive_step_random_walk.normal_random_walk,  # type: ignore[attr-defined]
         "initial_position": 1.0,
         "parameters": {"sigma": jnp.array([1.0])},
         "num_sampling_steps": 20_000,

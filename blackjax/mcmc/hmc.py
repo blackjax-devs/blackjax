@@ -150,14 +150,15 @@ def build_kernel(
     return kernel
 
 
-def as_sampling_algorithm(logdensity_fn: Callable,
-        step_size: float,
-        inverse_mass_matrix: metrics.MetricTypes,
-        num_integration_steps: int,
-        *,
-        divergence_threshold: int = 1000,
-        integrator: Callable = integrators.velocity_verlet,
-    ) -> SamplingAlgorithm:
+def as_sampling_algorithm(
+    logdensity_fn: Callable,
+    step_size: float,
+    inverse_mass_matrix: metrics.MetricTypes,
+    num_integration_steps: int,
+    *,
+    divergence_threshold: int = 1000,
+    integrator: Callable = integrators.velocity_verlet,
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the HMC kernel.
 
     The general hmc kernel builder (:meth:`blackjax.mcmc.hmc.build_kernel`, alias
@@ -231,7 +232,6 @@ def as_sampling_algorithm(logdensity_fn: Callable,
     -------
     A ``SamplingAlgorithm``.
     """
-
 
     kernel = build_kernel(integrator, divergence_threshold)
 
@@ -336,5 +336,3 @@ def flip_momentum(
         state.logdensity,
         state.logdensity_grad,
     )
-
-

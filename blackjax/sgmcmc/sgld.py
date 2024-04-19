@@ -47,8 +47,9 @@ def build_kernel() -> Callable:
     return kernel
 
 
-def as_sampling_algorithm(grad_estimator: Callable,
-    ) -> SamplingAlgorithm:
+def as_sampling_algorithm(
+    grad_estimator: Callable,
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the SGLD kernel.
 
     The general sgld kernel builder (:meth:`blackjax.sgmcmc.sgld.build_kernel`, alias
@@ -114,8 +115,6 @@ def as_sampling_algorithm(grad_estimator: Callable,
         step_size: float,
         temperature: float = 1,
     ) -> ArrayTree:
-        return kernel(
-            rng_key, state, grad_estimator, minibatch, step_size, temperature
-        )
+        return kernel(rng_key, state, grad_estimator, minibatch, step_size, temperature)
 
     return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

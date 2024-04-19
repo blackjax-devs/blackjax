@@ -103,11 +103,12 @@ def build_kernel(logdensity_fn, integrator):
     return kernel
 
 
-def as_sampling_algorithm(logdensity_fn: Callable,
-        L,
-        step_size,
-        integrator=isokinetic_mclachlan,
-    ) -> SamplingAlgorithm:
+def as_sampling_algorithm(
+    logdensity_fn: Callable,
+    L,
+    step_size,
+    integrator=isokinetic_mclachlan,
+) -> SamplingAlgorithm:
     """The general mclmc kernel builder (:meth:`blackjax.mcmc.mclmc.build_kernel`, alias `blackjax.mclmc.build_kernel`) can be
     cumbersome to manipulate. Since most users only need to specify the kernel
     parameters at initialization time, we provide a helper function that

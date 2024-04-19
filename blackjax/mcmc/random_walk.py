@@ -82,6 +82,7 @@ __all__ = [
     "additive_step_random_walk",
     "irmh_as_sampling_algorithm",
     "rmh_as_sampling_algorithm",
+    "normal_random_walk",
 ]
 
 
@@ -198,8 +199,9 @@ def normal_random_walk(logdensity_fn: Callable, sigma):
     return additive_step_random_walk(logdensity_fn, normal(sigma))
 
 
-def additive_step_random_walk(logdensity_fn: Callable, random_step: Callable
-    ) -> SamplingAlgorithm:
+def additive_step_random_walk(
+    logdensity_fn: Callable, random_step: Callable
+) -> SamplingAlgorithm:
     """Implements the user interface for the Additive Step RMH
 
     Examples
@@ -291,10 +293,11 @@ def build_irmh() -> Callable:
     return kernel
 
 
-def irmh_as_sampling_algorithm(logdensity_fn: Callable,
-        proposal_distribution: Callable,
-        proposal_logdensity_fn: Optional[Callable] = None,
-    ) -> SamplingAlgorithm:
+def irmh_as_sampling_algorithm(
+    logdensity_fn: Callable,
+    proposal_distribution: Callable,
+    proposal_logdensity_fn: Optional[Callable] = None,
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the independent RMH.
 
     Examples
@@ -407,10 +410,11 @@ def build_rmh():
     return kernel
 
 
-def rmh_as_sampling_algorithm( logdensity_fn: Callable,
-        proposal_generator: Callable[[PRNGKey, ArrayLikeTree], ArrayTree],
-        proposal_logdensity_fn: Optional[Callable[[ArrayLikeTree], ArrayTree]] = None,
-    ) -> SamplingAlgorithm:
+def rmh_as_sampling_algorithm(
+    logdensity_fn: Callable,
+    proposal_generator: Callable[[PRNGKey, ArrayLikeTree], ArrayTree],
+    proposal_logdensity_fn: Optional[Callable[[ArrayLikeTree], ArrayTree]] = None,
+) -> SamplingAlgorithm:
     """Implements the user interface for the RMH.
 
     Examples
