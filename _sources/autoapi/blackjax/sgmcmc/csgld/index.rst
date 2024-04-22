@@ -18,7 +18,6 @@ Classes
 .. autoapisummary::
 
    blackjax.sgmcmc.csgld.ContourSGLDState
-   blackjax.sgmcmc.csgld.csgld
 
 
 
@@ -29,6 +28,7 @@ Functions
 
    blackjax.sgmcmc.csgld.init
    blackjax.sgmcmc.csgld.build_kernel
+   blackjax.sgmcmc.csgld.as_top_level_api
 
 
 
@@ -78,8 +78,7 @@ Functions
                       the closer the gap between min_energy and 3456 is, the better.
 
 
-.. py:class:: csgld
-
+.. py:function:: as_top_level_api(logdensity_estimator: Callable, gradient_estimator: Callable, zeta: float = 1, num_partitions: int = 512, energy_gap: float = 100, min_energy: float = 0) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the Contour SGLD kernel.
 
@@ -102,13 +101,5 @@ Functions
                       the closer the gap between min_energy and 3456 is, the better.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

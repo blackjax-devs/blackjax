@@ -30,7 +30,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=fd3f3429" />
     <link rel="stylesheet" type="text/css" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
   
@@ -40,7 +40,7 @@
   <script src="../../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
     <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
-    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script src="../../../_static/design-tabs.js?v=36754332"></script>
@@ -391,7 +391,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">blackjax.sgmcmc.diffusions</span> <span class="kn">import</span> <span class="n">overdamped_langevin</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ContourSGLDState&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;csgld&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ContourSGLDState&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="ContourSGLDState">
@@ -560,9 +560,16 @@ document.write(`
 
 
 
-<div class="viewcode-block" id="csgld">
-<a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.csgld">[docs]</a>
-<span class="k">class</span> <span class="nc">csgld</span><span class="p">:</span>
+<div class="viewcode-block" id="as_top_level_api">
+<a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.as_top_level_api">[docs]</a>
+<span class="k">def</span> <span class="nf">as_top_level_api</span><span class="p">(</span>
+    <span class="n">logdensity_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">gradient_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">zeta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">num_partitions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+    <span class="n">energy_gap</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">min_energy</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Contour SGLD kernel.</span>
 
 <span class="sd">    Parameters</span>
@@ -597,51 +604,33 @@ document.write(`
 <span class="sd">    A ``SamplingAlgorithm``.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-<div class="viewcode-block" id="csgld.init">
-<a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.csgld.init">[docs]</a>
-    <span class="n">init</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">init</span><span class="p">)</span></div>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span><span class="n">num_partitions</span><span class="p">,</span> <span class="n">energy_gap</span><span class="p">,</span> <span class="n">min_energy</span><span class="p">)</span>
 
-<div class="viewcode-block" id="csgld.build_kernel">
-<a class="viewcode-back" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.csgld.build_kernel">[docs]</a>
-    <span class="n">build_kernel</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">build_kernel</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">del</span> <span class="n">rng_key</span>
+        <span class="k">return</span> <span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">num_partitions</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">ContourSGLDState</span><span class="p">,</span>
+        <span class="n">minibatch</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">step_size_diff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">step_size_stoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ContourSGLDState</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">,</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">logdensity_estimator</span><span class="p">,</span>
+            <span class="n">gradient_estimator</span><span class="p">,</span>
+            <span class="n">minibatch</span><span class="p">,</span>
+            <span class="n">step_size_diff</span><span class="p">,</span>
+            <span class="n">step_size_stoch</span><span class="p">,</span>
+            <span class="n">zeta</span><span class="p">,</span>
+            <span class="n">temperature</span><span class="p">,</span>
+        <span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore[misc]</span>
-        <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">logdensity_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">gradient_estimator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-        <span class="n">zeta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-        <span class="n">num_partitions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
-        <span class="n">energy_gap</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
-        <span class="n">min_energy</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-        <span class="n">kernel</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">num_partitions</span><span class="p">,</span> <span class="n">energy_gap</span><span class="p">,</span> <span class="n">min_energy</span><span class="p">)</span>
-
-        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-            <span class="k">del</span> <span class="n">rng_key</span>
-            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">num_partitions</span><span class="p">)</span>
-
-        <span class="k">def</span> <span class="nf">step_fn</span><span class="p">(</span>
-            <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
-            <span class="n">state</span><span class="p">:</span> <span class="n">ContourSGLDState</span><span class="p">,</span>
-            <span class="n">minibatch</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-            <span class="n">step_size_diff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-            <span class="n">step_size_stoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-            <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ContourSGLDState</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
-                <span class="n">rng_key</span><span class="p">,</span>
-                <span class="n">state</span><span class="p">,</span>
-                <span class="n">logdensity_estimator</span><span class="p">,</span>
-                <span class="n">gradient_estimator</span><span class="p">,</span>
-                <span class="n">minibatch</span><span class="p">,</span>
-                <span class="n">step_size_diff</span><span class="p">,</span>
-                <span class="n">step_size_stoch</span><span class="p">,</span>
-                <span class="n">zeta</span><span class="p">,</span>
-                <span class="n">temperature</span><span class="p">,</span>
-            <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
+    <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 
 </pre></div>
 

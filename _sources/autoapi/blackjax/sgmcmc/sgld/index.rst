@@ -12,14 +12,6 @@
 Module Contents
 ---------------
 
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   blackjax.sgmcmc.sgld.sgld
-
-
 
 Functions
 ~~~~~~~~~
@@ -28,6 +20,7 @@ Functions
 
    blackjax.sgmcmc.sgld.init
    blackjax.sgmcmc.sgld.build_kernel
+   blackjax.sgmcmc.sgld.as_top_level_api
 
 
 
@@ -39,8 +32,7 @@ Functions
    Stochastic gradient Langevin Dynamics (SgLD) algorithm.
 
 
-.. py:class:: sgld
-
+.. py:function:: as_top_level_api(grad_estimator: Callable) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the SGLD kernel.
 
@@ -85,13 +77,5 @@ Functions
                           of the gradient of the log-density at this position.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

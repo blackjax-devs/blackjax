@@ -14,7 +14,6 @@ Classes
 
    blackjax.vi.meanfield_vi.MFVIState
    blackjax.vi.meanfield_vi.MFVIInfo
-   blackjax.vi.meanfield_vi.meanfield_vi
 
 
 
@@ -25,6 +24,7 @@ Functions
 
    blackjax.vi.meanfield_vi.step
    blackjax.vi.meanfield_vi.sample
+   blackjax.vi.meanfield_vi.as_top_level_api
    blackjax.vi.meanfield_vi.generate_meanfield_logdensity
 
 
@@ -82,8 +82,7 @@ Functions
    Sample from the mean-field approximation.
 
 
-.. py:class:: meanfield_vi
-
+.. py:function:: as_top_level_api(logdensity_fn: Callable, optimizer: optax.GradientTransformation, num_samples: int = 100)
 
    High-level implementation of Mean-Field Variational Inference.
 
@@ -93,18 +92,6 @@ Functions
    :param num_samples: Number of samples to take at each step to optimize the ELBO.
 
    :rtype: A ``VIAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: step
-
-      
-
-   .. py:attribute:: sample
-
-      
 
 
 .. py:function:: generate_meanfield_logdensity(mu, rho)

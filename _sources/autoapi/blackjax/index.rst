@@ -29,38 +29,6 @@ Submodules
 Package Contents
 ----------------
 
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   blackjax.barker_proposal
-   blackjax.dynamic_hmc
-   blackjax.elliptical_slice
-   blackjax.ghmc
-   blackjax.hmc
-   blackjax.mala
-   blackjax.mgrad_gaussian
-   blackjax.mclmc
-   blackjax.nuts
-   blackjax.orbital_hmc
-   blackjax.additive_step_random_walk
-   blackjax.irmh
-   blackjax.rmh
-   blackjax.rmhmc
-   blackjax.csgld
-   blackjax.sghmc
-   blackjax.sgld
-   blackjax.sgnht
-   blackjax.adaptive_tempered_smc
-   blackjax.inner_kernel_tuning
-   blackjax.tempered_smc
-   blackjax.meanfield_vi
-   blackjax.pathfinder
-   blackjax.schrodinger_follmer
-   blackjax.svgd
-
-
 
 Functions
 ~~~~~~~~~
@@ -83,31 +51,6 @@ Attributes
 .. autoapisummary::
 
    blackjax.__version__
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

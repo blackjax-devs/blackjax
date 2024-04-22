@@ -63,9 +63,6 @@ Classes
 
    blackjax.mcmc.random_walk.RWState
    blackjax.mcmc.random_walk.RWInfo
-   blackjax.mcmc.random_walk.additive_step_random_walk
-   blackjax.mcmc.random_walk.irmh
-   blackjax.mcmc.random_walk.rmh
 
 
 
@@ -76,8 +73,12 @@ Functions
 
    blackjax.mcmc.random_walk.normal
    blackjax.mcmc.random_walk.build_additive_step
+   blackjax.mcmc.random_walk.normal_random_walk
+   blackjax.mcmc.random_walk.additive_step_random_walk
    blackjax.mcmc.random_walk.build_irmh
+   blackjax.mcmc.random_walk.irmh_as_top_level_api
    blackjax.mcmc.random_walk.build_rmh
+   blackjax.mcmc.random_walk.rmh_as_top_level_api
    blackjax.mcmc.random_walk.build_rmh_transition_energy
    blackjax.mcmc.random_walk.rmh_proposal
 
@@ -167,8 +168,15 @@ Functions
              * *information about the transition.*
 
 
-.. py:class:: additive_step_random_walk
+.. py:function:: normal_random_walk(logdensity_fn: Callable, sigma)
 
+   :param logdensity_fn: The log density probability density function from which we wish to sample.
+   :param sigma: The value of the covariance matrix of the gaussian proposal distribution.
+
+   :rtype: A ``SamplingAlgorithm``.
+
+
+.. py:function:: additive_step_random_walk(logdensity_fn: Callable, random_step: Callable) -> blackjax.base.SamplingAlgorithm
 
    Implements the user interface for the Additive Step RMH
 
@@ -198,23 +206,6 @@ Functions
 
    :rtype: A ``SamplingAlgorithm``.
 
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
-
-   .. py:method:: normal_random_walk(logdensity_fn: Callable, sigma)
-      :classmethod:
-
-      :param logdensity_fn: The log density probability density function from which we wish to sample.
-      :param sigma: The value of the covariance matrix of the gaussian proposal distribution.
-
-      :rtype: A ``SamplingAlgorithm``.
-
-
 
 .. py:function:: build_irmh() -> Callable
 
@@ -226,8 +217,7 @@ Functions
              * *information about the transition.*
 
 
-.. py:class:: irmh
-
+.. py:function:: irmh_as_top_level_api(logdensity_fn: Callable, proposal_distribution: Callable, proposal_logdensity_fn: Optional[Callable] = None) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the independent RMH.
 
@@ -257,14 +247,6 @@ Functions
 
    :rtype: A ``SamplingAlgorithm``.
 
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
-
 
 .. py:function:: build_rmh()
 
@@ -275,8 +257,7 @@ Functions
              * *information about the transition.*
 
 
-.. py:class:: rmh
-
+.. py:function:: rmh_as_top_level_api(logdensity_fn: Callable, proposal_generator: Callable[[blackjax.types.PRNGKey, blackjax.types.ArrayLikeTree], blackjax.types.ArrayTree], proposal_logdensity_fn: Optional[Callable[[blackjax.types.ArrayLikeTree], blackjax.types.ArrayTree]] = None) -> blackjax.base.SamplingAlgorithm
 
    Implements the user interface for the RMH.
 
@@ -305,14 +286,6 @@ Functions
                                    the Metropolis-Hastings correction for detailed balance.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 
 .. py:function:: build_rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> Callable

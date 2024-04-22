@@ -18,7 +18,6 @@ Classes
 .. autoapisummary::
 
    blackjax.mcmc.mclmc.MCLMCInfo
-   blackjax.mcmc.mclmc.mclmc
 
 
 
@@ -29,6 +28,7 @@ Functions
 
    blackjax.mcmc.mclmc.init
    blackjax.mcmc.mclmc.build_kernel
+   blackjax.mcmc.mclmc.as_top_level_api
 
 
 
@@ -78,8 +78,7 @@ Functions
              * *information about the transition.*
 
 
-.. py:class:: mclmc
-
+.. py:function:: as_top_level_api(logdensity_fn: Callable, L, step_size, integrator=isokinetic_mclachlan) -> blackjax.base.SamplingAlgorithm
 
    The general mclmc kernel builder (:meth:`blackjax.mcmc.mclmc.build_kernel`, alias `blackjax.mclmc.build_kernel`) can be
    cumbersome to manipulate. Since most users only need to specify the kernel
@@ -116,13 +115,5 @@ Functions
    :param integrator: an integrator. We recommend using the default here.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

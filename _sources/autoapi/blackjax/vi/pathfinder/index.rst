@@ -13,7 +13,6 @@ Classes
 .. autoapisummary::
 
    blackjax.vi.pathfinder.PathfinderState
-   blackjax.vi.pathfinder.pathfinder
 
 
 
@@ -24,6 +23,7 @@ Functions
 
    blackjax.vi.pathfinder.approximate
    blackjax.vi.pathfinder.sample
+   blackjax.vi.pathfinder.as_top_level_api
 
 
 
@@ -123,8 +123,7 @@ Functions
    :rtype: Samples drawn from the approximate Pathfinder distribution
 
 
-.. py:class:: pathfinder
-
+.. py:function:: as_top_level_api(logdensity_fn: Callable) -> PathFinderAlgorithm
 
    Implements the (basic) user interface for the pathfinder kernel.
 
@@ -141,13 +140,5 @@ Functions
                          to sample from.
 
    :rtype: A ``VISamplingAlgorithm``.
-
-   .. py:attribute:: approximate
-
-      
-
-   .. py:attribute:: sample
-
-      
 
 

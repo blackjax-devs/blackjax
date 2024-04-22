@@ -18,7 +18,6 @@ Classes
 .. autoapisummary::
 
    blackjax.mcmc.nuts.NUTSInfo
-   blackjax.mcmc.nuts.nuts
 
 
 
@@ -28,6 +27,7 @@ Functions
 .. autoapisummary::
 
    blackjax.mcmc.nuts.build_kernel
+   blackjax.mcmc.nuts.as_top_level_api
 
 
 
@@ -151,8 +151,7 @@ Attributes
                                 a transition "divergent".
 
 
-.. py:class:: nuts
-
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, *, max_num_doublings: int = 10, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the nuts kernel.
 
@@ -195,13 +194,5 @@ Attributes
    :param integrator: (algorithm parameter) The symplectic integrator to use to integrate the trajectory.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

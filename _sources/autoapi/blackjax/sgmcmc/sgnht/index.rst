@@ -18,7 +18,6 @@ Classes
 .. autoapisummary::
 
    blackjax.sgmcmc.sgnht.SGNHTState
-   blackjax.sgmcmc.sgnht.sgnht
 
 
 
@@ -29,6 +28,7 @@ Functions
 
    blackjax.sgmcmc.sgnht.init
    blackjax.sgmcmc.sgnht.build_kernel
+   blackjax.sgmcmc.sgnht.as_top_level_api
 
 
 
@@ -67,8 +67,7 @@ Functions
    Stochastic gradient Nosé-Hoover Thermostat (SGNHT) algorithm.
 
 
-.. py:class:: sgnht
-
+.. py:function:: as_top_level_api(grad_estimator: Callable, alpha: float = 0.01, beta: float = 0.0) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the SGNHT kernel.
 
@@ -114,13 +113,5 @@ Functions
                           of the gradient of the log-density at this position.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

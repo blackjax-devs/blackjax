@@ -19,7 +19,6 @@ Classes
 
    blackjax.mcmc.barker.BarkerState
    blackjax.mcmc.barker.BarkerInfo
-   blackjax.mcmc.barker.barker_proposal
 
 
 
@@ -30,6 +29,7 @@ Functions
 
    blackjax.mcmc.barker.init
    blackjax.mcmc.barker.build_kernel
+   blackjax.mcmc.barker.as_top_level_api
 
 
 
@@ -109,8 +109,7 @@ Functions
              * *information about the transition.*
 
 
-.. py:class:: barker_proposal
-
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the Barker's proposal :cite:p:`Livingstone2022Barker` kernel with a
    Gaussian base kernel.
@@ -152,13 +151,5 @@ Functions
    :param step_size: The value to use for the step size in the symplectic integrator.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

@@ -7,14 +7,6 @@
 Module Contents
 ---------------
 
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   blackjax.smc.adaptive_tempered.adaptive_tempered_smc
-
-
 
 Functions
 ~~~~~~~~~
@@ -22,7 +14,16 @@ Functions
 .. autoapisummary::
 
    blackjax.smc.adaptive_tempered.build_kernel
+   blackjax.smc.adaptive_tempered.as_top_level_api
 
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   blackjax.smc.adaptive_tempered.init
 
 
 .. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, target_ess: float, root_solver: Callable = solver.dichotomy) -> Callable
@@ -55,8 +56,11 @@ Functions
              * *information about the transition.*
 
 
-.. py:class:: adaptive_tempered_smc
+.. py:data:: init
 
+   
+
+.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, target_ess: float, root_solver: Callable = solver.dichotomy, num_mcmc_steps: int = 10) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
 
@@ -72,13 +76,5 @@ Functions
    :param num_mcmc_steps: The number of times the MCMC kernel is applied to the particles per step.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

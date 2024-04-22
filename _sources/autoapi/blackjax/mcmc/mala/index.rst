@@ -19,7 +19,6 @@ Classes
 
    blackjax.mcmc.mala.MALAState
    blackjax.mcmc.mala.MALAInfo
-   blackjax.mcmc.mala.mala
 
 
 
@@ -30,6 +29,7 @@ Functions
 
    blackjax.mcmc.mala.init
    blackjax.mcmc.mala.build_kernel
+   blackjax.mcmc.mala.as_top_level_api
 
 
 
@@ -102,8 +102,7 @@ Functions
              * *information about the transition.*
 
 
-.. py:class:: mala
-
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the MALA kernel.
 
@@ -144,13 +143,5 @@ Functions
    :param step_size: The value to use for the step size in the symplectic integrator.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

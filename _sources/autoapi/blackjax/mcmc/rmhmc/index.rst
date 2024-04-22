@@ -7,13 +7,13 @@
 Module Contents
 ---------------
 
-Classes
-~~~~~~~
+
+Functions
+~~~~~~~~~
 
 .. autoapisummary::
 
-   blackjax.mcmc.rmhmc.rmhmc
-
+   blackjax.mcmc.rmhmc.as_top_level_api
 
 
 
@@ -34,8 +34,7 @@ Attributes
 
    
 
-.. py:class:: rmhmc
-
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, mass_matrix: Union[blackjax.mcmc.metrics.Metric, Callable], num_integration_steps: int, *, divergence_threshold: int = 1000, integrator: Callable = integrators.implicit_midpoint) -> blackjax.base.SamplingAlgorithm
 
    A Riemannian Manifold Hamiltonian Monte Carlo kernel
 
@@ -60,13 +59,5 @@ Attributes
                       trajectory.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

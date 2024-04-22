@@ -18,7 +18,6 @@ Classes
 .. autoapisummary::
 
    blackjax.mcmc.ghmc.GHMCState
-   blackjax.mcmc.ghmc.ghmc
 
 
 
@@ -29,6 +28,7 @@ Functions
 
    blackjax.mcmc.ghmc.init
    blackjax.mcmc.ghmc.build_kernel
+   blackjax.mcmc.ghmc.as_top_level_api
 
 
 
@@ -101,8 +101,7 @@ Functions
              * *returns a new state of the chain along with information about the transition.*
 
 
-.. py:class:: ghmc
-
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, momentum_inverse_scale: blackjax.types.ArrayLikeTree, alpha: float, delta: float, *, divergence_threshold: int = 1000, noise_gn: Callable = lambda _: 0.0) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the Generalized HMC kernel.
 
@@ -152,13 +151,5 @@ Functions
                     The parameter defaults to a random variable with a single atom at 0.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

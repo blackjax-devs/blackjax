@@ -72,7 +72,7 @@ Functions
              * *final* -- Function that returns the step size and mass matrix given a warmup state.
 
 
-.. py:function:: pathfinder_adaptation(algorithm: Union[blackjax.mcmc.hmc.hmc, blackjax.mcmc.nuts.nuts], logdensity_fn: Callable, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: pathfinder_adaptation(algorithm, logdensity_fn: Callable, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the value of the inverse mass matrix and step size parameters of
    algorithms in the HMC fmaily.

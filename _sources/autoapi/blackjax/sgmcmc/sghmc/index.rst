@@ -12,14 +12,6 @@
 Module Contents
 ---------------
 
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   blackjax.sgmcmc.sghmc.sghmc
-
-
 
 Functions
 ~~~~~~~~~
@@ -28,6 +20,7 @@ Functions
 
    blackjax.sgmcmc.sghmc.init
    blackjax.sgmcmc.sghmc.build_kernel
+   blackjax.sgmcmc.sghmc.as_top_level_api
 
 
 
@@ -39,8 +32,7 @@ Functions
    Stochastic gradient Hamiltonian Monte Carlo (SgHMC) algorithm.
 
 
-.. py:class:: sghmc
-
+.. py:function:: as_top_level_api(grad_estimator: Callable, num_integration_steps: int = 10, alpha: float = 0.01, beta: float = 0) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the SGHMC kernel.
 
@@ -85,13 +77,5 @@ Functions
                           of the gradient of the log-density at this position.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

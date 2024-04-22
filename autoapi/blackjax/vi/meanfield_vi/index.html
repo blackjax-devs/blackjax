@@ -31,7 +31,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=fd3f3429" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
   
@@ -41,7 +41,7 @@
   <script src="../../../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
     <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
-    <script src="../../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script src="../../../../_static/design-tabs.js?v=36754332"></script>
@@ -379,12 +379,7 @@ document.write(`
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.step"><code class="docutils literal notranslate"><span class="pre">step()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.sample"><code class="docutils literal notranslate"><span class="pre">sample()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.meanfield_vi"><code class="docutils literal notranslate"><span class="pre">meanfield_vi</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.meanfield_vi.init"><code class="docutils literal notranslate"><span class="pre">meanfield_vi.init</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.meanfield_vi.step"><code class="docutils literal notranslate"><span class="pre">meanfield_vi.step</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.meanfield_vi.sample"><code class="docutils literal notranslate"><span class="pre">meanfield_vi.sample</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.generate_meanfield_logdensity"><code class="docutils literal notranslate"><span class="pre">generate_meanfield_logdensity()</span></code></a></li>
 </ul>
 </li>
@@ -415,9 +410,6 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.vi.meanfield_vi.MFVIInfo" title="blackjax.vi.meanfield_vi.MFVIInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MFVIInfo</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.vi.meanfield_vi.meanfield_vi" title="blackjax.vi.meanfield_vi.meanfield_vi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">meanfield_vi</span></code></a></p></td>
-<td><p>High-level implementation of Mean-Field Variational Inference.</p></td>
-</tr>
 </tbody>
 </table>
 </section>
@@ -431,7 +423,10 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.vi.meanfield_vi.sample" title="blackjax.vi.meanfield_vi.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>(rng_key, state[, num_samples])</p></td>
 <td><p>Sample from the mean-field approximation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.vi.meanfield_vi.generate_meanfield_logdensity" title="blackjax.vi.meanfield_vi.generate_meanfield_logdensity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_meanfield_logdensity</span></code></a>(mu, rho)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.vi.meanfield_vi.as_top_level_api" title="blackjax.vi.meanfield_vi.as_top_level_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_top_level_api</span></code></a>(logdensity_fn, optimizer[, num_samples])</p></td>
+<td><p>High-level implementation of Mean-Field Variational Inference.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.vi.meanfield_vi.generate_meanfield_logdensity" title="blackjax.vi.meanfield_vi.generate_meanfield_logdensity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_meanfield_logdensity</span></code></a>(mu, rho)</p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -494,9 +489,9 @@ from the gradient. It is suggested by <span id="id2">[<a class="reference intern
 <dd><p>Sample from the mean-field approximation.</p>
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="blackjax.vi.meanfield_vi.meanfield_vi">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">meanfield_vi</span></span><a class="reference internal" href="../../../../_modules/blackjax/vi/meanfield_vi.html#meanfield_vi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.vi.meanfield_vi.meanfield_vi" title="Link to this definition">#</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.vi.meanfield_vi.as_top_level_api">
+<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">optax.GradientTransformation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/vi/meanfield_vi.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.vi.meanfield_vi.as_top_level_api" title="Link to this definition">#</a></dt>
 <dd><p>High-level implementation of Mean-Field Variational Inference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -511,21 +506,6 @@ the distribution we want to sample from.</p></li>
 <dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">VIAlgorithm</span></code>.</p>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.vi.meanfield_vi.meanfield_vi.init">
-<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/vi/meanfield_vi.html#meanfield_vi.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.vi.meanfield_vi.meanfield_vi.init" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.vi.meanfield_vi.meanfield_vi.step">
-<span class="sig-name descname"><span class="pre">step</span></span><a class="reference internal" href="../../../../_modules/blackjax/vi/meanfield_vi.html#meanfield_vi.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.vi.meanfield_vi.meanfield_vi.step" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.vi.meanfield_vi.meanfield_vi.sample">
-<span class="sig-name descname"><span class="pre">sample</span></span><a class="reference internal" href="../../../../_modules/blackjax/vi/meanfield_vi.html#meanfield_vi.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.vi.meanfield_vi.meanfield_vi.sample" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="py function">
@@ -597,12 +577,7 @@ the distribution we want to sample from.</p></li>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.step"><code class="docutils literal notranslate"><span class="pre">step()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.sample"><code class="docutils literal notranslate"><span class="pre">sample()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.meanfield_vi"><code class="docutils literal notranslate"><span class="pre">meanfield_vi</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.meanfield_vi.init"><code class="docutils literal notranslate"><span class="pre">meanfield_vi.init</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.meanfield_vi.step"><code class="docutils literal notranslate"><span class="pre">meanfield_vi.step</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.meanfield_vi.sample"><code class="docutils literal notranslate"><span class="pre">meanfield_vi.sample</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.vi.meanfield_vi.generate_meanfield_logdensity"><code class="docutils literal notranslate"><span class="pre">generate_meanfield_logdensity()</span></code></a></li>
 </ul>
 </li>

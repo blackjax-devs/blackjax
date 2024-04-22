@@ -18,7 +18,6 @@ Classes
 .. autoapisummary::
 
    blackjax.mcmc.dynamic_hmc.DynamicHMCState
-   blackjax.mcmc.dynamic_hmc.dynamic_hmc
 
 
 
@@ -29,6 +28,7 @@ Functions
 
    blackjax.mcmc.dynamic_hmc.init
    blackjax.mcmc.dynamic_hmc.build_kernel
+   blackjax.mcmc.dynamic_hmc.as_top_level_api
    blackjax.mcmc.dynamic_hmc.halton_sequence
 
 
@@ -83,8 +83,7 @@ Functions
              * *information about the transition.*
 
 
-.. py:class:: dynamic_hmc
-
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, inverse_mass_matrix: blackjax.types.Array, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10)) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the dynamic HMC kernel.
 
@@ -101,14 +100,6 @@ Functions
                                 sequence, given the current `random_generator_arg`.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 
 .. py:function:: halton_sequence(i: blackjax.types.Array, max_bits: int = 10) -> float

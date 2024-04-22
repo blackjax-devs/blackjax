@@ -19,7 +19,6 @@ Classes
 
    blackjax.mcmc.marginal_latent_gaussian.MarginalState
    blackjax.mcmc.marginal_latent_gaussian.MarginalInfo
-   blackjax.mcmc.marginal_latent_gaussian.mgrad_gaussian
 
 
 
@@ -30,6 +29,7 @@ Functions
 
    blackjax.mcmc.marginal_latent_gaussian.init
    blackjax.mcmc.marginal_latent_gaussian.build_kernel
+   blackjax.mcmc.marginal_latent_gaussian.as_top_level_api
 
 
 
@@ -134,8 +134,7 @@ Functions
              * *information about the transition.*
 
 
-.. py:class:: mgrad_gaussian
-
+.. py:function:: as_top_level_api(logdensity_fn: Callable, covariance: Optional[blackjax.types.Array] = None, mean: Optional[blackjax.types.Array] = None, cov_svd: Optional[CovarianceSVD] = None, step_size: float = 1.0) -> blackjax.base.SamplingAlgorithm
 
    Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.
 
@@ -168,13 +167,5 @@ Functions
    :type mean: optional
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

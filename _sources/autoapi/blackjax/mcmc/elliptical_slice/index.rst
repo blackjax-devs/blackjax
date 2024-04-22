@@ -19,7 +19,6 @@ Classes
 
    blackjax.mcmc.elliptical_slice.EllipSliceState
    blackjax.mcmc.elliptical_slice.EllipSliceInfo
-   blackjax.mcmc.elliptical_slice.elliptical_slice
 
 
 
@@ -30,6 +29,7 @@ Functions
 
    blackjax.mcmc.elliptical_slice.init
    blackjax.mcmc.elliptical_slice.build_kernel
+   blackjax.mcmc.elliptical_slice.as_top_level_api
 
 
 
@@ -110,8 +110,7 @@ Functions
              * *information about the transition.*
 
 
-.. py:class:: elliptical_slice
-
+.. py:function:: as_top_level_api(loglikelihood_fn: Callable, *, mean: blackjax.types.Array, cov: blackjax.types.Array) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the Elliptical Slice sampling kernel.
 
@@ -136,13 +135,5 @@ Functions
    :param cov_matrix: The value of the covariance matrix of the gaussian prior distribution from the posterior we wish to sample.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

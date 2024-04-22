@@ -19,7 +19,6 @@ Classes
 
    blackjax.mcmc.hmc.HMCState
    blackjax.mcmc.hmc.HMCInfo
-   blackjax.mcmc.hmc.hmc
 
 
 
@@ -30,6 +29,7 @@ Functions
 
    blackjax.mcmc.hmc.init
    blackjax.mcmc.hmc.build_kernel
+   blackjax.mcmc.hmc.as_top_level_api
 
 
 
@@ -145,8 +145,7 @@ Functions
              * *information about the transition.*
 
 
-.. py:class:: hmc
-
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, num_integration_steps: int, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the HMC kernel.
 
@@ -209,13 +208,5 @@ Functions
                       trajectory.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 

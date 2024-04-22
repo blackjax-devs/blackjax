@@ -31,7 +31,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=fd3f3429" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
   
@@ -41,7 +41,7 @@
   <script src="../../../../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
     <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
-    <script src="../../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script src="../../../../_static/design-tabs.js?v=36754332"></script>
@@ -380,11 +380,7 @@ document.write(`
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.elliptical_slice.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.elliptical_slice.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.elliptical_slice.elliptical_slice"><code class="docutils literal notranslate"><span class="pre">elliptical_slice</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.elliptical_slice.elliptical_slice.init"><code class="docutils literal notranslate"><span class="pre">elliptical_slice.init</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.elliptical_slice.elliptical_slice.build_kernel"><code class="docutils literal notranslate"><span class="pre">elliptical_slice.build_kernel</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.elliptical_slice.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -415,9 +411,6 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.elliptical_slice.EllipSliceInfo" title="blackjax.mcmc.elliptical_slice.EllipSliceInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EllipSliceInfo</span></code></a></p></td>
 <td><p>Additional information on the Elliptical Slice sampling chain.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.elliptical_slice.elliptical_slice" title="blackjax.mcmc.elliptical_slice.elliptical_slice"><code class="xref py py-obj docutils literal notranslate"><span class="pre">elliptical_slice</span></code></a></p></td>
-<td><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel.</p></td>
-</tr>
 </tbody>
 </table>
 </section>
@@ -430,6 +423,9 @@ document.write(`
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.elliptical_slice.build_kernel" title="blackjax.mcmc.elliptical_slice.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(cov_matrix, mean)</p></td>
 <td><p>Build an Elliptical Slice sampling kernel <span id="id1">[<a class="reference internal" href="../../../../bib.html#id17" title="Iain Murray, Ryan Adams, and David MacKay. Elliptical slice sampling. In Proceedings of the thirteenth international conference on artificial intelligence and statistics, 541–548. JMLR Workshop and Conference Proceedings, 2010.">MAM10</a>]</span>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.elliptical_slice.as_top_level_api" title="blackjax.mcmc.elliptical_slice.as_top_level_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_top_level_api</span></code></a>(→ blackjax.base.SamplingAlgorithm)</p></td>
+<td><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel.</p></td>
 </tr>
 </tbody>
 </table>
@@ -515,9 +511,9 @@ the posterior we wish to sample.</p>
 </dl>
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="blackjax.mcmc.elliptical_slice.elliptical_slice">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">elliptical_slice</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/elliptical_slice.html#elliptical_slice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.elliptical_slice.elliptical_slice" title="Link to this definition">#</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.elliptical_slice.as_top_level_api">
+<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../base/index.html#blackjax.base.SamplingAlgorithm" title="blackjax.base.SamplingAlgorithm"><span class="pre">blackjax.base.SamplingAlgorithm</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/elliptical_slice.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.elliptical_slice.as_top_level_api" title="Link to this definition">#</a></dt>
 <dd><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel.</p>
 <p class="rubric">Examples</p>
 <p>A new Elliptical Slice sampling kernel can be initialized and used with the following code:</p>
@@ -542,16 +538,6 @@ the posterior we wish to sample.</p>
 <dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.elliptical_slice.elliptical_slice.init">
-<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/elliptical_slice.html#elliptical_slice.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.elliptical_slice.elliptical_slice.init" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.elliptical_slice.elliptical_slice.build_kernel">
-<span class="sig-name descname"><span class="pre">build_kernel</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/elliptical_slice.html#elliptical_slice.build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.elliptical_slice.elliptical_slice.build_kernel" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 </section>
@@ -619,11 +605,7 @@ the posterior we wish to sample.</p>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.elliptical_slice.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.elliptical_slice.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.elliptical_slice.elliptical_slice"><code class="docutils literal notranslate"><span class="pre">elliptical_slice</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.elliptical_slice.elliptical_slice.init"><code class="docutils literal notranslate"><span class="pre">elliptical_slice.init</span></code></a></li>
-<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.elliptical_slice.elliptical_slice.build_kernel"><code class="docutils literal notranslate"><span class="pre">elliptical_slice.build_kernel</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.elliptical_slice.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
 </ul>
 </li>
 </ul>

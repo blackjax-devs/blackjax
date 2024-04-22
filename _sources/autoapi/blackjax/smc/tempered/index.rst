@@ -23,6 +23,7 @@ Functions
 
    blackjax.smc.tempered.init
    blackjax.smc.tempered.build_kernel
+   blackjax.smc.tempered.as_top_level_api
 
 
 
@@ -85,5 +86,20 @@ Functions
    :returns: * *A callable that takes a rng_key and a TemperedSMCState that contains the current state*
              * *of the chain and that returns a new state of the chain along with*
              * *information about the transition.*
+
+
+.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, num_mcmc_steps: int = 10) -> blackjax.base.SamplingAlgorithm
+
+   Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
+
+   :param logprior_fn: The log-prior function of the model we wish to draw samples from.
+   :param loglikelihood_fn: The log-likelihood function of the model we wish to draw samples from.
+   :param mcmc_step_fn: The MCMC step function used to update the particles.
+   :param mcmc_init_fn: The MCMC init function used to build a MCMC state from a particle position.
+   :param mcmc_parameters: The parameters of the MCMC step function.
+   :param resampling_fn: The function used to resample the particles.
+   :param num_mcmc_steps: The number of times the MCMC kernel is applied to the particles per step.
+
+   :rtype: A ``SamplingAlgorithm``.
 
 

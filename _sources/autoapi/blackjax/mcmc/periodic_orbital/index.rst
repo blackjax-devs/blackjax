@@ -18,7 +18,6 @@ Classes
 .. autoapisummary::
 
    blackjax.mcmc.periodic_orbital.PeriodicOrbitalState
-   blackjax.mcmc.periodic_orbital.orbital_hmc
 
 
 
@@ -29,6 +28,7 @@ Functions
 
    blackjax.mcmc.periodic_orbital.init
    blackjax.mcmc.periodic_orbital.build_kernel
+   blackjax.mcmc.periodic_orbital.as_top_level_api
 
 
 
@@ -112,8 +112,7 @@ Functions
              * *information about the transition.*
 
 
-.. py:class:: orbital_hmc
-
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, inverse_mass_matrix: blackjax.types.Array, period: int, *, bijection: Callable = integrators.velocity_verlet) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the Periodic orbital MCMC kernel.
 
@@ -147,13 +146,5 @@ Functions
    :param bijection: (algorithm parameter) The symplectic integrator to use to build the orbit.
 
    :rtype: A ``SamplingAlgorithm``.
-
-   .. py:attribute:: init
-
-      
-
-   .. py:attribute:: build_kernel
-
-      
 
 
