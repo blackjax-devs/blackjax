@@ -25,7 +25,7 @@ from blackjax.optimizers.lbfgs import (
 )
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["PathfinderState", "approximate", "sample", "pathfinder"]
+__all__ = ["PathfinderState", "approximate", "sample", "as_top_level_api"]
 
 
 class PathfinderState(NamedTuple):
@@ -242,7 +242,7 @@ def sample(
         return jax.vmap(unravel_fn)(phi), logq
 
 
-class pathfinder:
+def as_top_level_api(logdensity_fn: Callable) -> PathFinderAlgorithm:
     """Implements the (basic) user interface for the pathfinder kernel.
 
     Pathfinder locates normal approximations to the target density along a
@@ -266,21 +266,17 @@ class pathfinder:
 
     """
 
-    approximate = staticmethod(approximate)
-    sample = staticmethod(sample)
+    def approximate_fn(
+        rng_key: PRNGKey,
+        position: ArrayLikeTree,
+        num_samples: int = 200,
+        **lbfgs_parameters,
+    ):
+        return approximate(
+            rng_key, logdensity_fn, position, num_samples, **lbfgs_parameters
+        )
 
-    def __new__(cls, logdensity_fn: Callable) -> PathFinderAlgorithm:  # type: ignore[misc]
-        def approximate_fn(
-            rng_key: PRNGKey,
-            position: ArrayLikeTree,
-            num_samples: int = 200,
-            **lbfgs_parameters,
-        ):
-            return cls.approximate(
-                rng_key, logdensity_fn, position, num_samples, **lbfgs_parameters
-            )
+    def sample_fn(rng_key: PRNGKey, state: PathfinderState, num_samples: int):
+        return sample(rng_key, state, num_samples)
 
-        def sample_fn(rng_key: PRNGKey, state: PathfinderState, num_samples: int):
-            return cls.sample(rng_key, state, num_samples)
-
-        return PathFinderAlgorithm(approximate_fn, sample_fn)
+    return PathFinderAlgorithm(approximate_fn, sample_fn)

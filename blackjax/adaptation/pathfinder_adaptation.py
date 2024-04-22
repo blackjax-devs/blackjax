@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Pathinder warmup for the HMC family of sampling algorithms."""
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 
-import blackjax.mcmc as mcmc
 import blackjax.vi as vi
 from blackjax.adaptation.base import AdaptationInfo, AdaptationResults
 from blackjax.adaptation.step_size import (
@@ -138,7 +137,7 @@ def base(
 
 
 def pathfinder_adaptation(
-    algorithm: Union[mcmc.hmc.hmc, mcmc.nuts.nuts],
+    algorithm,
     logdensity_fn: Callable,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,

@@ -80,8 +80,9 @@ __all__ = [
     "rmh_proposal",
     "build_rmh_transition_energy",
     "additive_step_random_walk",
-    "irmh",
-    "rmh",
+    "irmh_as_top_level_api",
+    "rmh_as_top_level_api",
+    "normal_random_walk",
 ]
 
 
@@ -182,7 +183,25 @@ def build_additive_step():
     return kernel
 
 
-class additive_step_random_walk:
+def normal_random_walk(logdensity_fn: Callable, sigma):
+    """
+    Parameters
+    ----------
+    logdensity_fn
+        The log density probability density function from which we wish to sample.
+    sigma
+        The value of the covariance matrix of the gaussian proposal distribution.
+
+    Returns
+    -------
+         A ``SamplingAlgorithm``.
+    """
+    return additive_step_random_walk(logdensity_fn, normal(sigma))
+
+
+def additive_step_random_walk(
+    logdensity_fn: Callable, random_step: Callable
+) -> SamplingAlgorithm:
     """Implements the user interface for the Additive Step RMH
 
     Examples
@@ -218,39 +237,16 @@ class additive_step_random_walk:
     -------
     A ``SamplingAlgorithm``.
     """
+    kernel = build_additive_step()
 
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_additive_step)
+    def init_fn(position: ArrayLikeTree, rng_key=None):
+        del rng_key
+        return init(position, logdensity_fn)
 
-    @classmethod
-    def normal_random_walk(cls, logdensity_fn: Callable, sigma):
-        """
-        Parameters
-        ----------
-        logdensity_fn
-            The log density probability density function from which we wish to sample.
-        sigma
-            The value of the covariance matrix of the gaussian proposal distribution.
+    def step_fn(rng_key: PRNGKey, state):
+        return kernel(rng_key, state, logdensity_fn, random_step)
 
-        Returns
-        -------
-             A ``SamplingAlgorithm``.
-        """
-        return cls(logdensity_fn, normal(sigma))
-
-    def __new__(  # type: ignore[misc]
-        cls, logdensity_fn: Callable, random_step: Callable
-    ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel()
-
-        def init_fn(position: ArrayLikeTree, rng_key=None):
-            del rng_key
-            return cls.init(position, logdensity_fn)
-
-        def step_fn(rng_key: PRNGKey, state):
-            return kernel(rng_key, state, logdensity_fn, random_step)
-
-        return SamplingAlgorithm(init_fn, step_fn)
+    return SamplingAlgorithm(init_fn, step_fn)
 
 
 def build_irmh() -> Callable:
@@ -297,7 +293,11 @@ def build_irmh() -> Callable:
     return kernel
 
 
-class irmh:
+def irmh_as_top_level_api(
+    logdensity_fn: Callable,
+    proposal_distribution: Callable,
+    proposal_logdensity_fn: Optional[Callable] = None,
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the independent RMH.
 
     Examples
@@ -334,32 +334,22 @@ class irmh:
     A ``SamplingAlgorithm``.
 
     """
+    kernel = build_irmh()
 
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_irmh)
+    def init_fn(position: ArrayLikeTree, rng_key=None):
+        del rng_key
+        return init(position, logdensity_fn)
 
-    def __new__(  # type: ignore[misc]
-        cls,
-        logdensity_fn: Callable,
-        proposal_distribution: Callable,
-        proposal_logdensity_fn: Optional[Callable] = None,
-    ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel()
+    def step_fn(rng_key: PRNGKey, state):
+        return kernel(
+            rng_key,
+            state,
+            logdensity_fn,
+            proposal_distribution,
+            proposal_logdensity_fn,
+        )
 
-        def init_fn(position: ArrayLikeTree, rng_key=None):
-            del rng_key
-            return cls.init(position, logdensity_fn)
-
-        def step_fn(rng_key: PRNGKey, state):
-            return kernel(
-                rng_key,
-                state,
-                logdensity_fn,
-                proposal_distribution,
-                proposal_logdensity_fn,
-            )
-
-        return SamplingAlgorithm(init_fn, step_fn)
+    return SamplingAlgorithm(init_fn, step_fn)
 
 
 def build_rmh():
@@ -420,7 +410,11 @@ def build_rmh():
     return kernel
 
 
-class rmh:
+def rmh_as_top_level_api(
+    logdensity_fn: Callable,
+    proposal_generator: Callable[[PRNGKey, ArrayLikeTree], ArrayTree],
+    proposal_logdensity_fn: Optional[Callable[[ArrayLikeTree], ArrayTree]] = None,
+) -> SamplingAlgorithm:
     """Implements the user interface for the RMH.
 
     Examples
@@ -456,32 +450,22 @@ class rmh:
     -------
     A ``SamplingAlgorithm``.
     """
+    kernel = build_rmh()
 
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_rmh)
+    def init_fn(position: ArrayLikeTree, rng_key=None):
+        del rng_key
+        return init(position, logdensity_fn)
 
-    def __new__(  # type: ignore[misc]
-        cls,
-        logdensity_fn: Callable,
-        proposal_generator: Callable[[PRNGKey, ArrayLikeTree], ArrayTree],
-        proposal_logdensity_fn: Optional[Callable[[ArrayLikeTree], ArrayTree]] = None,
-    ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel()
+    def step_fn(rng_key: PRNGKey, state):
+        return kernel(
+            rng_key,
+            state,
+            logdensity_fn,
+            proposal_generator,
+            proposal_logdensity_fn,
+        )
 
-        def init_fn(position: ArrayLikeTree, rng_key=None):
-            del rng_key
-            return cls.init(position, logdensity_fn)
-
-        def step_fn(rng_key: PRNGKey, state):
-            return kernel(
-                rng_key,
-                state,
-                logdensity_fn,
-                proposal_generator,
-                proposal_logdensity_fn,
-            )
-
-        return SamplingAlgorithm(init_fn, step_fn)
+    return SamplingAlgorithm(init_fn, step_fn)
 
 
 def build_rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> Callable:

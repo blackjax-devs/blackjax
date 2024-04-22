@@ -19,7 +19,7 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["SGNHTState", "init", "build_kernel", "sgnht"]
+__all__ = ["SGNHTState", "init", "build_kernel", "as_top_level_api"]
 
 
 class SGNHTState(NamedTuple):
@@ -67,7 +67,11 @@ def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
     return kernel
 
 
-class sgnht:
+def as_top_level_api(
+    grad_estimator: Callable,
+    alpha: float = 0.01,
+    beta: float = 0.0,
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the SGNHT kernel.
 
     The general sgnht kernel (:meth:`blackjax.sgmcmc.sgnht.build_kernel`, alias
@@ -121,33 +125,22 @@ class sgnht:
 
     """
 
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_kernel)
+    kernel = build_kernel(alpha, beta)
 
-    def __new__(  # type: ignore[misc]
-        cls,
-        grad_estimator: Callable,
-        alpha: float = 0.01,
-        beta: float = 0.0,
-    ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel(alpha, beta)
+    def init_fn(
+        position: ArrayLikeTree,
+        rng_key: PRNGKey,
+        init_xi: Union[None, float] = None,
+    ):
+        return init(position, rng_key, init_xi or alpha)
 
-        def init_fn(
-            position: ArrayLikeTree,
-            rng_key: PRNGKey,
-            init_xi: Union[None, float] = None,
-        ):
-            return cls.init(position, rng_key, init_xi or alpha)
+    def step_fn(
+        rng_key: PRNGKey,
+        state: SGNHTState,
+        minibatch: ArrayLikeTree,
+        step_size: float,
+        temperature: float = 1,
+    ) -> SGNHTState:
+        return kernel(rng_key, state, grad_estimator, minibatch, step_size, temperature)
 
-        def step_fn(
-            rng_key: PRNGKey,
-            state: SGNHTState,
-            minibatch: ArrayLikeTree,
-            step_size: float,
-            temperature: float = 1,
-        ) -> SGNHTState:
-            return kernel(
-                rng_key, state, grad_estimator, minibatch, step_size, temperature
-            )
-
-        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+    return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

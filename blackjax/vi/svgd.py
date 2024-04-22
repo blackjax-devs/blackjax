@@ -9,7 +9,13 @@ from jax.flatten_util import ravel_pytree
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree
 
-__all__ = ["svgd", "rbf_kernel", "update_median_heuristic"]
+__all__ = [
+    "as_top_level_api",
+    "init",
+    "build_kernel",
+    "rbf_kernel",
+    "update_median_heuristic",
+]
 
 
 class SVGDState(NamedTuple):
@@ -123,7 +129,12 @@ def update_median_heuristic(state: SVGDState) -> SVGDState:
     return SVGDState(position, median_heuristic(kernel_parameters, position), opt_state)
 
 
-class svgd:
+def as_top_level_api(
+    grad_logdensity_fn: Callable,
+    optimizer,
+    kernel: Callable = rbf_kernel,
+    update_kernel_parameters: Callable = update_median_heuristic,
+):
     """Implements the (basic) user interface for the svgd algorithm.
 
     Parameters
@@ -142,26 +153,16 @@ class svgd:
     A ``SamplingAlgorithm``.
     """
 
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_kernel)
+    kernel_ = build_kernel(optimizer)
 
-    def __new__(
-        cls,
-        grad_logdensity_fn: Callable,
-        optimizer,
-        kernel: Callable = rbf_kernel,
-        update_kernel_parameters: Callable = update_median_heuristic,
+    def init_fn(
+        initial_position: ArrayLikeTree,
+        kernel_parameters: dict[str, Any] = {"length_scale": 1.0},
     ):
-        kernel_ = cls.build_kernel(optimizer)
+        return init(initial_position, kernel_parameters, optimizer)
 
-        def init_fn(
-            initial_position: ArrayLikeTree,
-            kernel_parameters: dict[str, Any] = {"length_scale": 1.0},
-        ):
-            return cls.init(initial_position, kernel_parameters, optimizer)
+    def step_fn(state, **grad_params):
+        state = kernel_(state, grad_logdensity_fn, kernel, **grad_params)
+        return update_kernel_parameters(state)
 
-        def step_fn(state, **grad_params):
-            state = kernel_(state, grad_logdensity_fn, kernel, **grad_params)
-            return update_kernel_parameters(state)
-
-        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+    return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

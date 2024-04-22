@@ -27,8 +27,8 @@ __all__ = [
     "DynamicHMCState",
     "init",
     "build_kernel",
-    "dynamic_hmc",
     "halton_sequence",
+    "as_top_level_api",
 ]
 
 
@@ -115,7 +115,16 @@ def build_kernel(
     return kernel
 
 
-class dynamic_hmc:
+def as_top_level_api(
+    logdensity_fn: Callable,
+    step_size: float,
+    inverse_mass_matrix: Array,
+    *,
+    divergence_threshold: int = 1000,
+    integrator: Callable = integrators.velocity_verlet,
+    next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
+    integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the dynamic HMC kernel.
 
     Parameters
@@ -144,41 +153,26 @@ class dynamic_hmc:
     -------
     A ``SamplingAlgorithm``.
     """
+    kernel = build_kernel(
+        integrator, divergence_threshold, next_random_arg_fn, integration_steps_fn
+    )
 
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_kernel)
+    def init_fn(position: ArrayLikeTree, rng_key: Array):
+        # Note that rng_key here is not necessarily a PRNGKey, could be a Array that
+        # for generates a sequence of pseudo or quasi-random numbers (previously
+        # named as `random_generator_arg`)
+        return init(position, logdensity_fn, rng_key)
 
-    def __new__(  # type: ignore[misc]
-        cls,
-        logdensity_fn: Callable,
-        step_size: float,
-        inverse_mass_matrix: Array,
-        *,
-        divergence_threshold: int = 1000,
-        integrator: Callable = integrators.velocity_verlet,
-        next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
-        integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
-    ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel(
-            integrator, divergence_threshold, next_random_arg_fn, integration_steps_fn
+    def step_fn(rng_key: PRNGKey, state):
+        return kernel(
+            rng_key,
+            state,
+            logdensity_fn,
+            step_size,
+            inverse_mass_matrix,
         )
 
-        def init_fn(position: ArrayLikeTree, rng_key: Array):
-            # Note that rng_key here is not necessarily a PRNGKey, could be a Array that
-            # for generates a sequence of pseudo or quasi-random numbers (previously
-            # named as `random_generator_arg`)
-            return cls.init(position, logdensity_fn, rng_key)
-
-        def step_fn(rng_key: PRNGKey, state):
-            return kernel(
-                rng_key,
-                state,
-                logdensity_fn,
-                step_size,
-                inverse_mass_matrix,
-            )
-
-        return SamplingAlgorithm(init_fn, step_fn)
+    return SamplingAlgorithm(init_fn, step_fn)
 
 
 def halton_sequence(i: Array, max_bits: int = 10) -> float:

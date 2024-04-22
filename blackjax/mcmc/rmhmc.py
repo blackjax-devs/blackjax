@@ -20,14 +20,22 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc import hmc
 from blackjax.types import ArrayTree, PRNGKey
 
-__all__ = ["init", "build_kernel", "rmhmc"]
+__all__ = ["init", "build_kernel", "as_top_level_api"]
 
 
 init = hmc.init
 build_kernel = hmc.build_kernel
 
 
-class rmhmc:
+def as_top_level_api(
+    logdensity_fn: Callable,
+    step_size: float,
+    mass_matrix: Union[metrics.Metric, Callable],
+    num_integration_steps: int,
+    *,
+    divergence_threshold: int = 1000,
+    integrator: Callable = integrators.implicit_midpoint,
+) -> SamplingAlgorithm:
     """A Riemannian Manifold Hamiltonian Monte Carlo kernel
 
     Of note, this kernel is simply an alias of the ``hmc`` kernel with a
@@ -62,34 +70,20 @@ class rmhmc:
     -------
     A ``SamplingAlgorithm``.
     """
+    kernel = build_kernel(integrator, divergence_threshold)
 
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_kernel)
+    def init_fn(position: ArrayTree, rng_key=None):
+        del rng_key
+        return init(position, logdensity_fn)
 
-    def __new__(  # type: ignore[misc]
-        cls,
-        logdensity_fn: Callable,
-        step_size: float,
-        mass_matrix: Union[metrics.Metric, Callable],
-        num_integration_steps: int,
-        *,
-        divergence_threshold: int = 1000,
-        integrator: Callable = integrators.implicit_midpoint,
-    ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel(integrator, divergence_threshold)
+    def step_fn(rng_key: PRNGKey, state):
+        return kernel(
+            rng_key,
+            state,
+            logdensity_fn,
+            step_size,
+            mass_matrix,
+            num_integration_steps,
+        )
 
-        def init_fn(position: ArrayTree, rng_key=None):
-            del rng_key
-            return cls.init(position, logdensity_fn)
-
-        def step_fn(rng_key: PRNGKey, state):
-            return kernel(
-                rng_key,
-                state,
-                logdensity_fn,
-                step_size,
-                mass_matrix,
-                num_integration_steps,
-            )
-
-        return SamplingAlgorithm(init_fn, step_fn)
+    return SamplingAlgorithm(init_fn, step_fn)

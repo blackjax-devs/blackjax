@@ -18,7 +18,7 @@ import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["init", "build_kernel", "sgld"]
+__all__ = ["init", "build_kernel", "as_top_level_api"]
 
 
 def init(position: ArrayLikeTree) -> ArrayLikeTree:
@@ -47,7 +47,9 @@ def build_kernel() -> Callable:
     return kernel
 
 
-class sgld:
+def as_top_level_api(
+    grad_estimator: Callable,
+) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the SGLD kernel.
 
     The general sgld kernel builder (:meth:`blackjax.sgmcmc.sgld.build_kernel`, alias
@@ -100,28 +102,19 @@ class sgld:
 
     """
 
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_kernel)
+    kernel = build_kernel()
 
-    def __new__(  # type: ignore[misc]
-        cls,
-        grad_estimator: Callable,
-    ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel()
+    def init_fn(position: ArrayLikeTree, rng_key=None):
+        del rng_key
+        return init(position)
 
-        def init_fn(position: ArrayLikeTree, rng_key=None):
-            del rng_key
-            return cls.init(position)
+    def step_fn(
+        rng_key: PRNGKey,
+        state: ArrayLikeTree,
+        minibatch: ArrayLikeTree,
+        step_size: float,
+        temperature: float = 1,
+    ) -> ArrayTree:
+        return kernel(rng_key, state, grad_estimator, minibatch, step_size, temperature)
 
-        def step_fn(
-            rng_key: PRNGKey,
-            state: ArrayLikeTree,
-            minibatch: ArrayLikeTree,
-            step_size: float,
-            temperature: float = 1,
-        ) -> ArrayTree:
-            return kernel(
-                rng_key, state, grad_estimator, minibatch, step_size, temperature
-            )
-
-        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+    return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

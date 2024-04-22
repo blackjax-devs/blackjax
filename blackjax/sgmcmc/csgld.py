@@ -23,7 +23,7 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.sgmcmc.diffusions import overdamped_langevin
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["ContourSGLDState", "init", "build_kernel", "csgld"]
+__all__ = ["ContourSGLDState", "init", "build_kernel", "as_top_level_api"]
 
 
 class ContourSGLDState(NamedTuple):
@@ -174,7 +174,14 @@ def build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
     return kernel
 
 
-class csgld:
+def as_top_level_api(
+    logdensity_estimator: Callable,
+    gradient_estimator: Callable,
+    zeta: float = 1,
+    num_partitions: int = 512,
+    energy_gap: float = 100,
+    min_energy: float = 0,
+) -> SamplingAlgorithm:
     r"""Implements the (basic) user interface for the Contour SGLD kernel.
 
     Parameters
@@ -209,42 +216,30 @@ class csgld:
     A ``SamplingAlgorithm``.
 
     """
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_kernel)
+    kernel = build_kernel(num_partitions, energy_gap, min_energy)
 
-    def __new__(  # type: ignore[misc]
-        cls,
-        logdensity_estimator: Callable,
-        gradient_estimator: Callable,
-        zeta: float = 1,
-        num_partitions: int = 512,
-        energy_gap: float = 100,
-        min_energy: float = 0,
-    ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel(num_partitions, energy_gap, min_energy)
+    def init_fn(position: ArrayLikeTree, rng_key=None):
+        del rng_key
+        return init(position, num_partitions)
 
-        def init_fn(position: ArrayLikeTree, rng_key=None):
-            del rng_key
-            return cls.init(position, num_partitions)
+    def step_fn(
+        rng_key: PRNGKey,
+        state: ContourSGLDState,
+        minibatch: ArrayLikeTree,
+        step_size_diff: float,
+        step_size_stoch: float,
+        temperature: float = 1.0,
+    ) -> ContourSGLDState:
+        return kernel(
+            rng_key,
+            state,
+            logdensity_estimator,
+            gradient_estimator,
+            minibatch,
+            step_size_diff,
+            step_size_stoch,
+            zeta,
+            temperature,
+        )
 
-        def step_fn(
-            rng_key: PRNGKey,
-            state: ContourSGLDState,
-            minibatch: ArrayLikeTree,
-            step_size_diff: float,
-            step_size_stoch: float,
-            temperature: float = 1.0,
-        ) -> ContourSGLDState:
-            return kernel(
-                rng_key,
-                state,
-                logdensity_estimator,
-                gradient_estimator,
-                minibatch,
-                step_size_diff,
-                step_size_stoch,
-                zeta,
-                temperature,
-            )
-
-        return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
+    return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

@@ -14,7 +14,7 @@ import blackjax.smc.resampling as resampling
 from blackjax import adaptive_tempered_smc, tempered_smc
 from blackjax.mcmc.random_walk import build_irmh
 from blackjax.smc import extend_params
-from blackjax.smc.inner_kernel_tuning import inner_kernel_tuning
+from blackjax.smc.inner_kernel_tuning import as_top_level_api as inner_kernel_tuning
 from blackjax.smc.tuning.from_kernel_info import update_scale_from_acceptance_rate
 from blackjax.smc.tuning.from_particles import (
     mass_matrix_from_particles,
