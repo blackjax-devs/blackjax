@@ -13,11 +13,15 @@ from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
 from .mcmc import barker
 from .mcmc import dynamic_hmc as _dynamic_hmc
-from .mcmc import elliptical_slice, ghmc
+from .mcmc import elliptical_slice as _elliptical_slice
+from .mcmc import ghmc as _ghmc
 from .mcmc import hmc as _hmc
-from .mcmc import mala, marginal_latent_gaussian, mclmc
+from .mcmc import mala as _mala
+from .mcmc import marginal_latent_gaussian
+from .mcmc import mclmc as _mclmc
 from .mcmc import nuts as _nuts
-from .mcmc import periodic_orbital, random_walk, rmhmc
+from .mcmc import periodic_orbital, random_walk
+from .mcmc import rmhmc as _rmhmc
 from .mcmc.random_walk import additive_step_random_walk as _additive_step_random_walk
 from .mcmc.random_walk import (
     irmh_as_top_level_api,
@@ -25,7 +29,10 @@ from .mcmc.random_walk import (
     rmh_as_top_level_api,
 )
 from .optimizers import dual_averaging, lbfgs
-from .sgmcmc import csgld, sghmc, sgld, sgnht
+from .sgmcmc import csgld as _csgld
+from .sgmcmc import sghmc as _sghmc
+from .sgmcmc import sgld as _sgld
+from .sgmcmc import sgnht as _sgnht
 from .smc import adaptive_tempered
 from .smc import inner_kernel_tuning as _inner_kernel_tuning
 from .smc import tempered
@@ -90,8 +97,8 @@ irmh = GenerateSamplingAPI(
     irmh_as_top_level_api, random_walk.init, random_walk.build_irmh
 )
 dynamic_hmc = generate_top_level_api_from(_dynamic_hmc)
-rmhmc = generate_top_level_api_from(rmhmc)
-mala = generate_top_level_api_from(mala)
+rmhmc = generate_top_level_api_from(_rmhmc)
+mala = generate_top_level_api_from(_mala)
 mgrad_gaussian = generate_top_level_api_from(marginal_latent_gaussian)
 orbital_hmc = generate_top_level_api_from(periodic_orbital)
 
@@ -101,9 +108,9 @@ additive_step_random_walk = GenerateSamplingAPI(
 
 additive_step_random_walk.register_factory("normal_random_walk", normal_random_walk)
 
-mclmc = generate_top_level_api_from(mclmc)
-elliptical_slice = generate_top_level_api_from(elliptical_slice)
-ghmc = generate_top_level_api_from(ghmc)
+mclmc = generate_top_level_api_from(_mclmc)
+elliptical_slice = generate_top_level_api_from(_elliptical_slice)
+ghmc = generate_top_level_api_from(_ghmc)
 barker_proposal = generate_top_level_api_from(barker)
 
 hmc_family = [hmc, nuts]
@@ -117,10 +124,10 @@ smc_family = [tempered_smc, adaptive_tempered_smc]
 "Step_fn returning state has a .particles attribute"
 
 # stochastic gradient mcmc
-sgld = generate_top_level_api_from(sgld)
-sghmc = generate_top_level_api_from(sghmc)
-sgnht = generate_top_level_api_from(sgnht)
-csgld = generate_top_level_api_from(csgld)
+sgld = generate_top_level_api_from(_sgld)
+sghmc = generate_top_level_api_from(_sghmc)
+sgnht = generate_top_level_api_from(_sgnht)
+csgld = generate_top_level_api_from(_csgld)
 svgd = generate_top_level_api_from(_svgd)
 
 # variational inference
