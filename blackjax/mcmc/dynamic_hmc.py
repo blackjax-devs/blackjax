@@ -28,6 +28,7 @@ __all__ = [
     "init",
     "build_kernel",
     "halton_sequence",
+    "as_top_level_api"
 ]
 
 
