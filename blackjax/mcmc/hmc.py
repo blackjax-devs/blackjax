@@ -29,7 +29,7 @@ __all__ = [
     "HMCInfo",
     "init",
     "build_kernel",
-    "as_sampling_algorithm",
+    "as_top_level_api",
 ]
 
 
@@ -150,7 +150,7 @@ def build_kernel(
     return kernel
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     logdensity_fn: Callable,
     step_size: float,
     inverse_mass_matrix: metrics.MetricTypes,

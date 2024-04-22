@@ -10,7 +10,7 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree
 
 __all__ = [
-    "as_sampling_algorithm",
+    "as_top_level_api",
     "init",
     "build_kernel",
     "rbf_kernel",
@@ -129,7 +129,7 @@ def update_median_heuristic(state: SVGDState) -> SVGDState:
     return SVGDState(position, median_heuristic(kernel_parameters, position), opt_state)
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     grad_logdensity_fn: Callable,
     optimizer,
     kernel: Callable = rbf_kernel,

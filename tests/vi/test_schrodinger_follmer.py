@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import jax.scipy.stats as stats
 from absl.testing import absltest
 
-from blackjax.vi.schrodinger_follmer import as_vi_algorithm
+from blackjax.vi.schrodinger_follmer import as_top_level_api as schrodinger_follmer
 
 
 class SchrodingerFollmerTest(chex.TestCase):
@@ -67,7 +67,7 @@ class SchrodingerFollmerTest(chex.TestCase):
             observed, prior_mu, prior_prec, true_prec
         )
 
-        schrodinger_follmer_algo = as_vi_algorithm(logp_model, 50, 25)
+        schrodinger_follmer_algo = schrodinger_follmer(logp_model, 50, 25)
 
         initial_state = schrodinger_follmer_algo.init(initial_position)
         schrodinger_follmer_algo_sample = self.variant(

@@ -27,7 +27,7 @@ __all__ = [
     "MarginalInfo",
     "init",
     "build_kernel",
-    "as_sampling_algorithm",
+    "as_top_level_api",
 ]
 
 
@@ -212,7 +212,7 @@ def build_kernel(cov_svd: CovarianceSVD):
     return kernel
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     logdensity_fn: Callable,
     covariance: Optional[Array] = None,
     mean: Optional[Array] = None,

@@ -21,7 +21,7 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.smc.base import SMCState
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["TemperedSMCState", "init", "build_kernel", "as_sampling_algorithm"]
+__all__ = ["TemperedSMCState", "init", "build_kernel", "as_top_level_api"]
 
 
 class TemperedSMCState(NamedTuple):
@@ -156,7 +156,7 @@ def build_kernel(
     return kernel
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     mcmc_step_fn: Callable,

@@ -23,7 +23,7 @@ import blackjax.smc.tempered as tempered
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, PRNGKey
 
-__all__ = ["build_kernel", "init", "as_sampling_algorithm"]
+__all__ = ["build_kernel", "init", "as_top_level_api"]
 
 
 def build_kernel(
@@ -106,7 +106,7 @@ def build_kernel(
 init = tempered.init
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     mcmc_step_fn: Callable,

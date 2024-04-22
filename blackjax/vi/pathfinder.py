@@ -25,7 +25,7 @@ from blackjax.optimizers.lbfgs import (
 )
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["PathfinderState", "approximate", "sample", "as_pathfinder_algorithm"]
+__all__ = ["PathfinderState", "approximate", "sample", "as_top_level_api"]
 
 
 class PathfinderState(NamedTuple):
@@ -242,7 +242,7 @@ def sample(
         return jax.vmap(unravel_fn)(phi), logq
 
 
-def as_pathfinder_algorithm(logdensity_fn: Callable) -> PathFinderAlgorithm:
+def as_top_level_api(logdensity_fn: Callable) -> PathFinderAlgorithm:
     """Implements the (basic) user interface for the pathfinder kernel.
 
     Pathfinder locates normal approximations to the target density along a

@@ -76,7 +76,7 @@ def build_kernel(
     return kernel
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     smc_algorithm,
     logprior_fn: Callable,
     loglikelihood_fn: Callable,

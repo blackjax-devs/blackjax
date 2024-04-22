@@ -20,9 +20,9 @@ from .mcmc import nuts as _nuts
 from .mcmc import periodic_orbital, random_walk, rmhmc
 from .mcmc.random_walk import additive_step_random_walk as _additive_step_random_walk
 from .mcmc.random_walk import (
-    irmh_as_sampling_algorithm,
+    irmh_as_top_level_api,
     normal_random_walk,
-    rmh_as_sampling_algorithm,
+    rmh_as_top_level_api,
 )
 from .optimizers import dual_averaging, lbfgs
 from .sgmcmc import csgld, sghmc, sgld, sgnht
@@ -43,104 +43,102 @@ level to be mostly functional programming in nature and reducing boilerplate cod
 
 
 @dataclasses.dataclass
-class SamplingAlgorithmFactories:
-    differentiable_callable: Callable
+class GenerateSamplingAPI:
+    differentiable: Callable
     init: Callable
     build_kernel: Callable
 
     def __call__(self, *args, **kwargs) -> SamplingAlgorithm:
-        return self.differentiable_callable(*args, **kwargs)
+        return self.differentiable(*args, **kwargs)
 
     def register_factory(self, name, callable):
         setattr(self, name, callable)
 
 
 @dataclasses.dataclass
-class VIAlgorithmFactories:
-    differentiable_callable: Callable
+class GenerateVariationalAPI:
+    differentiable: Callable
     init: Callable
     step: Callable
     sample: Callable
 
     def __call__(self, *args, **kwargs) -> VIAlgorithm:
-        return self.differentiable_callable(*args, **kwargs)
+        return self.differentiable(*args, **kwargs)
 
 
 @dataclasses.dataclass
-class PathfinderAlgorithmFactories:
-    differentiable_callable: Callable
+class GeneratePathfinderAPI:
+    differentiable: Callable
     approximate: Callable
     sample: Callable
 
     def __call__(self, *args, **kwargs) -> PathFinderAlgorithm:
-        return self.differentiable_callable(*args, **kwargs)
+        return self.differentiable(*args, **kwargs)
 
 
-def sampling_factory_from_module(module):
-    return SamplingAlgorithmFactories(
-        module.as_sampling_algorithm, module.init, module.build_kernel
+def generate_top_level_api_from(module):
+    return GenerateSamplingAPI(
+        module.as_top_level_api, module.init, module.build_kernel
     )
 
 
 # MCMC
-hmc = sampling_factory_from_module(_hmc)
-nuts = sampling_factory_from_module(_nuts)
-rmh = SamplingAlgorithmFactories(
-    rmh_as_sampling_algorithm, random_walk.init, random_walk.build_rmh
+hmc = generate_top_level_api_from(_hmc)
+nuts = generate_top_level_api_from(_nuts)
+rmh = GenerateSamplingAPI(rmh_as_top_level_api, random_walk.init, random_walk.build_rmh)
+irmh = GenerateSamplingAPI(
+    irmh_as_top_level_api, random_walk.init, random_walk.build_irmh
 )
-irmh = SamplingAlgorithmFactories(
-    irmh_as_sampling_algorithm, random_walk.init, random_walk.build_irmh
-)
-dynamic_hmc = sampling_factory_from_module(_dynamic_hmc)
-rmhmc = sampling_factory_from_module(rmhmc)
-mala = sampling_factory_from_module(mala)
-mgrad_gaussian = sampling_factory_from_module(marginal_latent_gaussian)
-orbital_hmc = sampling_factory_from_module(periodic_orbital)
+dynamic_hmc = generate_top_level_api_from(_dynamic_hmc)
+rmhmc = generate_top_level_api_from(rmhmc)
+mala = generate_top_level_api_from(mala)
+mgrad_gaussian = generate_top_level_api_from(marginal_latent_gaussian)
+orbital_hmc = generate_top_level_api_from(periodic_orbital)
 
-additive_step_random_walk = SamplingAlgorithmFactories(
+additive_step_random_walk = GenerateSamplingAPI(
     _additive_step_random_walk, random_walk.init, random_walk.build_additive_step
 )
 
 additive_step_random_walk.register_factory("normal_random_walk", normal_random_walk)
 
-mclmc = sampling_factory_from_module(mclmc)
-elliptical_slice = sampling_factory_from_module(elliptical_slice)
-ghmc = sampling_factory_from_module(ghmc)
-barker_proposal = sampling_factory_from_module(barker)
+mclmc = generate_top_level_api_from(mclmc)
+elliptical_slice = generate_top_level_api_from(elliptical_slice)
+ghmc = generate_top_level_api_from(ghmc)
+barker_proposal = generate_top_level_api_from(barker)
 
 hmc_family = [hmc, nuts]
 
 # SMC
-adaptive_tempered_smc = sampling_factory_from_module(adaptive_tempered)
-tempered_smc = sampling_factory_from_module(tempered)
-inner_kernel_tuning = sampling_factory_from_module(_inner_kernel_tuning)
+adaptive_tempered_smc = generate_top_level_api_from(adaptive_tempered)
+tempered_smc = generate_top_level_api_from(tempered)
+inner_kernel_tuning = generate_top_level_api_from(_inner_kernel_tuning)
 
 smc_family = [tempered_smc, adaptive_tempered_smc]
 "Step_fn returning state has a .particles attribute"
 
 # stochastic gradient mcmc
-sgld = sampling_factory_from_module(sgld)
-sghmc = sampling_factory_from_module(sghmc)
-sgnht = sampling_factory_from_module(sgnht)
-csgld = sampling_factory_from_module(csgld)
-svgd = sampling_factory_from_module(_svgd)
+sgld = generate_top_level_api_from(sgld)
+sghmc = generate_top_level_api_from(sghmc)
+sgnht = generate_top_level_api_from(sgnht)
+csgld = generate_top_level_api_from(csgld)
+svgd = generate_top_level_api_from(_svgd)
 
 # variational inference
-meanfield_vi = VIAlgorithmFactories(
-    _meanfield_vi.as_vi_algorithm,
+meanfield_vi = GenerateVariationalAPI(
+    _meanfield_vi.as_top_level_api,
     _meanfield_vi.init,
     _meanfield_vi.step,
     _meanfield_vi.sample,
 )
-schrodinger_follmer = VIAlgorithmFactories(
-    _schrodinger_follmer.as_vi_algorithm,
+schrodinger_follmer = GenerateVariationalAPI(
+    _schrodinger_follmer.as_top_level_api,
     _schrodinger_follmer.init,
     _schrodinger_follmer.step,
     _schrodinger_follmer.sample,
 )
 
-pathfinder = PathfinderAlgorithmFactories(
-    _pathfinder.as_pathfinder_algorithm, _pathfinder.approximate, _pathfinder.sample
+pathfinder = GeneratePathfinderAPI(
+    _pathfinder.as_top_level_api, _pathfinder.approximate, _pathfinder.sample
 )
 
 

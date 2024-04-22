@@ -27,7 +27,7 @@ __all__ = [
     "sample",
     "generate_meanfield_logdensity",
     "step",
-    "as_vi_algorithm",
+    "as_top_level_api",
 ]
 
 
@@ -109,7 +109,7 @@ def sample(rng_key: PRNGKey, state: MFVIState, num_samples: int = 1):
     return _sample(rng_key, state.mu, state.rho, num_samples)
 
 
-def as_vi_algorithm(
+def as_top_level_api(
     logdensity_fn: Callable,
     optimizer: GradientTransformation,
     num_samples: int = 100,

@@ -181,7 +181,7 @@ def _log_fn_corrected(position, logdensity_fn):
     return log_pdf_val + norm
 
 
-def as_vi_algorithm(logdensity_fn: Callable, n_steps: int, n_inner_samples: int) -> VIAlgorithm:  # type: ignore[misc]
+def as_top_level_api(logdensity_fn: Callable, n_steps: int, n_inner_samples: int) -> VIAlgorithm:  # type: ignore[misc]
     """Implements the (basic) user interface for the Schrödinger-Föllmer algortithm :cite:p:`huang2021schrodingerfollmer`.
 
     The Schrödinger-Föllmer algorithm obtains (approximate) samples from the target distribution by means of a diffusion with

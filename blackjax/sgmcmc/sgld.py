@@ -18,7 +18,7 @@ import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["init", "build_kernel", "as_sampling_algorithm"]
+__all__ = ["init", "build_kernel", "as_top_level_api"]
 
 
 def init(position: ArrayLikeTree) -> ArrayLikeTree:
@@ -47,7 +47,7 @@ def build_kernel() -> Callable:
     return kernel
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     grad_estimator: Callable,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the SGLD kernel.

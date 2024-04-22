@@ -80,8 +80,8 @@ __all__ = [
     "rmh_proposal",
     "build_rmh_transition_energy",
     "additive_step_random_walk",
-    "irmh_as_sampling_algorithm",
-    "rmh_as_sampling_algorithm",
+    "irmh_as_top_level_api",
+    "rmh_as_top_level_api",
     "normal_random_walk",
 ]
 
@@ -293,7 +293,7 @@ def build_irmh() -> Callable:
     return kernel
 
 
-def irmh_as_sampling_algorithm(
+def irmh_as_top_level_api(
     logdensity_fn: Callable,
     proposal_distribution: Callable,
     proposal_logdensity_fn: Optional[Callable] = None,
@@ -410,7 +410,7 @@ def build_rmh():
     return kernel
 
 
-def rmh_as_sampling_algorithm(
+def rmh_as_top_level_api(
     logdensity_fn: Callable,
     proposal_generator: Callable[[PRNGKey, ArrayLikeTree], ArrayTree],
     proposal_logdensity_fn: Optional[Callable[[ArrayLikeTree], ArrayTree]] = None,

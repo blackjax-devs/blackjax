@@ -26,7 +26,7 @@ __all__ = [
     "EllipSliceInfo",
     "init",
     "build_kernel",
-    "as_sampling_algorithm",
+    "as_top_level_api",
 ]
 
 
@@ -119,7 +119,7 @@ def build_kernel(cov_matrix: Array, mean: Array):
     return kernel
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     loglikelihood_fn: Callable,
     *,
     mean: Array,

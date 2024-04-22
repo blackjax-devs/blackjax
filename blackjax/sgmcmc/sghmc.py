@@ -21,7 +21,7 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["init", "build_kernel", "as_sampling_algorithm"]
+__all__ = ["init", "build_kernel", "as_top_level_api"]
 
 
 def init(position: ArrayLikeTree) -> ArrayLikeTree:
@@ -58,7 +58,7 @@ def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
     return kernel
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     grad_estimator: Callable,
     num_integration_steps: int = 10,
     alpha: float = 0.01,

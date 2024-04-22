@@ -20,14 +20,14 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc import hmc
 from blackjax.types import ArrayTree, PRNGKey
 
-__all__ = ["init", "build_kernel", "as_sampling_algorithm"]
+__all__ = ["init", "build_kernel", "as_top_level_api"]
 
 
 init = hmc.init
 build_kernel = hmc.build_kernel
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     logdensity_fn: Callable,
     step_size: float,
     mass_matrix: Union[metrics.Metric, Callable],

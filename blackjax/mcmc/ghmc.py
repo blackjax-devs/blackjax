@@ -25,7 +25,7 @@ from blackjax.mcmc.proposal import nonreversible_slice_sampling
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["GHMCState", "init", "build_kernel", "as_sampling_algorithm"]
+__all__ = ["GHMCState", "init", "build_kernel", "as_top_level_api"]
 
 
 class GHMCState(NamedTuple):
@@ -195,7 +195,7 @@ def update_momentum(rng_key, state, alpha, momentum_generator):
     return momentum
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     logdensity_fn: Callable,
     step_size: float,
     momentum_inverse_scale: ArrayLikeTree,

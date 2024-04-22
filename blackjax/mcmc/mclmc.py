@@ -24,7 +24,7 @@ from blackjax.mcmc.integrators import IntegratorState, isokinetic_mclachlan
 from blackjax.types import ArrayLike, PRNGKey
 from blackjax.util import generate_unit_vector, pytree_size
 
-__all__ = ["MCLMCInfo", "init", "build_kernel", "as_sampling_algorithm"]
+__all__ = ["MCLMCInfo", "init", "build_kernel", "as_top_level_api"]
 
 
 class MCLMCInfo(NamedTuple):
@@ -103,7 +103,7 @@ def build_kernel(logdensity_fn, integrator):
     return kernel
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     logdensity_fn: Callable,
     L,
     step_size,

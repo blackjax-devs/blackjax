@@ -24,7 +24,7 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.proposal import static_binomial_sampling
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["BarkerState", "BarkerInfo", "init", "build_kernel", "as_sampling_algorithm"]
+__all__ = ["BarkerState", "BarkerInfo", "init", "build_kernel", "as_top_level_api"]
 
 
 class BarkerState(NamedTuple):
@@ -128,7 +128,7 @@ def build_kernel():
     return kernel
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     logdensity_fn: Callable,
     step_size: float,
 ) -> SamplingAlgorithm:

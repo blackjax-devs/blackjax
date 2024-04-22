@@ -23,7 +23,7 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.sgmcmc.diffusions import overdamped_langevin
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["ContourSGLDState", "init", "build_kernel", "as_sampling_algorithm"]
+__all__ = ["ContourSGLDState", "init", "build_kernel", "as_top_level_api"]
 
 
 class ContourSGLDState(NamedTuple):
@@ -174,7 +174,7 @@ def build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
     return kernel
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     logdensity_estimator: Callable,
     gradient_estimator: Callable,
     zeta: float = 1,

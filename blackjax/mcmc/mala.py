@@ -23,7 +23,7 @@ import blackjax.mcmc.proposal as proposal
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["MALAState", "MALAInfo", "init", "build_kernel", "as_sampling_algorithm"]
+__all__ = ["MALAState", "MALAInfo", "init", "build_kernel", "as_top_level_api"]
 
 
 class MALAState(NamedTuple):
@@ -117,7 +117,7 @@ def build_kernel():
     return kernel
 
 
-def as_sampling_algorithm(
+def as_top_level_api(
     logdensity_fn: Callable,
     step_size: float,
 ) -> SamplingAlgorithm:
