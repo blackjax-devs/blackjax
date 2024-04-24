@@ -1,0 +1,15 @@
+module load cudatoolkit/12.2
+module load cudnn/8.9.3_cuda12
+module load python
+
+conda create -n black python=3.11 pip numpy scipy pandas matplotlib
+
+conda activate black
+
+pip install --upgrade "jax[cuda12_local]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+# in the blackjax directory:
+
+pip install -r requirements.txt
+pip install -e .
+
