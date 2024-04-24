@@ -74,8 +74,8 @@ def run_mclmc(coefficients, logdensity_fn, num_steps, initial_position, transfor
         num_steps=num_steps,
         state=initial_state,
         rng_key=tune_key,
-        # frac_tune3=0.0,
-        diagonal_preconditioning=False
+        diagonal_preconditioning=True,
+        desired_energy_var= 1e-5
     )
 
     # jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.L, blackjax_mclmc_sampler_params.step_size))

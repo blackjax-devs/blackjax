@@ -139,6 +139,7 @@ def run_mhmclmc_no_tuning(initial_state, coefficients, step_size, L, std_mat):
 
 def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.average,):
 
+    pvmap = jax.pmap
     
     d = get_num_latents(model)
     if batch is None:
@@ -147,18 +148,17 @@ def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.av
     keys = jax.random.split(key, batch)
 
     init_keys = jax.random.split(init_key, batch)
-    init_pos = jax.vmap(model.sample_init)(init_keys)
+    init_pos = pvmap(model.sample_init)(init_keys)
 
     # samples, params, avg_num_steps_per_traj = jax.pmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
-    samples, params, grad_calls_per_traj, acceptance_rate = jax.vmap(lambda pos, key: sampler(logdensity_fn=model.logdensity_fn, num_steps=n, initial_position= pos,transform= model.transform, key=key))(init_pos, keys)
+    samples, params, grad_calls_per_traj, acceptance_rate = pvmap(lambda pos, key: sampler(logdensity_fn=model.logdensity_fn, num_steps=n, initial_position= pos,transform= model.transform, key=key))(init_pos, keys)
     avg_grad_calls_per_traj = jnp.nanmean(grad_calls_per_traj, axis=0)
     try:
         print(jnp.nanmean(params.step_size,axis=0), jnp.nanmean(params.L,axis=0))
     except: pass
     
     full = lambda arr : err(model.E_x2, model.Var_x2, contract)(cumulative_avg(arr))
-    err_t = jax.vmap(full)(samples**2)
-
+    err_t = pvmap(full)(samples**2)
 
     # outs = [calculate_ess(b, grad_evals_per_step=avg_grad_calls_per_traj) for b in err_t]
     # # print(outs[:10])
@@ -168,6 +168,14 @@ def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.av
 
 
     err_t_median = jnp.median(err_t, axis=0)
+    import matplotlib.pyplot as plt
+    plt.plot(np.arange(1, 1+ len(err_t_median))* 2, err_t_median, color= 'teal', lw = 3)
+    plt.xlabel('gradient evaluations')
+    plt.ylabel('average second moment error')
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.savefig('brownian.png')
+    plt.close()
     esses, grad_calls, _ = calculate_ess(err_t_median, grad_evals_per_step=avg_grad_calls_per_traj)
     return esses, grad_calls, params, acceptance_rate.mean().item()
 
@@ -179,7 +187,7 @@ def run_benchmarks(batch_size):
     results = defaultdict(tuple)
     for variables in itertools.product(
         # ["mhmclmc", "nuts", "mclmc", ], 
-        ["mhmclmc"], 
+        ["mclmc"], 
         # [StandardNormal(d) for d in np.ceil(np.logspace(np.log10(10), np.log10(10000), 10)).astype(int)],
         # [StandardNormal(500)],
         [Brownian()],
@@ -188,17 +196,17 @@ def run_benchmarks(batch_size):
         ):
 
         sampler, model, coefficients = variables
-        num_chains = 1 + batch_size//model.ndims
+        num_chains = batch_size#1 + batch_size//model.ndims
 
         print(f"\nModel: {model.name,model.ndims}, Sampler: {sampler}\n Coefficients: {coefficients}\nNumber of chains {num_chains}",) 
 
         key = jax.random.PRNGKey(11)
         for i in range(1):
             key1, key = jax.random.split(key)
-            ess, grad_calls, _ , acceptance_rate = benchmark_chains(model, partial(samplers[sampler], coefficients=coefficients),key1, n=100000, batch=num_chains, contract=jnp.max)
+            ess, grad_calls, _ , acceptance_rate = benchmark_chains(model, partial(samplers[sampler], coefficients=coefficients),key1, n=10**6, batch=num_chains, contract=jnp.average)
 
             print(f"grads to low bias: {grad_calls}")
-            print(f"acceptance rate is {acceptance_rate, acceptance_rate.mean()}")
+            #print(f"acceptance rate is {acceptance_rate, acceptance_rate.mean()}")
 
             results[((model.name, model.ndims), sampler, name_integrator(coefficients))] = (ess, grad_calls) 
 
@@ -420,8 +428,8 @@ def benchmark_omelyan(batch_size):
 if __name__ == "__main__":
 
     # benchmark_mhmchmc(batch_size=5000)
-    # run_benchmarks(1000)
-    benchmark_omelyan(10)
+    run_benchmarks(128)
+    #benchmark_omelyan(10)
     # print("4")
 
 

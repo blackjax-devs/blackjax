@@ -3,7 +3,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import os
-import numpyro.distributions as dist
+#import numpyro.distributions as dist
 dirr = os.path.dirname(os.path.realpath(__file__))
 
 
