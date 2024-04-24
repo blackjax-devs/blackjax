@@ -93,16 +93,16 @@ def base():
         of the generalized HMC algorithm.
 
         """
-        mean_position = jax.tree_map(lambda p: p.mean(axis=0), positions)
-        sd_position = jax.tree_map(lambda p: p.std(axis=0), positions)
-        normalized_positions = jax.tree_map(
+        mean_position = jax.tree.map(lambda p: p.mean(axis=0), positions)
+        sd_position = jax.tree.map(lambda p: p.std(axis=0), positions)
+        normalized_positions = jax.tree.map(
             lambda p, mu, sd: (p - mu) / sd,
             positions,
             mean_position,
             sd_position,
         )
 
-        batch_grad_scaled = jax.tree_map(
+        batch_grad_scaled = jax.tree.map(
             lambda grad, sd: grad * sd, logdensity_grad, sd_position
         )
 

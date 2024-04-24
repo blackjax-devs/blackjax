@@ -7,6 +7,7 @@ from jax.scipy.stats import multivariate_normal
 import blackjax
 from blackjax import adaptive_tempered_smc
 from blackjax.mcmc.random_walk import normal
+from blackjax.smc import extend_params
 
 
 class SMCAndMCMCIntegrationTest(unittest.TestCase):
@@ -18,8 +19,9 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
     def setUp(self):
         super().setUp()
         self.key = jax.random.key(42)
+        self.n_particles = 3
         self.initial_particles = jax.random.multivariate_normal(
-            self.key, jnp.zeros(2), jnp.eye(2), (3,)
+            self.key, jnp.zeros(2), jnp.eye(2), (self.n_particles,)
         )
 
     def check_compatible(self, mcmc_step_fn, mcmc_init_fn, mcmc_parameters):
@@ -40,54 +42,82 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
         kernel(self.key, init(self.initial_particles))
 
     def test_compatible_with_rwm(self):
+        rwm = blackjax.additive_step_random_walk.build_kernel()
+
+        def kernel(rng_key, state, logdensity_fn, proposal_mean):
+            return rwm(rng_key, state, logdensity_fn, normal(proposal_mean))
+
         self.check_compatible(
-            blackjax.additive_step_random_walk.build_kernel(),
+            kernel,
             blackjax.additive_step_random_walk.init,
-            {"random_step": normal(1.0)},
+            extend_params(self.n_particles, {"proposal_mean": 1.0}),
         )
 
     def test_compatible_with_rmh(self):
+        rmh = blackjax.rmh.build_kernel()
+
+        def kernel(
+            rng_key, state, logdensity_fn, proposal_mean, proposal_logdensity_fn=None
+        ):
+            return rmh(
+                rng_key,
+                state,
+                logdensity_fn,
+                lambda a, b: blackjax.mcmc.random_walk.normal(proposal_mean)(a, b),
+                proposal_logdensity_fn,
+            )
+
         self.check_compatible(
-            blackjax.rmh.build_kernel(),
+            kernel,
             blackjax.rmh.init,
-            {
-                "transition_generator": lambda a, b: blackjax.mcmc.random_walk.normal(
-                    1.0
-                )(a, b)
-            },
+            extend_params(self.n_particles, {"proposal_mean": 1.0}),
         )
 
     def test_compatible_with_hmc(self):
         self.check_compatible(
             blackjax.hmc.build_kernel(),
             blackjax.hmc.init,
-            {
-                "step_size": 0.3,
-                "inverse_mass_matrix": jnp.array([1]),
-                "num_integration_steps": 1,
-            },
+            extend_params(
+                self.n_particles,
+                {
+                    "step_size": 0.3,
+                    "inverse_mass_matrix": jnp.array([1.0]),
+                    "num_integration_steps": 1,
+                },
+            ),
         )
 
     def test_compatible_with_irmh(self):
+        def kernel(rng_key, state, logdensity_fn, mean, proposal_logdensity_fn=None):
+            return blackjax.irmh.build_kernel()(
+                rng_key,
+                state,
+                logdensity_fn,
+                lambda key: mean + jax.random.normal(key),
+                proposal_logdensity_fn,
+            )
+
         self.check_compatible(
-            blackjax.irmh.build_kernel(),
+            kernel,
             blackjax.irmh.init,
-            {
-                "proposal_distribution": lambda key: jnp.array([1.0, 1.0])
-                + jax.random.normal(key)
-            },
+            extend_params(self.n_particles, {"mean": jnp.array([1.0, 1.0])}),
         )
 
     def test_compatible_with_nuts(self):
         self.check_compatible(
             blackjax.nuts.build_kernel(),
             blackjax.nuts.init,
-            {"step_size": 1e-10, "inverse_mass_matrix": jnp.eye(2)},
+            extend_params(
+                self.n_particles,
+                {"step_size": 1e-10, "inverse_mass_matrix": jnp.eye(2)},
+            ),
         )
 
     def test_compatible_with_mala(self):
         self.check_compatible(
-            blackjax.mala.build_kernel(), blackjax.mala.init, {"step_size": 1e-10}
+            blackjax.mala.build_kernel(),
+            blackjax.mala.init,
+            extend_params(self.n_particles, {"step_size": 1e-10}),
         )
 
     @staticmethod

@@ -241,6 +241,60 @@ def base(
 
     return init, update, final
 
+def da_adaptation(
+    rng_key: PRNGKey,
+    initial_position,
+    algorithm: Union[mcmc.hmc.hmc, mcmc.nuts.nuts],
+    logdensity_fn: Callable,
+    num_steps: int = 1000,
+    initial_step_size: float = 1.0,
+    target_acceptance_rate: float = 0.80,
+    progress_bar: bool = False,
+    integrator = mcmc.integrators.velocity_verlet,
+    ):
+    
+    da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
+
+    kernel = algorithm.build_kernel(integrator=integrator)
+    init_kernel_state = algorithm.init(initial_position, logdensity_fn)
+    inverse_mass_matrix = jnp.ones(pytree_size(initial_position))
+    
+    def step(state, key):
+
+
+        adaptation_state, kernel_state = state
+
+        new_kernel_state, info = kernel(
+            key,
+            kernel_state,
+            logdensity_fn,
+            jnp.exp(adaptation_state.log_step_size),
+            inverse_mass_matrix)
+
+        new_adaptation_state = da_update(
+            adaptation_state,
+            info.acceptance_rate,
+        )
+
+        return (
+            (new_adaptation_state, new_kernel_state),
+            (True),
+            )
+
+    keys = jax.random.split(rng_key, num_steps)
+    init_state = da_init(initial_step_size), init_kernel_state
+    (adaptation_state, kernel_state), _ = jax.lax.scan(
+            step,
+            init_state,
+            keys,
+        )
+    # print(adaptation_state, "adaptation_state\n\n")
+    return kernel_state, {"step_size" : da_final(adaptation_state), "inverse_mass_matrix" : inverse_mass_matrix}
+
+
+
+
+
 
 def window_adaptation(
     algorithm: Union[mcmc.hmc.hmc, mcmc.nuts.nuts],
@@ -249,6 +303,7 @@ def window_adaptation(
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
     progress_bar: bool = False,
+    integrator = mcmc.integrators.velocity_verlet,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the value of the inverse mass matrix and step size parameters of
@@ -289,7 +344,7 @@ def window_adaptation(
 
     """
 
-    mcmc_kernel = algorithm.build_kernel()
+    mcmc_kernel = algorithm.build_kernel(integrator)
 
     adapt_init, adapt_step, adapt_final = base(
         is_mass_matrix_diagonal,

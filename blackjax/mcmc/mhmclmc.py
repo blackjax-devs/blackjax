@@ -42,10 +42,11 @@ def init(
     return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
 
 def build_kernel(
+    integration_steps_fn,
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
-    integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+    std_mat=1.,
 ):
     """Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
@@ -75,7 +76,6 @@ def build_kernel(
         logdensity_fn: Callable,
         step_size: float,
         L_proposal : float = 1.0,
-        std_mat=1.,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
         
@@ -92,7 +92,7 @@ def build_kernel(
 
         proposal, info, _ = mhmclmc_proposal(
             # integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
-            lambda state, step_size, x, y : (integrator(logdensity_fn, std_mat))(state, step_size),
+            lambda state, step_size, L_prop, key : (integrator(logdensity_fn, std_mat))(state, step_size),
             step_size,
             L_proposal,
             num_integration_steps,
@@ -151,6 +151,7 @@ class mhmclmc:
         logdensity_fn: Callable,
         step_size: float,
         L_proposal : float = 0.6,
+        std_mat=1.0,
         *,
         divergence_threshold: int = 1000,
         integrator: Callable = integrators.isokinetic_mclachlan,
@@ -158,7 +159,7 @@ class mhmclmc:
         integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
     ) -> SamplingAlgorithm:
         kernel = cls.build_kernel(
-            integrator, divergence_threshold, next_random_arg_fn, integration_steps_fn
+            integration_steps_fn=integration_steps_fn, integrator=integrator, divergence_threshold=divergence_threshold, next_random_arg_fn=next_random_arg_fn, std_mat=std_mat
         )
 
         def init_fn(position: ArrayLikeTree, rng_key: Array):
@@ -179,7 +180,7 @@ class mhmclmc:
 def mhmclmc_proposal(
     integrator: Callable,
     step_size: Union[float, ArrayLikeTree],
-    L: float,
+    L_proposal: float,
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,
     *,
@@ -215,8 +216,7 @@ def mhmclmc_proposal(
     def step(i, vars):
         state, kinetic_energy, rng_key = vars
         rng_key, next_rng_key = jax.random.split(rng_key)
-        next_state, next_kinetic_energy = integrator(state, step_size, L, rng_key)
-        # jax.debug.print("{x} pos, grad", x=(next_state.position, state.logdensity_grad))
+        next_state, next_kinetic_energy = integrator(state, step_size, L_proposal, rng_key)
 
         return next_state, kinetic_energy + next_kinetic_energy, next_rng_key
 

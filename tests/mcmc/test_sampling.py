@@ -27,12 +27,12 @@ def orbit_samples(orbits, weights, rng_key):
     return samples
 
 
-def irmh_proposal_distribution(rng_key):
+def irmh_proposal_distribution(rng_key, mean):
     """
     The proposal distribution is chosen to be wider than the target, so that the RMH rejection
     doesn't make the sample overemphasize the center of the target distribution.
     """
-    return 1.0 + jax.random.normal(rng_key) * 25.0
+    return mean + jax.random.normal(rng_key) * 25.0
 
 
 def rmh_proposal_distribution(rng_key, position):
@@ -459,7 +459,7 @@ class SGMCMCTest(chex.TestCase):
         _ = sghmc.step(rng_key, init_position, data_batch, 1e-3)
 
     def test_linear_regression_sgnht(self):
-        rng_key, data_key = jax.random.split(self.key, 2)
+        step_key, data_key = jax.random.split(self.key, 2)
 
         data_size = 1000
         X_data = jax.random.normal(data_key, shape=(data_size, 5))
@@ -469,15 +469,14 @@ class SGMCMCTest(chex.TestCase):
         )
         sgnht = blackjax.sgnht(grad_fn)
 
-        _, rng_key = jax.random.split(rng_key)
         data_batch = X_data[100:200, :]
         init_position = 1.0
         data_batch = X_data[:100, :]
         init_state = sgnht.init(init_position, self.key)
-        _ = sgnht.step(rng_key, init_state, data_batch, 1e-3)
+        _ = sgnht.step(step_key, init_state, data_batch, 1e-3)
 
     def test_linear_regression_sgnhtc_cv(self):
-        rng_key, data_key = jax.random.split(self.key, 2)
+        step_key, data_key = jax.random.split(self.key, 2)
 
         data_size = 1000
         X_data = jax.random.normal(data_key, shape=(data_size, 5))
@@ -492,11 +491,10 @@ class SGMCMCTest(chex.TestCase):
 
         sgnht = blackjax.sgnht(cv_grad_fn)
 
-        _, rng_key = jax.random.split(rng_key)
         init_position = 1.0
         data_batch = X_data[:100, :]
         init_state = sgnht.init(init_position, self.key)
-        _ = sgnht.step(rng_key, init_state, data_batch, 1e-3)
+        _ = sgnht.step(step_key, init_state, data_batch, 1e-3)
 
 
 class LatentGaussianTest(chex.TestCase):
@@ -659,7 +657,9 @@ class UnivariateNormalTest(chex.TestCase):
         self, algorithm, initial_position, parameters, num_sampling_steps, burnin
     ):
         if algorithm == blackjax.irmh:
-            parameters["proposal_distribution"] = irmh_proposal_distribution
+            parameters["proposal_distribution"] = functools.partial(
+                irmh_proposal_distribution, mean=1.0
+            )
 
         if algorithm == blackjax.rmh:
             parameters["proposal_generator"] = rmh_proposal_distribution
@@ -738,7 +738,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.key(20220203)
+        self.key = jax.random.key(8456)
 
     def generate_multivariate_target(self, rng=None):
         """Genrate a Multivariate Normal distribution as target."""
@@ -821,7 +821,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             true_scale[0] * true_scale[1]
         )
 
-        _ = jax.tree_map(
+        _ = jax.tree.map(
             self.mcse_test,
             [posterior_samples, posterior_variance, posterior_correlation],
             [true_loc, true_scale**2, true_rho],

@@ -3,7 +3,9 @@
 import jax
 import jax.numpy as jnp
 import blackjax
-from blackjax.mcmc.integrators import calls_per_integrator_step
+from blackjax.adaptation.mclmc_adaptation import MCLMCAdaptationState, integrator_order, target_acceptance_rate_of_order
+from blackjax.adaptation.window_adaptation import da_adaptation
+from blackjax.mcmc.integrators import calls_per_integrator_step, generate_euclidean_integrator, generate_isokinetic_integrator
 from blackjax.mcmc.mhmclmc import rescale
 from blackjax.util import run_inference_algorithm
 import blackjax
@@ -14,18 +16,25 @@ __all__ = ["samplers"]
 
 
 def run_nuts(
-    logdensity_fn, num_steps, initial_position, transform, key):
+    coefficients, logdensity_fn, num_steps, initial_position, transform, key):
     
-    integrator = blackjax.mcmc.integrators.velocity_verlet # note: defaulted to in nuts
-    warmup = blackjax.window_adaptation(blackjax.nuts, logdensity_fn)
+    integrator = generate_euclidean_integrator(coefficients)
+    # integrator = blackjax.mcmc.integrators.velocity_verlet # note: defaulted to in nuts
+    # warmup = blackjax.window_adaptation(blackjax.nuts, logdensity_fn, integrator=integrator)
 
     # we use 4 chains for sampling
     rng_key, warmup_key = jax.random.split(key, 2)
 
+    state, params = da_adaptation(
+        rng_key=warmup_key, 
+        initial_position=initial_position, 
+        algorithm=blackjax.nuts,
+        logdensity_fn=logdensity_fn)
+    
+    print(params["inverse_mass_matrix"], "inv\n\n")
+    # (state, params), _ = warmup.run(warmup_key, initial_position, 2000)
 
-    (state, params), _ = warmup.run(warmup_key, initial_position, 1000)
-
-    nuts = blackjax.nuts(logdensity_fn=logdensity_fn, step_size=params['step_size'], inverse_mass_matrix= params['inverse_mass_matrix'])
+    nuts = blackjax.nuts(logdensity_fn=logdensity_fn, step_size=params['step_size'], inverse_mass_matrix= params['inverse_mass_matrix'], integrator=integrator)
 
     final_state, state_history, info_history = run_inference_algorithm(
         rng_key=rng_key,
@@ -37,20 +46,23 @@ def run_nuts(
 
     # print("INFO\n\n",info_history.num_integration_steps)
 
-    return state_history, params, info_history.num_integration_steps.mean() * calls_per_integrator_step[integrator]
+    return state_history, params, info_history.num_integration_steps.mean() * calls_per_integrator_step(coefficients), info_history.acceptance_rate.mean()
 
-def run_mclmc(logdensity_fn, num_steps, initial_position, transform, key):
+def run_mclmc(coefficients, logdensity_fn, num_steps, initial_position, transform, key):
+
+    integrator = generate_isokinetic_integrator(coefficients)
+
     init_key, tune_key, run_key = jax.random.split(key, 3)
+
 
     initial_state = blackjax.mcmc.mclmc.init(
         position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
     )
 
-    integrator = blackjax.mcmc.integrators.isokinetic_mclachlan
+    
     kernel = lambda std_mat : blackjax.mcmc.mclmc.build_kernel(
         logdensity_fn=logdensity_fn,
         integrator=integrator,
-        # std_mat=jnp.ones((initial_position.shape[0],)),
         std_mat=std_mat,
     )
 
@@ -62,10 +74,11 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, transform, key):
         num_steps=num_steps,
         state=initial_state,
         rng_key=tune_key,
-        diagonal_preconditioning=True
+        # frac_tune3=0.0,
+        diagonal_preconditioning=False
     )
 
-    # jax.debug.print("params {x}", x=blackjax_mclmc_sampler_params)
+    # jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.L, blackjax_mclmc_sampler_params.step_size))
 
     sampling_alg = blackjax.mclmc(
         logdensity_fn,
@@ -73,6 +86,7 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, transform, key):
         step_size=blackjax_mclmc_sampler_params.step_size,
         std_mat=blackjax_mclmc_sampler_params.std_mat,
         integrator = integrator,
+
         # std_mat=jnp.ones((initial_position.shape[0],)),
     )
 
@@ -82,26 +96,26 @@ def run_mclmc(logdensity_fn, num_steps, initial_position, transform, key):
         inference_algorithm=sampling_alg,
         num_steps=num_steps,
         transform=lambda x: transform(x.position),
+        progress_bar=True,
     )
 
-    return samples, blackjax_mclmc_sampler_params, 2 #  calls_per_integrator_step[integrator]
+    acceptance_rate = 1.
+    return samples, blackjax_mclmc_sampler_params, calls_per_integrator_step(coefficients), acceptance_rate
 
 
-def run_mhmclmc(logdensity_fn, num_steps, initial_position, transform, key):
-
+def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transform, key):
+    integrator = generate_isokinetic_integrator(coefficients)
 
     init_key, tune_key, run_key = jax.random.split(key, 3)
-
 
     initial_state = blackjax.mcmc.mhmclmc.init(
         position=initial_position, logdensity_fn=logdensity_fn, random_generator_arg=init_key
     )
-    
-    integrator = blackjax.mcmc.integrators.isokinetic_mclachlan
 
-    kernel = lambda rng_key, state, avg_num_integration_steps, step_size: blackjax.mcmc.mhmclmc.build_kernel(
+    kernel = lambda rng_key, state, avg_num_integration_steps, step_size, std_mat: blackjax.mcmc.mhmclmc.build_kernel(
                 integrator=integrator,
-                integration_steps_fn = lambda k : jnp.ceil(jax.random.uniform(k) * rescale(avg_num_integration_steps))
+                integration_steps_fn = lambda k : jnp.ceil(jax.random.uniform(k) * rescale(avg_num_integration_steps)),
+                std_mat=std_mat,
             )(
                 rng_key=rng_key, 
                 state=state, 
@@ -116,30 +130,29 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, transform, key):
         num_steps=num_steps,
         state=initial_state,
         rng_key=tune_key,
-        # frac_tune2=0,
-        frac_tune3=0,
-        # params=MCLMCAdaptationState(L=16.765137, step_size=1.005)
+        target=target_acceptance_rate_of_order[integrator_order(coefficients)],
+        frac_tune1=0.1,
+        frac_tune2=0.1,
+        frac_tune3=0.0,
+        diagonal_preconditioning=False,
     )
 
-    # raise Exception
 
-
-    # step_size = 1.0784992
-    # L = 1.7056025
     step_size = blackjax_mclmc_sampler_params.step_size
     L = blackjax_mclmc_sampler_params.L
-
-    jax.debug.print("{x} num_steps, L, step_size", x=(jnp.ceil(L/step_size), L, step_size))
+    jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.step_size, blackjax_mclmc_sampler_params.L))
 
 
     alg = blackjax.mcmc.mhmclmc.mhmclmc(
         logdensity_fn=logdensity_fn,
         step_size=step_size,
-        integration_steps_fn = lambda key: jnp.round(jax.random.uniform(key) * rescale(L/step_size + 0.5)) ,
+        integration_steps_fn = lambda key: jnp.ceil(jax.random.uniform(key) * rescale(L/step_size)) ,
         integrator=integrator,
-        # integration_steps_fn = lambda key: jnp.ceil(jax.random.poisson(key, L/step_size )) ,
+        std_mat=blackjax_mclmc_sampler_params.std_mat,
+        
 
     )
+
 
     _, out, info = run_inference_algorithm(
         rng_key=run_key,
@@ -149,18 +162,19 @@ def run_mhmclmc(logdensity_fn, num_steps, initial_position, transform, key):
         transform=lambda x: transform(x.position), 
         progress_bar=True)
     
-    
-    jax.debug.print("ACCEPTANCE {x}", x = (info.acceptance_rate.shape, jnp.mean(info.acceptance_rate,)))
-    
-    # jax.debug.print("THING\n\n {x}",x=jnp.mean(info.num_integration_steps))
-    # raise Exception
 
-    return out, blackjax_mclmc_sampler_params, calls_per_integrator_step[integrator] * (L/step_size)
+
+    return out, blackjax_mclmc_sampler_params, calls_per_integrator_step(coefficients) * (L/step_size), info.acceptance_rate.mean()
 
 # we should do at least: mclmc, nuts, unadjusted hmc, mhmclmc, langevin
 
 samplers = {
     'nuts' : run_nuts,
     'mclmc' : run_mclmc, 
-    # 'mhmclmc': run_mhmclmc, 
+    'mhmclmc': run_mhmclmc, 
     }
+
+
+# foo = lambda k : jnp.ceil(jax.random.uniform(k) * rescale(20.56))
+
+# print(jnp.mean(jax.vmap(foo)(jax.random.split(jax.random.PRNGKey(1), 10000000))))

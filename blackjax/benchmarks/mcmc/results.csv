@@ -1,0 +1,13 @@
+model,sampler,coeffs,result
+10,mhmclmc,leapfrog,7972.41650390625
+10,mhmclmc,mclachlan,5409.03759765625
+10,mhmclmc,yoshida,4208.71435546875
+10,mhmclmc,omelyan,15649.9638671875
+10,nuts,leapfrog,2164.14013671875
+10,nuts,mclachlan,2366.050048828125
+10,nuts,yoshida,13041.8701171875
+10,nuts,omelyan,inf
+10,mclmc,leapfrog,180.0
+10,mclmc,mclachlan,82.0
+10,mclmc,yoshida,318.0
+10,mclmc,omelyan,615.0
