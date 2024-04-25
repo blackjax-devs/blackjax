@@ -310,7 +310,7 @@ def benchmark_mhmchmc(batch_size):
 
         print(f"grads to low bias: {grad_calls}")
 
-        # results[(model.name, model.ndims, "mhmchmc", L.item(), step_size.item(), name_integrator(coeffs), f"gridsearch:{convergence}", acceptance_rate)] = ess.item()
+        results[(model.name, model.ndims, "mhmchmc", L.item(), step_size.item(), name_integrator(coeffs), f"gridsearch:{convergence}", acceptance_rate)] = ess.item()
 
         ####### run nuts
 
