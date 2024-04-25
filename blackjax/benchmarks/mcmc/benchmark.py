@@ -186,6 +186,7 @@ def run_benchmarks(batch_size):
         ["mhmclmc"], 
         # [StandardNormal(d) for d in np.ceil(np.logspace(np.log10(10), np.log10(10000), 10)).astype(int)],
         # [StandardNormal(500)],
+        # [Brownian()],
         [Brownian()],
         # [velocity_verlet_coefficients, mclachlan_coefficients, yoshida_coefficients, omelyan_coefficients], 
         [mclachlan_coefficients], 
@@ -293,7 +294,7 @@ def benchmark_mhmchmc(batch_size):
             target=target_acceptance_rate_of_order[integrator_order(coeffs)],
             frac_tune1=0.1,
             frac_tune2=0.1,
-            frac_tune3=0.1,
+            frac_tune3=0.0,
             diagonal_preconditioning=False
         )
 
@@ -309,7 +310,7 @@ def benchmark_mhmchmc(batch_size):
 
         print(f"grads to low bias: {grad_calls}")
 
-        results[(model.name, model.ndims, "mhmchmc", L.item(), step_size.item(), name_integrator(coeffs), f"gridsearch:{convergence}", acceptance_rate)] = ess.item()
+        # results[(model.name, model.ndims, "mhmchmc", L.item(), step_size.item(), name_integrator(coeffs), f"gridsearch:{convergence}", acceptance_rate)] = ess.item()
 
         ####### run nuts
 
@@ -423,9 +424,9 @@ def benchmark_omelyan(batch_size):
     print(results)
 if __name__ == "__main__":
 
-    # benchmark_mhmchmc(batch_size=5000)
+    benchmark_mhmchmc(batch_size=5000)
     # run_benchmarks(1000)
-    benchmark_omelyan(10)
+    # benchmark_omelyan(10)
     # print("4")
 
 

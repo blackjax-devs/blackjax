@@ -140,7 +140,7 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
 
     step_size = blackjax_mclmc_sampler_params.step_size
     L = blackjax_mclmc_sampler_params.L
-    jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.step_size, blackjax_mclmc_sampler_params.L))
+    # jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.step_size, blackjax_mclmc_sampler_params.L))
 
 
     alg = blackjax.mcmc.mhmclmc.mhmclmc(

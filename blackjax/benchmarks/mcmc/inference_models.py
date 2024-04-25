@@ -868,7 +868,7 @@ def random_walk(key, num):
 
 
 models = {
-    StandardNormal(1000) : {'mclmc': 2000, 'mhmclmc' : 2000, 'nuts': 2000}, 
+    StandardNormal(100) : {'mclmc': 2000, 'mhmclmc' : 20000, 'nuts': 2000}, 
     # 'banana': Banana(), 
     # 'icg' : (IllConditionedGaussian(10, 2),   {'mclmc': 2000, 'mhmclmc' : 2000, 'nuts': 2000}),
     # Brownian() : {'mclmc': 20000, 'mhmclmc' : 40000, 'nuts': 20000},
