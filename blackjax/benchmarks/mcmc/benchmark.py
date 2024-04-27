@@ -185,38 +185,44 @@ def run_benchmarks(batch_size):
         # ["mhmclmc", "nuts", "mclmc", ], 
         ["mhmclmc"], 
         # [StandardNormal(d) for d in np.ceil(np.logspace(np.log10(10), np.log10(10000), 10)).astype(int)],
-        # [StandardNormal(500)],
+        [StandardNormal(10)],
         # [Brownian()],
-        [Brownian()],
+        # [Brownian()],
         # [velocity_verlet_coefficients, mclachlan_coefficients, yoshida_coefficients, omelyan_coefficients], 
         [mclachlan_coefficients], 
         ):
 
-        sampler, model, coefficients = variables
-        num_chains = 1 + batch_size//model.ndims
 
-        print(f"\nModel: {model.name,model.ndims}, Sampler: {sampler}\n Coefficients: {coefficients}\nNumber of chains {num_chains}",) 
+
+        num_steps = 2000
+
+        sampler, model, coefficients = variables
+        num_chains = batch_size # 1 + batch_size//model.ndims
+
+        # print(f"\nModel: {model.name,model.ndims}, Sampler: {sampler}\n Coefficients: {coefficients}\nNumber of chains {num_chains}",) 
+
+        contract = jnp.average
 
         key = jax.random.PRNGKey(11)
         for i in range(1):
             key1, key = jax.random.split(key)
-            ess, grad_calls, _ , acceptance_rate = benchmark_chains(model, partial(samplers[sampler], coefficients=coefficients),key1, n=100000, batch=num_chains, contract=jnp.max)
+            ess, grad_calls, params , acceptance_rate = benchmark_chains(model, partial(samplers[sampler], coefficients=coefficients, frac_tune1=.1, frac_tune2=0.0, frac_tune3=0.0),key1, n=num_steps, batch=num_chains, contract=contract)
 
-            print(f"grads to low bias: {grad_calls}")
-            print(f"acceptance rate is {acceptance_rate, acceptance_rate.mean()}")
+            # print(f"grads to low bias: {grad_calls}")
+            # print(f"acceptance rate is {acceptance_rate, acceptance_rate.mean()}")
 
-            results[((model.name, model.ndims), sampler, name_integrator(coefficients))] = (ess, grad_calls) 
-
+            results[((model.name, model.ndims), sampler, name_integrator(coefficients), "standard", acceptance_rate, params.L.mean().item(), params.step_size.mean().item(), num_chains, num_steps, contract)] = (ess, grad_calls) 
+            # results[(model.name, model.ndims, "nuts", 0., 0., name_integrator(coeffs), "standard", acceptance_rate)]
 
             
-    print(results)
+    # print(results)
             
 
-    # df = pd.Series(results).reset_index()
-    # df.columns = ["model", "sampler", "coeffs", "result"] 
+    df = pd.Series(results).reset_index()
+    df.columns = ["model", "sampler", "integrator", "tuning", "acc rate", "L", "stepsize", "num_chains", "num steps", "contraction", "ESS"] 
     # df.result = df.result.apply(lambda x: x[0].item())
     # df.model = df.model.apply(lambda x: x[1])
-    # df.to_csv("results.csv", index=False)
+    df.to_csv("results_simple.csv", index=False)
 
     return results
 
@@ -424,8 +430,8 @@ def benchmark_omelyan(batch_size):
     print(results)
 if __name__ == "__main__":
 
-    benchmark_mhmchmc(batch_size=5000)
-    # run_benchmarks(1000)
+    # benchmark_mhmchmc(batch_size=5000)
+    run_benchmarks(100)
     # benchmark_omelyan(10)
     # print("4")
 

@@ -1,0 +1,2 @@
+model,sampler,integrator,tuning,acc rate,L,stepsize,num_chains,num steps,contraction,ESS
+"('StandardNormal', 10)",mhmclmc,mclachlan,standard,0.7035808563232422,62.70658874511719,6.270658493041992,100,2000,<function average at 0x1273a7d90>,"(Array(0.01196172, dtype=float32), Array(8360., dtype=float32))"

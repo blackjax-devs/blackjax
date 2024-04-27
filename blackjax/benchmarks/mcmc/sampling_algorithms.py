@@ -103,7 +103,7 @@ def run_mclmc(coefficients, logdensity_fn, num_steps, initial_position, transfor
     return samples, blackjax_mclmc_sampler_params, calls_per_integrator_step(coefficients), acceptance_rate
 
 
-def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transform, key):
+def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transform, key, frac_tune1=0.1, frac_tune2=0.1, frac_tune3=0.0):
     integrator = generate_isokinetic_integrator(coefficients)
 
     init_key, tune_key, run_key = jax.random.split(key, 3)
@@ -131,9 +131,9 @@ def run_mhmclmc(coefficients, logdensity_fn, num_steps, initial_position, transf
         state=initial_state,
         rng_key=tune_key,
         target=target_acceptance_rate_of_order[integrator_order(coefficients)],
-        frac_tune1=0.1,
-        frac_tune2=0.1,
-        frac_tune3=0.0,
+        frac_tune1=frac_tune1,
+        frac_tune2=frac_tune2,
+        frac_tune3=frac_tune3,
         diagonal_preconditioning=False,
     )
 
