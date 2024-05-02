@@ -137,7 +137,7 @@ def run_mhmclmc_no_tuning(initial_state, coefficients, step_size, L, std_mat):
         transform=lambda x: transform(x.position), 
         progress_bar=True)
 
-        return out, MCLMCAdaptationState(L=L, step_size=step_size, std_mat=std_mat), num_steps_per_traj * calls_per_integrator_step(coefficients), info.acceptance_rate.mean()
+        return out, MCLMCAdaptationState(L=L, step_size=step_size, std_mat=std_mat), num_steps_per_traj * calls_per_integrator_step(coefficients), info.acceptance_rate.mean(), None, jnp.array([0])
 
     return s
 
@@ -154,7 +154,7 @@ def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.av
     init_pos = jax.vmap(model.sample_init)(init_keys)
 
     # samples, params, avg_num_steps_per_traj = jax.pmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
-    samples, params, grad_calls_per_traj, acceptance_rate = jax.vmap(lambda pos, key: sampler(logdensity_fn=model.logdensity_fn, num_steps=n, initial_position= pos,transform= model.transform, key=key))(init_pos, keys)
+    samples, params, grad_calls_per_traj, acceptance_rate, step_size_over_da, final_da = jax.vmap(lambda pos, key: sampler(logdensity_fn=model.logdensity_fn, num_steps=n, initial_position= pos,transform= model.transform, key=key))(init_pos, keys)
     avg_grad_calls_per_traj = jnp.nanmean(grad_calls_per_traj, axis=0)
     try:
         print(jnp.nanmean(params.step_size,axis=0), jnp.nanmean(params.L,axis=0))
@@ -169,11 +169,12 @@ def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.av
     # esses = [i[0].item() for i in outs if not math.isnan(i[0].item())]
     # grad_calls = [i[1].item() for i in outs if not math.isnan(i[1].item())]
     # return(mean(esses), mean(grad_calls))
+    # print(final_da.mean(), "final da")
 
 
     err_t_median = jnp.median(err_t, axis=0)
     esses, grad_calls, _ = calculate_ess(err_t_median, grad_evals_per_step=avg_grad_calls_per_traj)
-    return esses, grad_calls, params, acceptance_rate.mean().item()
+    return esses, grad_calls, params, acceptance_rate.mean(axis=0), step_size_over_da
 
 
 
@@ -185,7 +186,7 @@ def run_benchmarks(batch_size):
         # ["mhmclmc", "nuts", "mclmc", ], 
         ["mhmclmc"], 
         # [StandardNormal(d) for d in np.ceil(np.logspace(np.log10(10), np.log10(10000), 10)).astype(int)],
-        [StandardNormal(10)],
+        [Brownian()],
         # [Brownian()],
         # [Brownian()],
         # [velocity_verlet_coefficients, mclachlan_coefficients, yoshida_coefficients, omelyan_coefficients], 
@@ -194,7 +195,7 @@ def run_benchmarks(batch_size):
 
 
 
-        num_steps = 2000
+        num_steps = 5000
 
         sampler, model, coefficients = variables
         num_chains = batch_size # 1 + batch_size//model.ndims
@@ -206,12 +207,17 @@ def run_benchmarks(batch_size):
         key = jax.random.PRNGKey(11)
         for i in range(1):
             key1, key = jax.random.split(key)
-            ess, grad_calls, params , acceptance_rate = benchmark_chains(model, partial(samplers[sampler], coefficients=coefficients, frac_tune1=.1, frac_tune2=0.0, frac_tune3=0.0),key1, n=num_steps, batch=num_chains, contract=contract)
+            ess, grad_calls, params , acceptance_rate, step_size_over_da = benchmark_chains(model, partial(samplers[sampler], coefficients=coefficients, frac_tune1=1., frac_tune2=0.0, frac_tune3=0.0),key1, n=num_steps, batch=num_chains, contract=contract)
+
+            # print(f"step size over da {step_size_over_da.shape} \n\n\n\n")
+            jax.numpy.save(f"step_size_over_da.npy", step_size_over_da.mean(axis=0))
+            jax.numpy.save(f"acceptance.npy", acceptance_rate)
+
 
             # print(f"grads to low bias: {grad_calls}")
             # print(f"acceptance rate is {acceptance_rate, acceptance_rate.mean()}")
 
-            results[((model.name, model.ndims), sampler, name_integrator(coefficients), "standard", acceptance_rate, params.L.mean().item(), params.step_size.mean().item(), num_chains, num_steps, contract)] = (ess, grad_calls) 
+            results[((model.name, model.ndims), sampler, name_integrator(coefficients), "standard", acceptance_rate.mean().item(), params.L.mean().item(), params.step_size.mean().item(), num_chains, num_steps, contract)] = ess.item()
             # results[(model.name, model.ndims, "nuts", 0., 0., name_integrator(coeffs), "standard", acceptance_rate)]
 
             
@@ -223,6 +229,64 @@ def run_benchmarks(batch_size):
     # df.result = df.result.apply(lambda x: x[0].item())
     # df.model = df.model.apply(lambda x: x[1])
     df.to_csv("results_simple.csv", index=False)
+
+    return results
+
+# vary step_size
+def run_benchmarks_step_size(batch_size):
+
+    results = defaultdict(tuple)
+    for variables in itertools.product(
+        # ["mhmclmc", "nuts", "mclmc", ], 
+        ["mhmclmc"], 
+        # [StandardNormal(d) for d in np.ceil(np.logspace(np.log10(10), np.log10(10000), 10)).astype(int)],
+        [Brownian()],
+        # [Brownian()],
+        # [Brownian()],
+        # [velocity_verlet_coefficients, mclachlan_coefficients, yoshida_coefficients, omelyan_coefficients], 
+        [mclachlan_coefficients], 
+        ):
+
+
+
+        num_steps = 10000
+
+        sampler, model, coefficients = variables
+        num_chains = batch_size # 1 + batch_size//model.ndims
+
+        # print(f"\nModel: {model.name,model.ndims}, Sampler: {sampler}\n Coefficients: {coefficients}\nNumber of chains {num_chains}",) 
+
+        contract = jnp.max
+
+        center = 0.534974
+        key = jax.random.PRNGKey(11)
+        for step_size in np.linspace(center-0.2,center+0.2, 41):
+            key1, key2, key3, key = jax.random.split(key, 4)
+            initial_position = model.sample_init(key2)
+            initial_state = blackjax.mcmc.mhmclmc.init(
+            position=initial_position, logdensity_fn=model.logdensity_fn, random_generator_arg=key3)
+            ess, grad_calls, params , acceptance_rate, _ = benchmark_chains(model, run_mhmclmc_no_tuning(initial_state=initial_state, coefficients=mclachlan_coefficients, step_size=step_size, L= step_size*5, std_mat=1.),key1, n=num_steps, batch=num_chains, contract=contract)
+
+            # print(f"step size over da {step_size_over_da.shape} \n\n\n\n")
+            # jax.numpy.save(f"step_size_over_da.npy", step_size_over_da.mean(axis=0))
+            # jax.numpy.save(f"acceptance.npy_{step_size}", acceptance_rate)
+
+
+            # print(f"grads to low bias: {grad_calls}")
+            # print(f"acceptance rate is {acceptance_rate, acceptance_rate.mean()}")
+
+            results[((model.name, model.ndims), sampler, name_integrator(coefficients), "standard", acceptance_rate.mean().item(), params.L.mean().item(), params.step_size.mean().item(), num_chains, num_steps, contract)] = ess.item()
+            # results[(model.name, model.ndims, "nuts", 0., 0., name_integrator(coeffs), "standard", acceptance_rate)]
+
+            
+    # print(results)
+            
+
+    df = pd.Series(results).reset_index()
+    df.columns = ["model", "sampler", "integrator", "tuning", "acc rate", "L", "stepsize", "num_chains", "num steps", "contraction", "ESS"] 
+    # df.result = df.result.apply(lambda x: x[0].item())
+    # df.model = df.model.apply(lambda x: x[1])
+    df.to_csv("results_step_size.csv", index=False)
 
     return results
 
@@ -247,7 +311,7 @@ def benchmark_mhmchmc(batch_size):
         
         coeffs = mclachlan_coefficients
 
-        ess, grad_calls, params , _ = benchmark_chains(
+        ess, grad_calls, params , _, step_size_over_da = benchmark_chains(
             model,
             partial(run_mclmc,coefficients=coeffs),
             key0,
@@ -257,10 +321,11 @@ def benchmark_mhmchmc(batch_size):
         results[(model.name, model.ndims, "mclmc", params.L.mean().item(), params.step_size.mean().item(), name_integrator(coeffs), "standard", 1.)] = ess.item()
         print(f'mclmc with tuning ESS {ess}')
 
+
         ####### run mhmclmc with standard tuning 
 
         coeffs = mclachlan_coefficients
-        ess, grad_calls, params , acceptance_rate = benchmark_chains(
+        ess, grad_calls, params , acceptance_rate, _ = benchmark_chains(
             model, 
             partial(run_mhmclmc,coefficients=coeffs), 
             key1, 
@@ -426,12 +491,27 @@ def benchmark_omelyan(batch_size):
     df.to_csv("omelyan.csv", index=False)
 
 
-            
-    print(results)
+def run_benchmarks_divij():
+
+    sampler = run_mclmc
+    model = StandardNormal(10) # 10 dimensional standard normal
+    coefficients = mclachlan_coefficients
+    contract = jnp.max # how we average across dimensions
+    num_steps = 2000
+    num_chains = 100
+    key1 = jax.random.PRNGKey(0)
+
+    ess, grad_calls, params , acceptance_rate, step_size_over_da = benchmark_chains(model, partial(sampler, coefficients=coefficients),key1, n=num_steps, batch=num_chains, contract=contract)
+
+    print(f"Effective Sample Size (ESS) of 10D Normal is {ess}")
+
 if __name__ == "__main__":
 
+    run_benchmarks_divij()
+
     # benchmark_mhmchmc(batch_size=5000)
-    run_benchmarks(100)
+    # run_benchmarks(1000)
+    # run_benchmarks_step_size(500)
     # benchmark_omelyan(10)
     # print("4")
 
