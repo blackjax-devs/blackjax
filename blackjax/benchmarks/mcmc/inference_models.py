@@ -3,7 +3,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import os
-import numpyro.distributions as dist
+#import numpyro.distributions as dist
 dirr = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -181,7 +181,7 @@ class Banana():
 
     def logdensity_fn(self, x):
         mu2 = self.curvature * (x[0] ** 2 - 100)
-        return -0.5 * (jnp.square(x[0] / 10.0) - jnp.square(x[1] - mu2))
+        return -0.5 * (jnp.square(x[0] / 10.0) + jnp.square(x[1] - mu2))
 
     def posterior_draw(self, key):
         z = jax.random.normal(key, shape = (2, ))

@@ -7,14 +7,10 @@ import pprint
 from statistics import mean, median
 import jax
 import jax.numpy as jnp
-import pandas as pd
-from blackjax.adaptation.mclmc_adaptation import MCLMCAdaptationState, integrator_order, target_acceptance_rate_of_order
 
-
-
-# os.environ["XLA_FLAGS"] = '--xla_force_host_platform_device_count=' + str(128)
-# num_cores = jax.local_device_count()
-# print(num_cores, jax.lib.xla_bridge.get_backend().platform)
+os.environ["XLA_FLAGS"] = '--xla_force_host_platform_device_count=' + str(128)
+num_cores = jax.local_device_count()
+print(num_cores, jax.lib.xla_bridge.get_backend().platform)
 
 import itertools
 
@@ -143,6 +139,7 @@ def run_mhmclmc_no_tuning(initial_state, coefficients, step_size, L, std_mat):
 
 def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.average,):
 
+    pvmap = jax.pmap
     
     d = get_num_latents(model)
     if batch is None:
@@ -151,18 +148,17 @@ def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.av
     keys = jax.random.split(key, batch)
 
     init_keys = jax.random.split(init_key, batch)
-    init_pos = jax.vmap(model.sample_init)(init_keys)
+    init_pos = pvmap(model.sample_init)(init_keys)
 
     # samples, params, avg_num_steps_per_traj = jax.pmap(lambda pos, key: sampler(model.logdensity_fn, n, pos, model.transform, key))(init_pos, keys)
-    samples, params, grad_calls_per_traj, acceptance_rate, step_size_over_da, final_da = jax.vmap(lambda pos, key: sampler(logdensity_fn=model.logdensity_fn, num_steps=n, initial_position= pos,transform= model.transform, key=key))(init_pos, keys)
+    samples, params, grad_calls_per_traj, acceptance_rate, step_size_over_da, final_da = pvmap(lambda pos, key: sampler(logdensity_fn=model.logdensity_fn, num_steps=n, initial_position= pos,transform= model.transform, key=key))(init_pos, keys)
     avg_grad_calls_per_traj = jnp.nanmean(grad_calls_per_traj, axis=0)
     try:
         print(jnp.nanmean(params.step_size,axis=0), jnp.nanmean(params.L,axis=0))
     except: pass
     
     full = lambda arr : err(model.E_x2, model.Var_x2, contract)(cumulative_avg(arr))
-    err_t = jax.vmap(full)(samples**2)
-
+    err_t = pvmap(full)(samples**2)
 
     # outs = [calculate_ess(b, grad_evals_per_step=avg_grad_calls_per_traj) for b in err_t]
     # # print(outs[:10])
@@ -173,6 +169,14 @@ def benchmark_chains(model, sampler, key, n=10000, batch=None, contract = jnp.av
 
 
     err_t_median = jnp.median(err_t, axis=0)
+    import matplotlib.pyplot as plt
+    plt.plot(np.arange(1, 1+ len(err_t_median))* 2, err_t_median, color= 'teal', lw = 3)
+    plt.xlabel('gradient evaluations')
+    plt.ylabel('average second moment error')
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.savefig('brownian.png')
+    plt.close()
     esses, grad_calls, _ = calculate_ess(err_t_median, grad_evals_per_step=avg_grad_calls_per_traj)
     return esses, grad_calls, params, acceptance_rate.mean(axis=0), step_size_over_da
 
@@ -184,7 +188,7 @@ def run_benchmarks(batch_size):
     results = defaultdict(tuple)
     for variables in itertools.product(
         # ["mhmclmc", "nuts", "mclmc", ], 
-        ["mhmclmc"], 
+        ["mclmc"], 
         # [StandardNormal(d) for d in np.ceil(np.logspace(np.log10(10), np.log10(10000), 10)).astype(int)],
         [Brownian()],
         # [Brownian()],
@@ -193,6 +197,8 @@ def run_benchmarks(batch_size):
         [mclachlan_coefficients], 
         ):
 
+        sampler, model, coefficients = variables
+        num_chains = batch_size#1 + batch_size//model.ndims
 
 
         num_steps = 5000
@@ -499,7 +505,7 @@ def run_benchmarks_divij():
     contract = jnp.max # how we average across dimensions
     num_steps = 2000
     num_chains = 100
-    key1 = jax.random.PRNGKey(0)
+    key1 = jax.random.PRNGKey(1)
 
     ess, grad_calls, params , acceptance_rate, step_size_over_da = benchmark_chains(model, partial(sampler, coefficients=coefficients),key1, n=num_steps, batch=num_chains, contract=contract)
 
@@ -513,6 +519,8 @@ if __name__ == "__main__":
     # run_benchmarks(1000)
     # run_benchmarks_step_size(500)
     # benchmark_omelyan(10)
+    # run_benchmarks(128)
+    #benchmark_omelyan(10)
     # print("4")
 
 
