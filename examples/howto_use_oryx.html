@@ -546,8 +546,101 @@ Number of data points: 150
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.2 s, sys: 478 ms, total: 17.6 s
-Wall time: 17.6 s
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ValueError</span><span class="g g-Whitespace">                                </span>Traceback (most recent call last)
+<span class="n">File</span> <span class="o">&lt;</span><span class="n">timed</span> <span class="n">exec</span><span class="o">&gt;</span><span class="p">:</span><span class="mi">5</span>
+
+<span class="nn">File ~/work/blackjax/blackjax/blackjax/adaptation/window_adaptation.py:323,</span> in <span class="ni">window_adaptation.&lt;locals&gt;.run</span><span class="nt">(rng_key, position, num_steps)</span>
+<span class="g g-Whitespace">    </span><span class="mi">322</span> <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">):</span>
+<span class="ne">--&gt; </span><span class="mi">323</span>     <span class="n">init_state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">324</span>     <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">initial_step_size</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">326</span>     <span class="k">if</span> <span class="n">progress_bar</span><span class="p">:</span>
+
+<span class="nn">File ~/work/blackjax/blackjax/blackjax/mcmc/hmc.py:89,</span> in <span class="ni">init</span><span class="nt">(position, logdensity_fn)</span>
+<span class="g g-Whitespace">     </span><span class="mi">88</span> <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
+<span class="ne">---&gt; </span><span class="mi">89</span>     <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">90</span>     <span class="k">return</span> <span class="n">HMCState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">)</span>
+
+    <span class="p">[</span><span class="o">...</span> <span class="n">skipping</span> <span class="n">hidden</span> <span class="mi">8</span> <span class="n">frame</span><span class="p">]</span>
+
+<span class="nn">Cell In[9], line 4,</span> in <span class="ni">logdensity_fn</span><span class="nt">(weights)</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="k">def</span> <span class="nf">logdensity_fn</span><span class="p">(</span><span class="n">weights</span><span class="p">):</span>
+<span class="ne">----&gt; </span><span class="mi">4</span>   <span class="k">return</span> <span class="n">joint_log_prob</span><span class="p">(</span><span class="n">predict</span><span class="p">(</span><span class="n">bnn</span><span class="p">))(</span><span class="nb">dict</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">labels</span><span class="p">),</span> <span class="n">features</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.9/x64/lib/python3.11/site-packages/oryx/core/interpreters/log_prob.py:71,</span> in <span class="ni">log_prob.&lt;locals&gt;.wrapped</span><span class="nt">(sample, *args, **kwargs)</span>
+<span class="g g-Whitespace">     </span><span class="mi">67</span> <span class="n">flat_incells</span> <span class="o">=</span> <span class="p">[</span>
+<span class="g g-Whitespace">     </span><span class="mi">68</span>     <span class="n">InverseAndILDJ</span><span class="o">.</span><span class="n">unknown</span><span class="p">(</span><span class="n">trace_util</span><span class="o">.</span><span class="n">get_shaped_aval</span><span class="p">(</span><span class="n">dummy_seed</span><span class="p">))</span>
+<span class="g g-Whitespace">     </span><span class="mi">69</span> <span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">InverseAndILDJ</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">flat_inargs</span><span class="p">]</span>
+<span class="g g-Whitespace">     </span><span class="mi">70</span> <span class="n">flat_outcells</span> <span class="o">=</span> <span class="p">[</span><span class="n">InverseAndILDJ</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">flat_outargs</span><span class="p">]</span>
+<span class="ne">---&gt; </span><span class="mi">71</span> <span class="k">return</span> <span class="n">log_prob_jaxpr</span><span class="p">(</span><span class="n">jaxpr</span><span class="o">.</span><span class="n">jaxpr</span><span class="p">,</span> <span class="n">constcells</span><span class="p">,</span> <span class="n">flat_incells</span><span class="p">,</span> <span class="n">flat_outcells</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.9/x64/lib/python3.11/site-packages/oryx/core/interpreters/log_prob.py:118,</span> in <span class="ni">log_prob_jaxpr</span><span class="nt">(jaxpr, constcells, flat_incells, flat_outcells)</span>
+<span class="g g-Whitespace">    </span><span class="mi">113</span>   <span class="k">return</span> <span class="n">curr_log_prob</span>
+<span class="g g-Whitespace">    </span><span class="mi">115</span> <span class="c1"># Re-use the InverseAndILDJ propagation but silently fail instead of</span>
+<span class="g g-Whitespace">    </span><span class="mi">116</span> <span class="c1"># erroring when we hit a primitive we can&#39;t invert. We accumulate the log</span>
+<span class="g g-Whitespace">    </span><span class="mi">117</span> <span class="c1"># probability values using the propagater state.</span>
+<span class="ne">--&gt; </span><span class="mi">118</span> <span class="n">_</span><span class="p">,</span> <span class="n">final_log_prob</span> <span class="o">=</span> <span class="n">propagate</span><span class="o">.</span><span class="n">propagate</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">119</span>     <span class="n">InverseAndILDJ</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">120</span>     <span class="n">log_prob_rules</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">121</span>     <span class="n">jaxpr</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">122</span>     <span class="n">constcells</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">123</span>     <span class="n">flat_incells</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">124</span>     <span class="n">flat_outcells</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">125</span>     <span class="n">reducer</span><span class="o">=</span><span class="n">reducer</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">126</span>     <span class="n">initial_state</span><span class="o">=</span><span class="mf">0.</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">127</span> <span class="k">if</span> <span class="n">final_log_prob</span> <span class="ow">is</span> <span class="n">failed_log_prob</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">128</span>   <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot compute log_prob of function.&#39;</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.9/x64/lib/python3.11/site-packages/oryx/core/interpreters/propagate.py:320,</span> in <span class="ni">propagate</span><span class="nt">(cell_type, rules, jaxpr, constcells, incells, outcells, reducer, initial_state)</span>
+<span class="g g-Whitespace">    </span><span class="mi">318</span>   <span class="n">subfuns</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="g g-Whitespace">    </span><span class="mi">319</span>   <span class="n">rule</span> <span class="o">=</span> <span class="n">rules</span><span class="p">[</span><span class="n">eqn</span><span class="o">.</span><span class="n">primitive</span><span class="p">]</span>
+<span class="ne">--&gt; </span><span class="mi">320</span> <span class="n">new_incells</span><span class="p">,</span> <span class="n">new_outcells</span><span class="p">,</span> <span class="n">eqn_state</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span><span class="n">subfuns</span> <span class="o">+</span> <span class="n">incells</span><span class="p">,</span> <span class="n">outcells</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">321</span>                                             <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">322</span> <span class="n">env</span><span class="o">.</span><span class="n">write_state</span><span class="p">(</span><span class="n">eqn</span><span class="p">,</span> <span class="n">eqn_state</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">324</span> <span class="n">new_incells</span> <span class="o">=</span> <span class="n">safe_map</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">write</span><span class="p">,</span> <span class="n">eqn</span><span class="o">.</span><span class="n">invars</span><span class="p">,</span> <span class="n">new_incells</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.9/x64/lib/python3.11/site-packages/oryx/core/interpreters/propagate.py:354,</span> in <span class="ni">call_rule</span><span class="nt">(prim, incells, outcells, **params)</span>
+<span class="g g-Whitespace">    </span><span class="mi">352</span>   <span class="n">new_params</span><span class="p">[</span><span class="s1">&#39;donated_invars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">False</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">flat_vals</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">353</span> <span class="n">f</span><span class="p">,</span> <span class="n">aux</span> <span class="o">=</span> <span class="n">flat_propagate</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">in_tree</span><span class="p">)</span>
+<span class="ne">--&gt; </span><span class="mi">354</span> <span class="n">flat_out</span> <span class="o">=</span> <span class="n">prim</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">flat_vals</span><span class="p">,</span> <span class="o">**</span><span class="n">new_params</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">355</span> <span class="n">out_tree</span> <span class="o">=</span> <span class="n">aux</span><span class="p">()</span>
+<span class="g g-Whitespace">    </span><span class="mi">356</span> <span class="k">return</span> <span class="n">tree_util</span><span class="o">.</span><span class="n">tree_unflatten</span><span class="p">(</span><span class="n">out_tree</span><span class="p">,</span> <span class="n">flat_out</span><span class="p">)</span>
+
+    <span class="p">[</span><span class="o">...</span> <span class="n">skipping</span> <span class="n">hidden</span> <span class="mi">6</span> <span class="n">frame</span><span class="p">]</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.9/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:257,</span> in <span class="ni">_nest_impl</span><span class="nt">(f, *args, **_)</span>
+<span class="g g-Whitespace">    </span><span class="mi">255</span> <span class="k">def</span> <span class="nf">_nest_impl</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">):</span>
+<span class="g g-Whitespace">    </span><span class="mi">256</span>   <span class="k">with</span> <span class="n">jax_core</span><span class="o">.</span><span class="n">new_sublevel</span><span class="p">():</span>
+<span class="ne">--&gt; </span><span class="mi">257</span>     <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">call_wrapped</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="p">[</span><span class="o">...</span> <span class="n">skipping</span> <span class="n">hidden</span> <span class="mi">1</span> <span class="n">frame</span><span class="p">]</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.9/x64/lib/python3.11/site-packages/oryx/core/interpreters/propagate.py:320,</span> in <span class="ni">propagate</span><span class="nt">(cell_type, rules, jaxpr, constcells, incells, outcells, reducer, initial_state)</span>
+<span class="g g-Whitespace">    </span><span class="mi">318</span>   <span class="n">subfuns</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="g g-Whitespace">    </span><span class="mi">319</span>   <span class="n">rule</span> <span class="o">=</span> <span class="n">rules</span><span class="p">[</span><span class="n">eqn</span><span class="o">.</span><span class="n">primitive</span><span class="p">]</span>
+<span class="ne">--&gt; </span><span class="mi">320</span> <span class="n">new_incells</span><span class="p">,</span> <span class="n">new_outcells</span><span class="p">,</span> <span class="n">eqn_state</span> <span class="o">=</span> <span class="n">rule</span><span class="p">(</span><span class="n">subfuns</span> <span class="o">+</span> <span class="n">incells</span><span class="p">,</span> <span class="n">outcells</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">321</span>                                             <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">322</span> <span class="n">env</span><span class="o">.</span><span class="n">write_state</span><span class="p">(</span><span class="n">eqn</span><span class="p">,</span> <span class="n">eqn_state</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">324</span> <span class="n">new_incells</span> <span class="o">=</span> <span class="n">safe_map</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">write</span><span class="p">,</span> <span class="n">eqn</span><span class="o">.</span><span class="n">invars</span><span class="p">,</span> <span class="n">new_incells</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.9/x64/lib/python3.11/site-packages/oryx/core/interpreters/propagate.py:395,</span> in <span class="ni">_pjit_propagate_rule</span><span class="nt">(incells, outcells, **params)</span>
+<span class="g g-Whitespace">    </span><span class="mi">386</span> <span class="n">out_shardings</span> <span class="o">=</span> <span class="p">(</span><span class="n">sharding_impls</span><span class="o">.</span><span class="n">UNSPECIFIED</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_jaxpr</span><span class="o">.</span><span class="n">out_avals</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">388</span> <span class="n">new_params</span> <span class="o">=</span> <span class="p">{</span>
+<span class="g g-Whitespace">    </span><span class="mi">389</span>     <span class="o">**</span><span class="n">params</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">390</span>     <span class="s1">&#39;jaxpr&#39;</span><span class="p">:</span> <span class="n">new_jaxpr</span><span class="p">,</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">393</span>     <span class="s1">&#39;donated_invars&#39;</span><span class="p">:</span> <span class="n">donated_invars</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">394</span> <span class="p">}</span>
+<span class="ne">--&gt; </span><span class="mi">395</span> <span class="n">flat_out</span> <span class="o">=</span> <span class="n">pjit</span><span class="o">.</span><span class="n">pjit_p</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="o">*</span><span class="n">flat_vals</span><span class="p">,</span> <span class="o">**</span><span class="n">new_params</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">396</span> <span class="k">return</span> <span class="n">tree_util</span><span class="o">.</span><span class="n">tree_unflatten</span><span class="p">(</span><span class="n">out_tree</span><span class="p">(),</span> <span class="n">flat_out</span><span class="p">)</span>
+
+    <span class="p">[</span><span class="o">...</span> <span class="n">skipping</span> <span class="n">hidden</span> <span class="mi">4</span> <span class="n">frame</span><span class="p">]</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.9/x64/lib/python3.11/site-packages/jax/_src/pjit.py:1853,</span> in <span class="ni">_pjit_jvp.&lt;locals&gt;._filter_zeros</span><span class="nt">(is_nz_l, l)</span>
+<span class="g g-Whitespace">   </span><span class="mi">1852</span> <span class="k">def</span> <span class="nf">_filter_zeros</span><span class="p">(</span><span class="n">is_nz_l</span><span class="p">,</span> <span class="n">l</span><span class="p">):</span>
+<span class="nn">-&gt; 1853   return (x for nz, x</span> in <span class="ni">zip</span><span class="nt">(is_nz_l, l) if nz)</span>
+
+<span class="ne">ValueError</span>: safe_zip() argument 2 is shorter than argument 1
 </pre></div>
 </div>
 </div>
@@ -584,8 +677,11 @@ Wall time: 17.6 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 16.6 s, sys: 133 ms, total: 16.8 s
-Wall time: 16.7 s
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">NameError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
+<span class="n">File</span> <span class="o">&lt;</span><span class="n">timed</span> <span class="n">exec</span><span class="o">&gt;</span><span class="p">:</span><span class="mi">2</span>
+
+<span class="ne">NameError</span>: name &#39;kernel&#39; is not defined
 </pre></div>
 </div>
 </div>
@@ -608,6 +704,23 @@ Wall time: 16.7 s
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">NameError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">13</span><span class="p">],</span> <span class="n">line</span> <span class="mi">3</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="kn">from</span> <span class="nn">oryx.core.ppl</span> <span class="kn">import</span> <span class="n">intervene</span>
+<span class="ne">----&gt; </span><span class="mi">3</span> <span class="n">posterior_weights</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">position</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">pred_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="n">output_logits</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
+<span class="g g-Whitespace">      </span><span class="mi">7</span>     <span class="k">lambda</span> <span class="n">weights</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">intervene</span><span class="p">(</span><span class="n">bnn</span><span class="p">,</span> <span class="o">**</span><span class="n">weights</span><span class="p">)(</span>
+<span class="g g-Whitespace">      </span><span class="mi">8</span>         <span class="n">pred_key</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+<span class="g g-Whitespace">      </span><span class="mi">9</span>     <span class="p">)(</span><span class="n">features</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">10</span> <span class="p">)(</span><span class="n">posterior_weights</span><span class="p">)</span>
+
+<span class="ne">NameError</span>: name &#39;states&#39; is not defined
+</pre></div>
+</div>
+</div>
 </div>
 <div class="cell tag_hide-input docutils container">
 <details class="hide above-input">
@@ -625,12 +738,6 @@ Wall time: 16.7 s
 </div>
 </div>
 </details>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Average sample accuracy: 0.9792667
-BMA accuracy: 0.9866667
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 
