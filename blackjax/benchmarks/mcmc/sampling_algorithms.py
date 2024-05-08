@@ -20,9 +20,7 @@ def run_nuts(
     
     integrator = generate_euclidean_integrator(coefficients)
     # integrator = blackjax.mcmc.integrators.velocity_verlet # note: defaulted to in nuts
-    # warmup = blackjax.window_adaptation(blackjax.nuts, logdensity_fn, integrator=integrator)
 
-    # we use 4 chains for sampling
     rng_key, warmup_key = jax.random.split(key, 2)
 
     state, params = da_adaptation(
@@ -31,7 +29,8 @@ def run_nuts(
         algorithm=blackjax.nuts,
         logdensity_fn=logdensity_fn)
     
-    print(params["inverse_mass_matrix"], "inv\n\n")
+    # print(params["inverse_mass_matrix"], "inv\n\n")
+    # warmup = blackjax.window_adaptation(blackjax.nuts, logdensity_fn, integrator=integrator)
     # (state, params), _ = warmup.run(warmup_key, initial_position, 2000)
 
     nuts = blackjax.nuts(logdensity_fn=logdensity_fn, step_size=params['step_size'], inverse_mass_matrix= params['inverse_mass_matrix'], integrator=integrator)
@@ -42,11 +41,12 @@ def run_nuts(
         inference_algorithm=nuts,
         num_steps=num_steps,
         transform=lambda x: transform(x.position),
+        progress_bar=True
     )
 
     # print("INFO\n\n",info_history.num_integration_steps)
 
-    return state_history, params, info_history.num_integration_steps.mean() * calls_per_integrator_step(coefficients), info_history.acceptance_rate.mean()
+    return state_history, params, info_history.num_integration_steps.mean() * calls_per_integrator_step(coefficients), info_history.acceptance_rate.mean(), None, None
 
 def run_mclmc(coefficients, logdensity_fn, num_steps, initial_position, transform, key):
 
@@ -74,8 +74,8 @@ def run_mclmc(coefficients, logdensity_fn, num_steps, initial_position, transfor
         num_steps=num_steps,
         state=initial_state,
         rng_key=tune_key,
-        diagonal_preconditioning=True,
-        desired_energy_var= 1e-5
+        diagonal_preconditioning=False,
+        # desired_energy_var= 1e-5
     )
 
     # jax.debug.print("params {x}", x=(blackjax_mclmc_sampler_params.L, blackjax_mclmc_sampler_params.step_size))
