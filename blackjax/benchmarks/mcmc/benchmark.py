@@ -330,10 +330,8 @@ def benchmark_mhmchmc(batch_size):
 
         ####### run mclmc with standard tuning
 
-        # TODO: change to max!!!
         contract = jnp.max
         
-        coeffs = mclachlan_coefficients
 
         ess, grad_calls, params , _, step_size_over_da = benchmark_chains(
             model,
@@ -347,30 +345,30 @@ def benchmark_mhmchmc(batch_size):
 
 
         ####### run mhmclmc with standard tuning 
+        for target_acc_rate in [0.65, 0.9]:
+            # coeffs = mclachlan_coefficients
+            ess, grad_calls, params , acceptance_rate, _ = benchmark_chains(
+                model, 
+                partial(run_mhmclmc, target_acc_rate=target_acc_rate, coefficients=coeffs, frac_tune1=0.1, frac_tune2=0.1, frac_tune3=0.0), 
+                key1, 
+                n=num_steps, 
+                batch=num_chains, 
+                contract=contract)
+            results[(model.name, model.ndims, "mhmchmc"+str(target_acc_rate), jnp.nanmean(params.L).item(), jnp.nanmean(params.step_size).item(), name_integrator(coeffs), "standard", acceptance_rate.mean().item())] = ess.item()
+            print(f'mhmclmc with tuning ESS {ess}')
+            
+            # coeffs = mclachlan_coefficients
+            ess, grad_calls, params , acceptance_rate, _ = benchmark_chains(
+                model, 
+                partial(run_mhmclmc, target_acc_rate=target_acc_rate,coefficients=coeffs, frac_tune1=0.1, frac_tune2=0.1, frac_tune3=0.1), 
+                key1, 
+                n=num_steps, 
+                batch=num_chains, 
+                contract=contract)
+            results[(model.name, model.ndims, "mhmchmc:st3"+str(target_acc_rate), jnp.nanmean(params.L).item(), jnp.nanmean(params.step_size).item(), name_integrator(coeffs), "standard", acceptance_rate.mean().item())] = ess.item()
+            print(f'mhmclmc with tuning ESS {ess}')
 
-        # coeffs = mclachlan_coefficients
-        ess, grad_calls, params , acceptance_rate, _ = benchmark_chains(
-            model, 
-            partial(run_mhmclmc,coefficients=coeffs, frac_tune1=0.1, frac_tune2=0.1, frac_tune3=0.0), 
-            key1, 
-            n=num_steps, 
-            batch=num_chains, 
-            contract=contract)
-        results[(model.name, model.ndims, "mhmchmc", jnp.nanmean(params.L).item(), jnp.nanmean(params.step_size).item(), name_integrator(coeffs), "standard", acceptance_rate.mean().item())] = ess.item()
-        print(f'mhmclmc with tuning ESS {ess}')
-        
-        # coeffs = mclachlan_coefficients
-        ess, grad_calls, params , acceptance_rate, _ = benchmark_chains(
-            model, 
-            partial(run_mhmclmc,coefficients=coeffs, frac_tune1=0.1, frac_tune2=0.1, frac_tune3=0.1), 
-            key1, 
-            n=num_steps, 
-            batch=num_chains, 
-            contract=contract)
-        results[(model.name, model.ndims, "mhmchmc:stage3=True", jnp.nanmean(params.L).item(), jnp.nanmean(params.step_size).item(), name_integrator(coeffs), "standard", acceptance_rate.mean().item())] = ess.item()
-        print(f'mhmclmc with tuning ESS {ess}')
-
-        if False:
+        if True:
             ####### run mhmclmc with standard tuning + grid search
 
             init_pos_key, init_key, tune_key, grid_key, bench_key = jax.random.split(key2, 5)
