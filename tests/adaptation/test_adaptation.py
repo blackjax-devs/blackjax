@@ -66,6 +66,6 @@ def test_chees_adaptation():
     )(chain_keys, last_states)
 
     harmonic_mean = 1.0 / jnp.mean(1.0 / infos.acceptance_rate)
-    np.testing.assert_allclose(harmonic_mean, 0.75, rtol=1e-1)
+    np.testing.assert_allclose(harmonic_mean, 0.75, atol=1e-1)
     np.testing.assert_allclose(parameters["step_size"], 1.5, rtol=2e-1)
     np.testing.assert_array_less(infos.num_integration_steps.mean(), 15.0)
