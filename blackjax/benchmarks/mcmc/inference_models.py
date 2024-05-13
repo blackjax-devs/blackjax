@@ -332,7 +332,9 @@ class Funnel():
         self.ndims = d
         self.name = 'Funnel'
         self.sigma_theta= 3.0
-        self.variance = jnp.ones(d)
+        
+        self.E_x2 = jnp.ones(d) # the transformed variables are standard Gaussian distributed
+        self.Var_x2 = 2 * self.E_x2
         
 
 
