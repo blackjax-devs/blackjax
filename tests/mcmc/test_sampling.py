@@ -74,16 +74,17 @@ class LinearRegressionTest(chex.TestCase):
         # reduce sum otherwise broacasting will make the logprob biased.
         return sum(x.sum() for x in [scale_prior, coefs_prior, logpdf])
 
-    def run_mclmc(self, logdensity_fn, num_steps, initial_position, key):
+    def run_mclmc(self, logdensity_fn, num_steps, initial_position, key, diagonal_preconditioning=False):
         init_key, tune_key, run_key = jax.random.split(key, 3)
 
         initial_state = blackjax.mcmc.mclmc.init(
             position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
         )
 
-        kernel = blackjax.mcmc.mclmc.build_kernel(
+        kernel = lambda std_mat: blackjax.mcmc.mclmc.build_kernel(
             logdensity_fn=logdensity_fn,
-            integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
+            integrator=blackjax.mcmc.mclmc.isokinetic_mclachlan,
+            std_mat=std_mat,
         )
 
         (
@@ -94,12 +95,14 @@ class LinearRegressionTest(chex.TestCase):
             num_steps=num_steps,
             state=initial_state,
             rng_key=tune_key,
+            diagonal_preconditioning=diagonal_preconditioning,
         )
 
         sampling_alg = blackjax.mclmc(
             logdensity_fn,
             L=blackjax_mclmc_sampler_params.L,
             step_size=blackjax_mclmc_sampler_params.step_size,
+            std_mat=blackjax_mclmc_sampler_params.std_mat,
         )
 
         _, samples, _ = run_inference_algorithm(

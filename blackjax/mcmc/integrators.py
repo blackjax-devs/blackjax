@@ -311,8 +311,9 @@ def esh_dynamics_momentum_update_one_step(std_mat):
         """
         del is_last_call
 
-        logdensity_grad = logdensity_grad * std_mat
+        logdensity_grad = logdensity_grad
         flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
+        flatten_grads = flatten_grads * std_mat
         flatten_momentum, _ = ravel_pytree(momentum)
         dims = flatten_momentum.shape[0]
         normalized_gradient, gradient_norm = _normalized_flatten_array(flatten_grads)
@@ -324,6 +325,7 @@ def esh_dynamics_momentum_update_one_step(std_mat):
             + 2 * zeta * flatten_momentum
         )
         new_momentum_normalized, _ = _normalized_flatten_array(new_momentum_raw)
+        gr = unravel_fn(new_momentum_normalized*std_mat)
         next_momentum = unravel_fn(new_momentum_normalized)
         kinetic_energy_change = (
             delta
@@ -332,9 +334,8 @@ def esh_dynamics_momentum_update_one_step(std_mat):
         ) * (dims - 1)
         if previous_kinetic_energy_change is not None:
             kinetic_energy_change += previous_kinetic_energy_change
-        gr = std_mat * next_momentum
         return next_momentum, gr, kinetic_energy_change
-    
+
     return update
 
 
@@ -356,7 +357,7 @@ def format_isokinetic_state_output(
 
 def generate_isokinetic_integrator(coefficients):
     def isokinetic_integrator(
-        logdensity_fn: Callable, std_mat : ArrayTree, *args, **kwargs
+        logdensity_fn: Callable, std_mat: ArrayTree, *args, **kwargs
     ) -> GeneralIntegrator:
         position_update_fn = euclidean_position_update_fn(logdensity_fn)
         one_step = generalized_two_stage_integrator(
@@ -373,6 +374,7 @@ def generate_isokinetic_integrator(coefficients):
 isokinetic_leapfrog = generate_isokinetic_integrator(velocity_verlet_cofficients)
 isokinetic_yoshida = generate_isokinetic_integrator(yoshida_cofficients)
 isokinetic_mclachlan = generate_isokinetic_integrator(mclachlan_cofficients)
+
 
 def partially_refresh_momentum(momentum, rng_key, step_size, L):
     """Adds a small noise to momentum and normalizes.
@@ -399,21 +401,33 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     return unravel_fn((m + z) / jnp.linalg.norm(m + z))
 
 
-
 def with_isokinetic_maruyama(integrator):
-    
     def stochastic_integrator(init_state, step_size, L_proposal, rng_key):
-        
         key1, key2 = jax.random.split(rng_key)
         # partial refreshment
-        state = init_state._replace(momentum=partially_refresh_momentum(momentum=init_state.momentum, rng_key=key1, L=L_proposal, step_size=step_size * 0.5))
+        state = init_state._replace(
+            momentum=partially_refresh_momentum(
+                momentum=init_state.momentum,
+                rng_key=key1,
+                L=L_proposal,
+                step_size=step_size * 0.5,
+            )
+        )
         # one step of the deterministic dynamics
         state, info = integrator(state, step_size)
         # partial refreshment
-        state = state._replace(momentum=partially_refresh_momentum(momentum=state.momentum, rng_key=key2, L=L_proposal, step_size=step_size * 0.5))
+        state = state._replace(
+            momentum=partially_refresh_momentum(
+                momentum=state.momentum,
+                rng_key=key2,
+                L=L_proposal,
+                step_size=step_size * 0.5,
+            )
+        )
         return state, info
-    
+
     return stochastic_integrator
+
 
 FixedPointSolver = Callable[
     [Callable[[ArrayTree], Tuple[ArrayTree, ArrayTree]], ArrayTree],

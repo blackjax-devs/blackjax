@@ -16,9 +16,12 @@ from typing import Callable, NamedTuple
 
 import jax
 
-
 from blackjax.base import SamplingAlgorithm
-from blackjax.mcmc.integrators import IntegratorState, isokinetic_mclachlan, with_isokinetic_maruyama
+from blackjax.mcmc.integrators import (
+    IntegratorState,
+    isokinetic_mclachlan,
+    with_isokinetic_maruyama,
+)
 from blackjax.types import ArrayLike, PRNGKey
 from blackjax.util import generate_unit_vector, pytree_size
 
@@ -56,6 +59,7 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
         logdensity_grad=g,
     )
 
+
 def build_kernel(logdensity_fn, std_mat, integrator):
     """Build a HMC kernel.
 
@@ -76,7 +80,6 @@ def build_kernel(logdensity_fn, std_mat, integrator):
 
     """
 
-    print(std_mat, "foo")
     step = with_isokinetic_maruyama(integrator(logdensity_fn, std_mat))
 
     def kernel(
@@ -85,7 +88,6 @@ def build_kernel(logdensity_fn, std_mat, integrator):
         (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
             state, step_size, L, rng_key
         )
-
 
         return IntegratorState(
             position, momentum, logdensity, logdensitygrad
@@ -103,7 +105,7 @@ def as_top_level_api(
     L,
     step_size,
     integrator=isokinetic_mclachlan,
-    std_mat=1.,
+    std_mat=1.0,
 ) -> SamplingAlgorithm:
     """The general mclmc kernel builder (:meth:`blackjax.mcmc.mclmc.build_kernel`, alias `blackjax.mclmc.build_kernel`) can be
     cumbersome to manipulate. Since most users only need to specify the kernel
@@ -160,6 +162,3 @@ def as_top_level_api(
         return kernel(rng_key, state, L, step_size)
 
     return SamplingAlgorithm(init_fn, update_fn)
-
-
-
