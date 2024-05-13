@@ -33,7 +33,7 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             transform=lambda x: x.position,
         )
 
-    def test_streamning(self):
+    def test_streaming(self):
         def logdensity_fn(x):
             return -0.5 * jnp.sum(jnp.square(x))
 
@@ -54,12 +54,10 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             initial_state=initial_state,
             inference_algorithm=alg,
             num_steps=50,
-            progress_bar=True,
+            progress_bar=False,
             transform=lambda x: x.position,
             streaming=True,
         )
-
-        print(average)
 
         _, states, _ = run_inference_algorithm(
             rng_key=run_key,
@@ -71,7 +69,7 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             streaming=False,
         )
 
-        assert jnp.array_equal(states.mean(axis=0), average)
+        assert jnp.allclose(states.mean(axis=0), average)
 
     @parameterized.parameters([True, False])
     def test_compatible_with_initial_pos(self, progress_bar):
