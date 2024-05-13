@@ -220,7 +220,23 @@ def run_inference_algorithm(
 
 
 def streaming_average(O, x, streaming_avg, weight=1.0, zero_prevention=0.0):
-    """streaming average of f(x)"""
+    """Compute the streaming average of a function O(x) using a weight.
+    Parameters:
+    ----------
+        O
+            function to be averaged
+        x
+            current state
+        streaming_avg
+            tuple of (total, average) where total is the sum of weights and average is the current average
+        weight
+            weight of the current state
+        zero_prevention
+            small value to prevent division by zero
+    Returns:
+    ----------
+        new streaming average
+    """
     total, average = streaming_avg
     average = (total * average + weight * O(x)) / (total + weight + zero_prevention)
     total += weight
