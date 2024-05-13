@@ -206,7 +206,7 @@ def run_inference_algorithm(
 
     if streaming:
         xs = (jnp.arange(num_steps), keys)
-        (average, final_state), _ = lax.scan(
+        ((_, average), final_state), _ = lax.scan(
             online_one_step, ((0, transform(initial_state)), initial_state), xs
         )
         return average, transform(final_state)
