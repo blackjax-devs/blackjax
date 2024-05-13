@@ -870,13 +870,18 @@ def random_walk(key, num):
 
 
 models = {
-    StandardNormal(1000) : {'mclmc': 2000, 'mhmclmc' : 2000, 'nuts': 2000}, 
+
+    # Cauchy(100) : {'mclmc': 2000, 'mhmclmc' : 2000, 'nuts': 2000}, 
+    # StandardNormal(100) : {'mclmc': 10000, 'mhmclmc' : 10000, 'nuts': 10000}, 
+    # Banana() : {'mclmc': 10000, 'mhmclmc' : 10000, 'nuts': 10000}, 
+    Brownian() : {'mclmc': 20000, 'mhmclmc' : 80000, 'nuts': 40000},
+
+
     # 'banana': Banana(), 
     # 'icg' : (IllConditionedGaussian(10, 2),   {'mclmc': 2000, 'mhmclmc' : 2000, 'nuts': 2000}),
-    # Brownian() : {'mclmc': 20000, 'mhmclmc' : 40000, 'nuts': 20000},
-    # GermanCredit(): {'mclmc': 20000, 'mhmclmc' : 20000, 'nuts': 20000},
-    # ItemResponseTheory(): {'mclmc': 20000, 'mhmclmc' : 20000, 'nuts': 20000},
-    # StochasticVolatility(): {'mclmc': 20000, 'mhmclmc' : 20000, 'nuts': 20000}
+    # GermanCredit(): {'mclmc': 20000, 'mhmclmc' : 40000, 'nuts': 20000},
+    # ItemResponseTheory(): {'mclmc': 20000, 'mhmclmc' : 40000, 'nuts': 20000},
+    # StochasticVolatility(): {'mclmc': 20000, 'mhmclmc' : 40000, 'nuts': 20000}
     }
 
 # models = {'Brownian Motion': (Brownian(), {'mclmc': 50000, 'mhmclmc' : 40000, 'nuts': 1000}),

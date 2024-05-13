@@ -1,0 +1,2 @@
+model,sampler,integrator,tuning,acc rate,L,stepsize,num_chains,num steps,contraction,ESS
+"('Brownian', 32)",mhmclmc,mclachlan,standard,0.533236026763916,2.3151910305023193,0.5639873743057251,128,100000,<function amax at 0x11e8fe9e0>,0.001778263715095818

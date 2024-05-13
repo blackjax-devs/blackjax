@@ -377,13 +377,13 @@ def mhmclmc_find_L_and_step_size(
 
     dim = pytree_size(state.position)
     if params is None:
-        params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.1, std_mat=jnp.ones((dim,)))
+        params = MCLMCAdaptationState(jnp.sqrt(dim), jnp.sqrt(dim) * 0.2, std_mat=jnp.ones((dim,)))
     else:
         params = params
     # jax.debug.print("initial params {x}", x=params)
     part1_key, part2_key = jax.random.split(rng_key, 2)
 
-    state, params = mhmclmc_make_L_step_size_adaptation(
+    state, params, params_history, final_da_val = mhmclmc_make_L_step_size_adaptation(
         kernel=mclmc_kernel,
         dim=dim,
         frac_tune1=frac_tune1,
@@ -400,7 +400,7 @@ def mhmclmc_find_L_and_step_size(
             state, params, num_steps, part2_key1
         )
 
-        state, params = mhmclmc_make_L_step_size_adaptation(
+        state, params, params_history, final_da_val = mhmclmc_make_L_step_size_adaptation(
         kernel=mclmc_kernel,
         dim=dim,
         frac_tune1=frac_tune1,
@@ -410,7 +410,7 @@ def mhmclmc_find_L_and_step_size(
         diagonal_preconditioning=diagonal_preconditioning
         )(state, params, num_steps, part2_key2)
 
-    return state, params
+    return state, params, params_history, final_da_val
 
 
 def mhmclmc_make_L_step_size_adaptation(
@@ -516,7 +516,7 @@ def mhmclmc_make_L_step_size_adaptation(
             #                         )
 
 
-            return (state, params, (adaptive_state, step_size_max), streaming_avg), info
+            return (state, params, (adaptive_state, step_size_max), streaming_avg), (info, params)
         return step
     
     def step_size_adaptation(mask, state, params, keys, fix_L, initial_da, update_da):
@@ -551,14 +551,15 @@ def mhmclmc_make_L_step_size_adaptation(
 
         # jax.debug.print("{x} initial num steps",x=(params.L/params.step_size))
 
-        ((state, params, (dual_avg_state, step_size_max), (_, average)), info) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass1, fix_L=fix_L_first_da, initial_da=initial_da, update_da=update_da)
-        params = params._replace(L=params.L * (final_da(dual_avg_state)/params.step_size)) 
-        params = params._replace(step_size=final_da(dual_avg_state)) 
+        ((state, params, (dual_avg_state, step_size_max), (_, average)), (info, params_history)) = step_size_adaptation(mask, state, params, L_step_size_adaptation_keys_pass1, fix_L=fix_L_first_da, initial_da=initial_da, update_da=update_da)
+        # jax.debug.print("final da {x}", x=final_da(dual_avg_state))
+        # params = params._replace(L=params.L * (final_da(dual_avg_state)/params.step_size)) 
+        # params = params._replace(step_size=final_da(dual_avg_state)) 
 
         # jax.debug.print("{x} new num steps",x=(params.L/params.step_size))
         
 
-        # jax.debug.print("{x}",x=("mean acceptance rate", (jnp.mean(info.acceptance_rate[:num_steps1]), jnp.mean(info.acceptance_rate[num_steps1:]), params.L, params.step_size)))
+        # jax.debug.print("{x} mean acceptance rate",x=((jnp.mean(info.acceptance_rate))))
 
         
         # jax.debug.print("{x} params after a round of tuning",x=(params))
@@ -599,14 +600,14 @@ def mhmclmc_make_L_step_size_adaptation(
             # jax.debug.print("{x}",x=("L before", params.L))
             # jax.debug.print("{x}",x=("target", target))
             initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
-            ((state, params, (dual_avg_state, step_size_max), (_, average)), info) = step_size_adaptation(jnp.ones(num_steps1), state, params, L_step_size_adaptation_keys_pass2, fix_L=True, update_da=update_da, initial_da=initial_da)
+            ((state, params, (dual_avg_state, step_size_max), (_, average)), (info, params_history)) = step_size_adaptation(jnp.ones(num_steps1), state, params, L_step_size_adaptation_keys_pass2, fix_L=True, update_da=update_da, initial_da=initial_da)
             # params = params._replace(L=params.L * (final_da(dual_avg_state)/params.step_size)) 
-            params = params._replace(step_size=final_da(dual_avg_state))
-            # jax.debug.print("{x}",x=("mean acceptance rate post fractune2", jnp.mean(info.acceptance_rate,)))
+            # params = params._replace(step_size=final_da(dual_avg_state))
+            # jax.debug.print("{x} mean acceptance rate 2",x=(jnp.mean(info.acceptance_rate,)))
             # jax.debug.print("{x}",x=("L after", params.L))
             # jax.debug.print("{x} params after a round of tuning",x=(params))
 
-        return state, params
+        return state, params, params_history.step_size, final_da(dual_avg_state)
     
     return L_step_size_adaptation
 
