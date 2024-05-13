@@ -74,7 +74,14 @@ class LinearRegressionTest(chex.TestCase):
         # reduce sum otherwise broacasting will make the logprob biased.
         return sum(x.sum() for x in [scale_prior, coefs_prior, logpdf])
 
-    def run_mclmc(self, logdensity_fn, num_steps, initial_position, key, diagonal_preconditioning=False):
+    def run_mclmc(
+        self,
+        logdensity_fn,
+        num_steps,
+        initial_position,
+        key,
+        diagonal_preconditioning=False,
+    ):
         init_key, tune_key, run_key = jax.random.split(key, 3)
 
         initial_state = blackjax.mcmc.mclmc.init(

@@ -325,7 +325,7 @@ def esh_dynamics_momentum_update_one_step(std_mat):
             + 2 * zeta * flatten_momentum
         )
         new_momentum_normalized, _ = _normalized_flatten_array(new_momentum_raw)
-        gr = unravel_fn(new_momentum_normalized*std_mat)
+        gr = unravel_fn(new_momentum_normalized * std_mat)
         next_momentum = unravel_fn(new_momentum_normalized)
         kinetic_energy_change = (
             delta
