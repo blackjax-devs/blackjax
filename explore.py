@@ -1,53 +1,61 @@
 import jax
 import jax.numpy as jnp
-from benchmarks.mcmc.sampling_algorithms import samplers
+
 import blackjax
-from blackjax.mcmc.mhmclmc import mhmclmc, rescale
-from blackjax.mcmc.hmc import hmc
-from blackjax.mcmc.dynamic_hmc import dynamic_hmc
-from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
 
-
-
-
-
 init_key, tune_key, run_key = jax.random.split(jax.random.PRNGKey(0), 3)
+
 
 def logdensity_fn(x):
     return -0.5 * jnp.sum(jnp.square(x))
 
-initial_position = jnp.ones(10,)
+
+initial_position = jnp.ones(
+    10,
+)
 
 
-def run_mclmc(logdensity_fn, num_steps, initial_position):
-    key = jax.random.PRNGKey(0)
+def run_mclmc(logdensity_fn, key, num_steps, initial_position):
     init_key, tune_key, run_key = jax.random.split(key, 3)
-
 
     initial_state = blackjax.mcmc.mclmc.init(
         position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
     )
 
-    kernel = blackjax.mcmc.mclmc.build_kernel(
-        logdensity_fn=logdensity_fn,
-        integrator=blackjax.mcmc.integrators.isokinetic_mclachlan,
-    )
+    alg = blackjax.mclmc(logdensity_fn=logdensity_fn, L=0.5, step_size=0.1, std_mat=1.)
 
-    (
-        blackjax_state_after_tuning,
-        blackjax_mclmc_sampler_params,
-    ) = blackjax.mclmc_find_L_and_step_size(
-        mclmc_kernel=kernel,
+    average, states = run_inference_algorithm(
+        rng_key=run_key,
+        initial_state=initial_state,
+        inference_algorithm=alg,
         num_steps=num_steps,
-        state=initial_state,
-        rng_key=tune_key,
+        progress_bar=True,
+        transform=lambda x: x.position,
+        streaming=True,
     )
 
-    print(blackjax_mclmc_sampler_params)
+    print(average)
+
+    _, states, _ = run_inference_algorithm(
+        rng_key=run_key,
+        initial_state=initial_state,
+        inference_algorithm=alg,
+        num_steps=num_steps,
+        progress_bar=False,
+        transform=lambda x: x.position,
+        streaming=False,
+    )
+
+    print(states.mean(axis=0))
+
+    return states
+
 
 # out = run_hmc(initial_position)
-out = samplers["mhmclmc"](logdensity_fn=logdensity_fn, num_steps=5000, initial_position=initial_position, key=jax.random.PRNGKey(0))
-print(out.mean(axis=0) )
-
-
+out = run_mclmc(
+    logdensity_fn=logdensity_fn,
+    num_steps=5,
+    initial_position=initial_position,
+    key=jax.random.PRNGKey(0),
+)
