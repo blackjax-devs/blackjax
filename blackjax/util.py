@@ -159,8 +159,7 @@ def run_inference_algorithm(
     rng_key
         The random state used by JAX's random numbers generator.
     initial_state_or_position
-        The initial state OR the initial position of the inference algorithm. If an initial position
-        is passed in, the function will automatically convert it into an initial state.
+        The initial state of the inference algorithm.
     inference_algorithm
         One of blackjax's sampling algorithms or variational inference algorithms.
     num_steps
