@@ -19,14 +19,14 @@ class RunInferenceAlgorithmTest(chex.TestCase):
         )
         self.num_steps = 10
 
-    def check_compatible(self, initial_state_or_position, progress_bar):
+    def check_compatible(self, initial_state, progress_bar):
         """
         Runs 10 steps with `run_inference_algorithm` starting with
-        `initial_state_or_position` and potentially a progress bar.
+        `initial_state` and potentially a progress bar.
         """
         _ = run_inference_algorithm(
             self.key,
-            initial_state_or_position,
+            initial_state,
             self.algorithm,
             self.num_steps,
             progress_bar,
