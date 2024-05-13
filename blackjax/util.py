@@ -167,7 +167,7 @@ def run_inference_algorithm(
     progress_bar
         Whether to display a progress bar.
     transform
-        A transformation of the trace of states to be returned. This is useful for
+        A transform of the trace of states to be returned. This is useful for
         computing determinstic variables, or returning a subset of the states.
         By default, the states are returned as is.
 
