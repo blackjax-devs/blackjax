@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Set
 
 import jax
 import jax.numpy as jnp
@@ -247,11 +247,12 @@ def return_all_adapt_info(state, info, adaptation_state):
     """
     return AdaptationInfo(state, info, adaptation_state)
 
+
 def get_filter_adapt_info_fn(
-        state_keys: set = {},
-        info_keys: set = {},
-        adapt_state_keys: set = {},
-        ):
+    state_keys: Set[str] = set(),
+    info_keys: Set[str] = set(),
+    adapt_state_keys: Set[str] = set(),
+):
     """Generate a function to filter what is saved in AdaptationInfo.  Used
     for adptation_info_fn parameter of window_adaptation.
     adaptation_info_fn=get_filter_adapt_info_fn() saves no auxiliary information
@@ -266,6 +267,7 @@ def get_filter_adapt_info_fn(
         new_adapt_state = filter_tuple(adaptation_state, adapt_state_keys)
 
         return AdaptationInfo(sample_state, new_info, new_adapt_state)
+
     return filter_fn
 
 

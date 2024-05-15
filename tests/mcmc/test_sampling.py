@@ -57,14 +57,23 @@ regression_test_cases = [
 ]
 
 window_adaptation_filters = [
-    {"filter_fn": blackjax.adaptation.window_adaptation.return_all_adapt_info,
-     "return_sets": None,
+    {
+        "filter_fn": blackjax.adaptation.window_adaptation.return_all_adapt_info,
+        "return_sets": None,
     },
-    {"filter_fn": blackjax.adaptation.window_adaptation.get_filter_adapt_info_fn(),
-     "return_sets": ({}, {}, {}),
+    {
+        "filter_fn": blackjax.adaptation.window_adaptation.get_filter_adapt_info_fn(),
+        "return_sets": ({}, {}, {}),
     },
-    {"filter_fn": blackjax.adaptation.window_adaptation.get_filter_adapt_info_fn({"position"}, {"is_divergent"}, {"ss_state", "inverse_mass_matrix"}),
-     "return_sets": ({"position"}, {"is_divergent"}, {"ss_state", "inverse_mass_matrix"}),
+    {
+        "filter_fn": blackjax.adaptation.window_adaptation.get_filter_adapt_info_fn(
+            {"position"}, {"is_divergent"}, {"ss_state", "inverse_mass_matrix"}
+        ),
+        "return_sets": (
+            {"position"},
+            {"is_divergent"},
+            {"ss_state", "inverse_mass_matrix"},
+        ),
     },
 ]
 
@@ -124,8 +133,14 @@ class LinearRegressionTest(chex.TestCase):
 
         return samples
 
-    @parameterized.parameters(itertools.product(regression_test_cases, [True, False], window_adaptation_filters))
-    def test_window_adaptation(self, case, is_mass_matrix_diagonal, window_adapt_config):
+    @parameterized.parameters(
+        itertools.product(
+            regression_test_cases, [True, False], window_adaptation_filters
+        )
+    )
+    def test_window_adaptation(
+        self, case, is_mass_matrix_diagonal, window_adapt_config
+    ):
         """Test the HMC kernel and the Stan warmup."""
         rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
         x_data = jax.random.normal(init_key0, shape=(1000, 1))
@@ -162,7 +177,11 @@ class LinearRegressionTest(chex.TestCase):
 
         keysets = window_adapt_config["return_sets"]
         if keysets is None:
-            keysets = (info.state._fields, info.info._fields, info.adaptation_state._fields)
+            keysets = (
+                info.state._fields,
+                info.info._fields,
+                info.adaptation_state._fields,
+            )
         for i, attribute in enumerate(["state", "info", "adaptation_state"]):
             check_attrs(attribute, keysets[i])
 
