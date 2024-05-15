@@ -2,13 +2,14 @@
 from functools import partial
 from typing import Callable, Union
 
+import jax
 import jax.numpy as jnp
 from jax import jit, lax
 from jax.flatten_util import ravel_pytree
 from jax.random import normal, split
 from jax.tree_util import tree_leaves
 
-from blackjax.base import Info, SamplingAlgorithm, State, VIAlgorithm
+from blackjax.base import SamplingAlgorithm, VIAlgorithm
 from blackjax.progress_bar import progress_bar_scan
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -147,7 +148,8 @@ def run_inference_algorithm(
     num_steps: int,
     progress_bar: bool = False,
     transform: Callable = lambda x: x,
-    streaming=False,
+    return_state_history=True,
+    expectation: Callable = lambda x: x,
 ) -> tuple:
     """Wrapper to run an inference algorithm.
 
@@ -171,52 +173,49 @@ def run_inference_algorithm(
         A transformation of the trace of states to be returned. This is useful for
         computing determinstic variables, or returning a subset of the states.
         By default, the states are returned as is.
-    streaming
-        if True, `run_inference_algorithm` will take a streaming average of the value of transform, and return that average instead of the full set of samples. This is useful when memory is a bottleneck.
+    expectation
+        A function that computes the expectation of the state. This is done incrementally, so doesn't require storing all the states.
+    return_state_history
+        if False, `run_inference_algorithm` will only return an expectation of the value of transform, and return that average instead of the full set of samples. This is useful when memory is a bottleneck.
 
     Returns
     -------
-    Tuple[State, State, Info]
-        1. The final state of the inference algorithm.
-        2. The trace of states of the inference algorithm (contains the MCMC samples).
+    If return_state_history is True:
+        1. The final state.
+        2. The trace of the state.
         3. The trace of the info of the inference algorithm for diagnostics.
+    If return_state_history is False:
+        1. This is the expectation of state over the chain. Otherwise the final state.
+        2. The final state of the inference algorithm.
     """
 
     keys = split(rng_key, num_steps)
 
-    @jit
-    def _one_step(state, xs):
-        _, rng_key = xs
-        state, info = inference_algorithm.step(rng_key, state)
-        return state, (transform(state), info)
-
-    def _online_one_step(average_and_state, xs):
+    def one_step(average_and_state, xs, return_state):
         _, rng_key = xs
         average, state = average_and_state
-        state, _ = inference_algorithm.step(rng_key, state)
-        average = streaming_average(transform, state, average)
-        return (average, state), None
+        state, info = inference_algorithm.step(rng_key, state)
+        average = streaming_average(expectation, state, average)
+        if return_state:
+            return (average, state), (transform(state), info)
+        else:
+            return (average, state), None
+
+    one_step = jax.jit(partial(one_step, return_state=return_state_history))
 
     if progress_bar:
-        one_step = progress_bar_scan(num_steps)(_one_step)
-        online_one_step = progress_bar_scan(num_steps)(_online_one_step)
-    else:
-        one_step = _one_step
-        online_one_step = _online_one_step
+        one_step = progress_bar_scan(num_steps)(one_step)
 
-    if streaming:
-        xs = (jnp.arange(num_steps), keys)
-        ((_, average), final_state), _ = lax.scan(
-            online_one_step, ((0, transform(initial_state)), initial_state), xs
-        )
+    xs = (jnp.arange(num_steps), keys)
+    ((_, average), final_state), history = lax.scan(
+        one_step, ((0, expectation(initial_state)), initial_state), xs
+    )
+
+    if not return_state_history:
         return average, transform(final_state)
-
     else:
-        xs = (jnp.arange(num_steps), keys)
-        final_state, (state_history, info_history) = lax.scan(
-            one_step, initial_state, xs
-        )
-        return final_state, state_history, info_history
+        state_history, info_history = history
+        return transform(final_state), state_history, info_history
 
 
 def streaming_average(O, x, streaming_avg, weight=1.0, zero_prevention=0.0):
@@ -237,8 +236,14 @@ def streaming_average(O, x, streaming_avg, weight=1.0, zero_prevention=0.0):
     ----------
         new streaming average
     """
+
+    expectation = O(x)
+    flat_expectation, unravel_fn = ravel_pytree(expectation)
     total, average = streaming_avg
-    average = (total * average + weight * O(x)) / (total + weight + zero_prevention)
+    flat_average, _ = ravel_pytree(average)
+    average = (total * flat_average + weight * flat_expectation) / (
+        total + weight + zero_prevention
+    )
     total += weight
-    streaming_avg = (total, average)
+    streaming_avg = (total, unravel_fn(average))
     return streaming_avg

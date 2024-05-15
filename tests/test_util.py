@@ -49,24 +49,27 @@ class RunInferenceAlgorithmTest(chex.TestCase):
 
         alg = blackjax.mclmc(logdensity_fn=logdensity_fn, L=0.5, step_size=0.1)
 
-        average, states = run_inference_algorithm(
+        _, states, info = run_inference_algorithm(
             rng_key=run_key,
             initial_state=initial_state,
             inference_algorithm=alg,
             num_steps=50,
             progress_bar=False,
+            expectation=lambda x: x.position,
             transform=lambda x: x.position,
-            streaming=True,
+            return_state_history=True,
         )
 
-        _, states, _ = run_inference_algorithm(
+
+        average, _ = run_inference_algorithm(
             rng_key=run_key,
             initial_state=initial_state,
             inference_algorithm=alg,
             num_steps=50,
             progress_bar=False,
+            expectation=lambda x: x.position,
             transform=lambda x: x.position,
-            streaming=False,
+            return_state_history=False,
         )
 
         assert jnp.allclose(states.mean(axis=0), average)
