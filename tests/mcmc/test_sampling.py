@@ -104,7 +104,7 @@ class LinearRegressionTest(chex.TestCase):
 
         _, samples, _ = run_inference_algorithm(
             rng_key=run_key,
-            initial_state_or_position=blackjax_state_after_tuning,
+            initial_state=blackjax_state_after_tuning,
             inference_algorithm=sampling_alg,
             num_steps=num_steps,
             transform=lambda x: x.position,
