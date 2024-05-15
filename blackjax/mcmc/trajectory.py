@@ -357,7 +357,7 @@ def dynamic_recursive_integration(
 
         """
         if tree_depth == 0:
-            # Base case - take one leapfrog step in the direction v.
+            # Base case - take one velocity_verlet step in the direction v.
             next_state = integrator(initial_state, direction * step_size)
             new_proposal = generate_proposal(initial_energy, next_state)
             is_diverging = -new_proposal.weight > divergence_threshold
