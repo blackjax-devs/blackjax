@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Callable, NamedTuple, Set
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 
-from blackjax.adaptation.base import AdaptationInfo, AdaptationResults
+from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
 from blackjax.adaptation.mass_matrix import (
     MassMatrixAdaptationState,
     mass_matrix_adaptation,
@@ -241,36 +241,6 @@ def base(
     return init, update, final
 
 
-def return_all_adapt_info(state, info, adaptation_state):
-    """Return fully populated AdaptationInfo.  Used for adaptation_info_fn
-    parameter of window_adaptation
-    """
-    return AdaptationInfo(state, info, adaptation_state)
-
-
-def get_filter_adapt_info_fn(
-    state_keys: Set[str] = set(),
-    info_keys: Set[str] = set(),
-    adapt_state_keys: Set[str] = set(),
-):
-    """Generate a function to filter what is saved in AdaptationInfo.  Used
-    for adptation_info_fn parameter of window_adaptation.
-    adaptation_info_fn=get_filter_adapt_info_fn() saves no auxiliary information
-    """
-
-    def filter_tuple(tup, key_set):
-        return tup._replace(**{k: None for k in tup._fields if k not in key_set})
-
-    def filter_fn(state, info, adaptation_state):
-        sample_state = filter_tuple(state, state_keys)
-        new_info = filter_tuple(info, info_keys)
-        new_adapt_state = filter_tuple(adaptation_state, adapt_state_keys)
-
-        return AdaptationInfo(sample_state, new_info, new_adapt_state)
-
-    return filter_fn
-
-
 def window_adaptation(
     algorithm,
     logdensity_fn: Callable,
@@ -311,8 +281,9 @@ def window_adaptation(
         Whether we should display a progress bar.
     adaptation_info_fn
         Function to select the adaptation info returned. See return_all_adapt_info
-        and get_filter_adapt_info_fn.  By default all information is saved - this can
-        result in excessive memory usage if the information is unused.
+        and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all
+        information is saved - this can result in excessive memory usage if the
+        information is unused.
     **extra_parameters
         The extra parameters to pass to the algorithm, e.g. the number of
         integration steps for HMC.
