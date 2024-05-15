@@ -17,6 +17,7 @@ from typing import Any, Callable, NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
+from jax.random import normal
 
 from blackjax.mcmc.metrics import KineticEnergy
 from blackjax.types import ArrayTree
@@ -293,43 +294,49 @@ def _normalized_flatten_array(x, tol=1e-13):
     return jnp.where(norm > tol, x / norm, x), norm
 
 
-def esh_dynamics_momentum_update_one_step(
-    momentum: ArrayTree,
-    logdensity_grad: ArrayTree,
-    step_size: float,
-    coef: float,
-    previous_kinetic_energy_change=None,
-    is_last_call=False,
-):
-    """Momentum update based on Esh dynamics.
+def esh_dynamics_momentum_update_one_step(std_mat):
+    def update(
+        momentum: ArrayTree,
+        logdensity_grad: ArrayTree,
+        step_size: float,
+        coef: float,
+        previous_kinetic_energy_change=None,
+        is_last_call=False,
+    ):
+        """Momentum update based on Esh dynamics.
 
-    The momentum updating map of the esh dynamics as derived in :cite:p:`steeg2021hamiltonian`
-    There are no exponentials e^delta, which prevents overflows when the gradient norm
-    is large.
-    """
-    del is_last_call
+        The momentum updating map of the esh dynamics as derived in :cite:p:`steeg2021hamiltonian`
+        There are no exponentials e^delta, which prevents overflows when the gradient norm
+        is large.
+        """
+        del is_last_call
 
-    flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
-    flatten_momentum, _ = ravel_pytree(momentum)
-    dims = flatten_momentum.shape[0]
-    normalized_gradient, gradient_norm = _normalized_flatten_array(flatten_grads)
-    momentum_proj = jnp.dot(flatten_momentum, normalized_gradient)
-    delta = step_size * coef * gradient_norm / (dims - 1)
-    zeta = jnp.exp(-delta)
-    new_momentum_raw = (
-        normalized_gradient * (1 - zeta) * (1 + zeta + momentum_proj * (1 - zeta))
-        + 2 * zeta * flatten_momentum
-    )
-    new_momentum_normalized, _ = _normalized_flatten_array(new_momentum_raw)
-    next_momentum = unravel_fn(new_momentum_normalized)
-    kinetic_energy_change = (
-        delta
-        - jnp.log(2)
-        + jnp.log(1 + momentum_proj + (1 - momentum_proj) * zeta**2)
-    ) * (dims - 1)
-    if previous_kinetic_energy_change is not None:
-        kinetic_energy_change += previous_kinetic_energy_change
-    return next_momentum, next_momentum, kinetic_energy_change
+        logdensity_grad = logdensity_grad
+        flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
+        flatten_grads = flatten_grads * std_mat
+        flatten_momentum, _ = ravel_pytree(momentum)
+        dims = flatten_momentum.shape[0]
+        normalized_gradient, gradient_norm = _normalized_flatten_array(flatten_grads)
+        momentum_proj = jnp.dot(flatten_momentum, normalized_gradient)
+        delta = step_size * coef * gradient_norm / (dims - 1)
+        zeta = jnp.exp(-delta)
+        new_momentum_raw = (
+            normalized_gradient * (1 - zeta) * (1 + zeta + momentum_proj * (1 - zeta))
+            + 2 * zeta * flatten_momentum
+        )
+        new_momentum_normalized, _ = _normalized_flatten_array(new_momentum_raw)
+        gr = unravel_fn(new_momentum_normalized * std_mat)
+        next_momentum = unravel_fn(new_momentum_normalized)
+        kinetic_energy_change = (
+            delta
+            - jnp.log(2)
+            + jnp.log(1 + momentum_proj + (1 - momentum_proj) * zeta**2)
+        ) * (dims - 1)
+        if previous_kinetic_energy_change is not None:
+            kinetic_energy_change += previous_kinetic_energy_change
+        return next_momentum, gr, kinetic_energy_change
+
+    return update
 
 
 def format_isokinetic_state_output(
@@ -348,15 +355,15 @@ def format_isokinetic_state_output(
     )
 
 
-def generate_isokinetic_integrator(cofficients):
+def generate_isokinetic_integrator(coefficients):
     def isokinetic_integrator(
-        logdensity_fn: Callable, *args, **kwargs
+        logdensity_fn: Callable, std_mat: ArrayTree, *args, **kwargs
     ) -> GeneralIntegrator:
         position_update_fn = euclidean_position_update_fn(logdensity_fn)
         one_step = generalized_two_stage_integrator(
-            esh_dynamics_momentum_update_one_step,
+            esh_dynamics_momentum_update_one_step(std_mat),
             position_update_fn,
-            cofficients,
+            coefficients,
             format_output_fn=format_isokinetic_state_output,
         )
         return one_step
@@ -367,6 +374,60 @@ def generate_isokinetic_integrator(cofficients):
 isokinetic_leapfrog = generate_isokinetic_integrator(velocity_verlet_cofficients)
 isokinetic_yoshida = generate_isokinetic_integrator(yoshida_cofficients)
 isokinetic_mclachlan = generate_isokinetic_integrator(mclachlan_cofficients)
+
+
+def partially_refresh_momentum(momentum, rng_key, step_size, L):
+    """Adds a small noise to momentum and normalizes.
+
+    Parameters
+    ----------
+    rng_key
+        The pseudo-random number generator key used to generate random numbers.
+    momentum
+        PyTree that the structure the output should to match.
+    step_size
+        Step size
+    L
+        controls rate of momentum change
+
+    Returns
+    -------
+    momentum with random change in angle
+    """
+    m, unravel_fn = ravel_pytree(momentum)
+    dim = m.shape[0]
+    nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
+    z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
+    return unravel_fn((m + z) / jnp.linalg.norm(m + z))
+
+
+def with_isokinetic_maruyama(integrator):
+    def stochastic_integrator(init_state, step_size, L_proposal, rng_key):
+        key1, key2 = jax.random.split(rng_key)
+        # partial refreshment
+        state = init_state._replace(
+            momentum=partially_refresh_momentum(
+                momentum=init_state.momentum,
+                rng_key=key1,
+                L=L_proposal,
+                step_size=step_size * 0.5,
+            )
+        )
+        # one step of the deterministic dynamics
+        state, info = integrator(state, step_size)
+        # partial refreshment
+        state = state._replace(
+            momentum=partially_refresh_momentum(
+                momentum=state.momentum,
+                rng_key=key2,
+                L=L_proposal,
+                step_size=step_size * 0.5,
+            )
+        )
+        return state, info
+
+    return stochastic_integrator
+
 
 FixedPointSolver = Callable[
     [Callable[[ArrayTree], Tuple[ArrayTree, ArrayTree]], ArrayTree],
