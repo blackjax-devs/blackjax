@@ -63,7 +63,7 @@ window_adaptation_filters = [
     },
     {
         "filter_fn": blackjax.adaptation.window_adaptation.get_filter_adapt_info_fn(),
-        "return_sets": ({}, {}, {}),
+        "return_sets": (set(), set(), set()),
     },
     {
         "filter_fn": blackjax.adaptation.window_adaptation.get_filter_adapt_info_fn(
