@@ -60,7 +60,6 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             return_state_history=True,
         )
 
-
         average, _ = run_inference_algorithm(
             rng_key=run_key,
             initial_state=initial_state,
