@@ -39,6 +39,7 @@ __all__ = [
     "implicit_midpoint",
     "calls_per_integrator_step",
     "name_integrator",
+    "integrator_order"
 ]
 
 
@@ -464,7 +465,7 @@ def calls_per_integrator_step(c):
         return 5
 
     else:
-        raise Exception
+        raise Exception("No such integrator exists in blackjax")
 
 
 def name_integrator(c):
@@ -478,8 +479,16 @@ def name_integrator(c):
         return "omelyan"
 
     else:
-        raise Exception
+        raise Exception("No such integrator exists in blackjax")
 
+def integrator_order(c):
+    if c==velocity_verlet_coefficients: return 2
+    if c==mclachlan_coefficients: return 2
+    if c==yoshida_coefficients: return 4
+    if c==omelyan_coefficients: return 4
+    
+
+    else: raise Exception("No such integrator exists in blackjax")
 
 FixedPointSolver = Callable[
     [Callable[[ArrayTree], Tuple[ArrayTree, ArrayTree]], ArrayTree],
