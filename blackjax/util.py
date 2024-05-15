@@ -247,4 +247,3 @@ def streaming_average(O, x, streaming_avg, weight=1.0, zero_prevention=0.0):
     total += weight
     streaming_avg = (total, unravel_fn(average))
     return streaming_avg
-
