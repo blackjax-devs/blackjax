@@ -13,6 +13,7 @@ from absl.testing import absltest, parameterized
 import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
+from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
 from blackjax.util import run_inference_algorithm
 
 
@@ -58,15 +59,15 @@ regression_test_cases = [
 
 window_adaptation_filters = [
     {
-        "filter_fn": blackjax.adaptation.base.return_all_adapt_info,
+        "filter_fn": return_all_adapt_info,
         "return_sets": None,
     },
     {
-        "filter_fn": blackjax.adaptation.base.get_filter_adapt_info_fn(),
+        "filter_fn": get_filter_adapt_info_fn(),
         "return_sets": (set(), set(), set()),
     },
     {
-        "filter_fn": blackjax.adaptation.base.get_filter_adapt_info_fn(
+        "filter_fn": get_filter_adapt_info_fn(
             {"position"}, {"is_divergent"}, {"ss_state", "inverse_mass_matrix"}
         ),
         "return_sets": (
@@ -157,7 +158,7 @@ class LinearRegressionTest(chex.TestCase):
             case["algorithm"],
             logposterior_fn,
             is_mass_matrix_diagonal,
-            progress_bar=False,
+            progress_bar=True,
             adaptation_info_fn=window_adapt_config["filter_fn"],
             **case["parameters"],
         )

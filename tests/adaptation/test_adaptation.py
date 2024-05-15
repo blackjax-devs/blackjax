@@ -6,6 +6,7 @@ import pytest
 
 import blackjax
 from blackjax.adaptation import window_adaptation
+from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
 from blackjax.util import run_inference_algorithm
 
 
@@ -38,15 +39,15 @@ def test_adaptation_schedule(num_steps, expected_schedule):
     "adaptation_filters",
     [
         {
-            "filter_fn": blackjax.adaptation.base.return_all_adapt_info,
+            "filter_fn": return_all_adapt_info,
             "return_sets": None,
         },
         {
-            "filter_fn": blackjax.adaptation.base.get_filter_adapt_info_fn(),
+            "filter_fn": get_filter_adapt_info_fn(),
             "return_sets": (set(), set(), set()),
         },
         {
-            "filter_fn": blackjax.adaptation.base.get_filter_adapt_info_fn(
+            "filter_fn": get_filter_adapt_info_fn(
                 {"logdensity"},
                 {"proposal"},
                 {"random_generator_arg", "step", "da_state"},
