@@ -30,7 +30,7 @@ from blackjax.util import generate_unit_vector
 __all__ = [
     "init",
     "build_kernel",
-    "mhmclmc",
+    "adjusted_mclmc",
 ]
 
 def init(
@@ -84,7 +84,7 @@ def build_kernel(
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
 
-        proposal, info, _ = mhmclmc_proposal(
+        proposal, info, _ = adjusted_mclmc_proposal(
             # integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
             lambda state, step_size, L_prop, key : (integrator(logdensity_fn, std_mat))(state, step_size),
             step_size,
@@ -170,7 +170,7 @@ def as_top_level_api(
     return SamplingAlgorithm(init_fn, update_fn)  # type: ignore[arg-type]
 
 
-def mhmclmc_proposal(
+def adjusted_mclmc_proposal(
     integrator: Callable,
     step_size: Union[float, ArrayLikeTree],
     L_proposal: float,
