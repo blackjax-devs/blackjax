@@ -1,6 +1,8 @@
 # Created by https://www.gitignore.io/api/python
 # Edit at https://www.gitignore.io/?templates=python
 
+explore.py
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
