@@ -173,15 +173,20 @@ def run_inference_algorithm(
         A transformation of the trace of states to be returned. This is useful for
         computing determinstic variables, or returning a subset of the states.
         By default, the states are returned as is.
-    return_expectation
-        if True, `run_inference_algorithm` will take a streaming average of the value of transform, and return that average instead of the full set of samples. This is useful when memory is a bottleneck.
+    expectation
+        A function that computes the expectation of the state. This is done incrementally, so doesn't require storing all the states.
+    return_state_history
+        if False, `run_inference_algorithm` will only return an expectation of the value of transform, and return that average instead of the full set of samples. This is useful when memory is a bottleneck.
 
     Returns
     -------
-    Tuple[State, State, Info]
-        1. The expectation of transform(state) over the chain.
+    If return_state_history is True:
+        1. The final state.
+        2. The trace of the state.
+        3. The trace of the info of the inference algorithm for diagnostics.
+    If return_state_history is False:
+        1. This is the expectation of state over the chain. Otherwise the final state.
         2. The final state of the inference algorithm.
-        3. The trace of the state and info of the inference algorithm for diagnostics.
     """
 
     keys = split(rng_key, num_steps)
