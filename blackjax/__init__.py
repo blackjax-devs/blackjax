@@ -11,6 +11,7 @@ from .adaptation.window_adaptation import window_adaptation
 from .base import SamplingAlgorithm, VIAlgorithm
 from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
+from .mcmc import adjusted_mclmc as _adjusted_mclmc
 from .mcmc import barker
 from .mcmc import dynamic_hmc as _dynamic_hmc
 from .mcmc import elliptical_slice as _elliptical_slice
@@ -19,7 +20,6 @@ from .mcmc import hmc as _hmc
 from .mcmc import mala as _mala
 from .mcmc import marginal_latent_gaussian
 from .mcmc import mclmc as _mclmc
-from .mcmc import adjusted_mclmc as _adjusted_mclmc
 from .mcmc import nuts as _nuts
 from .mcmc import periodic_orbital, random_walk
 from .mcmc import rmhmc as _rmhmc

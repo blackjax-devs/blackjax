@@ -17,27 +17,21 @@ from typing import Callable, Union
 import jax
 import jax.numpy as jnp
 
-from blackjax.mcmc.dynamic_hmc import DynamicHMCState, halton_sequence
-from blackjax.types import ArrayLike
 import blackjax.mcmc.integrators as integrators
 from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.dynamic_hmc import DynamicHMCState, halton_sequence
 from blackjax.mcmc.hmc import HMCInfo
 from blackjax.mcmc.proposal import static_binomial_sampling
-
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_unit_vector
 
-__all__ = [
-    "init",
-    "build_kernel",
-    "adjusted_mclmc",
-]
+__all__ = ["init", "build_kernel", "as_top_level_api"]
 
-def init(
-    position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: Array
-):
+
+def init(position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: Array):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
+
 
 # TODO: no default for std_mat
 def build_kernel(
@@ -45,7 +39,7 @@ def build_kernel(
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
-    std_mat=1.,
+    std_mat=1.0,
 ):
     """Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
@@ -73,29 +67,29 @@ def build_kernel(
         state: DynamicHMCState,
         logdensity_fn: Callable,
         step_size: float,
-        L_proposal : float = 1.0,
+        L_proposal: float = 1.0,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
-        
-        num_integration_steps = integration_steps_fn(
-            state.random_generator_arg
-        )
+
+        num_integration_steps = integration_steps_fn(state.random_generator_arg)
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
 
         proposal, info, _ = adjusted_mclmc_proposal(
             # integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
-            lambda state, step_size, L_prop, key : (integrator(logdensity_fn, std_mat))(state, step_size),
+            lambda state, step_size, L_prop, key: (integrator(logdensity_fn, std_mat))(
+                state, step_size
+            ),
             step_size,
             L_proposal,
             num_integration_steps,
             divergence_threshold,
         )(
-            key_integrator, 
+            key_integrator,
             integrators.IntegratorState(
-            state.position, momentum, state.logdensity, state.logdensity_grad
-            )
+                state.position, momentum, state.logdensity, state.logdensity_grad
+            ),
         )
 
         return (
@@ -110,16 +104,17 @@ def build_kernel(
 
     return kernel
 
+
 def as_top_level_api(
-        logdensity_fn: Callable,
-        step_size: float,
-        L_proposal : float = 0.6,
-        std_mat=1.0,
-        *,
-        divergence_threshold: int = 1000,
-        integrator: Callable = integrators.isokinetic_mclachlan,
-        next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
-        integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+    logdensity_fn: Callable,
+    step_size: float,
+    L_proposal: float = 0.6,
+    std_mat=1.0,
+    *,
+    divergence_threshold: int = 1000,
+    integrator: Callable = integrators.isokinetic_mclachlan,
+    next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
+    integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the dynamic MHMCHMC kernel.
 
@@ -147,9 +142,13 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
     """
 
-    kernel = build_kernel(integration_steps_fn=integration_steps_fn, integrator=integrator, next_random_arg_fn=next_random_arg_fn, std_mat=std_mat, divergence_threshold=divergence_threshold)
-
-    
+    kernel = build_kernel(
+        integration_steps_fn=integration_steps_fn,
+        integrator=integrator,
+        next_random_arg_fn=next_random_arg_fn,
+        std_mat=std_mat,
+        divergence_threshold=divergence_threshold,
+    )
 
     def init_fn(position: ArrayLikeTree, rng_key: Array):
         return init(position, logdensity_fn, rng_key)
@@ -162,11 +161,7 @@ def as_top_level_api(
             step_size,
             L_proposal,
         )
-    
-    def init_fn(position: ArrayLike, rng_key: PRNGKey):
-        return init(position, logdensity_fn, rng_key)
 
-   
     return SamplingAlgorithm(init_fn, update_fn)  # type: ignore[arg-type]
 
 
@@ -209,12 +204,16 @@ def adjusted_mclmc_proposal(
     def step(i, vars):
         state, kinetic_energy, rng_key = vars
         rng_key, next_rng_key = jax.random.split(rng_key)
-        next_state, next_kinetic_energy = integrator(state, step_size, L_proposal, rng_key)
+        next_state, next_kinetic_energy = integrator(
+            state, step_size, L_proposal, rng_key
+        )
 
         return next_state, kinetic_energy + next_kinetic_energy, next_rng_key
 
     def build_trajectory(state, num_integration_steps, rng_key):
-        return jax.lax.fori_loop(0*num_integration_steps, num_integration_steps, step, (state, 0, rng_key))
+        return jax.lax.fori_loop(
+            0 * num_integration_steps, num_integration_steps, step, (state, 0, rng_key)
+        )
 
     def generate(
         rng_key, state: integrators.IntegratorState
@@ -225,7 +224,7 @@ def adjusted_mclmc_proposal(
         )
 
         # note that this is the POTENTIAL energy only
-        new_energy = -end_state.logdensity 
+        new_energy = -end_state.logdensity
         delta_energy = -state.logdensity + end_state.logdensity - kinetic_energy
         delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
         is_diverging = -delta_energy > divergence_threshold
@@ -246,6 +245,7 @@ def adjusted_mclmc_proposal(
 
     return generate
 
+
 def rescale(mu):
     """returns s, such that
      round(U(0, 1) * s + 0.5)
@@ -254,6 +254,7 @@ def rescale(mu):
     k = jnp.floor(2 * mu - 1)
     x = k * (mu - 0.5 * (k + 1)) / (k + 1 - mu)
     return k + x
+
 
 def trajectory_length(t, mu):
     s = rescale(mu)
