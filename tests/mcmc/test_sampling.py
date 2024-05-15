@@ -56,6 +56,18 @@ regression_test_cases = [
     },
 ]
 
+window_adaptation_filters = [
+    {"filter_fn": blackjax.adaptation.window_adaptation.return_all_adapt_info,
+     "return_sets": None,
+    },
+    {"filter_fn": blackjax.adaptation.window_adaptation.get_filter_adapt_info_fn(),
+     "return_sets": ({}, {}, {}),
+    },
+    {"filter_fn": blackjax.adaptation.window_adaptation.get_filter_adapt_info_fn({"position"}, {"is_divergent"}, {"ss_state", "inverse_mass_matrix"}),
+     "return_sets": ({"position"}, {"is_divergent"}, {"ss_state", "inverse_mass_matrix"}),
+    },
+]
+
 
 class LinearRegressionTest(chex.TestCase):
     """Test sampling of a linear regression model."""
@@ -112,8 +124,8 @@ class LinearRegressionTest(chex.TestCase):
 
         return samples
 
-    @parameterized.parameters(itertools.product(regression_test_cases, [True, False]))
-    def test_window_adaptation(self, case, is_mass_matrix_diagonal):
+    @parameterized.parameters(itertools.product(regression_test_cases, [True, False], window_adaptation_filters))
+    def test_window_adaptation(self, case, is_mass_matrix_diagonal, window_adapt_config):
         """Test the HMC kernel and the Stan warmup."""
         rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
         x_data = jax.random.normal(init_key0, shape=(1000, 1))
@@ -130,15 +142,29 @@ class LinearRegressionTest(chex.TestCase):
             case["algorithm"],
             logposterior_fn,
             is_mass_matrix_diagonal,
-            progress_bar=True,
+            progress_bar=False,
+            adaptation_info_fn=window_adapt_config["filter_fn"],
             **case["parameters"],
         )
-        (state, parameters), _ = warmup.run(
+        (state, parameters), info = warmup.run(
             warmup_key,
             case["initial_position"],
             case["num_warmup_steps"],
         )
         inference_algorithm = case["algorithm"](logposterior_fn, **parameters)
+
+        def check_attrs(attribute, keyset):
+            for name, param in getattr(info, attribute)._asdict().items():
+                if name in keyset:
+                    assert param is not None
+                else:
+                    assert param is None
+
+        keysets = window_adapt_config["return_sets"]
+        if keysets is None:
+            keysets = (info.state._fields, info.info._fields, info.adaptation_state._fields)
+        for i, attribute in enumerate(["state", "info", "adaptation_state"]):
+            check_attrs(attribute, keysets[i])
 
         _, states, _ = run_inference_algorithm(
             inference_key, state, inference_algorithm, case["num_sampling_steps"]

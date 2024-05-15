@@ -241,6 +241,34 @@ def base(
     return init, update, final
 
 
+def return_all_adapt_info(state, info, adaptation_state):
+    """Return fully populated AdaptationInfo.  Used for adaptation_info_fn
+    parameter of window_adaptation
+    """
+    return AdaptationInfo(state, info, adaptation_state)
+
+def get_filter_adapt_info_fn(
+        state_keys: set = {},
+        info_keys: set = {},
+        adapt_state_keys: set = {},
+        ):
+    """Generate a function to filter what is saved in AdaptationInfo.  Used
+    for adptation_info_fn parameter of window_adaptation.
+    adaptation_info_fn=get_filter_adapt_info_fn() saves no auxiliary information
+    """
+
+    def filter_tuple(tup, key_set):
+        return tup._replace(**{k: None for k in tup._fields if k not in key_set})
+
+    def filter_fn(state, info, adaptation_state):
+        sample_state = filter_tuple(state, state_keys)
+        new_info = filter_tuple(info, info_keys)
+        new_adapt_state = filter_tuple(adaptation_state, adapt_state_keys)
+
+        return AdaptationInfo(sample_state, new_info, new_adapt_state)
+    return filter_fn
+
+
 def window_adaptation(
     algorithm,
     logdensity_fn: Callable,
@@ -248,6 +276,7 @@ def window_adaptation(
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
     progress_bar: bool = False,
+    adaptation_info_fn: Callable = return_all_adapt_info,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the value of the inverse mass matrix and step size parameters of
@@ -278,6 +307,10 @@ def window_adaptation(
         The acceptance rate that we target during step size adaptation.
     progress_bar
         Whether we should display a progress bar.
+    adaptation_info_fn
+        Function to select the adaptation info returned. See return_all_adapt_info
+        and get_filter_adapt_info_fn.  By default all information is saved - this can
+        result in excessive memory usage if the information is unused.
     **extra_parameters
         The extra parameters to pass to the algorithm, e.g. the number of
         integration steps for HMC.
@@ -316,7 +349,7 @@ def window_adaptation(
 
         return (
             (new_state, new_adaptation_state),
-            AdaptationInfo(new_state, info, new_adaptation_state),
+            adaptation_info_fn(new_state, info, new_adaptation_state),
         )
 
     def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
