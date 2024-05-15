@@ -142,7 +142,7 @@ class LinearRegressionTest(chex.TestCase):
             case["algorithm"],
             logposterior_fn,
             is_mass_matrix_diagonal,
-            progress_bar=False,
+            progress_bar=True,
             adaptation_info_fn=window_adapt_config["filter_fn"],
             **case["parameters"],
         )
