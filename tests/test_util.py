@@ -33,6 +33,44 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             transform=lambda x: x.position,
         )
 
+    def test_streaming(self):
+        def logdensity_fn(x):
+            return -0.5 * jnp.sum(jnp.square(x))
+
+        initial_position = jnp.ones(
+            10,
+        )
+
+        init_key, run_key = jax.random.split(self.key, 2)
+
+        initial_state = blackjax.mcmc.mclmc.init(
+            position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
+        )
+
+        alg = blackjax.mclmc(logdensity_fn=logdensity_fn, L=0.5, step_size=0.1)
+
+        average, states = run_inference_algorithm(
+            rng_key=run_key,
+            initial_state=initial_state,
+            inference_algorithm=alg,
+            num_steps=50,
+            progress_bar=False,
+            transform=lambda x: x.position,
+            streaming=True,
+        )
+
+        _, states, _ = run_inference_algorithm(
+            rng_key=run_key,
+            initial_state=initial_state,
+            inference_algorithm=alg,
+            num_steps=50,
+            progress_bar=False,
+            transform=lambda x: x.position,
+            streaming=False,
+        )
+
+        assert jnp.allclose(states.mean(axis=0), average)
+
     @parameterized.parameters([True, False])
     def test_compatible_with_initial_pos(self, progress_bar):
         self.check_compatible(jnp.array([1.0, 1.0]), progress_bar)
