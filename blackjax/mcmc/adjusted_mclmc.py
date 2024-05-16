@@ -67,7 +67,7 @@ def build_kernel(
         state: DynamicHMCState,
         logdensity_fn: Callable,
         step_size: float,
-        L_proposal: float = 1.0,
+        L_proposal: float = jnp.inf,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
 
@@ -75,16 +75,12 @@ def build_kernel(
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
-
         proposal, info, _ = adjusted_mclmc_proposal(
-            # integrators.with_isokinetic_maruyama(integrator(logdensity_fn)),
-            lambda state, step_size, L_prop, key: (integrator(logdensity_fn, std_mat))(
-                state, step_size
-            ),
-            step_size,
-            L_proposal,
-            num_integration_steps,
-            divergence_threshold,
+            integrator=integrators.with_isokinetic_maruyama(integrator(logdensity_fn, std_mat)),
+            step_size=step_size,
+            L_proposal=L_proposal*num_integration_steps,
+            num_integration_steps=num_integration_steps,
+            divergence_threshold=divergence_threshold,
         )(
             key_integrator,
             integrators.IntegratorState(
@@ -108,7 +104,7 @@ def build_kernel(
 def as_top_level_api(
     logdensity_fn: Callable,
     step_size: float,
-    L_proposal: float = 0.6,
+    L_proposal: float = jnp.inf,
     std_mat=1.0,
     *,
     divergence_threshold: int = 1000,
