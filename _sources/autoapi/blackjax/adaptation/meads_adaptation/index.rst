@@ -92,7 +92,7 @@ Functions
              * *update* -- Function that moves the warmup one step.
 
 
-.. py:function:: meads_adaptation(logdensity_fn: Callable, num_chains: int) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: meads_adaptation(logdensity_fn: Callable, num_chains: int, adaptation_info_fn: Callable = return_all_adapt_info) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the parameters of the Generalized HMC algorithm.
 
@@ -118,6 +118,10 @@ Functions
 
    :param logdensity_fn: The log density probability density function from which we wish to sample.
    :param num_chains: Number of chains used for cross-chain warm-up training.
+   :param adaptation_info_fn: Function to select the adaptation info returned. See return_all_adapt_info
+                              and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all
+                              information is saved - this can result in excessive memory usage if the
+                              information is unused.
 
    :returns: * *A function that returns the last cross-chain state, a sampling kernel with the*
              * *tuned parameter values, and all the warm-up states for diagnostics.*

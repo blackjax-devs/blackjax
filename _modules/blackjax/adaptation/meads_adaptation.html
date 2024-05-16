@@ -385,7 +385,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
 <span class="kn">import</span> <span class="nn">blackjax.mcmc</span> <span class="k">as</span> <span class="nn">mcmc</span>
-<span class="kn">from</span> <span class="nn">blackjax.adaptation.base</span> <span class="kn">import</span> <span class="n">AdaptationInfo</span><span class="p">,</span> <span class="n">AdaptationResults</span>
+<span class="kn">from</span> <span class="nn">blackjax.adaptation.base</span> <span class="kn">import</span> <span class="n">AdaptationResults</span><span class="p">,</span> <span class="n">return_all_adapt_info</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">AdaptationAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
@@ -556,6 +556,7 @@ document.write(`
 <span class="k">def</span> <span class="nf">meads_adaptation</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">num_chains</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">adaptation_info_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">return_all_adapt_info</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdaptationAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Adapt the parameters of the Generalized HMC algorithm.</span>
 
@@ -585,6 +586,11 @@ document.write(`
 <span class="sd">        The log density probability density function from which we wish to sample.</span>
 <span class="sd">    num_chains</span>
 <span class="sd">        Number of chains used for cross-chain warm-up training.</span>
+<span class="sd">    adaptation_info_fn</span>
+<span class="sd">        Function to select the adaptation info returned. See return_all_adapt_info</span>
+<span class="sd">        and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all</span>
+<span class="sd">        information is saved - this can result in excessive memory usage if the</span>
+<span class="sd">        information is unused.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -618,10 +624,8 @@ document.write(`
             <span class="n">adaptation_state</span><span class="p">,</span> <span class="n">new_states</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">new_states</span><span class="o">.</span><span class="n">logdensity_grad</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="p">(</span><span class="n">new_states</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span> <span class="n">AdaptationInfo</span><span class="p">(</span>
-            <span class="n">new_states</span><span class="p">,</span>
-            <span class="n">info</span><span class="p">,</span>
-            <span class="n">new_adaptation_state</span><span class="p">,</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">new_states</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span> <span class="n">adaptation_info_fn</span><span class="p">(</span>
+            <span class="n">new_states</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">positions</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">):</span>

@@ -379,7 +379,9 @@ document.write(`
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Set</span>
+
+<span class="kn">import</span> <span class="nn">jax</span>
 
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayTree</span>
 
@@ -413,6 +415,43 @@ document.write(`
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.AdaptationInfo.adaptation_state">[docs]</a>
     <span class="n">adaptation_state</span><span class="p">:</span> <span class="n">NamedTuple</span></div>
 </div>
+
+
+
+<div class="viewcode-block" id="return_all_adapt_info">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.return_all_adapt_info">[docs]</a>
+<span class="k">def</span> <span class="nf">return_all_adapt_info</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return fully populated AdaptationInfo.  Used for adaptation_info_fn</span>
+<span class="sd">    parameters of the adaptation algorithms.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">AdaptationInfo</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_filter_adapt_info_fn">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.get_filter_adapt_info_fn">[docs]</a>
+<span class="k">def</span> <span class="nf">get_filter_adapt_info_fn</span><span class="p">(</span>
+    <span class="n">state_keys</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(),</span>
+    <span class="n">info_keys</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(),</span>
+    <span class="n">adapt_state_keys</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(),</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a function to filter what is saved in AdaptationInfo.  Used</span>
+<span class="sd">    for adptation_info_fn parameters of the adaptation algorithms.</span>
+<span class="sd">    adaptation_info_fn=get_filter_adapt_info_fn() saves no auxiliary information</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">filter_tuple</span><span class="p">(</span><span class="n">tup</span><span class="p">,</span> <span class="n">key_set</span><span class="p">):</span>
+        <span class="n">mapfn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">key_set</span> <span class="k">else</span> <span class="n">val</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">mapfn</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">tup</span><span class="p">)(</span><span class="o">*</span><span class="n">tup</span><span class="o">.</span><span class="n">_fields</span><span class="p">),</span> <span class="n">tup</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">filter_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">):</span>
+        <span class="n">sample_state</span> <span class="o">=</span> <span class="n">filter_tuple</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">state_keys</span><span class="p">)</span>
+        <span class="n">new_info</span> <span class="o">=</span> <span class="n">filter_tuple</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">info_keys</span><span class="p">)</span>
+        <span class="n">new_adapt_state</span> <span class="o">=</span> <span class="n">filter_tuple</span><span class="p">(</span><span class="n">adaptation_state</span><span class="p">,</span> <span class="n">adapt_state_keys</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">AdaptationInfo</span><span class="p">(</span><span class="n">sample_state</span><span class="p">,</span> <span class="n">new_info</span><span class="p">,</span> <span class="n">new_adapt_state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">filter_fn</span></div>
 
 </pre></div>
 

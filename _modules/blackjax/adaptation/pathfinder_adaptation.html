@@ -386,7 +386,7 @@ document.write(`
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 
 <span class="kn">import</span> <span class="nn">blackjax.vi</span> <span class="k">as</span> <span class="nn">vi</span>
-<span class="kn">from</span> <span class="nn">blackjax.adaptation.base</span> <span class="kn">import</span> <span class="n">AdaptationInfo</span><span class="p">,</span> <span class="n">AdaptationResults</span>
+<span class="kn">from</span> <span class="nn">blackjax.adaptation.base</span> <span class="kn">import</span> <span class="n">AdaptationResults</span><span class="p">,</span> <span class="n">return_all_adapt_info</span>
 <span class="kn">from</span> <span class="nn">blackjax.adaptation.step_size</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">DualAveragingAdaptationState</span><span class="p">,</span>
     <span class="n">dual_averaging_adaptation</span><span class="p">,</span>
@@ -526,6 +526,7 @@ document.write(`
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.80</span><span class="p">,</span>
+    <span class="n">adaptation_info_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">return_all_adapt_info</span><span class="p">,</span>
     <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdaptationAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Adapt the value of the inverse mass matrix and step size parameters of</span>
@@ -541,6 +542,11 @@ document.write(`
 <span class="sd">        The initial step size used in the algorithm.</span>
 <span class="sd">    target_acceptance_rate</span>
 <span class="sd">        The acceptance rate that we target during step size adaptation.</span>
+<span class="sd">    adaptation_info_fn</span>
+<span class="sd">        Function to select the adaptation info returned. See return_all_adapt_info</span>
+<span class="sd">        and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all</span>
+<span class="sd">        information is saved - this can result in excessive memory usage if the</span>
+<span class="sd">        information is unused.</span>
 <span class="sd">    **extra_parameters</span>
 <span class="sd">        The extra parameters to pass to the algorithm, e.g. the number of</span>
 <span class="sd">        integration steps for HMC.</span>
@@ -573,7 +579,7 @@ document.write(`
         <span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
-            <span class="n">AdaptationInfo</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
+            <span class="n">adaptation_info_fn</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">400</span><span class="p">):</span>

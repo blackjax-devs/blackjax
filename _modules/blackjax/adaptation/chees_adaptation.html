@@ -378,7 +378,7 @@ document.write(`
 
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.dynamic_hmc</span> <span class="k">as</span> <span class="nn">dynamic_hmc</span>
 <span class="kn">import</span> <span class="nn">blackjax.optimizers.dual_averaging</span> <span class="k">as</span> <span class="nn">dual_averaging</span>
-<span class="kn">from</span> <span class="nn">blackjax.adaptation.base</span> <span class="kn">import</span> <span class="n">AdaptationInfo</span><span class="p">,</span> <span class="n">AdaptationResults</span>
+<span class="kn">from</span> <span class="nn">blackjax.adaptation.base</span> <span class="kn">import</span> <span class="n">AdaptationResults</span><span class="p">,</span> <span class="n">return_all_adapt_info</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">AdaptationAlgorithm</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">pytree_size</span>
@@ -681,6 +681,7 @@ document.write(`
     <span class="n">jitter_amount</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">OPTIMAL_TARGET_ACCEPTANCE_RATE</span><span class="p">,</span>
     <span class="n">decay_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">adaptation_info_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">return_all_adapt_info</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdaptationAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Adapt the step size and trajectory length (number of integration steps / step size)</span>
 <span class="sd">    parameters of the jittered HMC algorthm.</span>
@@ -740,6 +741,11 @@ document.write(`
 <span class="sd">        Float representing how much to favor recent iterations over earlier ones in the optimization</span>
 <span class="sd">        of step size and trajectory length. A value of 1 gives equal weight to all history. A value</span>
 <span class="sd">        of 0 gives weight only to the most recent iteration.</span>
+<span class="sd">    adaptation_info_fn</span>
+<span class="sd">        Function to select the adaptation info returned. See return_all_adapt_info</span>
+<span class="sd">        and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all</span>
+<span class="sd">        information is saved - this can result in excessive memory usage if the</span>
+<span class="sd">        information is unused.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -814,10 +820,8 @@ document.write(`
                 <span class="n">info</span><span class="o">.</span><span class="n">is_divergent</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="k">return</span> <span class="p">(</span><span class="n">new_states</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span> <span class="n">AdaptationInfo</span><span class="p">(</span>
-                <span class="n">new_states</span><span class="p">,</span>
-                <span class="n">info</span><span class="p">,</span>
-                <span class="n">new_adaptation_state</span><span class="p">,</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">new_states</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span> <span class="n">adaptation_info_fn</span><span class="p">(</span>
+                <span class="n">new_states</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span>
             <span class="p">)</span>
 
         <span class="n">batch_init</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>

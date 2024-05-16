@@ -72,7 +72,7 @@ Functions
              * *final* -- Function that returns the step size and mass matrix given a warmup state.
 
 
-.. py:function:: pathfinder_adaptation(algorithm, logdensity_fn: Callable, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: pathfinder_adaptation(algorithm, logdensity_fn: Callable, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the value of the inverse mass matrix and step size parameters of
    algorithms in the HMC fmaily.
@@ -81,6 +81,10 @@ Functions
    :param logdensity_fn: The log density probability density function from which we wish to sample.
    :param initial_step_size: The initial step size used in the algorithm.
    :param target_acceptance_rate: The acceptance rate that we target during step size adaptation.
+   :param adaptation_info_fn: Function to select the adaptation info returned. See return_all_adapt_info
+                              and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all
+                              information is saved - this can result in excessive memory usage if the
+                              information is unused.
    :param \*\*extra_parameters: The extra parameters to pass to the algorithm, e.g. the number of
                                 integration steps for HMC.
 

@@ -365,7 +365,8 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.base.AdaptationResults"><code class="docutils literal notranslate"><span class="pre">AdaptationResults</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.base.AdaptationResults.state"><code class="docutils literal notranslate"><span class="pre">AdaptationResults.state</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.base.AdaptationResults.parameters"><code class="docutils literal notranslate"><span class="pre">AdaptationResults.parameters</span></code></a></li>
@@ -377,6 +378,8 @@ document.write(`
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.base.AdaptationInfo.adaptation_state"><code class="docutils literal notranslate"><span class="pre">AdaptationInfo.adaptation_state</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.base.return_all_adapt_info"><code class="docutils literal notranslate"><span class="pre">return_all_adapt_info()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.base.get_filter_adapt_info_fn"><code class="docutils literal notranslate"><span class="pre">get_filter_adapt_info_fn()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -405,6 +408,19 @@ document.write(`
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.base.AdaptationInfo" title="blackjax.adaptation.base.AdaptationInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AdaptationInfo</span></code></a></p></td>
 <td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h3>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.base.return_all_adapt_info" title="blackjax.adaptation.base.return_all_adapt_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">return_all_adapt_info</span></code></a>(state, info, adaptation_state)</p></td>
+<td><p>Return fully populated AdaptationInfo.  Used for adaptation_info_fn</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.base.get_filter_adapt_info_fn" title="blackjax.adaptation.base.get_filter_adapt_info_fn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_filter_adapt_info_fn</span></code></a>([state_keys, info_keys, ...])</p></td>
+<td><p>Generate a function to filter what is saved in AdaptationInfo.  Used</p></td>
 </tr>
 </tbody>
 </table>
@@ -441,6 +457,21 @@ document.write(`
 <span class="sig-name descname"><span class="pre">adaptation_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">NamedTuple</span></em><a class="reference internal" href="../../../../_modules/blackjax/adaptation/base.html#AdaptationInfo.adaptation_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.base.AdaptationInfo.adaptation_state" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.base.return_all_adapt_info">
+<span class="sig-name descname"><span class="pre">return_all_adapt_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptation_state</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/base.html#return_all_adapt_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.base.return_all_adapt_info" title="Link to this definition">#</a></dt>
+<dd><p>Return fully populated AdaptationInfo.  Used for adaptation_info_fn
+parameters of the adaptation algorithms.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.base.get_filter_adapt_info_fn">
+<span class="sig-name descname"><span class="pre">get_filter_adapt_info_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">set()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">set()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adapt_state_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">set()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/base.html#get_filter_adapt_info_fn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.base.get_filter_adapt_info_fn" title="Link to this definition">#</a></dt>
+<dd><p>Generate a function to filter what is saved in AdaptationInfo.  Used
+for adptation_info_fn parameters of the adaptation algorithms.
+adaptation_info_fn=get_filter_adapt_info_fn() saves no auxiliary information</p>
 </dd></dl>
 
 </section>
@@ -493,7 +524,8 @@ document.write(`
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.base.AdaptationResults"><code class="docutils literal notranslate"><span class="pre">AdaptationResults</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.base.AdaptationResults.state"><code class="docutils literal notranslate"><span class="pre">AdaptationResults.state</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.base.AdaptationResults.parameters"><code class="docutils literal notranslate"><span class="pre">AdaptationResults.parameters</span></code></a></li>
@@ -505,6 +537,8 @@ document.write(`
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.base.AdaptationInfo.adaptation_state"><code class="docutils literal notranslate"><span class="pre">AdaptationInfo.adaptation_state</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.base.return_all_adapt_info"><code class="docutils literal notranslate"><span class="pre">return_all_adapt_info()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.base.get_filter_adapt_info_fn"><code class="docutils literal notranslate"><span class="pre">get_filter_adapt_info_fn()</span></code></a></li>
 </ul>
 </li>
 </ul>

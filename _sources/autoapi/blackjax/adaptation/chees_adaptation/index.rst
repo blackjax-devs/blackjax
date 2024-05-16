@@ -137,7 +137,7 @@ Attributes
              * *update* -- Function that moves the warmup one step.
 
 
-.. py:function:: chees_adaptation(logdensity_fn: Callable, num_chains: int, *, jitter_generator: Optional[Callable] = None, jitter_amount: float = 1.0, target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE, decay_rate: float = 0.5) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: chees_adaptation(logdensity_fn: Callable, num_chains: int, *, jitter_generator: Optional[Callable] = None, jitter_amount: float = 1.0, target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE, decay_rate: float = 0.5, adaptation_info_fn: Callable = return_all_adapt_info) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the step size and trajectory length (number of integration steps / step size)
    parameters of the jittered HMC algorthm.
@@ -188,6 +188,10 @@ Attributes
    :param decay_rate: Float representing how much to favor recent iterations over earlier ones in the optimization
                       of step size and trajectory length. A value of 1 gives equal weight to all history. A value
                       of 0 gives weight only to the most recent iteration.
+   :param adaptation_info_fn: Function to select the adaptation info returned. See return_all_adapt_info
+                              and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all
+                              information is saved - this can result in excessive memory usage if the
+                              information is unused.
 
    :returns: * *A function that returns the last cross-chain state, a sampling kernel with the*
              * *tuned parameter values, and all the warm-up states for diagnostics.*
