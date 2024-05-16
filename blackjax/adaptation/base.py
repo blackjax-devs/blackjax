@@ -13,6 +13,8 @@
 # limitations under the License.
 from typing import NamedTuple, Set
 
+import jax
+
 from blackjax.types import ArrayTree
 
 
@@ -45,7 +47,8 @@ def get_filter_adapt_info_fn(
     """
 
     def filter_tuple(tup, key_set):
-        return tup._replace(**{k: None for k in tup._fields if k not in key_set})
+        mapfn = lambda key, val: None if key not in key_set else val
+        return jax.tree.map(mapfn, type(tup)(*tup._fields), tup)
 
     def filter_fn(state, info, adaptation_state):
         sample_state = filter_tuple(state, state_keys)
