@@ -10,7 +10,7 @@ import optax
 
 import blackjax.mcmc.dynamic_hmc as dynamic_hmc
 import blackjax.optimizers.dual_averaging as dual_averaging
-from blackjax.adaptation.base import AdaptationInfo, AdaptationResults
+from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
 from blackjax.base import AdaptationAlgorithm
 from blackjax.types import Array, ArrayLikeTree, PRNGKey
 from blackjax.util import pytree_size
@@ -278,6 +278,7 @@ def chees_adaptation(
     jitter_amount: float = 1.0,
     target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE,
     decay_rate: float = 0.5,
+    adaptation_info_fn: Callable = return_all_adapt_info,
 ) -> AdaptationAlgorithm:
     """Adapt the step size and trajectory length (number of integration steps / step size)
     parameters of the jittered HMC algorthm.
@@ -337,6 +338,11 @@ def chees_adaptation(
         Float representing how much to favor recent iterations over earlier ones in the optimization
         of step size and trajectory length. A value of 1 gives equal weight to all history. A value
         of 0 gives weight only to the most recent iteration.
+    adaptation_info_fn
+        Function to select the adaptation info returned. See return_all_adapt_info
+        and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all
+        information is saved - this can result in excessive memory usage if the
+        information is unused.
 
     Returns
     -------
@@ -411,10 +417,8 @@ def chees_adaptation(
                 info.is_divergent,
             )
 
-            return (new_states, new_adaptation_state), AdaptationInfo(
-                new_states,
-                info,
-                new_adaptation_state,
+            return (new_states, new_adaptation_state), adaptation_info_fn(
+                new_states, info, new_adaptation_state
             )
 
         batch_init = jax.vmap(
