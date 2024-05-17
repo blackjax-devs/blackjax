@@ -201,7 +201,7 @@ def run_inference_algorithm(
 
     rng_key, init_key = split(rng_key, 2)
     if initial_position is not None:
-        initial_state = inference_algorithm.init(initial_state, init_key)
+        initial_state = inference_algorithm.init(initial_position, init_key)
 
     keys = split(rng_key, num_steps)
 

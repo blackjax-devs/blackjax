@@ -75,7 +75,14 @@ class RunInferenceAlgorithmTest(chex.TestCase):
 
     @parameterized.parameters([True, False])
     def test_compatible_with_initial_pos(self, progress_bar):
-        self.check_compatible(jnp.array([1.0, 1.0]), progress_bar)
+        _ = run_inference_algorithm(
+            rng_key=self.key,
+            initial_position=jnp.array([1.0, 1.0]),
+            inference_algorithm=self.algorithm,
+            num_steps=self.num_steps,
+            progress_bar=progress_bar,
+            transform=lambda x: x.position,
+        )
 
     @parameterized.parameters([True, False])
     def test_compatible_with_initial_state(self, progress_bar):
