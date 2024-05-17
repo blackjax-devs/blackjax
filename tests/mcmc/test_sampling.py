@@ -141,7 +141,10 @@ class LinearRegressionTest(chex.TestCase):
         inference_algorithm = case["algorithm"](logposterior_fn, **parameters)
 
         _, states, _ = run_inference_algorithm(
-            inference_key, state, inference_algorithm, case["num_sampling_steps"]
+            rng_key=inference_key,
+            initial_state=state,
+            inference_algorithm=inference_algorithm,
+            num_steps=case["num_sampling_steps"],
         )
 
         coefs_samples = states.position["coefs"]
@@ -163,7 +166,12 @@ class LinearRegressionTest(chex.TestCase):
 
         mala = blackjax.mala(logposterior_fn, 1e-5)
         state = mala.init({"coefs": 1.0, "log_scale": 1.0})
-        _, states, _ = run_inference_algorithm(inference_key, state, mala, 10_000)
+        _, states, _ = run_inference_algorithm(
+            rng_key=inference_key,
+            initial_state=state,
+            inference_algorithm=mala,
+            num_steps=10_000,
+        )
 
         coefs_samples = states.position["coefs"][3000:]
         scale_samples = np.exp(states.position["log_scale"][3000:])
@@ -229,7 +237,10 @@ class LinearRegressionTest(chex.TestCase):
         inference_algorithm = algorithm(logposterior_fn, **parameters)
 
         _, states, _ = run_inference_algorithm(
-            inference_key, state, inference_algorithm, num_sampling_steps
+            rng_key=inference_key,
+            initial_state=state,
+            inference_algorithm=inference_algorithm,
+            num_steps=num_sampling_steps,
         )
 
         coefs_samples = states.position["coefs"]
@@ -270,7 +281,10 @@ class LinearRegressionTest(chex.TestCase):
         chain_keys = jax.random.split(inference_key, num_chains)
         _, states, _ = jax.vmap(
             lambda key, state: run_inference_algorithm(
-                key, state, inference_algorithm, 100
+                rng_key=key,
+                initial_state=state,
+                inference_algorithm=inference_algorithm,
+                num_steps=100,
             )
         )(chain_keys, last_states)
 
@@ -314,7 +328,10 @@ class LinearRegressionTest(chex.TestCase):
         chain_keys = jax.random.split(inference_key, num_chains)
         _, states, _ = jax.vmap(
             lambda key, state: run_inference_algorithm(
-                key, state, inference_algorithm, 100
+                rng_key=key,
+                initial_state=state,
+                inference_algorithm=inference_algorithm,
+                num_steps=100,
             )
         )(chain_keys, last_states)
 
@@ -338,7 +355,12 @@ class LinearRegressionTest(chex.TestCase):
         barker = blackjax.barker_proposal(logposterior_fn, 1e-1)
         state = barker.init({"coefs": 1.0, "log_scale": 1.0})
 
-        _, states, _ = run_inference_algorithm(inference_key, state, barker, 10_000)
+        _, states, _ = run_inference_algorithm(
+            rng_key=inference_key,
+            initial_state=state,
+            inference_algorithm=barker,
+            num_steps=10_000,
+        )
 
         coefs_samples = states.position["coefs"][3000:]
         scale_samples = np.exp(states.position["log_scale"][3000:])
@@ -524,7 +546,7 @@ class LatentGaussianTest(chex.TestCase):
                 inference_algorithm=inference_algorithm,
                 num_steps=self.sampling_steps,
             ),
-        )(self.key, initial_state)
+        )(rng_key=self.key, initial_state=initial_state)
 
         np.testing.assert_allclose(
             np.var(states.position[self.burnin :]), 1 / (1 + 0.5), rtol=1e-2, atol=1e-2
@@ -568,7 +590,7 @@ class UnivariateNormalTest(chex.TestCase):
                 inference_algorithm=inference_algorithm,
                 num_steps=num_sampling_steps,
             )
-        )(inference_key, initial_state)
+        )(rng_key=inference_key, initial_state=initial_state)
 
         # else:
         if postprocess_samples:
@@ -839,7 +861,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             )
         )
         _, states, _ = inference_loop_multiple_chains(
-            multi_chain_sample_key, initial_states
+            rng_key=multi_chain_sample_key, initial_state=initial_states
         )
 
         posterior_samples = states.position[:, -1000:]

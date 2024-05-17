@@ -25,11 +25,11 @@ class RunInferenceAlgorithmTest(chex.TestCase):
         `initial_state` and potentially a progress bar.
         """
         _ = run_inference_algorithm(
-            self.key,
-            initial_state,
-            self.algorithm,
-            self.num_steps,
-            progress_bar,
+            rng_key=self.key,
+            initial_state=initial_state,
+            inference_algorithm=self.algorithm,
+            num_steps=self.num_steps,
+            progress_bar=progress_bar,
             transform=lambda x: x.position,
         )
 
