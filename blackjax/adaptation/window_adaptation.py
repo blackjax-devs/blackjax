@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
 
-from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
+import blackjax.mcmc as mcmc
+from blackjax.adaptation.base import AdaptationInfo, AdaptationResults
 from blackjax.adaptation.mass_matrix import (
     MassMatrixAdaptationState,
     mass_matrix_adaptation,
@@ -240,19 +241,18 @@ def base(
 
     return init, update, final
 
-
 def window_adaptation(
-    algorithm,
+    algorithm: Union[mcmc.hmc.hmc, mcmc.nuts.nuts],
     logdensity_fn: Callable,
     is_mass_matrix_diagonal: bool = True,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
     progress_bar: bool = False,
-    adaptation_info_fn: Callable = return_all_adapt_info,
+    integrator = mcmc.integrators.velocity_verlet,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the value of the inverse mass matrix and step size parameters of
-    algorithms in the HMC family.  See Blackjax.hmc_family
+    algorithms in the HMC fmaily.
 
     Algorithms in the HMC family on a euclidean manifold depend on the value of
     at least two parameters: the step size, related to the trajectory
@@ -279,11 +279,6 @@ def window_adaptation(
         The acceptance rate that we target during step size adaptation.
     progress_bar
         Whether we should display a progress bar.
-    adaptation_info_fn
-        Function to select the adaptation info returned. See return_all_adapt_info
-        and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all
-        information is saved - this can result in excessive memory usage if the
-        information is unused.
     **extra_parameters
         The extra parameters to pass to the algorithm, e.g. the number of
         integration steps for HMC.
@@ -294,7 +289,7 @@ def window_adaptation(
 
     """
 
-    mcmc_kernel = algorithm.build_kernel()
+    mcmc_kernel = algorithm.build_kernel(integrator)
 
     adapt_init, adapt_step, adapt_final = base(
         is_mass_matrix_diagonal,
@@ -322,7 +317,7 @@ def window_adaptation(
 
         return (
             (new_state, new_adaptation_state),
-            adaptation_info_fn(new_state, info, new_adaptation_state),
+            AdaptationInfo(new_state, info, new_adaptation_state),
         )
 
     def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
