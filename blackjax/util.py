@@ -143,9 +143,10 @@ def index_pytree(input_pytree: ArrayLikeTree) -> ArrayTree:
 
 def run_inference_algorithm(
     rng_key: PRNGKey,
-    initial_state: ArrayLikeTree,
     inference_algorithm: Union[SamplingAlgorithm, VIAlgorithm],
     num_steps: int,
+    initial_state: ArrayLikeTree = None,
+    initial_position: ArrayLikeTree = None,
     progress_bar: bool = False,
     transform: Callable = lambda x: x,
     return_state_history=True,
@@ -163,6 +164,8 @@ def run_inference_algorithm(
         The random state used by JAX's random numbers generator.
     initial_state
         The initial state of the inference algorithm.
+    initial_position
+        The initial position of the inference algorithm. This is used when the initial state is not provided.
     inference_algorithm
         One of blackjax's sampling algorithms or variational inference algorithms.
     num_steps
@@ -188,6 +191,17 @@ def run_inference_algorithm(
         1. This is the expectation of state over the chain. Otherwise the final state.
         2. The final state of the inference algorithm.
     """
+
+    if initial_state is None and initial_position is None:
+        raise ValueError("Either initial_state or initial_position must be provided.")
+    if initial_state is not None and initial_position is not None:
+        raise ValueError(
+            "Only one of initial_state or initial_position must be provided."
+        )
+
+    rng_key, init_key = split(rng_key, 2)
+    if initial_position is not None:
+        initial_state = inference_algorithm.init(initial_position, init_key)
 
     keys = split(rng_key, num_steps)
 

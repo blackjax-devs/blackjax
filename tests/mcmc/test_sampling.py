@@ -13,6 +13,8 @@ from absl.testing import absltest, parameterized
 import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
+from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
+from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
 
 
@@ -53,6 +55,27 @@ regression_test_cases = [
         "parameters": {},
         "num_warmup_steps": 1_000,
         "num_sampling_steps": 1_000,
+    },
+]
+
+window_adaptation_filters = [
+    {
+        "filter_fn": return_all_adapt_info,
+        "return_sets": None,
+    },
+    {
+        "filter_fn": get_filter_adapt_info_fn(),
+        "return_sets": (set(), set(), set()),
+    },
+    {
+        "filter_fn": get_filter_adapt_info_fn(
+            {"position"}, {"is_divergent"}, {"ss_state", "inverse_mass_matrix"}
+        ),
+        "return_sets": (
+            {"position"},
+            {"is_divergent"},
+            {"ss_state", "inverse_mass_matrix"},
+        ),
     },
 ]
 
@@ -122,8 +145,14 @@ class LinearRegressionTest(chex.TestCase):
 
         return samples
 
-    @parameterized.parameters(itertools.product(regression_test_cases, [True, False]))
-    def test_window_adaptation(self, case, is_mass_matrix_diagonal):
+    @parameterized.parameters(
+        itertools.product(
+            regression_test_cases, [True, False], window_adaptation_filters
+        )
+    )
+    def test_window_adaptation(
+        self, case, is_mass_matrix_diagonal, window_adapt_config
+    ):
         """Test the HMC kernel and the Stan warmup."""
         rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
         x_data = jax.random.normal(init_key0, shape=(1000, 1))
@@ -141,17 +170,38 @@ class LinearRegressionTest(chex.TestCase):
             logposterior_fn,
             is_mass_matrix_diagonal,
             progress_bar=True,
+            adaptation_info_fn=window_adapt_config["filter_fn"],
             **case["parameters"],
         )
-        (state, parameters), _ = warmup.run(
+        (state, parameters), info = warmup.run(
             warmup_key,
             case["initial_position"],
             case["num_warmup_steps"],
         )
         inference_algorithm = case["algorithm"](logposterior_fn, **parameters)
 
+        def check_attrs(attribute, keyset):
+            for name, param in getattr(info, attribute)._asdict().items():
+                if name in keyset:
+                    assert param is not None
+                else:
+                    assert param is None
+
+        keysets = window_adapt_config["return_sets"]
+        if keysets is None:
+            keysets = (
+                info.state._fields,
+                info.info._fields,
+                info.adaptation_state._fields,
+            )
+        for i, attribute in enumerate(["state", "info", "adaptation_state"]):
+            check_attrs(attribute, keysets[i])
+
         _, states, _ = run_inference_algorithm(
-            inference_key, state, inference_algorithm, case["num_sampling_steps"]
+            rng_key=inference_key,
+            initial_state=state,
+            inference_algorithm=inference_algorithm,
+            num_steps=case["num_sampling_steps"],
         )
 
         coefs_samples = states.position["coefs"]
@@ -173,7 +223,12 @@ class LinearRegressionTest(chex.TestCase):
 
         mala = blackjax.mala(logposterior_fn, 1e-5)
         state = mala.init({"coefs": 1.0, "log_scale": 1.0})
-        _, states, _ = run_inference_algorithm(inference_key, state, mala, 10_000)
+        _, states, _ = run_inference_algorithm(
+            rng_key=inference_key,
+            initial_state=state,
+            inference_algorithm=mala,
+            num_steps=10_000,
+        )
 
         coefs_samples = states.position["coefs"][3000:]
         scale_samples = np.exp(states.position["log_scale"][3000:])
@@ -204,6 +259,88 @@ class LinearRegressionTest(chex.TestCase):
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+
+    def test_mclmc_preconditioning(self):
+        class IllConditionedGaussian:
+            """Gaussian distribution. Covariance matrix has eigenvalues equally spaced in log-space, going from 1/condition_bnumber^1/2 to condition_number^1/2."""
+
+            def __init__(self, d, condition_number):
+                """numpy_seed is used to generate a random rotation for the covariance matrix.
+                If None, the covariance matrix is diagonal."""
+
+                self.ndims = d
+                self.name = "IllConditionedGaussian"
+                self.condition_number = condition_number
+                eigs = jnp.logspace(
+                    -0.5 * jnp.log10(condition_number),
+                    0.5 * jnp.log10(condition_number),
+                    d,
+                )
+                self.E_x2 = eigs
+                self.R = jnp.eye(d)
+                self.Hessian = jnp.diag(1 / eigs)
+                self.Cov = jnp.diag(eigs)
+                self.Var_x2 = 2 * jnp.square(self.E_x2)
+
+                self.logdensity_fn = lambda x: -0.5 * x.T @ self.Hessian @ x
+                self.transform = lambda x: x
+
+                self.sample_init = lambda key: jax.random.normal(
+                    key, shape=(self.ndims,)
+                ) * jnp.max(jnp.sqrt(eigs))
+
+        dim = 100
+        condition_number = 10
+        eigs = jnp.logspace(
+            -0.5 * jnp.log10(condition_number), 0.5 * jnp.log10(condition_number), dim
+        )
+        model = IllConditionedGaussian(dim, condition_number)
+        num_steps = 20000
+        key = jax.random.PRNGKey(2)
+
+        integrator = isokinetic_mclachlan
+
+        def get_std_mat():
+            init_key, tune_key = jax.random.split(key)
+
+            initial_position = model.sample_init(init_key)
+
+            initial_state = blackjax.mcmc.mclmc.init(
+                position=initial_position,
+                logdensity_fn=model.logdensity_fn,
+                rng_key=init_key,
+            )
+
+            kernel = lambda std_mat: blackjax.mcmc.mclmc.build_kernel(
+                logdensity_fn=model.logdensity_fn,
+                integrator=integrator,
+                std_mat=std_mat,
+            )
+
+            (
+                _,
+                blackjax_mclmc_sampler_params,
+            ) = blackjax.mclmc_find_L_and_step_size(
+                mclmc_kernel=kernel,
+                num_steps=num_steps,
+                state=initial_state,
+                rng_key=tune_key,
+                diagonal_preconditioning=True,
+            )
+
+            return blackjax_mclmc_sampler_params.std_mat
+
+        std_mat = get_std_mat()
+        assert (
+            jnp.abs(
+                jnp.dot(
+                    (std_mat**2) / jnp.linalg.norm(std_mat**2),
+                    eigs / jnp.linalg.norm(eigs),
+                )
+                - 1
+            )
+            < 0.1
+        )
 
     @parameterized.parameters(regression_test_cases)
     def test_pathfinder_adaptation(
@@ -239,7 +376,10 @@ class LinearRegressionTest(chex.TestCase):
         inference_algorithm = algorithm(logposterior_fn, **parameters)
 
         _, states, _ = run_inference_algorithm(
-            inference_key, state, inference_algorithm, num_sampling_steps
+            rng_key=inference_key,
+            initial_state=state,
+            inference_algorithm=inference_algorithm,
+            num_steps=num_sampling_steps,
         )
 
         coefs_samples = states.position["coefs"]
@@ -280,7 +420,10 @@ class LinearRegressionTest(chex.TestCase):
         chain_keys = jax.random.split(inference_key, num_chains)
         _, states, _ = jax.vmap(
             lambda key, state: run_inference_algorithm(
-                key, state, inference_algorithm, 100
+                rng_key=key,
+                initial_state=state,
+                inference_algorithm=inference_algorithm,
+                num_steps=100,
             )
         )(chain_keys, last_states)
 
@@ -324,7 +467,10 @@ class LinearRegressionTest(chex.TestCase):
         chain_keys = jax.random.split(inference_key, num_chains)
         _, states, _ = jax.vmap(
             lambda key, state: run_inference_algorithm(
-                key, state, inference_algorithm, 100
+                rng_key=key,
+                initial_state=state,
+                inference_algorithm=inference_algorithm,
+                num_steps=100,
             )
         )(chain_keys, last_states)
 
@@ -348,7 +494,12 @@ class LinearRegressionTest(chex.TestCase):
         barker = blackjax.barker_proposal(logposterior_fn, 1e-1)
         state = barker.init({"coefs": 1.0, "log_scale": 1.0})
 
-        _, states, _ = run_inference_algorithm(inference_key, state, barker, 10_000)
+        _, states, _ = run_inference_algorithm(
+            rng_key=inference_key,
+            initial_state=state,
+            inference_algorithm=barker,
+            num_steps=10_000,
+        )
 
         coefs_samples = states.position["coefs"][3000:]
         scale_samples = np.exp(states.position["log_scale"][3000:])
@@ -534,7 +685,7 @@ class LatentGaussianTest(chex.TestCase):
                 inference_algorithm=inference_algorithm,
                 num_steps=self.sampling_steps,
             ),
-        )(self.key, initial_state)
+        )(rng_key=self.key, initial_state=initial_state)
 
         np.testing.assert_allclose(
             np.var(states.position[self.burnin :]), 1 / (1 + 0.5), rtol=1e-2, atol=1e-2
@@ -578,7 +729,7 @@ class UnivariateNormalTest(chex.TestCase):
                 inference_algorithm=inference_algorithm,
                 num_steps=num_sampling_steps,
             )
-        )(inference_key, initial_state)
+        )(rng_key=inference_key, initial_state=initial_state)
 
         # else:
         if postprocess_samples:
@@ -849,7 +1000,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             )
         )
         _, states, _ = inference_loop_multiple_chains(
-            multi_chain_sample_key, initial_states
+            rng_key=multi_chain_sample_key, initial_state=initial_states
         )
 
         posterior_samples = states.position[:, -1000:]
