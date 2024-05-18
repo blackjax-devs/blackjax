@@ -14,6 +14,7 @@ import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
+from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
 
 
@@ -258,6 +259,88 @@ class LinearRegressionTest(chex.TestCase):
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+
+    def test_mclmc_preconditioning(self):
+        class IllConditionedGaussian:
+            """Gaussian distribution. Covariance matrix has eigenvalues equally spaced in log-space, going from 1/condition_bnumber^1/2 to condition_number^1/2."""
+
+            def __init__(self, d, condition_number):
+                """numpy_seed is used to generate a random rotation for the covariance matrix.
+                If None, the covariance matrix is diagonal."""
+
+                self.ndims = d
+                self.name = "IllConditionedGaussian"
+                self.condition_number = condition_number
+                eigs = jnp.logspace(
+                    -0.5 * jnp.log10(condition_number),
+                    0.5 * jnp.log10(condition_number),
+                    d,
+                )
+                self.E_x2 = eigs
+                self.R = jnp.eye(d)
+                self.Hessian = jnp.diag(1 / eigs)
+                self.Cov = jnp.diag(eigs)
+                self.Var_x2 = 2 * jnp.square(self.E_x2)
+
+                self.logdensity_fn = lambda x: -0.5 * x.T @ self.Hessian @ x
+                self.transform = lambda x: x
+
+                self.sample_init = lambda key: jax.random.normal(
+                    key, shape=(self.ndims,)
+                ) * jnp.max(jnp.sqrt(eigs))
+
+        dim = 100
+        condition_number = 10
+        eigs = jnp.logspace(
+            -0.5 * jnp.log10(condition_number), 0.5 * jnp.log10(condition_number), dim
+        )
+        model = IllConditionedGaussian(dim, condition_number)
+        num_steps = 20000
+        key = jax.random.PRNGKey(2)
+
+        integrator = isokinetic_mclachlan
+
+        def get_std_mat():
+            init_key, tune_key = jax.random.split(key)
+
+            initial_position = model.sample_init(init_key)
+
+            initial_state = blackjax.mcmc.mclmc.init(
+                position=initial_position,
+                logdensity_fn=model.logdensity_fn,
+                rng_key=init_key,
+            )
+
+            kernel = lambda std_mat: blackjax.mcmc.mclmc.build_kernel(
+                logdensity_fn=model.logdensity_fn,
+                integrator=integrator,
+                std_mat=std_mat,
+            )
+
+            (
+                _,
+                blackjax_mclmc_sampler_params,
+            ) = blackjax.mclmc_find_L_and_step_size(
+                mclmc_kernel=kernel,
+                num_steps=num_steps,
+                state=initial_state,
+                rng_key=tune_key,
+                diagonal_preconditioning=True,
+            )
+
+            return blackjax_mclmc_sampler_params.std_mat
+
+        std_mat = get_std_mat()
+        assert (
+            jnp.abs(
+                jnp.dot(
+                    (std_mat**2) / jnp.linalg.norm(std_mat**2),
+                    eigs / jnp.linalg.norm(eigs),
+                )
+                - 1
+            )
+            < 0.1
+        )
 
     @parameterized.parameters(regression_test_cases)
     def test_pathfinder_adaptation(
