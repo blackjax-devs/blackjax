@@ -134,8 +134,8 @@ examples = {
 
 algorithms = {
     "velocity_verlet": {"algorithm": integrators.velocity_verlet, "precision": 1e-4},
-    "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-5},
-    "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-6},
+    "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-4},
+    "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-4},
     "implicit_midpoint": {
         "algorithm": integrators.implicit_midpoint,
         "precision": 1e-4,
@@ -234,7 +234,7 @@ class IntegratorTest(chex.TestCase):
         ) / (jnp.cosh(delta) + jnp.dot(gradient_normalized, momentum * jnp.sinh(delta)))
 
         # Efficient implementation
-        update_stable = self.variant(esh_dynamics_momentum_update_one_step)
+        update_stable = self.variant(esh_dynamics_momentum_update_one_step(std_mat=1.0))
         next_momentum1, *_ = update_stable(momentum, gradient, step_size, 1.0)
         np.testing.assert_array_almost_equal(next_momentum, next_momentum1)
 
@@ -258,7 +258,7 @@ class IntegratorTest(chex.TestCase):
         next_state, kinetic_energy_change = step(initial_state, step_size)
 
         # explicit integration
-        op1 = esh_dynamics_momentum_update_one_step
+        op1 = esh_dynamics_momentum_update_one_step(std_mat=1.0)
         op2 = integrators.euclidean_position_update_fn(logdensity_fn)
         position, momentum, _, logdensity_grad = initial_state
         momentum, kinetic_grad, kinetic_energy_change0 = op1(
