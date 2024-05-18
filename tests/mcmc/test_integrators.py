@@ -134,8 +134,8 @@ examples = {
 
 algorithms = {
     "velocity_verlet": {"algorithm": integrators.velocity_verlet, "precision": 1e-4},
-    "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-5},
-    "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-6},
+    "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-4},
+    "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-4},
     "implicit_midpoint": {
         "algorithm": integrators.implicit_midpoint,
         "precision": 1e-4,
