@@ -136,6 +136,7 @@ algorithms = {
     "velocity_verlet": {"algorithm": integrators.velocity_verlet, "precision": 1e-4},
     "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-4},
     "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-4},
+    "omelyan": {"algorithm": integrators.omelyan, "precision": 1e-4},
     "implicit_midpoint": {
         "algorithm": integrators.implicit_midpoint,
         "precision": 1e-4,
@@ -143,6 +144,7 @@ algorithms = {
     "isokinetic_velocity_verlet": {"algorithm": integrators.isokinetic_velocity_verlet},
     "isokinetic_mclachlan": {"algorithm": integrators.isokinetic_mclachlan},
     "isokinetic_yoshida": {"algorithm": integrators.isokinetic_yoshida},
+    "isokinetic_omelyan": {"algorithm": integrators.isokinetic_omelyan},
 }
 
 
@@ -168,6 +170,7 @@ class IntegratorTest(chex.TestCase):
                 "velocity_verlet",
                 "mclachlan",
                 "yoshida",
+                "omelyan",
                 "implicit_midpoint",
             ],
         )
@@ -297,6 +300,7 @@ class IntegratorTest(chex.TestCase):
             "isokinetic_velocity_verlet",
             "isokinetic_mclachlan",
             "isokinetic_yoshida",
+            "isokinetic_omelyan",
         ],
     )
     def test_isokinetic_integrator(self, integrator_name):
