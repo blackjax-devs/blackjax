@@ -357,7 +357,7 @@ def format_isokinetic_state_output(
 
 def generate_isokinetic_integrator(coefficients):
     def isokinetic_integrator(
-        logdensity_fn: Callable, std_mat: ArrayTree, *args, **kwargs
+        logdensity_fn: Callable, std_mat: ArrayTree=1., *args, **kwargs
     ) -> GeneralIntegrator:
         position_update_fn = euclidean_position_update_fn(logdensity_fn)
         one_step = generalized_two_stage_integrator(
