@@ -236,10 +236,8 @@ def streaming_average(expectation, streaming_avg, weight=1.0, zero_prevention=0.
     """Compute the streaming average of a function O(x) using a weight.
     Parameters:
     ----------
-        O
-            function to be averaged
-        x
-            current state
+        expectation
+            the value of the expectation at the current timestep
         streaming_avg
             tuple of (total, average) where total is the sum of weights and average is the current average
         weight
