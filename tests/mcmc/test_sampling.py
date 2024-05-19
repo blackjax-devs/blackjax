@@ -14,7 +14,13 @@ import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
-from blackjax.mcmc.integrators import isokinetic_mclachlan
+from blackjax.mcmc.adjusted_mclmc import rescale
+from blackjax.mcmc.integrators import (
+    generate_isokinetic_integrator,
+    integrator_order,
+    isokinetic_mclachlan,
+    mclachlan_coefficients,
+)
 from blackjax.util import run_inference_algorithm
 
 
@@ -145,6 +151,86 @@ class LinearRegressionTest(chex.TestCase):
 
         return samples
 
+    def run_adjusted_mclmc(
+        self,
+        logdensity_fn,
+        num_steps,
+        initial_position,
+        key,
+        diagonal_preconditioning=False,
+    ):
+        coefficients = mclachlan_coefficients
+        integrator = generate_isokinetic_integrator(coefficients)
+
+        init_key, tune_key, run_key = jax.random.split(key, 3)
+
+        initial_state = blackjax.mcmc.adjusted_mclmc.init(
+            position=initial_position,
+            logdensity_fn=logdensity_fn,
+            random_generator_arg=init_key,
+        )
+
+        kernel = lambda rng_key, state, avg_num_integration_steps, step_size, std_mat: blackjax.mcmc.adjusted_mclmc.build_kernel(
+            integrator=integrator,
+            integration_steps_fn=lambda k: jnp.ceil(
+                jax.random.uniform(k) * rescale(avg_num_integration_steps)
+            ),
+            std_mat=std_mat,
+        )(
+            rng_key=rng_key,
+            state=state,
+            step_size=step_size,
+            logdensity_fn=logdensity_fn,
+        )
+
+        target_acceptance_rate_of_order = {2: 0.65, 4: 0.8}
+
+        target_acc_rate = target_acceptance_rate_of_order[
+            integrator_order(coefficients)
+        ]
+
+        (
+            blackjax_state_after_tuning,
+            blackjax_mclmc_sampler_params,
+            params_history,
+            final_da,
+        ) = blackjax.adaptation.mclmc_adaptation.adjusted_mclmc_find_L_and_step_size(
+            mclmc_kernel=kernel,
+            num_steps=num_steps,
+            state=initial_state,
+            rng_key=tune_key,
+            target=target_acc_rate,
+            frac_tune1=0.1,
+            frac_tune2=0.1,
+            frac_tune3=0.1,
+            diagonal_preconditioning=diagonal_preconditioning,
+        )
+
+        step_size = blackjax_mclmc_sampler_params.step_size
+        L = blackjax_mclmc_sampler_params.L
+
+        alg = blackjax.adjusted_mclmc(
+            logdensity_fn=logdensity_fn,
+            step_size=step_size,
+            integration_steps_fn=lambda key: jnp.ceil(
+                jax.random.uniform(key) * rescale(L / step_size)
+            ),
+            integrator=integrator,
+            std_mat=blackjax_mclmc_sampler_params.std_mat,
+        )
+
+        _, out, info = run_inference_algorithm(
+            rng_key=run_key,
+            initial_state=blackjax_state_after_tuning,
+            inference_algorithm=alg,
+            num_steps=num_steps,
+            transform=lambda x: x.position,
+            expectation=lambda x: x.position,
+            progress_bar=False,
+        )
+
+        return out
+
     @parameterized.parameters(
         itertools.product(
             regression_test_cases, [True, False], window_adaptation_filters
@@ -248,6 +334,31 @@ class LinearRegressionTest(chex.TestCase):
         logdensity_fn = lambda x: logposterior_fn_(**x)
 
         states = self.run_mclmc(
+            initial_position={"coefs": 1.0, "log_scale": 1.0},
+            logdensity_fn=logdensity_fn,
+            key=inference_key,
+            num_steps=10000,
+        )
+
+        coefs_samples = states["coefs"][3000:]
+        scale_samples = np.exp(states["log_scale"][3000:])
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+
+    def test_adjusted_mclmc(self):
+        """Test the MCLMC kernel."""
+
+        init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logdensity_fn = lambda x: logposterior_fn_(**x)
+
+        states = self.run_adjusted_mclmc(
             initial_position={"coefs": 1.0, "log_scale": 1.0},
             logdensity_fn=logdensity_fn,
             key=inference_key,

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -241,6 +241,7 @@ def base(
 
     return init, update, final
 
+
 def window_adaptation(
     algorithm,
     logdensity_fn: Callable,
@@ -248,7 +249,7 @@ def window_adaptation(
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
     progress_bar: bool = False,
-    integrator = mcmc.integrators.velocity_verlet,
+    integrator=mcmc.integrators.velocity_verlet,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the value of the inverse mass matrix and step size parameters of

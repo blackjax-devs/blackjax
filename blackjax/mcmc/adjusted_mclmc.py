@@ -76,9 +76,11 @@ def build_kernel(
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
         proposal, info, _ = adjusted_mclmc_proposal(
-            integrator=integrators.with_isokinetic_maruyama(integrator(logdensity_fn, std_mat)),
+            integrator=integrators.with_isokinetic_maruyama(
+                integrator(logdensity_fn, std_mat)
+            ),
             step_size=step_size,
-            L_proposal=L_proposal*num_integration_steps,
+            L_proposal=L_proposal * num_integration_steps,
             num_integration_steps=num_integration_steps,
             divergence_threshold=divergence_threshold,
         )(

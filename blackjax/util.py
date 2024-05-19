@@ -251,6 +251,7 @@ def streaming_average(O, x, streaming_avg, weight=1.0, zero_prevention=0.0):
         new streaming average
     """
 
+    # x, _ = ravel_pytree(x)
     expectation = O(x)
     flat_expectation, unravel_fn = ravel_pytree(expectation)
     total, average = streaming_avg
