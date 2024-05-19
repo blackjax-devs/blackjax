@@ -209,7 +209,7 @@ def run_inference_algorithm(
         _, rng_key = xs
         average, state = average_and_state
         state, info = inference_algorithm.step(rng_key, state)
-        average = streaming_average(expectation, state, average)
+        average = streaming_average(expectation(state), average)
         if return_state:
             return (average, state), (transform(state), info)
         else:
@@ -232,7 +232,7 @@ def run_inference_algorithm(
         return transform(final_state), state_history, info_history
 
 
-def streaming_average(O, x, streaming_avg, weight=1.0, zero_prevention=0.0):
+def streaming_average(expectation, streaming_avg, weight=1.0, zero_prevention=0.0):
     """Compute the streaming average of a function O(x) using a weight.
     Parameters:
     ----------
@@ -251,7 +251,6 @@ def streaming_average(O, x, streaming_avg, weight=1.0, zero_prevention=0.0):
         new streaming average
     """
 
-    expectation = O(x)
     flat_expectation, unravel_fn = ravel_pytree(expectation)
     total, average = streaming_avg
     flat_average, _ = ravel_pytree(average)
