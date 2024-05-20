@@ -26,6 +26,7 @@ Functions
    blackjax.util.pytree_size
    blackjax.util.index_pytree
    blackjax.util.run_inference_algorithm
+   blackjax.util.streaming_average
 
 
 
@@ -100,7 +101,7 @@ Functions
    :rtype: PyTree mapping each individual element of an arange array to elements in the PyTree.
 
 
-.. py:function:: run_inference_algorithm(rng_key: blackjax.types.PRNGKey, initial_state_or_position: blackjax.types.ArrayLikeTree, inference_algorithm: Union[blackjax.base.SamplingAlgorithm, blackjax.base.VIAlgorithm], num_steps: int, progress_bar: bool = False, transform: Callable = lambda x: x) -> tuple[blackjax.base.State, blackjax.base.State, blackjax.base.Info]
+.. py:function:: run_inference_algorithm(rng_key: blackjax.types.PRNGKey, inference_algorithm: Union[blackjax.base.SamplingAlgorithm, blackjax.base.VIAlgorithm], num_steps: int, initial_state: blackjax.types.ArrayLikeTree = None, initial_position: blackjax.types.ArrayLikeTree = None, progress_bar: bool = False, transform: Callable = lambda x: x, return_state_history=True, expectation: Callable = lambda x: x) -> tuple
 
    Wrapper to run an inference algorithm.
 
@@ -109,20 +110,43 @@ Functions
    to be passed in during each sample.
 
    :param rng_key: The random state used by JAX's random numbers generator.
-   :param initial_state_or_position: The initial state OR the initial position of the inference algorithm. If an initial position
-                                     is passed in, the function will automatically convert it into an initial state.
+   :param initial_state: The initial state of the inference algorithm.
+   :param initial_position: The initial position of the inference algorithm. This is used when the initial state is not provided.
    :param inference_algorithm: One of blackjax's sampling algorithms or variational inference algorithms.
    :param num_steps: Number of MCMC steps.
    :param progress_bar: Whether to display a progress bar.
    :param transform: A transformation of the trace of states to be returned. This is useful for
                      computing determinstic variables, or returning a subset of the states.
                      By default, the states are returned as is.
+   :param expectation: A function that computes the expectation of the state. This is done incrementally, so doesn't require storing all the states.
+   :param return_state_history: if False, `run_inference_algorithm` will only return an expectation of the value of transform, and return that average instead of the full set of samples. This is useful when memory is a bottleneck.
 
-   :returns:
+   :returns: * *If return_state_history is True* --
 
-             1. The final state of the inference algorithm.
-             2. The trace of states of the inference algorithm (contains the MCMC samples).
-             3. The trace of the info of the inference algorithm for diagnostics.
-   :rtype: Tuple[State, State, Info]
+               1. The final state.
+               2. The trace of the state.
+               3. The trace of the info of the inference algorithm for diagnostics.
+             * *If return_state_history is False* --
+
+               1. This is the expectation of state over the chain. Otherwise the final state.
+               2. The final state of the inference algorithm.
+
+
+.. py:function:: streaming_average(expectation, streaming_avg, weight=1.0, zero_prevention=0.0)
+
+   Compute the streaming average of a function O(x) using a weight.
+   Parameters:
+   ----------
+       expectation
+           the value of the expectation at the current timestep
+       streaming_avg
+           tuple of (total, average) where total is the sum of weights and average is the current average
+       weight
+           weight of the current state
+       zero_prevention
+           small value to prevent division by zero
+   Returns:
+   ----------
+       new streaming average
 
 
