@@ -55,7 +55,7 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             inference_algorithm=alg,
             num_steps=50,
             progress_bar=False,
-            expectation=lambda x: x.position,
+            expectation=lambda x: x,
             transform=lambda x: x.position,
             return_state_history=True,
         )
@@ -66,7 +66,7 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             inference_algorithm=alg,
             num_steps=50,
             progress_bar=False,
-            expectation=lambda x: x.position,
+            expectation=lambda x: x,
             transform=lambda x: x.position,
             return_state_history=False,
         )

@@ -209,7 +209,7 @@ def run_inference_algorithm(
         _, rng_key = xs
         average, state = average_and_state
         state, info = inference_algorithm.step(rng_key, state)
-        average = streaming_average(expectation(state), average)
+        average = streaming_average(expectation(transform(state)), average)
         if return_state:
             return (average, state), (transform(state), info)
         else:
@@ -222,7 +222,7 @@ def run_inference_algorithm(
 
     xs = (jnp.arange(num_steps), keys)
     ((_, average), final_state), history = lax.scan(
-        one_step, ((0, expectation(initial_state)), initial_state), xs
+        one_step, ((0, expectation(transform(initial_state))), initial_state), xs
     )
 
     if not return_state_history:
@@ -236,10 +236,8 @@ def streaming_average(expectation, streaming_avg, weight=1.0, zero_prevention=0.
     """Compute the streaming average of a function O(x) using a weight.
     Parameters:
     ----------
-        O
-            function to be averaged
-        x
-            current state
+        expectation
+            the value of the expectation at the current timestep
         streaming_avg
             tuple of (total, average) where total is the sum of weights and average is the current average
         weight
