@@ -2,13 +2,14 @@
 from functools import partial
 from typing import Callable, Union
 
+import jax
 import jax.numpy as jnp
 from jax import jit, lax
 from jax.flatten_util import ravel_pytree
 from jax.random import normal, split
 from jax.tree_util import tree_leaves
 
-from blackjax.base import Info, SamplingAlgorithm, State, VIAlgorithm
+from blackjax.base import SamplingAlgorithm, VIAlgorithm
 from blackjax.progress_bar import progress_bar_scan
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -142,12 +143,15 @@ def index_pytree(input_pytree: ArrayLikeTree) -> ArrayTree:
 
 def run_inference_algorithm(
     rng_key: PRNGKey,
-    initial_state_or_position: ArrayLikeTree,
     inference_algorithm: Union[SamplingAlgorithm, VIAlgorithm],
     num_steps: int,
+    initial_state: ArrayLikeTree = None,
+    initial_position: ArrayLikeTree = None,
     progress_bar: bool = False,
     transform: Callable = lambda x: x,
-) -> tuple[State, State, Info]:
+    return_state_history=True,
+    expectation: Callable = lambda x: x,
+) -> tuple:
     """Wrapper to run an inference algorithm.
 
     Note that this utility function does not work for Stochastic Gradient MCMC samplers
@@ -158,9 +162,10 @@ def run_inference_algorithm(
     ----------
     rng_key
         The random state used by JAX's random numbers generator.
-    initial_state_or_position
-        The initial state OR the initial position of the inference algorithm. If an initial position
-        is passed in, the function will automatically convert it into an initial state.
+    initial_state
+        The initial state of the inference algorithm.
+    initial_position
+        The initial position of the inference algorithm. This is used when the initial state is not provided.
     inference_algorithm
         One of blackjax's sampling algorithms or variational inference algorithms.
     num_steps
@@ -171,34 +176,85 @@ def run_inference_algorithm(
         A transformation of the trace of states to be returned. This is useful for
         computing determinstic variables, or returning a subset of the states.
         By default, the states are returned as is.
+    expectation
+        A function that computes the expectation of the state. This is done incrementally, so doesn't require storing all the states.
+    return_state_history
+        if False, `run_inference_algorithm` will only return an expectation of the value of transform, and return that average instead of the full set of samples. This is useful when memory is a bottleneck.
 
     Returns
     -------
-    Tuple[State, State, Info]
-        1. The final state of the inference algorithm.
-        2. The trace of states of the inference algorithm (contains the MCMC samples).
+    If return_state_history is True:
+        1. The final state.
+        2. The trace of the state.
         3. The trace of the info of the inference algorithm for diagnostics.
+    If return_state_history is False:
+        1. This is the expectation of state over the chain. Otherwise the final state.
+        2. The final state of the inference algorithm.
     """
-    init_key, sample_key = split(rng_key, 2)
-    try:
-        initial_state = inference_algorithm.init(initial_state_or_position, init_key)
-    except (TypeError, ValueError, AttributeError):
-        # We assume initial_state is already in the right format.
-        initial_state = initial_state_or_position
 
-    keys = split(sample_key, num_steps)
+    if initial_state is None and initial_position is None:
+        raise ValueError("Either initial_state or initial_position must be provided.")
+    if initial_state is not None and initial_position is not None:
+        raise ValueError(
+            "Only one of initial_state or initial_position must be provided."
+        )
 
-    @jit
-    def _one_step(state, xs):
+    rng_key, init_key = split(rng_key, 2)
+    if initial_position is not None:
+        initial_state = inference_algorithm.init(initial_position, init_key)
+
+    keys = split(rng_key, num_steps)
+
+    def one_step(average_and_state, xs, return_state):
         _, rng_key = xs
+        average, state = average_and_state
         state, info = inference_algorithm.step(rng_key, state)
-        return state, (transform(state), info)
+        average = streaming_average(expectation(transform(state)), average)
+        if return_state:
+            return (average, state), (transform(state), info)
+        else:
+            return (average, state), None
+
+    one_step = jax.jit(partial(one_step, return_state=return_state_history))
 
     if progress_bar:
-        one_step = progress_bar_scan(num_steps)(_one_step)
-    else:
-        one_step = _one_step
+        one_step = progress_bar_scan(num_steps)(one_step)
 
     xs = (jnp.arange(num_steps), keys)
-    final_state, (state_history, info_history) = lax.scan(one_step, initial_state, xs)
-    return final_state, state_history, info_history
+    ((_, average), final_state), history = lax.scan(
+        one_step, ((0, expectation(transform(initial_state))), initial_state), xs
+    )
+
+    if not return_state_history:
+        return average, transform(final_state)
+    else:
+        state_history, info_history = history
+        return transform(final_state), state_history, info_history
+
+
+def streaming_average(expectation, streaming_avg, weight=1.0, zero_prevention=0.0):
+    """Compute the streaming average of a function O(x) using a weight.
+    Parameters:
+    ----------
+        expectation
+            the value of the expectation at the current timestep
+        streaming_avg
+            tuple of (total, average) where total is the sum of weights and average is the current average
+        weight
+            weight of the current state
+        zero_prevention
+            small value to prevent division by zero
+    Returns:
+    ----------
+        new streaming average
+    """
+
+    flat_expectation, unravel_fn = ravel_pytree(expectation)
+    total, average = streaming_avg
+    flat_average, _ = ravel_pytree(average)
+    average = (total * flat_average + weight * flat_expectation) / (
+        total + weight + zero_prevention
+    )
+    total += weight
+    streaming_avg = (total, unravel_fn(average))
+    return streaming_avg

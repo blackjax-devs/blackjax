@@ -91,7 +91,12 @@ def test_chees_adaptation(adaptation_filters):
 
     chain_keys = jax.random.split(inference_key, num_chains)
     _, _, infos = jax.vmap(
-        lambda key, state: run_inference_algorithm(key, state, algorithm, num_results)
+        lambda key, state: run_inference_algorithm(
+            rng_key=key,
+            initial_state=state,
+            inference_algorithm=algorithm,
+            num_steps=num_results,
+        )
     )(chain_keys, last_states)
 
     harmonic_mean = 1.0 / jnp.mean(1.0 / infos.acceptance_rate)
