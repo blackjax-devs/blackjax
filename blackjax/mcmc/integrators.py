@@ -14,12 +14,14 @@
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
 from typing import Any, Callable, NamedTuple, Tuple
 
+import chex
 import jax
 import jax.numpy as jnp
+import jax.tree_util as jtu
 from jax.flatten_util import ravel_pytree
 
 from blackjax.mcmc.metrics import KineticEnergy
-from blackjax.types import ArrayTree
+from blackjax.types import Array, ArrayTree
 
 __all__ = [
     "mclachlan",
@@ -29,6 +31,7 @@ __all__ = [
     "isokinetic_leapfrog",
     "isokinetic_mclachlan",
     "isokinetic_yoshida",
+    "rattle",
 ]
 
 
@@ -477,5 +480,155 @@ def implicit_midpoint(
         q, p = _update(q, p, dLdq, initial=(q, p))
 
         return IntegratorState(q, p, *logdensity_and_grad_fn(q))
+
+    return one_step
+
+
+@chex.dataclass
+class NewtonState:
+    x: ArrayTree
+    delta: ArrayTree
+    n: chex.Scalar
+    aux: ArrayTree
+
+
+def solve_newton(
+    func: Callable[[ArrayTree], Tuple[ArrayTree, ArrayTree]],
+    x0: ArrayTree,
+    *,
+    convergence_tol: float = 1e-6,
+    # divergence_tol: float = 1e10,
+    max_iters: int = 100,
+    # norm_fn: Callable[[ArrayTree], float] = lambda x: jnp.max(jnp.abs(x)),
+):
+    x0arr, unflatten = ravel_pytree(x0)
+
+    def surogate_func(x: ArrayTree):
+        x_tree = unflatten(x)
+        y, aux = func(x_tree)
+        y, _ = ravel_pytree(y)
+        return y, aux
+
+    jf = jax.jacobian(surogate_func, has_aux=True)
+
+    def step_fun(x: NewtonState) -> NewtonState:
+        J, _ = jf(x.x)
+        F, aux = surogate_func(x.x)
+
+        delta = jnp.linalg.solve(J, -F)
+        return NewtonState(
+            x=x.x + delta, delta=delta, n=x.n + jnp.ones_like(x.n), aux=aux
+        )
+
+    def cond(x: NewtonState):
+        return jnp.logical_and(
+            x.n < max_iters, jnp.linalg.norm(x.delta) > convergence_tol
+        )
+
+    sol = jax.lax.while_loop(
+        cond,
+        step_fun,
+        NewtonState(
+            x=x0arr, delta=x0arr, n=jnp.zeros((), dtype=jnp.int32), aux=func(x0)[1]
+        ),
+    )
+    return sol.replace(x=unflatten(sol.x), delta=unflatten(sol.delta))
+
+
+class RattleVars(NamedTuple):
+    p_1_2: Array  # Midpoint momentum
+    q_1: Array  # Final position
+    lam: Array  # Lagrange multiplier (state)
+    p_1: Array  # Final momentum
+    mu: Array  # Lagrange multiplier (momentum)
+
+
+def rattle(
+    logdensity_fn: Callable,
+    kinetic_energy_fn: KineticEnergy,
+    constrain_fn: Callable,
+    *,
+    solver: Callable = solve_newton,
+    **solver_kwargs: Any,
+) -> Integrator:
+    """Rattle integrator.
+
+    Symplectic method. Does not support adaptive step sizing. Uses 1st order local
+    linear interpolation for dense/ts output.
+    """
+    logdensity_and_grad_fn = jax.value_and_grad(logdensity_fn)
+    kinetic_energy_grad_fn = jax.grad(
+        lambda q, p: kinetic_energy_fn(p, position=q), argnums=(0, 1)
+    )
+
+    def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
+        q0, p0, _, _ = state
+        h = 0.5 * step_size
+
+        def eq(x: RattleVars) -> tuple:
+            _, vjp_fun = jax.vjp(constrain_fn, q0)
+            _, vjp_fun_mu = jax.vjp(constrain_fn, x.q_1)
+
+            dUdq = state.logdensity_grad
+
+            dTdq, dHdp = kinetic_energy_grad_fn(q0, p0)
+            dHdq = jax.tree_util.tree_map(jnp.subtract, dTdq, dUdq)
+            dTdq12, dHdp12 = kinetic_energy_grad_fn(q0, p0)
+
+            # TODOD check
+            dTdq12, dHdp12 = kinetic_energy_grad_fn(q0, x.p_1_2)
+            Uq1, dUdq1 = logdensity_and_grad_fn(x.q_1)
+            dHdq12 = jtu.tree_map(jnp.subtract, dTdq12, dUdq1)
+
+            zero = (
+                jtu.tree_map(
+                    lambda _p0, _dhdq, _dcl, _p12: _p0 - h * (_dhdq + _dcl) - _p12,
+                    p0,
+                    dHdq,
+                    vjp_fun(x.lam)[0],
+                    x.p_1_2,
+                ),
+                jtu.tree_map(
+                    lambda _q0, _dhdp0, _dhdp1, _q1: _q0 + h * (_dhdp0 + _dhdp1) - _q1,
+                    q0,
+                    kinetic_energy_grad_fn(q0, x.p_1_2)[1],
+                    kinetic_energy_grad_fn(x.q_1, x.p_1_2)[1],
+                    x.q_1,
+                ),
+                constrain_fn(x.q_1),
+                jtu.tree_map(
+                    lambda _p12, _dhdq, _dc, _p1: _p12 - h * (_dhdq + _dc) - _p1,
+                    x.p_1_2,
+                    dHdq12,
+                    vjp_fun_mu(x.mu)[0],
+                    x.p_1,
+                ),
+                jax.jvp(
+                    constrain_fn, (x.q_1,), (kinetic_energy_grad_fn(x.q_1, x.p_1)[1],)
+                )[1],
+            )
+
+            return zero, (Uq1, dUdq1)
+
+        cs = jax.eval_shape(constrain_fn, q0)
+
+        init_vars = RattleVars(
+            p_1_2=p0,
+            # TODO check better starting point
+            q_1=jtu.tree_map(lambda x: x, q0),
+            p_1=p0,
+            lam=jtu.tree_map(jnp.zeros_like, cs),  # TODO keep this in a state
+            mu=jtu.tree_map(jnp.zeros_like, cs),
+        )
+
+        sol = solver(eq, init_vars, **solver_kwargs)
+        Uq1, dUdq1 = sol.aux
+        next_state = IntegratorState(
+            position=sol.x.q_1,
+            momentum=sol.x.p_1,
+            logdensity=Uq1,
+            logdensity_grad=dUdq1,
+        )
+        return next_state
 
     return one_step
