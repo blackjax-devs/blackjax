@@ -117,10 +117,10 @@ class LinearRegressionTest(chex.TestCase):
             position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
         )
 
-        kernel = lambda sqrt_diag_cov_mat: blackjax.mcmc.mclmc.build_kernel(
+        kernel = lambda sqrt_diag_cov: blackjax.mcmc.mclmc.build_kernel(
             logdensity_fn=logdensity_fn,
             integrator=blackjax.mcmc.mclmc.isokinetic_mclachlan,
-            sqrt_diag_cov_mat=sqrt_diag_cov_mat,
+            sqrt_diag_cov=sqrt_diag_cov,
         )
 
         (
@@ -138,7 +138,7 @@ class LinearRegressionTest(chex.TestCase):
             logdensity_fn,
             L=blackjax_mclmc_sampler_params.L,
             step_size=blackjax_mclmc_sampler_params.step_size,
-            sqrt_diag_cov_mat=blackjax_mclmc_sampler_params.sqrt_diag_cov_mat,
+            sqrt_diag_cov=blackjax_mclmc_sampler_params.sqrt_diag_cov,
         )
 
         _, samples, _ = run_inference_algorithm(
@@ -170,12 +170,12 @@ class LinearRegressionTest(chex.TestCase):
             random_generator_arg=init_key,
         )
 
-        kernel = lambda rng_key, state, avg_num_integration_steps, step_size, sqrt_diag_cov_mat: blackjax.mcmc.adjusted_mclmc.build_kernel(
+        kernel = lambda rng_key, state, avg_num_integration_steps, step_size, sqrt_diag_cov: blackjax.mcmc.adjusted_mclmc.build_kernel(
             integrator=integrator,
             integration_steps_fn=lambda k: jnp.ceil(
                 jax.random.uniform(k) * rescale(avg_num_integration_steps)
             ),
-            sqrt_diag_cov_mat=sqrt_diag_cov_mat,
+            sqrt_diag_cov=sqrt_diag_cov,
         )(
             rng_key=rng_key,
             state=state,
@@ -216,7 +216,7 @@ class LinearRegressionTest(chex.TestCase):
                 jax.random.uniform(key) * rescale(L / step_size)
             ),
             integrator=integrator,
-            sqrt_diag_cov_mat=blackjax_mclmc_sampler_params.sqrt_diag_cov_mat,
+            sqrt_diag_cov=blackjax_mclmc_sampler_params.sqrt_diag_cov,
         )
 
         _, out, info = run_inference_algorithm(
@@ -411,7 +411,7 @@ class LinearRegressionTest(chex.TestCase):
 
         integrator = isokinetic_mclachlan
 
-        def get_sqrt_diag_cov_mat():
+        def get_sqrt_diag_cov():
             init_key, tune_key = jax.random.split(key)
 
             initial_position = model.sample_init(init_key)
@@ -422,10 +422,10 @@ class LinearRegressionTest(chex.TestCase):
                 rng_key=init_key,
             )
 
-            kernel = lambda sqrt_diag_cov_mat: blackjax.mcmc.mclmc.build_kernel(
+            kernel = lambda sqrt_diag_cov: blackjax.mcmc.mclmc.build_kernel(
                 logdensity_fn=model.logdensity_fn,
                 integrator=integrator,
-                sqrt_diag_cov_mat=sqrt_diag_cov_mat,
+                sqrt_diag_cov=sqrt_diag_cov,
             )
 
             (
@@ -439,13 +439,13 @@ class LinearRegressionTest(chex.TestCase):
                 diagonal_preconditioning=True,
             )
 
-            return blackjax_mclmc_sampler_params.sqrt_diag_cov_mat
+            return blackjax_mclmc_sampler_params.sqrt_diag_cov
 
-        sqrt_diag_cov_mat = get_sqrt_diag_cov_mat()
+        sqrt_diag_cov = get_sqrt_diag_cov()
         assert (
             jnp.abs(
                 jnp.dot(
-                    (sqrt_diag_cov_mat**2) / jnp.linalg.norm(sqrt_diag_cov_mat**2),
+                    (sqrt_diag_cov**2) / jnp.linalg.norm(sqrt_diag_cov**2),
                     eigs / jnp.linalg.norm(eigs),
                 )
                 - 1

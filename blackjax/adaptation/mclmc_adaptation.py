@@ -34,13 +34,13 @@ class MCLMCAdaptationState(NamedTuple):
         The momentum decoherent rate for the MCLMC algorithm.
     step_size
         The step size used for the MCLMC algorithm.
-    sqrt_diag_cov_mat
+    sqrt_diag_cov
         A matrix used for preconditioning.
     """
 
     L: float
     step_size: float
-    sqrt_diag_cov_mat: float
+    sqrt_diag_cov: float
 
 
 def mclmc_find_L_and_step_size(
@@ -89,10 +89,10 @@ def mclmc_find_L_and_step_size(
     Example
     -------
     .. code::
-        kernel = lambda sqrt_diag_cov_mat : blackjax.mcmc.mclmc.build_kernel(
+        kernel = lambda sqrt_diag_cov : blackjax.mcmc.mclmc.build_kernel(
         logdensity_fn=logdensity_fn,
         integrator=integrator,
-        sqrt_diag_cov_mat=sqrt_diag_cov_mat,
+        sqrt_diag_cov=sqrt_diag_cov,
         )
 
         (
@@ -108,7 +108,7 @@ def mclmc_find_L_and_step_size(
     """
     dim = pytree_size(state.position)
     params = MCLMCAdaptationState(
-        jnp.sqrt(dim), jnp.sqrt(dim) * 0.25, sqrt_diag_cov_mat=jnp.ones((dim,))
+        jnp.sqrt(dim), jnp.sqrt(dim) * 0.25, sqrt_diag_cov=jnp.ones((dim,))
     )
     part1_key, part2_key = jax.random.split(rng_key, 2)
 
@@ -125,7 +125,7 @@ def mclmc_find_L_and_step_size(
 
     if frac_tune3 != 0:
         state, params = make_adaptation_L(
-            mclmc_kernel(params.sqrt_diag_cov_mat), frac=frac_tune3, Lfactor=0.4
+            mclmc_kernel(params.sqrt_diag_cov), frac=frac_tune3, Lfactor=0.4
         )(state, params, num_steps, part2_key)
 
     return state, params
@@ -152,7 +152,7 @@ def make_L_step_size_adaptation(
         time, x_average, step_size_max = adaptive_state
 
         # dynamics
-        next_state, info = kernel(params.sqrt_diag_cov_mat)(
+        next_state, info = kernel(params.sqrt_diag_cov)(
             rng_key=rng_key,
             state=previous_state,
             L=params.L,
@@ -246,15 +246,15 @@ def make_L_step_size_adaptation(
 
         L = params.L
         # determine L
-        sqrt_diag_cov_mat = params.sqrt_diag_cov_mat
+        sqrt_diag_cov = params.sqrt_diag_cov
         if num_steps2 != 0.0:
             x_average, x_squared_average = average[0], average[1]
             variances = x_squared_average - jnp.square(x_average)
             L = jnp.sqrt(jnp.sum(variances))
 
             if diagonal_preconditioning:
-                sqrt_diag_cov_mat = jnp.sqrt(variances)
-                params = params._replace(sqrt_diag_cov_mat=sqrt_diag_cov_mat)
+                sqrt_diag_cov = jnp.sqrt(variances)
+                params = params._replace(sqrt_diag_cov=sqrt_diag_cov)
                 L = jnp.sqrt(dim)
 
                 # readjust the stepsize
@@ -264,7 +264,7 @@ def make_L_step_size_adaptation(
                     xs=(jnp.ones(steps), keys), state=state, params=params
                 )
 
-        return state, MCLMCAdaptationState(L, params.step_size, sqrt_diag_cov_mat)
+        return state, MCLMCAdaptationState(L, params.step_size, sqrt_diag_cov)
 
     return L_step_size_adaptation
 
@@ -354,7 +354,7 @@ def adjusted_mclmc_find_L_and_step_size(
     dim = pytree_size(state.position)
     if params is None:
         params = MCLMCAdaptationState(
-            jnp.sqrt(dim), jnp.sqrt(dim) * 0.2, sqrt_diag_cov_mat=jnp.ones((dim,))
+            jnp.sqrt(dim), jnp.sqrt(dim) * 0.2, sqrt_diag_cov=jnp.ones((dim,))
         )
     else:
         params = params
@@ -435,7 +435,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 state=previous_state,
                 avg_num_integration_steps=avg_num_integration_steps,
                 step_size=params.step_size,
-                sqrt_diag_cov_mat=params.sqrt_diag_cov_mat,
+                sqrt_diag_cov=params.sqrt_diag_cov,
             )
 
             # jax.debug.print("step size during {x}",x=(params.step_size, params.L))
@@ -479,7 +479,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
 
             x = ravel_pytree(state.position)[0]
             # update the running average of x, x^2
-            streaming_avg = streaming_average(
+            streaming_avg = streaming_average_update(
                 expectation=jnp.array([x, jnp.square(x)]),
                 streaming_avg=streaming_avg,
                 weight=(1 - mask) * success * step_size,
@@ -596,7 +596,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
 
             if diagonal_preconditioning:
                 # diagonal preconditioning
-                params = params._replace(sqrt_diag_cov_mat=jnp.sqrt(variances))
+                params = params._replace(sqrt_diag_cov=jnp.sqrt(variances))
 
                 # state = jax.lax.scan(step, init= state, xs= jnp.ones(steps), length= steps)[0]
                 # dyn, _, hyp, adap, kalman_state = state
@@ -643,7 +643,7 @@ def adjusted_mclmc_make_adaptation_L(kernel, frac, Lfactor):
                 state=state,
                 step_size=params.step_size,
                 avg_num_integration_steps=params.L / params.step_size,
-                sqrt_diag_cov_mat=params.sqrt_diag_cov_mat,
+                sqrt_diag_cov=params.sqrt_diag_cov,
             )
             return next_state, next_state.position
 
