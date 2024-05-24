@@ -60,7 +60,7 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
     )
 
 
-def build_kernel(logdensity_fn, std_mat, integrator):
+def build_kernel(logdensity_fn, sqrt_diag_cov_mat, integrator):
     """Build a HMC kernel.
 
     Parameters
@@ -80,7 +80,7 @@ def build_kernel(logdensity_fn, std_mat, integrator):
 
     """
 
-    step = with_isokinetic_maruyama(integrator(logdensity_fn, std_mat))
+    step = with_isokinetic_maruyama(integrator(logdensity_fn, sqrt_diag_cov_mat))
 
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
@@ -105,7 +105,7 @@ def as_top_level_api(
     L,
     step_size,
     integrator=isokinetic_mclachlan,
-    std_mat=1.0,
+    sqrt_diag_cov_mat=1.0,
 ) -> SamplingAlgorithm:
     """The general mclmc kernel builder (:meth:`blackjax.mcmc.mclmc.build_kernel`, alias `blackjax.mclmc.build_kernel`) can be
     cumbersome to manipulate. Since most users only need to specify the kernel
@@ -153,7 +153,7 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
     """
 
-    kernel = build_kernel(logdensity_fn, std_mat, integrator)
+    kernel = build_kernel(logdensity_fn, sqrt_diag_cov_mat, integrator)
 
     def init_fn(position: ArrayLike, rng_key: PRNGKey):
         return init(position, logdensity_fn, rng_key)
