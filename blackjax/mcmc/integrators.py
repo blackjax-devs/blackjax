@@ -316,7 +316,7 @@ def _normalized_flatten_array(x, tol=1e-13):
     return jnp.where(norm > tol, x / norm, x), norm
 
 
-def esh_dynamics_momentum_update_one_step(std_mat):
+def esh_dynamics_momentum_update_one_step(sqrt_diag_cov_mat=1.0):
     def update(
         momentum: ArrayTree,
         logdensity_grad: ArrayTree,
@@ -335,7 +335,7 @@ def esh_dynamics_momentum_update_one_step(std_mat):
 
         logdensity_grad = logdensity_grad
         flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
-        flatten_grads = flatten_grads * std_mat
+        flatten_grads = flatten_grads * sqrt_diag_cov_mat
         flatten_momentum, _ = ravel_pytree(momentum)
         dims = flatten_momentum.shape[0]
         normalized_gradient, gradient_norm = _normalized_flatten_array(flatten_grads)
@@ -347,7 +347,7 @@ def esh_dynamics_momentum_update_one_step(std_mat):
             + 2 * zeta * flatten_momentum
         )
         new_momentum_normalized, _ = _normalized_flatten_array(new_momentum_raw)
-        gr = unravel_fn(new_momentum_normalized * std_mat)
+        gr = unravel_fn(new_momentum_normalized * sqrt_diag_cov_mat)
         next_momentum = unravel_fn(new_momentum_normalized)
         kinetic_energy_change = (
             delta
@@ -379,11 +379,12 @@ def format_isokinetic_state_output(
 
 def generate_isokinetic_integrator(coefficients):
     def isokinetic_integrator(
-        logdensity_fn: Callable, std_mat: ArrayTree = 1.0, *args, **kwargs
+        logdensity_fn: Callable, *args, **kwargs
     ) -> GeneralIntegrator:
+        sqrt_diag_cov_mat = kwargs.get("sqrt_diag_cov_mat", 1.0)
         position_update_fn = euclidean_position_update_fn(logdensity_fn)
         one_step = generalized_two_stage_integrator(
-            esh_dynamics_momentum_update_one_step(std_mat),
+            esh_dynamics_momentum_update_one_step(sqrt_diag_cov_mat),
             position_update_fn,
             coefficients,
             format_output_fn=format_isokinetic_state_output,
