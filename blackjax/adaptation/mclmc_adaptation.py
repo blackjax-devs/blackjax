@@ -89,10 +89,10 @@ def mclmc_find_L_and_step_size(
     Example
     -------
     .. code::
-        kernel = lambda std_mat : blackjax.mcmc.mclmc.build_kernel(
+        kernel = lambda sqrt_diag_cov_mat : blackjax.mcmc.mclmc.build_kernel(
         logdensity_fn=logdensity_fn,
         integrator=integrator,
-        std_mat=std_mat,
+        sqrt_diag_cov_mat=sqrt_diag_cov_mat,
         )
 
         (
@@ -354,7 +354,7 @@ def adjusted_mclmc_find_L_and_step_size(
     dim = pytree_size(state.position)
     if params is None:
         params = MCLMCAdaptationState(
-            jnp.sqrt(dim), jnp.sqrt(dim) * 0.2, std_mat=jnp.ones((dim,))
+            jnp.sqrt(dim), jnp.sqrt(dim) * 0.2, sqrt_diag_cov_mat=jnp.ones((dim,))
         )
     else:
         params = params
@@ -435,7 +435,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 state=previous_state,
                 avg_num_integration_steps=avg_num_integration_steps,
                 step_size=params.step_size,
-                std_mat=params.std_mat,
+                sqrt_diag_cov_mat=params.sqrt_diag_cov_mat,
             )
 
             # jax.debug.print("step size during {x}",x=(params.step_size, params.L))
@@ -596,7 +596,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
 
             if diagonal_preconditioning:
                 # diagonal preconditioning
-                params = params._replace(std_mat=jnp.sqrt(variances))
+                params = params._replace(sqrt_diag_cov_mat=jnp.sqrt(variances))
 
                 # state = jax.lax.scan(step, init= state, xs= jnp.ones(steps), length= steps)[0]
                 # dyn, _, hyp, adap, kalman_state = state
@@ -643,7 +643,7 @@ def adjusted_mclmc_make_adaptation_L(kernel, frac, Lfactor):
                 state=state,
                 step_size=params.step_size,
                 avg_num_integration_steps=params.L / params.step_size,
-                std_mat=params.std_mat,
+                sqrt_diag_cov_mat=params.sqrt_diag_cov_mat,
             )
             return next_state, next_state.position
 

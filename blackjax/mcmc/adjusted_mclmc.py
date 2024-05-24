@@ -33,13 +33,13 @@ def init(position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg:
     return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
 
 
-# TODO: no default for std_mat
+# TODO: no default for sqrt_diag_cov_mat
 def build_kernel(
     integration_steps_fn,
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
-    std_mat=1.0,
+    sqrt_diag_cov_mat=1.0,
 ):
     """Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
@@ -77,7 +77,7 @@ def build_kernel(
         momentum = generate_unit_vector(key_momentum, state.position)
         proposal, info, _ = adjusted_mclmc_proposal(
             integrator=integrators.with_isokinetic_maruyama(
-                integrator(logdensity_fn, std_mat)
+                integrator(logdensity_fn, sqrt_diag_cov_mat)
             ),
             step_size=step_size,
             L_proposal=L_proposal * num_integration_steps,
@@ -107,7 +107,7 @@ def as_top_level_api(
     logdensity_fn: Callable,
     step_size: float,
     L_proposal: float = jnp.inf,
-    std_mat=1.0,
+    sqrt_diag_cov_mat=1.0,
     *,
     divergence_threshold: int = 1000,
     integrator: Callable = integrators.isokinetic_mclachlan,
@@ -144,7 +144,7 @@ def as_top_level_api(
         integration_steps_fn=integration_steps_fn,
         integrator=integrator,
         next_random_arg_fn=next_random_arg_fn,
-        std_mat=std_mat,
+        sqrt_diag_cov_mat=sqrt_diag_cov_mat,
         divergence_threshold=divergence_threshold,
     )
 

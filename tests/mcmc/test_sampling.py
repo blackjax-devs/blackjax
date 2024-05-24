@@ -170,12 +170,12 @@ class LinearRegressionTest(chex.TestCase):
             random_generator_arg=init_key,
         )
 
-        kernel = lambda rng_key, state, avg_num_integration_steps, step_size, std_mat: blackjax.mcmc.adjusted_mclmc.build_kernel(
+        kernel = lambda rng_key, state, avg_num_integration_steps, step_size, sqrt_diag_cov_mat: blackjax.mcmc.adjusted_mclmc.build_kernel(
             integrator=integrator,
             integration_steps_fn=lambda k: jnp.ceil(
                 jax.random.uniform(k) * rescale(avg_num_integration_steps)
             ),
-            std_mat=std_mat,
+            sqrt_diag_cov_mat=sqrt_diag_cov_mat,
         )(
             rng_key=rng_key,
             state=state,
@@ -216,7 +216,7 @@ class LinearRegressionTest(chex.TestCase):
                 jax.random.uniform(key) * rescale(L / step_size)
             ),
             integrator=integrator,
-            std_mat=blackjax_mclmc_sampler_params.std_mat,
+            sqrt_diag_cov_mat=blackjax_mclmc_sampler_params.sqrt_diag_cov_mat,
         )
 
         _, out, info = run_inference_algorithm(
