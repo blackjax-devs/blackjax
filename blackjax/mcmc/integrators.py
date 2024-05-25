@@ -402,6 +402,48 @@ isokinetic_mclachlan = generate_isokinetic_integrator(mclachlan_coefficients)
 isokinetic_omelyan = generate_isokinetic_integrator(omelyan_coefficients)
 
 
+def calls_per_integrator_step(c):
+    if c == velocity_verlet_coefficients:
+        return 1
+    if c == mclachlan_coefficients:
+        return 2
+    if c == yoshida_coefficients:
+        return 3
+    if c == omelyan_coefficients:
+        return 5
+
+    else:
+        raise Exception("No such integrator exists in blackjax")
+
+
+def name_integrator(c):
+    if c == velocity_verlet_coefficients:
+        return "velocity_verlet"
+    if c == mclachlan_coefficients:
+        return "mclachlan"
+    if c == yoshida_coefficients:
+        return "yoshida"
+    if c == omelyan_coefficients:
+        return "omelyan"
+
+    else:
+        raise Exception("No such integrator exists in blackjax")
+
+
+def integrator_order(c):
+    if c == velocity_verlet_coefficients:
+        return 2
+    if c == mclachlan_coefficients:
+        return 2
+    if c == yoshida_coefficients:
+        return 4
+    if c == omelyan_coefficients:
+        return 4
+
+    else:
+        raise Exception("No such integrator exists in blackjax")
+
+
 def partially_refresh_momentum(momentum, rng_key, step_size, L):
     """Adds a small noise to momentum and normalizes.
 
@@ -453,48 +495,6 @@ def with_isokinetic_maruyama(integrator):
         return state, info
 
     return stochastic_integrator
-
-
-def calls_per_integrator_step(c):
-    if c == velocity_verlet_coefficients:
-        return 1
-    if c == mclachlan_coefficients:
-        return 2
-    if c == yoshida_coefficients:
-        return 3
-    if c == omelyan_coefficients:
-        return 5
-
-    else:
-        raise Exception("No such integrator exists in blackjax")
-
-
-def name_integrator(c):
-    if c == velocity_verlet_coefficients:
-        return "velocity_verlet"
-    if c == mclachlan_coefficients:
-        return "mclachlan"
-    if c == yoshida_coefficients:
-        return "yoshida"
-    if c == omelyan_coefficients:
-        return "omelyan"
-
-    else:
-        raise Exception("No such integrator exists in blackjax")
-
-
-def integrator_order(c):
-    if c == velocity_verlet_coefficients:
-        return 2
-    if c == mclachlan_coefficients:
-        return 2
-    if c == yoshida_coefficients:
-        return 4
-    if c == omelyan_coefficients:
-        return 4
-
-    else:
-        raise Exception("No such integrator exists in blackjax")
 
 
 FixedPointSolver = Callable[
