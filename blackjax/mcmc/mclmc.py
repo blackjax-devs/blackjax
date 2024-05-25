@@ -15,12 +15,13 @@
 from typing import Callable, NamedTuple
 
 import jax
-import jax.numpy as jnp
-from jax.flatten_util import ravel_pytree
-from jax.random import normal
 
 from blackjax.base import SamplingAlgorithm
-from blackjax.mcmc.integrators import IntegratorState, isokinetic_mclachlan
+from blackjax.mcmc.integrators import (
+    IntegratorState,
+    isokinetic_mclachlan,
+    with_isokinetic_maruyama,
+)
 from blackjax.types import ArrayLike, PRNGKey
 from blackjax.util import generate_unit_vector, pytree_size
 
@@ -59,7 +60,7 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
     )
 
 
-def build_kernel(logdensity_fn, integrator):
+def build_kernel(logdensity_fn, sqrt_diag_cov, integrator):
     """Build a HMC kernel.
 
     Parameters
@@ -78,18 +79,14 @@ def build_kernel(logdensity_fn, integrator):
     information about the transition.
 
     """
-    step = integrator(logdensity_fn)
+
+    step = with_isokinetic_maruyama(integrator(logdensity_fn, sqrt_diag_cov))
 
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
     ) -> tuple[IntegratorState, MCLMCInfo]:
         (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
-            state, step_size
-        )
-
-        # Langevin-like noise
-        momentum = partially_refresh_momentum(
-            momentum=momentum, rng_key=rng_key, L=L, step_size=step_size
+            state, step_size, L, rng_key
         )
 
         return IntegratorState(
@@ -108,6 +105,7 @@ def as_top_level_api(
     L,
     step_size,
     integrator=isokinetic_mclachlan,
+    sqrt_diag_cov=1.0,
 ) -> SamplingAlgorithm:
     """The general mclmc kernel builder (:meth:`blackjax.mcmc.mclmc.build_kernel`, alias `blackjax.mclmc.build_kernel`) can be
     cumbersome to manipulate. Since most users only need to specify the kernel
@@ -155,7 +153,7 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
     """
 
-    kernel = build_kernel(logdensity_fn, integrator)
+    kernel = build_kernel(logdensity_fn, sqrt_diag_cov, integrator)
 
     def init_fn(position: ArrayLike, rng_key: PRNGKey):
         return init(position, logdensity_fn, rng_key)
@@ -164,28 +162,3 @@ def as_top_level_api(
         return kernel(rng_key, state, L, step_size)
 
     return SamplingAlgorithm(init_fn, update_fn)
-
-
-def partially_refresh_momentum(momentum, rng_key, step_size, L):
-    """Adds a small noise to momentum and normalizes.
-
-    Parameters
-    ----------
-    rng_key
-        The pseudo-random number generator key used to generate random numbers.
-    momentum
-        PyTree that the structure the output should to match.
-    step_size
-        Step size
-    L
-        controls rate of momentum change
-
-    Returns
-    -------
-    momentum with random change in angle
-    """
-    m, unravel_fn = ravel_pytree(momentum)
-    dim = m.shape[0]
-    nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
-    z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
-    return unravel_fn((m + z) / jnp.linalg.norm(m + z))
