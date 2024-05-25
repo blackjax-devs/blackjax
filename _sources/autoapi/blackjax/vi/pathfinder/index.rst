@@ -1,23 +1,19 @@
-:py:mod:`blackjax.vi.pathfinder`
-================================
+blackjax.vi.pathfinder
+======================
 
 .. py:module:: blackjax.vi.pathfinder
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.vi.pathfinder.PathfinderState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -26,9 +22,10 @@ Functions
    blackjax.vi.pathfinder.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:class:: PathfinderState
-
 
 
 
@@ -51,35 +48,29 @@ Functions
        ELBO of approximation wrt target distribution
 
 
-   .. py:attribute:: elbo
-      :type: blackjax.types.Array
 
-      
+   .. py:attribute:: elbo
+      :type:  blackjax.types.Array
+
 
    .. py:attribute:: position
-      :type: blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayTree
 
-      
 
    .. py:attribute:: grad_position
-      :type: blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayTree
 
-      
 
    .. py:attribute:: alpha
-      :type: blackjax.types.Array
+      :type:  blackjax.types.Array
 
-      
 
    .. py:attribute:: beta
-      :type: blackjax.types.Array
+      :type:  blackjax.types.Array
 
-      
 
    .. py:attribute:: gamma
-      :type: blackjax.types.Array
-
-      
+      :type:  blackjax.types.Array
 
 
 .. py:function:: approximate(rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable, initial_position: blackjax.types.ArrayLikeTree, num_samples: int = 200, *, maxiter=30, maxcor=10, maxls=1000, gtol=1e-08, ftol=1e-05, **lbfgs_kwargs) -> tuple[PathfinderState, PathfinderInfo]

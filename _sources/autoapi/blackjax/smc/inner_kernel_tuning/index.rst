@@ -1,23 +1,19 @@
-:py:mod:`blackjax.smc.inner_kernel_tuning`
-==========================================
+blackjax.smc.inner_kernel_tuning
+================================
 
 .. py:module:: blackjax.smc.inner_kernel_tuning
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.smc.inner_kernel_tuning.StateWithParameterOverride
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -26,9 +22,10 @@ Functions
    blackjax.smc.inner_kernel_tuning.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:class:: StateWithParameterOverride
-
 
 
 
@@ -37,19 +34,16 @@ Functions
    and (n_particles, *) arrays as meanings. The latter
    represent a parameter per chain for the next mutation step.
 
-   .. py:attribute:: sampler_state
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: sampler_state
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: parameter_override
-      :type: Dict[str, blackjax.types.ArrayTree]
-
-      
+      :type:  Dict[str, blackjax.types.ArrayTree]
 
 
 .. py:function:: init(alg_init_fn, position, initial_parameter_value)
-
 
 .. py:function:: build_kernel(smc_algorithm, logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, mcmc_parameter_update_fn: Callable[[blackjax.smc.base.SMCState, blackjax.smc.base.SMCInfo], Dict[str, blackjax.types.ArrayTree]], num_mcmc_steps: int = 10, **extra_parameters) -> Callable
 

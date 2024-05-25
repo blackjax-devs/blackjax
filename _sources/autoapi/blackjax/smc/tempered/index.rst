@@ -1,23 +1,19 @@
-:py:mod:`blackjax.smc.tempered`
-===============================
+blackjax.smc.tempered
+=====================
 
 .. py:module:: blackjax.smc.tempered
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.smc.tempered.TemperedSMCState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -26,9 +22,10 @@ Functions
    blackjax.smc.tempered.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:class:: TemperedSMCState
-
 
 
 
@@ -40,24 +37,20 @@ Functions
        Current value of the tempering parameter.
 
 
-   .. py:attribute:: particles
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: particles
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: weights
-      :type: blackjax.types.Array
+      :type:  blackjax.types.Array
 
-      
 
    .. py:attribute:: lmbda
-      :type: float
-
-      
+      :type:  float
 
 
 .. py:function:: init(particles: blackjax.types.ArrayLikeTree)
-
 
 .. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable) -> Callable
 

@@ -1,5 +1,5 @@
-:py:mod:`blackjax.sgmcmc.csgld`
-===============================
+blackjax.sgmcmc.csgld
+=====================
 
 .. py:module:: blackjax.sgmcmc.csgld
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.sgmcmc.csgld.ContourSGLDState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -31,9 +27,10 @@ Functions
    blackjax.sgmcmc.csgld.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:class:: ContourSGLDState
-
 
 
 
@@ -45,24 +42,20 @@ Functions
                       :math:`S_i` is the `i`-th energy partition.
    :param energy_idx: Index `i` such that the current position belongs to :math:`S_i`.
 
-   .. py:attribute:: position
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: position
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: energy_pdf
-      :type: blackjax.types.Array
+      :type:  blackjax.types.Array
 
-      
 
    .. py:attribute:: energy_idx
-      :type: int
-
-      
+      :type:  int
 
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree, num_partitions=512) -> ContourSGLDState
-
 
 .. py:function:: build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable
 

@@ -1,5 +1,5 @@
-:py:mod:`blackjax.sgmcmc.sgnht`
-===============================
+blackjax.sgmcmc.sgnht
+=====================
 
 .. py:module:: blackjax.sgmcmc.sgnht
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.sgmcmc.sgnht.SGNHTState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -31,9 +27,10 @@ Functions
    blackjax.sgmcmc.sgnht.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:class:: SGNHTState
-
 
 
 
@@ -43,24 +40,20 @@ Functions
    :param momentum: Current momentum in the sample space.
    :param xi: Scalar thermostat controlling kinetic energy.
 
-   .. py:attribute:: position
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: position
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: momentum
-      :type: blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayTree
 
-      
 
    .. py:attribute:: xi
-      :type: float
-
-      
+      :type:  float
 
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree, rng_key: blackjax.types.PRNGKey, xi: float) -> SGNHTState
-
 
 .. py:function:: build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable
 

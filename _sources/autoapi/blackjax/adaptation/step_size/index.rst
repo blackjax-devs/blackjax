@@ -1,5 +1,5 @@
-:py:mod:`blackjax.adaptation.step_size`
-=======================================
+blackjax.adaptation.step_size
+=============================
 
 .. py:module:: blackjax.adaptation.step_size
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.adaptation.step_size.DualAveragingAdaptationState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -30,9 +26,10 @@ Functions
    blackjax.adaptation.step_size.find_reasonable_step_size
 
 
+Module Contents
+---------------
 
 .. py:class:: DualAveragingAdaptationState
-
 
 
 
@@ -56,30 +53,25 @@ Functions
        `find_reasonable_step_size` procedure.
 
 
-   .. py:attribute:: log_step_size
-      :type: float
 
-      
+   .. py:attribute:: log_step_size
+      :type:  float
+
 
    .. py:attribute:: log_step_size_avg
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: step
-      :type: int
+      :type:  int
 
-      
 
    .. py:attribute:: avg_error
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: mu
-      :type: float
-
-      
+      :type:  float
 
 
 .. py:function:: dual_averaging_adaptation(target: float, t0: int = 10, gamma: float = 0.05, kappa: float = 0.75) -> tuple[Callable, Callable, Callable]

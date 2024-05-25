@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.random_walk`
-===================================
+blackjax.mcmc.random_walk
+=========================
 
 .. py:module:: blackjax.mcmc.random_walk
 
@@ -53,11 +53,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -65,9 +62,8 @@ Classes
    blackjax.mcmc.random_walk.RWInfo
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -83,6 +79,8 @@ Functions
    blackjax.mcmc.random_walk.rmh_proposal
 
 
+Module Contents
+---------------
 
 .. py:function:: normal(sigma: blackjax.types.Array) -> Callable
 
@@ -103,7 +101,6 @@ Functions
 
 
 
-
    State of the RW chain.
 
    position
@@ -112,19 +109,16 @@ Functions
        Current value of the log-density
 
 
-   .. py:attribute:: position
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: position
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: logdensity
-      :type: float
-
-      
+      :type:  float
 
 
 .. py:class:: RWInfo
-
 
 
 
@@ -143,20 +137,17 @@ Functions
        The state proposed by the proposal.
 
 
-   .. py:attribute:: acceptance_rate
-      :type: float
 
-      
+   .. py:attribute:: acceptance_rate
+      :type:  float
+
 
    .. py:attribute:: is_accepted
-      :type: bool
+      :type:  bool
 
-      
 
    .. py:attribute:: proposal
-      :type: RWState
-
-      
+      :type:  RWState
 
 
 .. py:function:: build_additive_step()
@@ -290,7 +281,5 @@ Functions
 
 .. py:function:: build_rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> Callable
 
-
 .. py:function:: rmh_proposal(logdensity_fn: Callable, transition_distribution: Callable, compute_acceptance_ratio: Callable, sample_proposal: Callable = proposal.static_binomial_sampling) -> Callable
-
 

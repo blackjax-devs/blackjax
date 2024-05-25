@@ -1,5 +1,5 @@
-:py:mod:`blackjax.smc.tuning.from_kernel_info`
-==============================================
+blackjax.smc.tuning.from_kernel_info
+====================================
 
 .. py:module:: blackjax.smc.tuning.from_kernel_info
 
@@ -10,18 +10,16 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    blackjax.smc.tuning.from_kernel_info.update_scale_from_acceptance_rate
 
 
+Module Contents
+---------------
 
 .. py:function:: update_scale_from_acceptance_rate(scales: jax.Array, acceptance_rates: jax.Array, target_acceptance_rate: float = 0.234) -> jax.Array
 

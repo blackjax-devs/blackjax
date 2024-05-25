@@ -1,23 +1,27 @@
-:py:mod:`blackjax.mcmc.proposal`
-================================
+blackjax.mcmc.proposal
+======================
 
 .. py:module:: blackjax.mcmc.proposal
 
 
-Module Contents
----------------
+Attributes
+----------
+
+.. autoapisummary::
+
+   blackjax.mcmc.proposal.TrajectoryState
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.mcmc.proposal.Proposal
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -30,21 +34,12 @@ Functions
    blackjax.mcmc.proposal.nonreversible_slice_sampling
 
 
-
-Attributes
-~~~~~~~~~~
-
-.. autoapisummary::
-
-   blackjax.mcmc.proposal.TrajectoryState
-
+Module Contents
+---------------
 
 .. py:data:: TrajectoryState
 
-   
-
 .. py:class:: Proposal
-
 
 
 
@@ -61,29 +56,24 @@ Attributes
        cumulated Metropolis-Hastings acceptance probability across entire trajectory.
 
 
-   .. py:attribute:: state
-      :type: TrajectoryState
 
-      
+   .. py:attribute:: state
+      :type:  TrajectoryState
+
 
    .. py:attribute:: energy
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: weight
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: sum_log_p_accept
-      :type: float
-
-      
+      :type:  float
 
 
 .. py:function:: safe_energy_diff(initial_energy: float, new_energy: float) -> float
-
 
 .. py:function:: proposal_generator(energy_fn: Callable) -> tuple[Callable, Callable]
 
@@ -94,7 +84,6 @@ Attributes
 
 
 .. py:function:: progressive_uniform_sampling(rng_key: blackjax.types.PRNGKey, proposal: Proposal, new_proposal: Proposal) -> Proposal
-
 
 .. py:function:: progressive_biased_sampling(rng_key: blackjax.types.PRNGKey, proposal: Proposal, new_proposal: Proposal) -> Proposal
 

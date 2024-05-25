@@ -1,5 +1,5 @@
-:py:mod:`blackjax.smc.solver`
-=============================
+blackjax.smc.solver
+===================
 
 .. py:module:: blackjax.smc.solver
 
@@ -9,18 +9,16 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    blackjax.smc.solver.dichotomy
 
 
+Module Contents
+---------------
 
 .. py:function:: dichotomy(fun, min_delta, max_delta, eps=0.0001, max_iter=100)
 

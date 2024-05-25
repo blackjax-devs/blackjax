@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.mala`
-============================
+blackjax.mcmc.mala
+==================
 
 .. py:module:: blackjax.mcmc.mala
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,9 +18,8 @@ Classes
    blackjax.mcmc.mala.MALAInfo
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -32,9 +28,10 @@ Functions
    blackjax.mcmc.mala.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:class:: MALAState
-
 
 
 
@@ -46,24 +43,20 @@ Functions
    log-probability density.
 
 
-   .. py:attribute:: position
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: position
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: logdensity
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: logdensity_grad
-      :type: blackjax.types.ArrayTree
-
-      
+      :type:  blackjax.types.ArrayTree
 
 
 .. py:class:: MALAInfo
-
 
 
 
@@ -79,19 +72,16 @@ Functions
        was returned.
 
 
-   .. py:attribute:: acceptance_rate
-      :type: float
 
-      
+   .. py:attribute:: acceptance_rate
+      :type:  float
+
 
    .. py:attribute:: is_accepted
-      :type: bool
-
-      
+      :type:  bool
 
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable) -> MALAState
-
 
 .. py:function:: build_kernel()
 

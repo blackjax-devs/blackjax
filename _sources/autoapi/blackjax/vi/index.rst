@@ -1,18 +1,18 @@
-:py:mod:`blackjax.vi`
-=====================
+blackjax.vi
+===========
 
 .. py:module:: blackjax.vi
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   meanfield_vi/index.rst
-   pathfinder/index.rst
-   schrodinger_follmer/index.rst
-   svgd/index.rst
+   /autoapi/blackjax/vi/meanfield_vi/index
+   /autoapi/blackjax/vi/pathfinder/index
+   /autoapi/blackjax/vi/schrodinger_follmer/index
+   /autoapi/blackjax/vi/svgd/index
 
 

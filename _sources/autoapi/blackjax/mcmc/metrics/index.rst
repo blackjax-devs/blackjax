@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.metrics`
-===============================
+blackjax.mcmc.metrics
+=====================
 
 .. py:module:: blackjax.mcmc.metrics
 
@@ -23,12 +23,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -37,6 +33,8 @@ Functions
    blackjax.mcmc.metrics.gaussian_riemannian
 
 
+Module Contents
+---------------
 
 .. py:function:: default_metric(metric: MetricTypes) -> Metric
 
@@ -78,5 +76,4 @@ Functions
 
 
 .. py:function:: gaussian_riemannian(mass_matrix_fn: Callable) -> Metric
-
 

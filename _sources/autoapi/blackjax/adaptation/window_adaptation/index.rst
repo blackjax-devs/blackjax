@@ -1,5 +1,5 @@
-:py:mod:`blackjax.adaptation.window_adaptation`
-===============================================
+blackjax.adaptation.window_adaptation
+=====================================
 
 .. py:module:: blackjax.adaptation.window_adaptation
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.adaptation.window_adaptation.WindowAdaptationState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -31,31 +27,27 @@ Functions
    blackjax.adaptation.window_adaptation.build_schedule
 
 
+Module Contents
+---------------
 
 .. py:class:: WindowAdaptationState
 
 
 
-
    .. py:attribute:: ss_state
-      :type: blackjax.adaptation.step_size.DualAveragingAdaptationState
+      :type:  blackjax.adaptation.step_size.DualAveragingAdaptationState
 
-      
 
    .. py:attribute:: imm_state
-      :type: blackjax.adaptation.mass_matrix.MassMatrixAdaptationState
+      :type:  blackjax.adaptation.mass_matrix.MassMatrixAdaptationState
 
-      
 
    .. py:attribute:: step_size
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: inverse_mass_matrix
-      :type: blackjax.types.Array
-
-      
+      :type:  blackjax.types.Array
 
 
 .. py:function:: base(is_mass_matrix_diagonal: bool, target_acceptance_rate: float = 0.8) -> tuple[Callable, Callable, Callable]

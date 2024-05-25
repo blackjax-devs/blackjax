@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.marginal_latent_gaussian`
-================================================
+blackjax.mcmc.marginal_latent_gaussian
+======================================
 
 .. py:module:: blackjax.mcmc.marginal_latent_gaussian
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,9 +18,8 @@ Classes
    blackjax.mcmc.marginal_latent_gaussian.MarginalInfo
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -32,9 +28,10 @@ Functions
    blackjax.mcmc.marginal_latent_gaussian.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:class:: MarginalState
-
 
 
 
@@ -52,34 +49,28 @@ Functions
        Gradient of the auxiliary attributes
 
 
-   .. py:attribute:: position
-      :type: blackjax.types.Array
 
-      
+   .. py:attribute:: position
+      :type:  blackjax.types.Array
+
 
    .. py:attribute:: logdensity
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: logdensity_grad
-      :type: blackjax.types.Array
+      :type:  blackjax.types.Array
 
-      
 
    .. py:attribute:: U_x
-      :type: blackjax.types.Array
+      :type:  blackjax.types.Array
 
-      
 
    .. py:attribute:: U_grad_x
-      :type: blackjax.types.Array
-
-      
+      :type:  blackjax.types.Array
 
 
 .. py:class:: MarginalInfo
-
 
 
 
@@ -98,20 +89,17 @@ Functions
        The state proposed by the proposal.
 
 
-   .. py:attribute:: acceptance_rate
-      :type: float
 
-      
+   .. py:attribute:: acceptance_rate
+      :type:  float
+
 
    .. py:attribute:: is_accepted
-      :type: bool
+      :type:  bool
 
-      
 
    .. py:attribute:: proposal
-      :type: MarginalState
-
-      
+      :type:  MarginalState
 
 
 .. py:function:: init(position, logdensity_fn, U_t)

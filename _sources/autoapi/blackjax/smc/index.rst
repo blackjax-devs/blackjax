@@ -1,44 +1,30 @@
-:py:mod:`blackjax.smc`
-======================
+blackjax.smc
+============
 
 .. py:module:: blackjax.smc
 
 
 Subpackages
 -----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 3
 
-   tuning/index.rst
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/blackjax/smc/tuning/index
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   adaptive_tempered/index.rst
-   base/index.rst
-   ess/index.rst
-   inner_kernel_tuning/index.rst
-   resampling/index.rst
-   solver/index.rst
-   tempered/index.rst
-
-
-Package Contents
-----------------
-
-
-Functions
-~~~~~~~~~
-
-.. autoapisummary::
-
-   blackjax.smc.extend_params
-
-
+   /autoapi/blackjax/smc/adaptive_tempered/index
+   /autoapi/blackjax/smc/base/index
+   /autoapi/blackjax/smc/ess/index
+   /autoapi/blackjax/smc/inner_kernel_tuning/index
+   /autoapi/blackjax/smc/resampling/index
+   /autoapi/blackjax/smc/solver/index
+   /autoapi/blackjax/smc/tempered/index
 
 

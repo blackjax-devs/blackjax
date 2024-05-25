@@ -1,5 +1,5 @@
-:py:mod:`blackjax.sgmcmc.diffusions`
-====================================
+blackjax.sgmcmc.diffusions
+==========================
 
 .. py:module:: blackjax.sgmcmc.diffusions
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -23,6 +19,8 @@ Functions
    blackjax.sgmcmc.diffusions.sgnht
 
 
+Module Contents
+---------------
 
 .. py:function:: overdamped_langevin()
 

@@ -1,5 +1,5 @@
-:py:mod:`blackjax.sgmcmc.sghmc`
-===============================
+blackjax.sgmcmc.sghmc
+=====================
 
 .. py:module:: blackjax.sgmcmc.sghmc
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -23,9 +19,10 @@ Functions
    blackjax.sgmcmc.sghmc.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree) -> blackjax.types.ArrayLikeTree
-
 
 .. py:function:: build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable
 

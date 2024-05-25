@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.elliptical_slice`
-========================================
+blackjax.mcmc.elliptical_slice
+==============================
 
 .. py:module:: blackjax.mcmc.elliptical_slice
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,9 +18,8 @@ Classes
    blackjax.mcmc.elliptical_slice.EllipSliceInfo
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -32,9 +28,10 @@ Functions
    blackjax.mcmc.elliptical_slice.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:class:: EllipSliceState
-
 
 
 
@@ -46,19 +43,16 @@ Functions
        Current value of the logdensity (evaluated at current position).
 
 
-   .. py:attribute:: position
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: position
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: logdensity
-      :type: blackjax.types.ArrayTree
-
-      
+      :type:  blackjax.types.ArrayTree
 
 
 .. py:class:: EllipSliceInfo
-
 
 
 
@@ -79,24 +73,20 @@ Functions
        new value is likely to be to the previous value.
 
 
-   .. py:attribute:: momentum
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: momentum
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: theta
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: subiter
-      :type: int
-
-      
+      :type:  int
 
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable)
-
 
 .. py:function:: build_kernel(cov_matrix: blackjax.types.Array, mean: blackjax.types.Array)
 

@@ -1,24 +1,11 @@
-:py:mod:`blackjax.mcmc.rmhmc`
-=============================
+blackjax.mcmc.rmhmc
+===================
 
 .. py:module:: blackjax.mcmc.rmhmc
 
 
-Module Contents
----------------
-
-
-Functions
-~~~~~~~~~
-
-.. autoapisummary::
-
-   blackjax.mcmc.rmhmc.as_top_level_api
-
-
-
 Attributes
-~~~~~~~~~~
+----------
 
 .. autoapisummary::
 
@@ -26,13 +13,20 @@ Attributes
    blackjax.mcmc.rmhmc.build_kernel
 
 
+Functions
+---------
+
+.. autoapisummary::
+
+   blackjax.mcmc.rmhmc.as_top_level_api
+
+
+Module Contents
+---------------
+
 .. py:data:: init
 
-   
-
 .. py:data:: build_kernel
-
-   
 
 .. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, mass_matrix: Union[blackjax.mcmc.metrics.Metric, Callable], num_integration_steps: int, *, divergence_threshold: int = 1000, integrator: Callable = integrators.implicit_midpoint) -> blackjax.base.SamplingAlgorithm
 

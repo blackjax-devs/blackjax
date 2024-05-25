@@ -1,15 +1,11 @@
-:py:mod:`blackjax.vi.svgd`
-==========================
+blackjax.vi.svgd
+================
 
 .. py:module:: blackjax.vi.svgd
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -20,6 +16,8 @@ Functions
    blackjax.vi.svgd.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:function:: init(initial_particles: blackjax.types.ArrayLikeTree, kernel_parameters: dict[str, Any], optimizer: optax.GradientTransformation) -> SVGDState
 
@@ -32,9 +30,7 @@ Functions
 
 .. py:function:: build_kernel(optimizer: optax.GradientTransformation)
 
-
 .. py:function:: rbf_kernel(x, y, length_scale=1)
-
 
 .. py:function:: update_median_heuristic(state: SVGDState) -> SVGDState
 

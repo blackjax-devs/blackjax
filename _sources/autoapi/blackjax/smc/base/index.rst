@@ -1,14 +1,11 @@
-:py:mod:`blackjax.smc.base`
-===========================
+blackjax.smc.base
+=================
 
 .. py:module:: blackjax.smc.base
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -16,9 +13,8 @@ Classes
    blackjax.smc.base.SMCInfo
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -27,9 +23,10 @@ Functions
    blackjax.smc.base.extend_params
 
 
+Module Contents
+---------------
 
 .. py:class:: SMCState
-
 
 
 
@@ -50,24 +47,20 @@ Functions
            [ Array([[1., 2.], [1.2, 0.5], [3.4, 50]]),
            Array([[50., 51., 52., 51], [51., 52., 52. ,54.], [55., 60, 60, 70]]) ]
 
-   .. py:attribute:: particles
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: particles
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: weights
-      :type: blackjax.types.Array
+      :type:  blackjax.types.Array
 
-      
 
    .. py:attribute:: update_parameters
-      :type: blackjax.types.ArrayTree
-
-      
+      :type:  blackjax.types.ArrayTree
 
 
 .. py:class:: SMCInfo
-
 
 
 
@@ -81,24 +74,20 @@ Functions
    update_info: NamedTuple
        Additional information returned by the update function.
 
-   .. py:attribute:: ancestors
-      :type: blackjax.types.Array
 
-      
+   .. py:attribute:: ancestors
+      :type:  blackjax.types.Array
+
 
    .. py:attribute:: log_likelihood_increment
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: update_info
-      :type: NamedTuple
-
-      
+      :type:  NamedTuple
 
 
 .. py:function:: init(particles: blackjax.types.ArrayLikeTree, init_update_params)
-
 
 .. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SMCState, update_fn: Callable, weight_fn: Callable, resample_fn: Callable, num_resampled: Optional[int] = None) -> tuple[SMCState, SMCInfo]
 

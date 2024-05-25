@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.trajectory`
-==================================
+blackjax.mcmc.trajectory
+========================
 
 .. py:module:: blackjax.mcmc.trajectory
 
@@ -32,11 +32,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -45,9 +42,8 @@ Classes
    blackjax.mcmc.trajectory.DynamicExpansionState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -61,31 +57,27 @@ Functions
    blackjax.mcmc.trajectory.hmc_energy
 
 
+Module Contents
+---------------
 
 .. py:class:: Trajectory
 
 
 
-
    .. py:attribute:: leftmost_state
-      :type: blackjax.mcmc.integrators.IntegratorState
+      :type:  blackjax.mcmc.integrators.IntegratorState
 
-      
 
    .. py:attribute:: rightmost_state
-      :type: blackjax.mcmc.integrators.IntegratorState
+      :type:  blackjax.mcmc.integrators.IntegratorState
 
-      
 
    .. py:attribute:: momentum_sum
-      :type: blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayTree
 
-      
 
    .. py:attribute:: num_states
-      :type: int
-
-      
+      :type:  int
 
 
 .. py:function:: append_to_trajectory(trajectory: Trajectory, state: blackjax.mcmc.integrators.IntegratorState) -> Trajectory
@@ -100,7 +92,6 @@ Functions
 
 .. py:function:: merge_trajectories(left_trajectory: Trajectory, right_trajectory: Trajectory)
 
-
 .. py:function:: static_integration(integrator: Callable, direction: int = 1) -> Callable
 
    Generate a trajectory by integrating several times in one direction.
@@ -110,26 +101,20 @@ Functions
 
 
 
-
    .. py:attribute:: step
-      :type: int
+      :type:  int
 
-      
 
    .. py:attribute:: proposal
-      :type: blackjax.mcmc.proposal.Proposal
+      :type:  blackjax.mcmc.proposal.Proposal
 
-      
 
    .. py:attribute:: trajectory
-      :type: Trajectory
+      :type:  Trajectory
 
-      
 
    .. py:attribute:: termination_state
-      :type: NamedTuple
-
-      
+      :type:  NamedTuple
 
 
 .. py:function:: dynamic_progressive_integration(integrator: Callable, kinetic_energy: Callable, update_termination_state: Callable, is_criterion_met: Callable, divergence_threshold: float)
@@ -169,26 +154,20 @@ Functions
 
 
 
-
    .. py:attribute:: step
-      :type: int
+      :type:  int
 
-      
 
    .. py:attribute:: proposal
-      :type: blackjax.mcmc.proposal.Proposal
+      :type:  blackjax.mcmc.proposal.Proposal
 
-      
 
    .. py:attribute:: trajectory
-      :type: Trajectory
+      :type:  Trajectory
 
-      
 
    .. py:attribute:: termination_state
-      :type: NamedTuple
-
-      
+      :type:  NamedTuple
 
 
 .. py:function:: dynamic_multiplicative_expansion(trajectory_integrator: Callable, uturn_check_fn: Callable, max_num_expansions: int = 10, rate: int = 2) -> Callable
@@ -213,5 +192,4 @@ Functions
 
 
 .. py:function:: hmc_energy(kinetic_energy)
-
 

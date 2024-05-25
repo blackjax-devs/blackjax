@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.dynamic_hmc`
-===================================
+blackjax.mcmc.dynamic_hmc
+=========================
 
 .. py:module:: blackjax.mcmc.dynamic_hmc
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.mcmc.dynamic_hmc.DynamicHMCState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -32,9 +28,10 @@ Functions
    blackjax.mcmc.dynamic_hmc.halton_sequence
 
 
+Module Contents
+---------------
 
 .. py:class:: DynamicHMCState
-
 
 
 
@@ -44,29 +41,24 @@ Functions
    number of integration steps.
 
 
-   .. py:attribute:: position
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: position
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: logdensity
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: logdensity_grad
-      :type: blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayTree
 
-      
 
    .. py:attribute:: random_generator_arg
-      :type: blackjax.types.Array
-
-      
+      :type:  blackjax.types.Array
 
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: blackjax.types.Array)
-
 
 .. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10))
 
@@ -103,5 +95,4 @@ Functions
 
 
 .. py:function:: halton_sequence(i: blackjax.types.Array, max_bits: int = 10) -> float
-
 

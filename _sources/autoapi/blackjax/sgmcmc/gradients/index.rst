@@ -1,15 +1,11 @@
-:py:mod:`blackjax.sgmcmc.gradients`
-===================================
+blackjax.sgmcmc.gradients
+=========================
 
 .. py:module:: blackjax.sgmcmc.gradients
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -18,6 +14,8 @@ Functions
    blackjax.sgmcmc.gradients.control_variates
 
 
+Module Contents
+---------------
 
 .. py:function:: logdensity_estimator(logprior_fn: Callable, loglikelihood_fn: Callable, data_size: int) -> Callable
 

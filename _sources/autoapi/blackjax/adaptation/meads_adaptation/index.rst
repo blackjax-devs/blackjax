@@ -1,23 +1,19 @@
-:py:mod:`blackjax.adaptation.meads_adaptation`
-==============================================
+blackjax.adaptation.meads_adaptation
+====================================
 
 .. py:module:: blackjax.adaptation.meads_adaptation
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.adaptation.meads_adaptation.MEADSAdaptationState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -26,9 +22,10 @@ Functions
    blackjax.adaptation.meads_adaptation.maximum_eigenvalue
 
 
+Module Contents
+---------------
 
 .. py:class:: MEADSAdaptationState
-
 
 
 
@@ -46,30 +43,25 @@ Functions
        Value of the alpha parameter of the generalized HMC algorithm.
 
 
-   .. py:attribute:: current_iteration
-      :type: int
 
-      
+   .. py:attribute:: current_iteration
+      :type:  int
+
 
    .. py:attribute:: step_size
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: position_sigma
-      :type: blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayTree
 
-      
 
    .. py:attribute:: alpha
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: delta
-      :type: float
-
-      
+      :type:  float
 
 
 .. py:function:: base()

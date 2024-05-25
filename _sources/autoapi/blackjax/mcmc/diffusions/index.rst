@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.diffusions`
-==================================
+blackjax.mcmc.diffusions
+========================
 
 .. py:module:: blackjax.mcmc.diffusions
 
@@ -9,18 +9,16 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    blackjax.mcmc.diffusions.overdamped_langevin
 
 
+Module Contents
+---------------
 
 .. py:function:: overdamped_langevin(logdensity_grad_fn)
 

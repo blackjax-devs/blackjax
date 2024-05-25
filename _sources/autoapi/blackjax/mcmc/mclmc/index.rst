@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.mclmc`
-=============================
+blackjax.mcmc.mclmc
+===================
 
 .. py:module:: blackjax.mcmc.mclmc
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.mcmc.mclmc.MCLMCInfo
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -31,9 +27,10 @@ Functions
    blackjax.mcmc.mclmc.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:class:: MCLMCInfo
-
 
 
 
@@ -46,26 +43,22 @@ Functions
    energy_change
        The difference in energy between the current and previous step.
 
-   .. py:attribute:: logdensity
-      :type: float
 
-      
+   .. py:attribute:: logdensity
+      :type:  float
+
 
    .. py:attribute:: kinetic_change
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: energy_change
-      :type: float
-
-      
+      :type:  float
 
 
 .. py:function:: init(position: blackjax.types.ArrayLike, logdensity_fn, rng_key)
 
-
-.. py:function:: build_kernel(logdensity_fn, integrator)
+.. py:function:: build_kernel(logdensity_fn, sqrt_diag_cov, integrator)
 
    Build a HMC kernel.
 
@@ -78,7 +71,7 @@ Functions
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, L, step_size, integrator=isokinetic_mclachlan) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: Callable, L, step_size, integrator=isokinetic_mclachlan, sqrt_diag_cov=1.0) -> blackjax.base.SamplingAlgorithm
 
    The general mclmc kernel builder (:meth:`blackjax.mcmc.mclmc.build_kernel`, alias `blackjax.mclmc.build_kernel`) can be
    cumbersome to manipulate. Since most users only need to specify the kernel

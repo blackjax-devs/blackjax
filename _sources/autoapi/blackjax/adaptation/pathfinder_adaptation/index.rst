@@ -1,5 +1,5 @@
-:py:mod:`blackjax.adaptation.pathfinder_adaptation`
-===================================================
+blackjax.adaptation.pathfinder_adaptation
+=========================================
 
 .. py:module:: blackjax.adaptation.pathfinder_adaptation
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.adaptation.pathfinder_adaptation.PathfinderAdaptationState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -30,26 +26,23 @@ Functions
    blackjax.adaptation.pathfinder_adaptation.pathfinder_adaptation
 
 
+Module Contents
+---------------
 
 .. py:class:: PathfinderAdaptationState
 
 
 
-
    .. py:attribute:: ss_state
-      :type: blackjax.adaptation.step_size.DualAveragingAdaptationState
+      :type:  blackjax.adaptation.step_size.DualAveragingAdaptationState
 
-      
 
    .. py:attribute:: step_size
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: inverse_mass_matrix
-      :type: blackjax.types.Array
-
-      
+      :type:  blackjax.types.Array
 
 
 .. py:function:: base(target_acceptance_rate: float = 0.8)

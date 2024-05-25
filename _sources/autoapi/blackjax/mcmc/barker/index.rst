@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.barker`
-==============================
+blackjax.mcmc.barker
+====================
 
 .. py:module:: blackjax.mcmc.barker
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,9 +18,8 @@ Classes
    blackjax.mcmc.barker.BarkerInfo
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -32,9 +28,10 @@ Functions
    blackjax.mcmc.barker.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:class:: BarkerState
-
 
 
 
@@ -46,24 +43,20 @@ Functions
    log-probability density.
 
 
-   .. py:attribute:: position
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: position
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: logdensity
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: logdensity_grad
-      :type: blackjax.types.ArrayTree
-
-      
+      :type:  blackjax.types.ArrayTree
 
 
 .. py:class:: BarkerInfo
-
 
 
 
@@ -81,24 +74,20 @@ Functions
        was returned.
 
 
-   .. py:attribute:: acceptance_rate
-      :type: float
 
-      
+   .. py:attribute:: acceptance_rate
+      :type:  float
+
 
    .. py:attribute:: is_accepted
-      :type: bool
+      :type:  bool
 
-      
 
    .. py:attribute:: proposal
-      :type: BarkerState
-
-      
+      :type:  BarkerState
 
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable) -> BarkerState
-
 
 .. py:function:: build_kernel()
 

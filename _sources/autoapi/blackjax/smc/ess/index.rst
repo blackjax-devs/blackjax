@@ -1,5 +1,5 @@
-:py:mod:`blackjax.smc.ess`
-==========================
+blackjax.smc.ess
+================
 
 .. py:module:: blackjax.smc.ess
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -23,9 +19,10 @@ Functions
    blackjax.smc.ess.ess_solver
 
 
+Module Contents
+---------------
 
 .. py:function:: ess(log_weights: blackjax.types.Array) -> float
-
 
 .. py:function:: log_ess(log_weights: blackjax.types.Array) -> float
 

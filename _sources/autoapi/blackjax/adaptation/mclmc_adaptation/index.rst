@@ -1,5 +1,5 @@
-:py:mod:`blackjax.adaptation.mclmc_adaptation`
-==============================================
+blackjax.adaptation.mclmc_adaptation
+====================================
 
 .. py:module:: blackjax.adaptation.mclmc_adaptation
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -32,9 +28,10 @@ Functions
    blackjax.adaptation.mclmc_adaptation.handle_nans
 
 
+Module Contents
+---------------
 
 .. py:class:: MCLMCAdaptationState
-
 
 
 
@@ -44,19 +41,23 @@ Functions
        The momentum decoherent rate for the MCLMC algorithm.
    step_size
        The step size used for the MCLMC algorithm.
+   sqrt_diag_cov
+       A matrix used for preconditioning.
+
 
    .. py:attribute:: L
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: step_size
-      :type: float
-
-      
+      :type:  float
 
 
-.. py:function:: mclmc_find_L_and_step_size(mclmc_kernel, num_steps, state, rng_key, frac_tune1=0.1, frac_tune2=0.1, frac_tune3=0.1, desired_energy_var=0.0005, trust_in_estimate=1.5, num_effective_samples=150)
+   .. py:attribute:: sqrt_diag_cov
+      :type:  float
+
+
+.. py:function:: mclmc_find_L_and_step_size(mclmc_kernel, num_steps, state, rng_key, frac_tune1=0.1, frac_tune2=0.1, frac_tune3=0.1, desired_energy_var=0.0005, trust_in_estimate=1.5, num_effective_samples=150, diagonal_preconditioning=True)
 
    Finds the optimal value of the parameters for the MCLMC algorithm.
 
@@ -73,36 +74,28 @@ Functions
 
    :rtype: A tuple containing the final state of the MCMC algorithm and the final hyperparameters.
 
-   .. rubric:: Examples
+   .. rubric:: Example
 
    .. code::
+       kernel = lambda std_mat : blackjax.mcmc.mclmc.build_kernel(
+       logdensity_fn=logdensity_fn,
+       integrator=integrator,
+       std_mat=std_mat,
+       )
 
-       # Define the kernel function
-       def kernel(x):
-           return x ** 2
-
-       # Define the initial state
-       initial_state = MCMCState(position=0, momentum=1)
-
-       # Generate a random number generator key
-       rng_key = jax.random.key(0)
-
-       # Find the optimal parameters for the MCLMC algorithm
-       final_state, final_params = mclmc_find_L_and_step_size(
+       (
+           blackjax_state_after_tuning,
+           blackjax_mclmc_sampler_params,
+       ) = blackjax.mclmc_find_L_and_step_size(
            mclmc_kernel=kernel,
-           num_steps=1000,
+           num_steps=num_steps,
            state=initial_state,
-           rng_key=rng_key,
-           frac_tune1=0.2,
-           frac_tune2=0.3,
-           frac_tune3=0.1,
-           desired_energy_var=1e-4,
-           trust_in_estimate=2.0,
-           num_effective_samples=200,
+           rng_key=tune_key,
+           diagonal_preconditioning=preconditioning,
        )
 
 
-.. py:function:: make_L_step_size_adaptation(kernel, dim, frac_tune1, frac_tune2, desired_energy_var=0.001, trust_in_estimate=1.5, num_effective_samples=150)
+.. py:function:: make_L_step_size_adaptation(kernel, dim, frac_tune1, frac_tune2, diagonal_preconditioning, desired_energy_var=0.001, trust_in_estimate=1.5, num_effective_samples=150)
 
    Adapts the stepsize and L of the MCLMC kernel. Designed for the unadjusted MCLMC
 

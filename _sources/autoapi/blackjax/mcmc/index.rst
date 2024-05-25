@@ -1,32 +1,32 @@
-:py:mod:`blackjax.mcmc`
-=======================
+blackjax.mcmc
+=============
 
 .. py:module:: blackjax.mcmc
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   barker/index.rst
-   diffusions/index.rst
-   dynamic_hmc/index.rst
-   elliptical_slice/index.rst
-   ghmc/index.rst
-   hmc/index.rst
-   integrators/index.rst
-   mala/index.rst
-   marginal_latent_gaussian/index.rst
-   mclmc/index.rst
-   metrics/index.rst
-   nuts/index.rst
-   periodic_orbital/index.rst
-   proposal/index.rst
-   random_walk/index.rst
-   rmhmc/index.rst
-   termination/index.rst
-   trajectory/index.rst
+   /autoapi/blackjax/mcmc/barker/index
+   /autoapi/blackjax/mcmc/diffusions/index
+   /autoapi/blackjax/mcmc/dynamic_hmc/index
+   /autoapi/blackjax/mcmc/elliptical_slice/index
+   /autoapi/blackjax/mcmc/ghmc/index
+   /autoapi/blackjax/mcmc/hmc/index
+   /autoapi/blackjax/mcmc/integrators/index
+   /autoapi/blackjax/mcmc/mala/index
+   /autoapi/blackjax/mcmc/marginal_latent_gaussian/index
+   /autoapi/blackjax/mcmc/mclmc/index
+   /autoapi/blackjax/mcmc/metrics/index
+   /autoapi/blackjax/mcmc/nuts/index
+   /autoapi/blackjax/mcmc/periodic_orbital/index
+   /autoapi/blackjax/mcmc/proposal/index
+   /autoapi/blackjax/mcmc/random_walk/index
+   /autoapi/blackjax/mcmc/rmhmc/index
+   /autoapi/blackjax/mcmc/termination/index
+   /autoapi/blackjax/mcmc/trajectory/index
 
 

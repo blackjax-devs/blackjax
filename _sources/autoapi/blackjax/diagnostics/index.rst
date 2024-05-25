@@ -1,5 +1,5 @@
-:py:mod:`blackjax.diagnostics`
-==============================
+blackjax.diagnostics
+====================
 
 .. py:module:: blackjax.diagnostics
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -22,6 +18,8 @@ Functions
    blackjax.diagnostics.effective_sample_size
 
 
+Module Contents
+---------------
 
 .. py:function:: potential_scale_reduction(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
 

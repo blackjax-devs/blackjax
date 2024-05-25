@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.integrators`
-===================================
+blackjax.mcmc.integrators
+=========================
 
 .. py:module:: blackjax.mcmc.integrators
 
@@ -9,21 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
-Functions
-~~~~~~~~~
-
-.. autoapisummary::
-
-   blackjax.mcmc.integrators.implicit_midpoint
-
-
-
 Attributes
-~~~~~~~~~~
+----------
 
 .. autoapisummary::
 
@@ -34,6 +21,17 @@ Attributes
    blackjax.mcmc.integrators.isokinetic_yoshida
    blackjax.mcmc.integrators.isokinetic_mclachlan
 
+
+Functions
+---------
+
+.. autoapisummary::
+
+   blackjax.mcmc.integrators.implicit_midpoint
+
+
+Module Contents
+---------------
 
 .. py:data:: velocity_verlet
 
@@ -59,19 +57,11 @@ Attributes
 
 .. py:data:: yoshida
 
-   
-
 .. py:data:: isokinetic_leapfrog
-
-   
 
 .. py:data:: isokinetic_yoshida
 
-   
-
 .. py:data:: isokinetic_mclachlan
-
-   
 
 .. py:function:: implicit_midpoint(logdensity_fn: Callable, kinetic_energy_fn: blackjax.mcmc.metrics.KineticEnergy, *, solver: FixedPointSolver = solve_fixed_point_iteration, **solver_kwargs: Any) -> Integrator
 

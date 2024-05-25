@@ -1,14 +1,11 @@
-:py:mod:`blackjax.vi.meanfield_vi`
-==================================
+blackjax.vi.meanfield_vi
+========================
 
 .. py:module:: blackjax.vi.meanfield_vi
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -16,9 +13,8 @@ Classes
    blackjax.vi.meanfield_vi.MFVIInfo
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -28,37 +24,31 @@ Functions
    blackjax.vi.meanfield_vi.generate_meanfield_logdensity
 
 
+Module Contents
+---------------
 
 .. py:class:: MFVIState
 
 
 
-
    .. py:attribute:: mu
-      :type: blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayTree
 
-      
 
    .. py:attribute:: rho
-      :type: blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayTree
 
-      
 
    .. py:attribute:: opt_state
-      :type: optax.OptState
-
-      
+      :type:  optax.OptState
 
 
 .. py:class:: MFVIInfo
 
 
 
-
    .. py:attribute:: elbo
-      :type: float
-
-      
+      :type:  float
 
 
 .. py:function:: step(rng_key: blackjax.types.PRNGKey, state: MFVIState, logdensity_fn: Callable, optimizer: optax.GradientTransformation, num_samples: int = 5, stl_estimator: bool = True) -> tuple[MFVIState, MFVIInfo]
@@ -95,5 +85,4 @@ Functions
 
 
 .. py:function:: generate_meanfield_logdensity(mu, rho)
-
 

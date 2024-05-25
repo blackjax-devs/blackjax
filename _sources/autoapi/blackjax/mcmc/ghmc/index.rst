@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.ghmc`
-============================
+blackjax.mcmc.ghmc
+==================
 
 .. py:module:: blackjax.mcmc.ghmc
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.mcmc.ghmc.GHMCState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -31,9 +27,10 @@ Functions
    blackjax.mcmc.ghmc.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:class:: GHMCState
-
 
 
 
@@ -49,34 +46,28 @@ Functions
    logdensity.
 
 
-   .. py:attribute:: position
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: position
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: momentum
-      :type: blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayTree
 
-      
 
    .. py:attribute:: logdensity
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: logdensity_grad
-      :type: blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayTree
 
-      
 
    .. py:attribute:: slice
-      :type: float
-
-      
+      :type:  float
 
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree, rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable) -> GHMCState
-
 
 .. py:function:: build_kernel(noise_fn: Callable = lambda _: 0.0, divergence_threshold: float = 1000)
 

@@ -1,14 +1,11 @@
-:py:mod:`blackjax.adaptation.base`
-==================================
+blackjax.adaptation.base
+========================
 
 .. py:module:: blackjax.adaptation.base
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -16,9 +13,8 @@ Classes
    blackjax.adaptation.base.AdaptationInfo
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -26,42 +22,35 @@ Functions
    blackjax.adaptation.base.get_filter_adapt_info_fn
 
 
+Module Contents
+---------------
 
 .. py:class:: AdaptationResults
 
 
 
-
    .. py:attribute:: state
-      :type: blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayTree
 
-      
 
    .. py:attribute:: parameters
-      :type: dict
-
-      
+      :type:  dict
 
 
 .. py:class:: AdaptationInfo
 
 
 
-
    .. py:attribute:: state
-      :type: NamedTuple
+      :type:  NamedTuple
 
-      
 
    .. py:attribute:: info
-      :type: NamedTuple
+      :type:  NamedTuple
 
-      
 
    .. py:attribute:: adaptation_state
-      :type: NamedTuple
-
-      
+      :type:  NamedTuple
 
 
 .. py:function:: return_all_adapt_info(state, info, adaptation_state)

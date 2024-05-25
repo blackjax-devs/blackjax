@@ -1,23 +1,19 @@
-:py:mod:`blackjax.vi.schrodinger_follmer`
-=========================================
+blackjax.vi.schrodinger_follmer
+===============================
 
 .. py:module:: blackjax.vi.schrodinger_follmer
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.vi.schrodinger_follmer.SchrodingerFollmerState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -26,9 +22,10 @@ Functions
    blackjax.vi.schrodinger_follmer.sample
 
 
+Module Contents
+---------------
 
 .. py:class:: SchrodingerFollmerState
-
 
 
 
@@ -43,19 +40,16 @@ Functions
    time:
        Current integration time of the SDE
 
-   .. py:attribute:: position
-      :type: blackjax.types.ArrayLikeTree
 
-      
+   .. py:attribute:: position
+      :type:  blackjax.types.ArrayLikeTree
+
 
    .. py:attribute:: time
-      :type: jax.typing.ArrayLike
-
-      
+      :type:  jax.typing.ArrayLike
 
 
 .. py:function:: init(example_position: blackjax.types.ArrayLikeTree) -> SchrodingerFollmerState
-
 
 .. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SchrodingerFollmerState, logdensity_fn: Callable, step_size: float, n_samples: int) -> Tuple[SchrodingerFollmerState, SchrodingerFollmerInfo]
 

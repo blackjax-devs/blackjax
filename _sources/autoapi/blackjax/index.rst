@@ -1,63 +1,28 @@
-:py:mod:`blackjax`
-==================
+blackjax
+========
 
 .. py:module:: blackjax
 
 
 Subpackages
 -----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 3
 
-   adaptation/index.rst
-   mcmc/index.rst
-   sgmcmc/index.rst
-   smc/index.rst
-   vi/index.rst
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/blackjax/adaptation/index
+   /autoapi/blackjax/mcmc/index
+   /autoapi/blackjax/sgmcmc/index
+   /autoapi/blackjax/smc/index
+   /autoapi/blackjax/vi/index
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   diagnostics/index.rst
-
-
-Package Contents
-----------------
-
-
-Functions
-~~~~~~~~~
-
-.. autoapisummary::
-
-   blackjax.chees_adaptation
-   blackjax.mclmc_find_L_and_step_size
-   blackjax.meads_adaptation
-   blackjax.pathfinder_adaptation
-   blackjax.window_adaptation
-   blackjax.ess
-   blackjax.rhat
-
-
-
-Attributes
-~~~~~~~~~~
-
-.. autoapisummary::
-
-   blackjax.__version__
-
-
-
-
-
-
-
-
+   /autoapi/blackjax/diagnostics/index
 
 

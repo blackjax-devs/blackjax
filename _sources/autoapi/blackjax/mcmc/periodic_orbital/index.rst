@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.periodic_orbital`
-========================================
+blackjax.mcmc.periodic_orbital
+==============================
 
 .. py:module:: blackjax.mcmc.periodic_orbital
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.mcmc.periodic_orbital.PeriodicOrbitalState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -31,9 +27,10 @@ Functions
    blackjax.mcmc.periodic_orbital.as_top_level_api
 
 
+Module Contents
+---------------
 
 .. py:class:: PeriodicOrbitalState
-
 
 
 
@@ -58,30 +55,25 @@ Functions
        matrix where each row is a vector with gradients of the logdensity
        function for each point in the orbit.
 
-   .. py:attribute:: positions
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: positions
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: weights
-      :type: blackjax.types.Array
+      :type:  blackjax.types.Array
 
-      
 
    .. py:attribute:: directions
-      :type: blackjax.types.Array
+      :type:  blackjax.types.Array
 
-      
 
    .. py:attribute:: logdensities
-      :type: blackjax.types.Array
+      :type:  blackjax.types.Array
 
-      
 
    .. py:attribute:: logdensities_grad
-      :type: blackjax.types.ArrayTree
-
-      
+      :type:  blackjax.types.ArrayTree
 
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable, period: int) -> PeriodicOrbitalState

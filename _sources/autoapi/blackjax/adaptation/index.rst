@@ -1,22 +1,22 @@
-:py:mod:`blackjax.adaptation`
-=============================
+blackjax.adaptation
+===================
 
 .. py:module:: blackjax.adaptation
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   base/index.rst
-   chees_adaptation/index.rst
-   mass_matrix/index.rst
-   mclmc_adaptation/index.rst
-   meads_adaptation/index.rst
-   pathfinder_adaptation/index.rst
-   step_size/index.rst
-   window_adaptation/index.rst
+   /autoapi/blackjax/adaptation/base/index
+   /autoapi/blackjax/adaptation/chees_adaptation/index
+   /autoapi/blackjax/adaptation/mass_matrix/index
+   /autoapi/blackjax/adaptation/mclmc_adaptation/index
+   /autoapi/blackjax/adaptation/meads_adaptation/index
+   /autoapi/blackjax/adaptation/pathfinder_adaptation/index
+   /autoapi/blackjax/adaptation/step_size/index
+   /autoapi/blackjax/adaptation/window_adaptation/index
 
 

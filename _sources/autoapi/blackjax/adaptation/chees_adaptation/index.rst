@@ -1,5 +1,5 @@
-:py:mod:`blackjax.adaptation.chees_adaptation`
-==============================================
+blackjax.adaptation.chees_adaptation
+====================================
 
 .. py:module:: blackjax.adaptation.chees_adaptation
 
@@ -9,20 +9,24 @@
 
 
 
-Module Contents
----------------
+Attributes
+----------
+
+.. autoapisummary::
+
+   blackjax.adaptation.chees_adaptation.OPTIMAL_TARGET_ACCEPTANCE_RATE
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.adaptation.chees_adaptation.ChEESAdaptationState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -30,22 +34,14 @@ Functions
    blackjax.adaptation.chees_adaptation.chees_adaptation
 
 
-
-Attributes
-~~~~~~~~~~
-
-.. autoapisummary::
-
-   blackjax.adaptation.chees_adaptation.OPTIMAL_TARGET_ACCEPTANCE_RATE
-
+Module Contents
+---------------
 
 .. py:data:: OPTIMAL_TARGET_ACCEPTANCE_RATE
    :value: 0.651
 
-   
 
 .. py:class:: ChEESAdaptationState
-
 
 
 
@@ -70,45 +66,37 @@ Attributes
        Current iteration number.
 
 
-   .. py:attribute:: step_size
-      :type: float
 
-      
+   .. py:attribute:: step_size
+      :type:  float
+
 
    .. py:attribute:: log_step_size_moving_average
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: trajectory_length
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: log_trajectory_length_moving_average
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: da_state
-      :type: blackjax.optimizers.dual_averaging.DualAveragingState
+      :type:  blackjax.optimizers.dual_averaging.DualAveragingState
 
-      
 
    .. py:attribute:: optim_state
-      :type: optax.OptState
+      :type:  optax.OptState
 
-      
 
    .. py:attribute:: random_generator_arg
-      :type: blackjax.types.Array
+      :type:  blackjax.types.Array
 
-      
 
    .. py:attribute:: step
-      :type: int
-
-      
+      :type:  int
 
 
 .. py:function:: base(jitter_generator: Callable, next_random_arg_fn: Callable, optim: optax.GradientTransformation, target_acceptance_rate: float, decay_rate: float) -> Tuple[Callable, Callable]

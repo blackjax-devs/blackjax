@@ -1,5 +1,5 @@
-:py:mod:`blackjax.adaptation.mass_matrix`
-=========================================
+blackjax.adaptation.mass_matrix
+===============================
 
 .. py:module:: blackjax.adaptation.mass_matrix
 
@@ -13,11 +13,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -25,9 +22,8 @@ Classes
    blackjax.adaptation.mass_matrix.MassMatrixAdaptationState
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -35,9 +31,10 @@ Functions
    blackjax.adaptation.mass_matrix.welford_algorithm
 
 
+Module Contents
+---------------
 
 .. py:class:: WelfordAlgorithmState
-
 
 
 
@@ -53,24 +50,20 @@ Functions
        also the current number of iterations of the algorithm.
 
 
-   .. py:attribute:: mean
-      :type: blackjax.types.Array
 
-      
+   .. py:attribute:: mean
+      :type:  blackjax.types.Array
+
 
    .. py:attribute:: m2
-      :type: blackjax.types.Array
+      :type:  blackjax.types.Array
 
-      
 
    .. py:attribute:: sample_size
-      :type: int
-
-      
+      :type:  int
 
 
 .. py:class:: MassMatrixAdaptationState
-
 
 
 
@@ -82,15 +75,13 @@ Functions
        The current state of the Welford Algorithm.
 
 
-   .. py:attribute:: inverse_mass_matrix
-      :type: blackjax.types.Array
 
-      
+   .. py:attribute:: inverse_mass_matrix
+      :type:  blackjax.types.Array
+
 
    .. py:attribute:: wc_state
-      :type: WelfordAlgorithmState
-
-      
+      :type:  WelfordAlgorithmState
 
 
 .. py:function:: mass_matrix_adaptation(is_diagonal_matrix: bool = True) -> tuple[Callable, Callable, Callable]

@@ -1,5 +1,5 @@
-:py:mod:`blackjax.smc.tuning.from_particles`
-============================================
+blackjax.smc.tuning.from_particles
+==================================
 
 .. py:module:: blackjax.smc.tuning.from_particles
 
@@ -10,12 +10,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -25,15 +21,14 @@ Functions
    blackjax.smc.tuning.from_particles.mass_matrix_from_particles
 
 
+Module Contents
+---------------
 
 .. py:function:: particles_stds(particles)
 
-
 .. py:function:: particles_means(particles)
 
-
 .. py:function:: particles_covariance_matrix(particles)
-
 
 .. py:function:: mass_matrix_from_particles(particles) -> blackjax.types.Array
 

@@ -1,5 +1,5 @@
-:py:mod:`blackjax.mcmc.nuts`
-============================
+blackjax.mcmc.nuts
+==================
 
 .. py:module:: blackjax.mcmc.nuts
 
@@ -9,20 +9,24 @@
 
 
 
-Module Contents
----------------
+Attributes
+----------
+
+.. autoapisummary::
+
+   blackjax.mcmc.nuts.init
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    blackjax.mcmc.nuts.NUTSInfo
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -30,21 +34,12 @@ Functions
    blackjax.mcmc.nuts.as_top_level_api
 
 
-
-Attributes
-~~~~~~~~~~
-
-.. autoapisummary::
-
-   blackjax.mcmc.nuts.init
-
+Module Contents
+---------------
 
 .. py:data:: init
 
-   
-
 .. py:class:: NUTSInfo
-
 
 
 
@@ -76,50 +71,41 @@ Attributes
        average acceptance probabilty across entire trajectory
 
 
-   .. py:attribute:: momentum
-      :type: blackjax.types.ArrayTree
 
-      
+   .. py:attribute:: momentum
+      :type:  blackjax.types.ArrayTree
+
 
    .. py:attribute:: is_divergent
-      :type: bool
+      :type:  bool
 
-      
 
    .. py:attribute:: is_turning
-      :type: bool
+      :type:  bool
 
-      
 
    .. py:attribute:: energy
-      :type: float
+      :type:  float
 
-      
 
    .. py:attribute:: trajectory_leftmost_state
-      :type: blackjax.mcmc.integrators.IntegratorState
+      :type:  blackjax.mcmc.integrators.IntegratorState
 
-      
 
    .. py:attribute:: trajectory_rightmost_state
-      :type: blackjax.mcmc.integrators.IntegratorState
+      :type:  blackjax.mcmc.integrators.IntegratorState
 
-      
 
    .. py:attribute:: num_trajectory_expansions
-      :type: int
+      :type:  int
 
-      
 
    .. py:attribute:: num_integration_steps
-      :type: int
+      :type:  int
 
-      
 
    .. py:attribute:: acceptance_rate
-      :type: float
-
-      
+      :type:  float
 
 
 .. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: int = 1000)
