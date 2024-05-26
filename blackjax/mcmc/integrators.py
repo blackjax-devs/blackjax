@@ -23,10 +23,6 @@ from blackjax.mcmc.metrics import KineticEnergy
 from blackjax.types import ArrayTree
 
 __all__ = [
-    "velocity_verlet_coefficients",
-    "mclachlan_coefficients",
-    "yoshida_coefficients",
-    "omelyan_coefficients",
     "mclachlan",
     "omelyan",
     "velocity_verlet",
