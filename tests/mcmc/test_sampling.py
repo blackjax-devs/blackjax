@@ -870,7 +870,7 @@ class UnivariateNormalTest(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_mala(self):
-        inference_algorithm = blackjax.mala(self.normal_logprob, step_size=1e-1)
+        inference_algorithm = blackjax.mala(self.normal_logprob, step_size=.2)
         initial_state = inference_algorithm.init(jnp.array(1.0))
         self.univariate_normal_test_case(
             inference_algorithm, self.key, initial_state, 45000, 5_000
