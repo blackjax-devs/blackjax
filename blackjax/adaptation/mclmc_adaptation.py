@@ -550,10 +550,6 @@ def adjusted_mclmc_make_L_step_size_adaptation(
             if diagonal_preconditioning:
                 params = params._replace(sqrt_diag_cov=jnp.sqrt(variances))
 
-                # state = jax.lax.scan(step, init= state, xs= jnp.ones(steps), length= steps)[0]
-                # dyn, _, hyp, adap, kalman_state = state
-                # TODO ^
-
             initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
             (
                 (state, params, (dual_avg_state, step_size_max), (_, average)),

@@ -33,7 +33,6 @@ def init(position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg:
     return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
 
 
-# TODO: no default for sqrt_diag_cov
 def build_kernel(
     integration_steps_fn,
     integrator: Callable = integrators.isokinetic_mclachlan,
