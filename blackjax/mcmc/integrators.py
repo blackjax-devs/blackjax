@@ -23,10 +23,6 @@ from blackjax.mcmc.metrics import KineticEnergy
 from blackjax.types import ArrayTree
 
 __all__ = [
-    "velocity_verlet_coefficients",
-    "mclachlan_coefficients",
-    "yoshida_coefficients",
-    "omelyan_coefficients",
     "mclachlan",
     "omelyan",
     "velocity_verlet",
@@ -37,9 +33,6 @@ __all__ = [
     "isokinetic_omelyan",
     "isokinetic_yoshida",
     "implicit_midpoint",
-    "calls_per_integrator_step",
-    "name_integrator",
-    "integrator_order",
 ]
 
 
@@ -400,48 +393,6 @@ isokinetic_velocity_verlet = generate_isokinetic_integrator(
 isokinetic_yoshida = generate_isokinetic_integrator(yoshida_coefficients)
 isokinetic_mclachlan = generate_isokinetic_integrator(mclachlan_coefficients)
 isokinetic_omelyan = generate_isokinetic_integrator(omelyan_coefficients)
-
-
-def calls_per_integrator_step(c):
-    if c == velocity_verlet_coefficients:
-        return 1
-    if c == mclachlan_coefficients:
-        return 2
-    if c == yoshida_coefficients:
-        return 3
-    if c == omelyan_coefficients:
-        return 5
-
-    else:
-        raise Exception("No such integrator exists in blackjax")
-
-
-def name_integrator(c):
-    if c == velocity_verlet_coefficients:
-        return "velocity_verlet"
-    if c == mclachlan_coefficients:
-        return "mclachlan"
-    if c == yoshida_coefficients:
-        return "yoshida"
-    if c == omelyan_coefficients:
-        return "omelyan"
-
-    else:
-        raise Exception("No such integrator exists in blackjax")
-
-
-def integrator_order(c):
-    if c == velocity_verlet_coefficients:
-        return 2
-    if c == mclachlan_coefficients:
-        return 2
-    if c == yoshida_coefficients:
-        return 4
-    if c == omelyan_coefficients:
-        return 4
-
-    else:
-        raise Exception("No such integrator exists in blackjax")
 
 
 def partially_refresh_momentum(momentum, rng_key, step_size, L):
