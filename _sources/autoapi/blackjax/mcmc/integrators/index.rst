@@ -60,9 +60,9 @@ Module Contents
 
 .. py:data:: yoshida
 
-   11 stage Omelyan integrator [I.P. Omelyan, I.M. Mryglod and R. Folk, Comput. Phys. Commun. 151 (2003) 272.],
-   4MN5FV in [Takaishi, Tetsuya, and Philippe De Forcrand. "Testing and tuning symplectic integrators for the hybrid Monte Carlo algorithm in lattice QCD." Physical Review E 73.3 (2006): 036706.]
-   popular in LQCD
+   Eleven-stage palindromic symplectic integrator derived in :cite:p:`omelyan2003symplectic`.
+
+   Popular in LQCD, see also :cite:p:`takaishi2006testing`.
 
 .. py:data:: omelyan
 

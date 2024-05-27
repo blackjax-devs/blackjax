@@ -667,9 +667,11 @@ document.write(`
 <span class="n">yoshida</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">yoshida_coefficients</span><span class="p">)</span></div>
 
 
-<span class="sd">&quot;&quot;&quot;11 stage Omelyan integrator [I.P. Omelyan, I.M. Mryglod and R. Folk, Comput. Phys. Commun. 151 (2003) 272.],</span>
-<span class="sd">4MN5FV in [Takaishi, Tetsuya, and Philippe De Forcrand. &quot;Testing and tuning symplectic integrators for the hybrid Monte Carlo algorithm in lattice QCD.&quot; Physical Review E 73.3 (2006): 036706.]</span>
-<span class="sd">popular in LQCD&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Eleven-stage palindromic symplectic integrator derived in :cite:p:`omelyan2003symplectic`.</span>
+
+<span class="sd">Popular in LQCD, see also :cite:p:`takaishi2006testing`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 <span class="n">b1</span> <span class="o">=</span> <span class="mf">0.08398315262876693</span>
 <span class="n">a1</span> <span class="o">=</span> <span class="mf">0.2539785108410595</span>
 <span class="n">b2</span> <span class="o">=</span> <span class="mf">0.6822365335719091</span>
