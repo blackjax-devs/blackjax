@@ -290,9 +290,11 @@ a2 = 1 - 2 * a1
 yoshida_coefficients = [b1, a1, b2, a2, b2, a1, b1]
 yoshida = generate_euclidean_integrator(yoshida_coefficients)
 
-"""11 stage Omelyan integrator [I.P. Omelyan, I.M. Mryglod and R. Folk, Comput. Phys. Commun. 151 (2003) 272.],
-4MN5FV in [Takaishi, Tetsuya, and Philippe De Forcrand. "Testing and tuning symplectic integrators for the hybrid Monte Carlo algorithm in lattice QCD." Physical Review E 73.3 (2006): 036706.]
-popular in LQCD"""
+"""
+Eleven-stage palindromic symplectic integrator derived in :cite:p:`omelyan2003symplectic`.
+
+Popular in LQCD, see also :cite:p:`takaishi2006testing`.
+"""
 b1 = 0.08398315262876693
 a1 = 0.2539785108410595
 b2 = 0.6822365335719091

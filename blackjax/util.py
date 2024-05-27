@@ -1,4 +1,5 @@
 """Utility functions for BlackJax."""
+
 from functools import partial
 from typing import Callable, Union
 
@@ -165,7 +166,8 @@ def run_inference_algorithm(
     initial_state
         The initial state of the inference algorithm.
     initial_position
-        The initial position of the inference algorithm. This is used when the initial state is not provided.
+        The initial position of the inference algorithm. This is used when the initial
+        state is not provided.
     inference_algorithm
         One of blackjax's sampling algorithms or variational inference algorithms.
     num_steps
@@ -177,9 +179,12 @@ def run_inference_algorithm(
         computing determinstic variables, or returning a subset of the states.
         By default, the states are returned as is.
     expectation
-        A function that computes the expectation of the state. This is done incrementally, so doesn't require storing all the states.
+        A function that computes the expectation of the state. This is done
+        incrementally, so doesn't require storing all the states.
     return_state_history
-        if False, `run_inference_algorithm` will only return an expectation of the value of transform, and return that average instead of the full set of samples. This is useful when memory is a bottleneck.
+        if False, `run_inference_algorithm` will only return an expectation of the value
+        of transform, and return that average instead of the full set of samples. This
+        is useful when memory is a bottleneck.
 
     Returns
     -------
@@ -193,14 +198,16 @@ def run_inference_algorithm(
     """
 
     if initial_state is None and initial_position is None:
-        raise ValueError("Either initial_state or initial_position must be provided.")
+        raise ValueError(
+            "Either `initial_state` or `initial_position` must be provided."
+        )
     if initial_state is not None and initial_position is not None:
         raise ValueError(
-            "Only one of initial_state or initial_position must be provided."
+            "Only one of `initial_state` or `initial_position` must be provided."
         )
 
-    rng_key, init_key = split(rng_key, 2)
-    if initial_position is not None:
+    if initial_state is None:
+        rng_key, init_key = split(rng_key, 2)
         initial_state = inference_algorithm.init(initial_position, init_key)
 
     keys = split(rng_key, num_steps)
@@ -241,7 +248,8 @@ def streaming_average_update(
         expectation
             the value of the expectation at the current timestep
         streaming_avg
-            tuple of (total, average) where total is the sum of weights and average is the current average
+            tuple of (total, average) where total is the sum of weights and average is
+            the current average
         weight
             weight of the current state
         zero_prevention
