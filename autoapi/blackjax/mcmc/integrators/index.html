@@ -370,9 +370,12 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.velocity_verlet"><code class="docutils literal notranslate"><span class="pre">velocity_verlet</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.mclachlan"><code class="docutils literal notranslate"><span class="pre">mclachlan</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.yoshida"><code class="docutils literal notranslate"><span class="pre">yoshida</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.isokinetic_leapfrog"><code class="docutils literal notranslate"><span class="pre">isokinetic_leapfrog</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.omelyan"><code class="docutils literal notranslate"><span class="pre">omelyan</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.isokinetic_velocity_verlet"><code class="docutils literal notranslate"><span class="pre">isokinetic_velocity_verlet</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.isokinetic_yoshida"><code class="docutils literal notranslate"><span class="pre">isokinetic_yoshida</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.isokinetic_mclachlan"><code class="docutils literal notranslate"><span class="pre">isokinetic_mclachlan</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.isokinetic_omelyan"><code class="docutils literal notranslate"><span class="pre">isokinetic_omelyan</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.with_isokinetic_maruyama"><code class="docutils literal notranslate"><span class="pre">with_isokinetic_maruyama()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.implicit_midpoint"><code class="docutils literal notranslate"><span class="pre">implicit_midpoint()</span></code></a></li>
 </ul>
 </li>
@@ -401,15 +404,21 @@ document.write(`
 <td><p>Three stages palindromic symplectic integrator derived in <span id="id2">[<a class="reference internal" href="../../../../bib.html#id19" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.yoshida" title="blackjax.mcmc.integrators.yoshida"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yoshida</span></code></a></p></td>
+<td><p>11 stage Omelyan integrator [I.P. Omelyan, I.M. Mryglod and R. Folk, Comput. Phys. Commun. 151 (2003) 272.],</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.omelyan" title="blackjax.mcmc.integrators.omelyan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">omelyan</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.isokinetic_leapfrog" title="blackjax.mcmc.integrators.isokinetic_leapfrog"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isokinetic_leapfrog</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.isokinetic_velocity_verlet" title="blackjax.mcmc.integrators.isokinetic_velocity_verlet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isokinetic_velocity_verlet</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.isokinetic_yoshida" title="blackjax.mcmc.integrators.isokinetic_yoshida"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isokinetic_yoshida</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.isokinetic_yoshida" title="blackjax.mcmc.integrators.isokinetic_yoshida"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isokinetic_yoshida</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.isokinetic_mclachlan" title="blackjax.mcmc.integrators.isokinetic_mclachlan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isokinetic_mclachlan</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.isokinetic_mclachlan" title="blackjax.mcmc.integrators.isokinetic_mclachlan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isokinetic_mclachlan</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.isokinetic_omelyan" title="blackjax.mcmc.integrators.isokinetic_omelyan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isokinetic_omelyan</span></code></a></p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -419,7 +428,10 @@ document.write(`
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.implicit_midpoint" title="blackjax.mcmc.integrators.implicit_midpoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">implicit_midpoint</span></code></a>(→ Integrator)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.with_isokinetic_maruyama" title="blackjax.mcmc.integrators.with_isokinetic_maruyama"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_isokinetic_maruyama</span></code></a>(integrator)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.implicit_midpoint" title="blackjax.mcmc.integrators.implicit_midpoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">implicit_midpoint</span></code></a>(→ Integrator)</p></td>
 <td><p>The implicit midpoint integrator with support for non-stationary kinetic energy</p></td>
 </tr>
 </tbody>
@@ -453,11 +465,19 @@ guarantees a stability interval length approximately equal to 4.67.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="blackjax.mcmc.integrators.yoshida">
 <span class="sig-name descname"><span class="pre">yoshida</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#yoshida"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.yoshida" title="Link to this definition">#</a></dt>
+<dd><p>11 stage Omelyan integrator [I.P. Omelyan, I.M. Mryglod and R. Folk, Comput. Phys. Commun. 151 (2003) 272.],
+4MN5FV in [Takaishi, Tetsuya, and Philippe De Forcrand. “Testing and tuning symplectic integrators for the hybrid Monte Carlo algorithm in lattice QCD.” Physical Review E 73.3 (2006): 036706.]
+popular in LQCD</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="blackjax.mcmc.integrators.omelyan">
+<span class="sig-name descname"><span class="pre">omelyan</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#omelyan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.omelyan" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt class="sig sig-object py" id="blackjax.mcmc.integrators.isokinetic_leapfrog">
-<span class="sig-name descname"><span class="pre">isokinetic_leapfrog</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#isokinetic_leapfrog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.isokinetic_leapfrog" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.mcmc.integrators.isokinetic_velocity_verlet">
+<span class="sig-name descname"><span class="pre">isokinetic_velocity_verlet</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#isokinetic_velocity_verlet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.isokinetic_velocity_verlet" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py data">
@@ -468,6 +488,16 @@ guarantees a stability interval length approximately equal to 4.67.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="blackjax.mcmc.integrators.isokinetic_mclachlan">
 <span class="sig-name descname"><span class="pre">isokinetic_mclachlan</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#isokinetic_mclachlan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.isokinetic_mclachlan" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="blackjax.mcmc.integrators.isokinetic_omelyan">
+<span class="sig-name descname"><span class="pre">isokinetic_omelyan</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#isokinetic_omelyan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.isokinetic_omelyan" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.integrators.with_isokinetic_maruyama">
+<span class="sig-name descname"><span class="pre">with_isokinetic_maruyama</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#with_isokinetic_maruyama"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.with_isokinetic_maruyama" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -536,9 +566,12 @@ in the future.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.velocity_verlet"><code class="docutils literal notranslate"><span class="pre">velocity_verlet</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.mclachlan"><code class="docutils literal notranslate"><span class="pre">mclachlan</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.yoshida"><code class="docutils literal notranslate"><span class="pre">yoshida</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.isokinetic_leapfrog"><code class="docutils literal notranslate"><span class="pre">isokinetic_leapfrog</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.omelyan"><code class="docutils literal notranslate"><span class="pre">omelyan</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.isokinetic_velocity_verlet"><code class="docutils literal notranslate"><span class="pre">isokinetic_velocity_verlet</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.isokinetic_yoshida"><code class="docutils literal notranslate"><span class="pre">isokinetic_yoshida</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.isokinetic_mclachlan"><code class="docutils literal notranslate"><span class="pre">isokinetic_mclachlan</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.isokinetic_omelyan"><code class="docutils literal notranslate"><span class="pre">isokinetic_omelyan</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.with_isokinetic_maruyama"><code class="docutils literal notranslate"><span class="pre">with_isokinetic_maruyama()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.integrators.implicit_midpoint"><code class="docutils literal notranslate"><span class="pre">implicit_midpoint()</span></code></a></li>
 </ul>
 </li>

@@ -772,7 +772,7 @@ document.write(`
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">tree_depth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># Base case - take one leapfrog step in the direction v.</span>
+            <span class="c1"># Base case - take one velocity_verlet step in the direction v.</span>
             <span class="n">next_state</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">direction</span> <span class="o">*</span> <span class="n">step_size</span><span class="p">)</span>
             <span class="n">new_proposal</span> <span class="o">=</span> <span class="n">generate_proposal</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">next_state</span><span class="p">)</span>
             <span class="n">is_diverging</span> <span class="o">=</span> <span class="o">-</span><span class="n">new_proposal</span><span class="o">.</span><span class="n">weight</span> <span class="o">&gt;</span> <span class="n">divergence_threshold</span>

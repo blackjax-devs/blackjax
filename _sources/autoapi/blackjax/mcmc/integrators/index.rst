@@ -17,9 +17,11 @@ Attributes
    blackjax.mcmc.integrators.velocity_verlet
    blackjax.mcmc.integrators.mclachlan
    blackjax.mcmc.integrators.yoshida
-   blackjax.mcmc.integrators.isokinetic_leapfrog
+   blackjax.mcmc.integrators.omelyan
+   blackjax.mcmc.integrators.isokinetic_velocity_verlet
    blackjax.mcmc.integrators.isokinetic_yoshida
    blackjax.mcmc.integrators.isokinetic_mclachlan
+   blackjax.mcmc.integrators.isokinetic_omelyan
 
 
 Functions
@@ -27,6 +29,7 @@ Functions
 
 .. autoapisummary::
 
+   blackjax.mcmc.integrators.with_isokinetic_maruyama
    blackjax.mcmc.integrators.implicit_midpoint
 
 
@@ -57,11 +60,21 @@ Module Contents
 
 .. py:data:: yoshida
 
-.. py:data:: isokinetic_leapfrog
+   11 stage Omelyan integrator [I.P. Omelyan, I.M. Mryglod and R. Folk, Comput. Phys. Commun. 151 (2003) 272.],
+   4MN5FV in [Takaishi, Tetsuya, and Philippe De Forcrand. "Testing and tuning symplectic integrators for the hybrid Monte Carlo algorithm in lattice QCD." Physical Review E 73.3 (2006): 036706.]
+   popular in LQCD
+
+.. py:data:: omelyan
+
+.. py:data:: isokinetic_velocity_verlet
 
 .. py:data:: isokinetic_yoshida
 
 .. py:data:: isokinetic_mclachlan
+
+.. py:data:: isokinetic_omelyan
+
+.. py:function:: with_isokinetic_maruyama(integrator)
 
 .. py:function:: implicit_midpoint(logdensity_fn: Callable, kinetic_energy_fn: blackjax.mcmc.metrics.KineticEnergy, *, solver: FixedPointSolver = solve_fixed_point_iteration, **solver_kwargs: Any) -> Integrator
 

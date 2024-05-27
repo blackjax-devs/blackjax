@@ -392,12 +392,15 @@ document.write(`
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;mclachlan&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;omelyan&quot;</span><span class="p">,</span>
     <span class="s2">&quot;velocity_verlet&quot;</span><span class="p">,</span>
     <span class="s2">&quot;yoshida&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;implicit_midpoint&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;isokinetic_leapfrog&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;with_isokinetic_maruyama&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;isokinetic_velocity_verlet&quot;</span><span class="p">,</span>
     <span class="s2">&quot;isokinetic_mclachlan&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;isokinetic_omelyan&quot;</span><span class="p">,</span>
     <span class="s2">&quot;isokinetic_yoshida&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;implicit_midpoint&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -438,7 +441,7 @@ document.write(`
 
 <span class="sd">    .. math:: \\frac{d}{dt}f = (O_1+O_2)f</span>
 
-<span class="sd">    The leapfrog operator can be seen as approximating :math:`e^{\\epsilon(O_1 + O_2)}`</span>
+<span class="sd">    The velocity_verlet operator can be seen as approximating :math:`e^{\\epsilon(O_1 + O_2)}`</span>
 <span class="sd">    by :math:`e^{\\epsilon O_1/2}e^{\\epsilon O_2}e^{\\epsilon O_1/2}`.</span>
 
 <span class="sd">    In a standard Hamiltonian, the forms of :math:`e^{\\epsilon O_2}` and</span>
@@ -578,7 +581,7 @@ document.write(`
     <span class="k">return</span> <span class="n">IntegratorState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">generate_euclidean_integrator</span><span class="p">(</span><span class="n">cofficients</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">generate_euclidean_integrator</span><span class="p">(</span><span class="n">coefficients</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate symplectic integrator for solving a Hamiltonian system.</span>
 
 <span class="sd">    The resulting integrator is volume-preserve and preserves the symplectic structure</span>
@@ -593,7 +596,7 @@ document.write(`
         <span class="n">one_step</span> <span class="o">=</span> <span class="n">generalized_two_stage_integrator</span><span class="p">(</span>
             <span class="n">momentum_update_fn</span><span class="p">,</span>
             <span class="n">position_update_fn</span><span class="p">,</span>
-            <span class="n">cofficients</span><span class="p">,</span>
+            <span class="n">coefficients</span><span class="p">,</span>
             <span class="n">format_output_fn</span><span class="o">=</span><span class="n">format_euclidean_state_output</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">one_step</span>
@@ -619,10 +622,10 @@ document.write(`
 <span class="sd">of the kinetic energy. We are trading accuracy in exchange, and it is not</span>
 <span class="sd">clear whether this is the right tradeoff.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="n">velocity_verlet_cofficients</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span>
+<span class="n">velocity_verlet_coefficients</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span>
 <div class="viewcode-block" id="velocity_verlet">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.velocity_verlet">[docs]</a>
-<span class="n">velocity_verlet</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">velocity_verlet_cofficients</span><span class="p">)</span></div>
+<span class="n">velocity_verlet</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">velocity_verlet_coefficients</span><span class="p">)</span></div>
 
 
 <span class="sd">&quot;&quot;&quot;</span>
@@ -639,10 +642,10 @@ document.write(`
 <span class="n">b1</span> <span class="o">=</span> <span class="mf">0.1931833275037836</span>
 <span class="n">a1</span> <span class="o">=</span> <span class="mf">0.5</span>
 <span class="n">b2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b1</span>
-<span class="n">mclachlan_cofficients</span> <span class="o">=</span> <span class="p">[</span><span class="n">b1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">]</span>
+<span class="n">mclachlan_coefficients</span> <span class="o">=</span> <span class="p">[</span><span class="n">b1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">]</span>
 <div class="viewcode-block" id="mclachlan">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.mclachlan">[docs]</a>
-<span class="n">mclachlan</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">mclachlan_cofficients</span><span class="p">)</span></div>
+<span class="n">mclachlan</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">mclachlan_coefficients</span><span class="p">)</span></div>
 
 
 <span class="sd">&quot;&quot;&quot;</span>
@@ -658,10 +661,25 @@ document.write(`
 <span class="n">a1</span> <span class="o">=</span> <span class="mf">0.29619504261126</span>
 <span class="n">b2</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">b1</span>
 <span class="n">a2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">a1</span>
-<span class="n">yoshida_cofficients</span> <span class="o">=</span> <span class="p">[</span><span class="n">b1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">]</span>
+<span class="n">yoshida_coefficients</span> <span class="o">=</span> <span class="p">[</span><span class="n">b1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">]</span>
 <div class="viewcode-block" id="yoshida">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.yoshida">[docs]</a>
-<span class="n">yoshida</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">yoshida_cofficients</span><span class="p">)</span></div>
+<span class="n">yoshida</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">yoshida_coefficients</span><span class="p">)</span></div>
+
+
+<span class="sd">&quot;&quot;&quot;11 stage Omelyan integrator [I.P. Omelyan, I.M. Mryglod and R. Folk, Comput. Phys. Commun. 151 (2003) 272.],</span>
+<span class="sd">4MN5FV in [Takaishi, Tetsuya, and Philippe De Forcrand. &quot;Testing and tuning symplectic integrators for the hybrid Monte Carlo algorithm in lattice QCD.&quot; Physical Review E 73.3 (2006): 036706.]</span>
+<span class="sd">popular in LQCD&quot;&quot;&quot;</span>
+<span class="n">b1</span> <span class="o">=</span> <span class="mf">0.08398315262876693</span>
+<span class="n">a1</span> <span class="o">=</span> <span class="mf">0.2539785108410595</span>
+<span class="n">b2</span> <span class="o">=</span> <span class="mf">0.6822365335719091</span>
+<span class="n">a2</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.03230286765269967</span>
+<span class="n">b3</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">b1</span> <span class="o">-</span> <span class="n">b2</span>
+<span class="n">a3</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">a1</span> <span class="o">+</span> <span class="n">a2</span><span class="p">)</span>
+<span class="n">omelyan_coefficients</span> <span class="o">=</span> <span class="p">[</span><span class="n">b1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">b3</span><span class="p">,</span> <span class="n">a3</span><span class="p">,</span> <span class="n">b3</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">b2</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">]</span>
+<div class="viewcode-block" id="omelyan">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.omelyan">[docs]</a>
+<span class="n">omelyan</span> <span class="o">=</span> <span class="n">generate_euclidean_integrator</span><span class="p">(</span><span class="n">omelyan_coefficients</span><span class="p">)</span></div>
 
 
 
@@ -749,17 +767,23 @@ document.write(`
     <span class="k">return</span> <span class="n">isokinetic_integrator</span>
 
 
-<div class="viewcode-block" id="isokinetic_leapfrog">
-<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.isokinetic_leapfrog">[docs]</a>
-<span class="n">isokinetic_leapfrog</span> <span class="o">=</span> <span class="n">generate_isokinetic_integrator</span><span class="p">(</span><span class="n">velocity_verlet_cofficients</span><span class="p">)</span></div>
+<div class="viewcode-block" id="isokinetic_velocity_verlet">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.isokinetic_velocity_verlet">[docs]</a>
+<span class="n">isokinetic_velocity_verlet</span> <span class="o">=</span> <span class="n">generate_isokinetic_integrator</span><span class="p">(</span>
+    <span class="n">velocity_verlet_coefficients</span>
+<span class="p">)</span></div>
 
 <div class="viewcode-block" id="isokinetic_yoshida">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.isokinetic_yoshida">[docs]</a>
-<span class="n">isokinetic_yoshida</span> <span class="o">=</span> <span class="n">generate_isokinetic_integrator</span><span class="p">(</span><span class="n">yoshida_cofficients</span><span class="p">)</span></div>
+<span class="n">isokinetic_yoshida</span> <span class="o">=</span> <span class="n">generate_isokinetic_integrator</span><span class="p">(</span><span class="n">yoshida_coefficients</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="isokinetic_mclachlan">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.isokinetic_mclachlan">[docs]</a>
-<span class="n">isokinetic_mclachlan</span> <span class="o">=</span> <span class="n">generate_isokinetic_integrator</span><span class="p">(</span><span class="n">mclachlan_cofficients</span><span class="p">)</span></div>
+<span class="n">isokinetic_mclachlan</span> <span class="o">=</span> <span class="n">generate_isokinetic_integrator</span><span class="p">(</span><span class="n">mclachlan_coefficients</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="isokinetic_omelyan">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.isokinetic_omelyan">[docs]</a>
+<span class="n">isokinetic_omelyan</span> <span class="o">=</span> <span class="n">generate_isokinetic_integrator</span><span class="p">(</span><span class="n">omelyan_coefficients</span><span class="p">)</span></div>
 
 
 
@@ -788,6 +812,8 @@ document.write(`
     <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">((</span><span class="n">m</span> <span class="o">+</span> <span class="n">z</span><span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="n">z</span><span class="p">))</span>
 
 
+<div class="viewcode-block" id="with_isokinetic_maruyama">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.with_isokinetic_maruyama">[docs]</a>
 <span class="k">def</span> <span class="nf">with_isokinetic_maruyama</span><span class="p">(</span><span class="n">integrator</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">stochastic_integrator</span><span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">L_proposal</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
         <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
@@ -813,7 +839,8 @@ document.write(`
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">info</span>
 
-    <span class="k">return</span> <span class="n">stochastic_integrator</span>
+    <span class="k">return</span> <span class="n">stochastic_integrator</span></div>
+
 
 
 <span class="n">FixedPointSolver</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span>
