@@ -136,13 +136,15 @@ algorithms = {
     "velocity_verlet": {"algorithm": integrators.velocity_verlet, "precision": 1e-4},
     "mclachlan": {"algorithm": integrators.mclachlan, "precision": 1e-4},
     "yoshida": {"algorithm": integrators.yoshida, "precision": 1e-4},
+    "omelyan": {"algorithm": integrators.omelyan, "precision": 1e-4},
     "implicit_midpoint": {
         "algorithm": integrators.implicit_midpoint,
         "precision": 1e-4,
     },
-    "isokinetic_leapfrog": {"algorithm": integrators.isokinetic_leapfrog},
+    "isokinetic_velocity_verlet": {"algorithm": integrators.isokinetic_velocity_verlet},
     "isokinetic_mclachlan": {"algorithm": integrators.isokinetic_mclachlan},
     "isokinetic_yoshida": {"algorithm": integrators.isokinetic_yoshida},
+    "isokinetic_omelyan": {"algorithm": integrators.isokinetic_omelyan},
 }
 
 
@@ -168,6 +170,7 @@ class IntegratorTest(chex.TestCase):
                 "velocity_verlet",
                 "mclachlan",
                 "yoshida",
+                "omelyan",
                 "implicit_midpoint",
             ],
         )
@@ -241,13 +244,13 @@ class IntegratorTest(chex.TestCase):
         np.testing.assert_array_almost_equal(next_momentum, next_momentum1)
 
     @chex.all_variants(with_pmap=False)
-    def test_isokinetic_leapfrog(self):
+    def test_isokinetic_velocity_verlet(self):
         cov = jnp.asarray([[1.0, 0.5, 0.1], [0.5, 2.0, -0.1], [0.1, -0.1, 3.0]])
         logdensity_fn = lambda x: stats.multivariate_normal.logpdf(
             x, jnp.zeros([3]), cov
         )
 
-        step = self.variant(integrators.isokinetic_leapfrog(logdensity_fn))
+        step = self.variant(integrators.isokinetic_velocity_verlet(logdensity_fn))
 
         rng = jax.random.key(4263456)
         key0, key1 = jax.random.split(rng, 2)
@@ -296,9 +299,10 @@ class IntegratorTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
         [
-            "isokinetic_leapfrog",
+            "isokinetic_velocity_verlet",
             "isokinetic_mclachlan",
             "isokinetic_yoshida",
+            "isokinetic_omelyan",
         ],
     )
     def test_isokinetic_integrator(self, integrator_name):
