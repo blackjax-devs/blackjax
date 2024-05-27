@@ -15,12 +15,7 @@ import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
 from blackjax.mcmc.adjusted_mclmc import rescale
-from blackjax.mcmc.integrators import (
-    generate_isokinetic_integrator,
-    integrator_order,
-    isokinetic_mclachlan,
-    mclachlan_coefficients,
-)
+from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
 
 
@@ -159,8 +154,7 @@ class LinearRegressionTest(chex.TestCase):
         key,
         diagonal_preconditioning=False,
     ):
-        coefficients = mclachlan_coefficients
-        integrator = generate_isokinetic_integrator(coefficients)
+        integrator = isokinetic_mclachlan
 
         init_key, tune_key, run_key = jax.random.split(key, 3)
 
@@ -183,11 +177,7 @@ class LinearRegressionTest(chex.TestCase):
             logdensity_fn=logdensity_fn,
         )
 
-        target_acceptance_rate_of_order = {2: 0.65, 4: 0.8}
-
-        target_acc_rate = target_acceptance_rate_of_order[
-            integrator_order(coefficients)
-        ]
+        target_acc_rate = 0.65
 
         (
             blackjax_state_after_tuning,
@@ -225,7 +215,7 @@ class LinearRegressionTest(chex.TestCase):
             inference_algorithm=alg,
             num_steps=num_steps,
             transform=lambda x: x.position,
-            expectation=lambda x: x.position,
+            expectation=lambda x: x,
             progress_bar=False,
         )
 
