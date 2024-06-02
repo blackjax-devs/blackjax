@@ -76,7 +76,7 @@ def build_kernel(
         momentum = generate_unit_vector(key_momentum, state.position)
         proposal, info, _ = adjusted_mclmc_proposal(
             integrator=integrators.with_isokinetic_maruyama(
-                integrator(logdensity_fn, sqrt_diag_cov)
+                integrator(logdensity_fn=logdensity_fn, sqrt_diag_cov=sqrt_diag_cov)
             ),
             step_size=step_size,
             L_proposal=L_proposal * num_integration_steps,
