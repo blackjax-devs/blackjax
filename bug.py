@@ -103,7 +103,7 @@ model = StandardNormal(2)
 key = jax.random.PRNGKey(0)
 
 
-map = jax.pmap # change to pmap
+map = jax.pmap # change to vmap
 
 sampler = partial(run_mclmc, preconditioning=True)
 
