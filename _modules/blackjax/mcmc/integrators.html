@@ -755,9 +755,8 @@ document.write(`
 
 <span class="k">def</span> <span class="nf">generate_isokinetic_integrator</span><span class="p">(</span><span class="n">coefficients</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">isokinetic_integrator</span><span class="p">(</span>
-        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sqrt_diag_cov</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">=</span> <span class="mf">1.0</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneralIntegrator</span><span class="p">:</span>
-        <span class="n">sqrt_diag_cov</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sqrt_diag_cov&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
         <span class="n">position_update_fn</span> <span class="o">=</span> <span class="n">euclidean_position_update_fn</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
         <span class="n">one_step</span> <span class="o">=</span> <span class="n">generalized_two_stage_integrator</span><span class="p">(</span>
             <span class="n">esh_dynamics_momentum_update_one_step</span><span class="p">(</span><span class="n">sqrt_diag_cov</span><span class="p">),</span>
