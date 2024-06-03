@@ -66,7 +66,7 @@ def build_kernel(
         state: DynamicHMCState,
         logdensity_fn: Callable,
         step_size: float,
-        L_proposal: float = jnp.inf,
+        L_proposal_factor: float = jnp.inf,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
 
@@ -79,7 +79,7 @@ def build_kernel(
                 integrator(logdensity_fn=logdensity_fn, sqrt_diag_cov=sqrt_diag_cov)
             ),
             step_size=step_size,
-            L_proposal=L_proposal * num_integration_steps,
+            L_proposal_factor=L_proposal_factor * (num_integration_steps/step_size),
             num_integration_steps=num_integration_steps,
             divergence_threshold=divergence_threshold,
         )(
@@ -105,7 +105,7 @@ def build_kernel(
 def as_top_level_api(
     logdensity_fn: Callable,
     step_size: float,
-    L_proposal: float = jnp.inf,
+    L_proposal_factor: float = jnp.inf,
     sqrt_diag_cov=1.0,
     *,
     divergence_threshold: int = 1000,
@@ -156,7 +156,7 @@ def as_top_level_api(
             state,
             logdensity_fn,
             step_size,
-            L_proposal,
+            L_proposal_factor,
         )
 
     return SamplingAlgorithm(init_fn, update_fn)  # type: ignore[arg-type]
@@ -165,7 +165,7 @@ def as_top_level_api(
 def adjusted_mclmc_proposal(
     integrator: Callable,
     step_size: Union[float, ArrayLikeTree],
-    L_proposal: float,
+    L_proposal_factor: float,
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,
     *,
@@ -202,7 +202,7 @@ def adjusted_mclmc_proposal(
         state, kinetic_energy, rng_key = vars
         rng_key, next_rng_key = jax.random.split(rng_key)
         next_state, next_kinetic_energy = integrator(
-            state, step_size, L_proposal, rng_key
+            state, step_size, L_proposal_factor, rng_key
         )
 
         return next_state, kinetic_energy + next_kinetic_energy, next_rng_key
