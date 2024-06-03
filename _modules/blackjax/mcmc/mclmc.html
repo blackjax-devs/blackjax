@@ -466,7 +466,9 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">step</span> <span class="o">=</span> <span class="n">with_isokinetic_maruyama</span><span class="p">(</span><span class="n">integrator</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">sqrt_diag_cov</span><span class="p">))</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="n">with_isokinetic_maruyama</span><span class="p">(</span>
+        <span class="n">integrator</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">sqrt_diag_cov</span><span class="o">=</span><span class="n">sqrt_diag_cov</span><span class="p">)</span>
+    <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">,</span> <span class="n">L</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span>
