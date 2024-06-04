@@ -3,6 +3,7 @@ from typing import Callable
 
 from blackjax._version import __version__
 
+from .adaptation.adjusted_mclmc_adaptation import adjusted_mclmc_find_L_and_step_size
 from .adaptation.chees_adaptation import chees_adaptation
 from .adaptation.mclmc_adaptation import mclmc_find_L_and_step_size
 from .adaptation.meads_adaptation import meads_adaptation
@@ -160,6 +161,7 @@ __all__ = [
     "chees_adaptation",
     "pathfinder_adaptation",
     "mclmc_find_L_and_step_size",  # mclmc adaptation
+    "adjusted_mclmc_find_L_and_step_size",  # adjusted mclmc adaptation
     "ess",  # diagnostics
     "rhat",
 ]
