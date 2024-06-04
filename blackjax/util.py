@@ -220,7 +220,7 @@ def run_inference_algorithm(
         if return_state:
             return (average, state), (transform(state), info)
         else:
-            return (average, state), average[1]
+            return (average, state), None
 
     one_step = jax.jit(partial(one_step, return_state=return_state_history))
 
@@ -233,7 +233,7 @@ def run_inference_algorithm(
     )
 
     if not return_state_history:
-        return average, transform(final_state), history
+        return average, transform(final_state)
     else:
         state_history, info_history = history
         return transform(final_state), state_history, info_history
