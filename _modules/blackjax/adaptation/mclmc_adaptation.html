@@ -586,8 +586,8 @@ document.write(`
         <span class="n">x</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="c1"># update the running average of x, x^2</span>
         <span class="n">streaming_avg</span> <span class="o">=</span> <span class="n">streaming_average_update</span><span class="p">(</span>
-            <span class="n">expectation</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">x</span><span class="p">)]),</span>
-            <span class="n">streaming_avg</span><span class="o">=</span><span class="n">streaming_avg</span><span class="p">,</span>
+            <span class="n">current_value</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">x</span><span class="p">)]),</span>
+            <span class="n">previous_weight_and_average</span><span class="o">=</span><span class="n">streaming_avg</span><span class="p">,</span>
             <span class="n">weight</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">mask</span><span class="p">)</span> <span class="o">*</span> <span class="n">success</span> <span class="o">*</span> <span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
             <span class="n">zero_prevention</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span>
         <span class="p">)</span>
