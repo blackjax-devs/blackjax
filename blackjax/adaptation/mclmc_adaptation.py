@@ -200,8 +200,8 @@ def make_L_step_size_adaptation(
         x = ravel_pytree(state.position)[0]
         # update the running average of x, x^2
         streaming_avg = streaming_average_update(
-            expectation=jnp.array([x, jnp.square(x)]),
-            streaming_avg=streaming_avg,
+            current_value=jnp.array([x, jnp.square(x)]),
+            previous_weight_and_average=streaming_avg,
             weight=(1 - mask) * success * params.step_size,
             zero_prevention=mask,
         )
