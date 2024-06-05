@@ -193,7 +193,12 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                     + (1 - mask) * params.L,
                 )
 
-            return (state, params, (adaptive_state, step_size_max), previous_weight_and_average), (
+            return (
+                state,
+                params,
+                (adaptive_state, step_size_max),
+                previous_weight_and_average,
+            ), (
                 info,
                 params,
             )
