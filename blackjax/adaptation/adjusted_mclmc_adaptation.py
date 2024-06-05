@@ -131,7 +131,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 previous_state,
                 params,
                 (adaptive_state, step_size_max),
-                streaming_avg,
+                previous_weight_and_average,
             ) = iteration_state
 
             avg_num_integration_steps = params.L / params.step_size
@@ -174,9 +174,9 @@ def adjusted_mclmc_make_L_step_size_adaptation(
 
             x = ravel_pytree(state.position)[0]
             # update the running average of x, x^2
-            streaming_avg = streaming_average_update(
-                expectation=jnp.array([x, jnp.square(x)]),
-                streaming_avg=streaming_avg,
+            previous_weight_and_average = streaming_average_update(
+                current_value=jnp.array([x, jnp.square(x)]),
+                previous_weight_and_average=previous_weight_and_average,
                 weight=(1 - mask) * success * step_size,
                 zero_prevention=mask,
             )
@@ -193,7 +193,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                     + (1 - mask) * params.L,
                 )
 
-            return (state, params, (adaptive_state, step_size_max), streaming_avg), (
+            return (state, params, (adaptive_state, step_size_max), previous_weight_and_average), (
                 info,
                 params,
             )
