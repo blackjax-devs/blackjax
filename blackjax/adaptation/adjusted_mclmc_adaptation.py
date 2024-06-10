@@ -260,7 +260,9 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 L=params.L * change, step_size=params.step_size * change
             )
             if diagonal_preconditioning:
-                params = params._replace(sqrt_diag_cov=jnp.sqrt(variances), L = jnp.sqrt(dim))
+                params = params._replace(
+                    sqrt_diag_cov=jnp.sqrt(variances), L=jnp.sqrt(dim)
+                )
 
             initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
             (
