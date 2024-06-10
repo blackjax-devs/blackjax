@@ -79,7 +79,7 @@ def build_kernel(
                 integrator(logdensity_fn=logdensity_fn, sqrt_diag_cov=sqrt_diag_cov)
             ),
             step_size=step_size,
-            L_proposal_factor=L_proposal_factor * (num_integration_steps / step_size),
+            L_proposal_factor=L_proposal_factor * (num_integration_steps * step_size),
             num_integration_steps=num_integration_steps,
             divergence_threshold=divergence_threshold,
         )(
