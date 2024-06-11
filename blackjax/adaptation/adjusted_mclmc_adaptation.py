@@ -309,6 +309,6 @@ def adjusted_mclmc_make_adaptation_L(kernel, frac, Lfactor):
         flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
         ess = effective_sample_size(flat_samples[None, ...])
 
-        return state, params._replace(L=(0.4 * params.L) / ess)
+        return state, params._replace(L=(0.4 * params.L) / jnp.mean(ess))
 
     return adaptation_L
