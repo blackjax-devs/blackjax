@@ -281,7 +281,7 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
 
         def parameter_update(state, info):
             return extend_params(
-                100,
+                1,
                 {
                     "inverse_mass_matrix": mass_matrix_from_particles(state.particles),
                     "step_size": 10e-2,
@@ -298,7 +298,7 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
             resampling.systematic,
             mcmc_parameter_update_fn=parameter_update,
             initial_parameter_value=extend_params(
-                100,
+                1,
                 dict(
                     inverse_mass_matrix=jnp.eye(2),
                     step_size=10e-2,
@@ -326,7 +326,7 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
 
         _, state = inference_loop(smc_kernel, self.key, init_state)
 
-        assert state.parameter_override["inverse_mass_matrix"].shape == (100, 2, 2)
+        assert state.parameter_override["inverse_mass_matrix"].shape == (1, 2, 2)
         self.assert_linear_regression_test_case(state.sampler_state)
 
     @chex.all_variants(with_pmap=False)
@@ -340,7 +340,7 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
 
         def parameter_update(state, info):
             return extend_params(
-                100,
+                1,
                 {
                     "inverse_mass_matrix": mass_matrix_from_particles(state.particles),
                     "step_size": 10e-2,
@@ -357,7 +357,7 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
             resampling.systematic,
             mcmc_parameter_update_fn=parameter_update,
             initial_parameter_value=extend_params(
-                100,
+                1,
                 dict(
                     inverse_mass_matrix=jnp.eye(2),
                     step_size=10e-2,
