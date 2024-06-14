@@ -65,23 +65,26 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
 
         hmc_kernel = blackjax.hmc.build_kernel()
         hmc_init = blackjax.hmc.init
-        hmc_parameters_list = [
-            extend_params(
-                num_particles if extend else 1,
-                {
-                    "step_size": 10e-2,
-                    "inverse_mass_matrix": jnp.eye(2),
-                    "num_integration_steps": 50,
-                },
-            )
-            for extend in [True, False]
-        ]
-        hmc_parameters_list.append(
-            extend_params(
-                num_particles, {"step_size": 10e-2, "num_integration_steps": 50}
-            )
-            | extend_params(num_particles, {"inverse_mass_matrix": jnp.eye(2)})
+
+        base_params = extend_params(
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(2),
+                "num_integration_steps": 50,
+            }
         )
+
+        # verify results are equivalent with all shared, all unshared, and mixed params
+        hmc_parameters_list = [
+            base_params,
+            jax.tree.map(lambda x: jnp.repeat(x, num_particles, axis=0), base_params),
+            jax.tree_util.tree_map_with_path(
+                lambda path, x: jnp.repeat(x, num_particles, axis=0)
+                if path[0].key == "step_size"
+                else x,
+                base_params,
+            ),
+        ]
 
         for target_ess, hmc_parameters in zip([0.5, 0.5, 0.75], hmc_parameters_list):
             tempering = adaptive_tempered_smc(
@@ -124,7 +127,6 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
         hmc_init = blackjax.hmc.init
         hmc_kernel = blackjax.hmc.build_kernel()
         hmc_parameters = extend_params(
-            1,
             {
                 "step_size": 10e-2,
                 "inverse_mass_matrix": jnp.eye(2),
@@ -191,7 +193,6 @@ class NormalizingConstantTest(chex.TestCase):
         hmc_init = blackjax.hmc.init
         hmc_kernel = blackjax.hmc.build_kernel()
         hmc_parameters = extend_params(
-            num_particles,
             {
                 "step_size": 10e-2,
                 "inverse_mass_matrix": jnp.eye(num_dim),
