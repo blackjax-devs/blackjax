@@ -29,7 +29,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=384b581d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=fd3f3429" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=87e54e7c" />
@@ -43,7 +43,7 @@
     <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/smc/base/index';</script>
@@ -280,9 +280,9 @@
   
     <div class="header-article-items__start">
       
-        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
   <span class="fa-solid fa-bars"></span>
-</label></div>
+</button></div>
       
     </div>
   
@@ -343,9 +343,9 @@ document.write(`
   </button>
 `);
 </script>
-<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <span class="fa-solid fa-list"></span>
-</label>
+</button>
 </div></div>
       
     </div>
@@ -423,7 +423,7 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.base.step" title="blackjax.smc.base.step"><code class="xref py py-obj docutils literal notranslate"><span class="pre">step</span></code></a>(→ tuple[SMCState, SMCInfo])</p></td>
 <td><p>General SMC sampling step.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.base.extend_params" title="blackjax.smc.base.extend_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extend_params</span></code></a>(n_particles, params)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.base.extend_params" title="blackjax.smc.base.extend_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extend_params</span></code></a>(params)</p></td>
 <td><p>Given a dictionary of params, repeats them for every single particle. The expected</p></td>
 </tr>
 </tbody>
@@ -566,7 +566,7 @@ transition.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.smc.base.extend_params">
-<span class="sig-name descname"><span class="pre">extend_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_particles</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#extend_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.extend_params" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">extend_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#extend_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.extend_params" title="Link to this definition">#</a></dt>
 <dd><p>Given a dictionary of params, repeats them for every single particle. The expected
 usage is in cases where the aim is to repeat the same parameters for all chains within SMC.</p>
 </dd></dl>

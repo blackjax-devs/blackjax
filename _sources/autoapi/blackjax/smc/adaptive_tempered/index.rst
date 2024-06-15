@@ -64,7 +64,8 @@ Module Contents
    :param loglikelihood_fn: The log-likelihood function of the model we wish to draw samples from.
    :param mcmc_step_fn: The MCMC step function used to update the particles.
    :param mcmc_init_fn: The MCMC init function used to build a MCMC state from a particle position.
-   :param mcmc_parameters: The parameters of the MCMC step function.
+   :param mcmc_parameters: The parameters of the MCMC step function.  Parameters with leading dimension
+                           length of 1 are shared amongst the particles.
    :param resampling_fn: The function used to resample the particles.
    :param target_ess: The number of effective sample size to aim for at each step.
    :param root_solver: The solver used to adaptively compute the temperature given a target number
