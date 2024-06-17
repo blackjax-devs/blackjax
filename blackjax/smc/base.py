@@ -150,12 +150,9 @@ def step(
     )
 
 
-def extend_params(n_particles, params):
+def extend_params(params):
     """Given a dictionary of params, repeats them for every single particle. The expected
     usage is in cases where the aim is to repeat the same parameters for all chains within SMC.
     """
 
-    def extend(param):
-        return jnp.repeat(jnp.asarray(param)[None, ...], n_particles, axis=0)
-
-    return jax.tree.map(extend, params)
+    return jax.tree.map(lambda x: jnp.asarray(x)[None, ...], params)

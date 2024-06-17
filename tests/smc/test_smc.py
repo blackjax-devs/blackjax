@@ -50,16 +50,17 @@ class SMCTest(chex.TestCase):
         same_for_all_params = dict(
             step_size=1e-2, inverse_mass_matrix=jnp.eye(1), num_integration_steps=50
         )
+
         state = init(
             init_particles,
-            extend_params(num_particles, same_for_all_params),
+            same_for_all_params,
         )
 
         # Run the SMC sampler once
         new_state, info = self.variant(step, static_argnums=(2, 3, 4))(
             sample_key,
             state,
-            jax.vmap(update_fn),
+            jax.vmap(update_fn, in_axes=(0, 0, None)),
             jax.vmap(logdensity_fn),
             resampling.systematic,
         )
@@ -87,7 +88,9 @@ class SMCTest(chex.TestCase):
                 _, (states, info) = jax.lax.scan(body_fn, state, keys)
                 return states.position, info
 
-            particles, info = jax.vmap(one_particle_fn)(keys, particles, update_params)
+            particles, info = jax.vmap(one_particle_fn, in_axes=(0, 0, None))(
+                keys, particles, update_params
+            )
             particles = particles.reshape((num_particles,))
             return particles, info
 
@@ -97,13 +100,10 @@ class SMCTest(chex.TestCase):
         init_particles = 0.25 + jax.random.normal(init_key, shape=(num_particles,))
         state = init(
             init_particles,
-            extend_params(
-                num_resampled,
-                dict(
-                    step_size=1e-2,
-                    inverse_mass_matrix=jnp.eye(1),
-                    num_integration_steps=100,
-                ),
+            dict(
+                step_size=1e-2,
+                inverse_mass_matrix=jnp.eye(1),
+                num_integration_steps=100,
             ),
         )
 
@@ -125,7 +125,6 @@ class SMCTest(chex.TestCase):
 class ExtendParamsTest(chex.TestCase):
     def test_extend_params(self):
         extended = extend_params(
-            3,
             {
                 "a": 50,
                 "b": np.array([50]),
@@ -133,14 +132,12 @@ class ExtendParamsTest(chex.TestCase):
                 "d": np.array([[1, 2], [3, 4]]),
             },
         )
-        np.testing.assert_allclose(extended["a"], np.ones((3,)) * 50)
-        np.testing.assert_allclose(extended["b"], np.array([[50], [50], [50]]))
-        np.testing.assert_allclose(
-            extended["c"], np.array([[50, 60], [50, 60], [50, 60]])
-        )
+        np.testing.assert_allclose(extended["a"], np.ones((1,)) * 50)
+        np.testing.assert_allclose(extended["b"], np.array([[50]]))
+        np.testing.assert_allclose(extended["c"], np.array([[50, 60]]))
         np.testing.assert_allclose(
             extended["d"],
-            np.array([[[1, 2], [3, 4]], [[1, 2], [3, 4]], [[1, 2], [3, 4]]]),
+            np.array([[[1, 2], [3, 4]]]),
         )
 
 
