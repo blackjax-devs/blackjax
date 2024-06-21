@@ -29,10 +29,9 @@ Functions can be defined as the minimum of another one, $f(x) = min_{y} g(x,y)$.
 Our example is taken from the theory of [convex conjugates](https://en.wikipedia.org/wiki/Convex_conjugate), used for example in optimal transport. Let's consider the following function:
 
 $$
-\begin{align*}
-g(x, y) &= h(y) - \langle x, y\rangle\\
-h(x) &= \frac{1}{p}|x|^p,\qquad p > 1.\\
-\end{align*}
+\begin{equation*}
+g(x, y) &= h(y) - \langle x, y\rangle,\qquad h(x) &= \frac{1}{p}|x|^p,\qquad p > 1.
+\end{equation*}
 $$
 
 And define the function $f$ as $f(x) = -min_y g(x, y)$ which we can be implemented as:
