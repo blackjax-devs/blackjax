@@ -60,7 +60,7 @@ def base():
     with shape.
 
     This is an implementation of Algorithm 3 of :cite:p:`hoffman2022tuning` using cross-chain
-    adaptation instead of parallel ensample chain adaptation.
+    adaptation instead of parallel ensemble chain adaptation.
 
     Returns
     -------
