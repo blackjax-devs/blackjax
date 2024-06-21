@@ -30,7 +30,7 @@ Our example is taken from the theory of [convex conjugates](https://en.wikipedia
 
 $$
 \begin{equation*}
-g(x, y) &= h(y) - \langle x, y\rangle,\qquad h(x) &= \frac{1}{p}|x|^p,\qquad p > 1.
+g(x, y) = h(y) - \langle x, y\rangle,\qquad h(x) = \frac{1}{p}|x|^p,\qquad p > 1.
 \end{equation*}
 $$
 
