@@ -68,7 +68,7 @@ Note the we also return the value of $y$ where the minimum of $g$ is achieved (t
 
 ### Trying to differentate the function with `jax.grad`
 
-The gradient of the function $f$ is undefined for JAX, which cannot differentiate through `while` loops, and trying to compute it directly raises an error:
+The gradient of the function $f$ is undefined for JAX, which cannot differentiate through `while` loops used in BFGS, and trying to compute it directly raises an error:
 
 ```{code-cell} ipython3
 # We only want the gradient with respect to `x`
