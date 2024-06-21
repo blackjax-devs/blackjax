@@ -104,7 +104,7 @@ ensures that
 \end{equation*}
 ```
 
-i.e. the value of the derivative at $x$ is the value $y(x)$ at which the minimum of the function $g$ is achieved.
+In other words, the value of the derivative at $x$ is the value $y(x)$ at which the minimum of the function $g$ is achieved.
 
 
 ### Telling JAX to use a custom gradient
