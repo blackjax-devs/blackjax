@@ -96,7 +96,7 @@ The first order optimality criterion
 \end{equation*}
 ```
 
-Ensures that:
+ensures that
 
 ```{math}
 \begin{equation*}
