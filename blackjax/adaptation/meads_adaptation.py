@@ -36,7 +36,7 @@ class MEADSAdaptationState(NamedTuple):
     alpha
         Value of the alpha parameter of the generalized HMC algorithm.
     delta
-        Value of the alpha parameter of the generalized HMC algorithm.
+        Value of the delta parameter of the generalized HMC algorithm.
 
     """
 
