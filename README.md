@@ -41,12 +41,6 @@ or via conda-forge:
 conda install -c conda-forge blackjax
 ```
 
-Nightly builds (bleeding edge) of Blackjax can also be installed using `pip`:
-
-```bash
-pip install blackjax-nightly
-```
-
 BlackJAX is written in pure Python but depends on XLA via JAX. By default, the
 version of JAX that will be installed along with BlackJAX will make your code
 run on CPU only. **If you want to use BlackJAX on GPU/TPU** we recommend you follow
