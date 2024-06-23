@@ -89,7 +89,7 @@ class SamplingAlgorithm(NamedTuple):
     """A pair of functions that represents a MCMC sampling algorithm.
 
     Blackjax sampling algorithms are implemented as a pair of pure functions: a
-    kernel, that takes a new samples starting from the current state, and an
+    kernel, that generates a new sample from the current state, and an
     initialization function that creates a kernel state from a chain position.
 
     As they represent Markov kernels, the kernel functions are pure functions
