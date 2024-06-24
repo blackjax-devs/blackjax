@@ -399,10 +399,9 @@ document.write(`
 <p>Functions can be defined as the minimum of another one, <span class="math notranslate nohighlight">\(f(x) = min_{y} g(x,y)\)</span>. Computing their gradients may be tedious, especially if the minimisation happens numerically rather than in closed form. We show how automatic derivatives can be modified on such examples, resulting in better overall efficiency and stability.</p>
 <p>Our example is taken from the theory of <a class="reference external" href="https://en.wikipedia.org/wiki/Convex_conjugate">convex conjugates</a>, used for example in optimal transport. Let’s consider the following function:</p>
 <p>$$
-\begin{align*}
-g(x, y) &amp;= h(y) - \langle x, y\rangle\
-h(x) &amp;= \frac{1}{p}|x|^p,\qquad p &gt; 1.\
-\end{align*}
+\begin{equation*}
+g(x, y) = h(y) - \langle x, y\rangle,\qquad h(x) = \frac{1}{p}|x|^p,\qquad p &gt; 1.
+\end{equation*}
 $$</p>
 <p>And define the function <span class="math notranslate nohighlight">\(f\)</span> as <span class="math notranslate nohighlight">\(f(x) = -min_y g(x, y)\)</span> which we can be implemented as:</p>
 <div class="cell tag_remove-output docutils container">
@@ -439,7 +438,7 @@ $$</p>
 <p>Note the we also return the value of <span class="math notranslate nohighlight">\(y\)</span> where the minimum of <span class="math notranslate nohighlight">\(g\)</span> is achieved (this will be useful later).</p>
 <section id="trying-to-differentate-the-function-with-jax-grad">
 <h3>Trying to differentate the function with <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code><a class="headerlink" href="#trying-to-differentate-the-function-with-jax-grad" title="Link to this heading">#</a></h3>
-<p>The gradient of the function <span class="math notranslate nohighlight">\(f\)</span> is undefined for JAX, which cannot differentiate through <code class="docutils literal notranslate"><span class="pre">while</span></code> loops, and trying to compute it directly raises an error:</p>
+<p>The gradient of the function <span class="math notranslate nohighlight">\(f\)</span> is undefined for JAX, which cannot differentiate through <code class="docutils literal notranslate"><span class="pre">while</span></code> loops used in BFGS, and trying to compute it directly raises an error:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># We only want the gradient with respect to `x`</span>
@@ -469,12 +468,12 @@ $$</p>
 \[\begin{equation*}
     \frac{dh}{dy} - x = 0,
 \end{equation*}\]</div>
-<p>Ensures that:</p>
+<p>ensures that</p>
 <div class="math notranslate nohighlight">
 \[\begin{equation*}
     \frac{df}{dx} = y(x).
 \end{equation*}\]</div>
-<p>i.e. the value of the derivative at <span class="math notranslate nohighlight">\(x\)</span> is the value <span class="math notranslate nohighlight">\(y(x)\)</span> at which the minimum of the function <span class="math notranslate nohighlight">\(g\)</span> is achieved.</p>
+<p>In other words, the value of the derivative at <span class="math notranslate nohighlight">\(x\)</span> is the value <span class="math notranslate nohighlight">\(y(x)\)</span> at which the minimum of the function <span class="math notranslate nohighlight">\(g\)</span> is achieved.</p>
 </section>
 <section id="telling-jax-to-use-a-custom-gradient">
 <h3>Telling JAX to use a custom gradient<a class="headerlink" href="#telling-jax-to-use-a-custom-gradient" title="Link to this heading">#</a></h3>

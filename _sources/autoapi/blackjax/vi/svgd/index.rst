@@ -43,7 +43,7 @@ Module Contents
 
 .. py:function:: as_top_level_api(grad_logdensity_fn: Callable, optimizer, kernel: Callable = rbf_kernel, update_kernel_parameters: Callable = update_median_heuristic)
 
-   Implements the (basic) user interface for the svgd algorithm.
+   Implements the (basic) user interface for the svgd algorithm :cite:p:`liu2016stein`.
 
    :param grad_logdensity_fn: gradient, or an estimate, of the target log density function to samples approximately from
    :param optimizer: Optax compatible optimizer, which conforms to the `optax.GradientTransformation` protocol

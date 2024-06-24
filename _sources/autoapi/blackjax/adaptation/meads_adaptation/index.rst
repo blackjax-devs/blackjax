@@ -40,7 +40,7 @@ Module Contents
    alpha
        Value of the alpha parameter of the generalized HMC algorithm.
    delta
-       Value of the alpha parameter of the generalized HMC algorithm.
+       Value of the delta parameter of the generalized HMC algorithm.
 
 
 
@@ -78,7 +78,7 @@ Module Contents
    with shape.
 
    This is an implementation of Algorithm 3 of :cite:p:`hoffman2022tuning` using cross-chain
-   adaptation instead of parallel ensample chain adaptation.
+   adaptation instead of parallel ensemble chain adaptation.
 
    :returns: * *init* -- Function that initializes the warmup.
              * *update* -- Function that moves the warmup one step.
