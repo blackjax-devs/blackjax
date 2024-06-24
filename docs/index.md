@@ -57,13 +57,7 @@ If you want to use Blackjax with a model implemented with a PPL, go to the relat
 ```{code-block} bash
 pip install blackjax
 ```
-:::
 
-:::{tab-item} Nightly
-```{code-block} bash
-pip install blackjax-nightly
-```
-:::
 
 :::{tab-item} Conda
 ```{code-block} bash
