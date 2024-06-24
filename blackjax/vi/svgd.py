@@ -135,7 +135,7 @@ def as_top_level_api(
     kernel: Callable = rbf_kernel,
     update_kernel_parameters: Callable = update_median_heuristic,
 ):
-    """Implements the (basic) user interface for the svgd algorithm.
+    """Implements the (basic) user interface for the svgd algorithm :cite:p:`liu2016stein`.
 
     Parameters
     ----------
