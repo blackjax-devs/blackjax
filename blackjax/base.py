@@ -64,7 +64,7 @@ class UpdateFn(Protocol):
 
     """
 
-    def __call__(self, rng_key: PRNGKey, state: State) -> tuple[State, Info]:
+    def __call__(self, rng_key: PRNGKey, state: State, *args) -> tuple[State, Info]:
         """Update the current state using the sampling algorithm.
 
         Parameters
