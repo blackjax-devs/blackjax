@@ -13,7 +13,7 @@ import blackjax.smc.resampling as resampling
 import blackjax.smc.solver as solver
 from blackjax import adaptive_tempered_smc, tempered_smc
 from blackjax.smc import extend_params
-from blackjax.smc.waste_free import mutate_waste_free
+from blackjax.smc.waste_free import update_waste_free, waste_free_smc
 from tests.smc import SMCLinearRegressionTestCase
 
 #jax.config.update("jax_disable_jit", True)  # for easier debugging
@@ -52,7 +52,7 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
             hmc_parameters,
             resampling.systematic,
             None,
-            functools.partial(mutate_waste_free, p=4)
+            waste_free_smc(100,4)
         )
         init_state = tempering.init(init_particles)
         smc_kernel = self.variant(tempering.step)

@@ -48,7 +48,7 @@ def init(particles: ArrayLikeTree):
     return TemperedSMCState(particles, weights, 0.0)
 
 
-def mutate_and_take_last(mcmc_init_fn,
+def update_and_take_last(mcmc_init_fn,
                          tempered_logposterior_fn,
                          shared_mcmc_step_fn,
                          num_mcmc_steps,
@@ -80,7 +80,7 @@ def build_kernel(
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
-    update_strategy: Callable = mutate_and_take_last
+    update_strategy: Callable = update_and_take_last
 ) -> Callable:
     """Build the base Tempered SMC kernel.
 
@@ -200,7 +200,7 @@ def as_top_level_api(
     mcmc_parameters: dict,
     resampling_fn: Callable,
     num_mcmc_steps: Optional[int] = 10,
-    update_strategy = mutate_and_take_last
+    update_strategy = update_and_take_last
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
 
