@@ -36,6 +36,7 @@ from .sgmcmc import sgnht as _sgnht
 from .smc import adaptive_tempered
 from .smc import inner_kernel_tuning as _inner_kernel_tuning
 from .smc import tempered
+from .ns import rejection
 from .vi import meanfield_vi as _meanfield_vi
 from .vi import pathfinder as _pathfinder
 from .vi import schrodinger_follmer as _schrodinger_follmer
@@ -122,6 +123,9 @@ inner_kernel_tuning = generate_top_level_api_from(_inner_kernel_tuning)
 
 smc_family = [tempered_smc, adaptive_tempered_smc]
 "Step_fn returning state has a .particles attribute"
+
+# NS
+rejection_ns = generate_top_level_api_from(rejection)
 
 # stochastic gradient mcmc
 sgld = generate_top_level_api_from(_sgld)
