@@ -141,26 +141,16 @@ def build_kernel(
 
         shared_mcmc_step_fn = partial(mcmc_step_fn, **shared_mcmc_parameters)
 
-        def mcmc_kernel(rng_key, position, step_parameters):
-            state = mcmc_init_fn(position, tempered_logposterior_fn)
-
-            def body_fn(state, rng_key):
-                new_state, info = shared_mcmc_step_fn(
-                    rng_key, state, tempered_logposterior_fn, **step_parameters
-                )
-                return new_state, info
-
-            keys = jax.random.split(rng_key, num_mcmc_steps)
-            last_state, info = jax.lax.scan(body_fn, state, keys)
-            return last_state.position, info
+        update_fn = mutate_and_take_last(mcmc_init_fn, tempered_logposterior_fn, shared_mcmc_step_fn, num_mcmc_steps)
 
         smc_state, info = smc.base.step(
             rng_key,
             SMCState(state.particles, state.weights, unshared_mcmc_parameters),
-            jax.vmap(mcmc_kernel),
+            update_fn,
             jax.vmap(log_weights_fn),
             resampling_fn,
         )
+
         tempered_state = TemperedSMCState(
             smc_state.particles, smc_state.weights, state.lmbda + delta
         )
@@ -168,6 +158,31 @@ def build_kernel(
         return tempered_state, info
 
     return kernel
+
+
+def mutate_and_take_last(mcmc_init_fn,
+                         tempered_logposterior_fn,
+                         shared_mcmc_step_fn,
+                         num_mcmc_steps):
+    """
+    Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and
+    returns the last values, waisting the previous num_mcmc_steps-1
+    samples per chain.
+    """
+    def mcmc_kernel(rng_key, position, step_parameters):
+        state = mcmc_init_fn(position, tempered_logposterior_fn)
+
+        def body_fn(state, rng_key):
+            new_state, info = shared_mcmc_step_fn(
+                rng_key, state, tempered_logposterior_fn, **step_parameters
+            )
+            return new_state, info
+
+        keys = jax.random.split(rng_key, num_mcmc_steps)
+        last_state, info = jax.lax.scan(body_fn, state, keys)
+        return last_state.position, info
+
+    return  jax.vmap(mcmc_kernel)
 
 
 def as_top_level_api(
