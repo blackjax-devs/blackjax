@@ -28,17 +28,16 @@ def one_step(carry, xs):
     state, k = carry
     k, subk = jax.random.split(k, 2)
     state, dead_point = algo.step(subk, state)
-    return (state, k), (xs[0], dead_point)
+    return (state, k), dead_point
 
 
 with jax.disable_jit():
     n_iter = 100
     iterations = jnp.arange(n_iter)
-    res = jax.lax.scan(
-        one_step, (state, rng_key), (iterations, jnp.empty(n_iter))
-    )
+    res = jax.lax.scan(one_step, (state, rng_key), length=n_iter)
 
-final = res[1][1].update_info["particles"]
+
+final = res[1].update_info["particles"]
 live = res[0][0][0]
 
 plt.hist(final.flatten(), bins=30, density=True)
