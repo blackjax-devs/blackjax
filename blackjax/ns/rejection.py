@@ -12,30 +12,40 @@ from blackjax.ns.base import init, build_kernel
 
 __all__ = ["init", "as_top_level_api", "build_kernel"]
 
+
 def create_fn(rng_key, particles, logL_fn, logL_star, create_parameters):
     num_particles, ndims = jax.tree_util.tree_flatten(particles)[0][0].shape
 
-    def cond_fun(carry):
-        _, logL, _ = carry
-        return logL <= logL_star
+    def body_fun(carry, xs):
+        def cond_fun(carry):
+            _, logL, _ = carry
+            return logL <= logL_star
 
-    def body_fun(carry):
-        rng_key, _, _ = carry
-        rng_key, subkey = jax.random.split(rng_key)
-        particle = jax.random.uniform(subkey, (ndims,))
-        logL = logL_fn(particle)
-        return rng_key, logL, particle
+        def inner_body(carry):
+            rng_key, _, _ = carry
+            rng_key, subkey = jax.random.split(rng_key)
+            particle = jax.random.uniform(subkey, (ndims,))
+            logL = logL_fn(particle)
+            return rng_key, logL, particle
+        
+        rng_key = carry[0]
+        rng_key, step_rng = jax.random.split(rng_key)
+        _, final_logL, particle = jax.lax.while_loop(
+            cond_fun, inner_body, (step_rng, -jnp.inf, jnp.zeros(ndims))
+        )
+        return (rng_key, final_logL, particle), (particle, final_logL)
 
+    logLs = jnp.ones(num_particles) * -jnp.inf
     init_val = (rng_key, -jnp.inf, jnp.zeros(ndims))
-    final_rng_key, final_logL, final_particle = jax.lax.while_loop(cond_fun, body_fun, init_val)
+    _, new_particles = jax.lax.scan(body_fun, init_val, (particles, logLs))
 
-    return jnp.array([final_particle]), { "logL": jnp.array([final_logL]) }
+    return new_particles[0], new_particles[1]
 
 
 def delete_fn(rng_key, logL, delete_parameters):
     idx = logL > logL.min()
     return idx
-    
+
 
 def as_top_level_api(
     logL_fn: Callable,
