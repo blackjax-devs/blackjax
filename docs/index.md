@@ -41,7 +41,7 @@ rng_key = jax.random.key(0)
 step = jax.jit(nuts.step)
 for i in range(1_000):
     nuts_key = jax.random.fold_in(rng_key, i)
-    state, _ = nuts.step(nuts_key, state)
+    state, _ = step(nuts_key, state)
 ```
 
 :::{note}
