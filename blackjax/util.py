@@ -283,6 +283,7 @@ def run_inference_algorithm(
     final_state, history = lax.scan(one_step, initial_state, xs)
     return final_state, history
 
+
 def store_only_expectation_values(sampling_algorithm, state_transform= lambda x: x, exp_vals_transform= lambda x: x):
     """Takes a sampling algorithm and constructs from it a new sampling algorithm object. The new sampling algorithm has the same 
         kernel but only stores the streaming expectation values of some observables, not the full states; to save memory.
