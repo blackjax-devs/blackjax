@@ -22,6 +22,7 @@ from jax.experimental import io_callback
 def progress_bar_scan(num_samples, print_rate=None):
     "Progress bar for a JAX scan"
     progress_bars = {}
+    idx_map = {}
 
     if print_rate is None:
         if num_samples > 20:
@@ -29,17 +30,30 @@ def progress_bar_scan(num_samples, print_rate=None):
         else:
             print_rate = 1  # if you run the sampler for less than 20 iterations
 
+    def _calc_chain_idx(iter_num):
+        iter_num = int(iter_num)
+        try:
+            idx = idx_map[iter_num]
+        except KeyError:
+            idx = 0
+            idx_map[iter_num] = 0
+
+        idx_map[iter_num] += 1
+        return idx
+
     def _define_bar(arg):
         del arg
-        progress_bars[0] = progress_bar(range(num_samples))
-        progress_bars[0].update(0)
+        idx = len(progress_bars)
+        progress_bars[idx] = progress_bar(range(num_samples))
+        progress_bars[idx].update(0)
 
     def _update_bar(arg):
-        progress_bars[0].update_bar(arg + 1)
+        idx = _calc_chain_idx(arg)
+        progress_bars[idx].update_bar(arg + 1)
 
     def _close_bar(arg):
-        del arg
-        progress_bars[0].on_iter_end()
+        idx = _calc_chain_idx(arg)
+        progress_bars[idx].on_iter_end()
 
     def _update_progress_bar(iter_num):
         "Updates progress bar of a JAX scan or loop"
@@ -60,7 +74,7 @@ def progress_bar_scan(num_samples, print_rate=None):
 
         _ = lax.cond(
             iter_num == num_samples - 1,
-            lambda _: io_callback(_close_bar, None, None),
+            lambda _: io_callback(_close_bar, None, iter_num + 1),
             lambda _: None,
             operand=None,
         )
