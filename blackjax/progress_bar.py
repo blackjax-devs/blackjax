@@ -41,14 +41,11 @@ def progress_bar_scan(num_samples, print_rate=None):
         idx_map[iter_num] += 1
         return idx
 
-    def _define_bar(arg):
-        del arg
-        idx = len(progress_bars)
-        progress_bars[idx] = progress_bar(range(num_samples))
-        progress_bars[idx].update(0)
-
     def _update_bar(arg):
         idx = _calc_chain_idx(arg)
+        if arg == 0:
+            progress_bars[idx] = progress_bar(range(num_samples))
+            progress_bars[idx].update(0)
         progress_bars[idx].update_bar(arg + 1)
 
     def _close_bar(arg):
@@ -57,12 +54,6 @@ def progress_bar_scan(num_samples, print_rate=None):
 
     def _update_progress_bar(iter_num):
         "Updates progress bar of a JAX scan or loop"
-        _ = lax.cond(
-            iter_num == 0,
-            lambda _: io_callback(_define_bar, None, iter_num),
-            lambda _: None,
-            operand=None,
-        )
 
         _ = lax.cond(
             # update every multiple of `print_rate` except at the end
