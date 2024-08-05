@@ -14,10 +14,11 @@
 """Progress bar decorators for use with step functions.
 Adapted from Jeremie Coullon's blog post :cite:p:`progress_bar`.
 """
+from threading import Lock
+
 from fastprogress.fastprogress import progress_bar
 from jax import lax
 from jax.experimental import io_callback
-from threading import Lock
 
 
 def progress_bar_scan(num_samples, print_rate=None):
