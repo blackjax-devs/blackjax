@@ -20,7 +20,7 @@ import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
 from blackjax.diagnostics import effective_sample_size
-from blackjax.util import pytree_size, streaming_average_update
+from blackjax.util import pytree_size, incremental_value_update
 
 
 class MCLMCAdaptationState(NamedTuple):

@@ -282,11 +282,11 @@ def run_inference_algorithm(
     return final_state, history
 
 
-def store_only_expectation_values(sampling_algorithm, state_transform= lambda x: x, exp_vals_transform= lambda x: x):
+def store_only_expectation_values(sampling_algorithm, state_transform= lambda x: x, incremental_value_transform= lambda x: x):
     """Takes a sampling algorithm and constructs from it a new sampling algorithm object. The new sampling algorithm has the same 
         kernel but only stores the streaming expectation values of some observables, not the full states; to save memory.
 
-       It saves exp_vals_transform(E[state_transform(x)]) at each step i, where expectation is computed with samples up to i-th sample.
+       It saves incremental_value_transform(E[state_transform(x)]) at each step i, where expectation is computed with samples up to i-th sample.
        
        Example:
 
@@ -304,7 +304,7 @@ def store_only_expectation_values(sampling_algorithm, state_transform= lambda x:
             num_steps = 4
 
             integrator = map_integrator_type_to_integrator['mclmc'][integrator_type]
-            state_transform = lambda state: x.position
+            state_transform = lambda state: state.position
             memory_efficient_sampling_alg, transform = store_only_expectation_values(
                 sampling_algorithm=sampling_alg,
                 state_transform=state_transform)
@@ -326,27 +326,27 @@ def store_only_expectation_values(sampling_algorithm, state_transform= lambda x:
         averaging_state = (0., state_transform(state))
         return (state, averaging_state)
 
-    def update_fn(rng_key, state_full):
-        state, averaging_state = state_full
+    def update_fn(rng_key, state_and_incremental_val):
+        state, averaging_state = state_and_incremental_val
         state, info = sampling_algorithm.step(rng_key, state) # update the state with the sampling algorithm
-        averaging_state = streaming_average_update(state_transform(state), averaging_state) # update the expectation value with the Kalman filter
+        averaging_state = incremental_value_update(state_transform(state), averaging_state) # update the expectation value with the running average
         return (state, averaging_state), info
     
-    def transform(full_state, info):
-        exp_vals = full_state[1][1]
-        return exp_vals_transform(exp_vals), info
+    def transform(state_and_incremental_val, info):
+        (state, (_, incremental_value)) = state_and_incremental_val 
+        return incremental_value_transform(incremental_value), info
 
     return SamplingAlgorithm(init_fn, update_fn), transform
     
 
 
-def streaming_average_update(expectation, streaming_avg, weight=1.0, zero_prevention=0.0):
+def incremental_value_update(expectation, incremental_val, weight=1.0, zero_prevention=0.0):
     """Compute the streaming average of a function O(x) using a weight.
     Parameters:
     ----------
         expectation
             the value of the expectation at the current timestep
-        streaming_avg
+        incremental_val
             tuple of (total, average) where total is the sum of weights and average is the current average
         weight
             weight of the current state
@@ -358,11 +358,11 @@ def streaming_average_update(expectation, streaming_avg, weight=1.0, zero_preven
     """
 
     flat_expectation, unravel_fn = ravel_pytree(expectation)
-    total, average = streaming_avg
+    total, average = incremental_val
     flat_average, _ = ravel_pytree(average)
     average = (total * flat_average + weight * flat_expectation) / (
         total + weight + zero_prevention
     )
     total += weight
-    streaming_avg = (total, unravel_fn(average))
-    return streaming_avg
+    incremental_val = (total, unravel_fn(average))
+    return incremental_val
