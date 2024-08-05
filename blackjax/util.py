@@ -3,14 +3,13 @@
 from functools import partial
 from typing import Callable, Union
 
-import jax
 import jax.numpy as jnp
 from jax import jit, lax
 from jax.flatten_util import ravel_pytree
 from jax.random import normal, split
 from jax.tree_util import tree_leaves
 
-from blackjax.base import Info, SamplingAlgorithm, State, VIAlgorithm
+from blackjax.base import SamplingAlgorithm, VIAlgorithm
 from blackjax.progress_bar import progress_bar_scan
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -151,8 +150,8 @@ def index_pytree(input_pytree: ArrayLikeTree) -> ArrayTree:
 #     progress_bar: bool = False,
 #     transform: Callable = lambda x: x,
 # ) -> tuple[State, State, Info]:
-    
-    
+
+
 #     """Wrapper to run an inference algorithm.
 
 #     Note that this utility function does not work for Stochastic Gradient MCMC samplers
@@ -191,11 +190,11 @@ def index_pytree(input_pytree: ArrayLikeTree) -> ArrayTree:
 #         raise ValueError(
 #             "Only one of initial_state or initial_position must be provided."
 #         )
-    
+
 #     init_key, sample_key = split(rng_key, 2)
 #     if initial_position is not None:
 #         initial_state = inference_algorithm.init(initial_position, init_key)
-    
+
 #     keys = split(sample_key, num_steps)
 
 #     @jit
@@ -212,6 +211,7 @@ def index_pytree(input_pytree: ArrayLikeTree) -> ArrayTree:
 #     xs = (jnp.arange(num_steps), keys)
 #     final_state, (state_history, info_history) = lax.scan(one_step, initial_state, xs)
 #     return final_state, state_history, info_history
+
 
 def run_inference_algorithm(
     rng_key: PRNGKey,
@@ -273,7 +273,7 @@ def run_inference_algorithm(
         _, rng_key = xs
         state, info = inference_algorithm.step(rng_key, state)
         return state, transform(state, info)
-        
+
     if progress_bar:
         one_step = progress_bar_scan(num_steps)(one_step)
 
@@ -282,65 +282,74 @@ def run_inference_algorithm(
     return final_state, history
 
 
-def store_only_expectation_values(sampling_algorithm, state_transform= lambda x: x, incremental_value_transform= lambda x: x):
-    """Takes a sampling algorithm and constructs from it a new sampling algorithm object. The new sampling algorithm has the same 
-        kernel but only stores the streaming expectation values of some observables, not the full states; to save memory.
+def store_only_expectation_values(
+    sampling_algorithm,
+    state_transform=lambda x: x,
+    incremental_value_transform=lambda x: x,
+):
+    """Takes a sampling algorithm and constructs from it a new sampling algorithm object. The new sampling algorithm has the same
+     kernel but only stores the streaming expectation values of some observables, not the full states; to save memory.
 
-       It saves incremental_value_transform(E[state_transform(x)]) at each step i, where expectation is computed with samples up to i-th sample.
-       
-       Example:
+    It saves incremental_value_transform(E[state_transform(x)]) at each step i, where expectation is computed with samples up to i-th sample.
 
-       .. code::
+    Example:
 
-            init_key, state_key, run_key = jax.random.split(jax.random.PRNGKey(0),3)
-            model = StandardNormal(2)
-            initial_position = model.sample_init(init_key)
-            initial_state = blackjax.mcmc.mclmc.init(
-                position=initial_position, logdensity_fn=model.logdensity_fn, rng_key=state_key
-            )
-            integrator_type = "mclachlan"
-            L = 1.0
-            step_size = 0.1
-            num_steps = 4
+    .. code::
 
-            integrator = map_integrator_type_to_integrator['mclmc'][integrator_type]
-            state_transform = lambda state: state.position
-            memory_efficient_sampling_alg, transform = store_only_expectation_values(
-                sampling_algorithm=sampling_alg,
-                state_transform=state_transform)
-            
-            initial_state = memory_efficient_sampling_alg.init(initial_state)
-                
-            final_state, trace_at_every_step = run_inference_algorithm(
+         init_key, state_key, run_key = jax.random.split(jax.random.PRNGKey(0),3)
+         model = StandardNormal(2)
+         initial_position = model.sample_init(init_key)
+         initial_state = blackjax.mcmc.mclmc.init(
+             position=initial_position, logdensity_fn=model.logdensity_fn, rng_key=state_key
+         )
+         integrator_type = "mclachlan"
+         L = 1.0
+         step_size = 0.1
+         num_steps = 4
 
-                rng_key=run_key,
-                initial_state=initial_state,
-                inference_algorithm=memory_efficient_sampling_alg,
-                num_steps=num_steps,
-                transform=transform,
-                progress_bar=True,
-            )           
+         integrator = map_integrator_type_to_integrator['mclmc'][integrator_type]
+         state_transform = lambda state: state.position
+         memory_efficient_sampling_alg, transform = store_only_expectation_values(
+             sampling_algorithm=sampling_alg,
+             state_transform=state_transform)
+
+         initial_state = memory_efficient_sampling_alg.init(initial_state)
+
+         final_state, trace_at_every_step = run_inference_algorithm(
+
+             rng_key=run_key,
+             initial_state=initial_state,
+             inference_algorithm=memory_efficient_sampling_alg,
+             num_steps=num_steps,
+             transform=transform,
+             progress_bar=True,
+         )
     """
-    
+
     def init_fn(state):
-        averaging_state = (0., state_transform(state))
+        averaging_state = (0.0, state_transform(state))
         return (state, averaging_state)
 
     def update_fn(rng_key, state_and_incremental_val):
         state, averaging_state = state_and_incremental_val
-        state, info = sampling_algorithm.step(rng_key, state) # update the state with the sampling algorithm
-        averaging_state = incremental_value_update(state_transform(state), averaging_state) # update the expectation value with the running average
+        state, info = sampling_algorithm.step(
+            rng_key, state
+        )  # update the state with the sampling algorithm
+        averaging_state = incremental_value_update(
+            state_transform(state), averaging_state
+        )  # update the expectation value with the running average
         return (state, averaging_state), info
-    
+
     def transform(state_and_incremental_val, info):
-        (state, (_, incremental_value)) = state_and_incremental_val 
+        (state, (_, incremental_value)) = state_and_incremental_val
         return incremental_value_transform(incremental_value), info
 
     return SamplingAlgorithm(init_fn, update_fn), transform
-    
 
 
-def incremental_value_update(expectation, incremental_val, weight=1.0, zero_prevention=0.0):
+def incremental_value_update(
+    expectation, incremental_val, weight=1.0, zero_prevention=0.0
+):
     """Compute the streaming average of a function O(x) using a weight.
     Parameters:
     ----------
