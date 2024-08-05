@@ -17,12 +17,14 @@ Adapted from Jeremie Coullon's blog post :cite:p:`progress_bar`.
 from fastprogress.fastprogress import progress_bar
 from jax import lax
 from jax.experimental import io_callback
+from threading import Lock
 
 
 def progress_bar_scan(num_samples, print_rate=None):
     "Progress bar for a JAX scan"
     progress_bars = {}
     idx_map = {}
+    lock = Lock()
 
     if print_rate is None:
         if num_samples > 20:
@@ -42,14 +44,16 @@ def progress_bar_scan(num_samples, print_rate=None):
         return idx
 
     def _update_bar(arg):
-        idx = _calc_chain_idx(arg)
-        if arg == 0:
-            progress_bars[idx] = progress_bar(range(num_samples))
-            progress_bars[idx].update(0)
+        with lock:
+            idx = _calc_chain_idx(arg)
+            if arg == 0:
+                progress_bars[idx] = progress_bar(range(num_samples))
+                progress_bars[idx].update(0)
         progress_bars[idx].update_bar(arg + 1)
 
     def _close_bar(arg):
-        idx = _calc_chain_idx(arg)
+        with lock:
+            idx = _calc_chain_idx(arg)
         progress_bars[idx].on_iter_end()
 
     def _update_progress_bar(iter_num):
