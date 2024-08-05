@@ -279,7 +279,7 @@ def run_inference_algorithm(
     if progress_bar:
         one_step = progress_bar_scan(num_steps)(one_step)
 
-    xs = (jnp.arange(num_steps), keys)
+    xs = jnp.arange(num_steps), keys
     final_state, history = lax.scan(one_step, initial_state, xs)
     return final_state, history
 
