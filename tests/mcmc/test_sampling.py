@@ -502,7 +502,7 @@ class LinearRegressionTest(chex.TestCase):
             rng_key=inference_key,
             initial_state=state,
             inference_algorithm=barker,
-            transform=lambda state, info: state.position,
+            transform=lambda state, info: state,
             num_steps=10_000,
         )
 
@@ -688,7 +688,7 @@ class LatentGaussianTest(chex.TestCase):
             functools.partial(
                 run_inference_algorithm,
                 inference_algorithm=inference_algorithm,
-                transform=lambda state, info: state.position,
+                transform=lambda state, info: state,
                 num_steps=self.sampling_steps,
             ),
         )(rng_key=self.key, initial_state=initial_state)
@@ -730,11 +730,10 @@ class UnivariateNormalTest(chex.TestCase):
         **kwargs,
     ):
         inference_key, orbit_key = jax.random.split(rng_key)
-        _, states = self.variant(
+        _, (states, info) = self.variant(
             functools.partial(
                 run_inference_algorithm,
                 inference_algorithm=inference_algorithm,
-                transform=lambda state, info: state.position,
                 num_steps=num_sampling_steps,
                 **kwargs,
             )
@@ -862,7 +861,7 @@ class UnivariateNormalTest(chex.TestCase):
             20_000,
             burnin,
             postprocess_samples,
-            transform=lambda x: (x.positions, x.weights),
+            transform=lambda state, info: ((state.positions, state.weights), info),
         )
 
     @chex.all_variants(with_pmap=False)
@@ -1004,7 +1003,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             functools.partial(
                 run_inference_algorithm,
                 inference_algorithm=inference_algorithm,
-                transform=lambda state, info: state.position,
+                transform=lambda state, info: state,
                 num_steps=2_000,
             )
         )
