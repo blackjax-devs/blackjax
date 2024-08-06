@@ -30,7 +30,7 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             inference_algorithm=self.algorithm,
             num_steps=self.num_steps,
             progress_bar=progress_bar,
-            transform=lambda state,info: state.position,
+            transform=lambda state, info: state.position,
         )
 
     def test_streaming(self):
