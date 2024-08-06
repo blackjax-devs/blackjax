@@ -224,13 +224,19 @@ def run_inference_algorithm(
 
     one_step = jax.jit(partial(one_step, return_state=return_state_history))
 
+    xs = (jnp.arange(num_steps), keys)
     if progress_bar:
         one_step = progress_bar_scan(num_steps)(one_step)
+        (((_, average), final_state), _), history = lax.scan(
+            one_step,
+            (((0, expectation(transform(initial_state))), initial_state), -1),
+            xs,
+        )
 
-    xs = (jnp.arange(num_steps), keys)
-    ((_, average), final_state), history = lax.scan(
-        one_step, ((0, expectation(transform(initial_state))), initial_state), xs
-    )
+    else:
+        ((_, average), final_state), history = lax.scan(
+            one_step, ((0, expectation(transform(initial_state))), initial_state), xs
+        )
 
     if not return_state_history:
         return average, transform(final_state)
