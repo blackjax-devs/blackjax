@@ -197,7 +197,7 @@ class LinearRegressionTest(chex.TestCase):
         for i, attribute in enumerate(["state", "info", "adaptation_state"]):
             check_attrs(attribute, keysets[i])
 
-        _, states, _ = run_inference_algorithm(
+        _, (states, _) = run_inference_algorithm(
             rng_key=inference_key,
             initial_state=state,
             inference_algorithm=inference_algorithm,
@@ -227,7 +227,7 @@ class LinearRegressionTest(chex.TestCase):
             rng_key=inference_key,
             initial_state=state,
             inference_algorithm=mala,
-            transform=lambda state, info: state.position,
+            transform=lambda state, info: state,
             num_steps=10_000,
         )
 
@@ -381,7 +381,7 @@ class LinearRegressionTest(chex.TestCase):
             initial_state=state,
             inference_algorithm=inference_algorithm,
             num_steps=num_sampling_steps,
-            transform=lambda state, info: state.position,
+            transform=lambda state, info: state,
         )
 
         coefs_samples = states.position["coefs"]
@@ -425,7 +425,7 @@ class LinearRegressionTest(chex.TestCase):
                 rng_key=key,
                 initial_state=state,
                 inference_algorithm=inference_algorithm,
-                transform=lambda state, info: state.position,
+                transform=lambda state, info: state,
                 num_steps=100,
             )
         )(chain_keys, last_states)
@@ -473,7 +473,7 @@ class LinearRegressionTest(chex.TestCase):
                 rng_key=key,
                 initial_state=state,
                 inference_algorithm=inference_algorithm,
-                transform=lambda state, info: state.position,
+                transform=lambda state, info: state,
                 num_steps=100,
             )
         )(chain_keys, last_states)
