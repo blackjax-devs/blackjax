@@ -67,6 +67,15 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
         self.assert_linear_regression_test_case(result)
 
 
+#class UpdateWasteFreeTest(chex.TestCase):
+#    update_waste_free(mcmc_init_fn,
+#                      logposterior_fn,
+#                      mcmc_step_fn,
+#                      n_particles: int,
+#                      p: int,
+#                      num_resampled,
+#                      num_mcmc_steps):
+
 
 if __name__ == "__main__":
     absltest.main()

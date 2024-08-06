@@ -18,7 +18,7 @@ def update_waste_free(mcmc_init_fn,
     See Algorithm 2: https://arxiv.org/abs/2011.02328
     """
     if num_mcmc_steps is not None:
-        raise ValueError("Can't use waste free SMC with a num_mcmc_steps parameter")
+        raise ValueError("Can't use waste free SMC with a num_mcmc_steps parameter, set num_mcmc_steps = None")
 
     num_mcmc_steps = p-1
 
@@ -34,14 +34,25 @@ def update_waste_free(mcmc_init_fn,
         _, (states, infos) = jax.lax.scan(body_fn, state, jax.random.split(rng_key, num_mcmc_steps))
         return states, infos
 
-    def gather(rng_key, position, step_parameters):
-        states, infos= jax.vmap(mcmc_kernel)(rng_key, position, step_parameters)
-        step_particles = jax.tree.map(lambda x: x.reshape((num_resampled * num_mcmc_steps)), states.position)
-        initial_particles = jax.tree.map(lambda x: x.reshape((num_resampled,)), position)
-        new_particles = jax.tree.map(lambda x,y: jax.numpy.hstack([x,y]), initial_particles, step_particles)
-        return new_particles, None
+    def update(rng_key, position, step_parameters):
+        """
+        Given the initial particles, runs a chain starting at each.
+        The combines the initial particles with all the particles generated
+        at each step of each chain.
+        """
+        states, infos = jax.vmap(mcmc_kernel)(rng_key, position, step_parameters)
+        # step particles is num_resmapled, num_mcmc_steps, dimension_of_variable
+        # want to transformed into num_resampled * num_mcmc_steps, dimension of variable
+        def reshape_step_particles(x):
+            if len(x.shape) > 2:
+                return x.reshape((x.shape[0]*x.shape[1], -1))
+            else:
+                return x.flatten()
 
-    return gather, num_resampled
+        step_particles = jax.tree.map(reshape_step_particles, states.position)
+        new_particles = jax.tree.map(lambda x,y: jnp.concatenate([x,y]), position, step_particles)
+        return new_particles, None # TODO also update Info?
+    return update, num_resampled
 
 def waste_free_smc(n_particles, p):
     return functools.partial(update_waste_free, num_resampled=int(n_particles / p), p=p)
