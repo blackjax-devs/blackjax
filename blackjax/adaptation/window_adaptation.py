@@ -334,16 +334,22 @@ def window_adaptation(
         if progress_bar:
             print("Running window adaptation")
             one_step_ = jax.jit(progress_bar_scan(num_steps)(one_step))
+            start_state = ((init_state, init_adaptation_state), -1)
         else:
             one_step_ = jax.jit(one_step)
+            start_state = (init_state, init_adaptation_state)
 
         keys = jax.random.split(rng_key, num_steps)
         schedule = build_schedule(num_steps)
         last_state, info = jax.lax.scan(
             one_step_,
-            (init_state, init_adaptation_state),
+            start_state,
             (jnp.arange(num_steps), keys, schedule),
         )
+
+        if progress_bar:
+            last_state, _ = last_state
+
         last_chain_state, last_warmup_state, *_ = last_state
 
         step_size, inverse_mass_matrix = adapt_final(last_warmup_state)
