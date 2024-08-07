@@ -51,7 +51,7 @@ def update_waste_free(mcmc_init_fn,
 
         step_particles = jax.tree.map(reshape_step_particles, states.position)
         new_particles = jax.tree.map(lambda x,y: jnp.concatenate([x,y]), position, step_particles)
-        return new_particles, None # TODO also update Info?
+        return new_particles, infos
     return update, num_resampled
 
 def waste_free_smc(n_particles, p):
