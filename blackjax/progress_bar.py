@@ -94,3 +94,17 @@ def progress_bar_scan(num_samples, print_rate=None):
         return wrapper_progress_bar
 
     return _progress_bar_scan
+
+
+def gen_scan_fn(num_samples, progress_bar, print_rate=None):
+    if progress_bar:
+
+        def scan_wrap(f, init, *args, **kwargs):
+            func = progress_bar_scan(num_samples, print_rate)(f)
+            carry = (init, -1)
+            (last_state, _), output = lax.scan(func, carry, *args, **kwargs)
+            return last_state, output
+
+        return scan_wrap
+    else:
+        return lax.scan
