@@ -90,7 +90,7 @@ def test_chees_adaptation(adaptation_filters):
     algorithm = blackjax.dynamic_hmc(logprob_fn, **parameters)
 
     chain_keys = jax.random.split(inference_key, num_chains)
-    _, _, infos = jax.vmap(
+    _, (_, infos) = jax.vmap(
         lambda key, state: run_inference_algorithm(
             rng_key=key,
             initial_state=state,

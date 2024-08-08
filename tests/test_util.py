@@ -4,7 +4,7 @@ import jax.numpy as jnp
 from absl.testing import absltest, parameterized
 
 import blackjax
-from blackjax.util import run_inference_algorithm
+from blackjax.util import run_inference_algorithm, store_only_expectation_values
 
 
 class RunInferenceAlgorithmTest(chex.TestCase):
@@ -30,7 +30,7 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             inference_algorithm=self.algorithm,
             num_steps=self.num_steps,
             progress_bar=progress_bar,
-            transform=lambda x: x.position,
+            transform=lambda state, info: state.position,
         )
 
     def test_streaming(self):
@@ -41,37 +41,49 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             10,
         )
 
-        init_key, run_key = jax.random.split(self.key, 2)
-
+        init_key, state_key, run_key = jax.random.split(jax.random.PRNGKey(0), 3)
         initial_state = blackjax.mcmc.mclmc.init(
-            position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
+            position=initial_position, logdensity_fn=logdensity_fn, rng_key=state_key
+        )
+        L = 1.0
+        step_size = 0.1
+        num_steps = 4
+
+        sampling_alg = blackjax.mclmc(
+            logdensity_fn,
+            L=L,
+            step_size=step_size,
         )
 
-        alg = blackjax.mclmc(logdensity_fn=logdensity_fn, L=0.5, step_size=0.1)
+        state_transform = lambda x: x.position
 
-        _, states, info = run_inference_algorithm(
+        _, samples = run_inference_algorithm(
             rng_key=run_key,
             initial_state=initial_state,
-            inference_algorithm=alg,
-            num_steps=50,
-            progress_bar=False,
-            expectation=lambda x: x,
-            transform=lambda x: x.position,
-            return_state_history=True,
+            inference_algorithm=sampling_alg,
+            num_steps=num_steps,
+            transform=lambda state, info: state_transform(state),
+            progress_bar=True,
         )
 
-        average, _ = run_inference_algorithm(
+        print("average of steps (slow way):", samples.mean(axis=0))
+
+        memory_efficient_sampling_alg, transform = store_only_expectation_values(
+            sampling_algorithm=sampling_alg, state_transform=state_transform
+        )
+
+        initial_state = memory_efficient_sampling_alg.init(initial_state)
+
+        final_state, trace_at_every_step = run_inference_algorithm(
             rng_key=run_key,
             initial_state=initial_state,
-            inference_algorithm=alg,
-            num_steps=50,
-            progress_bar=False,
-            expectation=lambda x: x,
-            transform=lambda x: x.position,
-            return_state_history=False,
+            inference_algorithm=memory_efficient_sampling_alg,
+            num_steps=num_steps,
+            transform=transform,
+            progress_bar=True,
         )
 
-        assert jnp.allclose(states.mean(axis=0), average)
+        assert jnp.allclose(trace_at_every_step[0][-1], samples.mean(axis=0))
 
     @parameterized.parameters([True, False])
     def test_compatible_with_initial_pos(self, progress_bar):
@@ -81,7 +93,7 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             inference_algorithm=self.algorithm,
             num_steps=self.num_steps,
             progress_bar=progress_bar,
-            transform=lambda x: x.position,
+            transform=lambda state, info: state.position,
         )
 
     @parameterized.parameters([True, False])

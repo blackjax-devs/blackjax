@@ -20,7 +20,7 @@ import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
 from blackjax.diagnostics import effective_sample_size
-from blackjax.util import pytree_size, streaming_average_update
+from blackjax.util import incremental_value_update, pytree_size
 
 
 class MCLMCAdaptationState(NamedTuple):
@@ -199,9 +199,9 @@ def make_L_step_size_adaptation(
 
         x = ravel_pytree(state.position)[0]
         # update the running average of x, x^2
-        streaming_avg = streaming_average_update(
-            current_value=jnp.array([x, jnp.square(x)]),
-            previous_weight_and_average=streaming_avg,
+        streaming_avg = incremental_value_update(
+            expectation=jnp.array([x, jnp.square(x)]),
+            incremental_val=streaming_avg,
             weight=(1 - mask) * success * params.step_size,
             zero_prevention=mask,
         )
