@@ -399,7 +399,7 @@ document.write(`
     <span class="n">dual_averaging_adaptation</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">blackjax.base</span> <span class="kn">import</span> <span class="n">AdaptationAlgorithm</span>
-<span class="kn">from</span> <span class="nn">blackjax.progress_bar</span> <span class="kn">import</span> <span class="n">progress_bar_scan</span>
+<span class="kn">from</span> <span class="nn">blackjax.progress_bar</span> <span class="kn">import</span> <span class="n">gen_scan_fn</span>
 <span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">pytree_size</span>
 
@@ -724,22 +724,15 @@ document.write(`
 
         <span class="k">if</span> <span class="n">progress_bar</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Running window adaptation&quot;</span><span class="p">)</span>
-            <span class="n">one_step_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">progress_bar_scan</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)(</span><span class="n">one_step</span><span class="p">))</span>
-            <span class="n">start_state</span> <span class="o">=</span> <span class="p">((</span><span class="n">init_state</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">one_step_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">one_step</span><span class="p">)</span>
-            <span class="n">start_state</span> <span class="o">=</span> <span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">)</span>
-
+        <span class="n">scan_fn</span> <span class="o">=</span> <span class="n">gen_scan_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">,</span> <span class="n">progress_bar</span><span class="o">=</span><span class="n">progress_bar</span><span class="p">)</span>
+        <span class="n">start_state</span> <span class="o">=</span> <span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">)</span>
         <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
         <span class="n">schedule</span> <span class="o">=</span> <span class="n">build_schedule</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
-        <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-            <span class="n">one_step_</span><span class="p">,</span>
+        <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">scan_fn</span><span class="p">(</span>
+            <span class="n">one_step</span><span class="p">,</span>
             <span class="n">start_state</span><span class="p">,</span>
             <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="n">keys</span><span class="p">,</span> <span class="n">schedule</span><span class="p">),</span>
         <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">progress_bar</span><span class="p">:</span>
-            <span class="n">last_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">last_state</span>
 
         <span class="n">last_chain_state</span><span class="p">,</span> <span class="n">last_warmup_state</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">last_state</span>
 
