@@ -10,7 +10,7 @@ from jax.random import normal, split
 from jax.tree_util import tree_leaves
 
 from blackjax.base import SamplingAlgorithm, VIAlgorithm
-from blackjax.progress_bar import progress_bar_scan
+from blackjax.progress_bar import gen_scan_fn
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 
@@ -200,13 +200,15 @@ def run_inference_algorithm(
         state, info = inference_algorithm.step(rng_key, state)
         return state, transform(state, info)
 
-    if progress_bar:
-        one_step = progress_bar_scan(num_steps)(one_step)
-        xs = jnp.arange(num_steps), keys
-        final_state, history = lax.scan(one_step, (initial_state, -1), xs)
-    else:
-        xs = jnp.arange(num_steps), keys
-        final_state, history = lax.scan(one_step, initial_state, xs)
+    scan_fn = gen_scan_fn(num_steps, progress_bar)
+
+    # if progress_bar:
+    #     one_step = progress_bar_scan(num_steps)(one_step)
+    #     xs = jnp.arange(num_steps), keys
+    #     final_state, history = lax.scan(one_step, (initial_state, -1), xs)
+
+    xs = jnp.arange(num_steps), keys
+    final_state, history = scan_fn(one_step, initial_state, xs)
 
     return final_state, history
 
