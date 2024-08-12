@@ -227,12 +227,12 @@ class LinearRegressionTest(chex.TestCase):
             rng_key=inference_key,
             initial_state=state,
             inference_algorithm=mala,
-            transform=lambda state, info: state,
+            transform=lambda state, info: state.position,
             num_steps=10_000,
         )
 
-        coefs_samples = states.position["coefs"][3000:]
-        scale_samples = np.exp(states.position["log_scale"][3000:])
+        coefs_samples = states["coefs"][3000:]
+        scale_samples = np.exp(states["log_scale"][3000:])
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
@@ -381,11 +381,11 @@ class LinearRegressionTest(chex.TestCase):
             initial_state=state,
             inference_algorithm=inference_algorithm,
             num_steps=num_sampling_steps,
-            transform=lambda state, info: state,
+            transform=lambda state, info: state.position,
         )
 
-        coefs_samples = states.position["coefs"]
-        scale_samples = np.exp(states.position["log_scale"])
+        coefs_samples = states["coefs"]
+        scale_samples = np.exp(states["log_scale"])
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
@@ -425,13 +425,13 @@ class LinearRegressionTest(chex.TestCase):
                 rng_key=key,
                 initial_state=state,
                 inference_algorithm=inference_algorithm,
-                transform=lambda state, info: state,
+                transform=lambda state, info: state.position,
                 num_steps=100,
             )
         )(chain_keys, last_states)
 
-        coefs_samples = states.position["coefs"]
-        scale_samples = np.exp(states.position["log_scale"])
+        coefs_samples = states["coefs"]
+        scale_samples = np.exp(states["log_scale"])
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
@@ -473,13 +473,13 @@ class LinearRegressionTest(chex.TestCase):
                 rng_key=key,
                 initial_state=state,
                 inference_algorithm=inference_algorithm,
-                transform=lambda state, info: state,
+                transform=lambda state, info: state.position,
                 num_steps=100,
             )
         )(chain_keys, last_states)
 
-        coefs_samples = states.position["coefs"]
-        scale_samples = np.exp(states.position["log_scale"])
+        coefs_samples = states["coefs"]
+        scale_samples = np.exp(states["log_scale"])
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
@@ -502,12 +502,12 @@ class LinearRegressionTest(chex.TestCase):
             rng_key=inference_key,
             initial_state=state,
             inference_algorithm=barker,
-            transform=lambda state, info: state,
+            transform=lambda state, info: state.position,
             num_steps=10_000,
         )
 
-        coefs_samples = states.position["coefs"][3000:]
-        scale_samples = np.exp(states.position["log_scale"][3000:])
+        coefs_samples = states["coefs"][3000:]
+        scale_samples = np.exp(states["log_scale"][3000:])
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
@@ -688,16 +688,16 @@ class LatentGaussianTest(chex.TestCase):
             functools.partial(
                 run_inference_algorithm,
                 inference_algorithm=inference_algorithm,
-                transform=lambda state, info: state,
+                transform=lambda state, info: state.position,
                 num_steps=self.sampling_steps,
             ),
         )(rng_key=self.key, initial_state=initial_state)
 
         np.testing.assert_allclose(
-            np.var(states.position[self.burnin :]), 1 / (1 + 0.5), rtol=1e-2, atol=1e-2
+            np.var(states[self.burnin :]), 1 / (1 + 0.5), rtol=1e-2, atol=1e-2
         )
         np.testing.assert_allclose(
-            np.mean(states.position[self.burnin :]), 2 / 3, rtol=1e-2, atol=1e-2
+            np.mean(states[self.burnin :]), 2 / 3, rtol=1e-2, atol=1e-2
         )
 
 
@@ -1003,7 +1003,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             functools.partial(
                 run_inference_algorithm,
                 inference_algorithm=inference_algorithm,
-                transform=lambda state, info: state,
+                transform=lambda state, info: state.position,
                 num_steps=2_000,
             )
         )
@@ -1011,7 +1011,7 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             rng_key=multi_chain_sample_key, initial_state=initial_states
         )
 
-        posterior_samples = states.position[:, -1000:]
+        posterior_samples = states[:, -1000:]
         posterior_delta = posterior_samples - true_loc
         posterior_variance = posterior_delta**2.0
         posterior_correlation = jnp.prod(posterior_delta, axis=-1, keepdims=True) / (

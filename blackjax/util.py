@@ -7,7 +7,7 @@ import jax.numpy as jnp
 from jax import jit, lax
 from jax.flatten_util import ravel_pytree
 from jax.random import normal, split
-from jax.tree_util import tree_leaves
+from jax.tree_util import tree_leaves, tree_map
 
 from blackjax.base import SamplingAlgorithm, VIAlgorithm
 from blackjax.progress_bar import gen_scan_fn
@@ -178,19 +178,20 @@ def run_inference_algorithm(
     Returns
     -------
         1. The final state.
-        2. The trace of the transform(state)
-        3. The trace of the info of the inference algorithm for diagnostics.
+        2. The history of states.
     """
 
     if initial_state is None and initial_position is None:
-        raise ValueError("Either initial_state or initial_position must be provided.")
+        raise ValueError(
+            "Either `initial_state` or `initial_position` must be provided."
+        )
     if initial_state is not None and initial_position is not None:
         raise ValueError(
-            "Only one of initial_state or initial_position must be provided."
+            "Only one of `initial_state` or `initial_position` must be provided."
         )
 
-    rng_key, init_key = split(rng_key, 2)
-    if initial_position is not None:
+    if initial_state is None:
+        rng_key, init_key = split(rng_key, 2)
         initial_state = inference_algorithm.init(initial_position, init_key)
 
     keys = split(rng_key, num_steps)
@@ -299,12 +300,13 @@ def incremental_value_update(
         new streaming average
     """
 
-    flat_expectation, unravel_fn = ravel_pytree(expectation)
     total, average = incremental_val
-    flat_average, _ = ravel_pytree(average)
-    average = (total * flat_average + weight * flat_expectation) / (
-        total + weight + zero_prevention
+    average = tree_map(
+        lambda exp, av: (total * av + weight * exp)
+        / (total + weight + zero_prevention),
+        expectation,
+        average,
     )
     total += weight
-    incremental_val = (total, unravel_fn(average))
+    incremental_val = total, average
     return incremental_val
