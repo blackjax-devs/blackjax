@@ -13,7 +13,7 @@ from blackjax.types import ArrayLikeTree, PRNGKey
 __all__ = ["init", "as_top_level_api", "build_kernel"]
 
 
-def create_fn(rng_key, particles, logL_fn, logL_star, create_parameters):
+def create_fn(rng_key, particles, prior, logL_fn, logL_star, create_parameters):
     # num_particles, ndims = jax.tree_util.tree_flatten(particles)[0][0].shape
     # ndims = jax.tree_util.tree_flatten(particles)[0][0].shape
     num_particles, ndims = particles.shape
@@ -26,7 +26,7 @@ def create_fn(rng_key, particles, logL_fn, logL_star, create_parameters):
         def inner_body(carry):
             rng_key, _, _ = carry
             rng_key, subkey = jax.random.split(rng_key)
-            particle = jax.random.uniform(subkey, (ndims,))
+            particle = prior(seed=subkey)
             logL = logL_fn(particle)
             return rng_key, logL, particle
 
@@ -50,6 +50,7 @@ def delete_fn(rng_key, logL, delete_parameters, n_delete):
 
 
 def as_top_level_api(
+    logPrior_fn: Callable,
     logL_fn: Callable,
     n_delete: int = 1,
 ) -> SamplingAlgorithm:
@@ -74,6 +75,7 @@ def as_top_level_api(
     delete_func = partial(delete_fn, n_delete=n_delete)
 
     kernel = build_kernel(
+        logPrior_fn,
         logL_fn,
         create_fn,
         delete_func,

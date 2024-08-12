@@ -53,6 +53,7 @@ def init(particles: ArrayLikeTree, logL_fn, init_create_params):
 
 
 def build_kernel(
+    log_density_fn: Callable,
     logL_fn: Callable,
     create_fn: Callable,
     delete_fn: Callable,
@@ -87,12 +88,13 @@ def build_kernel(
         # num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0] # Not good jax -- improve with sgpt
         logL_birth = state.logL_star
         val, dead_idx = delete_fn(rng_key, state.logL, state.create_parameters)
+        
         dead_particles = jax.tree.map(lambda x: x[dead_idx], state.particles)
         dead_logL = state.logL[dead_idx]
         dead_logL_birth = state.logL_birth[dead_idx]
 
         new_particles, new_particles_logL = create_fn(
-            rng_key, dead_particles, logL_fn, -val.min(), create_parameters
+            rng_key, dead_particles, log_density_fn, logL_fn, -val.min(), create_parameters
         )
         logL_births = logL_birth * jnp.ones(dead_idx.shape)
 

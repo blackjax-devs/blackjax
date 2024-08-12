@@ -13,25 +13,36 @@ import numpy as np
 from jax.scipy.stats import multivariate_normal
 
 import blackjax
+import distrax
+import anesthetic as ns
 
-d = 2
+d = 4
 
 
 def loglikelihood(x):
-    return -5 * jnp.square(jnp.sum(((x + 2) / 4) ** 2, axis=-1) - 1)
+    return multivariate_normal.logpdf(
+        x, mean=jnp.ones(d), cov=jnp.eye(d) * 0.05
+    )
 
 
-algo = blackjax.rejection_ns(loglikelihood)
-
-n_samples = 100
+n_samples = 500
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
-state = jax.random.uniform(init_key, (n_samples, d))
-state = algo.init(state, loglikelihood)
+
+prior = distrax.MultivariateNormalDiag(
+    loc=jnp.zeros(d), scale_diag=jnp.ones(d)
+)
+# prior = distrax.Uniform(low=-2.0 * jnp.ones(d), high=2.0 * jnp.ones(d))
+
+state = prior._sample_n(rng_key, n_samples)
+
+algo = blackjax.rejection_ns(prior.sample, loglikelihood)
+state = algo.init(state, loglikelihood) 
+
 
 # from jax_tqdm import scan_tqdm
 from blackjax.progress_bar import progress_bar_scan
 
-n_steps = 1000
+n_steps = 5000
 
 
 # @scan_tqdm(100)
@@ -55,9 +66,19 @@ iterations = jnp.arange(n_steps)
 dead_points = dead.particles.squeeze()
 live_points = live.particles.squeeze()
 
-plt.scatter(*dead_points.T, label="Dead points", color="C1")
-plt.scatter(*live_points.T, label="Live points", color="C0")
+samples = ns.NestedSamples(
+    data=np.concatenate([live_points, dead_points], axis=0),
+    logL=np.concatenate([live.logL, dead.logL.squeeze()]),
+    logL_birth=np.concatenate([live.logL_birth, dead.logL_birth.squeeze()]),
+)
+print(samples.logZ())
+from lsbi.model import ReducedLinearModel
 
-# plt.loglog()
-plt.legend()
+model = ReducedLinearModel(mu_L = np.ones(d), Sigma_L = np.eye(d)*0.05, logLmax=loglikelihood(np.ones(d)))
+
+print(model.logZ()) 
+a = samples.set_beta(0.0).plot_2d(np.arange(d))
+# samples.plot_2d(a)
+samples.plot_2d(a)
+
 plt.show()
