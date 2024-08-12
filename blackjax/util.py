@@ -202,11 +202,6 @@ def run_inference_algorithm(
 
     scan_fn = gen_scan_fn(num_steps, progress_bar)
 
-    # if progress_bar:
-    #     one_step = progress_bar_scan(num_steps)(one_step)
-    #     xs = jnp.arange(num_steps), keys
-    #     final_state, history = lax.scan(one_step, (initial_state, -1), xs)
-
     xs = jnp.arange(num_steps), keys
     final_state, history = scan_fn(one_step, initial_state, xs)
 
