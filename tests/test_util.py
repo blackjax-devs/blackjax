@@ -41,7 +41,7 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             10,
         )
 
-        init_key, state_key, run_key = jax.random.split(jax.random.PRNGKey(0), 3)
+        init_key, state_key, run_key = jax.random.split(self.key, 3)
         initial_state = blackjax.mcmc.mclmc.init(
             position=initial_position, logdensity_fn=logdensity_fn, rng_key=state_key
         )
