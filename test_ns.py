@@ -26,6 +26,7 @@ def loglikelihood(x):
 
 
 n_samples = 500
+n_delete= 250
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
 prior = distrax.MultivariateNormalDiag(
@@ -35,14 +36,15 @@ prior = distrax.MultivariateNormalDiag(
 
 state = prior._sample_n(rng_key, n_samples)
 
-algo = blackjax.rejection_ns(prior.sample, loglikelihood)
+algo = blackjax.rejection_ns(prior.sample, loglikelihood, n_delete=n_delete)
 state = algo.init(state, loglikelihood) 
 
 
 # from jax_tqdm import scan_tqdm
 from blackjax.progress_bar import progress_bar_scan
 
-n_steps = 5000
+
+n_steps = 3000//n_delete
 
 
 # @scan_tqdm(100)
@@ -67,9 +69,9 @@ dead_points = dead.particles.squeeze()
 live_points = live.particles.squeeze()
 
 samples = ns.NestedSamples(
-    data=np.concatenate([live_points, dead_points], axis=0),
-    logL=np.concatenate([live.logL, dead.logL.squeeze()]),
-    logL_birth=np.concatenate([live.logL_birth, dead.logL_birth.squeeze()]),
+    data=np.concatenate([live_points, dead_points.reshape(-1,d)], axis=0),
+    logL=np.concatenate([live.logL, dead.logL.squeeze().reshape(-1)]),
+    logL_birth=np.concatenate([live.logL_birth, dead.logL_birth.squeeze().reshape(-1)]),
 )
 print(samples.logZ())
 from lsbi.model import ReducedLinearModel
@@ -80,5 +82,6 @@ print(model.logZ())
 a = samples.set_beta(0.0).plot_2d(np.arange(d))
 # samples.plot_2d(a)
 samples.plot_2d(a)
-
+samples.to_csv("post.csv")
+plt.savefig("post.pdf")
 plt.show()

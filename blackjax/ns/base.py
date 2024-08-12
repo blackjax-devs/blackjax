@@ -96,7 +96,7 @@ def build_kernel(
         new_particles, new_particles_logL = create_fn(
             rng_key, dead_particles, log_density_fn, logL_fn, -val.min(), create_parameters
         )
-        logL_births = logL_birth * jnp.ones(dead_idx.shape)
+        logL_births = -val.min() * jnp.ones(dead_idx.shape)
 
         particles = state.particles.at[dead_idx].set(new_particles)
         logL = state.logL.at[dead_idx].set(new_particles_logL)
