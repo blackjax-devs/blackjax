@@ -34,7 +34,7 @@ def build_kernel(
     resampling_fn: Callable,
     target_ess: float,
     root_solver: Callable = solver.dichotomy,
-    **extra_parameters
+    **extra_parameters,
 ) -> Callable:
     r"""Build a Tempered SMC step using an adaptive schedule.
 
@@ -89,7 +89,7 @@ def build_kernel(
         mcmc_step_fn,
         mcmc_init_fn,
         resampling_fn,
-        **extra_parameters
+        **extra_parameters,
     )
 
     def kernel(

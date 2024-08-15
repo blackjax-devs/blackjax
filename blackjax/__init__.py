@@ -3,7 +3,6 @@ from typing import Callable
 
 from blackjax._version import __version__
 
-
 from .base import SamplingAlgorithm, VIAlgorithm
 from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
@@ -24,11 +23,9 @@ from .mcmc.random_walk import (
     normal_random_walk,
     rmh_as_top_level_api,
 )
-
 from .smc import adaptive_tempered
 from .smc import inner_kernel_tuning as _inner_kernel_tuning
 from .smc import tempered
-
 
 """
 The above three classes exist as a backwards compatible way of exposing both the high level, differentiable
@@ -59,7 +56,6 @@ class GenerateVariationalAPI:
 
     def __call__(self, *args, **kwargs) -> VIAlgorithm:
         return self.differentiable(*args, **kwargs)
-
 
 
 def generate_top_level_api_from(module):
@@ -105,7 +101,6 @@ smc_family = [tempered_smc, adaptive_tempered_smc]
 
 __all__ = [
     "__version__",
-
     "ess",  # diagnostics
     "rhat",
 ]

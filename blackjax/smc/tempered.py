@@ -48,16 +48,19 @@ def init(particles: ArrayLikeTree):
     return TemperedSMCState(particles, weights, 0.0)
 
 
-def update_and_take_last(mcmc_init_fn,
-                         tempered_logposterior_fn,
-                         shared_mcmc_step_fn,
-                         num_mcmc_steps,
-                         n_particles):
+def update_and_take_last(
+    mcmc_init_fn,
+    tempered_logposterior_fn,
+    shared_mcmc_step_fn,
+    num_mcmc_steps,
+    n_particles,
+):
     """
     Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and
     returns the last values, waisting the previous num_mcmc_steps-1
     samples per chain.
     """
+
     def mcmc_kernel(rng_key, position, step_parameters):
         state = mcmc_init_fn(position, tempered_logposterior_fn)
 
@@ -80,7 +83,7 @@ def build_kernel(
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
-    update_strategy: Callable = update_and_take_last
+    update_strategy: Callable = update_and_take_last,
 ) -> Callable:
     """Build the base Tempered SMC kernel.
 
@@ -168,11 +171,13 @@ def build_kernel(
 
         shared_mcmc_step_fn = partial(mcmc_step_fn, **shared_mcmc_parameters)
 
-        update_fn, num_resampled = update_strategy(mcmc_init_fn,
-                                                   tempered_logposterior_fn,
-                                                   shared_mcmc_step_fn,
-                                                   n_particles=state.weights.shape[0],
-                                                   num_mcmc_steps=num_mcmc_steps)
+        update_fn, num_resampled = update_strategy(
+            mcmc_init_fn,
+            tempered_logposterior_fn,
+            shared_mcmc_step_fn,
+            n_particles=state.weights.shape[0],
+            num_mcmc_steps=num_mcmc_steps,
+        )
 
         smc_state, info = smc.base.step(
             rng_key,
@@ -180,7 +185,7 @@ def build_kernel(
             update_fn,
             jax.vmap(log_weights_fn),
             resampling_fn,
-            num_resampled
+            num_resampled,
         )
 
         tempered_state = TemperedSMCState(
@@ -200,7 +205,7 @@ def as_top_level_api(
     mcmc_parameters: dict,
     resampling_fn: Callable,
     num_mcmc_steps: Optional[int] = 10,
-    update_strategy = update_and_take_last
+    update_strategy=update_and_take_last,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
 
@@ -228,14 +233,13 @@ def as_top_level_api(
 
     """
 
-
     kernel = build_kernel(
         logprior_fn,
         loglikelihood_fn,
         mcmc_step_fn,
         mcmc_init_fn,
         resampling_fn,
-        update_strategy
+        update_strategy,
     )
 
     def init_fn(position: ArrayLikeTree, rng_key=None):
