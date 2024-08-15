@@ -12,7 +12,7 @@ import blackjax
 import blackjax.smc.resampling as resampling
 from blackjax import adaptive_tempered_smc, tempered_smc
 from blackjax.smc import extend_params
-from blackjax.smc.waste_free import waste_free_smc, update_waste_free
+from blackjax.smc.waste_free import update_waste_free, waste_free_smc
 from tests.smc import SMCLinearRegressionTestCase
 from tests.smc.test_tempered_smc import inference_loop
 
@@ -107,14 +107,13 @@ class WasteFreeSMCTest(SMCLinearRegressionTestCase):
 
 def test_waste_free_set_num_mcmc_steps():
     with pytest.raises(ValueError) as exc_info:
-        update_waste_free(lambda x:x,
-                          lambda x:1,
-                          lambda x:1,
-                          100,
-                          10,
-                          3,
-                          num_mcmc_steps=50)
-        assert str(exc_info.value).startswith("Can't use waste free SMC with a num_mcmc_steps parameter")
+        update_waste_free(
+            lambda x: x, lambda x: 1, lambda x: 1, 100, 10, 3, num_mcmc_steps=50
+        )
+        assert str(exc_info.value).startswith(
+            "Can't use waste free SMC with a num_mcmc_steps parameter"
+        )
+
 
 if __name__ == "__main__":
     absltest.main()
