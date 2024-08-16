@@ -148,8 +148,9 @@ def _unflatten_cholesky(chol_params):
     """Construct the Cholesky factor from a flattened vector of cholesky parameters.
 
     Transforms a flattened vector representation of a lower triangular matrix
-    into a full Cholesky factor. The input vector contains n = dim * (dim + 1) / 2
-    elements, where dim is the dimension of the resulting square matrix.
+    into a full Cholesky factor. The input vector contains n = d(d+1)/2 elements 
+    consisting of d diagonal elements followed by n - d off-diagonal elements in 
+    row-major order, where d is the dimension of the matrix.
 
     The diagonal elements are passed through a softplus function to ensure (numerically
     stable) positivity, crucial to maintain a valid covariance matrix parameterization.
