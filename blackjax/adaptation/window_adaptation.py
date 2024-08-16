@@ -28,7 +28,7 @@ from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
 )
 from blackjax.base import AdaptationAlgorithm
-from blackjax.progress_bar import progress_bar_scan
+from blackjax.progress_bar import gen_scan_fn
 from blackjax.types import Array, ArrayLikeTree, PRNGKey
 from blackjax.util import pytree_size
 
@@ -333,17 +333,16 @@ def window_adaptation(
 
         if progress_bar:
             print("Running window adaptation")
-            one_step_ = jax.jit(progress_bar_scan(num_steps)(one_step))
-        else:
-            one_step_ = jax.jit(one_step)
-
+        scan_fn = gen_scan_fn(num_steps, progress_bar=progress_bar)
+        start_state = (init_state, init_adaptation_state)
         keys = jax.random.split(rng_key, num_steps)
         schedule = build_schedule(num_steps)
-        last_state, info = jax.lax.scan(
-            one_step_,
-            (init_state, init_adaptation_state),
+        last_state, info = scan_fn(
+            one_step,
+            start_state,
             (jnp.arange(num_steps), keys, schedule),
         )
+
         last_chain_state, last_warmup_state, *_ = last_state
 
         step_size, inverse_mass_matrix = adapt_final(last_warmup_state)
