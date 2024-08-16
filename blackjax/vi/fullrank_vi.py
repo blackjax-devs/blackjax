@@ -33,8 +33,7 @@ __all__ = [
 
 class FRVIState(NamedTuple):
     mu: ArrayTree
-    rho: ArrayTree
-    L: ArrayTree
+    chol_params: ArrayTree # flattened Cholesky factor
     opt_state: OptState
 
 
@@ -50,10 +49,10 @@ def init(
 ) -> FRVIState:
     """Initialize the full-rank VI state."""
     mu = jax.tree.map(jnp.zeros_like, position)
-    rho = jax.tree.map(jnp.zeros_like, position)
-    L = jax.tree.map(lambda x: jnp.zeros((*x.shape, x.shape)), position)
-    opt_state = optimizer.init((mu, rho, L))
-    return FRVIState(mu, rho, L, opt_state)
+    dim = jax.flatten_util.ravel_pytree(mu)[0].shape[0]
+    chol_params = jax.flatten_util.ravel_pytree(jnp.tril(jnp.eye(dim)))[0]
+    opt_state = optimizer.init((mu, chol_params))
+    return FRVIState(mu, chol_params, opt_state)
 
 
 def step(
@@ -87,28 +86,27 @@ def step(
 
     """
 
-    parameters = (state.mu, state.rho, state.L)
+    parameters = (state.mu, state.chol_params)
 
     def kl_divergence_fn(parameters):
-        mu, rho, L = parameters
-        z = _sample(rng_key, mu, rho, L, num_samples)
+        mu, chol_params = parameters
+        z = _sample(rng_key, mu, chol_params, num_samples)
         if stl_estimator:
-            parameters = jax.tree_map(jax.lax.stop_gradient, (mu, rho, L))
-        logq = jax.vmap(generate_fullrank_logdensity(mu, rho, L))(z)
+            parameters = jax.tree_map(jax.lax.stop_gradient, (mu, chol_params))
+        logq = jax.vmap(generate_fullrank_logdensity(mu, chol_params))(z)
         logp = jax.vmap(logdensity_fn)(z)
         return (logq - logp).mean()
 
     elbo, elbo_grad = jax.value_and_grad(kl_divergence_fn)(parameters)
     updates, new_opt_state = optimizer.update(elbo_grad, state.opt_state, parameters)
     new_parameters = jax.tree.map(lambda p, u: p + u, parameters, updates)
-
-    new_mu, new_rho, new_L = new_parameters
-    return FRVIState(new_mu, new_rho, new_L, new_opt_state), FRVIInfo(elbo)
+    new_state = FRVIState(new_parameters[0], new_parameters[1], new_opt_state)
+    return new_state, FRVIInfo(elbo)
 
 
 def sample(rng_key: PRNGKey, state: FRVIState, num_samples: int = 1):
     """Sample from the full-rank approximation."""
-    return _sample(rng_key, state.mu, state.rho, state.L, num_samples)
+    return _sample(rng_key, state.mu, state.chol_params, num_samples)
 
 
 def as_top_level_api(
@@ -146,20 +144,44 @@ def as_top_level_api(
     return VIAlgorithm(init_fn, step_fn, sample_fn)
 
 
-def _sample(rng_key, mu, rho, L, num_samples):
-    cholesky = jnp.tril(L, k=-1) + jnp.diag(jnp.exp(L))
-    eps = jax.random.normal(rng_key, (num_samples,) + mu.shape)
-    return mu + eps @ cholesky.T
+def _unflatten_cholesky(chol_params):
+    """Construct the Cholesky factor from a flattened vector of cholesky parameters.
+
+    Transforms a flattened vector representation of a lower triangular matrix
+    into a full Cholesky factor. The input vector contains n = dim * (dim + 1) / 2
+    elements, where dim is the dimension of the resulting square matrix.
+
+    The diagonal elements are passed through a softplus function to ensure (numerically
+    stable) positivity, crucial to maintain a valid covariance matrix parameterization.
+
+    This parameterization allows for unconstrained optimization while ensuring the
+    resulting covariance matrix Sigma = CC^T is symmetric and positive definite.
+    """
+    n = chol_params.size
+    dim = int(jnp.sqrt(1 + 8 * n) - 1) // 2
+    tril = jnp.zeros((dim, dim))
+    tril = tril.at[jnp.tril_indices(dim, k=-1)].set(chol_params[dim:])
+    diag = jax.nn.softplus(chol_params[:dim])
+    chol_factor = tril + jnp.diag(diag)
+    return chol_factor
 
 
-def generate_fullrank_logdensity(mu, rho, L):
-    cholesky = jnp.tril(L, k=-1) + jnp.diag(jnp.exp(L))
-    log_det = 2 * jnp.sum(rho)
-    const = -0.5 * mu.shape[-1] * jnp.log(2 * jnp.pi)
+def _sample(rng_key, mu, chol_params, num_samples):
+    mu_flatten, unravel_fn = jax.flatten_util.ravel_pytree(mu)
+    chol_factor = _unflatten_cholesky(chol_params)
+    eps = jax.random.normal(rng_key, (num_samples, mu_flatten.shape[0]))
+    flatten_sample = eps @ chol_factor.T + mu_flatten
+    return jax.vmap(unravel_fn)(flatten_sample)
+
+
+def generate_fullrank_logdensity(mu, chol_params):
+    mu_flatten, _ = jax.flatten_util.ravel_pytree(mu)
+    chol_factor = _unflatten_cholesky(chol_params)
+    cov = chol_factor @ chol_factor.T
 
     def fullrank_logdensity(position):
-        y = jsp.linalg.solve_triangular(cholesky, position - mu, lower=True)
-        mahalanobis_dist = jnp.sum(y ** 2, axis=-1)
-        return const - 0.5 * log_det - 0.5 * mahalanobis_dist
+        position_flatten = jax.flatten_util.ravel_pytree(position)[0]
+        # TODO: inefficient because of redundant cholesky decomposition
+        return jsp.stats.multivariate_normal.logpdf(position_flatten, mu_flatten, cov)
 
     return fullrank_logdensity

@@ -45,5 +45,6 @@ class FullRankVITest(chex.TestCase):
         self.assertAlmostEqual(loc_1, ground_truth[0][0], delta=0.01)
         self.assertAlmostEqual(loc_2, ground_truth[1][0], delta=0.01)
 
+
 if __name__ == "__main__":
     absltest.main()
