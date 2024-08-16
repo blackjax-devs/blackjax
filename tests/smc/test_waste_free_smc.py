@@ -107,7 +107,6 @@ class WasteFreeSMCTest(SMCLinearRegressionTestCase):
 
 
 class Update_waste_free_multivariate_particles(chex.TestCase):
-
     @chex.variants(with_jit=True)
     def test_update_waste_free_multivariate_particles(self):
         """
