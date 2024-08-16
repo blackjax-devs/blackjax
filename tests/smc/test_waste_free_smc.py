@@ -14,7 +14,7 @@ import blackjax
 import blackjax.smc.resampling as resampling
 from blackjax import adaptive_tempered_smc, tempered_smc
 from blackjax.mcmc.random_walk import build_rmh
-from blackjax.smc import extend_params, base
+from blackjax.smc import base, extend_params
 from blackjax.smc.base import SMCState
 from blackjax.smc.waste_free import update_waste_free, waste_free_smc
 from tests.smc import SMCLinearRegressionTestCase
