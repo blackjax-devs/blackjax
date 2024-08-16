@@ -145,15 +145,15 @@ def as_top_level_api(
 
 
 def _unflatten_cholesky(chol_params):
-    """Construct the Cholesky factor from a flattened vector of cholesky parameters.
+    """Construct the Cholesky factor from a flattened vector of Cholesky parameters.
 
     Transforms a flattened vector representation of a lower triangular matrix
     into a full Cholesky factor. The input vector contains n = d(d+1)/2 elements
-    consisting of d diagonal elements followed by n - d off-diagonal elements in
+    consisting of d diagonal elements followed by n-d off-diagonal elements in
     row-major order, where d is the dimension of the matrix.
 
     The diagonal elements are passed through a softplus function to ensure (numerically
-    stable) positivity, crucial to maintain a valid covariance matrix parameterization.
+    stable) positivity, such that the resulting Cholesky factor is positive definite.
 
     This parameterization allows for unconstrained optimization while ensuring the
     resulting covariance matrix Sigma = CC^T is symmetric and positive definite.
