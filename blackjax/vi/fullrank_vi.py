@@ -185,7 +185,7 @@ def generate_fullrank_logdensity(mu, chol_params):
         position_flatten, _ = jax.flatten_util.ravel_pytree(position)
         centered_position = position_flatten - mu_flatten
         y = jsp.linalg.solve_triangular(chol_factor, centered_position, lower=True)
-        mahalanobis_dist = jnp.sum(y ** 2)
+        mahalanobis_dist = jnp.sum(y**2)
         return const - 0.5 * (log_det + mahalanobis_dist)
 
     return fullrank_logdensity
