@@ -133,10 +133,10 @@ svgd = generate_top_level_api_from(_svgd)
 
 # variational inference
 fullrank_vi = GenerateVariationalAPI(
-    _fullrank_vi.as_top_level_api, 
-    _fullrank_vi.init, 
-    _fullrank_vi.step, 
-    _fullrank_vi.sample
+    _fullrank_vi.as_top_level_api,
+    _fullrank_vi.init,
+    _fullrank_vi.step,
+    _fullrank_vi.sample,
 )
 meanfield_vi = GenerateVariationalAPI(
     _meanfield_vi.as_top_level_api,
