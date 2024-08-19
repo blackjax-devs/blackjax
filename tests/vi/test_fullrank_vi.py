@@ -11,9 +11,9 @@ import blackjax
 class FullRankVITest(chex.TestCase):
     def setUp(self):
         super().setUp()
-        self.key = jax.random.PRNGKey(42)
+        self.key = jax.random.key(42)
 
-    @chex.variants(with_jit=True, without_jit=True)
+    @chex.variants(with_jit=True, without_jit=False)
     def test_recover_posterior(self):
         ground_truth = [
             # loc, scale
@@ -38,7 +38,7 @@ class FullRankVITest(chex.TestCase):
 
         rng_key = self.key
         for i in range(num_steps):
-            subkey = jax.random.split(rng_key, i)
+            subkey = jax.random.fold_in(rng_key, i)
             state, _ = self.variant(frvi.step)(subkey, state)
 
         loc_1, loc_2 = state.mu["x_1"], state.mu["x_2"]
