@@ -313,5 +313,4 @@ def incremental_value_update(
         average,
     )
     total += weight
-    incremental_val = total, average
-    return incremental_val
+    return total, average
