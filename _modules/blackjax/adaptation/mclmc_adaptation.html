@@ -542,6 +542,7 @@ document.write(`
             <span class="n">L</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">L</span><span class="p">,</span>
             <span class="n">step_size</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
         <span class="p">)</span>
+
         <span class="c1"># step updating</span>
         <span class="n">success</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">step_size_max</span><span class="p">,</span> <span class="n">energy_change</span> <span class="o">=</span> <span class="n">handle_nans</span><span class="p">(</span>
             <span class="n">previous_state</span><span class="p">,</span>
@@ -591,7 +592,6 @@ document.write(`
             <span class="n">expectation</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">x</span><span class="p">)]),</span>
             <span class="n">incremental_val</span><span class="o">=</span><span class="n">streaming_avg</span><span class="p">,</span>
             <span class="n">weight</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">mask</span><span class="p">)</span> <span class="o">*</span> <span class="n">success</span> <span class="o">*</span> <span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
-            <span class="n">zero_prevention</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">adaptive_state</span><span class="p">,</span> <span class="n">streaming_avg</span><span class="p">),</span> <span class="kc">None</span>
@@ -631,7 +631,7 @@ document.write(`
         <span class="n">L</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">L</span>
         <span class="c1"># determine L</span>
         <span class="n">sqrt_diag_cov</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">sqrt_diag_cov</span>
-        <span class="k">if</span> <span class="n">num_steps2</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">num_steps2</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">x_average</span><span class="p">,</span> <span class="n">x_squared_average</span> <span class="o">=</span> <span class="n">average</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">average</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">variances</span> <span class="o">=</span> <span class="n">x_squared_average</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">x_average</span><span class="p">)</span>
             <span class="n">L</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">variances</span><span class="p">))</span>
@@ -698,7 +698,8 @@ document.write(`
 
     <span class="n">reduced_step_size</span> <span class="o">=</span> <span class="mf">0.8</span>
     <span class="n">p</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">next_state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
-    <span class="n">nonans</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+    <span class="n">q</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">next_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">)</span>
+    <span class="n">nonans</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">p</span><span class="p">)),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">q</span><span class="p">)))</span>
     <span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">kinetic_change</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span>
         <span class="k">lambda</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">nonans</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">new</span><span class="p">),</span> <span class="n">old</span><span class="p">),</span>
         <span class="p">(</span><span class="n">next_state</span><span class="p">,</span> <span class="n">step_size_max</span><span class="p">,</span> <span class="n">kinetic_change</span><span class="p">),</span>

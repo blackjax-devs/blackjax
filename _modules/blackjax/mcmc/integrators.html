@@ -832,6 +832,7 @@ document.write(`
         <span class="p">)</span>
         <span class="c1"># one step of the deterministic dynamics</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+
         <span class="c1"># partial refreshment</span>
         <span class="n">state</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
             <span class="n">momentum</span><span class="o">=</span><span class="n">partially_refresh_momentum</span><span class="p">(</span>
