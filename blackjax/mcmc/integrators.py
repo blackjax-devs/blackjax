@@ -170,8 +170,6 @@ def euclidean_position_update_fn(logdensity_fn: Callable):
             kinetic_grad,
         )
         logdensity, logdensity_grad = logdensity_and_grad_fn(new_position)
-        jax.debug.print("new_position {x}", x=(new_position, jnp.any(jnp.isnan(new_position))))
-        jax.debug.print("logdensity FOO {x}", x=(logdensity, jnp.any(jnp.isnan(logdensity))))
         return new_position, logdensity, logdensity_grad, None
 
     return update
@@ -333,12 +331,10 @@ def esh_dynamics_momentum_update_one_step(sqrt_diag_cov=1.0):
         logdensity_grad = logdensity_grad
         flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
         flatten_grads = flatten_grads * sqrt_diag_cov
-        jax.debug.print("flatten_grads {x}", x=jnp.any(jnp.isfinite(flatten_grads)))
         flatten_momentum, _ = ravel_pytree(momentum)
         dims = flatten_momentum.shape[0]
         normalized_gradient, gradient_norm = _normalized_flatten_array(flatten_grads)
         momentum_proj = jnp.dot(flatten_momentum, normalized_gradient)
-        jax.debug.print("momentum_proj {x}", x=momentum_proj)
         delta = step_size * coef * gradient_norm / (dims - 1)
         zeta = jnp.exp(-delta)
         new_momentum_raw = (
@@ -439,7 +435,7 @@ def with_isokinetic_maruyama(integrator):
         )
         # one step of the deterministic dynamics
         state, info = integrator(state, step_size)
-        
+
         # partial refreshment
         state = state._replace(
             momentum=partially_refresh_momentum(

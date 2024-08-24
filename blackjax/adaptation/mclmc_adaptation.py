@@ -23,7 +23,6 @@ from blackjax.diagnostics import effective_sample_size
 from blackjax.util import incremental_value_update, pytree_size
 
 
-
 class MCLMCAdaptationState(NamedTuple):
     """Represents the tunable parameters for MCLMC adaptation.
 
@@ -155,11 +154,7 @@ def make_L_step_size_adaptation(
             L=params.L,
             step_size=params.step_size,
         )
-        jax.debug.print("step_size {x}", x=params.step_size)
-        jax.debug.print("previous_state position {x}", x=previous_state.position)
-        jax.debug.print("previous_state momentum {x}", x=previous_state.momentum)
-        # jax.debug.print("next_state position {x}", x=next_state.position)
-        # jax.debug.print("next_state momentum {x}", x=next_state.momentum)
+
         # step updating
         success, state, step_size_max, energy_change = handle_nans(
             previous_state,
@@ -265,9 +260,6 @@ def make_L_step_size_adaptation(
                     xs=(jnp.ones(steps), keys), state=state, params=params
                 )
 
-        jax.debug.print(
-            "params {x}", x=MCLMCAdaptationState(L, params.step_size, sqrt_diag_cov)
-        )
         return state, MCLMCAdaptationState(L, params.step_size, sqrt_diag_cov)
 
     return L_step_size_adaptation
