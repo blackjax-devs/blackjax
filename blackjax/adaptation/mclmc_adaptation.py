@@ -154,6 +154,7 @@ def make_L_step_size_adaptation(
             L=params.L,
             step_size=params.step_size,
         )
+
         # step updating
         success, state, step_size_max, energy_change = handle_nans(
             previous_state,
@@ -203,7 +204,6 @@ def make_L_step_size_adaptation(
             expectation=jnp.array([x, jnp.square(x)]),
             incremental_val=streaming_avg,
             weight=(1 - mask) * success * params.step_size,
-            zero_prevention=mask,
         )
 
         return (state, params, adaptive_state, streaming_avg), None
@@ -243,7 +243,7 @@ def make_L_step_size_adaptation(
         L = params.L
         # determine L
         sqrt_diag_cov = params.sqrt_diag_cov
-        if num_steps2 != 0.0:
+        if num_steps2 > 1:
             x_average, x_squared_average = average[0], average[1]
             variances = x_squared_average - jnp.square(x_average)
             L = jnp.sqrt(jnp.sum(variances))
@@ -304,7 +304,8 @@ def handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_ch
 
     reduced_step_size = 0.8
     p, unravel_fn = ravel_pytree(next_state.position)
-    nonans = jnp.all(jnp.isfinite(p))
+    q, unravel_fn = ravel_pytree(next_state.momentum)
+    nonans = jnp.logical_and(jnp.all(jnp.isfinite(p)), jnp.all(jnp.isfinite(q)))
     state, step_size, kinetic_change = jax.tree_util.tree_map(
         lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old),
         (next_state, step_size_max, kinetic_change),
