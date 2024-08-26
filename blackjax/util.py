@@ -281,6 +281,10 @@ def store_only_expectation_values(
     return SamplingAlgorithm(init_fn, update_fn), transform
 
 
+def safediv(x, y):
+    return jnp.where(x == 0.0, 0.0, x / y)
+
+
 def incremental_value_update(
     expectation, incremental_val, weight=1.0, zero_prevention=0.0
 ):
@@ -302,8 +306,9 @@ def incremental_value_update(
 
     total, average = incremental_val
     average = tree_map(
-        lambda exp, av: (total * av + weight * exp)
-        / (total + weight + zero_prevention),
+        lambda exp, av: safediv(
+            total * av + weight * exp, (total + weight + zero_prevention)
+        ),
         expectation,
         average,
     )
