@@ -34,6 +34,7 @@ def build_kernel(
     resampling_fn: Callable,
     target_ess: float,
     root_solver: Callable = solver.dichotomy,
+    **extra_parameters,
 ) -> Callable:
     r"""Build a Tempered SMC step using an adaptive schedule.
 
@@ -88,6 +89,7 @@ def build_kernel(
         mcmc_step_fn,
         mcmc_init_fn,
         resampling_fn,
+        **extra_parameters,
     )
 
     def kernel(
@@ -116,6 +118,7 @@ def as_top_level_api(
     target_ess: float,
     root_solver: Callable = solver.dichotomy,
     num_mcmc_steps: int = 10,
+    **extra_parameters,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
 
@@ -155,6 +158,7 @@ def as_top_level_api(
         resampling_fn,
         target_ess,
         root_solver,
+        **extra_parameters,
     )
 
     def init_fn(position: ArrayLikeTree, rng_key=None):
