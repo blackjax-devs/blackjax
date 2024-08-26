@@ -238,6 +238,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
 </ul>
 </details></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -383,7 +384,7 @@ document.write(`
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -434,6 +435,35 @@ document.write(`
 
 
 
+<span class="k">def</span> <span class="nf">update_and_take_last</span><span class="p">(</span>
+    <span class="n">mcmc_init_fn</span><span class="p">,</span>
+    <span class="n">tempered_logposterior_fn</span><span class="p">,</span>
+    <span class="n">shared_mcmc_step_fn</span><span class="p">,</span>
+    <span class="n">num_mcmc_steps</span><span class="p">,</span>
+    <span class="n">n_particles</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and</span>
+<span class="sd">    returns the last values, waisting the previous num_mcmc_steps-1</span>
+<span class="sd">    samples per chain.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">mcmc_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">step_parameters</span><span class="p">):</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">mcmc_init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">tempered_logposterior_fn</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">body_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+            <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">shared_mcmc_step_fn</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">tempered_logposterior_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">step_parameters</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_mcmc_steps</span><span class="p">)</span>
+        <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">body_fn</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">last_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">info</span>
+
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">mcmc_kernel</span><span class="p">),</span> <span class="n">n_particles</span>
+
+
 <div class="viewcode-block" id="build_kernel">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.build_kernel">[docs]</a>
 <span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span>
@@ -442,6 +472,7 @@ document.write(`
     <span class="n">mcmc_step_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">update_strategy</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">update_and_take_last</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the base Tempered SMC kernel.</span>
 
@@ -529,26 +560,23 @@ document.write(`
 
         <span class="n">shared_mcmc_step_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">mcmc_step_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">shared_mcmc_parameters</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">mcmc_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">step_parameters</span><span class="p">):</span>
-            <span class="n">state</span> <span class="o">=</span> <span class="n">mcmc_init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">tempered_logposterior_fn</span><span class="p">)</span>
-
-            <span class="k">def</span> <span class="nf">body_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
-                <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">shared_mcmc_step_fn</span><span class="p">(</span>
-                    <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">tempered_logposterior_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">step_parameters</span>
-                <span class="p">)</span>
-                <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span>
-
-            <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_mcmc_steps</span><span class="p">)</span>
-            <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">body_fn</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">last_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">info</span>
+        <span class="n">update_fn</span><span class="p">,</span> <span class="n">num_resampled</span> <span class="o">=</span> <span class="n">update_strategy</span><span class="p">(</span>
+            <span class="n">mcmc_init_fn</span><span class="p">,</span>
+            <span class="n">tempered_logposterior_fn</span><span class="p">,</span>
+            <span class="n">shared_mcmc_step_fn</span><span class="p">,</span>
+            <span class="n">n_particles</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">num_mcmc_steps</span><span class="o">=</span><span class="n">num_mcmc_steps</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="n">smc_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">smc</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">step</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">,</span>
             <span class="n">SMCState</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">particles</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">unshared_mcmc_parameters</span><span class="p">),</span>
-            <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">mcmc_kernel</span><span class="p">),</span>
+            <span class="n">update_fn</span><span class="p">,</span>
             <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">log_weights_fn</span><span class="p">),</span>
             <span class="n">resampling_fn</span><span class="p">,</span>
+            <span class="n">num_resampled</span><span class="p">,</span>
         <span class="p">)</span>
+
         <span class="n">tempered_state</span> <span class="o">=</span> <span class="n">TemperedSMCState</span><span class="p">(</span>
             <span class="n">smc_state</span><span class="o">.</span><span class="n">particles</span><span class="p">,</span> <span class="n">smc_state</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">lmbda</span> <span class="o">+</span> <span class="n">delta</span>
         <span class="p">)</span>
@@ -568,7 +596,8 @@ document.write(`
     <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">update_strategy</span><span class="o">=</span><span class="n">update_and_take_last</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</span>
 
@@ -595,12 +624,14 @@ document.write(`
 <span class="sd">    A ``SamplingAlgorithm``.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span>
         <span class="n">logprior_fn</span><span class="p">,</span>
         <span class="n">loglikelihood_fn</span><span class="p">,</span>
         <span class="n">mcmc_step_fn</span><span class="p">,</span>
         <span class="n">mcmc_init_fn</span><span class="p">,</span>
         <span class="n">resampling_fn</span><span class="p">,</span>
+        <span class="n">update_strategy</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>

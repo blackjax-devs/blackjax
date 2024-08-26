@@ -26,5 +26,6 @@ Submodules
    /autoapi/blackjax/smc/resampling/index
    /autoapi/blackjax/smc/solver/index
    /autoapi/blackjax/smc/tempered/index
+   /autoapi/blackjax/smc/waste_free/index
 
 

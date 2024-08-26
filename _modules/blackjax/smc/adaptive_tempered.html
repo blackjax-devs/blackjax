@@ -238,6 +238,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
 </ul>
 </details></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -407,6 +408,7 @@ document.write(`
     <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">target_ess</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">root_solver</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">dichotomy</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Build a Tempered SMC step using an adaptive schedule.</span>
 
@@ -461,6 +463,7 @@ document.write(`
         <span class="n">mcmc_step_fn</span><span class="p">,</span>
         <span class="n">mcmc_init_fn</span><span class="p">,</span>
         <span class="n">resampling_fn</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">kernel</span><span class="p">(</span>
@@ -495,6 +498,7 @@ document.write(`
     <span class="n">target_ess</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">root_solver</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">dichotomy</span><span class="p">,</span>
     <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the Adaptive Tempered SMC kernel.</span>
 
@@ -534,6 +538,7 @@ document.write(`
         <span class="n">resampling_fn</span><span class="p">,</span>
         <span class="n">target_ess</span><span class="p">,</span>
         <span class="n">root_solver</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
