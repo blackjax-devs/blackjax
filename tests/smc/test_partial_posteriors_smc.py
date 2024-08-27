@@ -54,7 +54,7 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
             hmc_parameters,
             resampling.systematic,
             30,
-            partial_logposterior_factory=partial_logposterior_factory
+            partial_logposterior_factory=partial_logposterior_factory,
         )
 
         init_state = init(init_particles, 1000)
