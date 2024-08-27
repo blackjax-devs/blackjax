@@ -1,8 +1,10 @@
-from typing import NamedTuple, Callable
+from typing import Callable, NamedTuple
+
 import jax
 import jax.numpy as jnp
-from blackjax.types import ArrayTree, Array
+
 from blackjax.smc.from_mcmc import build_kernel as smc_from_mcmc
+from blackjax.types import Array, ArrayTree
 
 
 class PartialPosteriorsSMCState(NamedTuple):
@@ -25,12 +27,14 @@ def init(particles, num_datapoints):
     return PartialPosteriorsSMCState(particles, weights, jnp.zeros(num_datapoints))
 
 
-def partial_posteriors_kernel(mcmc_step_fn: Callable,
-                              mcmc_init_fn: Callable,
-                              resampling_fn: Callable,
-                              num_mcmc_steps: int,
-                              mcmc_parameters: ArrayTree,
-                              partial_logposterior_factory: Callable[[Array], Callable]):
+def partial_posteriors_kernel(
+    mcmc_step_fn: Callable,
+    mcmc_init_fn: Callable,
+    resampling_fn: Callable,
+    num_mcmc_steps: int,
+    mcmc_parameters: ArrayTree,
+    partial_logposterior_factory: Callable[[Array], Callable],
+):
     """Build the Partial Posteriors (data tempering) SMC kernel.
     The distribution's trajectory includes increasingly adding more
     datapoints to the likelihood.
@@ -56,7 +60,7 @@ def partial_posteriors_kernel(mcmc_step_fn: Callable,
      -------
      A callable that takes a rng_key and PartialPosteriorsSMCState and selectors for
      the current and previous posteriors, and takes a data-tempered SMC state.
-     """
+    """
     delegate = smc_from_mcmc(mcmc_step_fn, mcmc_init_fn, resampling_fn)
 
     def step(key, state: PartialPosteriorsSMCState, selector):
@@ -68,12 +72,9 @@ def partial_posteriors_kernel(mcmc_step_fn: Callable,
         def log_weights_fn(x):
             return logposterior_fn(x) - previous_logposterior_fn(x)
 
-        state, info = delegate(key,
-                               state,
-                               num_mcmc_steps,
-                               mcmc_parameters,
-                               logposterior_fn,
-                               log_weights_fn)
+        state, info = delegate(
+            key, state, num_mcmc_steps, mcmc_parameters, logposterior_fn, log_weights_fn
+        )
 
         return PartialPosteriorsSMCState(state.particles, state.weights, selector), info
 

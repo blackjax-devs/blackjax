@@ -159,11 +159,11 @@ def extend_params(params):
 
 
 def update_and_take_last(
-        mcmc_init_fn,
-        tempered_logposterior_fn,
-        shared_mcmc_step_fn,
-        num_mcmc_steps,
-        n_particles,
+    mcmc_init_fn,
+    tempered_logposterior_fn,
+    shared_mcmc_step_fn,
+    num_mcmc_steps,
+    n_particles,
 ):
     """
     Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and

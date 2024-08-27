@@ -3,10 +3,11 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest
+
 import blackjax
 import blackjax.smc.resampling as resampling
 from blackjax.smc import extend_params
-from blackjax.smc.partial_posteriors_path import partial_posteriors_kernel, init
+from blackjax.smc.partial_posteriors_path import init, partial_posteriors_kernel
 from tests.smc import SMCLinearRegressionTestCase
 
 
@@ -23,7 +24,7 @@ class PartialPosteriorSMCTest(SMCLinearRegressionTestCase):
             init_particles,
             logprior_fn,
             observations,
-        ) = self.partial_posterior()
+        ) = self.partial_posterior_test_case()
         print("here")
         hmc_init = blackjax.hmc.init
         hmc_kernel = blackjax.hmc.build_kernel()
@@ -39,21 +40,31 @@ class PartialPosteriorSMCTest(SMCLinearRegressionTestCase):
         def partial_logposterior_factory(selector):
             def partial_logposterior(x):
                 lp = logprior_fn(x)
-                return lp + jnp.sum(self.logdensity_by_observation(**x, **observations) * selector.reshape(-1, 1))
+                return lp + jnp.sum(
+                    self.logdensity_by_observation(**x, **observations)
+                    * selector.reshape(-1, 1)
+                )
 
             return jax.jit(partial_logposterior)
 
-        kernel = partial_posteriors_kernel(hmc_kernel, hmc_init,
-                                           resampling.systematic,
-                                           10,
-                                           hmc_parameters,
-                                           partial_logposterior_factory=partial_logposterior_factory)
+        kernel = partial_posteriors_kernel(
+            hmc_kernel,
+            hmc_init,
+            resampling.systematic,
+            10,
+            hmc_parameters,
+            partial_logposterior_factory=partial_logposterior_factory,
+        )
 
         init_state = init(init_particles, 1000)
         smc_kernel = self.variant(kernel)
 
-        selectors = jnp.array([jnp.concat([jnp.ones(selector), jnp.zeros(dataset_size - selector)])
-                               for selector in np.arange(100, 1100, 100)])
+        selectors = jnp.array(
+            [
+                jnp.concat([jnp.ones(selector), jnp.zeros(dataset_size - selector)])
+                for selector in np.arange(100, 1100, 100)
+            ]
+        )
 
         def body_fn(carry, selector):
             i, state = carry

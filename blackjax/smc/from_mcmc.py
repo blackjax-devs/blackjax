@@ -1,10 +1,11 @@
 from functools import partial
 from typing import Callable
 
+import jax
+
+from blackjax import smc
 from blackjax.smc.base import SMCState, update_and_take_last
 from blackjax.types import PRNGKey
-from blackjax import smc
-import jax
 
 
 def build_kernel(
@@ -12,7 +13,7 @@ def build_kernel(
     mcmc_init_fn: Callable,
     resampling_fn,
     update_strategy: Callable = update_and_take_last,
-    ):
+):
     """SMC step from MCMC kernels.
      Builds MCMC kernels from the input parameters, which may change across iterations.
       Moreover, it defines the way such kernels are used to update the particles. This layer

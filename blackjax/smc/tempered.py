@@ -17,9 +17,8 @@ import jax
 import jax.numpy as jnp
 
 import blackjax.smc as smc
-from blackjax.base import SamplingAlgorithm
-
 import blackjax.smc.from_mcmc as smc_from_mcmc
+from blackjax.base import SamplingAlgorithm
 from blackjax.smc.base import update_and_take_last
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -50,12 +49,12 @@ def init(particles: ArrayLikeTree):
 
 
 def build_kernel(
-        logprior_fn: Callable,
-        loglikelihood_fn: Callable,
-        mcmc_step_fn: Callable,
-        mcmc_init_fn: Callable,
-        resampling_fn: Callable,
-        update_strategy: Callable = update_and_take_last,
+    logprior_fn: Callable,
+    loglikelihood_fn: Callable,
+    mcmc_step_fn: Callable,
+    mcmc_init_fn: Callable,
+    resampling_fn: Callable,
+    update_strategy: Callable = update_and_take_last,
 ) -> Callable:
     """Build the base Tempered SMC kernel.
 
@@ -93,14 +92,16 @@ def build_kernel(
     information about the transition.
 
     """
-    delegate = smc_from_mcmc.build_kernel(mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy)
+    delegate = smc_from_mcmc.build_kernel(
+        mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy
+    )
 
     def kernel(
-            rng_key: PRNGKey,
-            state: TemperedSMCState,
-            num_mcmc_steps: int,
-            lmbda: float,
-            mcmc_parameters: dict,
+        rng_key: PRNGKey,
+        state: TemperedSMCState,
+        num_mcmc_steps: int,
+        lmbda: float,
+        mcmc_parameters: dict,
     ) -> tuple[TemperedSMCState, smc.base.SMCInfo]:
         """Move the particles one step using the Tempered SMC algorithm.
 
@@ -134,13 +135,14 @@ def build_kernel(
             tempered_loglikelihood = state.lmbda * loglikelihood_fn(position)
             return logprior + tempered_loglikelihood
 
-        smc_state, info = delegate(rng_key,
-                                   state,
-                                   num_mcmc_steps,
-                                   mcmc_parameters,
-                                   tempered_logposterior_fn,
-                                   log_weights_fn
-                                   )
+        smc_state, info = delegate(
+            rng_key,
+            state,
+            num_mcmc_steps,
+            mcmc_parameters,
+            tempered_logposterior_fn,
+            log_weights_fn,
+        )
 
         tempered_state = TemperedSMCState(
             smc_state.particles, smc_state.weights, state.lmbda + delta
@@ -152,14 +154,14 @@ def build_kernel(
 
 
 def as_top_level_api(
-        logprior_fn: Callable,
-        loglikelihood_fn: Callable,
-        mcmc_step_fn: Callable,
-        mcmc_init_fn: Callable,
-        mcmc_parameters: dict,
-        resampling_fn: Callable,
-        num_mcmc_steps: Optional[int] = 10,
-        update_strategy=update_and_take_last,
+    logprior_fn: Callable,
+    loglikelihood_fn: Callable,
+    mcmc_step_fn: Callable,
+    mcmc_init_fn: Callable,
+    mcmc_parameters: dict,
+    resampling_fn: Callable,
+    num_mcmc_steps: Optional[int] = 10,
+    update_strategy=update_and_take_last,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
 
