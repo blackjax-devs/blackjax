@@ -48,7 +48,7 @@ def build_kernel(
 ) -> Callable:
     """Build the Partial Posteriors (data tempering) SMC kernel.
     The distribution's trajectory includes increasingly adding more
-    datapoints to the likelihood.
+    datapoints to the likelihood. See Section 2.2 of https://arxiv.org/pdf/2007.11936
      Parameters
      ----------
      mcmc_step_fn
