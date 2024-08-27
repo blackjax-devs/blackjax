@@ -52,10 +52,8 @@ def update_waste_free(
         # step particles is num_resmapled, num_mcmc_steps, dimension_of_variable
         # want to transformed into num_resampled * num_mcmc_steps, dimension of variable
         def reshape_step_particles(x):
-            if len(x.shape) > 2:
-                return x.reshape((x.shape[0] * x.shape[1], -1))
-            else:
-                return x.flatten()
+            _num_resampled, num_mcmc_steps, *dimension_of_variable = x.shape
+            return x.reshape((_num_resampled * num_mcmc_steps, *dimension_of_variable))
 
         step_particles = jax.tree.map(reshape_step_particles, states.position)
         new_particles = jax.tree.map(
