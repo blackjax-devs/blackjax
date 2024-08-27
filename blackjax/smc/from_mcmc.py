@@ -11,7 +11,7 @@ from blackjax.types import PRNGKey
 def build_kernel(
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
-    resampling_fn,
+    resampling_fn: Callable,
     update_strategy: Callable = update_and_take_last,
 ):
     """SMC step from MCMC kernels.

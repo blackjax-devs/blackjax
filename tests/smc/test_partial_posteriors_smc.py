@@ -7,7 +7,7 @@ from absl.testing import absltest
 import blackjax
 import blackjax.smc.resampling as resampling
 from blackjax.smc import extend_params
-from blackjax.smc.partial_posteriors_path import init, partial_posteriors_kernel
+from blackjax.smc.partial_posteriors_path import build_kernel, init
 from tests.smc import SMCLinearRegressionTestCase
 
 
@@ -25,9 +25,10 @@ class PartialPosteriorSMCTest(SMCLinearRegressionTestCase):
             logprior_fn,
             observations,
         ) = self.partial_posterior_test_case()
-        print("here")
+
         hmc_init = blackjax.hmc.init
         hmc_kernel = blackjax.hmc.build_kernel()
+
         hmc_parameters = extend_params(
             {
                 "step_size": 10e-2,
@@ -35,6 +36,7 @@ class PartialPosteriorSMCTest(SMCLinearRegressionTestCase):
                 "num_integration_steps": 50,
             },
         )
+
         dataset_size = 1000
 
         def partial_logposterior_factory(selector):
@@ -47,11 +49,11 @@ class PartialPosteriorSMCTest(SMCLinearRegressionTestCase):
 
             return jax.jit(partial_logposterior)
 
-        kernel = partial_posteriors_kernel(
+        kernel = build_kernel(
             hmc_kernel,
             hmc_init,
             resampling.systematic,
-            10,
+            30,
             hmc_parameters,
             partial_logposterior_factory=partial_logposterior_factory,
         )
@@ -62,7 +64,7 @@ class PartialPosteriorSMCTest(SMCLinearRegressionTestCase):
         selectors = jnp.array(
             [
                 jnp.concat([jnp.ones(selector), jnp.zeros(dataset_size - selector)])
-                for selector in np.arange(100, 1100, 100)
+                for selector in np.arange(100, 1001, 50)
             ]
         )
 
@@ -72,9 +74,9 @@ class PartialPosteriorSMCTest(SMCLinearRegressionTestCase):
             new_state, info = smc_kernel(subkey, state, selector)
             return (i + 1, new_state), (new_state, info)
 
-        (steps, result), _ = jax.lax.scan(body_fn, (0, init_state), selectors)
-        assert steps == 10
-        print(selectors)
+        (steps, result), it = jax.lax.scan(body_fn, (0, init_state), selectors)
+        assert steps == 19
+
         self.assert_linear_regression_test_case(result)
 
 
