@@ -11,7 +11,7 @@ from blackjax.smc.partial_posteriors_path import build_kernel, init
 from tests.smc import SMCLinearRegressionTestCase
 
 
-class PartialPosteriorSMCTest(SMCLinearRegressionTestCase):
+class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
     """Test posterior mean estimate."""
 
     def setUp(self):
