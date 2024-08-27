@@ -9,11 +9,11 @@ import numpy as np
 import optax
 
 import blackjax.mcmc.dynamic_hmc as dynamic_hmc
-import blackjax.optimizers.dual_averaging as dual_averaging
-from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
-from blackjax.base import AdaptationAlgorithm
-from blackjax.types import Array, ArrayLikeTree, PRNGKey
-from blackjax.util import pytree_size
+#import blackjax.optimizers.dual_averaging as dual_averaging
+#from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
+##from blackjax.base import AdaptationAlgorithm
+f#rom blackjax.types import Array, ArrayLikeTree, PRNGKey
+f#rom blackjax.util import pytree_size
 
 # optimal tuning for HMC, see https://arxiv.org/abs/1001.4460
 OPTIMAL_TARGET_ACCEPTANCE_RATE = 0.651

@@ -19,7 +19,7 @@ import jax.numpy as jnp
 import blackjax.smc as smc
 from blackjax.base import SamplingAlgorithm
 
-import blackjax.smc.build_inner_kernels as bik
+import blackjax.smc.from_mcmc as smc_from_mcmc
 from blackjax.smc.base import update_and_take_last
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -93,7 +93,7 @@ def build_kernel(
     information about the transition.
 
     """
-    delegate = bik.build_kernel(mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy)
+    delegate = smc_from_mcmc.build_kernel(mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy)
 
     def kernel(
             rng_key: PRNGKey,
@@ -135,11 +135,11 @@ def build_kernel(
             return logprior + tempered_loglikelihood
 
         smc_state, info = delegate(rng_key,
-                                     state,
-                                     num_mcmc_steps,
-                                     mcmc_parameters,
-                                     tempered_logposterior_fn,
-                                     log_weights_fn
+                                   state,
+                                   num_mcmc_steps,
+                                   mcmc_parameters,
+                                   tempered_logposterior_fn,
+                                   log_weights_fn
                                    )
 
         tempered_state = TemperedSMCState(
