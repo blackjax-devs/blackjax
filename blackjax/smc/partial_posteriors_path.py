@@ -98,8 +98,8 @@ def as_top_level_api(
     mcmc_init_fn: Callable,
     mcmc_parameters: dict,
     resampling_fn: Callable,
+    num_mcmc_steps,
     partial_logposterior_factory: Callable,
-    num_mcmc_steps: Optional[int] = 10,
     update_strategy=update_and_take_last,
 ) -> SamplingAlgorithm:
     """

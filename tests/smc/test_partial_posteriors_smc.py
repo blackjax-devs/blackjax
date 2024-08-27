@@ -7,7 +7,6 @@ from absl.testing import absltest
 import blackjax
 import blackjax.smc.resampling as resampling
 from blackjax.smc import extend_params
-from blackjax.smc.partial_posteriors_path import build_kernel, init
 from tests.smc import SMCLinearRegressionTestCase
 
 
@@ -49,13 +48,13 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
 
             return jax.jit(partial_logposterior)
 
-        kernel = build_kernel(
+        init, kernel = blackjax.partial_posteriors_smc(
             hmc_kernel,
             hmc_init,
+            hmc_parameters,
             resampling.systematic,
             30,
-            hmc_parameters,
-            partial_logposterior_factory=partial_logposterior_factory,
+            partial_logposterior_factory=partial_logposterior_factory
         )
 
         init_state = init(init_particles, 1000)
