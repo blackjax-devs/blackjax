@@ -1,4 +1,5 @@
 """Test the accuracy of the MCMC kernels."""
+
 import functools
 import itertools
 
@@ -495,7 +496,9 @@ class LinearRegressionTest(chex.TestCase):
         )
         logposterior_fn = lambda x: logposterior_fn_(**x)
 
-        barker = blackjax.barker_proposal(logposterior_fn, 1e-1)
+        inv_mass_matrix = jnp.eye(1)  # no effect on original test
+
+        barker = blackjax.barker_proposal(logposterior_fn, 1e-1, inv_mass_matrix)
         state = barker.init({"coefs": 1.0, "log_scale": 1.0})
 
         _, states = run_inference_algorithm(
