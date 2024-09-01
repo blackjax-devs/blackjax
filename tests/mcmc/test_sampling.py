@@ -496,7 +496,7 @@ class LinearRegressionTest(chex.TestCase):
         )
         logposterior_fn = lambda x: logposterior_fn_(**x)
 
-        inv_mass_matrix = jnp.eye(1)  # no effect on original test
+        inv_mass_matrix = jnp.eye(2)  # no effect on original test
 
         barker = blackjax.barker_proposal(logposterior_fn, 1e-1, inv_mass_matrix)
         state = barker.init({"coefs": 1.0, "log_scale": 1.0})
