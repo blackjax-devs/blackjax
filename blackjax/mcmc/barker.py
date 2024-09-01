@@ -186,7 +186,7 @@ def as_top_level_api(
     logdensity_fn
         The log-density function we wish to draw samples from.
     step_size
-        The value to use for the step size in the symplectic integrator.
+        The value of the step_size correspnoding to the global scale of the proposal distribution.
     inverse_mass_matrix
         The inverse mass matrix to use for pre-conditioning (see Appendix G of :cite:p:`Livingstone2022Barker`).
 
@@ -231,7 +231,8 @@ def _barker_sample_nd(key, mean, a, scale, C_t):
         The global scale, a scalar. This corresponds to :math:`\\sigma` in the equation above.
         It encodes the step size of the proposal.
     C_t
-        The transpose of the sqrt of the mass matrix, an Array. It is not used in the 1D version of Barker's proposal and thus not present in the equation above.
+        The transpose of the sqrt of the mass matrix, an Array. It is not used in the
+        1D version of Barker's proposal and thus not present in the equation above.
 
     Returns
     -------
