@@ -22,7 +22,7 @@ from jax.scipy import stats
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.proposal import static_binomial_sampling
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["BarkerState", "BarkerInfo", "init", "build_kernel", "as_top_level_api"]
 
@@ -81,7 +81,7 @@ def build_kernel():
     """
 
     def _compute_acceptance_probability(
-        state: BarkerState, proposal: BarkerState, C_t: jnp.Array, C_t_inv: jnp.Array
+        state: BarkerState, proposal: BarkerState, C_t: Array, C_t_inv: Array
     ) -> float:
         """Compute the acceptance probability of the Barker's proposal kernel."""
 
@@ -106,7 +106,7 @@ def build_kernel():
         state: BarkerState,
         logdensity_fn: Callable,
         step_size: float,
-        inverse_mass_matrix: jnp.Array,
+        inverse_mass_matrix: Array,
     ) -> tuple[BarkerState, BarkerInfo]:
         """Generate a new sample with the Barker kernel."""
         grad_fn = jax.value_and_grad(logdensity_fn)
@@ -142,7 +142,7 @@ def build_kernel():
 
 
 def as_top_level_api(
-    logdensity_fn: Callable, step_size: float, inverse_mass_matrix: jnp.Array
+    logdensity_fn: Callable, step_size: float, inverse_mass_matrix: Array
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Barker's proposal :cite:p:`Livingstone2022Barker` kernel with a
     Gaussian base kernel.
