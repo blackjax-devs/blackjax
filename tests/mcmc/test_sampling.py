@@ -889,7 +889,7 @@ class UnivariateNormalTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_barker(self):
         inference_algorithm = blackjax.barker_proposal(
-            self.normal_logprob, step_size=1.5
+            self.normal_logprob, step_size=1.5, inverse_mass_matrix=jnp.eye(1)
         )
         initial_state = inference_algorithm.init(jnp.array(1.0))
         self.univariate_normal_test_case(
@@ -926,7 +926,7 @@ mcse_test_cases = [
     },
     {
         "algorithm": blackjax.barker_proposal,
-        "parameters": {"step_size": 0.5},
+        "parameters": {"step_size": 0.5, "inverse_mass_matrix": jnp.eye(2)},
         "is_mass_matrix_diagonal": None,
     },
 ]
