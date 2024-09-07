@@ -32,7 +32,7 @@ class TrajectoryTest(chex.TestCase):
             momentum_generator,
             kinetic_energy_fn,
             uturn_check_fn,
-            _
+            _,
         ) = metrics.gaussian_euclidean(inverse_mass_matrix)
 
         integrator = integrators.velocity_verlet(logdensity_fn, kinetic_energy_fn)
@@ -84,7 +84,7 @@ class TrajectoryTest(chex.TestCase):
             momentum_generator,
             kinetic_energy_fn,
             uturn_check_fn,
-            _
+            _,
         ) = metrics.gaussian_euclidean(inverse_mass_matrix)
 
         integrator = integrators.velocity_verlet(logdensity_fn, kinetic_energy_fn)
@@ -213,7 +213,7 @@ class TrajectoryTest(chex.TestCase):
             momentum_generator,
             kinetic_energy_fn,
             uturn_check_fn,
-            _
+            _,
         ) = metrics.gaussian_euclidean(inverse_mass_matrix)
 
         integrator = integrators.velocity_verlet(logdensity_fn, kinetic_energy_fn)

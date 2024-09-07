@@ -24,7 +24,7 @@ class CovarianceFormattingTest(chex.TestCase):
         """Test formatting raises error for invalid shapes"""
         mass_matrix = jnp.zeros(shape=shape)
         with self.assertRaisesRegex(
-                ValueError, "The mass matrix has the wrong number of dimensions"
+            ValueError, "The mass matrix has the wrong number of dimensions"
         ):
             metrics._format_covariance(mass_matrix, get_inv)
 
@@ -38,9 +38,9 @@ class CovarianceFormattingTest(chex.TestCase):
         mass_matrix_sqrt, inv_mass_matrix_sqrt, diag = metrics._format_covariance(
             mass_matrix, get_inv
         )
-        chex.assert_trees_all_close(mass_matrix_sqrt, mass_matrix ** 0.5)
+        chex.assert_trees_all_close(mass_matrix_sqrt, mass_matrix**0.5)
         if get_inv:
-            chex.assert_trees_all_close(inv_mass_matrix_sqrt, mass_matrix ** -0.5)
+            chex.assert_trees_all_close(inv_mass_matrix_sqrt, mass_matrix**-0.5)
         else:
             assert inv_mass_matrix_sqrt is None
 
@@ -83,7 +83,7 @@ class GaussianEuclideanMetricsTest(chex.TestCase):
         """Test Gaussian Euclidean Function returns correct function invalid ndim"""
         x = jnp.ones(shape=shape)
         with self.assertRaisesRegex(
-                ValueError, "The mass matrix has the wrong number of dimensions"
+            ValueError, "The mass matrix has the wrong number of dimensions"
         ):
             _ = metrics.gaussian_euclidean(x)
 
@@ -168,17 +168,17 @@ class GaussianRiemannianMetricsTest(chex.TestCase):
         x = jnp.ones(shape=shape)
         metric = metrics.gaussian_riemannian(lambda _: x)
         with self.assertRaisesRegex(
-                ValueError, "The mass matrix has the wrong number of dimensions"
+            ValueError, "The mass matrix has the wrong number of dimensions"
         ):
             metric.sample_momentum(self.key, x)
 
         with self.assertRaisesRegex(
-                ValueError, "The mass matrix has the wrong number of dimensions"
+            ValueError, "The mass matrix has the wrong number of dimensions"
         ):
             metric.kinetic_energy(x, position=x)
 
         with self.assertRaisesRegex(
-                ValueError, "must be called with the position specified"
+            ValueError, "must be called with the position specified"
         ):
             metric.kinetic_energy(x)
 
