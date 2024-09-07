@@ -24,7 +24,7 @@ class CovarianceFormattingTest(chex.TestCase):
         """Test formatting raises error for invalid shapes"""
         mass_matrix = jnp.zeros(shape=shape)
         with self.assertRaisesRegex(
-            ValueError, "The mass matrix has the wrong number of dimensions"
+                ValueError, "The mass matrix has the wrong number of dimensions"
         ):
             metrics._format_covariance(mass_matrix, get_inv)
 
@@ -38,9 +38,9 @@ class CovarianceFormattingTest(chex.TestCase):
         mass_matrix_sqrt, inv_mass_matrix_sqrt, diag = metrics._format_covariance(
             mass_matrix, get_inv
         )
-        chex.assert_trees_all_close(mass_matrix_sqrt, mass_matrix**0.5)
+        chex.assert_trees_all_close(mass_matrix_sqrt, mass_matrix ** 0.5)
         if get_inv:
-            chex.assert_trees_all_close(inv_mass_matrix_sqrt, mass_matrix**-0.5)
+            chex.assert_trees_all_close(inv_mass_matrix_sqrt, mass_matrix ** -0.5)
         else:
             assert inv_mass_matrix_sqrt is None
 
@@ -83,7 +83,7 @@ class GaussianEuclideanMetricsTest(chex.TestCase):
         """Test Gaussian Euclidean Function returns correct function invalid ndim"""
         x = jnp.ones(shape=shape)
         with self.assertRaisesRegex(
-            ValueError, "The mass matrix has the wrong number of dimensions"
+                ValueError, "The mass matrix has the wrong number of dimensions"
         ):
             _ = metrics.gaussian_euclidean(x)
 
@@ -111,11 +111,11 @@ class GaussianEuclideanMetricsTest(chex.TestCase):
         inv_scaled_momentum, scaled_momentum = scale(
             arbitrary_position, ((momentum_val, True), (momentum_val, False))
         )
-        expected_scaled_momentum = momentum_val * jnp.sqrt(inverse_mass_matrix)
-        expected_inv_scaled_momentum = momentum_val / jnp.sqrt(inverse_mass_matrix)
+        expected_scaled_momentum = momentum_val / jnp.sqrt(inverse_mass_matrix)
+        expected_inv_scaled_momentum = momentum_val * jnp.sqrt(inverse_mass_matrix)
 
         chex.assert_trees_all_close(inv_scaled_momentum, expected_inv_scaled_momentum)
-        chex.assert_trees_all_close(inv_scaled_momentum, expected_scaled_momentum)
+        chex.assert_trees_all_close(scaled_momentum, expected_scaled_momentum)
 
     @chex.all_variants(with_pmap=False)
     def test_gaussian_euclidean_dim_2(self):
@@ -143,15 +143,15 @@ class GaussianEuclideanMetricsTest(chex.TestCase):
         inv_scaled_momentum, scaled_momentum = scale(
             arbitrary_position, ((momentum_val, True), (momentum_val, False))
         )
-        expected_scaled_momentum = momentum_val @ linalg.cholesky(
+        expected_inv_scaled_momentum = momentum_val @ linalg.cholesky(
             inverse_mass_matrix, lower=True
         )
-        expected_inv_scaled_momentum = momentum_val @ linalg.inv(
+        expected_scaled_momentum = momentum_val @ linalg.inv(
             linalg.cholesky(inverse_mass_matrix, lower=True)
         )
 
         chex.assert_trees_all_close(inv_scaled_momentum, expected_inv_scaled_momentum)
-        chex.assert_trees_all_close(inv_scaled_momentum, expected_scaled_momentum)
+        chex.assert_trees_all_close(scaled_momentum, expected_scaled_momentum)
 
 
 class GaussianRiemannianMetricsTest(chex.TestCase):
@@ -168,17 +168,17 @@ class GaussianRiemannianMetricsTest(chex.TestCase):
         x = jnp.ones(shape=shape)
         metric = metrics.gaussian_riemannian(lambda _: x)
         with self.assertRaisesRegex(
-            ValueError, "The mass matrix has the wrong number of dimensions"
+                ValueError, "The mass matrix has the wrong number of dimensions"
         ):
             metric.sample_momentum(self.key, x)
 
         with self.assertRaisesRegex(
-            ValueError, "The mass matrix has the wrong number of dimensions"
+                ValueError, "The mass matrix has the wrong number of dimensions"
         ):
             metric.kinetic_energy(x, position=x)
 
         with self.assertRaisesRegex(
-            ValueError, "must be called with the position specified"
+                ValueError, "must be called with the position specified"
         ):
             metric.kinetic_energy(x)
 
@@ -203,17 +203,17 @@ class GaussianRiemannianMetricsTest(chex.TestCase):
         expected_kinetic_energy_val = 0.5 * velocity * momentum_val
         expected_kinetic_energy_val += 0.5 * jnp.sum(jnp.log(2 * jnp.pi * mass_matrix))
 
-        assert momentum_val == expected_momentum_val
-        assert kinetic_energy_val == expected_kinetic_energy_val
+        np.testing.assert_allclose(expected_momentum_val, momentum_val)
+        np.testing.assert_allclose(kinetic_energy_val, expected_kinetic_energy_val)
 
         inv_scaled_momentum, scaled_momentum = scale(
             arbitrary_position, ((momentum_val, True), (momentum_val, False))
         )
-        expected_scaled_momentum = momentum_val * jnp.sqrt(inverse_mass_matrix)
-        expected_inv_scaled_momentum = momentum_val / jnp.sqrt(inverse_mass_matrix)
+        expected_scaled_momentum = momentum_val / jnp.sqrt(inverse_mass_matrix)
+        expected_inv_scaled_momentum = momentum_val * jnp.sqrt(inverse_mass_matrix)
 
         chex.assert_trees_all_close(inv_scaled_momentum, expected_inv_scaled_momentum)
-        chex.assert_trees_all_close(inv_scaled_momentum, expected_scaled_momentum)
+        chex.assert_trees_all_close(scaled_momentum, expected_scaled_momentum)
 
     @chex.all_variants(with_pmap=False)
     def test_gaussian_euclidean_dim_2(self):
@@ -239,21 +239,21 @@ class GaussianRiemannianMetricsTest(chex.TestCase):
         expected_kinetic_energy_val += 0.5 * jnp.linalg.slogdet(mass_matrix)[1]
         expected_kinetic_energy_val += 0.5 * len(mass_matrix) * jnp.log(2 * jnp.pi)
 
-        assert momentum_val == expected_momentum_val
-        assert kinetic_energy_val == expected_kinetic_energy_val
+        np.testing.assert_allclose(expected_momentum_val, momentum_val)
+        np.testing.assert_allclose(kinetic_energy_val, expected_kinetic_energy_val)
 
         inv_scaled_momentum, scaled_momentum = scale(
             arbitrary_position, ((momentum_val, True), (momentum_val, False))
         )
-        expected_scaled_momentum = momentum_val @ linalg.cholesky(
+        expected_inv_scaled_momentum = momentum_val @ linalg.cholesky(
             inverse_mass_matrix, lower=True
         )
-        expected_inv_scaled_momentum = momentum_val @ linalg.inv(
+        expected_scaled_momentum = momentum_val @ linalg.inv(
             linalg.cholesky(inverse_mass_matrix, lower=True)
         )
 
         chex.assert_trees_all_close(inv_scaled_momentum, expected_inv_scaled_momentum)
-        chex.assert_trees_all_close(inv_scaled_momentum, expected_scaled_momentum)
+        chex.assert_trees_all_close(scaled_momentum, expected_scaled_momentum)
 
 
 if __name__ == "__main__":
