@@ -28,34 +28,34 @@ For a Newtonian hamiltonian dynamic the kinetic energy is given by:
 We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
 
 """
-from typing import Callable, NamedTuple, Optional, Protocol, Union, Tuple, List
+from typing import Callable, NamedTuple, Optional, Protocol, Tuple, Union
 
 import jax.numpy as jnp
 import jax.scipy as jscipy
+from chex import Numeric
 from jax.flatten_util import ravel_pytree
-from jax.scipy import stats as sp_stats
 
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
-from blackjax.util import generate_gaussian_noise
+from blackjax.util import generate_gaussian_noise, linear_map
 
 __all__ = ["default_metric", "gaussian_euclidean", "gaussian_riemannian"]
 
 
 class KineticEnergy(Protocol):
     def __call__(
-            self, momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
-    ) -> float:
+        self, momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+    ) -> Numeric:
         ...
 
 
 class CheckTurning(Protocol):
     def __call__(
-            self,
-            momentum_left: ArrayLikeTree,
-            momentum_right: ArrayLikeTree,
-            momentum_sum: ArrayLikeTree,
-            position_left: Optional[ArrayLikeTree] = None,
-            position_right: Optional[ArrayLikeTree] = None,
+        self,
+        momentum_left: ArrayLikeTree,
+        momentum_right: ArrayLikeTree,
+        momentum_sum: ArrayLikeTree,
+        position_left: Optional[ArrayLikeTree] = None,
+        position_right: Optional[ArrayLikeTree] = None,
     ) -> bool:
         ...
 
@@ -95,7 +95,7 @@ def default_metric(metric: MetricTypes) -> Metric:
 
 
 def gaussian_euclidean(
-        inverse_mass_matrix: Array,
+    inverse_mass_matrix: Array,
 ) -> Metric:
     r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum
     :cite:p:`betancourt2013general`.
@@ -129,27 +129,28 @@ def gaussian_euclidean(
         itself given the values of the momentum along the trajectory.
 
     """
-    inv_mass_matrix_sqrt, mass_matrix_sqrt, matmul = _format_covariance(inverse_mass_matrix, get_inv=True)
-
+    inv_mass_matrix_sqrt, mass_matrix_sqrt, diag = _format_covariance(
+        inverse_mass_matrix, get_inv=True
+    )
 
     def momentum_generator(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayTree:
         return generate_gaussian_noise(rng_key, position, sigma=mass_matrix_sqrt)
 
     def kinetic_energy(
-            momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
-    ) -> float:
+        momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+    ) -> Numeric:
         del position
         momentum, _ = ravel_pytree(momentum)
-        velocity = matmul(inverse_mass_matrix, momentum)
+        velocity = linear_map(inverse_mass_matrix, momentum)
         kinetic_energy_val = 0.5 * jnp.dot(velocity, momentum)
         return kinetic_energy_val
 
     def is_turning(
-            momentum_left: ArrayLikeTree,
-            momentum_right: ArrayLikeTree,
-            momentum_sum: ArrayLikeTree,
-            position_left: Optional[ArrayLikeTree] = None,
-            position_right: Optional[ArrayLikeTree] = None,
+        momentum_left: ArrayLikeTree,
+        momentum_right: ArrayLikeTree,
+        momentum_sum: ArrayLikeTree,
+        position_left: Optional[ArrayLikeTree] = None,
+        position_right: Optional[ArrayLikeTree] = None,
     ) -> bool:
         """Generalized U-turn criterion :cite:p:`betancourt2013generalizing,nuts_uturn`.
 
@@ -169,8 +170,8 @@ def gaussian_euclidean(
         m_right, _ = ravel_pytree(momentum_right)
         m_sum, _ = ravel_pytree(momentum_sum)
 
-        velocity_left = matmul(inverse_mass_matrix, m_left)
-        velocity_right = matmul(inverse_mass_matrix, m_right)
+        velocity_left = linear_map(inverse_mass_matrix, m_left)
+        velocity_right = linear_map(inverse_mass_matrix, m_right)
 
         # rho = m_sum
         rho = m_sum - (m_right + m_left) / 2
@@ -178,7 +179,9 @@ def gaussian_euclidean(
         turning_at_right = jnp.dot(velocity_right, rho) <= 0
         return turning_at_left | turning_at_right
 
-    def scale(position: ArrayLikeTree, elements: Tuple[Tuple[ArrayLikeTree, bool]]) -> Tuple[ArrayLikeTree]:
+    def scale(
+        position: ArrayLikeTree, elements: Tuple[Tuple[ArrayLikeTree, bool]]
+    ) -> Tuple[ArrayLikeTree]:
         """Scale elements by the mass matrix.
 
         Parameters
@@ -198,41 +201,27 @@ def gaussian_euclidean(
         for element, inv in elements:
             ravelled_element, unravel_fn = ravel_pytree(element)
             if inv:
-                ravelled_element = matmul(inv_mass_matrix_sqrt, ravelled_element)
+                ravelled_element = linear_map(inv_mass_matrix_sqrt, ravelled_element)
             else:
-                ravelled_element = matmul(mass_matrix_sqrt, ravelled_element)
+                ravelled_element = linear_map(mass_matrix_sqrt, ravelled_element)
             scaled_elements.append(unravel_fn(ravelled_element))
-        return tuple(scaled_elements)
+        return tuple(scaled_elements)  # type: ignore
 
     return Metric(momentum_generator, kinetic_energy, is_turning, scale)
 
 
 def gaussian_riemannian(
-        mass_matrix_fn: Callable,
+    mass_matrix_fn: Callable,
 ) -> Metric:
-
-
-
-
-
     def momentum_generator(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayLikeTree:
         mass_matrix = mass_matrix_fn(position)
-        ndim = jnp.ndim(mass_matrix)
-        if ndim == 1:
-            mass_matrix_sqrt = jnp.sqrt(mass_matrix)
-        elif ndim == 2:
-            mass_matrix_sqrt = jscipy.linalg.cholesky(mass_matrix, lower=True)
-        else:
-            raise ValueError(
-                "The mass matrix has the wrong number of dimensions:"
-                f" expected 1 or 2, got {jnp.ndim(mass_matrix)}."
-            )
+        mass_matrix_sqrt, *_ = _format_covariance(mass_matrix, get_inv=False)
 
         return generate_gaussian_noise(rng_key, position, sigma=mass_matrix_sqrt)
 
     def kinetic_energy(
-            momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
-    ) -> float:
+        momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+    ) -> Numeric:
         if position is None:
             raise ValueError(
                 "A Reinmannian kinetic energy function must be called with the "
@@ -242,25 +231,18 @@ def gaussian_riemannian(
 
         momentum, _ = ravel_pytree(momentum)
         mass_matrix = mass_matrix_fn(position)
-        ndim = jnp.ndim(mass_matrix)
-        if ndim == 1:
-            return -jnp.sum(sp_stats.norm.logpdf(momentum, 0.0, jnp.sqrt(mass_matrix)))
-        elif ndim == 2:
-            return -sp_stats.multivariate_normal.logpdf(
-                momentum, jnp.zeros_like(momentum), mass_matrix
-            )
-        else:
-            raise ValueError(
-                "The mass matrix has the wrong number of dimensions:"
-                f" expected 1 or 2, got {jnp.ndim(mass_matrix)}."
-            )
+        sqrt_mass_matrix, inv_sqrt_mass_matrix, diag = _format_covariance(
+            mass_matrix, get_inv=True
+        )
+
+        return _energy(momentum, 0, sqrt_mass_matrix, inv_sqrt_mass_matrix, diag)
 
     def is_turning(
-            momentum_left: ArrayLikeTree,
-            momentum_right: ArrayLikeTree,
-            momentum_sum: ArrayLikeTree,
-            position_left: Optional[ArrayLikeTree] = None,
-            position_right: Optional[ArrayLikeTree] = None,
+        momentum_left: ArrayLikeTree,
+        momentum_right: ArrayLikeTree,
+        momentum_sum: ArrayLikeTree,
+        position_left: Optional[ArrayLikeTree] = None,
+        position_right: Optional[ArrayLikeTree] = None,
     ) -> bool:
         del momentum_left, momentum_right, momentum_sum, position_left, position_right
         raise NotImplementedError(
@@ -287,7 +269,9 @@ def gaussian_riemannian(
         # turning_at_right = jnp.dot(velocity_right, rho) <= 0
         # return turning_at_left | turning_at_right
 
-    def scale(position: ArrayLikeTree, elements: Tuple[Tuple[ArrayLikeTree, bool]]) -> Tuple[ArrayLikeTree]:
+    def scale(
+        position: ArrayLikeTree, elements: Tuple[Tuple[ArrayLikeTree, bool]]
+    ) -> Tuple[ArrayLikeTree]:
         """Scale elements by the mass matrix.
 
         Parameters
@@ -307,51 +291,65 @@ def gaussian_riemannian(
         mass_matrix = mass_matrix_fn(position)
         # some small performance improvement: group by inv and only compute the inverse Cholesky if needed
 
-        inv_elements = [(k, element) for k, (element, inv) in enumerate(elements) if inv]
-        non_inv_elements = [(k, element) for k, (element, inv) in enumerate(elements) if not inv]
+        inv_elements = [
+            (k, element) for k, (element, inv) in enumerate(elements) if inv
+        ]
+        non_inv_elements = [
+            (k, element) for k, (element, inv) in enumerate(elements) if not inv
+        ]
         argsort = [k for k, _ in non_inv_elements] + [k for k, _ in inv_elements]
 
-        mass_matrix_sqrt, inv_sqrt_mass_matrix, matmul = _format_covariance(mass_matrix, get_inv=bool(inv_elements))
+        mass_matrix_sqrt, inv_sqrt_mass_matrix, diag = _format_covariance(
+            mass_matrix, get_inv=bool(inv_elements)
+        )
 
         for _, element in non_inv_elements:
             rav_element, unravel_fn = ravel_pytree(element)
-            rav_element = matmul(mass_matrix_sqrt, rav_element)
+            rav_element = linear_map(mass_matrix_sqrt, rav_element)
             scaled_elements.append(unravel_fn(rav_element))
 
         if inv_elements:
             for _, element in inv_elements:
                 rav_element, unravel_fn = ravel_pytree(element)
-                rav_element = matmul(inv_sqrt_mass_matrix, rav_element)
+                rav_element = linear_map(inv_sqrt_mass_matrix, rav_element)
                 scaled_elements.append(unravel_fn(rav_element))
 
         scaled_elements = [scaled_elements[k] for k in argsort]
 
-        return tuple(scaled_elements)
+        return tuple(scaled_elements)  # type: ignore
 
-    return Metric(momentum_generator, kinetic_energy, is_turning)
+    return Metric(momentum_generator, kinetic_energy, is_turning, scale)
 
-def _format_covariance(mass_matrix: Array, get_inv):
-    ndim = jnp.ndim(mass_matrix)
+
+def _format_covariance(cov: Array, get_inv):
+    ndim = jnp.ndim(cov)
     if ndim == 1:
-        mass_matrix_sqrt = jnp.sqrt(mass_matrix)
-        matmul = jnp.multiply
+        cov_sqrt = jnp.sqrt(cov)
+        diag = lambda x: x
         if get_inv:
-            inv_mass_matrix_sqrt = jnp.reciprocal(mass_matrix_sqrt)
+            inv_cov_sqrt = jnp.reciprocal(cov_sqrt)
         else:
-            inv_mass_matrix_sqrt = None
+            inv_cov_sqrt = None
     elif ndim == 2:
-        mass_matrix_sqrt = jscipy.linalg.cholesky(mass_matrix, lower=True)
-        matmul = jnp.matmul
+        cov_sqrt = jscipy.linalg.cholesky(cov, lower=True)
+        diag = lambda x: jnp.diag(x)
         if get_inv:
-            identity = jnp.identity(mass_matrix.shape[0])
-            inv_mass_matrix_sqrt = jscipy.linalg.solve_triangular(
-            mass_matrix_sqrt, identity, lower=True
+            identity = jnp.identity(cov.shape[0])
+            inv_cov_sqrt = jscipy.linalg.solve_triangular(
+                cov_sqrt, identity, lower=True
             )
         else:
-            inv_mass_matrix_sqrt = None
+            inv_cov_sqrt = None
     else:
         raise ValueError(
             "The mass matrix has the wrong number of dimensions:"
-            f" expected 1 or 2, got {jnp.ndim(mass_matrix)}."
+            f" expected 1 or 2, got {jnp.ndim(cov)}."
         )
-    return mass_matrix_sqrt, inv_mass_matrix_sqrt, matmul
+    return cov_sqrt, inv_cov_sqrt, diag
+
+
+def _energy(x, mean, cov_sqrt, inv_cov_sqrt, diag):
+    d = x.shape[0]
+    z = linear_map(inv_cov_sqrt, x - mean)
+    const = jnp.sum(jnp.log(diag(cov_sqrt))) + d / 2 * jnp.log(2 * jnp.pi)
+    return 0.5 * jnp.sum(z**2) + const

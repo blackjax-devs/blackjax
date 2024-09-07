@@ -172,7 +172,7 @@ def build_kernel(
 
         """
 
-        momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
+        momentum_generator, kinetic_energy_fn, *_ = metrics.gaussian_euclidean(
             inverse_mass_matrix
         )
         bijection_fn = bijection(logdensity_fn, kinetic_energy_fn)
