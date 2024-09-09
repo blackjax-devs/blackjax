@@ -331,12 +331,12 @@ def _format_covariance(cov: Array, get_inv):
         else:
             inv_cov_sqrt = None
     elif ndim == 2:
-        cov_sqrt = jscipy.linalg.cholesky(cov, lower=True)
+        cov_sqrt = jscipy.linalg.cholesky(cov, lower=False)
         diag = lambda x: jnp.diag(x)
         if get_inv:
             identity = jnp.identity(cov.shape[0])
             inv_cov_sqrt = jscipy.linalg.solve_triangular(
-                cov_sqrt, identity, lower=True
+                cov_sqrt, identity, lower=False
             )
         else:
             inv_cov_sqrt = None
