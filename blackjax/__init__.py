@@ -33,7 +33,7 @@ from .sgmcmc import csgld as _csgld
 from .sgmcmc import sghmc as _sghmc
 from .sgmcmc import sgld as _sgld
 from .sgmcmc import sgnht as _sgnht
-from .smc import adaptive_tempered
+from .smc import adaptive_tempered, pretuning
 from .smc import inner_kernel_tuning as _inner_kernel_tuning
 from .smc import partial_posteriors_path as _partial_posteriors_smc
 from .smc import tempered
@@ -120,6 +120,7 @@ hmc_family = [hmc, nuts]
 adaptive_tempered_smc = generate_top_level_api_from(adaptive_tempered)
 tempered_smc = generate_top_level_api_from(tempered)
 inner_kernel_tuning = generate_top_level_api_from(_inner_kernel_tuning)
+pretuning_smc = generate_top_level_api_from(pretuning)
 partial_posteriors_smc = generate_top_level_api_from(_partial_posteriors_smc)
 
 smc_family = [tempered_smc, adaptive_tempered_smc, partial_posteriors_smc]
