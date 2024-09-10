@@ -4,7 +4,10 @@ import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
+from absl.testing import absltest
 
+import blackjax
+from blackjax.smc import extend_params, resampling
 from blackjax.smc.pretuning import build_pretune, esjd, update_parameter_distribution
 from tests.smc import SMCLinearRegressionTestCase
 
@@ -186,7 +189,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
         )
 
         init, step = blackjax.inner_kernel_tuning(
-            tempered_smc,
+            blackjax.tempered_smc,
             logprior_fn,
             loglikelihood_fn,
             blackjax.hmc.build_kernel(),

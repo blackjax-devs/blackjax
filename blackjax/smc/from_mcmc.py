@@ -59,7 +59,7 @@ def build_kernel(
 
 
 def step_from_mcmc_parameters(
-    mcmc_parameters: ArrayLikeTree, mcmc_step_fn: Callable
+    mcmc_parameters: dict, mcmc_step_fn: Callable
 ) -> Tuple[ArrayLikeTree, Callable]:
     """
     Splits between shared and unshared parameters, and binds the shared
