@@ -3,7 +3,7 @@ import unittest
 import chex
 import numpy as np
 import jax.numpy as jnp
-from blackjax.smc.pretuning import update_parameter_distribution, esjd, build_kernel
+from blackjax.smc.pretuning import update_parameter_distribution, esjd, build_pretune
 import jax
 
 
@@ -61,6 +61,16 @@ class TestUpdateParameterDistribution(chex.TestCase):
     def setUp(self):
         super().setUp()
         self.key = jax.random.key(42)
+        self.previous_position = np.array(
+            [jnp.array([10.0, 15.0]),
+             jnp.array([10.0, 15.0]),
+             jnp.array([3.0, 4.0])]
+        )
+        self.next_position = np.array(
+            [jnp.array([20.0, 30.0]),
+             jnp.array([10.0, 15.0]),
+             jnp.array([9.0, 12.0])]
+        )
 
     def test_update_param_distribution(self):
         """
@@ -69,22 +79,11 @@ class TestUpdateParameterDistribution(chex.TestCase):
         of that chain with a slight mutation due to noise are reused.
         """
 
-        previous_position = np.array(
-            [jnp.array([10.0, 15.0]),
-             jnp.array([10.0, 15.0]),
-             jnp.array([3.0, 4.0])]
-        )
-        next_position = np.array(
-            [jnp.array([20.0, 30.0]),
-             jnp.array([10.0, 15.0]),
-             jnp.array([9.0, 12.0])]
-        )
-
         new_parameter_distribution, chain_mixing_measurement = update_parameter_distribution(
             self.key,
             jnp.array([1.0, 2.0, 3.0]),
-            previous_position,
-            next_position,
+            self.previous_position,
+            self.next_position,
             measure_of_chain_mixing=lambda x, y, z: jnp.array([1.0, 0.0, 0.0]),
             alpha=0,
             sigma_parameters=0.0001,
@@ -101,6 +100,34 @@ class TestUpdateParameterDistribution(chex.TestCase):
             np.array([1, 0, 0], dtype="float32"),
             rtol=1e-6,
         )
+
+    def test_update_multi_sigmas(self):
+        """
+        When we have multiple parameters, the performance is attached to its combination
+        so sampling must work accordingly.
+        """
+        new_parameter_distribution, chain_mixing_measurement = update_parameter_distribution(
+            self.key,
+            {"param_a": jnp.array([1.0, 2.0, 3.0]),
+             "param_b": jnp.array([[5., 6.],
+                                   [6., 7.],
+                                   [4., 5.]
+                                   ])},
+            self.previous_position,
+            self.next_position,
+            measure_of_chain_mixing=lambda x, y, z: jnp.array([1.0, 0.0, 0.0]),
+            alpha=0,
+            sigma_parameters={"param_a": 0.0001, "param_b": 0.00001},
+            acceptance_probability=None
+        )
+        print(chain_mixing_measurement)
+        np.testing.assert_allclose(chain_mixing_measurement, np.array([1.0, 0, 0]))
+
+        np.testing.assert_allclose(new_parameter_distribution["param_a"], jnp.array([1.0, 1.0, 1.0]), atol=0.1)
+        np.testing.assert_allclose(new_parameter_distribution["param_b"], jnp.array([[5., 6.],
+                                                                                     [5., 6.],
+                                                                                     [5., 6.]
+                                                                                     ]), atol=0.1)
 
 
 import functools
@@ -386,38 +413,51 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
         def logposterior(x):
             return logprior_fn(x) + loglikelihood_fn(x)
 
-        num_particles = 1000
+        # TODO CHARLY  when we have more than one step this needs to be non-static.
+        num_particles = 100
         sampling_key, step_size_key, integration_steps_key = jax.random.split(self.key, 3)
-        integration_steps_distribution = jax.random.uniform(integration_steps_key, (num_particles,), minval=1,
-                                                            max_val=100)
-        step_sizes_distribution = jax.random.uniform(step_size_key, (num_particles,), minval=0, max_val=0.1)
+        integration_steps_distribution = (jnp.round(jax.random.uniform(integration_steps_key,
+                                                                       (num_particles,),
+                                                                       minval=1, maxval=100))
+                                          .astype(int))
+
+        step_sizes_distribution = jax.random.uniform(step_size_key,
+                                                     (num_particles,),
+                                                     minval=0,
+                                                     maxval=0.1)
 
         # Fixes inverse_mass_matrix and distribution for the other two parameters.
-        initial_parameters = extend_params(
-            dict(
-                inverse_mass_matrix=jnp.eye(2),
-                step_size=step_sizes_distribution,
-                num_integration_steps=integration_steps_distribution,
-            ),
+        initial_parameters = dict(
+            inverse_mass_matrix=extend_params(jnp.eye(2)),
+            step_size=step_sizes_distribution,
+            num_integration_steps=integration_steps_distribution,
         )
-        step = build_kernel(blackjax.hmc.init,
-                            blackjax.hmc.build_kernel(),
-                            logposterior,
-                            1,
-                            0.01
-                            )
-        init, step = blackjax.pretuning_smc(
+        assert initial_parameters["step_size"].shape == (num_particles,)
+        assert initial_parameters["num_integration_steps"].shape == (num_particles,)
+        print(initial_parameters)
+        pretune = build_pretune(blackjax.hmc.init,
+                                blackjax.hmc.build_kernel(),
+                                alpha=1,
+                                sigma_parameters={"step_size": 0.01,
+                                                  "num_integration_steps": 2},
+                                parameters_to_pretune=["step_size", "num_integration_steps"],
+                                round_to_integer=["num_integration_steps"]
+                                )
+
+        init, step = blackjax.inner_kernel_tuning(
             tempered_smc,
             logprior_fn,
             loglikelihood_fn,
             blackjax.hmc.build_kernel(),
             blackjax.hmc.init,
             resampling.systematic,
-            mcmc_parameter_update_fn=parameter_update,
             initial_parameter_value=initial_parameters,
             num_mcmc_steps=10,
+            pretune_fn=pretune
         )
-        step(sampling_key, )
+        a = init(init_particles)
+        assert a.parameter_override["num_integration_steps"] is not None
+        step(sampling_key, a, lmbda=0.5)
 
     @chex.all_variants(with_pmap=False)
     def test_with_tempered_smc(self):

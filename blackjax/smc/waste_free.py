@@ -67,7 +67,7 @@ def update_waste_free(
     return update, num_resampled
 
 
-def waste_free_smc(n_particles, p, paralelize):
+def waste_free_smc(n_particles, p, paralelize=False):
     if not n_particles % p == 0:
         raise ValueError("p must be a divider of n_particles ")
     return functools.partial(update_waste_free, num_resampled=int(n_particles / p), p=p, paralelize=paralelize)

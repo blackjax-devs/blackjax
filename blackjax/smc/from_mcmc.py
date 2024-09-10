@@ -1,11 +1,11 @@
 from functools import partial
-from typing import Callable
+from typing import Callable, Tuple
 
 import jax
 
 from blackjax import smc
 from blackjax.smc.base import SMCState, update_and_take_last
-from blackjax.types import PRNGKey
+from blackjax.types import PRNGKey, ArrayLikeTree
 
 
 def build_kernel(
@@ -34,15 +34,7 @@ def build_kernel(
         logposterior_fn: Callable,
         log_weights_fn: Callable,
     ) -> tuple[smc.base.SMCState, smc.base.SMCInfo]:
-        shared_mcmc_parameters = {}
-        unshared_mcmc_parameters = {}
-        for k, v in mcmc_parameters.items():
-            if v.shape[0] == 1:
-                shared_mcmc_parameters[k] = v[0, ...]
-            else:
-                unshared_mcmc_parameters[k] = v
-
-        shared_mcmc_step_fn = partial(mcmc_step_fn, **shared_mcmc_parameters)
+        unshared_mcmc_parameters, shared_mcmc_step_fn = step_from_mcmc_parameters(mcmc_parameters, mcmc_step_fn)
 
         update_fn, num_resampled = update_strategy(
             mcmc_init_fn,
@@ -62,3 +54,22 @@ def build_kernel(
         )
 
     return step
+
+
+def step_from_mcmc_parameters(mcmc_parameters: ArrayLikeTree, mcmc_step_fn: Callable) -> Tuple[ArrayLikeTree, Callable]:
+    """
+    Splits between shared and unshared parameters, and binds the shared
+    parameters into the mcmc_step_fn.
+    @return: the unshared parameters are the binded step function.
+    """
+    shared_mcmc_parameters = {}
+    unshared_mcmc_parameters = {}
+    for k, v in mcmc_parameters.items():
+        if v.shape[0] == 1:
+            shared_mcmc_parameters[k] = v[0, ...]
+        else:
+            unshared_mcmc_parameters[k] = v
+    shared_mcmc_step_fn = partial(mcmc_step_fn, **shared_mcmc_parameters)
+    return unshared_mcmc_parameters, shared_mcmc_step_fn
+
+
