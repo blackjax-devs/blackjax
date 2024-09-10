@@ -33,7 +33,7 @@ from .sgmcmc import csgld as _csgld
 from .sgmcmc import sghmc as _sghmc
 from .sgmcmc import sgld as _sgld
 from .sgmcmc import sgnht as _sgnht
-from .smc import adaptive_tempered, pretuning
+from .smc import adaptive_tempered
 from .smc import inner_kernel_tuning as _inner_kernel_tuning
 from .smc import partial_posteriors_path as _partial_posteriors_smc
 from .smc import tempered

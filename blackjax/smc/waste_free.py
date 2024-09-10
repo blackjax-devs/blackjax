@@ -13,7 +13,7 @@ def update_waste_free(
     p: int,
     num_resampled,
     num_mcmc_steps=None,
-    paralelize=False
+    paralelize=False,
 ):
     apply = jax.pmap if paralelize else jax.vmap
 
@@ -70,4 +70,9 @@ def update_waste_free(
 def waste_free_smc(n_particles, p, paralelize=False):
     if not n_particles % p == 0:
         raise ValueError("p must be a divider of n_particles ")
-    return functools.partial(update_waste_free, num_resampled=int(n_particles / p), p=p, paralelize=paralelize)
+    return functools.partial(
+        update_waste_free,
+        num_resampled=int(n_particles / p),
+        p=p,
+        paralelize=paralelize,
+    )
