@@ -13,7 +13,6 @@ class FullRankVITest(chex.TestCase):
         super().setUp()
         self.key = jax.random.key(42)
 
-    @chex.variants(with_jit=True, without_jit=False)
     def test_recover_posterior(self):
         ground_truth = [
             # loc, scale
@@ -39,11 +38,15 @@ class FullRankVITest(chex.TestCase):
         rng_key = self.key
         for i in range(num_steps):
             subkey = jax.random.fold_in(rng_key, i)
-            state, _ = self.variant(frvi.step)(subkey, state)
+            state, _ = jax.jit(frvi.step)(subkey, state)
 
         loc_1, loc_2 = state.mu["x_1"], state.mu["x_2"]
+        chol_factor = state.chol_params
+        scale_1, scale_2 = jnp.exp(chol_factor[0]), jnp.exp(chol_factor[1])
         self.assertAlmostEqual(loc_1, ground_truth[0][0], delta=0.01)
+        self.assertAlmostEqual(scale_1, ground_truth[0][1], delta=0.01)
         self.assertAlmostEqual(loc_2, ground_truth[1][0], delta=0.01)
+        self.assertAlmostEqual(scale_2, ground_truth[1][1], delta=0.01)
 
 
 if __name__ == "__main__":
