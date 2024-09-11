@@ -60,7 +60,7 @@ def build_kernel(
     mcmc_parameter_update_fn: Callable[
         [NSState, NSInfo], Dict[str, ArrayTree]
     ],
-    num_mcmc_steps: int = 10,
+    num_mcmc_steps: int = 5,
     **extra_parameters,
 ) -> Callable:
     r"""Build a Nested Sampling by running a creation and deletion step.
@@ -113,19 +113,16 @@ def build_kernel(
 
         contour_check_fn = lambda x: x <= -val.min()
 
-        def particle_scan(carry, xs):
-            # lstar, num_mcmc_steps, step_parameters = params
-            """Outer most loop to scan over particles."""
-            rng, position =  xs
-
-            state = mcmc_init_fn(position, logprior_fn)
+        def particle_map(xs):
+            xs,rng = xs
+            state = mcmc_init_fn(xs, logprior_fn)
 
             def chain_scan(carry, xs):
                 """Middle loop to scan over required MCMC steps."""
 
                 def cond_fun(carry):
                     _, _, logL, MHaccept = carry
-                    return contour_check_fn(logL) & jnp.logical_not(MHaccept)
+                    return contour_check_fn(logL)  #& jnp.logical_not(MHaccept)
                     # return contour_check_fn(logL)
 
                 def inner_chain(carry):
@@ -135,7 +132,7 @@ def build_kernel(
                     new_state, info = shared_mcmc_step_fn(subkey, state)
                     logL = loglikelihood_fn(new_state.position)
                     return rng_key, new_state, logL, info.is_accepted
-                
+
                 state, _ = carry
                 rng_key, step_key = jax.random.split(xs[0])
                 _, state, logL, _ = jax.lax.while_loop(
@@ -144,28 +141,82 @@ def build_kernel(
                 return (state, logL), (rng_key, state, logL)
 
             # rng_key, scan_key = jax.random.split(rng)
-            # last_state, info = jax.lax.scan(chain_scan, rng_key, (state, -jnp.inf)) 
+            # last_state, info = jax.lax.scan(chain_scan, rng_key, (state, -jnp.inf))
             # rng_key = xs
-            (fs, fl), (rng,s,l) = jax.lax.scan(chain_scan, (state, -jnp.inf), (rng, jnp.zeros(rng.shape[0]) )) 
-            # jax.lax.scan(chain_scan, (state, -jnp.inf), (rng_key, jnp.zeros(rng_key.shape[0]), state)) 
+            (fs, fl), (rng, s, l) = jax.lax.scan(
+                chain_scan, (state, -jnp.inf), (rng, jnp.zeros(rng.shape[0]))
+            )
+            # jax.lax.scan(chain_scan, (state, -jnp.inf), (rng_key, jnp.zeros(rng_key.shape[0]), state))
             # return (rng, fs), fl
-            return (fs.position, fl), (fs.position, fl)
+            return fs.position, fl
+            # return (fs.position, fl), (fs.position, fl)
+
+        # def particle_scan(carry, xs):
+        #     # lstar, num_mcmc_steps, step_parameters = params
+        #     """Outer most loop to scan over particles."""
+        #     rng, position = xs
+
+        #     state = mcmc_init_fn(position, logprior_fn)
+
+        #     def chain_scan(carry, xs):
+        #         """Middle loop to scan over required MCMC steps."""
+
+        #         def cond_fun(carry):
+        #             _, _, logL, MHaccept = carry
+        #             return contour_check_fn(logL) & jnp.logical_not(MHaccept)
+        #             # return contour_check_fn(logL)
+
+        #         def inner_chain(carry):
+        #             """Inner most while to check steps are in contour"""
+        #             key, state, _, _ = carry
+        #             rng_key, subkey = jax.random.split(key)
+        #             new_state, info = shared_mcmc_step_fn(subkey, state)
+        #             logL = loglikelihood_fn(new_state.position)
+        #             return rng_key, new_state, logL, info.is_accepted
+
+        #         state, _ = carry
+        #         rng_key, step_key = jax.random.split(xs[0])
+        #         _, state, logL, _ = jax.lax.while_loop(
+        #             cond_fun, inner_chain, (step_key, state, -jnp.inf, False)
+        #         )
+        #         return (state, logL), (rng_key, state, logL)
+
+        #     # rng_key, scan_key = jax.random.split(rng)
+        #     # last_state, info = jax.lax.scan(chain_scan, rng_key, (state, -jnp.inf))
+        #     # rng_key = xs
+        #     (fs, fl), (rng, s, l) = jax.lax.scan(
+        #         chain_scan, (state, -jnp.inf), (rng, jnp.zeros(rng.shape[0]))
+        #     )
+        #     # jax.lax.scan(chain_scan, (state, -jnp.inf), (rng_key, jnp.zeros(rng_key.shape[0]), state))
+        #     # return (rng, fs), fl
+        #     return (fs.position, fl), (fs.position, fl)
 
         # rng_key, scan_key = jax.random.split(rng_key)
         scan_keys = jax.random.split(
             rng_key, (*dead_idx.shape, num_mcmc_steps)
         )
-        dead_logL = jnp.ones(dead_idx.shape) * -jnp.inf
+        # dead_logL = jnp.ones(dead_idx.shape) * -jnp.inf
         # keys = jax.random.split(rng_key, dead_idx.shape)
-        _, (new_pos, new_logl) = jax.lax.scan(particle_scan,(dead_particles, dead_logL), (scan_keys,dead_particles))
-        
-        
-        
+        # print(state.parameter_override["cov"])
+        # jax.pmap(particle_scan)
+        new_pos,new_logl = jax.pmap(particle_map)((dead_particles, scan_keys))
+        # particle_map((dead_particles[0], scan_keys[0]))
+        # particle_scan(dead_particles, (scan_keys[0],dead_particles[0]))
+        # _, (new_pos, new_logl) = jax.lax.scan(
+        #     particle_scan,
+        #     (dead_particles, dead_logL),
+        #     (scan_keys, dead_particles),
+        # )
+
         logL_births = -val.min() * jnp.ones(dead_idx.shape)
 
-        particles = state.sampler_state.particles.at[dead_idx].set(new_pos.squeeze())
+        particles = state.sampler_state.particles.at[dead_idx].set(
+            new_pos.squeeze()
+        )
         logL = state.sampler_state.logL.at[dead_idx].set(new_logl.squeeze())
-        logL_birth = state.sampler_state.logL_birth.at[dead_idx].set(logL_births)
+        logL_birth = state.sampler_state.logL_birth.at[dead_idx].set(
+            logL_births
+        )
         logL_star = state.sampler_state.logL.min()
 
         state = NSState(
