@@ -23,7 +23,7 @@ from jax.scipy.stats import multivariate_normal
 import blackjax
 import distrax
 import anesthetic as ns
-
+from blackjax import irmh
 d = 5
 
 from blackjax.smc.tuning.from_particles import (
@@ -36,10 +36,7 @@ np.random.seed(1)
 C = np.random.randn(d, d) * 0.1
 like_cov = C @ C.T
 like_mean = np.random.randn(d) * 2
-# like_cov = jnp.eye(d) * 0.01
 
-
-# cov *= 0.001
 def loglikelihood(x):
     return multivariate_normal.logpdf(x, mean=like_mean, cov=like_cov)
 
@@ -51,31 +48,11 @@ rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 prior = distrax.MultivariateNormalDiag(
     loc=jnp.zeros(d), scale_diag=jnp.ones(d)
 )
-# prior = distrax.Uniform(low=-2.0 * jnp.ones(d), high=2.0 * jnp.ones(d))
-from blackjax import irmh
 
 kernel = irmh.build_kernel()
 
 mean = jnp.zeros(d)
 cov = jnp.diag(jnp.ones(d)) * 2
-
-
-# def irmh_proposal_distribution(rng_key):
-#     return jax.random.multivariate_normal(rng_key, mean, cov)
-
-
-# def proposal_logdensity_fn(proposal, state):
-#     return jnp.log(
-#         jax.scipy.stats.multivariate_normal.pdf(
-#             state.position, mean=mean, cov=cov
-#         )
-#     )
-
-
-# def step(key, state, logdensity):
-#     return irmh(
-#         logdensity, irmh_proposal_distribution, proposal_logdensity_fn
-#     ).step(key, state)
 
 
 def step_fn(key, state, logdensity, means, cov):
@@ -133,17 +110,10 @@ def one_step(carry, xs):
 iterations = jnp.arange(n_steps)
 (live, _), dead = jax.lax.scan((one_step), (state, rng_key), iterations)
 
-# for debugging
-# with jax.disable_jit():
-#     n_iter = 10
-#     iterations = jnp.arange(n_iter)
-#     res = jax.lax.scan((one_step), (state, rng_key), iterations)
-
 
 dead_points = dead.particles.squeeze()
-# live_points = live.particles.squeeze()
 live_points = live.sampler_state.particles.squeeze()
-live_logL = live.sampler_state.logL
+# live_logL = live.sampler_state.logL
 
 
 samples = ns.NestedSamples(

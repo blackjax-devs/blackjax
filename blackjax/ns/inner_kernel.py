@@ -123,7 +123,6 @@ def build_kernel(
                 def cond_fun(carry):
                     _, _, logL, MHaccept = carry
                     return contour_check_fn(logL)  #& jnp.logical_not(MHaccept)
-                    # return contour_check_fn(logL)
 
                 def inner_chain(carry):
                     """Inner most while to check steps are in contour"""
@@ -140,78 +139,16 @@ def build_kernel(
                 )
                 return (state, logL), (rng_key, state, logL)
 
-            # rng_key, scan_key = jax.random.split(rng)
-            # last_state, info = jax.lax.scan(chain_scan, rng_key, (state, -jnp.inf))
-            # rng_key = xs
             (fs, fl), (rng, s, l) = jax.lax.scan(
                 chain_scan, (state, -jnp.inf), (rng, jnp.zeros(rng.shape[0]))
             )
-            # jax.lax.scan(chain_scan, (state, -jnp.inf), (rng_key, jnp.zeros(rng_key.shape[0]), state))
-            # return (rng, fs), fl
             return fs.position, fl
-            # return (fs.position, fl), (fs.position, fl)
 
-        # def particle_scan(carry, xs):
-        #     # lstar, num_mcmc_steps, step_parameters = params
-        #     """Outer most loop to scan over particles."""
-        #     rng, position = xs
-
-        #     state = mcmc_init_fn(position, logprior_fn)
-
-        #     def chain_scan(carry, xs):
-        #         """Middle loop to scan over required MCMC steps."""
-
-        #         def cond_fun(carry):
-        #             _, _, logL, MHaccept = carry
-        #             return contour_check_fn(logL) & jnp.logical_not(MHaccept)
-        #             # return contour_check_fn(logL)
-
-        #         def inner_chain(carry):
-        #             """Inner most while to check steps are in contour"""
-        #             key, state, _, _ = carry
-        #             rng_key, subkey = jax.random.split(key)
-        #             new_state, info = shared_mcmc_step_fn(subkey, state)
-        #             logL = loglikelihood_fn(new_state.position)
-        #             return rng_key, new_state, logL, info.is_accepted
-
-        #         state, _ = carry
-        #         rng_key, step_key = jax.random.split(xs[0])
-        #         _, state, logL, _ = jax.lax.while_loop(
-        #             cond_fun, inner_chain, (step_key, state, -jnp.inf, False)
-        #         )
-        #         return (state, logL), (rng_key, state, logL)
-
-        #     # rng_key, scan_key = jax.random.split(rng)
-        #     # last_state, info = jax.lax.scan(chain_scan, rng_key, (state, -jnp.inf))
-        #     # rng_key = xs
-        #     (fs, fl), (rng, s, l) = jax.lax.scan(
-        #         chain_scan, (state, -jnp.inf), (rng, jnp.zeros(rng.shape[0]))
-        #     )
-        #     # jax.lax.scan(chain_scan, (state, -jnp.inf), (rng_key, jnp.zeros(rng_key.shape[0]), state))
-        #     # return (rng, fs), fl
-        #     return (fs.position, fl), (fs.position, fl)
-
-        # rng_key, scan_key = jax.random.split(rng_key)
         scan_keys = jax.random.split(
             rng_key, (*dead_idx.shape, num_mcmc_steps)
         )
-        # dead_logL = jnp.ones(dead_idx.shape) * -jnp.inf
-        # keys = jax.random.split(rng_key, dead_idx.shape)
-        # print(state.parameter_override["cov"])
-        # jax.pmap(particle_scan)
 
         new_pos,new_logl = jax.pmap(particle_map)((dead_particles, scan_keys))
-        # new_pos,new_logl = jax.vmap(particle_map)((dead_particles, scan_keys))
-
-
-        # particle_map((dead_particles[0], scan_keys[0]))
-        # particle_scan(dead_particles, (scan_keys[0],dead_particles[0]))
-        # _, (new_pos, new_logl) = jax.lax.scan(
-        #     particle_scan,
-        #     (dead_particles, dead_logL),
-        #     (scan_keys, dead_particles),
-        # )
-
         logL_births = -val.min() * jnp.ones(dead_idx.shape)
 
         particles = state.sampler_state.particles.at[dead_idx].set(
@@ -228,8 +165,6 @@ def build_kernel(
             logL,
             logL_birth,
             logL_star,
-            # state.sampler_state.create_parameters,
-            # state.delete_parameters,
         )
         info = NSInfo(dead_particles, dead_logL, dead_logL_birth)
         new_parameter_override = mcmc_parameter_update_fn(state, info)
