@@ -32,7 +32,7 @@ from blackjax.smc.tuning.from_particles import (
     particles_means,
     mass_matrix_from_particles,
 )
-np.random.seed(0)
+np.random.seed(1)
 C = np.random.randn(d, d) * 0.1
 like_cov = C @ C.T
 like_mean = np.random.randn(d) * 2
@@ -44,7 +44,7 @@ def loglikelihood(x):
     return multivariate_normal.logpdf(x, mean=like_mean, cov=like_cov)
 
 
-n_samples = 1000
+n_samples = 500
 n_delete = num_cores
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
@@ -60,22 +60,22 @@ mean = jnp.zeros(d)
 cov = jnp.diag(jnp.ones(d)) * 2
 
 
-def irmh_proposal_distribution(rng_key):
-    return jax.random.multivariate_normal(rng_key, mean, cov)
+# def irmh_proposal_distribution(rng_key):
+#     return jax.random.multivariate_normal(rng_key, mean, cov)
 
 
-def proposal_logdensity_fn(proposal, state):
-    return jnp.log(
-        jax.scipy.stats.multivariate_normal.pdf(
-            state.position, mean=mean, cov=cov
-        )
-    )
+# def proposal_logdensity_fn(proposal, state):
+#     return jnp.log(
+#         jax.scipy.stats.multivariate_normal.pdf(
+#             state.position, mean=mean, cov=cov
+#         )
+#     )
 
 
-def step(key, state, logdensity):
-    return irmh(
-        logdensity, irmh_proposal_distribution, proposal_logdensity_fn
-    ).step(key, state)
+# def step(key, state, logdensity):
+#     return irmh(
+#         logdensity, irmh_proposal_distribution, proposal_logdensity_fn
+#     ).step(key, state)
 
 
 def step_fn(key, state, logdensity, means, cov):
@@ -96,23 +96,16 @@ def step_fn(key, state, logdensity, means, cov):
 def irmh_update_fn(state, info):
     cov = jnp.atleast_2d(particles_covariance_matrix(state.particles))
     mean = particles_means(state.particles)
+    print(cov)
     return {"means": mean, "cov": cov}
-    # cov = particles_covariance_matrix(state.particles)
-    # return blackjax.smc.extend_params(
-    #     {
-    #         "means": mean,
-    #         "cov": cov,
-    #     },
-    # )
 
 
-state = prior._sample_n(rng_key, n_samples)
-means = particles_means(state)
-cov = particles_covariance_matrix(state)
+initial_state = prior._sample_n(rng_key, n_samples)
+means = particles_means(initial_state)
+cov = particles_covariance_matrix(initial_state)
 
 init_params = {"means": means, "cov": cov}
 
-# algo = blackjax.rejection_ns(prior.sample, loglikelihood, n_delete=n_delete)
 algo = blackjax.inner_kernel_ns(
     logprior_fn=lambda x: prior.log_prob(x).sum().squeeze(),
     loglikelihood_fn=loglikelihood,
@@ -120,26 +113,15 @@ algo = blackjax.inner_kernel_ns(
     mcmc_init_fn=blackjax.rmh.init,
     mcmc_parameter_update_fn=irmh_update_fn,
     n_delete=n_delete,
-    # mcmc_initial_parameters=blackjax.smc.extend_params(init_params),
     mcmc_initial_parameters=init_params,
 )
-state = algo.init(state, loglikelihood)
+state = algo.init(initial_state, loglikelihood)
 
-
-# from jax_tqdm import scan_tqdm
 from blackjax.progress_bar import progress_bar_scan
 
 
-# n_steps = 3000 // n_delete
+n_steps = 3000
 
-n_steps = 5000
-# with jax.disable_jit():
-#     n_iter = 10
-#     iterations = jnp.arange(n_iter)
-#     res = jax.lax.scan((one_step), (state, rng_key), iterations)
-
-
-# @scan_tqdm(100)
 @progress_bar_scan(n_steps)
 def one_step(carry, xs):
     state, k = carry
@@ -151,6 +133,7 @@ def one_step(carry, xs):
 iterations = jnp.arange(n_steps)
 (live, _), dead = jax.lax.scan((one_step), (state, rng_key), iterations)
 
+# for debugging
 # with jax.disable_jit():
 #     n_iter = 10
 #     iterations = jnp.arange(n_iter)
@@ -185,7 +168,7 @@ model = ReducedLinearModel(
 )
 
 print(f"True logZ = {model.logZ():.2f}")
-a = samples.set_beta(0.0).plot_2d(np.arange(d))
+a = samples.set_beta(0.0).plot_2d(np.arange(d), figsize=(10, 10))
 # samples.plot_2d(a)
 ns.MCMCSamples(model.posterior().rvs(200)).plot_2d(a)
 samples.plot_2d(a)
@@ -193,5 +176,7 @@ samples.to_csv("post.csv")
 a.iloc[0, 0].legend(
     ["Prior", "Truth", "NS"], loc="lower left", bbox_to_anchor=(0, 1), ncol=3
 )
+plt.suptitle(f"NS logZ = {lzs.mean():.2f} ± {lzs.std():.2f}, true logZ = {model.logZ():.2f}")
 plt.savefig("post.pdf")
+plt.savefig("post.png", dpi=300)
 plt.show()

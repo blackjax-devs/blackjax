@@ -60,7 +60,7 @@ def build_kernel(
     mcmc_parameter_update_fn: Callable[
         [NSState, NSInfo], Dict[str, ArrayTree]
     ],
-    num_mcmc_steps: int = 5,
+    num_mcmc_steps: int = 10,
     **extra_parameters,
 ) -> Callable:
     r"""Build a Nested Sampling by running a creation and deletion step.
@@ -199,7 +199,11 @@ def build_kernel(
         # keys = jax.random.split(rng_key, dead_idx.shape)
         # print(state.parameter_override["cov"])
         # jax.pmap(particle_scan)
+
         new_pos,new_logl = jax.pmap(particle_map)((dead_particles, scan_keys))
+        # new_pos,new_logl = jax.vmap(particle_map)((dead_particles, scan_keys))
+
+
         # particle_map((dead_particles[0], scan_keys[0]))
         # particle_scan(dead_particles, (scan_keys[0],dead_particles[0]))
         # _, (new_pos, new_logl) = jax.lax.scan(
