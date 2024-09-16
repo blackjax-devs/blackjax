@@ -33,10 +33,9 @@ from typing import Callable, NamedTuple, Optional, Protocol, Union
 import jax
 import jax.numpy as jnp
 import jax.scipy as jscipy
-from chex import Numeric
 from jax.flatten_util import ravel_pytree
 
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, Numeric, PRNGKey
 from blackjax.util import generate_gaussian_noise, linear_map
 
 __all__ = ["default_metric", "gaussian_euclidean", "gaussian_riemannian"]
@@ -61,11 +60,18 @@ class CheckTurning(Protocol):
         ...
 
 
+class Scale(Protocol):
+    def __call__(
+        self, position: ArrayLikeTree, element: ArrayLikeTree, inv: ArrayLikeTree
+    ) -> ArrayLikeTree:
+        ...
+
+
 class Metric(NamedTuple):
     sample_momentum: Callable[[PRNGKey, ArrayLikeTree], ArrayLikeTree]
     kinetic_energy: KineticEnergy
     check_turning: CheckTurning
-    scale: Callable[[ArrayLikeTree, ArrayLikeTree, bool], ArrayLikeTree]
+    scale: Scale
 
 
 MetricTypes = Union[Metric, Array, Callable[[ArrayLikeTree], Array]]
