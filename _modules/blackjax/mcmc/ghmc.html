@@ -388,6 +388,7 @@ document.write(`
 
 <span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">from</span> <span class="nn">jax.flatten_util</span> <span class="kn">import</span> <span class="n">ravel_pytree</span>
 
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.hmc</span> <span class="k">as</span> <span class="nn">hmc</span>
 <span class="kn">import</span> <span class="nn">blackjax.mcmc.integrators</span> <span class="k">as</span> <span class="nn">integrators</span>
@@ -524,8 +525,8 @@ document.write(`
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">flat_inverse_scale</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">gaussian_euclidean</span><span class="p">(</span>
+        <span class="n">flat_inverse_scale</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">gaussian_euclidean</span><span class="p">(</span>
             <span class="n">flat_inverse_scale</span><span class="o">**</span><span class="mi">2</span>
         <span class="p">)</span>
 
@@ -646,6 +647,10 @@ document.write(`
 <span class="sd">        A PyTree of the same structure as the target PyTree (position) with the</span>
 <span class="sd">        values used for as a step size for each dimension of the target space in</span>
 <span class="sd">        the velocity verlet integrator.</span>
+<span class="sd">    momentum_inverse_scale</span>
+<span class="sd">        Pytree with the same structure as the targeted position variable</span>
+<span class="sd">        specifying the per dimension inverse scaling transformation applied</span>
+<span class="sd">        to the persistent momentum variable prior to the integration step.</span>
 <span class="sd">    alpha</span>
 <span class="sd">        The value defining the persistence of the momentum variable.</span>
 <span class="sd">    delta</span>

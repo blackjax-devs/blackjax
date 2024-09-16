@@ -402,13 +402,13 @@ document.write(`
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="kn">import</span> <span class="nn">jax</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax.scipy</span> <span class="k">as</span> <span class="nn">jscipy</span>
 <span class="kn">from</span> <span class="nn">jax.flatten_util</span> <span class="kn">import</span> <span class="n">ravel_pytree</span>
-<span class="kn">from</span> <span class="nn">jax.scipy</span> <span class="kn">import</span> <span class="n">stats</span> <span class="k">as</span> <span class="n">sp_stats</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
-<span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span>
+<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">Numeric</span><span class="p">,</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_gaussian_noise</span><span class="p">,</span> <span class="n">linear_map</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;default_metric&quot;</span><span class="p">,</span> <span class="s2">&quot;gaussian_euclidean&quot;</span><span class="p">,</span> <span class="s2">&quot;gaussian_riemannian&quot;</span><span class="p">]</span>
 
@@ -416,7 +416,7 @@ document.write(`
 <span class="k">class</span> <span class="nc">KineticEnergy</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Numeric</span><span class="p">:</span>
         <span class="o">...</span>
 
 
@@ -432,10 +432,18 @@ document.write(`
         <span class="o">...</span>
 
 
+<span class="k">class</span> <span class="nc">Scale</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">ArrayLikeTree</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLikeTree</span><span class="p">:</span>
+        <span class="o">...</span>
+
+
 <span class="k">class</span> <span class="nc">Metric</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
     <span class="n">sample_momentum</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">PRNGKey</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">],</span> <span class="n">ArrayLikeTree</span><span class="p">]</span>
     <span class="n">kinetic_energy</span><span class="p">:</span> <span class="n">KineticEnergy</span>
     <span class="n">check_turning</span><span class="p">:</span> <span class="n">CheckTurning</span>
+    <span class="n">scale</span><span class="p">:</span> <span class="n">Scale</span>
 
 
 <span class="n">MetricTypes</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Metric</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLikeTree</span><span class="p">],</span> <span class="n">Array</span><span class="p">]]</span>
@@ -505,46 +513,19 @@ document.write(`
 <span class="sd">        itself given the values of the momentum along the trajectory.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">ndim</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
-    <span class="n">shape</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)[:</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># type: ignore[arg-type]</span>
-
-    <span class="k">if</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># diagonal mass matrix</span>
-        <span class="n">mass_matrix_sqrt</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">))</span>
-        <span class="n">matmul</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">multiply</span>
-
-    <span class="k">elif</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="c1"># inverse mass matrix can be factored into L*L.T. We want the cholesky</span>
-        <span class="c1"># factor (inverse of L.T) of the mass matrix.</span>
-        <span class="n">L</span> <span class="o">=</span> <span class="n">jscipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">identity</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">mass_matrix_sqrt</span> <span class="o">=</span> <span class="n">jscipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span>
-            <span class="n">L</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">trans</span><span class="o">=</span><span class="kc">True</span>
-        <span class="p">)</span>
-        <span class="c1"># Note that mass_matrix_sqrt is a upper triangular matrix here, with</span>
-        <span class="c1">#   jscipy.linalg.inv(mass_matrix_sqrt @ mass_matrix_sqrt.T)</span>
-        <span class="c1">#   == inverse_mass_matrix</span>
-        <span class="c1"># An alternative is to compute directly the cholesky factor of the inverse mass</span>
-        <span class="c1"># matrix</span>
-        <span class="c1">#   mass_matrix_sqrt = jscipy.linalg.cholesky(</span>
-        <span class="c1">#       jscipy.linalg.inv(inverse_mass_matrix), lower=True)</span>
-        <span class="c1"># which the result would instead be a lower triangular matrix.</span>
-        <span class="n">matmul</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">matmul</span>
-
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;The mass matrix has the wrong number of dimensions:&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot; expected 1 or 2, got </span><span class="si">{</span><span class="n">ndim</span><span class="si">}</span><span class="s2">.&quot;</span>
-        <span class="p">)</span>
+    <span class="n">mass_matrix_sqrt</span><span class="p">,</span> <span class="n">inv_mass_matrix_sqrt</span><span class="p">,</span> <span class="n">diag</span> <span class="o">=</span> <span class="n">_format_covariance</span><span class="p">(</span>
+        <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">is_inv</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">momentum_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">mass_matrix_sqrt</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">kinetic_energy</span><span class="p">(</span>
         <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Numeric</span><span class="p">:</span>
         <span class="k">del</span> <span class="n">position</span>
         <span class="n">momentum</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
-        <span class="n">velocity</span> <span class="o">=</span> <span class="n">matmul</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">momentum</span><span class="p">)</span>
+        <span class="n">velocity</span> <span class="o">=</span> <span class="n">linear_map</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">momentum</span><span class="p">)</span>
         <span class="n">kinetic_energy_val</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">velocity</span><span class="p">,</span> <span class="n">momentum</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">kinetic_energy_val</span>
 
@@ -573,8 +554,8 @@ document.write(`
         <span class="n">m_right</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_right</span><span class="p">)</span>
         <span class="n">m_sum</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_sum</span><span class="p">)</span>
 
-        <span class="n">velocity_left</span> <span class="o">=</span> <span class="n">matmul</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">m_left</span><span class="p">)</span>
-        <span class="n">velocity_right</span> <span class="o">=</span> <span class="n">matmul</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">m_right</span><span class="p">)</span>
+        <span class="n">velocity_left</span> <span class="o">=</span> <span class="n">linear_map</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">m_left</span><span class="p">)</span>
+        <span class="n">velocity_right</span> <span class="o">=</span> <span class="n">linear_map</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">m_right</span><span class="p">)</span>
 
         <span class="c1"># rho = m_sum</span>
         <span class="n">rho</span> <span class="o">=</span> <span class="n">m_sum</span> <span class="o">-</span> <span class="p">(</span><span class="n">m_right</span> <span class="o">+</span> <span class="n">m_left</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
@@ -582,7 +563,37 @@ document.write(`
         <span class="n">turning_at_right</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">velocity_right</span><span class="p">,</span> <span class="n">rho</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="n">turning_at_left</span> <span class="o">|</span> <span class="n">turning_at_right</span>
 
-    <span class="k">return</span> <span class="n">Metric</span><span class="p">(</span><span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="nf">scale</span><span class="p">(</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">ArrayLikeTree</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLikeTree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Scale elements by the mass matrix.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        position</span>
+<span class="sd">            The current position. Not used in this metric.</span>
+<span class="sd">        elements</span>
+<span class="sd">            Elements to scale</span>
+<span class="sd">        invs</span>
+<span class="sd">            Whether to scale the elements by the inverse mass matrix or the mass matrix.</span>
+<span class="sd">            If True, the element is scaled by the inverse square root mass matrix, i.e., elem &lt;- (M^{1/2})^{-1} elem.</span>
+<span class="sd">            Same pytree structure as `elements`.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        scaled_elements</span>
+<span class="sd">            The scaled elements.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">ravelled_element</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+        <span class="n">scaled</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">inv</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">linear_map</span><span class="p">(</span><span class="n">inv_mass_matrix_sqrt</span><span class="p">,</span> <span class="n">ravelled_element</span><span class="p">),</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">linear_map</span><span class="p">(</span><span class="n">mass_matrix_sqrt</span><span class="p">,</span> <span class="n">ravelled_element</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">scaled</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Metric</span><span class="p">(</span><span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span></div>
 
 
 
@@ -593,22 +604,13 @@ document.write(`
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metric</span><span class="p">:</span>
     <span class="k">def</span> <span class="nf">momentum_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLikeTree</span><span class="p">:</span>
         <span class="n">mass_matrix</span> <span class="o">=</span> <span class="n">mass_matrix_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-        <span class="n">ndim</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">mass_matrix_sqrt</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="n">mass_matrix_sqrt</span> <span class="o">=</span> <span class="n">jscipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;The mass matrix has the wrong number of dimensions:&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot; expected 1 or 2, got </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
-            <span class="p">)</span>
+        <span class="n">mass_matrix_sqrt</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">_format_covariance</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">,</span> <span class="n">is_inv</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">mass_matrix_sqrt</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">kinetic_energy</span><span class="p">(</span>
         <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Numeric</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;A Reinmannian kinetic energy function must be called with the &quot;</span>
@@ -618,18 +620,11 @@ document.write(`
 
         <span class="n">momentum</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
         <span class="n">mass_matrix</span> <span class="o">=</span> <span class="n">mass_matrix_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-        <span class="n">ndim</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">sp_stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">momentum</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">)))</span>
-        <span class="k">elif</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="o">-</span><span class="n">sp_stats</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span>
-                <span class="n">momentum</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">momentum</span><span class="p">),</span> <span class="n">mass_matrix</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;The mass matrix has the wrong number of dimensions:&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot; expected 1 or 2, got </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">mass_matrix</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
-            <span class="p">)</span>
+        <span class="n">sqrt_mass_matrix</span><span class="p">,</span> <span class="n">inv_sqrt_mass_matrix</span><span class="p">,</span> <span class="n">diag</span> <span class="o">=</span> <span class="n">_format_covariance</span><span class="p">(</span>
+            <span class="n">mass_matrix</span><span class="p">,</span> <span class="n">is_inv</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_energy</span><span class="p">(</span><span class="n">momentum</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sqrt_mass_matrix</span><span class="p">,</span> <span class="n">inv_sqrt_mass_matrix</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">diag</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">is_turning</span><span class="p">(</span>
         <span class="n">momentum_left</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
@@ -663,8 +658,73 @@ document.write(`
         <span class="c1"># turning_at_right = jnp.dot(velocity_right, rho) &lt;= 0</span>
         <span class="c1"># return turning_at_left | turning_at_right</span>
 
-    <span class="k">return</span> <span class="n">Metric</span><span class="p">(</span><span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="nf">scale</span><span class="p">(</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">ArrayLikeTree</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLikeTree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Scale elements by the mass matrix.</span>
 
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        position</span>
+<span class="sd">            The current position.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        scaled_elements</span>
+<span class="sd">            The scaled elements.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mass_matrix</span> <span class="o">=</span> <span class="n">mass_matrix_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+        <span class="n">mass_matrix_sqrt</span><span class="p">,</span> <span class="n">inv_mass_matrix_sqrt</span><span class="p">,</span> <span class="n">diag</span> <span class="o">=</span> <span class="n">_format_covariance</span><span class="p">(</span>
+            <span class="n">mass_matrix</span><span class="p">,</span> <span class="n">is_inv</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="n">ravelled_element</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+        <span class="n">scaled</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">inv</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">linear_map</span><span class="p">(</span><span class="n">inv_mass_matrix_sqrt</span><span class="p">,</span> <span class="n">ravelled_element</span><span class="p">),</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">linear_map</span><span class="p">(</span><span class="n">mass_matrix_sqrt</span><span class="p">,</span> <span class="n">ravelled_element</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">scaled</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Metric</span><span class="p">(</span><span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_format_covariance</span><span class="p">(</span><span class="n">cov</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">is_inv</span><span class="p">):</span>
+    <span class="n">ndim</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">cov_sqrt</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span>
+        <span class="n">inv_cov_sqrt</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">cov_sqrt</span>
+        <span class="n">diag</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
+        <span class="k">if</span> <span class="n">is_inv</span><span class="p">:</span>
+            <span class="n">inv_cov_sqrt</span><span class="p">,</span> <span class="n">cov_sqrt</span> <span class="o">=</span> <span class="n">cov_sqrt</span><span class="p">,</span> <span class="n">inv_cov_sqrt</span>
+    <span class="k">elif</span> <span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">identity</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">cov</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">is_inv</span><span class="p">:</span>
+            <span class="n">inv_cov_sqrt</span> <span class="o">=</span> <span class="n">jscipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">cov</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">cov_sqrt</span> <span class="o">=</span> <span class="n">jscipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span>
+                <span class="n">inv_cov_sqrt</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">trans</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cov_sqrt</span> <span class="o">=</span> <span class="n">jscipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">cov</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">inv_cov_sqrt</span> <span class="o">=</span> <span class="n">jscipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span>
+                <span class="n">cov_sqrt</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">trans</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+
+        <span class="n">diag</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;The mass matrix has the wrong number of dimensions:&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; expected 1 or 2, got </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">cov_sqrt</span><span class="p">,</span> <span class="n">inv_cov_sqrt</span><span class="p">,</span> <span class="n">diag</span>
+
+
+<span class="k">def</span> <span class="nf">_energy</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">cov_sqrt</span><span class="p">,</span> <span class="n">inv_cov_sqrt</span><span class="p">,</span> <span class="n">diag</span><span class="p">):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">linear_map</span><span class="p">(</span><span class="n">inv_cov_sqrt</span><span class="p">,</span> <span class="n">x</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">diag</span><span class="p">(</span><span class="n">cov_sqrt</span><span class="p">)))</span> <span class="o">+</span> <span class="n">d</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">z</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">const</span>
 </pre></div>
 
                 </article>

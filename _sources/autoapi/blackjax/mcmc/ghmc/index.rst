@@ -132,6 +132,9 @@ Module Contents
    :param step_size: A PyTree of the same structure as the target PyTree (position) with the
                      values used for as a step size for each dimension of the target space in
                      the velocity verlet integrator.
+   :param momentum_inverse_scale: Pytree with the same structure as the targeted position variable
+                                  specifying the per dimension inverse scaling transformation applied
+                                  to the persistent momentum variable prior to the integration step.
    :param alpha: The value defining the persistence of the momentum variable.
    :param delta: The value defining the deterministic translation of the slice variable.
    :param divergence_threshold: The absolute value of the difference in energy between two states above

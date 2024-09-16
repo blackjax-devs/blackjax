@@ -105,7 +105,7 @@ Module Contents
    determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)
 
 
-.. py:function:: handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_change)
+.. py:function:: handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_change, key)
 
    if there are nans, let's reduce the stepsize, and not update the state. The
    function returns the old state in this case.

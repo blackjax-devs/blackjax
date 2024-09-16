@@ -392,7 +392,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">jax.flatten_util</span> <span class="kn">import</span> <span class="n">ravel_pytree</span>
 
 <span class="kn">from</span> <span class="nn">blackjax.diagnostics</span> <span class="kn">import</span> <span class="n">effective_sample_size</span>
-<span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">incremental_value_update</span><span class="p">,</span> <span class="n">pytree_size</span>
+<span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">generate_unit_vector</span><span class="p">,</span> <span class="n">incremental_value_update</span><span class="p">,</span> <span class="n">pytree_size</span>
 
 
 <div class="viewcode-block" id="MCLMCAdaptationState">
@@ -536,6 +536,8 @@ document.write(`
 
         <span class="n">time</span><span class="p">,</span> <span class="n">x_average</span><span class="p">,</span> <span class="n">step_size_max</span> <span class="o">=</span> <span class="n">adaptive_state</span>
 
+        <span class="n">rng_key</span><span class="p">,</span> <span class="n">nan_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+
         <span class="c1"># dynamics</span>
         <span class="n">next_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">sqrt_diag_cov</span><span class="p">)(</span>
             <span class="n">rng_key</span><span class="o">=</span><span class="n">rng_key</span><span class="p">,</span>
@@ -551,6 +553,7 @@ document.write(`
             <span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
             <span class="n">step_size_max</span><span class="p">,</span>
             <span class="n">info</span><span class="o">.</span><span class="n">energy_change</span><span class="p">,</span>
+            <span class="n">nan_key</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># Warning: var = 0 if there were nans, but we will give it a very small weight</span>
@@ -592,7 +595,7 @@ document.write(`
         <span class="n">streaming_avg</span> <span class="o">=</span> <span class="n">incremental_value_update</span><span class="p">(</span>
             <span class="n">expectation</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">x</span><span class="p">)]),</span>
             <span class="n">incremental_val</span><span class="o">=</span><span class="n">streaming_avg</span><span class="p">,</span>
-            <span class="n">weight</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">mask</span><span class="p">)</span> <span class="o">*</span> <span class="n">success</span> <span class="o">*</span> <span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+            <span class="n">weight</span><span class="o">=</span><span class="n">mask</span> <span class="o">*</span> <span class="n">success</span> <span class="o">*</span> <span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">adaptive_state</span><span class="p">,</span> <span class="n">streaming_avg</span><span class="p">),</span> <span class="kc">None</span>
@@ -622,7 +625,7 @@ document.write(`
         <span class="p">)</span>
 
         <span class="c1"># we use the last num_steps2 to compute the diagonal preconditioner</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_steps1</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_steps2</span><span class="p">)))</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_steps1</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_steps2</span><span class="p">)))</span>
 
         <span class="c1"># run the steps</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">average</span><span class="p">)</span> <span class="o">=</span> <span class="n">run_steps</span><span class="p">(</span>
@@ -693,7 +696,9 @@ document.write(`
 
 <div class="viewcode-block" id="handle_nans">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.handle_nans">[docs]</a>
-<span class="k">def</span> <span class="nf">handle_nans</span><span class="p">(</span><span class="n">previous_state</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">step_size_max</span><span class="p">,</span> <span class="n">kinetic_change</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">handle_nans</span><span class="p">(</span>
+    <span class="n">previous_state</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">step_size_max</span><span class="p">,</span> <span class="n">kinetic_change</span><span class="p">,</span> <span class="n">key</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;if there are nans, let&#39;s reduce the stepsize, and not update the state. The</span>
 <span class="sd">    function returns the old state in this case.&quot;&quot;&quot;</span>
 
@@ -706,6 +711,15 @@ document.write(`
         <span class="p">(</span><span class="n">next_state</span><span class="p">,</span> <span class="n">step_size_max</span><span class="p">,</span> <span class="n">kinetic_change</span><span class="p">),</span>
         <span class="p">(</span><span class="n">previous_state</span><span class="p">,</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">reduced_step_size</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
     <span class="p">)</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">next_state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">),</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
+            <span class="n">momentum</span><span class="o">=</span><span class="n">generate_unit_vector</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">previous_state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">state</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="k">return</span> <span class="n">nonans</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">kinetic_change</span></div>
 
 </pre></div>

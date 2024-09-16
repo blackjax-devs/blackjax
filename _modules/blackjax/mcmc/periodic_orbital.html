@@ -567,7 +567,7 @@ document.write(`
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">gaussian_euclidean</span><span class="p">(</span>
+        <span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">gaussian_euclidean</span><span class="p">(</span>
             <span class="n">inverse_mass_matrix</span>
         <span class="p">)</span>
         <span class="n">bijection_fn</span> <span class="o">=</span> <span class="n">bijection</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">)</span>

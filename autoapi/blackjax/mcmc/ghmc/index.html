@@ -539,6 +539,9 @@ the algorithm a good candiate for running many chains in parallel.</p>
 <li><p><strong>step_size</strong> – A PyTree of the same structure as the target PyTree (position) with the
 values used for as a step size for each dimension of the target space in
 the velocity verlet integrator.</p></li>
+<li><p><strong>momentum_inverse_scale</strong> – Pytree with the same structure as the targeted position variable
+specifying the per dimension inverse scaling transformation applied
+to the persistent momentum variable prior to the integration step.</p></li>
 <li><p><strong>alpha</strong> – The value defining the persistence of the momentum variable.</p></li>
 <li><p><strong>delta</strong> – The value defining the deterministic translation of the slice variable.</p></li>
 <li><p><strong>divergence_threshold</strong> – The absolute value of the difference in energy between two states above
