@@ -187,7 +187,7 @@ def gaussian_euclidean(
         return turning_at_left | turning_at_right
 
     def scale(
-        position: ArrayLikeTree, element: ArrayLikeTree, inv: ArrayLikeTree
+        position: ArrayLikeTree, element: ArrayLikeTree, inv: bool
     ) -> ArrayLikeTree:
         """Scale elements by the mass matrix.
 
