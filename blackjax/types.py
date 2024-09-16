@@ -46,4 +46,4 @@ PRNGKey = jax.Array
 
 #: JAX Scalar types
 Scalar = Union[float, int]
-Numeric = Union[Array, Scalar]
+Numeric = Union[jax.Array, Scalar]
