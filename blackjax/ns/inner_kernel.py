@@ -121,21 +121,28 @@ def build_kernel(
                 """Middle loop to scan over required MCMC steps."""
 
                 def cond_fun(carry):
-                    _, _, logL, MHaccept = carry
+                    # _, _, logL, MHaccept = carry
+                    _, _, logL = carry
+
                     return contour_check_fn(logL)  #& jnp.logical_not(MHaccept)
 
                 def inner_chain(carry):
                     """Inner most while to check steps are in contour"""
-                    key, state, _, _ = carry
+                    # key, state, _, _ = carry
+                    key, state, _ = carry
                     rng_key, subkey = jax.random.split(key)
                     new_state, info = shared_mcmc_step_fn(subkey, state)
                     logL = loglikelihood_fn(new_state.position)
-                    return rng_key, new_state, logL, info.is_accepted
+                    # return rng_key, new_state, logL, info.is_accepted
+                    return rng_key, new_state, logL
 
                 state, _ = carry
                 rng_key, step_key = jax.random.split(xs[0])
-                _, state, logL, _ = jax.lax.while_loop(
-                    cond_fun, inner_chain, (step_key, state, -jnp.inf, False)
+                # _, state, logL, _ = jax.lax.while_loop(
+                #     cond_fun, inner_chain, (step_key, state, -jnp.inf, False)
+                # )
+                _, state, logL = jax.lax.while_loop(
+                    cond_fun, inner_chain, (step_key, state, -jnp.inf)
                 )
                 return (state, logL), (rng_key, state, logL)
 
@@ -147,6 +154,8 @@ def build_kernel(
         scan_keys = jax.random.split(
             rng_key, (*dead_idx.shape, num_mcmc_steps)
         )
+
+        # particle_map((dead_particles[0], scan_keys[0]))
 
         new_pos,new_logl = jax.pmap(particle_map)((dead_particles, scan_keys))
         logL_births = -val.min() * jnp.ones(dead_idx.shape)
