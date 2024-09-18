@@ -37,6 +37,7 @@ from .smc import adaptive_tempered
 from .smc import inner_kernel_tuning as _inner_kernel_tuning
 from .smc import tempered
 from .ns import rejection
+from .ns import inner_kernel 
 from .vi import meanfield_vi as _meanfield_vi
 from .vi import pathfinder as _pathfinder
 from .vi import schrodinger_follmer as _schrodinger_follmer
@@ -126,6 +127,7 @@ smc_family = [tempered_smc, adaptive_tempered_smc]
 
 # NS
 rejection_ns = generate_top_level_api_from(rejection)
+inner_kernel_ns = generate_top_level_api_from(inner_kernel)
 
 # stochastic gradient mcmc
 sgld = generate_top_level_api_from(_sgld)
