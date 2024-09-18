@@ -22,6 +22,7 @@ from .mcmc import mclmc as _mclmc
 from .mcmc import nuts as _nuts
 from .mcmc import periodic_orbital, random_walk
 from .mcmc import rmhmc as _rmhmc
+from .mcmc import univariate_slice as _slice
 from .mcmc.random_walk import additive_step_random_walk as _additive_step_random_walk
 from .mcmc.random_walk import (
     irmh_as_top_level_api,
@@ -110,6 +111,7 @@ additive_step_random_walk.register_factory("normal_random_walk", normal_random_w
 
 mclmc = generate_top_level_api_from(_mclmc)
 elliptical_slice = generate_top_level_api_from(_elliptical_slice)
+univariate_slice = generate_top_level_api_from(_slice)
 ghmc = generate_top_level_api_from(_ghmc)
 barker_proposal = generate_top_level_api_from(barker)
 
