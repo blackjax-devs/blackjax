@@ -1,31 +1,28 @@
-from datetime import date
-import os
 import multiprocessing
+import os
+from datetime import date
 
 num_cores = multiprocessing.cpu_count()
-os.environ["XLA_FLAGS"] = "--xla_force_host_platform_device_count={}".format(
-    num_cores
-)
+os.environ["XLA_FLAGS"] = "--xla_force_host_platform_device_count={}".format(num_cores)
 
+import anesthetic as ns
+import distrax
 import jax
-import matplotlib.pyplot as plt
-import blackjax.progress_bar
 import jax.numpy as jnp
+import matplotlib.pyplot as plt
 import numpy as np
 from jax.scipy.stats import multivariate_normal
 
 import blackjax
-import distrax
-import anesthetic as ns
+import blackjax.progress_bar
 from blackjax import irmh
 from blackjax.progress_bar import progress_bar_scan
 from blackjax.smc.tuning.from_particles import (
-    particles_covariance_matrix,
-    particles_stds,
-    particles_means,
     mass_matrix_from_particles,
+    particles_covariance_matrix,
+    particles_means,
+    particles_stds,
 )
-
 
 ##################################################################################
 # Setup the problem
@@ -48,9 +45,7 @@ n_samples = 500
 n_delete = num_cores
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
-prior = distrax.MultivariateNormalDiag(
-    loc=jnp.zeros(d), scale_diag=jnp.ones(d)
-)
+prior = distrax.MultivariateNormalDiag(loc=jnp.zeros(d), scale_diag=jnp.ones(d))
 
 
 ##################################################################################
@@ -59,19 +54,16 @@ prior = distrax.MultivariateNormalDiag(
 
 kernel = irmh.build_kernel()
 
+
 def mcmc_step_fn(key, state, logdensity, means, cov):
-    proposal_distribution = lambda key: jax.random.multivariate_normal(
-        key, means, cov
-    )
+    proposal_distribution = lambda key: jax.random.multivariate_normal(key, means, cov)
 
     def proposal_logdensity_fn(proposal, state):
         return jax.scipy.stats.multivariate_normal.logpdf(
             state.position, mean=means, cov=cov
         ).squeeze()
 
-    return kernel(
-        key, state, logdensity, proposal_distribution, proposal_logdensity_fn
-    )
+    return kernel(key, state, logdensity, proposal_distribution, proposal_logdensity_fn)
 
 
 def mcmc_parameter_update_fn(state, info):
@@ -98,7 +90,7 @@ mcmc_parameter_update_fn: function to tune the parameters of the mcmc step
 mcmc_initial_parameters: initial parameters for the inner kernel -- effectively call the parameter update fn on the initial pop
 
 Specific settings for the NS algorithm:
-n_delete: number of points to delete at each iteration 
+n_delete: number of points to delete at each iteration
         jax will pmap over this, so it is detected automatically in this script as the number of available cpu cores
 num mcmc steps: number of successful steps to take in the inner kernel - n_repeats in polychord language
 """
@@ -142,9 +134,8 @@ iterations = jnp.arange(n_steps)
 # comment out the above scan and uncomment this for debugging
 # with jax.disable_jit():
 #     for i in range(10):
-#         sample_key, rng_key = jax.random.split(sample_key)
-#         (state, sample_key), _ =  one_step((state, sample_key), iterations)
-
+#         rng_key, sample_key = jax.random.split(rng_key)
+#         state, info = algo.step(sample_key, state)
 
 ##################################################################################
 # Collect the samples into anesthetic objects
@@ -157,9 +148,7 @@ live_points = live.sampler_state.particles.squeeze()
 
 samples = ns.NestedSamples(
     data=np.concatenate([live_points, dead_points.reshape(-1, d)], axis=0),
-    logL=np.concatenate(
-        [live.sampler_state.logL, dead.logL.squeeze().reshape(-1)]
-    ),
+    logL=np.concatenate([live.sampler_state.logL, dead.logL.squeeze().reshape(-1)]),
     logL_birth=np.concatenate(
         [live.sampler_state.logL_birth, dead.logL_birth.squeeze().reshape(-1)]
     ),
