@@ -322,11 +322,23 @@ def gaussian_riemannian(
             mass_matrix, is_inv=False
         )
         ravelled_element, unravel_fn = ravel_pytree(element)
-        scaled = jax.lax.cond(
-            inv,
-            lambda: linear_map(inv_mass_matrix_sqrt, ravelled_element),
-            lambda: linear_map(mass_matrix_sqrt, ravelled_element),
-        )
+
+        def _linear_map_transpose():
+            return jax.lax.cond(
+                inv,
+                lambda: linear_map(inv_mass_matrix_sqrt.T, ravelled_element),
+                lambda: linear_map(mass_matrix_sqrt.T, ravelled_element),
+            )
+
+        def _linear_map():
+            return jax.lax.cond(
+                inv,
+                lambda: linear_map(inv_mass_matrix_sqrt, ravelled_element),
+                lambda: linear_map(mass_matrix_sqrt, ravelled_element),
+            )
+
+        scaled = jax.lax.cond(trans, _linear_map_transpose, _linear_map)
+
         return unravel_fn(scaled)
 
     return Metric(momentum_generator, kinetic_energy, is_turning, scale)
