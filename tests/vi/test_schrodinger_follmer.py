@@ -51,7 +51,7 @@ class SchrodingerFollmerTest(chex.TestCase):
 
         # Simulate the data
         observed = jax.random.multivariate_normal(
-            rng_key_observed, true_mu, true_cov, shape=(10_000,)
+            rng_key_observed, true_mu, true_cov, shape=(25,)
         )
 
         logp_model = functools.partial(
