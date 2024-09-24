@@ -303,7 +303,7 @@ def gaussian_riemannian(
         position: ArrayLikeTree,
         element: ArrayLikeTree,
         inv: ArrayLikeTree,
-        trans: ArrayLikeTree = False,
+        trans: ArrayLikeTree,
     ) -> ArrayLikeTree:
         """Scale elements by the mass matrix.
 
