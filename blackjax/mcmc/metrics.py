@@ -62,7 +62,11 @@ class CheckTurning(Protocol):
 
 class Scale(Protocol):
     def __call__(
-        self, position: ArrayLikeTree, element: ArrayLikeTree, inv: ArrayLikeTree
+        self,
+        position: ArrayLikeTree,
+        element: ArrayLikeTree,
+        inv: ArrayLikeTree,
+        trans: ArrayLikeTree,
     ) -> ArrayLikeTree:
         ...
 
@@ -187,7 +191,10 @@ def gaussian_euclidean(
         return turning_at_left | turning_at_right
 
     def scale(
-        position: ArrayLikeTree, element: ArrayLikeTree, inv: ArrayLikeTree
+        position: ArrayLikeTree,
+        element: ArrayLikeTree,
+        inv: ArrayLikeTree,
+        trans: ArrayLikeTree,
     ) -> ArrayLikeTree:
         """Scale elements by the mass matrix.
 
@@ -201,6 +208,8 @@ def gaussian_euclidean(
             Whether to scale the elements by the inverse mass matrix or the mass matrix.
             If True, the element is scaled by the inverse square root mass matrix, i.e., elem <- (M^{1/2})^{-1} elem.
             Same pytree structure as `elements`.
+        trans
+            whether to transpose mass matrix when scaling
 
         Returns
         -------
@@ -209,11 +218,23 @@ def gaussian_euclidean(
         """
 
         ravelled_element, unravel_fn = ravel_pytree(element)
-        scaled = jax.lax.cond(
-            inv,
-            lambda: linear_map(inv_mass_matrix_sqrt, ravelled_element),
-            lambda: linear_map(mass_matrix_sqrt, ravelled_element),
-        )
+
+        def _linear_map_transpose():
+            return jax.lax.cond(
+                inv,
+                lambda: linear_map(inv_mass_matrix_sqrt.T, ravelled_element),
+                lambda: linear_map(mass_matrix_sqrt.T, ravelled_element),
+            )
+
+        def _linear_map():
+            return jax.lax.cond(
+                inv,
+                lambda: linear_map(inv_mass_matrix_sqrt, ravelled_element),
+                lambda: linear_map(mass_matrix_sqrt, ravelled_element),
+            )
+
+        scaled = jax.lax.cond(trans, _linear_map_transpose, _linear_map)
+
         return unravel_fn(scaled)
 
     return Metric(momentum_generator, kinetic_energy, is_turning, scale)
@@ -279,7 +300,10 @@ def gaussian_riemannian(
         # return turning_at_left | turning_at_right
 
     def scale(
-        position: ArrayLikeTree, element: ArrayLikeTree, inv: ArrayLikeTree
+        position: ArrayLikeTree,
+        element: ArrayLikeTree,
+        inv: ArrayLikeTree,
+        trans: ArrayLikeTree = False,
     ) -> ArrayLikeTree:
         """Scale elements by the mass matrix.
 
