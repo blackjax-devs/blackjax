@@ -496,9 +496,7 @@ class LinearRegressionTest(chex.TestCase):
         )
         logposterior_fn = lambda x: logposterior_fn_(**x)
 
-        inv_mass_matrix = jnp.eye(2)  # no effect on original test
-
-        barker = blackjax.barker_proposal(logposterior_fn, 1e-1, inv_mass_matrix)
+        barker = blackjax.barker_proposal(logposterior_fn, 1e-1)
         state = barker.init({"coefs": 1.0, "log_scale": 1.0})
 
         _, states = run_inference_algorithm(
@@ -889,7 +887,7 @@ class UnivariateNormalTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_barker(self):
         inference_algorithm = blackjax.barker_proposal(
-            self.normal_logprob, step_size=1.5, inverse_mass_matrix=jnp.eye(1)
+            self.normal_logprob, step_size=1.5
         )
         initial_state = inference_algorithm.init(jnp.array(1.0))
         self.univariate_normal_test_case(
@@ -926,7 +924,7 @@ mcse_test_cases = [
     },
     {
         "algorithm": blackjax.barker_proposal,
-        "parameters": {"step_size": 0.5, "inverse_mass_matrix": jnp.eye(2)},
+        "parameters": {"step_size": 0.5},
         "is_mass_matrix_diagonal": None,
     },
 ]
