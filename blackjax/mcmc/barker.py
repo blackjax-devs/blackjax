@@ -16,13 +16,14 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
-import jax.scipy as jscipy
 from jax.flatten_util import ravel_pytree
 from jax.scipy import stats
 
+import blackjax.mcmc.metrics as metrics
 from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.metrics import Metric
 from blackjax.mcmc.proposal import static_binomial_sampling
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["BarkerState", "BarkerInfo", "init", "build_kernel", "as_top_level_api"]
 
@@ -81,21 +82,29 @@ def build_kernel():
     """
 
     def _compute_acceptance_probability(
-        state: BarkerState, proposal: BarkerState, C_t: Array, C_t_inv: Array
+        state: BarkerState, proposal: BarkerState, metric: Metric
     ) -> float:
         """Compute the acceptance probability of the Barker's proposal kernel."""
 
-        x_flat, _ = ravel_pytree(state.position)
-        y_flat, _ = ravel_pytree(proposal.position)
-        log_x_flat, _ = ravel_pytree(state.logdensity_grad)
-        log_y_flat, _ = ravel_pytree(proposal.logdensity_grad)
+        x = state.position
+        y = proposal.position
+        log_x = state.logdensity_grad
+        log_y = proposal.logdensity_grad
 
-        z = C_t_inv.dot(y_flat - x_flat)
-        c_x = log_x_flat.dot(C_t)
-        c_y = log_y_flat.dot(C_t)
+        z1 = metric.scale(y, y, True, True)
+        z2 = metric.scale(x, x, True, True)
+        c_x = metric.scale(x, log_x, False, True)
+        c_y = metric.scale(y, log_y, False, True)
 
-        num = _log1pexp(-z * c_x)
-        denom = _log1pexp(z * c_y)
+        z1_flat, _ = ravel_pytree(z1)
+        z2_flat, _ = ravel_pytree(z2)
+        c_x_flat, _ = ravel_pytree(c_x)
+        c_y_flat, _ = ravel_pytree(c_y)
+
+        z = z1_flat - z2_flat
+
+        num = _log1pexp(-z * c_x_flat)
+        denom = _log1pexp(z * c_y_flat)
 
         ratio_proposal = jnp.sum(num - denom)
 
@@ -106,22 +115,23 @@ def build_kernel():
         state: BarkerState,
         logdensity_fn: Callable,
         step_size: float,
-        inverse_mass_matrix: Array,
+        inverse_mass_matrix: metrics.MetricTypes | None = None,
     ) -> tuple[BarkerState, BarkerInfo]:
         """Generate a new sample with the Barker kernel."""
+        if inverse_mass_matrix is None:
+            p, _ = ravel_pytree(state.position)
+            (m,) = p.shape
+            inverse_mass_matrix = jnp.identity(m)
+        metric = metrics.default_metric(inverse_mass_matrix)
         grad_fn = jax.value_and_grad(logdensity_fn)
         key_sample, key_rmh = jax.random.split(rng_key)
-
-        mass_matrix_sqrt, inv_mass_matrix_sqrt = _get_mass_matrix_sqrt(
-            inverse_mass_matrix
-        )
 
         proposed_pos = _barker_sample(
             key_sample,
             state.position,
             state.logdensity_grad,
             step_size,
-            mass_matrix_sqrt,
+            metric,
         )
 
         proposed_logdensity, proposed_logdensity_grad = grad_fn(proposed_pos)
@@ -129,9 +139,7 @@ def build_kernel():
             proposed_pos, proposed_logdensity, proposed_logdensity_grad
         )
 
-        log_p_accept = _compute_acceptance_probability(
-            state, proposed_state, mass_matrix_sqrt, inv_mass_matrix_sqrt
-        )
+        log_p_accept = _compute_acceptance_probability(state, proposed_state, metric)
         accepted_state, info = static_binomial_sampling(
             key_rmh, log_p_accept, state, proposed_state
         )
@@ -142,7 +150,9 @@ def build_kernel():
 
 
 def as_top_level_api(
-    logdensity_fn: Callable, step_size: float, inverse_mass_matrix: Array
+    logdensity_fn: Callable,
+    step_size: float,
+    inverse_mass_matrix: metrics.MetricTypes | None = None,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Barker's proposal :cite:p:`Livingstone2022Barker` kernel with a
     Gaussian base kernel.
@@ -208,7 +218,7 @@ def as_top_level_api(
     return SamplingAlgorithm(init_fn, step_fn)
 
 
-def _barker_sample_nd(key, mean, a, scale, C_t):
+def _barker_sample_nd(key, mean, a, scale, metric):
     """
     Sample from a multivariate Barker's proposal distribution. In 1D, this has the following probability density function:
 
@@ -230,9 +240,8 @@ def _barker_sample_nd(key, mean, a, scale, C_t):
     scale
         The global scale, a scalar. This corresponds to :math:`\\sigma` in the equation above.
         It encodes the step size of the proposal.
-    C_t
-        The transpose of the sqrt of the mass matrix, an Array. It is not used in the
-        1D version of Barker's proposal and thus not present in the equation above.
+    metric
+        A `metrics.MetricTypes` object encoding the mass matrix information.
 
     Returns
     -------
@@ -242,7 +251,7 @@ def _barker_sample_nd(key, mean, a, scale, C_t):
 
     key1, key2 = jax.random.split(key)
     z = scale * jax.random.normal(key1, shape=mean.shape)
-    c = a.dot(C_t)
+    c = metric.scale(mean, a, False, True)
 
     # Sample b=1 with probability p and 0 with probability 1 - p where
     # p = 1 / (1 + exp(-a * (z - mean)))
@@ -250,10 +259,10 @@ def _barker_sample_nd(key, mean, a, scale, C_t):
     b = jax.random.bernoulli(key2, p=jnp.exp(log_p), shape=mean.shape)
 
     # return mean + z if b == 1 else mean - z
-    return mean + C_t.dot(b * z - (1 - b) * z)
+    return mean + metric.scale(mean, b * z - (1 - b) * z, False, False)
 
 
-def _barker_sample(key, mean, a, scale, C_t):
+def _barker_sample(key, mean, a, scale, metric):
     r"""
     Sample from a multivariate Barker's proposal distribution for PyTrees.
 
@@ -268,43 +277,18 @@ def _barker_sample(key, mean, a, scale, C_t):
     scale
         The global scale, a scalar. This corresponds to :math:`\\sigma` in the equation above.
         It encodes the step size of the proposal.
-    C_t
-        The transpose of the sqrt of the mass matrix, an Array.
+    metric
+        A `metrics.MetricTypes` object encoding the mass matrix information.
     """
 
     flat_mean, unravel_fn = ravel_pytree(mean)
     flat_a, _ = ravel_pytree(a)
-    flat_sample = _barker_sample_nd(key, flat_mean, flat_a, scale, C_t)
+    flat_sample = _barker_sample_nd(key, flat_mean, flat_a, scale, metric)
     return unravel_fn(flat_sample)
 
 
 def _log1pexp(a):
     return jnp.log1p(jnp.exp(a))
-
-
-def _get_mass_matrix_sqrt(inverse_mass_matrix):
-    # want transpoed cholesky decomposition C_t of mass matrix (see Appendix G of paper)
-
-    ndim = jnp.ndim(inverse_mass_matrix)  # type: ignore[arg-type]
-    shape = jnp.shape(inverse_mass_matrix)[:1]  # type: ignore[arg-type]
-    if ndim == 1:  # diagonal
-        inv_mass_matrix_sqrt = jnp.sqrt(inverse_mass_matrix)
-        mass_matrix_sqrt = jnp.reciprocal(inv_mass_matrix_sqrt)
-    elif ndim == 2:
-        # inverse mass matrix can be factored into L*L.T. We want the cholesky
-        # factor (inverse of L.T) of the mass matrix.
-        L = jscipy.linalg.cholesky(inverse_mass_matrix, lower=True)
-        identity = jnp.identity(shape[0])
-        mass_matrix_sqrt = jscipy.linalg.solve_triangular(
-            L, identity, lower=True, trans=True
-        )
-        inv_mass_matrix_sqrt = L.T
-    else:
-        raise ValueError(
-            "The mass matrix has the wrong number of dimensions:"
-            f" expected 1 or 2, got {ndim}."
-        )
-    return mass_matrix_sqrt, inv_mass_matrix_sqrt
 
 
 def _barker_logpdf(x, mean, a, scale):
