@@ -3,7 +3,7 @@ import os
 from datetime import date
 
 num_cores = multiprocessing.cpu_count()
-os.environ["XLA_FLAGS"] = "--xla_force_host_platform_device_count={}".format(num_cores)
+os.environ["XLA_FLAGS"] = f"--xla_force_host_platform_device_count={num_cores}"
 
 import anesthetic as ns
 import distrax
@@ -29,9 +29,9 @@ from blackjax.smc.tuning.from_particles import (
 ##################################################################################
 
 rng_key = jax.random.PRNGKey(2)
-d = 5
+d = 10
 
-np.random.seed(1)
+np.random.seed(2)
 C = np.random.randn(d, d) * 0.05
 like_cov = C @ C.T
 like_mean = np.random.randn(d) * 2
@@ -112,7 +112,7 @@ state = algo.init(initial_state, loglikelihood)
 # request 1000 steps of the NS kernel, currently this is fixed, and compresses for n_delete * n_steps rounds
 # simplest design pattern is to put this in an outer while loop, and break when some convergence criteria is met
 # currently there is no safety check in this compression so it can hang with too many steps, or not a good enough inner kernel
-n_steps = 1000
+n_steps = 5000
 
 
 @progress_bar_scan(n_steps)

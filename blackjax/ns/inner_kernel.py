@@ -11,6 +11,7 @@ from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import init as init_base
 from functools import partial
 from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
+from jaxopt._src.loop import while_loop
 
 __all__ = ["init", "as_top_level_api", "build_kernel"]
 
@@ -110,11 +111,10 @@ def build_kernel(
         shared_mcmc_step_fn = partial(
             mcmc_step_fn, logdensity=logprior_fn, **state.parameter_override
         )
-
         contour_check_fn = lambda x: x <= -val.min()
 
         def particle_map(xs):
-            xs,rng = xs
+            xs, rng = xs
             state = mcmc_init_fn(xs, logprior_fn)
 
             def chain_scan(carry, xs):
@@ -124,7 +124,9 @@ def build_kernel(
                     # _, _, logL, MHaccept = carry
                     _, _, logL = carry
 
-                    return contour_check_fn(logL)  #& jnp.logical_not(MHaccept)
+                    return contour_check_fn(
+                        logL
+                    )  # & jnp.logical_not(MHaccept)
 
                 def inner_chain(carry):
                     """Inner most while to check steps are in contour"""
@@ -141,8 +143,11 @@ def build_kernel(
                 # _, state, logL, _ = jax.lax.while_loop(
                 #     cond_fun, inner_chain, (step_key, state, -jnp.inf, False)
                 # )
-                _, state, logL = jax.lax.while_loop(
-                    cond_fun, inner_chain, (step_key, state, -jnp.inf)
+                # _, state, logL = jax.lax.while_loop(
+                #     cond_fun, inner_chain, (step_key, state, -jnp.inf)
+                # )
+                _, state, logL = while_loop(
+                    cond_fun, inner_chain, (step_key, state, -jnp.inf), maxiter=500, jit=True
                 )
                 return (state, logL), (rng_key, state, logL)
 
@@ -151,13 +156,22 @@ def build_kernel(
             )
             return fs.position, fl
 
+        rng_key, choice_key = jax.random.split(rng_key)
         scan_keys = jax.random.split(
             rng_key, (*dead_idx.shape, num_mcmc_steps)
         )
 
         # particle_map((dead_particles[0], scan_keys[0]))
+        idx = jax.random.choice(
+            choice_key,
+            state.sampler_state.particles.shape[0],
+            shape=(dead_particles.shape[0],),
+        )
+        # new_pos,new_logl = jax.pmap(particle_map)((dead_particles, scan_keys))
+        new_pos, new_logl = jax.pmap(particle_map)(
+            (state.sampler_state.particles[idx], scan_keys)
+        )
 
-        new_pos,new_logl = jax.pmap(particle_map)((dead_particles, scan_keys))
         logL_births = -val.min() * jnp.ones(dead_idx.shape)
 
         particles = state.sampler_state.particles.at[dead_idx].set(
