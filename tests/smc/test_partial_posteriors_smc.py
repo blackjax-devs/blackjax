@@ -30,7 +30,7 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
 
         hmc_parameters = extend_params(
             {
-                "step_size": 10e-2,
+                "step_size": 10e-3,
                 "inverse_mass_matrix": jnp.eye(2),
                 "num_integration_steps": 50,
             },
