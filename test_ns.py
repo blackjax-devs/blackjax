@@ -53,6 +53,7 @@ prior = distrax.MultivariateNormalDiag(loc=jnp.zeros(d), scale_diag=jnp.ones(d))
 ##################################################################################
 
 kernel = irmh.build_kernel()
+# kernel = blackjax.random_walk.build_additive_step()
 
 
 def mcmc_step_fn(key, state, logdensity, means, cov):

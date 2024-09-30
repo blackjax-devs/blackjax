@@ -1,17 +1,17 @@
 # Copyright 2024- Will Handley & David Yallup
-from typing import Callable, NamedTuple, Optional
-from typing import Callable, Dict, NamedTuple, Tuple
+from functools import partial
+from typing import Callable, Dict, NamedTuple, Optional, Tuple
+
 import jax
 import jax.numpy as jnp
+from jaxopt._src.loop import while_loop
 
 import blackjax.ns.base as base
 from blackjax.base import SamplingAlgorithm
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import init as init_base
-from functools import partial
 from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
-from jaxopt._src.loop import while_loop
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["init", "as_top_level_api", "build_kernel"]
 
@@ -21,9 +21,7 @@ class NSState(NamedTuple):
 
     particles: ArrayTree
     logL: Array  # The log-likelihood of the particles
-    logL_birth: (
-        Array  # The hard likelihood threshold of each particle at birth
-    )
+    logL_birth: (Array)  # The hard likelihood threshold of each particle at birth
     logL_star: float  # The current hard likelihood threshold
 
 
@@ -32,9 +30,7 @@ class NSInfo(NamedTuple):
 
     particles: ArrayTree
     logL: Array  # The log-likelihood of the particles
-    logL_birth: (
-        Array  # The hard likelihood threshold of each particle at birth
-    )
+    logL_birth: (Array)  # The hard likelihood threshold of each particle at birth
 
 
 def init_base(particles: ArrayLikeTree, loglikelihood_fn):
@@ -58,9 +54,7 @@ def build_kernel(
     contour_fn: Callable,
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
-    mcmc_parameter_update_fn: Callable[
-        [NSState, NSInfo], Dict[str, ArrayTree]
-    ],
+    mcmc_parameter_update_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
     num_mcmc_steps: int = 10,
     **extra_parameters,
 ) -> Callable:
@@ -90,7 +84,6 @@ def build_kernel(
         state: base.NSState,
         **extra_step_parameters,
     ) -> tuple[base.NSState, base.NSInfo]:
-
         logL_birth = state.sampler_state.logL_star
         val, dead_idx = delete_fn(state.sampler_state.logL)
 
@@ -124,9 +117,7 @@ def build_kernel(
                     # _, _, logL, MHaccept = carry
                     _, _, logL = carry
 
-                    return contour_check_fn(
-                        logL
-                    )  # & jnp.logical_not(MHaccept)
+                    return contour_check_fn(logL)  # & jnp.logical_not(MHaccept)
 
                 def inner_chain(carry):
                     """Inner most while to check steps are in contour"""
@@ -147,7 +138,11 @@ def build_kernel(
                 #     cond_fun, inner_chain, (step_key, state, -jnp.inf)
                 # )
                 _, state, logL = while_loop(
-                    cond_fun, inner_chain, (step_key, state, -jnp.inf), maxiter=500, jit=True
+                    cond_fun,
+                    inner_chain,
+                    (step_key, state, -jnp.inf),
+                    maxiter=500,
+                    jit=True,
                 )
                 return (state, logL), (rng_key, state, logL)
 
@@ -157,9 +152,7 @@ def build_kernel(
             return fs.position, fl
 
         rng_key, choice_key = jax.random.split(rng_key)
-        scan_keys = jax.random.split(
-            rng_key, (*dead_idx.shape, num_mcmc_steps)
-        )
+        scan_keys = jax.random.split(rng_key, (*dead_idx.shape, num_mcmc_steps))
 
         # particle_map((dead_particles[0], scan_keys[0]))
         idx = jax.random.choice(
@@ -174,13 +167,9 @@ def build_kernel(
 
         logL_births = -val.min() * jnp.ones(dead_idx.shape)
 
-        particles = state.sampler_state.particles.at[dead_idx].set(
-            new_pos.squeeze()
-        )
+        particles = state.sampler_state.particles.at[dead_idx].set(new_pos.squeeze())
         logL = state.sampler_state.logL.at[dead_idx].set(new_logl.squeeze())
-        logL_birth = state.sampler_state.logL_birth.at[dead_idx].set(
-            logL_births
-        )
+        logL_birth = state.sampler_state.logL_birth.at[dead_idx].set(logL_births)
         logL_star = state.sampler_state.logL.min()
 
         state = NSState(
@@ -210,9 +199,7 @@ def as_top_level_api(
     loglikelihood_fn: Callable,
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
-    mcmc_parameter_update_fn: Callable[
-        [NSState, NSInfo], Dict[str, ArrayTree]
-    ],
+    mcmc_parameter_update_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
     mcmc_initial_parameters: dict,
     num_mcmc_steps: int = 10,
     n_delete: int = 1,
