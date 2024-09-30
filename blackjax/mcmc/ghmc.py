@@ -16,6 +16,7 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
+from jax.flatten_util import ravel_pytree
 
 import blackjax.mcmc.hmc as hmc
 import blackjax.mcmc.integrators as integrators
@@ -129,8 +130,8 @@ def build_kernel(
 
         """
 
-        flat_inverse_scale = jax.flatten_util.ravel_pytree(momentum_inverse_scale)[0]
-        momentum_generator, kinetic_energy_fn, _ = metrics.gaussian_euclidean(
+        flat_inverse_scale = ravel_pytree(momentum_inverse_scale)[0]
+        momentum_generator, kinetic_energy_fn, *_ = metrics.gaussian_euclidean(
             flat_inverse_scale**2
         )
 
@@ -248,6 +249,10 @@ def as_top_level_api(
         A PyTree of the same structure as the target PyTree (position) with the
         values used for as a step size for each dimension of the target space in
         the velocity verlet integrator.
+    momentum_inverse_scale
+        Pytree with the same structure as the targeted position variable
+        specifying the per dimension inverse scaling transformation applied
+        to the persistent momentum variable prior to the integration step.
     alpha
         The value defining the persistence of the momentum variable.
     delta

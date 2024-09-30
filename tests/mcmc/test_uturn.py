@@ -20,7 +20,7 @@ class UTurnTest(chex.TestCase):
     )
     def test_is_iterative_turning(self, checkpoint_idxs, expected_turning):
         inverse_mass_matrix = jnp.ones(1)
-        _, _, is_turning = gaussian_euclidean(inverse_mass_matrix)
+        _, _, is_turning, _ = gaussian_euclidean(inverse_mass_matrix)
         _, _, is_iterative_turning = iterative_uturn_numpyro(is_turning)
 
         momentum = 1.0
