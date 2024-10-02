@@ -9,7 +9,7 @@ from absl.testing import absltest, parameterized
 
 import blackjax
 from blackjax.mcmc import metrics
-from blackjax.mcmc.barker import _barker_pdf, _barker_sample_nd
+from blackjax.mcmc.barker import _barker_pdf, _barker_sample
 from blackjax.util import run_inference_algorithm
 
 
@@ -27,7 +27,7 @@ class BarkerSamplingTest(chex.TestCase):
 
         metric = metrics.default_metric(jnp.eye(4))
         keys = jax.random.split(key, n_samples)
-        samples = jax.vmap(lambda k: _barker_sample_nd(k, m, a, scale, metric))(keys)
+        samples = jax.vmap(lambda k: _barker_sample(k, m, a, scale, metric))(keys)
         # Check that the emprical mean and the mean computed as sum(x * p(x) dx) are close
         _test_samples_vs_pdf(samples, lambda x: _barker_pdf(x, m, a, scale))
 
