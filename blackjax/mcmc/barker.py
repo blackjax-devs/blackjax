@@ -224,52 +224,6 @@ def as_top_level_api(
     return SamplingAlgorithm(init_fn, step_fn)
 
 
-def _barker_sample_nd(key, mean, a, scale, metric):
-    """
-    Sample from a multivariate Barker's proposal distribution. In 1D, this has the following probability density function:
-
-    .. math::
-        p(x; \\mu, a, \\sigma) = 2 \frac{N(x; \\mu, \\sigma^2)}{1 + \\exp(-a (x - \\mu)}
-
-    where :math:`N(x; \\mu, \\sigma^2)` is the normal distribution with mean :math:`\\mu` and standard deviation :math:`\\sigma`.
-    The multivariate Barker's proposal distribution is the product of one-dimensional Barker's proposal distributions.
-
-
-    Parameters
-    ----------
-    key
-        A PRNG key.
-    mean
-        The mean of the normal distribution, an Array. This corresponds to :math:`\\mu` in the equation above.
-    a
-        The parameter :math:`a` in the equation above, an Array. This is a skewness parameter.
-    scale
-        The global scale, a scalar. This corresponds to :math:`\\sigma` in the equation above.
-        It encodes the step size of the proposal.
-    metric
-        A `metrics.MetricTypes` object encoding the mass matrix information.
-
-    Returns
-    -------
-    A sample from the Barker's multidimensional proposal distribution.
-
-    """
-
-    key1, key2 = jax.random.split(key)
-    z = scale * jax.random.normal(key1, shape=mean.shape)
-    c = metric.scale(mean, a, False, True)
-
-    # Sample b=1 with probability p and 0 with probability 1 - p where
-    # p = 1 / (1 + exp(-a * (z - mean)))
-    log_p = -_log1pexp(-c * z)
-    b = jax.random.bernoulli(key2, p=jnp.exp(log_p), shape=mean.shape)
-
-    # return mean + z if b == 1 else mean - z
-    return jax.tree_util.tree_map(
-        lambda a, b: a + b, mean, metric.scale(mean, b * z - (1 - b) * z, False, False)
-    )
-
-
 def _barker_sample(key, mean, a, scale, metric):
     r"""
     Sample from a multivariate Barker's proposal distribution for PyTrees.
@@ -289,10 +243,20 @@ def _barker_sample(key, mean, a, scale, metric):
         A `metrics.MetricTypes` object encoding the mass matrix information.
     """
 
-    flat_mean, unravel_fn = ravel_pytree(mean)
-    flat_a, _ = ravel_pytree(a)
-    flat_sample = _barker_sample_nd(key, flat_mean, flat_a, scale)
-    return unravel_fn(flat_sample)
+    key1, key2 = jax.random.split(key)
+    flat_mean, _ = ravel_pytree(mean)
+
+    c = metric.scale(mean, a, False, True)
+    z = scale * jax.random.normal(key1, shape=flat_mean.shape)
+
+    # Sample b=1 with probability p and 0 with probability 1 - p where
+    # p = 1 / (1 + exp(-a * (z - mean)))
+    log_p = jax.tree_util.tree_map(lambda x, y: -_log1pexp(-x * y), c, z)
+    b = jax.random.bernoulli(key2, p=jnp.exp(log_p), shape=flat_mean.shape)
+
+    return jax.tree_util.tree_map(
+        lambda a, b: a + b, mean, metric.scale(mean, b * z - (1 - b) * z, False, False)
+    )
 
 
 def _log1pexp(a):
