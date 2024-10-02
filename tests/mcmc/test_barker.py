@@ -1,4 +1,5 @@
 import functools
+import itertools
 
 import chex
 import jax
@@ -127,6 +128,51 @@ class BarkerPreconditioiningTest(chex.TestCase):
             states2_trans.append(metric.scale(s, s, False, False))
         states2_trans = jnp.array(states2_trans)
         assert jnp.allclose(states1, states2_trans)
+
+    @parameterized.parameters(
+        itertools.product([1234, 5678], ["gaussian", "riemannian"])
+    )
+    def test_invariance(self, seed, metric):
+        logpdf = lambda x: -0.5 * jnp.sum(x**2)
+
+        n_samples, m_steps = 10_000, 50
+
+        key = jax.random.key(seed)
+        init_key, inference_key = jax.random.split(key, 2)
+        inference_keys = jax.random.split(inference_key, n_samples)
+        if metric == "gaussian":
+            inv_mass_matrix = jnp.ones((2,))
+            metric = metrics.default_metric(inv_mass_matrix)
+        else:
+            # bit of a random metric but we are testing invariance, not efficiency
+            metric = metrics.gaussian_riemannian(
+                lambda x: 1 / jnp.sum(1 + jnp.sum(x**2)) * jnp.eye(2)
+            )
+
+        barker = blackjax.barker_proposal(logpdf, 0.5, metric)
+        init_samples = jax.random.normal(init_key, shape=(n_samples, 2))
+
+        def loop(carry, key_):
+            state, accepted = carry
+            state, info = barker.step(key_, state)
+            accepted += info.is_accepted
+            return (state, accepted), None
+
+        def get_samples(init_sample, key_):
+            init = (barker.init(init_sample), 0)
+            (out, n_accepted), _ = jax.lax.scan(
+                loop, init, jax.random.split(key_, m_steps)
+            )
+            return out.position, n_accepted / m_steps
+
+        samples, total_accepted = jax.vmap(get_samples)(init_samples, inference_keys)
+        # now we test the distance versus a Gaussian
+        chex.assert_trees_all_close(
+            jnp.mean(samples, 0), jnp.zeros((2,)), atol=1e-1, rtol=1e-1
+        )
+        chex.assert_trees_all_close(
+            jnp.cov(samples.T), jnp.eye(2), atol=1e-1, rtol=1e-1
+        )
 
 
 if __name__ == "__main__":
