@@ -16,19 +16,19 @@ class PartialPosteriorsSMCState(NamedTuple):
         The particles' positions.
     weights:
         Weights of the particles, so that they represent a probability distribution
-    selector:
-        Datapoints used to calculate the posterior the particles represent, a 1D boolean
-        array to indicate which datapoints to include in the computation of the observed likelihood.
+    data_mask:
+        A 1D boolean array to indicate which datapoints to include
+        in the computation of the observed likelihood.
     """
 
     particles: ArrayTree
     weights: Array
-    selector: Array
+    data_mask: Array
 
 
 def init(particles: ArrayLikeTree, num_datapoints: int) -> PartialPosteriorsSMCState:
     """num_datapoints are the number of observations that could potentially be
-    used in a partial posterior. Since the initial selector is all 0s, it
+    used in a partial posterior. Since the initial data_mask is all 0s, it
     means that no likelihood term will be added (only prior).
     """
     num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
@@ -73,11 +73,11 @@ def build_kernel(
     delegate = smc_from_mcmc(mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy)
 
     def step(
-        key, state: PartialPosteriorsSMCState, selector: Array
+        key, state: PartialPosteriorsSMCState, data_mask: Array
     ) -> Tuple[PartialPosteriorsSMCState, smc.base.SMCInfo]:
-        logposterior_fn = partial_logposterior_factory(selector)
+        logposterior_fn = partial_logposterior_factory(data_mask)
 
-        previous_logposterior_fn = partial_logposterior_factory(state.selector)
+        previous_logposterior_fn = partial_logposterior_factory(state.data_mask)
 
         def log_weights_fn(x):
             return logposterior_fn(x) - previous_logposterior_fn(x)
@@ -86,7 +86,7 @@ def build_kernel(
             key, state, num_mcmc_steps, mcmc_parameters, logposterior_fn, log_weights_fn
         )
 
-        return PartialPosteriorsSMCState(state.particles, state.weights, selector), info
+        return PartialPosteriorsSMCState(state.particles, state.weights, data_mask), info
 
     return step
 
@@ -118,7 +118,7 @@ def as_top_level_api(
         del rng_key
         return init(position, num_observations)
 
-    def step(key: PRNGKey, state: PartialPosteriorsSMCState, selector: Array):
-        return kernel(key, state, selector)
+    def step(key: PRNGKey, state: PartialPosteriorsSMCState, data_mask: Array):
+        return kernel(key, state, data_mask)
 
     return SamplingAlgorithm(init_fn, step)  # type: ignore[arg-type]
