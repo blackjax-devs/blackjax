@@ -15,8 +15,8 @@ def build_kernel(
     update_strategy: Callable = update_and_take_last,
 ):
     """SMC step from MCMC kernels.
-     Builds MCMC kernels from the input parameters, which may change across iterations.
-      Moreover, it defines the way such kernels are used to update the particles. This layer
+    Builds MCMC kernels from the input parameters, which may change across iterations.
+    Moreover, it defines the way such kernels are used to update the particles. This layer
     adapts an API defined in terms of kernels (mcmc_step_fn and mcmc_init_fn) into an API
     that depends on an update function over the set of particles.
     Returns

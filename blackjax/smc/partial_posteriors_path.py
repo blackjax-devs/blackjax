@@ -17,8 +17,8 @@ class PartialPosteriorsSMCState(NamedTuple):
     weights:
         Weights of the particles, so that they represent a probability distribution
     selector:
-        {Datapoints used to calculate the posterior the particles represent
-
+        Datapoints used to calculate the posterior the particles represent, a 1D boolean
+        array to indicate which datapoints to include in the computation of the observed likelihood.
     """
 
     particles: ArrayTree
@@ -27,8 +27,7 @@ class PartialPosteriorsSMCState(NamedTuple):
 
 
 def init(particles: ArrayLikeTree, num_datapoints: int) -> PartialPosteriorsSMCState:
-    """
-    num_datapoints are the number of observations that could potentially be
+    """num_datapoints are the number of observations that could potentially be
     used in a partial posterior. Since the initial selector is all 0s, it
     means that no likelihood term will be added (only prior).
     """
@@ -49,28 +48,27 @@ def build_kernel(
     """Build the Partial Posteriors (data tempering) SMC kernel.
     The distribution's trajectory includes increasingly adding more
     datapoints to the likelihood. See Section 2.2 of https://arxiv.org/pdf/2007.11936
-     Parameters
-     ----------
-     mcmc_step_fn
-         A function that computes the log density of the prior distribution
-     mcmc_init_fn
-         A function that returns the probability at a given
-         position.
-     resampling_fn
-         A random function that resamples generated particles based of weights
-     num_mcmc_steps
-         Number of iterations in the MCMC chain.
-     mcmc_parameters
-         A dictionary of parameters to be used by the inner MCMC kernels
-     partial_logposterior_factory:
-         A callable that given an array of 0 and 1, returns a function logposterior(x).
-         The array represents which values to include in the logposterior calculation. The logposterior
-         must be jax compilable.
+    Parameters
+    ----------
+    mcmc_step_fn
+        A function that computes the log density of the prior distribution
+    mcmc_init_fn
+        A function that returns the probability at a given position.
+    resampling_fn
+        A random function that resamples generated particles based of weights
+    num_mcmc_steps
+        Number of iterations in the MCMC chain.
+    mcmc_parameters
+        A dictionary of parameters to be used by the inner MCMC kernels
+    partial_logposterior_factory:
+        A callable that given an array of 0 and 1, returns a function logposterior(x).
+        The array represents which values to include in the logposterior calculation. The logposterior
+        must be jax compilable.
 
-     Returns
-     -------
-     A callable that takes a rng_key and PartialPosteriorsSMCState and selectors for
-     the current and previous posteriors, and takes a data-tempered SMC state.
+    Returns
+    -------
+    A callable that takes a rng_key and PartialPosteriorsSMCState and selectors for
+    the current and previous posteriors, and takes a data-tempered SMC state.
     """
     delegate = smc_from_mcmc(mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy)
 
@@ -102,8 +100,7 @@ def as_top_level_api(
     partial_logposterior_factory: Callable,
     update_strategy=update_and_take_last,
 ) -> SamplingAlgorithm:
-    """
-    A factory that wraps the kernel into a SamplingAlgorithm object.
+    """A factory that wraps the kernel into a SamplingAlgorithm object.
     See build_kernel for full documentation on the parameters.
     """
 
