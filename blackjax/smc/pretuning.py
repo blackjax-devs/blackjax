@@ -1,16 +1,30 @@
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Tuple, Dict, NamedTuple
 
 import jax
 import jax.numpy as jnp
 import jax.random
 from jax._src.flatten_util import ravel_pytree
 
-from blackjax.smc.base import update_and_take_last
+from blackjax import smc
+from blackjax.smc.base import update_and_take_last, SMCInfo, SMCState
 from blackjax.smc.from_mcmc import step_from_mcmc_parameters
 from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
 from blackjax.smc.resampling import stratified
-from blackjax.types import ArrayLikeTree
+from blackjax.types import ArrayLikeTree, PRNGKey, ArrayTree, Array
 from blackjax.util import generate_gaussian_noise
+
+
+class SMCInfoWithParameterDistribution(NamedTuple):
+    """
+    Stores both the sampling status and also a dictionary
+    that contains an dictionary with parameter names as key
+    and (n_particles, *) arrays as meanings. The latter
+    represent a parameter per chain for the next mutation step.
+    """
+    smc_info: SMCInfo
+    parameter_override: Dict[str, ArrayTree]
+
+
 
 
 def esjd(m):
@@ -21,7 +35,6 @@ def esjd(m):
     Carlo.
     """
     L = jnp.linalg.cholesky(m)
-    print(L)
 
     def measure(previous_position, next_position, acceptance_probability):
         return acceptance_probability * jnp.power(
@@ -29,8 +42,8 @@ def esjd(m):
                 jnp.matmul(
                     L,
                     (
-                        ravel_pytree(previous_position)[0]
-                        - ravel_pytree(next_position)[0]
+                            ravel_pytree(previous_position)[0]
+                            - ravel_pytree(next_position)[0]
                     ),
                 ),
                 2,
@@ -42,14 +55,14 @@ def esjd(m):
 
 
 def update_parameter_distribution(
-    key,
-    previous_param_samples: ArrayLikeTree,
-    previous_particles,
-    latest_particles,
-    measure_of_chain_mixing,
-    alpha,
-    sigma_parameters: ArrayLikeTree,
-    acceptance_probability,
+        key,
+        previous_param_samples: ArrayLikeTree,
+        previous_particles,
+        latest_particles,
+        measure_of_chain_mixing,
+        alpha,
+        sigma_parameters: ArrayLikeTree,
+        acceptance_probability,
 ):
     """Given an existing parameter distribution that were used to mutate previous_particles
     into latest_particles, updates that parameter distribution by resampling from previous_param_samples after adding
@@ -76,7 +89,7 @@ def update_parameter_distribution(
         into latest_particles.
     """
     noise_key, resampling_key = jax.random.split(key, 2)
-    print(previous_param_samples)
+
     noises = jax.tree.map(
         lambda x, s: generate_gaussian_noise(noise_key, x.astype("float32"), sigma=s),
         previous_param_samples,
@@ -98,15 +111,15 @@ def update_parameter_distribution(
 
 
 def build_pretune(
-    mcmc_init_fn,
-    mcmc_step_fn,
-    alpha,
-    sigma_parameters,
-    parameters_to_pretune: List[str],
-    performance_of_chain_measure_factory: Callable = lambda state: esjd(
-        state.parameter_override["inverse_mass_matrix"]
-    ),
-    round_to_integer: Optional[List[str]] = None,
+        mcmc_init_fn,
+        mcmc_step_fn,
+        alpha,
+        sigma_parameters,
+        parameters_to_pretune: List[str],
+        performance_of_chain_measure_factory: Callable = lambda state: esjd(
+            state.parameter_override["inverse_mass_matrix"]
+        ),
+        round_to_integer: Optional[List[str]] = None,
 ):
     """
     Implements Buchholz et al https://arxiv.org/pdf/1808.07730 pretuning procedure. The goal is to maintain
@@ -134,8 +147,8 @@ def build_pretune(
             mcmc_init_fn, logposterior, shared_mcmc_step_fn, 1, 100
         )
 
-        print(jax.tree.map(lambda x: x.shape, state.sampler_state.particles))
-        print(jax.tree.map(lambda x: x.shape, unshared_mcmc_parameters))
+
+
         new_state, info = one_step_fn(
             jax.random.split(key, 100),
             state.sampler_state.particles,
@@ -143,8 +156,8 @@ def build_pretune(
         )
 
         performance_of_chain_measure = performance_of_chain_measure_factory(state)
-        print(state.parameter_override)
-        print(state.parameter_override.fromkeys(parameters_to_pretune))
+
+
         (
             new_parameter_distribution,
             chain_mixing_measurement,
@@ -178,3 +191,90 @@ def build_pretune(
         return updated_parameter_distribution
 
     return pretune_and_update
+
+
+import blackjax.smc.from_mcmc as smc_from_mcmc
+
+
+def build_kernel(
+        smc_algorithm,
+        logprior_fn: Callable,
+        loglikelihood_fn: Callable,
+        mcmc_step_fn: Callable,
+        mcmc_init_fn: Callable,
+        resampling_fn: Callable,
+        num_mcmc_steps: int = 10,
+        pretune_fn: Callable = lambda x, y, z: {},
+        update_strategy=update_and_take_last,
+        **extra_parameters,
+) -> Callable:
+    """In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
+    MCMC that is used to perturbate/update each of the particles. This adaptation tunes some parameter of that MCMC,
+    based on particles. The parameter type must be a valid JAX type.
+
+    Parameters
+    ----------
+    smc_algorithm
+        c§Either blackjax.adaptive_tempered_smc or blackjax.tempered_smc (or any other implementation of
+        a sampling algorithm that returns an SMCState and SMCInfo pair).
+    logprior_fn
+        A function that computes the log density of the prior distribution
+    loglikelihood_fn
+        A function that returns the probability at a given position.
+    mcmc_step_fn:
+        The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
+        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
+    mcmc_init_fn
+        A callable that initializes the inner kernel
+    mcmc_parameter_update_fn
+        A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the inner kernel in i+1 iteration.
+    extra_parameters:
+        parameters to be used for the creation of the smc_algorithm.
+    """
+    delegate = smc_from_mcmc.build_kernel(
+        mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy)
+
+    def pretuned_step(
+            rng_key: PRNGKey,
+            state,
+            num_mcmc_steps: int,
+            mcmc_parameters: dict,
+            logposterior_fn: Callable,
+            log_weights_fn: Callable,
+    ) -> tuple[smc.base.SMCState, SMCInfoWithParameterDistribution]:
+        """
+        Wraps the output of smc.from_mcmc.build_kernel into a pretuning + step method.
+        This one should be a subtype of the former, in the sense that a usage of the former
+        can be replaced with a instance of this one.
+        """
+
+        pretune_key, step_key = jax.random.split(rng_key, 2)
+        pretuned_parameters = pretune_fn(pretune_key, StateWithParameterOverride(state, mcmc_parameters),
+                                         logposterior_fn)
+        state, info = delegate(rng_key, state, num_mcmc_steps, pretuned_parameters, logposterior_fn, log_weights_fn)
+        return state, SMCInfoWithParameterDistribution(info,
+                                                       pretuned_parameters)
+
+    def kernel(
+            rng_key: PRNGKey, state: StateWithParameterOverride, **extra_step_parameters
+    ) -> Tuple[StateWithParameterOverride, SMCInfo]:
+        extra_parameters["update_particles_fn"] = pretuned_step
+        step_fn = smc_algorithm(
+            logprior_fn=logprior_fn,
+            loglikelihood_fn=loglikelihood_fn,
+            mcmc_step_fn=mcmc_step_fn,
+            mcmc_init_fn=mcmc_init_fn,
+            mcmc_parameters=state.parameter_override,
+            resampling_fn=resampling_fn,
+            num_mcmc_steps=num_mcmc_steps,
+            ** extra_parameters,
+        ).step
+        new_state, info = step_fn(
+            rng_key, state.sampler_state, **extra_step_parameters
+        )
+        return StateWithParameterOverride(new_state, info.parameter_override), info.smc_info
+
+    def init(alg_init_fn, position, initial_parameter_value):
+        return StateWithParameterOverride(alg_init_fn(position), initial_parameter_value)
+
+    return init, kernel

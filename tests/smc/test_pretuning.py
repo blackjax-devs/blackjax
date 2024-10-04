@@ -145,6 +145,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
         super().setUp()
         self.key = jax.random.key(42)
 
+    @chex.variants(with_jit=True)
     def test_one_step(self):
         (
             init_particles,
@@ -188,20 +189,51 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             round_to_integer=["num_integration_steps"],
         )
 
-        init, step = blackjax.inner_kernel_tuning(
-            blackjax.tempered_smc,
+        #init, step = blackjax.inner_kernel_tuning(
+        #    blackjax.tempered_smc,
+        #    logprior_fn,
+        #    loglikelihood_fn,
+        #    blackjax.hmc.build_kernel(),
+        #    blackjax.hmc.init,
+        #    resampling.systematic,
+        #    initial_parameter_value=initial_parameters,
+        #    num_mcmc_steps=10,
+        #    pretune_fn=pretune,
+        #)
+        #a = init(init_particles)
+        #assert a.parameter_override["num_integration_steps"] is not None
+        #step(sampling_key, a, lmbda=0.5)
+
+        init2, step2 = blackjax.smc.pretuning.build_kernel(blackjax.tempered_smc,
             logprior_fn,
             loglikelihood_fn,
             blackjax.hmc.build_kernel(),
             blackjax.hmc.init,
             resampling.systematic,
-            initial_parameter_value=initial_parameters,
             num_mcmc_steps=10,
-            pretune_fn=pretune,
-        )
-        a = init(init_particles)
+            pretune_fn=pretune)
+
+        a = init2(blackjax.tempered_smc.init, init_particles, initial_parameters)
         assert a.parameter_override["num_integration_steps"] is not None
-        step(sampling_key, a, lmbda=0.5)
+        step2(sampling_key, a, lmbda=0.5)
+
+        smc_kernel = self.variant(step2)
+
+        def body_fn(carry, lmbda):
+            i, state = carry
+            subkey = jax.random.fold_in(self.key, i)
+            new_state, info = smc_kernel(subkey, state, lmbda=lmbda)
+            return (i + 1, new_state), (new_state, info)
+        num_tempering_steps = 10
+        lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
+
+        (_, result), _ = jax.lax.scan(body_fn, (0, a), lambda_schedule)
+        self.assert_linear_regression_test_case(result.sampler_state)
+        assert set(result.parameter_override.keys()) == {"step_size",
+                                                         "num_integration_steps",
+                                                         "inverse_mass_matrix"}
+        assert result.parameter_override["step_size"].shape == (num_particles,)
+        assert result.parameter_override["num_integration_steps"].shape == (num_particles,)
 
 
 if __name__ == "__main__":
