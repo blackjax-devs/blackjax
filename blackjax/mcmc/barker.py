@@ -94,11 +94,11 @@ def build_kernel():
 
         y_minus_x = jax.tree_util.tree_map(lambda a, b: a - b, y, x)
         x_minus_y = jax.tree_util.tree_map(lambda a: -a, y_minus_x)
-        z_tilde_x_to_y = metric.scale(x, y_minus_x, True, True)
-        z_tilde_y_to_x = metric.scale(y, x_minus_y, True, True)
+        z_tilde_x_to_y = metric.scale(x, y_minus_x, inv=True, trans=True)
+        z_tilde_y_to_x = metric.scale(y, x_minus_y, inv=True, trans=True)
 
-        c_x_to_y = metric.scale(x, log_x, False, True)
-        c_y_to_x = metric.scale(y, log_y, False, True)
+        c_x_to_y = metric.scale(x, log_x, inv=False, trans=True)
+        c_y_to_x = metric.scale(y, log_y, inv=False, trans=True)
 
         z_tilde_x_to_y_flat, _ = ravel_pytree(z_tilde_x_to_y)
         z_tilde_y_to_x_flat, _ = ravel_pytree(z_tilde_y_to_x)
@@ -256,7 +256,7 @@ def _barker_sample(key, mean, a, scale, metric):
     key1, key2 = jax.random.split(key)
 
     z = generate_gaussian_noise(key1, mean, sigma=scale)
-    c = metric.scale(mean, a, False, True)
+    c = metric.scale(mean, a, inv=False, trans=True)
 
     # Sample b=1 with probability p and 0 with probability 1 - p where
     # p = 1 / (1 + exp(-a * (z - mean)))
@@ -267,7 +267,7 @@ def _barker_sample(key, mean, a, scale, metric):
     bz = jax.tree_util.tree_map(lambda x, y: x * y - (1 - x) * y, b, z)
 
     return jax.tree_util.tree_map(
-        lambda a, b: a + b, mean, metric.scale(mean, bz, False, False)
+        lambda a, b: a + b, mean, metric.scale(mean, bz, inv=False, trans=False)
     )
 
 

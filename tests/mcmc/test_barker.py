@@ -93,7 +93,7 @@ class BarkerPreconditioiningTest(chex.TestCase):
 
         # scaled, trivial pre-conditioning
         def scaled_logdensity(x_scaled, data, metric):
-            x = metric.scale(x_scaled, x_scaled, False, False)
+            x = metric.scale(x_scaled, x_scaled, inv=False, trans=False)
             return logdensity(x, data)
 
         logposterior_fn2 = functools.partial(
@@ -101,7 +101,7 @@ class BarkerPreconditioiningTest(chex.TestCase):
         )
         barker2 = blackjax.barker_proposal(logposterior_fn2, 1e-1, jnp.eye(2))
 
-        true_x_trans = metric.scale(true_x, true_x, True, True)
+        true_x_trans = metric.scale(true_x, true_x, inv=True, trans=True)
         state2 = barker2.init(true_x_trans)
 
         n_steps = 10
@@ -125,7 +125,7 @@ class BarkerPreconditioiningTest(chex.TestCase):
         states2_trans = []
         for ii in range(n_steps):
             s = states2[ii]
-            states2_trans.append(metric.scale(s, s, False, False))
+            states2_trans.append(metric.scale(s, s, inv=False, trans=False))
         states2_trans = jnp.array(states2_trans)
         assert jnp.allclose(states1, states2_trans)
 

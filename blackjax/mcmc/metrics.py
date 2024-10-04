@@ -30,7 +30,6 @@ We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
 """
 from typing import Callable, NamedTuple, Optional, Protocol, Union
 
-import jax
 import jax.numpy as jnp
 import jax.scipy as jscipy
 from jax.flatten_util import ravel_pytree
@@ -194,8 +193,9 @@ def gaussian_euclidean(
     def scale(
         position: ArrayLikeTree,
         element: ArrayLikeTree,
-        inv: ArrayLikeTree,
-        trans: ArrayLikeTree,
+        *,
+        inv: bool,
+        trans: bool,
     ) -> ArrayLikeTree:
         """Scale elements by the mass matrix.
 
@@ -205,10 +205,9 @@ def gaussian_euclidean(
             The current position. Not used in this metric.
         elements
             Elements to scale
-        invs
+        inv
             Whether to scale the elements by the inverse mass matrix or the mass matrix.
             If True, the element is scaled by the inverse square root mass matrix, i.e., elem <- (M^{1/2})^{-1} elem.
-            Same pytree structure as `elements`.
         trans
             whether to transpose mass matrix when scaling
 
@@ -296,8 +295,9 @@ def gaussian_riemannian(
     def scale(
         position: ArrayLikeTree,
         element: ArrayLikeTree,
-        inv: ArrayLikeTree,
-        trans: ArrayLikeTree,
+        *,
+        inv: bool,
+        trans: bool,
     ) -> ArrayLikeTree:
         """Scale elements by the mass matrix.
 
@@ -317,21 +317,14 @@ def gaussian_riemannian(
         )
         ravelled_element, unravel_fn = ravel_pytree(element)
 
-        def _linear_map_transpose():
-            return jax.lax.cond(
-                inv,
-                lambda: linear_map(inv_mass_matrix_sqrt.T, ravelled_element),
-                lambda: linear_map(mass_matrix_sqrt.T, ravelled_element),
-            )
+        if inv:
+            left_hand_side_matrix = inv_mass_matrix_sqrt
+        else:
+            left_hand_side_matrix = mass_matrix_sqrt
+        if trans:
+            left_hand_side_matrix = left_hand_side_matrix.T
 
-        def _linear_map():
-            return jax.lax.cond(
-                inv,
-                lambda: linear_map(inv_mass_matrix_sqrt, ravelled_element),
-                lambda: linear_map(mass_matrix_sqrt, ravelled_element),
-            )
-
-        scaled = jax.lax.cond(trans, _linear_map_transpose, _linear_map)
+        scaled = linear_map(left_hand_side_matrix, ravelled_element)
 
         return unravel_fn(scaled)
 
