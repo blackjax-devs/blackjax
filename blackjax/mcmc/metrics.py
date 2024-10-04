@@ -220,21 +220,14 @@ def gaussian_euclidean(
 
         ravelled_element, unravel_fn = ravel_pytree(element)
 
-        def _linear_map_transpose():
-            return jax.lax.cond(
-                inv,
-                lambda: linear_map(inv_mass_matrix_sqrt.T, ravelled_element),
-                lambda: linear_map(mass_matrix_sqrt.T, ravelled_element),
-            )
+        if inv:
+            left_hand_side_matrix = inv_mass_matrix_sqrt
+        else:
+            left_hand_side_matrix = mass_matrix_sqrt
+        if trans:
+            left_hand_side_matrix = left_hand_side_matrix.T
 
-        def _linear_map():
-            return jax.lax.cond(
-                inv,
-                lambda: linear_map(inv_mass_matrix_sqrt, ravelled_element),
-                lambda: linear_map(mass_matrix_sqrt, ravelled_element),
-            )
-
-        scaled = jax.lax.cond(trans, _linear_map_transpose, _linear_map)
+        scaled = linear_map(left_hand_side_matrix, ravelled_element)
 
         return unravel_fn(scaled)
 
