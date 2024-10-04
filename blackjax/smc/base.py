@@ -165,8 +165,7 @@ def update_and_take_last(
     num_mcmc_steps,
     n_particles,
 ):
-    """
-    Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and
+    """Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and
     returns the last values, waisting the previous num_mcmc_steps-1
     samples per chain.
     """
