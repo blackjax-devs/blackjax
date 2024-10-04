@@ -86,7 +86,10 @@ def build_kernel(
             key, state, num_mcmc_steps, mcmc_parameters, logposterior_fn, log_weights_fn
         )
 
-        return PartialPosteriorsSMCState(state.particles, state.weights, data_mask), info
+        return (
+            PartialPosteriorsSMCState(state.particles, state.weights, data_mask),
+            info,
+        )
 
     return step
 

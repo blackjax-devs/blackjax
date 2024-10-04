@@ -62,7 +62,12 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
 
         data_masks = jnp.array(
             [
-                jnp.concat([jnp.ones(datapoints_chosen), jnp.zeros(dataset_size - datapoints_chosen)])
+                jnp.concat(
+                    [
+                        jnp.ones(datapoints_chosen),
+                        jnp.zeros(dataset_size - datapoints_chosen),
+                    ]
+                )
                 for datapoints_chosen in np.arange(100, 1001, 50)
             ]
         )
