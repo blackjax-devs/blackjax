@@ -65,8 +65,9 @@ class Scale(Protocol):
         self,
         position: ArrayLikeTree,
         element: ArrayLikeTree,
-        inv: ArrayLikeTree,
-        trans: ArrayLikeTree,
+        *,
+        inv: bool,
+        trans: bool,
     ) -> ArrayLikeTree:
         ...
 
