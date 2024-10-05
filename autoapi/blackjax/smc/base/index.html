@@ -236,7 +236,9 @@
 <li class="toctree-l3"><a class="reference internal" href="../adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">blackjax.smc.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../solver/index.html">blackjax.smc.solver</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../tempered/index.html">blackjax.smc.tempered</a></li>
@@ -387,6 +389,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.step"><code class="docutils literal notranslate"><span class="pre">step()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.extend_params"><code class="docutils literal notranslate"><span class="pre">extend_params()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.update_and_take_last"><code class="docutils literal notranslate"><span class="pre">update_and_take_last()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -428,6 +431,9 @@ document.write(`
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.base.extend_params" title="blackjax.smc.base.extend_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extend_params</span></code></a>(params)</p></td>
 <td><p>Given a dictionary of params, repeats them for every single particle. The expected</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.base.update_and_take_last" title="blackjax.smc.base.update_and_take_last"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_and_take_last</span></code></a>(mcmc_init_fn, ...)</p></td>
+<td><p>Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and</p></td>
 </tr>
 </tbody>
 </table>
@@ -574,6 +580,14 @@ transition.</p></li>
 usage is in cases where the aim is to repeat the same parameters for all chains within SMC.</p>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.base.update_and_take_last">
+<span class="sig-name descname"><span class="pre">update_and_take_last</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcmc_init_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tempered_logposterior_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shared_mcmc_step_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_mcmc_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_particles</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#update_and_take_last"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.update_and_take_last" title="Link to this definition">#</a></dt>
+<dd><p>Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and
+returns the last values, waisting the previous num_mcmc_steps-1
+samples per chain.</p>
+</dd></dl>
+
 </section>
 </section>
 
@@ -640,6 +654,7 @@ usage is in cases where the aim is to repeat the same parameters for all chains 
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.step"><code class="docutils literal notranslate"><span class="pre">step()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.extend_params"><code class="docutils literal notranslate"><span class="pre">extend_params()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.base.update_and_take_last"><code class="docutils literal notranslate"><span class="pre">update_and_take_last()</span></code></a></li>
 </ul>
 </li>
 </ul>

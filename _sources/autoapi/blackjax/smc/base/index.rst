@@ -21,6 +21,7 @@ Functions
    blackjax.smc.base.init
    blackjax.smc.base.step
    blackjax.smc.base.extend_params
+   blackjax.smc.base.update_and_take_last
 
 
 Module Contents
@@ -134,5 +135,12 @@ Module Contents
 
    Given a dictionary of params, repeats them for every single particle. The expected
    usage is in cases where the aim is to repeat the same parameters for all chains within SMC.
+
+
+.. py:function:: update_and_take_last(mcmc_init_fn, tempered_logposterior_fn, shared_mcmc_step_fn, num_mcmc_steps, n_particles)
+
+   Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and
+   returns the last values, waisting the previous num_mcmc_steps-1
+   samples per chain.
 
 

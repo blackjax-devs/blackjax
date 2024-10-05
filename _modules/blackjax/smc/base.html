@@ -234,7 +234,9 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
@@ -560,6 +562,37 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="update_and_take_last">
+<a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.update_and_take_last">[docs]</a>
+<span class="k">def</span> <span class="nf">update_and_take_last</span><span class="p">(</span>
+    <span class="n">mcmc_init_fn</span><span class="p">,</span>
+    <span class="n">tempered_logposterior_fn</span><span class="p">,</span>
+    <span class="n">shared_mcmc_step_fn</span><span class="p">,</span>
+    <span class="n">num_mcmc_steps</span><span class="p">,</span>
+    <span class="n">n_particles</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and</span>
+<span class="sd">    returns the last values, waisting the previous num_mcmc_steps-1</span>
+<span class="sd">    samples per chain.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">mcmc_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">step_parameters</span><span class="p">):</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">mcmc_init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">tempered_logposterior_fn</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">body_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+            <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">shared_mcmc_step_fn</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">tempered_logposterior_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">step_parameters</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_mcmc_steps</span><span class="p">)</span>
+        <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">body_fn</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">last_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">info</span>
+
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">mcmc_kernel</span><span class="p">),</span> <span class="n">n_particles</span></div>
 
 </pre></div>
 

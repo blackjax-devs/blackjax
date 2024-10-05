@@ -234,7 +234,9 @@
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
@@ -469,6 +471,8 @@ document.write(`
         <li><a href="autoapi/blackjax/smc/adaptive_tempered/index.html#blackjax.smc.adaptive_tempered.as_top_level_api">(in module blackjax.smc.adaptive_tempered)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.as_top_level_api">(in module blackjax.smc.inner_kernel_tuning)</a>
+</li>
+        <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.as_top_level_api">(in module blackjax.smc.partial_posteriors_path)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.as_top_level_api">(in module blackjax.smc.tempered)</a>
 </li>
@@ -722,8 +726,6 @@ document.write(`
         <li><a href="autoapi/blackjax/sgmcmc/index.html#module-blackjax.sgmcmc">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blackjax.sgmcmc.csgld
 
@@ -738,6 +740,8 @@ document.write(`
         <li><a href="autoapi/blackjax/sgmcmc/diffusions/index.html#module-blackjax.sgmcmc.diffusions">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blackjax.sgmcmc.gradients
 
@@ -795,10 +799,24 @@ document.write(`
 </li>
       </ul></li>
       <li>
+    blackjax.smc.from_mcmc
+
+      <ul>
+        <li><a href="autoapi/blackjax/smc/from_mcmc/index.html#module-blackjax.smc.from_mcmc">module</a>
+</li>
+      </ul></li>
+      <li>
     blackjax.smc.inner_kernel_tuning
 
       <ul>
         <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#module-blackjax.smc.inner_kernel_tuning">module</a>
+</li>
+      </ul></li>
+      <li>
+    blackjax.smc.partial_posteriors_path
+
+      <ul>
+        <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#module-blackjax.smc.partial_posteriors_path">module</a>
 </li>
       </ul></li>
       <li>
@@ -922,7 +940,11 @@ document.write(`
 </li>
         <li><a href="autoapi/blackjax/smc/adaptive_tempered/index.html#blackjax.smc.adaptive_tempered.build_kernel">(in module blackjax.smc.adaptive_tempered)</a>
 </li>
+        <li><a href="autoapi/blackjax/smc/from_mcmc/index.html#blackjax.smc.from_mcmc.build_kernel">(in module blackjax.smc.from_mcmc)</a>
+</li>
         <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.build_kernel">(in module blackjax.smc.inner_kernel_tuning)</a>
+</li>
+        <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.build_kernel">(in module blackjax.smc.partial_posteriors_path)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.build_kernel">(in module blackjax.smc.tempered)</a>
 </li>
@@ -962,6 +984,8 @@ document.write(`
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.da_state">da_state (ChEESAdaptationState attribute)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.PartialPosteriorsSMCState.data_mask">data_mask (PartialPosteriorsSMCState attribute)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.default_metric">default_metric() (in module blackjax.mcmc.metrics)</a>
 </li>
@@ -1133,6 +1157,8 @@ document.write(`
         <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.init">(in module blackjax.smc.base)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.init">(in module blackjax.smc.inner_kernel_tuning)</a>
+</li>
+        <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.init">(in module blackjax.smc.partial_posteriors_path)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.init">(in module blackjax.smc.tempered)</a>
 </li>
@@ -1393,7 +1419,11 @@ document.write(`
 </li>
         <li><a href="autoapi/blackjax/smc/ess/index.html#module-blackjax.smc.ess">blackjax.smc.ess</a>
 </li>
+        <li><a href="autoapi/blackjax/smc/from_mcmc/index.html#module-blackjax.smc.from_mcmc">blackjax.smc.from_mcmc</a>
+</li>
         <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#module-blackjax.smc.inner_kernel_tuning">blackjax.smc.inner_kernel_tuning</a>
+</li>
+        <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#module-blackjax.smc.partial_posteriors_path">blackjax.smc.partial_posteriors_path</a>
 </li>
         <li><a href="autoapi/blackjax/smc/resampling/index.html#module-blackjax.smc.resampling">blackjax.smc.resampling</a>
 </li>
@@ -1508,9 +1538,13 @@ document.write(`
 </li>
       <li><a href="autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.AdaptationResults.parameters">parameters (AdaptationResults attribute)</a>
 </li>
-      <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState.particles">particles (SMCState attribute)</a>
+      <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.PartialPosteriorsSMCState">PartialPosteriorsSMCState (class in blackjax.smc.partial_posteriors_path)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.PartialPosteriorsSMCState.particles">particles (PartialPosteriorsSMCState attribute)</a>
 
       <ul>
+        <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState.particles">(SMCState attribute)</a>
+</li>
         <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState.particles">(TemperedSMCState attribute)</a>
 </li>
       </ul></li>
@@ -1760,6 +1794,8 @@ document.write(`
 </li>
       <li><a href="autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.MarginalState.U_x">U_x (MarginalState attribute)</a>
 </li>
+      <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.update_and_take_last">update_and_take_last() (in module blackjax.smc.base)</a>
+</li>
       <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.update_info">update_info (SMCInfo attribute)</a>
 </li>
   </ul></td>
@@ -1792,9 +1828,11 @@ document.write(`
 </li>
       <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.Proposal.weight">weight (Proposal attribute)</a>
 </li>
-      <li><a href="autoapi/blackjax/mcmc/periodic_orbital/index.html#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState.weights">weights (PeriodicOrbitalState attribute)</a>
+      <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.PartialPosteriorsSMCState.weights">weights (PartialPosteriorsSMCState attribute)</a>
 
       <ul>
+        <li><a href="autoapi/blackjax/mcmc/periodic_orbital/index.html#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState.weights">(PeriodicOrbitalState attribute)</a>
+</li>
         <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState.weights">(SMCState attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState.weights">(TemperedSMCState attribute)</a>
