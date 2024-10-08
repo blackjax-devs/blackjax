@@ -98,7 +98,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes | None = None) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the Barker's proposal :cite:p:`Livingstone2022Barker` kernel with a
    Gaussian base kernel.
@@ -137,7 +137,8 @@ Module Contents
       state, info = kernel(rng_key, state, logdensity_fn, step_size)
 
    :param logdensity_fn: The log-density function we wish to draw samples from.
-   :param step_size: The value to use for the step size in the symplectic integrator.
+   :param step_size: The value of the step_size correspnoding to the global scale of the proposal distribution.
+   :param inverse_mass_matrix: The inverse mass matrix to use for pre-conditioning (see Appendix G of :cite:p:`Livingstone2022Barker`).
 
    :rtype: A ``SamplingAlgorithm``.
 
