@@ -131,8 +131,12 @@ class GaussianEuclideanMetricsTest(chex.TestCase):
         assert momentum_val == expected_momentum_val
         assert kinetic_energy_val == expected_kinetic_energy_val
 
-        inv_scaled_momentum = scale(arbitrary_position, momentum_val, True)
-        scaled_momentum = scale(arbitrary_position, momentum_val, False)
+        inv_scaled_momentum = scale(
+            arbitrary_position, momentum_val, inv=True, trans=False
+        )
+        scaled_momentum = scale(
+            arbitrary_position, momentum_val, inv=False, trans=False
+        )
 
         expected_scaled_momentum = momentum_val / jnp.sqrt(inverse_mass_matrix)
         expected_inv_scaled_momentum = momentum_val * jnp.sqrt(inverse_mass_matrix)
@@ -164,8 +168,12 @@ class GaussianEuclideanMetricsTest(chex.TestCase):
         np.testing.assert_allclose(expected_momentum_val, momentum_val)
         np.testing.assert_allclose(kinetic_energy_val, expected_kinetic_energy_val)
 
-        inv_scaled_momentum = scale(arbitrary_position, momentum_val, True)
-        scaled_momentum = scale(arbitrary_position, momentum_val, False)
+        inv_scaled_momentum = scale(
+            arbitrary_position, momentum_val, inv=True, trans=False
+        )
+        scaled_momentum = scale(
+            arbitrary_position, momentum_val, inv=False, trans=False
+        )
 
         expected_inv_scaled_momentum = jnp.linalg.inv(L_inv).T @ momentum_val
         expected_scaled_momentum = L_inv @ momentum_val
@@ -226,8 +234,12 @@ class GaussianRiemannianMetricsTest(chex.TestCase):
         np.testing.assert_allclose(expected_momentum_val, momentum_val)
         np.testing.assert_allclose(kinetic_energy_val, expected_kinetic_energy_val)
 
-        inv_scaled_momentum = scale(arbitrary_position, momentum_val, True)
-        scaled_momentum = scale(arbitrary_position, momentum_val, False)
+        inv_scaled_momentum = scale(
+            arbitrary_position, momentum_val, inv=True, trans=False
+        )
+        scaled_momentum = scale(
+            arbitrary_position, momentum_val, inv=False, trans=False
+        )
         expected_scaled_momentum = momentum_val / jnp.sqrt(inverse_mass_matrix)
         expected_inv_scaled_momentum = momentum_val * jnp.sqrt(inverse_mass_matrix)
 
@@ -265,8 +277,12 @@ class GaussianRiemannianMetricsTest(chex.TestCase):
         np.testing.assert_allclose(expected_momentum_val, momentum_val)
         np.testing.assert_allclose(kinetic_energy_val, expected_kinetic_energy_val)
 
-        inv_scaled_momentum = scale(arbitrary_position, momentum_val, True)
-        scaled_momentum = scale(arbitrary_position, momentum_val, False)
+        inv_scaled_momentum = scale(
+            arbitrary_position, momentum_val, inv=True, trans=False
+        )
+        scaled_momentum = scale(
+            arbitrary_position, momentum_val, inv=False, trans=False
+        )
         expected_inv_scaled_momentum = jnp.linalg.inv(L_inv).T @ momentum_val
         expected_scaled_momentum = L_inv @ momentum_val
 
