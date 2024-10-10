@@ -85,10 +85,10 @@ def mclmc_find_L_and_step_size(
     Example
     -------
     .. code::
-        kernel = lambda std_mat : blackjax.mcmc.mclmc.build_kernel(
+        kernel = lambda sqrt_diag_cov : blackjax.mcmc.mclmc.build_kernel(
         logdensity_fn=logdensity_fn,
         integrator=integrator,
-        std_mat=std_mat,
+        sqrt_diag_cov=sqrt_diag_cov,
         )
 
         (

@@ -1,4 +1,5 @@
 from . import (
+    adjusted_mclmc,
     barker,
     elliptical_slice,
     ghmc,
@@ -24,4 +25,5 @@ __all__ = [
     "marginal_latent_gaussian",
     "random_walk",
     "mclmc",
+    "adjusted_mclmc",
 ]
