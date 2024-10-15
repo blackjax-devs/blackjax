@@ -85,8 +85,8 @@ def build_kernel(
         state: base.NSState,
         **extra_step_parameters,
     ) -> tuple[base.NSState, base.NSInfo]:
-        logL_birth = state.sampler_state.logL_star
         val, dead_idx = delete_fn(state.sampler_state.logL)
+        logL0 = val.min()
 
         dead_particles = jax.tree.map(
             lambda x: x[dead_idx], state.sampler_state.particles
@@ -102,15 +102,23 @@ def build_kernel(
             state.sampler_state.particles.shape[0],
             shape=(dead_particles.shape[0],),
         )
-        rng_key, slice_key = jax.random.split(rng_key)
-        new_pos, new_logl = slice_proposal(
-            slice_key,
+
+        # TODO loop this
+        logpi = logprior_fn(state.sampler_state.particles[idx])
+        rng_key, vertical_slice_key = jax.random.split(rng_key)
+        logpi0 = logpi * jnp.log(jnp.random.uniform(vertical_slice_key, shape=(idx.shape[0],)))
+
+        rng_key, horizontal_slice_key = jax.random.split(rng_key)
+        new_pos, new_logl = horizontal_slice_proposal(
+            horizontal_slice_key,
             state.sampler_state.particles[idx],
             state.parameter_override["cov"],
             loglikelihood_fn,
-            -val.min(),
+            logL0,
+            logprior_fn,
+            logpi0,
         )
-        logL_births = -val.min() * jnp.ones(dead_idx.shape)
+        logL_births = logL0 * jnp.ones(dead_idx.shape)
 
         particles = state.sampler_state.particles.at[dead_idx].set(
             new_pos.squeeze()
@@ -134,7 +142,7 @@ def build_kernel(
     return kernel
 
 
-def slice_proposal(key, x0, cov, logL, logL0):
+def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     # Ensure cov_ and x0 are JAX arrays
     cov = jnp.asarray(cov)
     x0 = jnp.atleast_2d(x0)
@@ -159,7 +167,7 @@ def slice_proposal(key, x0, cov, logL, logL0):
     def expand_l(carry):
         l, within = carry
         l = l + within[:, None] * n
-        within = logL(l) > logL0
+        within = jnp.logical_and(logL(l) > logL0, logpi0 > logpi(l))
         return l, within
 
     def cond_fun_l(carry):
@@ -167,7 +175,7 @@ def slice_proposal(key, x0, cov, logL, logL0):
         print(within)
         return jnp.any(within)
 
-    within = logL(l) > logL0
+    within = jnp.ones((x0.shape[0], 1), dtype=bool)
     carry = (l, within)
     l, l_exp = jax.lax.while_loop(cond_fun_l, expand_l, carry)
 
@@ -175,14 +183,14 @@ def slice_proposal(key, x0, cov, logL, logL0):
     def expand_r(carry):
         r, within = carry
         r = r - within[:, None] * n
-        within = logL(r) > logL0
+        within = jnp.logical_and(logL(r) > logL0, logpi0 > logpi(r))
         return r, within
 
     def cond_fun_r(carry):
         within = carry[1]
         return jnp.any(within)
 
-    within = logL(r) > logL0
+    within = jnp.ones((x0.shape[0], 1), dtype=bool)
     carry = (r, within)
     r, r_exp = jax.lax.while_loop(cond_fun_r, expand_r, carry)
 
@@ -193,7 +201,7 @@ def slice_proposal(key, x0, cov, logL, logL0):
         u = jax.random.uniform(subkey, shape=(x0.shape[0],))
         x1 = l + u[:, None] * (r - l)
         logLx1 = logL(x1)
-        within_new = (logLx1 > logL0)[:, None]
+        within_new = jnp.logical_and(logLx1 > logL0, logpi0 > logpi(x1))[..., None]
         s = (jnp.sum((x1 - x0) * (r - l), axis=-1) > 0)[:, None]
         condition_l = (~within_new[:, 0]) & (~s[:, 0])
         l = jnp.where(condition_l[:, None], x1, l)
@@ -217,7 +225,7 @@ def slice_proposal(key, x0, cov, logL, logL0):
 
 def delete_fn(logL, n_delete):
     val, idx = jax.lax.top_k(-logL, n_delete)
-    return val, idx
+    return -val, idx
 
 
 def contour_fn(logL, lstar):
