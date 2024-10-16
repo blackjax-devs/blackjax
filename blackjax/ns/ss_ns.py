@@ -50,7 +50,6 @@ def init(position, loglikelihood_fn, initial_parameter_value):
         init_base(position, loglikelihood_fn), initial_parameter_value
     )
 
-
 def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
@@ -58,9 +57,9 @@ def build_kernel(
     parameter_update_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
     num_mcmc_steps: int = 10,
     **extra_parameters,
+
 ) -> Callable:
     r"""Build a Nested Sampling by running a creation and deletion step.
-
     Parameters
     ----------
     logL_fn: Callable
@@ -71,15 +70,12 @@ def build_kernel(
     delete_fn: Callable
         Function that takes an array of keys and particles and deletes some
         particles.
-
     Returns
     -------
     A callable that takes a rng_key and a NSState that contains the current state
     of the chain and that returns a new state of the chain along with
     information about the transition.
-
     """
-
     def kernel(
         rng_key: PRNGKey,
         state: base.NSState,
@@ -87,15 +83,12 @@ def build_kernel(
     ) -> tuple[base.NSState, base.NSInfo]:
         val, dead_idx = delete_fn(state.sampler_state.logL)
         logL0 = val.min()
-
         dead_particles = jax.tree.map(
             lambda x: x[dead_idx], state.sampler_state.particles
         )
         dead_logL = state.sampler_state.logL[dead_idx]
         dead_logL_birth = state.sampler_state.logL_birth[dead_idx]
-
         rng_key, choice_key = jax.random.split(rng_key)
-
         # particle_map((dead_particles[0], scan_keys[0]))
         idx = jax.random.choice(
             choice_key,
@@ -103,11 +96,28 @@ def build_kernel(
             shape=(dead_particles.shape[0],),
         )
 
-        # TODO loop this
-        logpi = logprior_fn(state.sampler_state.particles[idx])
-        rng_key, vertical_slice_key = jax.random.split(rng_key)
-        logpi0 = logpi * jnp.log(jnp.random.uniform(vertical_slice_key, shape=(idx.shape[0],)))
+        def mcmc_step(i, carry):
+            print(i)
+            rng_key, new_pos, new_logl = carry
+            rng_key, vertical_slice_key = jax.random.split(rng_key)
+            logpi = logprior_fn(new_pos)
+            logpi0 = logpi + jnp.log(jax.random.uniform(vertical_slice_key, shape=(idx.shape[0],)))
+            rng_key, horizontal_slice_key = jax.random.split(rng_key)
+            new_pos, new_logl = horizontal_slice_proposal(
+                horizontal_slice_key,
+                new_pos,
+                state.parameter_override["cov"],
+                loglikelihood_fn,
+                logL0,
+                logprior_fn,
+                logpi0,
+            )
+            return rng_key, new_pos, new_logl
 
+        # Initialize the loop
+        rng_key, vertical_slice_key = jax.random.split(rng_key)
+        logpi = logprior_fn(state.sampler_state.particles[idx])
+        logpi0 = logpi + jnp.log(jax.random.uniform(vertical_slice_key, shape=(idx.shape[0],)))
         rng_key, horizontal_slice_key = jax.random.split(rng_key)
         new_pos, new_logl = horizontal_slice_proposal(
             horizontal_slice_key,
@@ -118,8 +128,10 @@ def build_kernel(
             logprior_fn,
             logpi0,
         )
-        logL_births = logL0 * jnp.ones(dead_idx.shape)
+        # Run the jax.lax.fori_loop
+        rng_key, new_pos, new_logl = jax.lax.fori_loop(0, num_mcmc_steps, mcmc_step, (rng_key, new_pos, new_logl))
 
+        logL_births = logL0 * jnp.ones(dead_idx.shape)
         particles = state.sampler_state.particles.at[dead_idx].set(
             new_pos.squeeze()
         )
@@ -128,7 +140,6 @@ def build_kernel(
             logL_births
         )
         logL_star = state.sampler_state.logL.min()
-
         state = NSState(
             particles,
             logL,
@@ -138,9 +149,7 @@ def build_kernel(
         info = NSInfo(dead_particles, dead_logL, dead_logL_birth)
         new_parameter_override = parameter_update_fn(state, info)
         return StateWithParameterOverride(state, new_parameter_override), info
-
     return kernel
-
 
 def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     # Ensure cov_ and x0 are JAX arrays
@@ -172,10 +181,9 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
 
     def cond_fun_l(carry):
         within = carry[1]
-        print(within)
         return jnp.any(within)
 
-    within = jnp.ones((x0.shape[0], 1), dtype=bool)
+    within = jnp.ones(x0.shape[0], dtype=bool)
     carry = (l, within)
     l, l_exp = jax.lax.while_loop(cond_fun_l, expand_l, carry)
 
@@ -190,7 +198,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
         within = carry[1]
         return jnp.any(within)
 
-    within = jnp.ones((x0.shape[0], 1), dtype=bool)
+    within = jnp.ones(x0.shape[0], dtype=bool)
     carry = (r, within)
     r, r_exp = jax.lax.while_loop(cond_fun_r, expand_r, carry)
 
@@ -213,7 +221,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
         within = carry[-1]
         return ~jnp.all(within)
 
-    within = jnp.zeros((x0.shape[0], 1), dtype=bool)
+    within = jnp.zeros(x0.shape[0], dtype=bool)
     carry = (l, r, x0, jnp.zeros(x0.shape[0]), key, within)
     shrink_step(carry)
     l, r, x1, logl, key, within = jax.lax.while_loop(
