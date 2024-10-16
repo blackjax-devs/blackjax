@@ -48,7 +48,9 @@ n_samples = 500
 n_delete = num_cores
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
-prior = distrax.MultivariateNormalDiag(loc=jnp.zeros(d), scale_diag=2*jnp.ones(d))
+prior_mean = jnp.zeros(d)
+prior_cov = jnp.eye(d) * 3
+prior = distrax.MultivariateNormalDiag(loc=jnp.zeros(d), scale_diag=jnp.diag(prior_cov))
 
 
 ##################################################################################
@@ -152,25 +154,25 @@ samples = read_csv("samples.csv")
 samples.gui()
 
 
-
 lzs = samples.logZ(100)
 # print(samples.logZ())
 print(f"logZ = {lzs.mean():.2f} ± {lzs.std():.2f}")
 from lsbi.model import ReducedLinearModel
-samples.gui()
-# convert dataframe to normal floats
-samples.logL = samples.logL.astype(float)
-samples.logL_birth = samples.logL_birth.astype(float)
-samples.gui()
-samples.dtypes
-
 model = ReducedLinearModel(
     mu_L=like_mean,
     Sigma_L=like_cov,
     logLmax=loglikelihood(like_mean),
+    Sigma_pi=prior_cov,
+    mu_pi=prior_mean,
 )
 
 print(f"True logZ = {model.logZ():.2f}")
+
+
+
+
+
+
 a = samples.set_beta(0.0).plot_2d(np.arange(d), figsize=(10, 10))
 # samples.plot_2d(a)
 ns.MCMCSamples(model.posterior().rvs(200)).plot_2d(a)

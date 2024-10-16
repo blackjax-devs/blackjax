@@ -86,10 +86,10 @@ def build_kernel(
         dead_particles = jax.tree.map(
             lambda x: x[dead_idx], state.sampler_state.particles
         )
+
         dead_logL = state.sampler_state.logL[dead_idx]
         dead_logL_birth = state.sampler_state.logL_birth[dead_idx]
         rng_key, choice_key = jax.random.split(rng_key)
-        # particle_map((dead_particles[0], scan_keys[0]))
         idx = jax.random.choice(
             choice_key,
             state.sampler_state.particles.shape[0],
@@ -113,14 +113,8 @@ def build_kernel(
             )
             return rng_key, new_pos, new_logl
 
-        # Initialize the loop
-        rng_key, vertical_slice_key = jax.random.split(rng_key)
         new_pos = state.sampler_state.particles[idx]
-        logpi = logprior_fn(new_pos)
-        logpi0 = logpi + jnp.log(jax.random.uniform(vertical_slice_key, shape=(idx.shape[0],)))
         new_logl = state.sampler_state.logL[idx]
-
-        # Run the jax.lax.fori_loop
         rng_key, new_pos, new_logl = jax.lax.fori_loop(0, num_mcmc_steps, mcmc_step, (rng_key, new_pos, new_logl))
 
         logL_births = logL0 * jnp.ones(dead_idx.shape)
