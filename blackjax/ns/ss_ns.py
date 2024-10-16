@@ -97,7 +97,6 @@ def build_kernel(
         )
 
         def mcmc_step(i, carry):
-            print(i)
             rng_key, new_pos, new_logl = carry
             rng_key, vertical_slice_key = jax.random.split(rng_key)
             logpi = logprior_fn(new_pos)
@@ -116,18 +115,11 @@ def build_kernel(
 
         # Initialize the loop
         rng_key, vertical_slice_key = jax.random.split(rng_key)
-        logpi = logprior_fn(state.sampler_state.particles[idx])
+        new_pos = state.sampler_state.particles[idx]
+        logpi = logprior_fn(new_pos)
         logpi0 = logpi + jnp.log(jax.random.uniform(vertical_slice_key, shape=(idx.shape[0],)))
-        rng_key, horizontal_slice_key = jax.random.split(rng_key)
-        new_pos, new_logl = horizontal_slice_proposal(
-            horizontal_slice_key,
-            state.sampler_state.particles[idx],
-            state.parameter_override["cov"],
-            loglikelihood_fn,
-            logL0,
-            logprior_fn,
-            logpi0,
-        )
+        new_logl = state.sampler_state.logL[idx]
+
         # Run the jax.lax.fori_loop
         rng_key, new_pos, new_logl = jax.lax.fori_loop(0, num_mcmc_steps, mcmc_step, (rng_key, new_pos, new_logl))
 
@@ -176,7 +168,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     def expand_l(carry):
         l, within = carry
         l = l + within[:, None] * n
-        within = jnp.logical_and(logL(l) > logL0, logpi0 > logpi(l))
+        within = jnp.logical_and(logL(l) > logL0, logpi0 < logpi(l))
         return l, within
 
     def cond_fun_l(carry):
@@ -191,7 +183,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     def expand_r(carry):
         r, within = carry
         r = r - within[:, None] * n
-        within = jnp.logical_and(logL(r) > logL0, logpi0 > logpi(r))
+        within = jnp.logical_and(logL(r) > logL0, logpi0 < logpi(r))
         return r, within
 
     def cond_fun_r(carry):
@@ -209,11 +201,11 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
         u = jax.random.uniform(subkey, shape=(x0.shape[0],))
         x1 = l + u[:, None] * (r - l)
         logLx1 = logL(x1)
-        within_new = jnp.logical_and(logLx1 > logL0, logpi0 > logpi(x1))[..., None]
-        s = (jnp.sum((x1 - x0) * (r - l), axis=-1) > 0)[:, None]
-        condition_l = (~within_new[:, 0]) & (~s[:, 0])
+        within_new = jnp.logical_and(logLx1 > logL0, logpi0 < logpi(x1))
+        s = (jnp.sum((x1 - x0) * (r - l), axis=-1) > 0)
+        condition_l = (~within_new) & (~s)
         l = jnp.where(condition_l[:, None], x1, l)
-        condition_r = (~within_new[:, 0]) & s[:, 0]
+        condition_r = (~within_new) & s
         r = jnp.where(condition_r[:, None], x1, r)
         return l, r, x1, logLx1, key, within_new
 

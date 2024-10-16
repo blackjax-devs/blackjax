@@ -1,3 +1,5 @@
+%load_ext autoreload
+%autoreload 2
 import multiprocessing
 import os
 from datetime import date
@@ -46,7 +48,7 @@ n_samples = 500
 n_delete = num_cores
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
-prior = distrax.MultivariateNormalDiag(loc=jnp.zeros(d), scale_diag=jnp.ones(d))
+prior = distrax.MultivariateNormalDiag(loc=jnp.zeros(d), scale_diag=2*jnp.ones(d))
 
 
 ##################################################################################
@@ -87,7 +89,7 @@ algo = blackjax.ss_ns(
     parameter_update_fn=mcmc_parameter_update_fn,
     n_delete=20,
     initial_parameters=init_params,
-    num_mcmc_steps=5,
+    num_mcmc_steps=5*d,
 
 )
 
@@ -98,7 +100,7 @@ state = algo.init(initial_state, loglikelihood)
 # request 1000 steps of the NS kernel, currently this is fixed, and compresses for n_delete * n_steps rounds
 # simplest design pattern is to put this in an outer while loop, and break when some convergence criteria is met
 # currently there is no safety check in this compression so it can hang with too many steps, or not a good enough inner kernel
-n_steps = 1000
+n_steps = 300
 
 
 @progress_bar_scan(n_steps)
@@ -113,16 +115,21 @@ def one_step(carry, xs):
 # run the ns kernel
 ##################################################################################
 
-# iterations = jnp.arange(n_steps)
-# (live, _), dead = jax.lax.scan((one_step), (state, rng_key), iterations)
+iterations = jnp.arange(n_steps)
+(live, _), dead = jax.lax.scan((one_step), (state, rng_key), iterations)
 
-
-# comment out the above scan and uncomment this for debugging
-with jax.disable_jit():
-    for i in range(10):
-        rng_key, sample_key = jax.random.split(rng_key)
-        state, info = algo.step(sample_key, state)
-
+##with jax.disable_jit():
+#plt.plot(state[0].particles[:, 0], state[0].particles[:, 1], "o")
+#for _ in range(10):
+#    state, info = algo.step(sample_key, state)
+#plt.plot(state[0].particles[:, 0], state[0].particles[:, 1], "o")
+#
+#
+## comment out the above scan and uncomment this for debugging
+#for i in range(10):
+#    rng_key, sample_key = jax.random.split(rng_key)
+#    state, info = algo.step(sample_key, state)
+#
 ##################################################################################
 # Collect the samples into anesthetic objects
 ##################################################################################
@@ -140,10 +147,22 @@ samples = ns.NestedSamples(
     ),
 )
 samples.to_csv("samples.csv")
+from anesthetic import read_csv
+samples = read_csv("samples.csv")
+samples.gui()
+
+
+
 lzs = samples.logZ(100)
 # print(samples.logZ())
 print(f"logZ = {lzs.mean():.2f} ± {lzs.std():.2f}")
 from lsbi.model import ReducedLinearModel
+samples.gui()
+# convert dataframe to normal floats
+samples.logL = samples.logL.astype(float)
+samples.logL_birth = samples.logL_birth.astype(float)
+samples.gui()
+samples.dtypes
 
 model = ReducedLinearModel(
     mu_L=like_mean,
