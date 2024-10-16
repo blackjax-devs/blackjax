@@ -81,26 +81,29 @@ def build_kernel(
         state: base.NSState,
         **extra_step_parameters,
     ) -> tuple[base.NSState, base.NSInfo]:
-        val, dead_idx = delete_fn(state.sampler_state.logL)
+
+        val, dead_idx, live_idx = delete_fn(state.sampler_state.logL)
+
         logL0 = val.min()
         dead_particles = jax.tree.map(
             lambda x: x[dead_idx], state.sampler_state.particles
         )
-
         dead_logL = state.sampler_state.logL[dead_idx]
         dead_logL_birth = state.sampler_state.logL_birth[dead_idx]
         rng_key, choice_key = jax.random.split(rng_key)
         idx = jax.random.choice(
             choice_key,
-            state.sampler_state.particles.shape[0],
+            live_idx,
             shape=(dead_particles.shape[0],),
         )
 
         def mcmc_step(i, carry):
             rng_key, new_pos, new_logl = carry
+
             rng_key, vertical_slice_key = jax.random.split(rng_key)
             logpi = logprior_fn(new_pos)
             logpi0 = logpi + jnp.log(jax.random.uniform(vertical_slice_key, shape=(idx.shape[0],)))
+
             rng_key, horizontal_slice_key = jax.random.split(rng_key)
             new_pos, new_logl = horizontal_slice_proposal(
                 horizontal_slice_key,
@@ -162,7 +165,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     def expand_l(carry):
         l, within = carry
         l = l + within[:, None] * n
-        within = jnp.logical_and(logL(l) > logL0, logpi0 < logpi(l))
+        within = jnp.logical_and(logL(l) > logL0, logpi(l)> logpi0 )
         return l, within
 
     def cond_fun_l(carry):
@@ -177,7 +180,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     def expand_r(carry):
         r, within = carry
         r = r - within[:, None] * n
-        within = jnp.logical_and(logL(r) > logL0, logpi0 < logpi(r))
+        within = jnp.logical_and(logL(r) > logL0, logpi(r)> logpi0 )
         return r, within
 
     def cond_fun_r(carry):
@@ -195,7 +198,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
         u = jax.random.uniform(subkey, shape=(x0.shape[0],))
         x1 = l + u[:, None] * (r - l)
         logLx1 = logL(x1)
-        within_new = jnp.logical_and(logLx1 > logL0, logpi0 < logpi(x1))
+        within_new = jnp.logical_and(logLx1 > logL0, logpi(x1) > logpi0 )
         s = (jnp.sum((x1 - x0) * (r - l), axis=-1) > 0)
         condition_l = (~within_new) & (~s)
         l = jnp.where(condition_l[:, None], x1, l)
@@ -209,7 +212,6 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
 
     within = jnp.zeros(x0.shape[0], dtype=bool)
     carry = (l, r, x0, jnp.zeros(x0.shape[0]), key, within)
-    shrink_step(carry)
     l, r, x1, logl, key, within = jax.lax.while_loop(
         cond_fun, shrink_step, carry
     )
@@ -218,8 +220,9 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
 
 
 def delete_fn(logL, n_delete):
-    val, idx = jax.lax.top_k(-logL, n_delete)
-    return -val, idx
+    val, dead_idx = jax.lax.top_k(-logL, n_delete)
+    _, live_idx = jax.lax.top_k(logL, logL.shape[0] - n_delete)
+    return -val, dead_idx, live_idx
 
 
 def contour_fn(logL, lstar):

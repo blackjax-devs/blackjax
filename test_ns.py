@@ -10,6 +10,7 @@ os.environ["XLA_FLAGS"] = f"--xla_force_host_platform_device_count={num_cores}"
 import anesthetic as ns
 import distrax
 import jax
+jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,7 +33,7 @@ from blackjax.smc.tuning.from_particles import (
 ##################################################################################
 
 rng_key = jax.random.PRNGKey(2)
-d = 2
+d = 10
 
 np.random.seed(2)
 C = np.random.randn(d, d) * 0.5
@@ -45,11 +46,12 @@ def loglikelihood(x):
 
 
 n_samples = 500
+n_steps = 400
 n_delete = num_cores
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
 prior_mean = jnp.zeros(d)
-prior_cov = jnp.eye(d) * 3
+prior_cov = jnp.eye(d) * 10
 prior = distrax.MultivariateNormalDiag(loc=jnp.zeros(d), scale_diag=jnp.diag(prior_cov))
 
 
@@ -92,7 +94,6 @@ algo = blackjax.ss_ns(
     n_delete=20,
     initial_parameters=init_params,
     num_mcmc_steps=5*d,
-
 )
 
 # Initialize the ns state
@@ -102,23 +103,59 @@ state = algo.init(initial_state, loglikelihood)
 # request 1000 steps of the NS kernel, currently this is fixed, and compresses for n_delete * n_steps rounds
 # simplest design pattern is to put this in an outer while loop, and break when some convergence criteria is met
 # currently there is no safety check in this compression so it can hang with too many steps, or not a good enough inner kernel
-n_steps = 300
 
 
-@progress_bar_scan(n_steps)
+#
+#@progress_bar_scan(n_steps)
+@jax.jit
 def one_step(carry, xs):
     state, k = carry
     k, subk = jax.random.split(k, 2)
     state, dead_point = algo.step(subk, state)
     return (state, k), dead_point
 
+#(live, _), dead = jax.lax.scan((one_step), (state, rng_key), iterations)
+
+import tqdm
+dead_points = []
+dead_logL = []
+dead_logL_birth = []
+for _ in tqdm.trange(1000):
+    if (np.diff(np.sort(state[0].logL))==0).any():
+        break
+    (state, k), dead = one_step((state, rng_key), jnp.arange(n_steps))
+    dead_points.append(dead.particles)
+    dead_logL.append(dead.logL)
+    dead_logL_birth.append(dead.logL_birth)
+
+samples = ns.NestedSamples(
+    data=np.concatenate(dead_points +[state[0].particles]),
+    logL=np.concatenate(dead_logL + [state[0].logL]),
+    logL_birth=np.concatenate(dead_logL_birth + [state[0].logL_birth]),
+)
+
+samples.to_csv("samples.csv")
+from anesthetic import read_csv
+samples = read_csv("samples.csv")
+samples.gui()
+
+samples.logL.plot()
+plt.axvline(7568, color='r')
+plt.ylim(-50,0)
+samples.live_points().logL.diff().values
+
+samples[(samples.logL.diff() == 0)]
+samples.iloc[7568:7571]
+loglikelihood(samples.iloc[7568,:10].values)
+loglikelihood(samples.iloc[7569,:10].values)
+samples.iloc[7568:7571]
 
 ##################################################################################
 # run the ns kernel
 ##################################################################################
 
-iterations = jnp.arange(n_steps)
-(live, _), dead = jax.lax.scan((one_step), (state, rng_key), iterations)
+
+#iterations = jnp.arange(n_steps)
 
 ##with jax.disable_jit():
 #plt.plot(state[0].particles[:, 0], state[0].particles[:, 1], "o")
@@ -153,6 +190,7 @@ from anesthetic import read_csv
 samples = read_csv("samples.csv")
 samples.gui()
 
+samples.logL.plot()
 
 lzs = samples.logZ(100)
 # print(samples.logZ())
