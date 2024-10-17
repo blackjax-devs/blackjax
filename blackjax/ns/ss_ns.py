@@ -21,9 +21,7 @@ class NSState(NamedTuple):
 
     particles: ArrayTree
     logL: Array  # The log-likelihood of the particles
-    logL_birth: (
-        Array  # The hard likelihood threshold of each particle at birth
-    )
+    logL_birth: (Array)  # The hard likelihood threshold of each particle at birth
     logL_star: float  # The current hard likelihood threshold
     logX: float = 0.0  # The current log-volume estiamte
     logZ_live: float = -jnp.inf  # The current evidence estimate
@@ -35,9 +33,7 @@ class NSInfo(NamedTuple):
 
     particles: ArrayTree
     logL: Array  # The log-likelihood of the particles
-    logL_birth: (
-        Array  # The hard likelihood threshold of each particle at birth
-    )
+    logL_birth: (Array)  # The hard likelihood threshold of each particle at birth
 
 
 def init_base(particles: ArrayLikeTree, loglikelihood_fn):
@@ -86,9 +82,7 @@ def build_kernel(
         **extra_step_parameters,
     ) -> tuple[base.NSState, base.NSInfo]:
         rng_key, delete_fn_key = jax.random.split(rng_key)
-        val, dead_idx, live_idx = delete_fn(
-            delete_fn_key, state.sampler_state.logL
-        )
+        val, dead_idx, live_idx = delete_fn(delete_fn_key, state.sampler_state.logL)
 
         logL0 = val.min()
         dead_particles = jax.tree.map(
@@ -96,12 +90,6 @@ def build_kernel(
         )
         dead_logL = state.sampler_state.logL[dead_idx]
         dead_logL_birth = state.sampler_state.logL_birth[dead_idx]
-        rng_key, choice_key = jax.random.split(rng_key)
-        idx = jax.random.choice(
-            choice_key,
-            live_idx,
-            shape=(dead_particles.shape[0],),
-        )
 
         def mcmc_step(i, carry):
             rng_key, new_pos, new_logl = carry
@@ -109,7 +97,7 @@ def build_kernel(
             rng_key, vertical_slice_key = jax.random.split(rng_key)
             logpi = logprior_fn(new_pos)
             logpi0 = logpi + jnp.log(
-                jax.random.uniform(vertical_slice_key, shape=(idx.shape[0],))
+                jax.random.uniform(vertical_slice_key, shape=(live_idx.shape[0],))
             )
 
             rng_key, horizontal_slice_key = jax.random.split(rng_key)
@@ -124,25 +112,19 @@ def build_kernel(
             )
             return rng_key, new_pos, new_logl
 
-        new_pos = state.sampler_state.particles[idx]
-        new_logl = state.sampler_state.logL[idx]
+        new_pos = state.sampler_state.particles[live_idx]
+        new_logl = state.sampler_state.logL[live_idx]
         rng_key, new_pos, new_logl = jax.lax.fori_loop(
             0, num_mcmc_steps, mcmc_step, (rng_key, new_pos, new_logl)
         )
 
         logL_births = logL0 * jnp.ones(dead_idx.shape)
-        particles = state.sampler_state.particles.at[dead_idx].set(
-            new_pos.squeeze()
-        )
+        particles = state.sampler_state.particles.at[dead_idx].set(new_pos.squeeze())
         logL = state.sampler_state.logL.at[dead_idx].set(new_logl.squeeze())
-        logL_birth = state.sampler_state.logL_birth.at[dead_idx].set(
-            logL_births
-        )
+        logL_birth = state.sampler_state.logL_birth.at[dead_idx].set(logL_births)
         logL_star = state.sampler_state.logL.min()
 
-        log_delta_xi = (
-            -dead_idx.shape[0] / state.sampler_state.particles.shape[0]
-        )
+        log_delta_xi = -dead_idx.shape[0] / state.sampler_state.particles.shape[0]
         delta_logz_dead = log_delta_xi + logL0
 
         # logX = jnp.logaddexp(state.sampler_state.logX, delta_xi)
@@ -238,9 +220,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
 
     within = jnp.zeros(x0.shape[0], dtype=bool)
     carry = (l, r, x0, jnp.zeros(x0.shape[0]), key, within)
-    l, r, x1, logl, key, within = jax.lax.while_loop(
-        cond_fun, shrink_step, carry
-    )
+    l, r, x1, logl, key, within = jax.lax.while_loop(cond_fun, shrink_step, carry)
 
     return x1, logl
 
@@ -248,10 +228,17 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
 def delete_fn(key, logL, n_delete):
     val, dead_idx = jax.lax.top_k(-logL, n_delete)
     weights = jnp.array(logL > -val.min(), dtype=jnp.float32)
+    # live_idx = jax.random.choice(
+    #     key,
+    #     weights.shape[0],
+    #     shape=(logL.shape[0] - n_delete,),
+    #     p=weights / weights.sum(),
+    #     replace=True,
+    # )
     live_idx = jax.random.choice(
         key,
         weights.shape[0],
-        shape=(logL.shape[0] - n_delete,),
+        shape=(n_delete,),
         p=weights / weights.sum(),
         replace=True,
     )
