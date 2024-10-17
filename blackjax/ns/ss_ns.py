@@ -231,7 +231,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
 def delete_fn(key, logL, n_delete):
     val, dead_idx = jax.lax.top_k(-logL, n_delete)
     weights = jnp.array(logL > -val.min(), dtype=jnp.float32)
-    weights /= weights.sum()
+    # weights /= weights.sum()
     live_idx = jax.random.choice(
         key,
         weights.shape[0],
