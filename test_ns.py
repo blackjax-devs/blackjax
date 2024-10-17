@@ -10,7 +10,7 @@ os.environ["XLA_FLAGS"] = f"--xla_force_host_platform_device_count={num_cores}"
 import anesthetic as ns
 import distrax
 import jax
-jax.config.update("jax_enable_x64", True)
+# jax.config.update("jax_enable_x64", True)
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -51,7 +51,7 @@ n_delete = num_cores
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
 prior_mean = jnp.zeros(d)
-prior_cov = jnp.eye(d) * 10
+prior_cov = jnp.eye(d) * 1
 prior = distrax.MultivariateNormalDiag(loc=jnp.zeros(d), scale_diag=jnp.diag(prior_cov))
 
 
@@ -120,8 +120,10 @@ import tqdm
 dead_points = []
 dead_logL = []
 dead_logL_birth = []
+# logZ_live =-jnp.inf
 for _ in tqdm.trange(1000):
-    if (np.diff(np.sort(state[0].logL))==0).any():
+    # state.sampler_state.logZ_live
+    if (state.sampler_state.logZ_live - state.sampler_state.logZ < -3 ):
         break
     (state, k), dead = one_step((state, rng_key), jnp.arange(n_steps))
     dead_points.append(dead.particles)
@@ -137,18 +139,6 @@ samples = ns.NestedSamples(
 samples.to_csv("samples.csv")
 from anesthetic import read_csv
 samples = read_csv("samples.csv")
-samples.gui()
-
-samples.logL.plot()
-plt.axvline(7568, color='r')
-plt.ylim(-50,0)
-samples.live_points().logL.diff().values
-
-samples[(samples.logL.diff() == 0)]
-samples.iloc[7568:7571]
-loglikelihood(samples.iloc[7568,:10].values)
-loglikelihood(samples.iloc[7569,:10].values)
-samples.iloc[7568:7571]
 
 ##################################################################################
 # run the ns kernel
@@ -173,24 +163,24 @@ samples.iloc[7568:7571]
 # Collect the samples into anesthetic objects
 ##################################################################################
 
-dead_points = dead.particles.squeeze()
-live_points = live.sampler_state.particles.squeeze()
-# live_logL = live.sampler_state.logL
+# dead_points = dead.particles.squeeze()
+# live_points = live.sampler_state.particles.squeeze()
+# # live_logL = live.sampler_state.logL
 
 
-samples = ns.NestedSamples(
-    data=np.concatenate([live_points, dead_points.reshape(-1, d)], axis=0),
-    logL=np.concatenate([live.sampler_state.logL, dead.logL.squeeze().reshape(-1)]),
-    logL_birth=np.concatenate(
-        [live.sampler_state.logL_birth, dead.logL_birth.squeeze().reshape(-1)]
-    ),
-)
-samples.to_csv("samples.csv")
-from anesthetic import read_csv
-samples = read_csv("samples.csv")
-samples.gui()
+# samples = ns.NestedSamples(
+#     data=np.concatenate([live_points, dead_points.reshape(-1, d)], axis=0),
+#     logL=np.concatenate([live.sampler_state.logL, dead.logL.squeeze().reshape(-1)]),
+#     logL_birth=np.concatenate(
+#         [live.sampler_state.logL_birth, dead.logL_birth.squeeze().reshape(-1)]
+#     ),
+# )
+# samples.to_csv("samples.csv")
+# from anesthetic import read_csv
+# samples = read_csv("samples.csv")
+# samples.gui()
 
-samples.logL.plot()
+# samples.logL.plot()
 
 lzs = samples.logZ(100)
 # print(samples.logZ())

@@ -25,6 +25,9 @@ class NSState(NamedTuple):
         Array  # The hard likelihood threshold of each particle at birth
     )
     logL_star: float  # The current hard likelihood threshold
+    logX: float = 0.0  # The current log-volume estiamte
+    logZ_live: float = -jnp.inf  # The current evidence estimate
+    logZ: float = -jnp.inf  # The accumulated evidence estimate
 
 
 class NSInfo(NamedTuple):
@@ -136,11 +139,25 @@ def build_kernel(
             logL_births
         )
         logL_star = state.sampler_state.logL.min()
+
+        log_delta_xi = (
+            -dead_idx.shape[0] / state.sampler_state.particles.shape[0]
+        )
+        delta_logz_dead = log_delta_xi + logL0
+
+        # logX = jnp.logaddexp(state.sampler_state.logX, delta_xi)
+        logX = state.sampler_state.logX + log_delta_xi
+        logZ_dead = jnp.logaddexp(state.sampler_state.logZ, delta_logz_dead)
+        logZ_live = jnp.logaddexp(0.0, state.sampler_state.logX) + logL_star
+
         state = NSState(
             particles,
             logL,
             logL_birth,
             logL_star,
+            logX=logX,
+            logZ=logZ_dead,
+            logZ_live=logZ_live,
         )
         info = NSInfo(dead_particles, dead_logL, dead_logL_birth)
         new_parameter_override = parameter_update_fn(state, info)
@@ -231,7 +248,6 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
 def delete_fn(key, logL, n_delete):
     val, dead_idx = jax.lax.top_k(-logL, n_delete)
     weights = jnp.array(logL > -val.min(), dtype=jnp.float32)
-    # weights /= weights.sum()
     live_idx = jax.random.choice(
         key,
         weights.shape[0],
