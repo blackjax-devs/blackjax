@@ -50,6 +50,7 @@ def init(position, loglikelihood_fn, initial_parameter_value):
         init_base(position, loglikelihood_fn), initial_parameter_value
     )
 
+
 def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
@@ -57,7 +58,6 @@ def build_kernel(
     parameter_update_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
     num_mcmc_steps: int = 10,
     **extra_parameters,
-
 ) -> Callable:
     r"""Build a Nested Sampling by running a creation and deletion step.
     Parameters
@@ -76,13 +76,16 @@ def build_kernel(
     of the chain and that returns a new state of the chain along with
     information about the transition.
     """
+
     def kernel(
         rng_key: PRNGKey,
         state: base.NSState,
         **extra_step_parameters,
     ) -> tuple[base.NSState, base.NSInfo]:
-
-        val, dead_idx, live_idx = delete_fn(state.sampler_state.logL)
+        rng_key, delete_fn_key = jax.random.split(rng_key)
+        val, dead_idx, live_idx = delete_fn(
+            delete_fn_key, state.sampler_state.logL
+        )
 
         logL0 = val.min()
         dead_particles = jax.tree.map(
@@ -102,7 +105,9 @@ def build_kernel(
 
             rng_key, vertical_slice_key = jax.random.split(rng_key)
             logpi = logprior_fn(new_pos)
-            logpi0 = logpi + jnp.log(jax.random.uniform(vertical_slice_key, shape=(idx.shape[0],)))
+            logpi0 = logpi + jnp.log(
+                jax.random.uniform(vertical_slice_key, shape=(idx.shape[0],))
+            )
 
             rng_key, horizontal_slice_key = jax.random.split(rng_key)
             new_pos, new_logl = horizontal_slice_proposal(
@@ -118,7 +123,9 @@ def build_kernel(
 
         new_pos = state.sampler_state.particles[idx]
         new_logl = state.sampler_state.logL[idx]
-        rng_key, new_pos, new_logl = jax.lax.fori_loop(0, num_mcmc_steps, mcmc_step, (rng_key, new_pos, new_logl))
+        rng_key, new_pos, new_logl = jax.lax.fori_loop(
+            0, num_mcmc_steps, mcmc_step, (rng_key, new_pos, new_logl)
+        )
 
         logL_births = logL0 * jnp.ones(dead_idx.shape)
         particles = state.sampler_state.particles.at[dead_idx].set(
@@ -138,7 +145,9 @@ def build_kernel(
         info = NSInfo(dead_particles, dead_logL, dead_logL_birth)
         new_parameter_override = parameter_update_fn(state, info)
         return StateWithParameterOverride(state, new_parameter_override), info
+
     return kernel
+
 
 def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     # Ensure cov_ and x0 are JAX arrays
@@ -165,7 +174,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     def expand_l(carry):
         l, within = carry
         l = l + within[:, None] * n
-        within = jnp.logical_and(logL(l) > logL0, logpi(l)> logpi0 )
+        within = jnp.logical_and(logL(l) > logL0, logpi(l) > logpi0)
         return l, within
 
     def cond_fun_l(carry):
@@ -180,7 +189,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     def expand_r(carry):
         r, within = carry
         r = r - within[:, None] * n
-        within = jnp.logical_and(logL(r) > logL0, logpi(r)> logpi0 )
+        within = jnp.logical_and(logL(r) > logL0, logpi(r) > logpi0)
         return r, within
 
     def cond_fun_r(carry):
@@ -198,8 +207,8 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
         u = jax.random.uniform(subkey, shape=(x0.shape[0],))
         x1 = l + u[:, None] * (r - l)
         logLx1 = logL(x1)
-        within_new = jnp.logical_and(logLx1 > logL0, logpi(x1) > logpi0 )
-        s = (jnp.sum((x1 - x0) * (r - l), axis=-1) > 0)
+        within_new = jnp.logical_and(logLx1 > logL0, logpi(x1) > logpi0)
+        s = jnp.sum((x1 - x0) * (r - l), axis=-1) > 0
         condition_l = (~within_new) & (~s)
         l = jnp.where(condition_l[:, None], x1, l)
         condition_r = (~within_new) & s
@@ -219,9 +228,19 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     return x1, logl
 
 
-def delete_fn(logL, n_delete):
+def delete_fn(key, logL, n_delete):
     val, dead_idx = jax.lax.top_k(-logL, n_delete)
-    _, live_idx = jax.lax.top_k(logL, logL.shape[0] - n_delete)
+    weights = jnp.array(logL > -val.min(), dtype=jnp.float32)
+    weights /= weights.sum()
+    live_idx = jax.random.choice(
+        key,
+        weights.shape[0],
+        shape=(logL.shape[0] - n_delete,),
+        p=weights / weights.sum(),
+        replace=True,
+    )
+    # live_idx = jnp.sample(alphas, n_delete, replacement=True)
+    # _, live_idx = jax.lax.top_k(logL, logL.shape[0] - n_delete)
     return -val, dead_idx, live_idx
 
 

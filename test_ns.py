@@ -1,5 +1,5 @@
-%load_ext autoreload
-%autoreload 2
+# %load_ext autoreload
+# %autoreload 2
 import multiprocessing
 import os
 from datetime import date
