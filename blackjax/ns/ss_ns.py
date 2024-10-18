@@ -124,13 +124,14 @@ def build_kernel(
         logL_birth = state.sampler_state.logL_birth.at[dead_idx].set(logL_births)
         logL_star = state.sampler_state.logL.min()
 
-        log_delta_xi = -dead_idx.shape[0] / state.sampler_state.particles.shape[0]
-        delta_logz_dead = log_delta_xi + logL0
+        delta_log_xi = -dead_idx.shape[0] / state.sampler_state.particles.shape[0]
+        log_delta_xi = state.sampler_state.logX + jnp.log(1-jnp.exp(delta_log_xi))
+        delta_logz_dead = logL0 + log_delta_xi
 
         # logX = jnp.logaddexp(state.sampler_state.logX, delta_xi)
-        logX = state.sampler_state.logX + log_delta_xi
+        logX = state.sampler_state.logX + delta_log_xi
         logZ_dead = jnp.logaddexp(state.sampler_state.logZ, delta_logz_dead)
-        logZ_live = jnp.logaddexp(0.0, state.sampler_state.logX) + logL_star
+        logZ_live = logL_star + logX
 
         state = NSState(
             particles,
