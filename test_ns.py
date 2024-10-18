@@ -1,5 +1,5 @@
-# %load_ext autoreload
-# %autoreload 2
+%load_ext autoreload
+%autoreload 2
 import multiprocessing
 import os
 from datetime import date
@@ -140,6 +140,9 @@ samples.to_csv("samples.csv")
 from anesthetic import read_csv
 samples = read_csv("samples.csv")
 
+samples.gui()
+
+plt.plot(samples.logL.value_counts().sort_index().values)
 ##################################################################################
 # run the ns kernel
 ##################################################################################

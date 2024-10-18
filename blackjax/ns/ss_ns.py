@@ -156,13 +156,12 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
 
     # Random direction
     key, subkey = jax.random.split(key)
-    n = jax.random.normal(subkey, shape=(x0.shape))  # Standard normal samples
+    n = jax.random.multivariate_normal(subkey, jnp.zeros(x0.shape[1]), cov, shape=(x0.shape[0],))  # Standard normal samples
 
     # Compute Mahalanobis norms and normalize n
-    n_cov = jnp.dot(n, cov)  # Shape (nlive, D)
-    n_sqr = jnp.sum(n * n_cov, axis=1)  # Shape (nlive,)
-    norms = jnp.sqrt(n_sqr)
-    n = n / norms[:, None]  # Normalize to unit Mahalanobis length
+    invcov = jnp.linalg.inv(cov)
+    norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
+    n = n / norm[..., None]
 
     # Initial bounds
     key, subkey = jax.random.split(key)
@@ -229,13 +228,6 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
 def delete_fn(key, logL, n_delete):
     val, dead_idx = jax.lax.top_k(-logL, n_delete)
     weights = jnp.array(logL > -val.min(), dtype=jnp.float32)
-    # live_idx = jax.random.choice(
-    #     key,
-    #     weights.shape[0],
-    #     shape=(logL.shape[0] - n_delete,),
-    #     p=weights / weights.sum(),
-    #     replace=True,
-    # )
     live_idx = jax.random.choice(
         key,
         weights.shape[0],
@@ -243,8 +235,6 @@ def delete_fn(key, logL, n_delete):
         p=weights / weights.sum(),
         replace=True,
     )
-    # live_idx = jnp.sample(alphas, n_delete, replacement=True)
-    # _, live_idx = jax.lax.top_k(logL, logL.shape[0] - n_delete)
     return -val, dead_idx, live_idx
 
 
