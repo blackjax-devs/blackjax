@@ -103,27 +103,6 @@ def build_kernel(
         dead_logL = state.sampler_state.logL[dead_idx]
         dead_logL_birth = state.sampler_state.logL_birth[dead_idx]
 
-        # def mcmc_step(i, carry):
-        #     rng_key, new_pos, new_logl = carry
-
-        #     rng_key, vertical_slice_key = jax.random.split(rng_key)
-        #     logpi = logprior_fn(new_pos)
-        #     logpi0 = logpi + jnp.log(
-        #         jax.random.uniform(vertical_slice_key, shape=(live_idx.shape[0],))
-        #     )
-
-        #     rng_key, horizontal_slice_key = jax.random.split(rng_key)
-        #     new_pos, new_logl, info = horizontal_slice_proposal(
-        #         horizontal_slice_key,
-        #         new_pos,
-        #         state.parameter_override["cov"],
-        #         loglikelihood_fn,
-        #         logL0,
-        #         logprior_fn,
-        #         logpi0,
-        #     )
-        #     return rng_key, new_pos, new_logl
-
         new_pos = state.sampler_state.particles[live_idx]
         new_logl = state.sampler_state.logL[live_idx]
 
@@ -133,22 +112,18 @@ def build_kernel(
             logprior_fn,
             loglikelihood_fn,
         )
-        kernel = jax.jit(kernel)
+
         def mcmc_step(carry, xs):
             state, k = carry
             k, subk = jax.random.split(k, 2)
             state, info = kernel(subk, state)
             return (state, k), info
 
-        rng_key,sample_key = jax.random.split(rng_key)
+        rng_key, sample_key = jax.random.split(rng_key)
         mcmc_state = init_slice(new_pos, logprior_fn, new_logl)
         (new_state, rng_key), new_state_info = jax.lax.scan(
             mcmc_step, (mcmc_state, sample_key), length=num_mcmc_steps
         )
-
-        # rng_key, new_pos, new_logl = jax.lax.fori_loop(
-        #     0, num_mcmc_steps, mcmc_step, (rng_key, new_pos, new_logl)
-        # )
 
         logL_births = logL0 * jnp.ones(dead_idx.shape)
         particles = state.sampler_state.particles.at[dead_idx].set(
@@ -196,90 +171,6 @@ def build_kernel(
         return StateWithParameterOverride(state, new_parameter_override), info
 
     return kernel
-
-
-def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
-    # Ensure cov_ and x0 are JAX arrays
-    cov = jnp.asarray(cov)
-    x0 = jnp.atleast_2d(x0)
-
-    # Random direction
-    key, subkey = jax.random.split(key)
-    n = jax.random.multivariate_normal(
-        subkey, jnp.zeros(x0.shape[1]), cov, shape=(x0.shape[0],)
-    )  # Standard normal samples
-
-    # Compute Mahalanobis norms and normalize n
-    invcov = jnp.linalg.inv(cov)
-    norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
-    n = n / norm[..., None]
-
-    # Initial bounds
-    key, subkey = jax.random.split(key)
-    w = jax.random.uniform(subkey, shape=(x0.shape[0],))
-    l = x0 + w[:, None] * n
-    r = x0 + (w[:, None] - 1) * n
-
-    # Expand l
-    def expand_l(carry):
-        l, within = carry
-        l = l + within[:, None] * n
-        within = jnp.logical_and(logL(l) > logL0, logpi(l) > logpi0)
-        return l, within
-
-    def cond_fun_l(carry):
-        within = carry[1]
-        return jnp.any(within)
-
-    within = jnp.ones(x0.shape[0], dtype=bool)
-    carry = (l, within)
-    l, l_expand_info = jax.lax.while_loop(cond_fun_l, expand_l, carry)
-
-    # Expand r
-    def expand_r(carry):
-        r, within = carry
-        r = r - within[:, None] * n
-        within = jnp.logical_and(logL(r) > logL0, logpi(r) > logpi0)
-        return r, within
-
-    def cond_fun_r(carry):
-        within = carry[1]
-        return jnp.any(within)
-
-    within = jnp.ones(x0.shape[0], dtype=bool)
-    carry = (r, within)
-    r, r_expand_info = jax.lax.while_loop(cond_fun_r, expand_r, carry)
-
-    # Shrink
-    def shrink_step(carry):
-        l, r, _, _, key, within = carry
-        key, subkey = jax.random.split(key)
-        u = jax.random.uniform(subkey, shape=(x0.shape[0],))
-        x1 = l + u[:, None] * (r - l)
-        logLx1 = logL(x1)
-        within_new = jnp.logical_and(logLx1 > logL0, logpi(x1) > logpi0)
-        s = jnp.sum((x1 - x0) * (r - l), axis=-1) > 0
-        condition_l = (~within_new) & (~s)
-        l = jnp.where(condition_l[:, None], x1, l)
-        condition_r = (~within_new) & s
-        r = jnp.where(condition_r[:, None], x1, r)
-        return l, r, x1, logLx1, key, within_new
-
-    def cond_fun(carry):
-        within = carry[-1]
-        return ~jnp.all(within)
-
-    within = jnp.zeros(x0.shape[0], dtype=bool)
-    carry = (l, r, x0, jnp.zeros(x0.shape[0]), key, within)
-    l, r, x1, logl, key, within = jax.lax.while_loop(
-        cond_fun, shrink_step, carry
-    )
-
-    return (
-        x1,
-        logl,
-        (l_expand_info.shape[0], r_expand_info.shape[0], within.shape[0]),
-    )
 
 
 def delete_fn(key, logL, n_delete):
