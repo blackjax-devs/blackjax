@@ -161,8 +161,8 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
 
     # Compute Mahalanobis norms and normalize n
     invcov = jnp.linalg.inv(cov)
-    dim = n.shape[-1]  # Get the dimension of the vector
-    norm = jnp.sqrt(dim * jnp.einsum("...i,...ij,...j", n, invcov, n))
+    # dim = n.shape[0]  # Get the dimension of the vector
+    norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
     n = n / norm[..., None]
 
 
