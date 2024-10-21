@@ -37,7 +37,7 @@ rng_key = jax.random.PRNGKey(2)
 d = 5
 
 np.random.seed(2)
-C = np.random.randn(d, d) * 0.5
+C = np.random.randn(d, d) * 0.05
 like_cov = C @ C.T
 like_mean = np.random.randn(d) * 2
 
@@ -46,13 +46,13 @@ def loglikelihood(x):
     return multivariate_normal.logpdf(x, mean=like_mean, cov=like_cov)
 
 
-n_samples = 1000
+n_samples = 500
 n_steps = 400
 n_delete = num_cores
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
 prior_mean = jnp.zeros(d)
-prior_cov = jnp.eye(d) * 3
+prior_cov = jnp.eye(d) * 1
 prior = distrax.MultivariateNormalDiag(
     loc=jnp.zeros(d), scale_diag=jnp.diag(prior_cov)
 )
@@ -91,10 +91,11 @@ n_delete: number of points to delete at each iteration
 num mcmc steps: number of successful steps to take in the inner kernel - n_repeats in polychord language
 """
 algo = blackjax.ss_ns(
-    logprior_fn=lambda x: prior.log_prob(x).sum().squeeze(),
+    # logprior_fn=lambda x: prior.log_prob(x).sum(axis=-1).squeeze(),
+    logprior_fn=prior.log_prob,
     loglikelihood_fn=loglikelihood,
     parameter_update_fn=mcmc_parameter_update_fn,
-    n_delete=100,
+    n_delete=20,
     initial_parameters=init_params,
     num_mcmc_steps=5 * d,
 )
@@ -122,19 +123,41 @@ def one_step(carry, xs):
 
 import tqdm
 
-dead = blackjax.ns.ss_ns.NSInfo(jnp.empty((0, d)), jnp.empty(0), jnp.empty(0))
+dead = blackjax.ns.ss_ns.NSInfo(
+    jnp.empty((0, d)),
+    jnp.empty(0),
+    jnp.empty(0),
+    jnp.empty(0),
+    jnp.empty(0),
+    jnp.empty(0),
+)
+# with jax.disable_jit():
 for _ in tqdm.trange(1000):
-    if state.sampler_state.logZ_live - state.sampler_state.logZ < -3:
-        break
-    (state, k), dead_info = one_step((state, rng_key), jnp.arange(n_steps))
-    dead = jax.tree_util.tree_map(
-        lambda a, b: jnp.concatenate([a, b]), dead, dead_info
-    )
+        if state.sampler_state.logZ_live - state.sampler_state.logZ < -3:
+            break
+        (state, k), dead_info = one_step((state, rng_key), jnp.arange(n_steps))
+        dead = jax.tree_util.tree_map(
+            lambda a, b: jnp.concatenate([a, b]), dead, dead_info
+        )
 
 samples = ns.NestedSamples(
     data=np.concatenate([dead.particles, state.sampler_state.particles]),
     logL=np.concatenate([dead.logL, state.sampler_state.logL]),
-    logL_birth=np.concatenate([dead.logL_birth, state.sampler_state.logL_birth]))
+    logL_birth=np.concatenate(
+        [dead.logL_birth, state.sampler_state.logL_birth]
+    ),
+)
+
+print(state.sampler_state.logZ)
+
+import pandas as pd
+f,a = plt.subplots()
+window = 50
+a.plot(pd.Series(dead.l_steps).rolling(window=window).mean(), label="l_steps (50-MA)")
+a.plot(pd.Series(dead.r_steps).rolling(window=window).mean(), label="r_steps (50-MA)")
+a.plot(pd.Series(dead.s_steps).rolling(window=window).mean(), label="s_steps (50-MA)")
+a.legend()
+f.savefig("slice_diagnostics.pdf")
 
 
 samples.to_csv("samples.csv")
@@ -200,9 +223,9 @@ print(f"True logZ = {model.logZ():.2f}")
 
 a = samples.set_beta(0.0).plot_2d(np.arange(d), figsize=(10, 10))
 # samples.plot_2d(a)
-ns.MCMCSamples(model.posterior().rvs(200)).plot_2d(a)
-samples.plot_2d(a)
-samples.to_csv("post.csv")
+a=ns.MCMCSamples(model.posterior().rvs(200)).plot_2d(a)
+a=samples.plot_2d(a)
+# samples.to_csv("post.csv")
 a.iloc[0, 0].legend(
     ["Prior", "Truth", "NS"], loc="lower left", bbox_to_anchor=(0, 1), ncol=3
 )
@@ -211,4 +234,4 @@ plt.suptitle(
 )
 plt.savefig("post.pdf")
 plt.savefig("post.png", dpi=300)
-plt.show()
+# plt.show()
