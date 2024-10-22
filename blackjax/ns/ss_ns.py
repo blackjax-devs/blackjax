@@ -40,11 +40,7 @@ class NSInfo(NamedTuple):
     logL_birth: (
         Array  # The hard likelihood threshold of each particle at birth
     )
-
-    l_steps: Array
-    r_steps: Array
-    s_steps: Array
-
+    update_info: NamedTuple
 
 def init_base(particles: ArrayLikeTree, loglikelihood_fn):
     logL_star = -jnp.inf
@@ -163,9 +159,7 @@ def build_kernel(
             dead_particles,
             dead_logL,
             dead_logL_birth,
-            new_state_info.l_steps,
-            new_state_info.r_steps,
-            new_state_info.s_steps,
+            new_state_info
         )
         new_parameter_override = parameter_update_fn(state, info)
         return StateWithParameterOverride(state, new_parameter_override), info

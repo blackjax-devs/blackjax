@@ -34,9 +34,9 @@ from blackjax.smc.tuning.from_particles import (
 ##################################################################################
 
 rng_key = jax.random.PRNGKey(2)
-d = 5
+d = 10
 
-np.random.seed(2)
+np.random.seed(3)
 C = np.random.randn(d, d) * 0.05
 like_cov = C @ C.T
 like_mean = np.random.randn(d) * 2
@@ -52,7 +52,7 @@ n_delete = num_cores
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
 prior_mean = jnp.zeros(d)
-prior_cov = jnp.eye(d) * 1
+prior_cov = jnp.eye(d) * 3
 prior = distrax.MultivariateNormalDiag(
     loc=jnp.zeros(d), scale_diag=jnp.diag(prior_cov)
 )
@@ -95,7 +95,7 @@ algo = blackjax.ss_ns(
     logprior_fn=prior.log_prob,
     loglikelihood_fn=loglikelihood,
     parameter_update_fn=mcmc_parameter_update_fn,
-    n_delete=20,
+    n_delete=25,
     initial_parameters=init_params,
     num_mcmc_steps=5 * d,
 )
@@ -123,22 +123,16 @@ def one_step(carry, xs):
 
 import tqdm
 
-dead = blackjax.ns.ss_ns.NSInfo(
-    jnp.empty((0, d)),
-    jnp.empty(0),
-    jnp.empty(0),
-    jnp.empty(0),
-    jnp.empty(0),
-    jnp.empty(0),
-)
+dead = []
 # with jax.disable_jit():
-for _ in tqdm.trange(1000):
-        if state.sampler_state.logZ_live - state.sampler_state.logZ < -3:
-            break
-        (state, k), dead_info = one_step((state, rng_key), jnp.arange(n_steps))
-        dead = jax.tree_util.tree_map(
-            lambda a, b: jnp.concatenate([a, b]), dead, dead_info
-        )
+for _ in tqdm.trange(3000):
+    if state.sampler_state.logZ_live - state.sampler_state.logZ < -3:
+        break
+    (state, k), dead_info = one_step((state, rng_key), jnp.arange(n_steps))
+    dead.append(dead_info)
+
+
+dead = jax.tree.map(lambda *args: jnp.concatenate(args), *dead)
 
 samples = ns.NestedSamples(
     data=np.concatenate([dead.particles, state.sampler_state.particles]),
@@ -149,61 +143,29 @@ samples = ns.NestedSamples(
 )
 
 print(state.sampler_state.logZ)
-
+print(state.sampler_state.logZ_live)
+print(state.sampler_state.logZ + state.sampler_state.logZ_live)
 import pandas as pd
-f,a = plt.subplots()
+
+f, a = plt.subplots()
 window = 50
-a.plot(pd.Series(dead.l_steps).rolling(window=window).mean(), label="l_steps (50-MA)")
-a.plot(pd.Series(dead.r_steps).rolling(window=window).mean(), label="r_steps (50-MA)")
-a.plot(pd.Series(dead.s_steps).rolling(window=window).mean(), label="s_steps (50-MA)")
+a.plot(
+    pd.Series(dead.update_info.l_steps).rolling(window=window).mean(),
+    label="l_steps (50-MA)",
+)
+a.plot(
+    pd.Series(dead.update_info.r_steps).rolling(window=window).mean(),
+    label="r_steps (50-MA)",
+)
+a.plot(
+    pd.Series(dead.update_info.s_steps).rolling(window=window).mean(),
+    label="s_steps (50-MA)",
+)
 a.legend()
 f.savefig("slice_diagnostics.pdf")
 
 
 samples.to_csv("samples.csv")
-from anesthetic import read_csv
-
-##################################################################################
-# run the ns kernel
-##################################################################################
-
-
-# iterations = jnp.arange(n_steps)
-
-##with jax.disable_jit():
-# plt.plot(state[0].particles[:, 0], state[0].particles[:, 1], "o")
-# for _ in range(10):
-#    state, info = algo.step(sample_key, state)
-# plt.plot(state[0].particles[:, 0], state[0].particles[:, 1], "o")
-#
-#
-## comment out the above scan and uncomment this for debugging
-# for i in range(10):
-#    rng_key, sample_key = jax.random.split(rng_key)
-#    state, info = algo.step(sample_key, state)
-#
-##################################################################################
-# Collect the samples into anesthetic objects
-##################################################################################
-
-# dead_points = dead.particles.squeeze()
-# live_points = live.sampler_state.particles.squeeze()
-# # live_logL = live.sampler_state.logL
-
-
-# samples = ns.NestedSamples(
-#     data=np.concatenate([live_points, dead_points.reshape(-1, d)], axis=0),
-#     logL=np.concatenate([live.sampler_state.logL, dead.logL.squeeze().reshape(-1)]),
-#     logL_birth=np.concatenate(
-#         [live.sampler_state.logL_birth, dead.logL_birth.squeeze().reshape(-1)]
-#     ),
-# )
-# samples.to_csv("samples.csv")
-# from anesthetic import read_csv
-# samples = read_csv("samples.csv")
-# samples.gui()
-
-# samples.logL.plot()
 
 lzs = samples.logZ(100)
 # print(samples.logZ())
@@ -221,10 +183,10 @@ model = ReducedLinearModel(
 print(f"True logZ = {model.logZ():.2f}")
 
 
-a = samples.set_beta(0.0).plot_2d(np.arange(d), figsize=(10, 10))
+a = samples.set_beta(0.0).plot_2d(np.arange(5), figsize=(10, 10))
 # samples.plot_2d(a)
-a=ns.MCMCSamples(model.posterior().rvs(200)).plot_2d(a)
-a=samples.plot_2d(a)
+a = ns.MCMCSamples(model.posterior().rvs(200)).plot_2d(a)
+a = samples.plot_2d(a)
 # samples.to_csv("post.csv")
 a.iloc[0, 0].legend(
     ["Prior", "Truth", "NS"], loc="lower left", bbox_to_anchor=(0, 1), ncol=3
