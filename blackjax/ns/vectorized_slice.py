@@ -89,6 +89,7 @@ class SliceInfo(NamedTuple):
     l_steps: Array
     r_steps: Array
     s_steps: Array
+    s_special: Array
 
 
 def init(position: ArrayTree, logdensity_fn: Callable, loglikelihood: Array):
@@ -133,6 +134,7 @@ def build_kernel(
             logL0,
             logprior_fn,
             logpi0,
+            logpi,
         )
 
         return slice_state, slice_info
@@ -148,7 +150,9 @@ def vertical_slice(rng, logdensity, positions):
     return logpi0, logpi
 
 
-def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
+def horizontal_slice_proposal(
+    key, x0, cov, logL, logL0, logpi, logpi0, logpi_slice
+):
     # Ensure cov_ and x0 are JAX arrays
     cov = jnp.asarray(cov)
     x0 = jnp.atleast_2d(x0)
@@ -164,7 +168,6 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     # dim = n.shape[0]  # Get the dimension of the vector
     norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
     n = n / norm[..., None]
-
 
     # Initial bounds
     key, subkey = jax.random.split(key)
@@ -187,6 +190,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     within = jnp.ones(x0.shape[0], dtype=bool)
     carry = (l, within, 0)
     l, _, l_i = jax.lax.while_loop(cond_fun_l, expand_l, carry)
+
     # Expand r
     def expand_r(carry):
         r, within, counter = carry
@@ -205,31 +209,35 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
 
     # Shrink
     def shrink_step(carry):
-        l, r, _, _, key, within, counter = carry
+        l, r, xminus1, _, key, special_counter, within, counter = carry
         counter += 1
+
         key, subkey = jax.random.split(key)
         u = jax.random.uniform(subkey, shape=(x0.shape[0],))
+
         x1 = l + u[:, None] * (r - l)
+        x1 = jnp.where(~within[:, None], x1, xminus1)
+
         logLx1 = logL(x1)
         within_new = jnp.logical_and(logLx1 > logL0, logpi(x1) > logpi0)
+        special_counter += (within & ~within_new).sum()
+
         s = jnp.sum((x1 - x0) * (r - l), axis=-1) > 0
         condition_l = (~within_new) & (~s)
         l = jnp.where(condition_l[:, None], x1, l)
         condition_r = (~within_new) & s
         r = jnp.where(condition_r[:, None], x1, r)
-        return l, r, x1, logLx1, key, within_new, counter
+        return l, r, x1, logLx1, key, special_counter, within_new, counter
 
     def cond_fun(carry):
         within = carry[-2]
         return ~jnp.all(within)
 
     within = jnp.zeros(x0.shape[0], dtype=bool)
-    carry = (l, r, x0, jnp.zeros(x0.shape[0]), key, within, 0)
-    l, r, x1, logl, key, within, s_i = jax.lax.while_loop(
+    carry = (l, r, x0, jnp.zeros(x0.shape[0]), key, 0, within, 0)
+    l, r, x1, logl, key, c_i, within, s_i = jax.lax.while_loop(
         cond_fun, shrink_step, carry
     )
-    slice_state = SliceState(x1,logpi(x1), logl)
-    slice_info = SliceInfo(
-        l_i, r_i, s_i
-    )
+    slice_state = SliceState(x1, logpi(x1), logl)
+    slice_info = SliceInfo(l_i, r_i, s_i, c_i)
     return slice_state, slice_info
