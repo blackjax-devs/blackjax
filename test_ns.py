@@ -33,7 +33,7 @@ from blackjax.smc.tuning.from_particles import (
 # Setup the problem
 ##################################################################################
 
-rng_key = jax.random.PRNGKey(2)
+rng_key = jax.random.PRNGKey(3)
 d = 10
 
 np.random.seed(1)
@@ -57,9 +57,8 @@ prior = distrax.MultivariateNormalDiag(
     loc=jnp.zeros(d), scale_diag=jnp.diag(prior_cov)
 )
 
-# prior = distrax.Uniform(low=-10*jnp.ones(d), high=10*jnp.ones(d)) 
-# prior = distrax.Independent(prior, reinterpreted_batch_ndims=1)   
-
+# prior = distrax.Uniform(low=-10 * jnp.ones(d), high=10 * jnp.ones(d))
+# prior = distrax.Independent(prior, reinterpreted_batch_ndims=1)
 
 
 ##################################################################################
@@ -99,7 +98,7 @@ algo = blackjax.ss_ns(
     logprior_fn=prior.log_prob,
     loglikelihood_fn=loglikelihood,
     parameter_update_fn=mcmc_parameter_update_fn,
-    n_delete=10,
+    n_delete=20,
     initial_parameters=init_params,
     num_mcmc_steps=5 * d,
 )
@@ -129,22 +128,22 @@ import tqdm
 
 dead = []
 # with jax.disable_jit():
-for _ in tqdm.trange(50000):
-        if state.sampler_state.logZ_live - state.sampler_state.logZ < -3:
-            break
-        (state, k), dead_info = one_step((state, rng_key), jnp.arange(n_steps))
-        dead.append(dead_info)
+#     for _ in tqdm.trange(50000):
+#         if state.sampler_state.logZ_live - state.sampler_state.logZ < -3:
+#             break
+#         # rng_key,step_key = jax.random.split(rng_key)
+#         (state, rng_key), dead_info = one_step((state, rng_key), jnp.arange(n_steps))
+#         dead.append(dead_info)
+
+for _ in tqdm.trange(2000):
+    if state.sampler_state.logZ_live - state.sampler_state.logZ < -3:
+        break
+    (state, rng_key), dead_info = one_step((state, rng_key), jnp.arange(n_steps))
+    dead.append(dead_info)
 
 
 dead = jax.tree.map(lambda *args: jnp.concatenate(args), *dead)
 
-f, a = plt.subplots()
-window = 50
-a.plot(dead.update_info.s_special/ 25)
-a.set_ylabel("num missteps / number of vectorized particles")
-a.set_xlabel("MCMC Step")
-a.legend()
-f.savefig("slice_missteps.pdf")
 
 samples = ns.NestedSamples(
     data=np.concatenate([dead.particles, state.sampler_state.particles]),
@@ -190,14 +189,13 @@ model = ReducedLinearModel(
     logLmax=loglikelihood(like_mean),
     Sigma_pi=prior_cov,
     mu_pi=prior_mean,
-
 )
 
 # model = ReducedLinearModelUniformPrior(
 #     mu_L=like_mean,
 #     Sigma_L=like_cov,
 #     logLmax=loglikelihood(like_mean),
-#     logV = -prior.log_prob(like_mean)
+#     logV=prior.log_prob(like_mean),
 # )
 
 
@@ -206,7 +204,7 @@ print(f"True logZ = {model.logZ():.2f}")
 
 a = samples.set_beta(0.0).plot_2d(np.arange(5), figsize=(10, 10))
 # samples.plot_2d(a)
-a = ns.MCMCSamples(model.posterior().rvs(200)).plot_2d(a)
+a = ns.MCMCSamples(model.posterior().rvs(500)).plot_2d(a)
 a = samples.plot_2d(a)
 # samples.to_csv("post.csv")
 a.iloc[0, 0].legend(
