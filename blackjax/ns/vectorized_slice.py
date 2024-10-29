@@ -34,6 +34,8 @@ __all__ = [
 #     loglikelihood_fn: Callable,
 #     *,
 #     n_doublings: int = 5,
+#     log_likelihood: Callable: lambda x: jnp.inf,
+#     logl0: float = -jnp.inf,
 # ) -> SamplingAlgorithm:
 #     """Implements the (basic) user interface for the Slice sampling kernel.
 
@@ -164,10 +166,8 @@ def horizontal_slice_proposal(
 
     # Compute Mahalanobis norms and normalize n
     invcov = jnp.linalg.inv(cov)
-    dim = n.shape[0]  # Get the dimension of the vector
     norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
     n = n / norm[..., None]
-    # print(n)
     # Initial bounds
     key, subkey = jax.random.split(key)
     w = jax.random.uniform(subkey, shape=(x0.shape[0],))
@@ -179,7 +179,6 @@ def horizontal_slice_proposal(
         l0, within, counter = carry
         counter += 1
         l = l0 + within[:, None] * n
-        l = jnp.where(within[:, None], l, l0)
         within = jnp.logical_and(logL(l) > logL0, logpi(l) > logpi0)
         return l, within, counter
 
@@ -196,7 +195,6 @@ def horizontal_slice_proposal(
         r0, within, counter = carry
         counter += 1
         r = r0 - within[:, None] * n
-        r = jnp.where(within[:, None], r, r0)
         within = jnp.logical_and(logL(r) > logL0, logpi(r) > logpi0)
         return r, within, counter
 
