@@ -10,6 +10,7 @@ from .adaptation.pathfinder_adaptation import pathfinder_adaptation
 from .adaptation.window_adaptation import window_adaptation
 from .base import SamplingAlgorithm, VIAlgorithm
 from .diagnostics import effective_sample_size as ess
+from .diagnostics import nested_rhat as nested_rhat
 from .diagnostics import potential_scale_reduction as rhat
 from .mcmc import barker
 from .mcmc import dynamic_hmc as _dynamic_hmc
@@ -161,5 +162,6 @@ __all__ = [
     "pathfinder_adaptation",
     "mclmc_find_L_and_step_size",  # mclmc adaptation
     "ess",  # diagnostics
+    "nested_rhat",
     "rhat",
 ]
