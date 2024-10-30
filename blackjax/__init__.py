@@ -162,5 +162,6 @@ __all__ = [
     "pathfinder_adaptation",
     "mclmc_find_L_and_step_size",  # mclmc adaptation
     "ess",  # diagnostics
+    "nested_rhat",
     "rhat",
 ]
