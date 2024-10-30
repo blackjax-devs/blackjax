@@ -69,7 +69,7 @@ class SMCParameterTuningTest(chex.TestCase):
         scale = jnp.exp(log_scale)
         y = jnp.dot(x, coefs)
         logpdf = stats.norm.logpdf(preds, y, scale)
-        return log_scale + jnp.sum(logpdf)
+        return jnp.sum(logpdf)
 
     def test_smc_inner_kernel_adaptive_tempered(self):
         self.smc_inner_kernel_tuning_test_case(
