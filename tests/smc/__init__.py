@@ -16,6 +16,9 @@ class SMCLinearRegressionTestCase(chex.TestCase):
         logpdf = self.logdensity_by_observation(log_scale, coefs, preds, x)
         return jnp.sum(logpdf)
 
+    def logprior_fn(self, log_scale, coefs):
+        return log_scale + stats.norm.logpdf(log_scale) + stats.norm.logpdf(coefs)
+
     def observations(self):
         num_particles = 100
 
@@ -27,9 +30,7 @@ class SMCLinearRegressionTestCase(chex.TestCase):
     def particles_prior_loglikelihood(self):
         observations, num_particles = self.observations()
 
-        logprior_fn = lambda x: stats.norm.logpdf(x["log_scale"]) + stats.norm.logpdf(
-            x["coefs"]
-        )
+        logprior_fn = lambda x: self.logprior_fn(**x)
         loglikelihood_fn = lambda x: self.logdensity_fn(**x, **observations)
 
         log_scale_init = np.random.randn(num_particles)
@@ -45,9 +46,7 @@ class SMCLinearRegressionTestCase(chex.TestCase):
         y_data = 3 * x_data + np.random.normal(size=x_data.shape)
         observations = {"x": x_data, "preds": y_data}
 
-        logprior_fn = lambda x: stats.norm.logpdf(x["log_scale"]) + stats.norm.logpdf(
-            x["coefs"]
-        )
+        logprior_fn = lambda x: self.logprior_fn(**x)
 
         log_scale_init = np.random.randn(num_particles)
         coeffs_init = np.random.randn(num_particles)
