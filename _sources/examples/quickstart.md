@@ -48,8 +48,9 @@ observed = np.random.normal(loc, scale, size=1_000)
 def logdensity_fn(loc, log_scale, observed=observed):
     """Univariate Normal"""
     scale = jnp.exp(log_scale)
+    logjac = log_scale
     logpdf = stats.norm.logpdf(observed, loc, scale)
-    return jnp.sum(logpdf)
+    return logjac + jnp.sum(logpdf)
 
 
 logdensity = lambda x: logdensity_fn(**x)

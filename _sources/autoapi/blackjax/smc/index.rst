@@ -4,15 +4,6 @@ blackjax.smc
 .. py:module:: blackjax.smc
 
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 1
-
-   /autoapi/blackjax/smc/tuning/index
-
-
 Submodules
 ----------
 
@@ -28,6 +19,7 @@ Submodules
    /autoapi/blackjax/smc/resampling/index
    /autoapi/blackjax/smc/solver/index
    /autoapi/blackjax/smc/tempered/index
+   /autoapi/blackjax/smc/tuning/index
    /autoapi/blackjax/smc/waste_free/index
 
 
