@@ -9,7 +9,7 @@ class SMCLinearRegressionTestCase(chex.TestCase):
         scale = jnp.exp(log_scale)
         y = jnp.dot(x, coefs)
         logpdf = stats.norm.logpdf(preds, y, scale)
-        return logpdf
+        return log_scale + logpdf
 
     def logdensity_fn(self, log_scale, coefs, preds, x):
         """Linear regression"""
