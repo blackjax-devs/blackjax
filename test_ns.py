@@ -1,5 +1,5 @@
-# %load_ext autoreload
-# %autoreload 2
+%load_ext autoreload
+%autoreload 2
 import multiprocessing
 import os
 from datetime import date
@@ -48,7 +48,8 @@ def loglikelihood(x):
 
 n_samples = 500
 n_steps = 400
-n_delete = num_cores
+n_delete = 20#num_cores
+n_dead = 20000/n_delete
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
 prior_mean = jnp.zeros(d)
@@ -98,7 +99,7 @@ algo = blackjax.ss_ns(
     logprior_fn=prior.log_prob,
     loglikelihood_fn=loglikelihood,
     parameter_update_fn=mcmc_parameter_update_fn,
-    n_delete=20,
+    n_delete=n_delete,
     initial_parameters=init_params,
     num_mcmc_steps=5 * d,
 )
@@ -141,7 +142,6 @@ for _ in tqdm.trange(2000):
     (state, rng_key), dead_info = one_step((state, rng_key), jnp.arange(n_steps))
     dead.append(dead_info)
 
-
 dead = jax.tree.map(lambda *args: jnp.concatenate(args), *dead)
 
 
@@ -153,9 +153,11 @@ samples = ns.NestedSamples(
     ),
 )
 
+
 print(state.sampler_state.logZ)
 print(state.sampler_state.logZ_live)
-print(state.sampler_state.logZ + state.sampler_state.logZ_live)
+samples.logZ()
+print(state.sampler_state.logZ_live)
 import pandas as pd
 
 f, a = plt.subplots()
@@ -177,6 +179,8 @@ f.savefig("slice_diagnostics.pdf")
 
 
 samples.to_csv("samples.csv")
+from anesthetic import read_csv
+read_csv("samples.csv").gui()
 
 lzs = samples.logZ(100)
 # print(samples.logZ())
