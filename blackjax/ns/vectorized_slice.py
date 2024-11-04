@@ -11,74 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Public API for the  Slice sampling Kernel"""
 from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
-from jax import random
 
-from blackjax.base import SamplingAlgorithm
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey, Array
+from blackjax.types import Array, ArrayTree, PRNGKey
 
 __all__ = [
     "SliceState",
     "SliceInfo",
     "init",
     "build_kernel",
-    # "as_top_level_api",
 ]
-
-
-# def as_top_level_api(
-#     loglikelihood_fn: Callable,
-#     *,
-#     n_doublings: int = 5,
-#     log_likelihood: Callable: lambda x: jnp.inf,
-#     logl0: float = -jnp.inf,
-# ) -> SamplingAlgorithm:
-#     """Implements the (basic) user interface for the Slice sampling kernel.
-
-#     Examples
-#     --------
-
-#     A slice sampling kernel can be initialized like this:
-
-#     .. code::
-
-#         slice = blackjax.slice(logdensity_fn, n_doublings)
-#         state = slice.init(position)
-#         new_state, info = slice.step(rng_key, state)
-
-#     We can JIT-compile the step function for better performance
-
-#     .. code::
-
-#         step = jax.jit(slice.step)
-#         new_state, info = step(rng_key, state)
-
-#     Parameters
-#     ----------
-#     logdensity_fn: Callable
-#         the unnormalized posterior distribution we wish to sample from.
-#     n_doublings: int
-#         maximal number of slice expansions.
-
-#     Returns
-#     -------
-#     A ``MCMCSamplingAlgorithm``.
-#     """
-
-#     kernel = build_kernel(n_doublings)
-
-#     def init_fn(position: ArrayLikeTree, rng_key=None):
-#         del rng_key
-#         return init(position, loglikelihood_fn)
-
-#     def step_fn(rng_key: PRNGKey, state):
-#         return kernel(rng_key, state, loglikelihood_fn)
-
-#     return SamplingAlgorithm(init_fn, step_fn)
 
 
 class SliceState(NamedTuple):
@@ -99,22 +44,28 @@ def init(position: ArrayTree, logdensity_fn: Callable, loglikelihood: Array):
 
 
 def build_kernel(
-    cov: Array,
-    logL0: Array,
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
+    logL0: Array,
+    cov: Array,
 ) -> Callable:
-    """Instantiate a slice sampling kernel.
-
-    Implementation according to [1]. Doubling implementation inspired
-    by Tensorflow probability's implementation. Performs a univariate update in
-    each dimension.
+    """Instantiate a vectorized slice sampling kernel.
 
     Parameters
     ----------
-    n_doublings: int
-        maximal number of slice expansions
+    cov : Array
+        Covariance matrix for the proposal distribution.
+    logL0 : Array
+        Initial log-likelihood values.
+    logprior_fn : Callable
+        Function to compute the log prior probability.
+    loglikelihood_fn : Callable
+        Function to compute the log likelihood.
 
+    Returns
+    -------
+    Callable
+        A slice sampling kernel function.
     References
     -------
     [1] Radford M. Neal "Slice sampling",
@@ -123,9 +74,7 @@ def build_kernel(
 
     def one_step(rng_key: PRNGKey, state: SliceState):
         rng_key, vertical_slice_key = jax.random.split(rng_key)
-        logpi0, logpi = vertical_slice(
-            vertical_slice_key, logprior_fn, state.position
-        )
+        logpi0, logpi = vertical_slice(vertical_slice_key, logprior_fn, state.position)
         rng_key, horizontal_slice_key = jax.random.split(rng_key)
         slice_state, slice_info = horizontal_slice_proposal(
             horizontal_slice_key,
@@ -135,7 +84,6 @@ def build_kernel(
             logL0,
             logprior_fn,
             logpi0,
-            logpi,
         )
 
         return slice_state, slice_info
@@ -145,15 +93,11 @@ def build_kernel(
 
 def vertical_slice(rng, logdensity, positions):
     logpi = logdensity(positions)
-    logpi0 = logpi + jnp.log(
-        jax.random.uniform(rng, shape=(positions.shape[0],))
-    )
+    logpi0 = logpi + jnp.log(jax.random.uniform(rng, shape=(positions.shape[0],)))
     return logpi0, logpi
 
 
-def horizontal_slice_proposal(
-    key, x0, cov, logL, logL0, logpi, logpi0, logpi_slice
-):
+def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     # Ensure cov_ and x0 are JAX arrays
     cov = jnp.asarray(cov)
     x0 = jnp.atleast_2d(x0)
@@ -233,9 +177,7 @@ def horizontal_slice_proposal(
 
     within = jnp.zeros(x0.shape[0], dtype=bool)
     carry = (l, r, x0, jnp.zeros(x0.shape[0]), key, within, 0)
-    l, r, x1, logl, key, within, s_i = jax.lax.while_loop(
-        cond_fun, shrink_step, carry
-    )
+    l, r, x1, logl, key, within, s_i = jax.lax.while_loop(cond_fun, shrink_step, carry)
     slice_state = SliceState(x1, logpi(x1), logl)
     slice_info = SliceInfo(l_i, r_i, s_i)
     return slice_state, slice_info

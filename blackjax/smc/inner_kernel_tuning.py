@@ -121,7 +121,6 @@ def as_top_level_api(
 
     """
 
-
     kernel = build_kernel(
         smc_algorithm,
         logprior_fn,
