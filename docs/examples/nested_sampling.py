@@ -12,7 +12,7 @@ from blackjax.ns.utils import log_weights
 rng_key = jax.random.PRNGKey(0)
 d = 20
 
-C = jax.random.normal(rng_key, (d, d)) * 0.05
+C = jax.random.normal(rng_key, (d, d)) * 0.1
 like_cov = C @ C.T
 like_mean = jax.random.normal(rng_key, (d,))
 prior_mean = jnp.zeros(d)
@@ -48,7 +48,7 @@ log_analytic_evidence = compute_logZ(
 )
 
 n_live = 500
-n_delete = 20
+n_delete = 50
 num_mcmc_steps = d * 5
 algo = blackjax.ns.adaptive_ns.ssns(
     logprior_fn=prior.log_prob,
@@ -76,7 +76,7 @@ def one_step(carry, xs):
 
 dead = []
 
-for _ in tqdm.trange(10000):
+for _ in tqdm.trange(1000):
     if state.sampler_state.logZ_live - state.sampler_state.logZ < -3:  # type: ignore[attr-defined]
         break
     (state, rng_key), dead_info = one_step((state, rng_key), None)
