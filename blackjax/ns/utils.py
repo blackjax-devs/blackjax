@@ -63,7 +63,9 @@ def logX(key: jax.random.PRNGKey, dead: NSInfo, samples=100):
         WeightedDataFrame like self, columns range(nsamples)
     """
     key, subkey = jax.random.split(key)
-    r = jnp.log(jax.random.uniform(subkey, shape=(dead.logL.shape[0], samples)))
+    r = jnp.log(
+        jax.random.uniform(subkey, shape=(dead.logL.shape[0], samples), minval=1e-6)
+    )
     nlive = compute_nlive(dead)
     t = r / nlive[:, jnp.newaxis]
     logX = jnp.cumsum(t, axis=0)
@@ -73,6 +75,6 @@ def logX(key: jax.random.PRNGKey, dead: NSInfo, samples=100):
     return logX, logdX
 
 
-def weights(key: jax.random.PRNGKey, dead: NSInfo, samples=100, beta=1.0):
+def log_weights(key: jax.random.PRNGKey, dead: NSInfo, samples=100, beta=1.0):
     _, ldX = logX(key, dead, samples)
     return ldX + beta * dead.logL[..., jnp.newaxis]
