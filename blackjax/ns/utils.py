@@ -65,7 +65,7 @@ def logX(key: jax.random.PRNGKey, dead: NSInfo, samples=100):
     key, subkey = jax.random.split(key)
     r = jnp.log(
         jax.random.uniform(subkey, shape=(dead.logL.shape[0], samples), minval=1e-6)
-    )
+    ) #TODO Don't hardcode minval as 1e-6, read the precision appropriately
     nlive = compute_nlive(dead)
     t = r / nlive[:, jnp.newaxis]
     logX = jnp.cumsum(t, axis=0)

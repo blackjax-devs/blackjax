@@ -141,7 +141,7 @@ def as_top_level_api(
 def ssns(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
-    num_mcmc_steps: int = 10,
+    num_mcmc_steps: int,
     n_delete: int = 1,
 ) -> SamplingAlgorithm:
     """Implements the a baseline Adaptive Slice Sampling Nested Sampling kernel.
@@ -153,7 +153,7 @@ def ssns(
     loglikelihood_fn: Callable
         A function that computes the log likelihood.
     num_mcmc_steps: int, optional
-        Number of MCMC steps to perform. Default is 10.
+        Number of MCMC steps to perform. Recommended is 5 times the dimension of the parameter space.
     n_delete: int, optional
         Number of particles to delete in each iteration. Default is 1.
 

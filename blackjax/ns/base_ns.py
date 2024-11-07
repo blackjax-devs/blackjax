@@ -83,9 +83,9 @@ def build_kernel(
     ) -> tuple[NSState, NSInfo]:
         num_particles = jnp.shape(jax.tree_leaves(state.particles)[0])[0]
         rng_key, delete_fn_key = jax.random.split(rng_key)
-        val, dead_idx, live_idx = delete_fn(delete_fn_key, state.logL)
-
-        logL0 = val.max()
+        dead_logL, dead_idx, live_idx = delete_fn(delete_fn_key, state.logL)
+f
+        logL0 = dead_logL.max()
         dead_particles = jax.tree.map(lambda x: x[dead_idx], state.particles)
         dead_logL = state.logL[dead_idx]
         dead_logL_birth = state.logL_birth[dead_idx]
@@ -120,6 +120,7 @@ def build_kernel(
         logL_birth = state.logL_birth.at[dead_idx].set(logL_births)
         logL_star = state.logL.min()
 
+        #--------------------------------------------------------------
         delta_log_xi = -dead_idx.shape[0] / num_particles
         log_delta_xi = state.logX + jnp.log(1 - jnp.exp(delta_log_xi))
         delta_logz_dead = state.logL_star + log_delta_xi
@@ -128,6 +129,7 @@ def build_kernel(
         logX = state.logX + delta_log_xi
         logZ_dead = jnp.logaddexp(state.logZ, delta_logz_dead)
         logZ_live = logL0 + logX
+        #--------------------------------------------------------------
 
         new_state = NSState(
             particles,
@@ -159,8 +161,8 @@ def delete_fn(key, logL, n_delete):
 
     Returns:
     --------
-    val : jnp.ndarray
-        log likelihood threshold of live particles.
+    dead_logL : jnp.ndarray
+        log likelihood threshold of live particles, sorted from low to high.
     dead_idx : jnp.ndarray
         Indices of particles to be deleted.
     live_idx : jnp.ndarray
