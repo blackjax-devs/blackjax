@@ -166,8 +166,8 @@ def delete_fn(key, logL, n_delete):
     live_idx : jnp.ndarray
         Indices of resampled particles to evolve.
     """
-    val, dead_idx = jax.lax.top_k(-logL, n_delete)
-    weights = jnp.array(logL > -val.min(), dtype=jnp.float32)
+    neg_dead_logL, dead_idx = jax.lax.top_k(-logL, n_delete)
+    weights = jnp.array(logL > -neg_dead_logL.min(), dtype=jnp.float32)
     live_idx = jax.random.choice(
         key,
         weights.shape[0],
@@ -175,7 +175,7 @@ def delete_fn(key, logL, n_delete):
         p=weights / weights.sum(),
         replace=True,
     )
-    return -val, dead_idx, live_idx
+    return -neg_dead_logL, dead_idx, live_idx
 
 
 def as_top_level_api(

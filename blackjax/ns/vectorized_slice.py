@@ -123,7 +123,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
         l0, within, counter = carry
         counter += 1
         l = l0 + within[:, None] * n
-        within = jnp.logical_and(logL(l) > logL0, logpi(l) > logpi0)
+        within = jnp.logical_and(logL(l) > logL0, logpi(l) >= logpi0)
         return l, within, counter
 
     def cond_fun_l(carry):
@@ -139,7 +139,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
         r0, within, counter = carry
         counter += 1
         r = r0 - within[:, None] * n
-        within = jnp.logical_and(logL(r) > logL0, logpi(r) > logpi0)
+        within = jnp.logical_and(logL(r) > logL0, logpi(r) >= logpi0)
         return r, within, counter
 
     def cond_fun_r(carry):
@@ -162,7 +162,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
         x1 = jnp.where(~within[:, None], x1, xminus1)
 
         logLx1 = logL(x1)
-        within_new = jnp.logical_and(logLx1 > logL0, logpi(x1) > logpi0)
+        within_new = jnp.logical_and(logLx1 > logL0, logpi(x1) >= logpi0)
 
         s = jnp.sum((x1 - x0) * (r - l), axis=-1) > 0
         condition_l = (~within_new) & (~s)
