@@ -49,18 +49,18 @@ def build_kernel(
     logL0: Array,
     cov: Array,
 ) -> Callable:
-    """Instantiate a vectorized slice sampling kernel.
+    """Instantiate a (constrained) vectorized slice sampling kernel.
 
     Parameters
     ----------
-    cov : Array
-        Covariance matrix for the proposal distribution.
-    logL0 : Array
-        Initial log-likelihood values.
     logprior_fn : Callable
         Function to compute the log prior probability.
     loglikelihood_fn : Callable
         Function to compute the log likelihood.
+    logL0 : Array
+        Initial log-likelihood values.
+    cov : Array
+        Covariance matrix for the proposal distribution.
 
     Returns
     -------
@@ -74,7 +74,9 @@ def build_kernel(
 
     def one_step(rng_key: PRNGKey, state: SliceState):
         rng_key, vertical_slice_key = jax.random.split(rng_key)
-        logpi0, logpi = vertical_slice(vertical_slice_key, logprior_fn, state.position)
+        logpi0, _ = vertical_slice(
+            vertical_slice_key, logprior_fn, state.position
+        )
         rng_key, horizontal_slice_key = jax.random.split(rng_key)
         slice_state, slice_info = horizontal_slice_proposal(
             horizontal_slice_key,
@@ -93,7 +95,9 @@ def build_kernel(
 
 def vertical_slice(rng, logdensity, positions):
     logpi = logdensity(positions)
-    logpi0 = logpi + jnp.log(jax.random.uniform(rng, shape=(positions.shape[0],)))
+    logpi0 = logpi + jnp.log(
+        jax.random.uniform(rng, shape=(positions.shape[0],))
+    )
     return logpi0, logpi
 
 
@@ -177,7 +181,9 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
 
     within = jnp.zeros(x0.shape[0], dtype=bool)
     carry = (l, r, x0, jnp.zeros(x0.shape[0]), key, within, 0)
-    l, r, x1, logl, key, within, s_i = jax.lax.while_loop(cond_fun, shrink_step, carry)
+    l, r, x1, logl, key, within, s_i = jax.lax.while_loop(
+        cond_fun, shrink_step, carry
+    )
     slice_state = SliceState(x1, logpi(x1), logl)
     slice_info = SliceInfo(l_i, r_i, s_i)
     return slice_state, slice_info

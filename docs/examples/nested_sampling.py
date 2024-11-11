@@ -48,9 +48,9 @@ log_analytic_evidence = compute_logZ(
 )
 
 n_live = 500
-n_delete = 50
+n_delete = 20
 num_mcmc_steps = d * 5
-algo = blackjax.ns.adaptive_ns.ssns(
+algo = blackjax.ns.adaptive.nss(
     logprior_fn=prior.log_prob,
     loglikelihood_fn=loglikelihood,
     n_delete=n_delete,
