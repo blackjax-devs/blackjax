@@ -6,4 +6,5 @@ __all__ = [
     "tempered",
     "inner_kernel_tuning",
     "extend_params",
+    "partial_posteriors_path",
 ]
