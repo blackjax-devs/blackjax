@@ -84,7 +84,7 @@ def build_kernel(
         num_particles = jnp.shape(jax.tree_leaves(state.particles)[0])[0]
         rng_key, delete_fn_key = jax.random.split(rng_key)
         dead_logL, dead_idx, live_idx = delete_fn(delete_fn_key, state.logL)
-f
+
         logL0 = dead_logL.max()
         dead_particles = jax.tree.map(lambda x: x[dead_idx], state.particles)
         dead_logL = state.logL[dead_idx]
@@ -120,16 +120,16 @@ f
         logL_birth = state.logL_birth.at[dead_idx].set(logL_births)
         logL_star = state.logL.min()
 
-        #--------------------------------------------------------------
-        delta_log_xi = -dead_idx.shape[0] / num_particles
-        log_delta_xi = state.logX + jnp.log(1 - jnp.exp(delta_log_xi))
-        delta_logz_dead = state.logL_star + log_delta_xi
+        nlive = state.particles.shape[0]
+        ndel = dead_idx.shape[0]
+        n = jnp.arange(nlive, nlive-ndel, -1)
+        delta_log_xi = - 1/n
+        log_delta_xi = state.logX + jnp.cumsum(delta_log_xi) + jnp.log(1 - jnp.exp(delta_log_xi))
+        delta_logz_dead = dead_logL + log_delta_xi
 
-        # logX = jnp.logaddexp(state.sampler_state.logX, delta_xi)
-        logX = state.logX + delta_log_xi
-        logZ_dead = jnp.logaddexp(state.logZ, delta_logz_dead)
-        logZ_live = logL0 + logX
-        #--------------------------------------------------------------
+        logX = state.logX + delta_log_xi.sum()
+        logZ_dead = jnp.logaddexp(state.logZ, jax.scipy.special.logsumexp(delta_logz_dead))
+        logZ_live = jax.scipy.special.logsumexp(logL) - jnp.log(nlive) + logX
 
         new_state = NSState(
             particles,
