@@ -10,7 +10,6 @@ from . import (
     periodic_orbital,
     random_walk,
     rmhmc,
-    univariate_slice,
 )
 
 __all__ = [
@@ -25,5 +24,4 @@ __all__ = [
     "marginal_latent_gaussian",
     "random_walk",
     "mclmc",
-    "univariate_slice",
 ]
