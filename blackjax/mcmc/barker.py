@@ -18,11 +18,13 @@ import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 from jax.scipy import stats
-from jax.tree_util import tree_leaves, tree_map
 
+import blackjax.mcmc.metrics as metrics
 from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.metrics import Metric
 from blackjax.mcmc.proposal import static_binomial_sampling
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import ArrayLikeTree, ArrayTree, Numeric, PRNGKey
+from blackjax.util import generate_gaussian_noise
 
 __all__ = ["BarkerState", "BarkerInfo", "init", "build_kernel", "as_top_level_api"]
 
@@ -81,44 +83,70 @@ def build_kernel():
     """
 
     def _compute_acceptance_probability(
-        state: BarkerState,
-        proposal: BarkerState,
-    ) -> float:
+        state: BarkerState, proposal: BarkerState, metric: Metric
+    ) -> Numeric:
         """Compute the acceptance probability of the Barker's proposal kernel."""
 
-        def ratio_proposal_nd(y, x, log_y, log_x):
-            num = -_log1pexp(-log_y * (x - y))
-            den = -_log1pexp(-log_x * (y - x))
+        x = state.position
+        y = proposal.position
+        log_x = state.logdensity_grad
+        log_y = proposal.logdensity_grad
 
-            return jnp.sum(num - den)
+        y_minus_x = jax.tree_util.tree_map(lambda a, b: a - b, y, x)
+        x_minus_y = jax.tree_util.tree_map(lambda a: -a, y_minus_x)
+        z_tilde_x_to_y = metric.scale(x, y_minus_x, inv=True, trans=True)
+        z_tilde_y_to_x = metric.scale(y, x_minus_y, inv=True, trans=True)
 
-        ratios_proposals = tree_map(
-            ratio_proposal_nd,
-            proposal.position,
-            state.position,
-            proposal.logdensity_grad,
-            state.logdensity_grad,
+        c_x_to_y = metric.scale(x, log_x, inv=False, trans=True)
+        c_y_to_x = metric.scale(y, log_y, inv=False, trans=True)
+
+        z_tilde_x_to_y_flat, _ = ravel_pytree(z_tilde_x_to_y)
+        z_tilde_y_to_x_flat, _ = ravel_pytree(z_tilde_y_to_x)
+
+        c_x_to_y_flat, _ = ravel_pytree(c_x_to_y)
+        c_y_to_x_flat, _ = ravel_pytree(c_y_to_x)
+
+        num = metric.kinetic_energy(x_minus_y, y) - _log1pexp(
+            -z_tilde_y_to_x_flat * c_y_to_x_flat
         )
-        ratio_proposal = sum(tree_leaves(ratios_proposals))
+        denom = metric.kinetic_energy(y_minus_x, x) - _log1pexp(
+            -z_tilde_x_to_y_flat * c_x_to_y_flat
+        )
+
+        ratio_proposal = jnp.sum(num - denom)
+
         return proposal.logdensity - state.logdensity + ratio_proposal
 
     def kernel(
-        rng_key: PRNGKey, state: BarkerState, logdensity_fn: Callable, step_size: float
+        rng_key: PRNGKey,
+        state: BarkerState,
+        logdensity_fn: Callable,
+        step_size: float,
+        inverse_mass_matrix: metrics.MetricTypes | None = None,
     ) -> tuple[BarkerState, BarkerInfo]:
-        """Generate a new sample with the MALA kernel."""
+        """Generate a new sample with the Barker kernel."""
+        if inverse_mass_matrix is None:
+            p, _ = ravel_pytree(state.position)
+            (m,) = p.shape
+            inverse_mass_matrix = jnp.ones((m,))
+        metric = metrics.default_metric(inverse_mass_matrix)
         grad_fn = jax.value_and_grad(logdensity_fn)
-
         key_sample, key_rmh = jax.random.split(rng_key)
 
         proposed_pos = _barker_sample(
-            key_sample, state.position, state.logdensity_grad, step_size
+            key_sample,
+            state.position,
+            state.logdensity_grad,
+            step_size,
+            metric,
         )
+
         proposed_logdensity, proposed_logdensity_grad = grad_fn(proposed_pos)
         proposed_state = BarkerState(
             proposed_pos, proposed_logdensity, proposed_logdensity_grad
         )
 
-        log_p_accept = _compute_acceptance_probability(state, proposed_state)
+        log_p_accept = _compute_acceptance_probability(state, proposed_state, metric)
         accepted_state, info = static_binomial_sampling(
             key_rmh, log_p_accept, state, proposed_state
         )
@@ -131,6 +159,7 @@ def build_kernel():
 def as_top_level_api(
     logdensity_fn: Callable,
     step_size: float,
+    inverse_mass_matrix: metrics.MetricTypes | None = None,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Barker's proposal :cite:p:`Livingstone2022Barker` kernel with a
     Gaussian base kernel.
@@ -174,7 +203,9 @@ def as_top_level_api(
     logdensity_fn
         The log-density function we wish to draw samples from.
     step_size
-        The value to use for the step size in the symplectic integrator.
+        The value of the step_size correspnoding to the global scale of the proposal distribution.
+    inverse_mass_matrix
+        The inverse mass matrix to use for pre-conditioning (see Appendix G of :cite:p:`Livingstone2022Barker`).
 
     Returns
     -------
@@ -189,53 +220,21 @@ def as_top_level_api(
         return init(position, logdensity_fn)
 
     def step_fn(rng_key: PRNGKey, state):
-        return kernel(rng_key, state, logdensity_fn, step_size)
+        return kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix)
 
     return SamplingAlgorithm(init_fn, step_fn)
 
 
-def _barker_sample_nd(key, mean, a, scale):
-    """
-    Sample from a multivariate Barker's proposal distribution. In 1D, this has the following probability density function:
-
-    .. math::
-        p(x; \\mu, a, \\sigma) = 2 \frac{N(x; \\mu, \\sigma^2)}{1 + \\exp(-a (x - \\mu)}
-
-    where :math:`N(x; \\mu, \\sigma^2)` is the normal distribution with mean :math:`\\mu` and standard deviation :math:`\\sigma`.
-    The multivariate Barker's proposal distribution is the product of one-dimensional Barker's proposal distributions.
+def _generate_bernoulli(
+    rng_key: PRNGKey, position: ArrayLikeTree, p: ArrayLikeTree
+) -> ArrayTree:
+    pos, unravel_fn = ravel_pytree(position)
+    p_flat, _ = ravel_pytree(p)
+    sample = jax.random.bernoulli(rng_key, p=p_flat, shape=pos.shape)
+    return unravel_fn(sample)
 
 
-    Parameters
-    ----------
-    key
-        A PRNG key.
-    mean
-        The mean of the normal distribution, an Array. This corresponds to :math:`\\mu` in the equation above.
-    a
-        The parameter :math:`a` in the equation above, an Array. This is a skewness parameter.
-    scale
-        The standard deviation of the normal distribution, a scalar. This corresponds to :math:`\\sigma` in the equation above.
-        It encodes the step size of the proposal.
-
-    Returns
-    -------
-    A sample from the Barker's multidimensional proposal distribution.
-
-    """
-
-    key1, key2 = jax.random.split(key)
-    z = scale * jax.random.normal(key1, shape=mean.shape)
-
-    # Sample b=1 with probability p and 0 with probability 1 - p where
-    # p = 1 / (1 + exp(-a * (z - mean)))
-    log_p = -_log1pexp(-a * z)
-    b = jax.random.bernoulli(key2, p=jnp.exp(log_p), shape=mean.shape)
-
-    # return mean + z if b == 1 else mean - z
-    return mean + b * z - (1 - b) * z
-
-
-def _barker_sample(key, mean, a, scale):
+def _barker_sample(key, mean, a, scale, metric):
     r"""
     Sample from a multivariate Barker's proposal distribution for PyTrees.
 
@@ -248,15 +247,28 @@ def _barker_sample(key, mean, a, scale):
     a
         The parameter :math:`a` in the equation above, the same PyTree as `mean`. This is a skewness parameter.
     scale
-        The standard deviation of the normal distribution, a scalar. This corresponds to :math:`\sigma` in the equation above.
+        The global scale, a scalar. This corresponds to :math:`\\sigma` in the equation above.
         It encodes the step size of the proposal.
-
+    metric
+        A `metrics.MetricTypes` object encoding the mass matrix information.
     """
 
-    flat_mean, unravel_fn = ravel_pytree(mean)
-    flat_a, _ = ravel_pytree(a)
-    flat_sample = _barker_sample_nd(key, flat_mean, flat_a, scale)
-    return unravel_fn(flat_sample)
+    key1, key2 = jax.random.split(key)
+
+    z = generate_gaussian_noise(key1, mean, sigma=scale)
+    c = metric.scale(mean, a, inv=False, trans=True)
+
+    # Sample b=1 with probability p and 0 with probability 1 - p where
+    # p = 1 / (1 + exp(-a * (z - mean)))
+    log_p = jax.tree_util.tree_map(lambda x, y: -_log1pexp(-x * y), c, z)
+    p = jax.tree_util.tree_map(lambda x: jnp.exp(x), log_p)
+    b = _generate_bernoulli(key2, mean, p=p)
+
+    bz = jax.tree_util.tree_map(lambda x, y: x * y - (1 - x) * y, b, z)
+
+    return jax.tree_util.tree_map(
+        lambda a, b: a + b, mean, metric.scale(mean, bz, inv=False, trans=False)
+    )
 
 
 def _log1pexp(a):
