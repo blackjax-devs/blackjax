@@ -120,16 +120,19 @@ def build_kernel(
         logL_birth = state.logL_birth.at[dead_idx].set(logL_births)
         logL_star = state.logL.min()
 
-        nlive = state.particles.shape[0]
         ndel = dead_idx.shape[0]
-        n = jnp.arange(nlive, nlive-ndel, -1)
-        delta_log_xi = - 1/n
-        log_delta_xi = state.logX + jnp.cumsum(delta_log_xi) + jnp.log(1 - jnp.exp(delta_log_xi))
+        n = jnp.arange(num_particles, num_particles - ndel, -1)
+        delta_log_xi = -1 / n
+        log_delta_xi = (
+            state.logX + jnp.cumsum(delta_log_xi) + jnp.log(1 - jnp.exp(delta_log_xi))
+        )
         delta_logz_dead = dead_logL + log_delta_xi
 
         logX = state.logX + delta_log_xi.sum()
-        logZ_dead = jnp.logaddexp(state.logZ, jax.scipy.special.logsumexp(delta_logz_dead))
-        logZ_live = jax.scipy.special.logsumexp(logL) - jnp.log(nlive) + logX
+        logZ_dead = jnp.logaddexp(
+            state.logZ, jax.scipy.special.logsumexp(delta_logz_dead)
+        )
+        logZ_live = jax.scipy.special.logsumexp(logL) - jnp.log(num_particles) + logX
 
         new_state = NSState(
             particles,

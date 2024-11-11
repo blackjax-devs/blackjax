@@ -47,9 +47,22 @@ log_analytic_evidence = compute_logZ(
     logLmax=loglikelihood(like_mean),
 )
 
+############################################
+# Nested Sampling algorithm definition
+############################################
+
+# We use the loaded `nested slice sampling` here, bypassing the choice of inner kernel and
+# inner kernel tuning, in favour of a simpler UI that loads the vectorized slice sampler
+
+# n_live is the number of live samples to draw initially and maintain through the run
 n_live = 500
+# n_delete is the number of samples to delete each outer kernel iteration, as the inner kernel is parallelised we do this
+# to update all of these points in parallel, useful for GPU acceleration hopefully.
 n_delete = 20
+# num_mcmc_steps is the number of MCMC steps to perform with the inner kernel in order to decorrelate the resampled points
+# we set this conservatively high here at 5 times the dimension of the parameter space
 num_mcmc_steps = d * 5
+
 algo = blackjax.ns.adaptive.nss(
     logprior_fn=prior.log_prob,
     loglikelihood_fn=loglikelihood,
@@ -71,22 +84,39 @@ def one_step(carry, xs):
     return (state, k), dead_point
 
 
+# We can run the algorithm for a fixed number of steps but we run into a quirk of nested sampling here. The state after N iterations
+# does not necessarily contain any useful posterior points, it will have accumulated an estimate of the marginal likelihood, and this
+# is what is usefully tracked.
+
+
 # n_steps = 1000
 # (live, _), dead = jax.lax.scan((one_step), (state, rng_key), length=n_steps)
 
-dead = []
 
+# Also typically we would wrap the outer in a while loop, as the compression of nested sampling can push well past the posterior typical
+# set if left fixed. This leaves a slightly strange construction, but works well. We want to accumulate the algorithm info (as this is)
+# how we will reconstruct posterior points, but the lax while loop wrapper won't accumulate well. So we will jit compile the outer step
+# and run it in a python loop
+
+dead = []
 for _ in tqdm.trange(1000):
+    # We track the estimate of the evidence in the live points as logZ_live, and the accumulated sum across all steps in logZ
+    # this gives a handy termination that allows us to stop early
     if state.sampler_state.logZ_live - state.sampler_state.logZ < -3:  # type: ignore[attr-defined]
         break
     (state, rng_key), dead_info = one_step((state, rng_key), None)
     dead.append(dead_info)
 
-
+# It is now not too bad to remap the list of NSInfos into a single instance
+# note in theory we should include the live points, but assuming we have done things correctly and hit the termination criteria,
+# they will contain negligible weight
 dead = jax.tree.map(lambda *args: jnp.concatenate(args), *dead)
 
+# From here we can use the utils to compute the log weights and the evidence of the accumulated dead points
+# sampling log weights lets us get a sensible error on the evidence estimate
 logw = log_weights(rng_key, dead)  # type: ignore[arg-type]
 logZs = jax.scipy.special.logsumexp(logw, axis=0)
 
 print(f"Analytic evidence: {log_analytic_evidence:.2f}")
+print(f"Runtime evidence: {state.sampler_state.logZ:.2f}")  # type: ignore[attr-defined]
 print(f"Estimated evidence: {logZs.mean():.2f} +- {logZs.std():.2f}")
