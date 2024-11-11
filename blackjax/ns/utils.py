@@ -74,9 +74,7 @@ def logX(key: jax.random.PRNGKey, dead: NSInfo, samples=100):
     logX = jnp.cumsum(t, axis=0)
 
     logXp = jnp.concatenate([jnp.zeros((1, logX.shape[1])), logX[:-1]], axis=0)
-    logXm = jnp.concatenate(
-        [logX[1:], jnp.full((1, logX.shape[1]), -jnp.inf)], axis=0
-    )
+    logXm = jnp.concatenate([logX[1:], jnp.full((1, logX.shape[1]), -jnp.inf)], axis=0)
     log_diff = logXm - logXp
     logdX = jnp.log1p(-jnp.exp(log_diff).clip(max=1.0)) + logXp - jnp.log(2)
     return logX, logdX
