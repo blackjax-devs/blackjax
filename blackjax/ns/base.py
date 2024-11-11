@@ -1,4 +1,3 @@
-# Copyright 2024- Will Handley & David Yallup
 from functools import partial
 from typing import Callable, NamedTuple
 
@@ -47,26 +46,27 @@ def build_kernel(
     delete_fn: Callable,
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
-    num_mcmc_steps: int = 10,
+    num_mcmc_steps: int,
 ) -> Callable:
-    r"""Build a Nested Sampling by running a creation and deletion step.
+    r"""Build a Nested Sampling by running a vectorized delete and creation of particles.
     This base version does not tune the inner kernel parameters. Consequently,
-    it will rapidly become inefficient.
+    it can be inefficient.
 
     Parameters
-        Parameters
     ----------
     logprior_fn : Callable
         A function that computes the log prior probability.
     loglikelihood_fn : Callable
         A function that computes the log likelihood.
     delete_fn : Callable
-        Function that takes an array of keys and particles and deletes some
-        particles.
-    parameter_update_fn : Callable[[NSState, NSInfo], Dict[str, ArrayTree]]
-        Function that updates the parameters of the inner kernel.
-    num_mcmc_steps : int, optional
-        Number of MCMC steps to perform, by default 10.
+        Function that takes an array of log likelihoods and marks particles for deletion and updates.
+    mcmc_step_fn:
+        The initialisation of the transition kernel, should take as parameters.
+        kernel = mcmc_step_fn(logprior, loglikelihood, logL0 (likelihood threshold), **mcmc_parameter_update_fn())
+    mcmc_init_fn
+        A callable that initializes the inner kernel
+    num_mcmc_steps: int
+        Number of MCMC steps to perform. Recommended is 5 times the dimension of the parameter space.
 
     Returns
     -------
@@ -110,7 +110,7 @@ def build_kernel(
         )
 
         logL_births = logL0 * jnp.ones(dead_idx.shape)
-        # particles = state.particles.at[dead_idx].set(new_state.position)
+
         particles = jax.tree_util.tree_map(
             lambda p, n: p.at[dead_idx].set(n),
             state.particles,
@@ -186,26 +186,26 @@ def as_top_level_api(
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
     mcmc_parameters: dict,
-    num_mcmc_steps: int = 10,
+    num_mcmc_steps: int,
     n_delete: int = 1,
 ) -> SamplingAlgorithm:
-    """Implements the (basic) user interface for the Adaptive Nested Sampling kernel.
+    """Implements the user interface for the Nested Sampling kernel.
+
     Parameters
     ----------
-    logprior_fn: Callable
+    logprior_fn : Callable
         A function that computes the log prior probability.
-    loglikelihood_fn: Callable
+    loglikelihood_fn : Callable
         A function that computes the log likelihood.
-    parameter_update_fn: Callable
-        A function that updates the parameters given the current state and info.
-    initial_parameters: dict
-        Initial parameters for the inner kernel.
-    num_mcmc_steps: int, optional
-        Number of MCMC steps to perform. Default is 10.
+    mcmc_step_fn:
+        The initialisation of the transition kernel, should take as parameters.
+        kernel = mcmc_step_fn(logprior, loglikelihood, logL0 (likelihood threshold), **mcmc_parameter_update_fn())
+    mcmc_init_fn
+        A callable that initializes the inner kernel
+    num_mcmc_steps: int
+        Number of MCMC steps to perform. Recommended is 5 times the dimension of the parameter space.
     n_delete: int, optional
         Number of particles to delete in each iteration. Default is 1.
-    **extra_parameters
-        Additional parameters for the algorithm.
 
     Returns
     -------
