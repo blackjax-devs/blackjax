@@ -16,8 +16,8 @@ class NSState(NamedTuple):
     particles: ArrayTree
     logL: Array  # The log-likelihood of the particles
     logL_birth: (Array)  # The hard likelihood threshold of each particle at birth
-
     logL_star: float  # The current hard likelihood threshold
+    pid: Array = Array  # particle ID
     logX: float = 0.0  # The current log-volume estiamte
     logZ_live: float = -jnp.inf  # The current evidence estimate
     logZ: float = -jnp.inf  # The accumulated evidence estimate
@@ -37,7 +37,8 @@ def init(particles: ArrayLikeTree, loglikelihood_fn):
     num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
     logL_birth = logL_star * jnp.ones(num_particles)
     logL = loglikelihood_fn(particles)
-    return NSState(particles, logL, logL_birth, logL_star)
+    pid = jnp.arange(num_particles)
+    return NSState(particles, logL, logL_birth, logL_star, pid)
 
 
 def build_kernel(
@@ -119,6 +120,7 @@ def build_kernel(
         logL = state.logL.at[dead_idx].set(new_state.loglikelihood)
         logL_birth = state.logL_birth.at[dead_idx].set(logL_births)
         logL_star = state.logL.min()
+        pid = state.pid.at[dead_idx].set(state.pid[live_idx])
 
         ndel = dead_idx.shape[0]
         n = jnp.arange(num_particles, num_particles - ndel, -1)
@@ -139,6 +141,7 @@ def build_kernel(
             logL,
             logL_birth,
             logL_star,
+            pid,
             logX=logX,
             logZ=logZ_dead,
             logZ_live=logZ_live,
