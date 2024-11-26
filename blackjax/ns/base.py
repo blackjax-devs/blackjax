@@ -84,7 +84,7 @@ def build_kernel(
     ) -> tuple[NSState, NSInfo]:
         num_particles = jnp.shape(jax.tree_leaves(state.particles)[0])[0]
         rng_key, delete_fn_key = jax.random.split(rng_key)
-        dead_logL, dead_idx, live_idx = delete_fn(delete_fn_key, state.logL)
+        dead_logL, dead_idx, live_idx = delete_fn(delete_fn_key, state)
 
         logL0 = dead_logL.max()
         dead_particles = jax.tree.map(lambda x: x[dead_idx], state.particles)
@@ -152,7 +152,7 @@ def build_kernel(
     return kernel
 
 
-def delete_fn(key, logL, n_delete):
+def delete_fn(key, state, n_delete):
     """Analogous to resampling functions in SMC, defines the likelihood level and associated particles to delete.
     As well as resampling live particles to then evolve.
 
@@ -160,8 +160,8 @@ def delete_fn(key, logL, n_delete):
     -----------
     key : jax.random.PRNGKey
         A PRNG key used for random number generation.
-    logL : jnp.ndarray
-        Array of log-likelihood values for the current set of particles.
+    state : NSState
+        The current state of the Nested Sampler.
     n_delete : int
         Number of particles to delete and resample.
 
@@ -174,6 +174,7 @@ def delete_fn(key, logL, n_delete):
     live_idx : jnp.ndarray
         Indices of resampled particles to evolve.
     """
+    logL = state.logL
     neg_dead_logL, dead_idx = jax.lax.top_k(-logL, n_delete)
     weights = jnp.array(logL > -neg_dead_logL.min(), dtype=jnp.float32)
     live_idx = jax.random.choice(
