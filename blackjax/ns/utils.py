@@ -104,3 +104,35 @@ def log_weights(key: jax.random.PRNGKey, dead: NSInfo, samples=100, beta=1.0):
     """
     _, ldX = logX(key, dead, samples)
     return ldX + beta * dead.logL[..., jnp.newaxis]
+
+
+def finalise(state, dead):
+    dead_map = jax.tree.map(
+        lambda *args: jnp.concatenate(args),
+        *(
+            dead
+            + [
+                NSInfo(
+                    state.sampler_state.particles,
+                    state.sampler_state.logL,
+                    state.sampler_state.logL_birth,
+                    dead[-1].update_info,
+                )
+            ]
+        ),
+    )
+
+    return dead_map
+
+
+def sample(rng_key, dead_map, n=1000):
+    logw = log_weights(rng_key, dead_map).mean(axis=-1)
+    return dead_map.particles[
+        jax.random.choice(
+            rng_key,
+            dead_map.particles.shape[0],
+            p=jnp.exp(logw.squeeze()),
+            shape=(n,),
+            replace=False,
+        )
+    ]

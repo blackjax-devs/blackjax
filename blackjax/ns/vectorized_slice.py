@@ -36,6 +36,7 @@ class SliceInfo(NamedTuple):
     l_steps: Array
     r_steps: Array
     s_steps: Array
+    evals: Array
 
 
 def init(position: ArrayTree, logdensity_fn: Callable, loglikelihood: Array):
@@ -179,5 +180,7 @@ def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
     carry = (l, r, x0, jnp.zeros(x0.shape[0]), key, within, 0)
     l, r, x1, logl, key, within, s_i = jax.lax.while_loop(cond_fun, shrink_step, carry)
     slice_state = SliceState(x1, logpi(x1), logl)
-    slice_info = SliceInfo(l_i, r_i, s_i)
+    slice_info = SliceInfo(
+        l_i, r_i, s_i, (l_i + r_i + s_i) * jnp.ones(x0.shape[0]).sum()
+    )
     return slice_state, slice_info
