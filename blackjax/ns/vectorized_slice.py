@@ -96,19 +96,22 @@ def build_slice_kernel(
 
 
 def vertical_slice(rng, logdensity, positions):
+    n_particles = jnp.shape(jax.tree_leaves(positions)[0])[0]
     logpi = logdensity(positions)
-    logpi0 = logpi + jnp.log(jax.random.uniform(rng, shape=(positions.shape[0],)))
+    logpi0 = logpi + jnp.log(jax.random.uniform(rng, shape=(n_particles,)))
     return logpi0, logpi
 
 
 def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
+    n_particles = jnp.shape(jax.tree_leaves(x0)[0])[0]
+    x0, wrap = jax.flatten_util.ravel_pytree(x0)
     x0 = jnp.atleast_2d(x0)
     key, proposal_key = jax.random.split(key)
     n = proposal(proposal_key, x0)
 
     # # Initial bounds
     key, subkey = jax.random.split(key)
-    w = jax.random.uniform(subkey, shape=(x0.shape[0],))
+    w = jax.random.uniform(subkey, shape=(n_particles,))
     l = x0 + w[:, None] * n
     r = x0 + (w[:, None] - 1) * n
 
@@ -117,7 +120,8 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
         l0, within, counter = carry
         counter += 1
         l = l0 + within[:, None] * n
-        within = jnp.logical_and(logL(l) > logL0, logpi(l) >= logpi0)
+        wrap_l = wrap(l.squeeze())
+        within = jnp.logical_and(logL(wrap_l) > logL0, logpi(wrap_l) >= logpi0)
         return l, within, counter
 
     def cond_fun_l(carry):
@@ -133,7 +137,8 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
         r0, within, counter = carry
         counter += 1
         r = r0 - within[:, None] * n
-        within = jnp.logical_and(logL(r) > logL0, logpi(r) >= logpi0)
+        wrap_r = wrap(r.squeeze())
+        within = jnp.logical_and(logL(wrap_r) > logL0, logpi(wrap_r) >= logpi0)
         return r, within, counter
 
     def cond_fun_r(carry):
@@ -154,9 +159,9 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
 
         x1 = l + u[:, None] * (r - l)
         x1 = jnp.where(~within[:, None], x1, xminus1)
-
-        logLx1 = logL(x1)
-        within_new = jnp.logical_and(logLx1 > logL0, logpi(x1) >= logpi0)
+        wrap_x1 = wrap(x1.squeeze())
+        logLx1 = logL(wrap_x1)
+        within_new = jnp.logical_and(logLx1 > logL0, logpi(wrap_x1) >= logpi0)
 
         s = jnp.sum((x1 - x0) * (r - l), axis=-1) > 0
         condition_l = (~within_new) & (~s)
@@ -172,7 +177,8 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
     within = jnp.zeros(x0.shape[0], dtype=bool)
     carry = (l, r, x0, jnp.zeros(x0.shape[0]), key, within, 0)
     l, r, x1, logl, key, within, s_i = jax.lax.while_loop(cond_fun, shrink_step, carry)
-    slice_state = SliceState(x1, logpi(x1), logl)
+    wrap_x1 = wrap(x1.squeeze())
+    slice_state = SliceState(wrap_x1, logpi(wrap_x1), logl)
     slice_info = SliceInfo(
         l_i, r_i, s_i, (l_i + r_i + s_i) * jnp.ones(x0.shape[0]).sum()
     )

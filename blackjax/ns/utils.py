@@ -127,12 +127,11 @@ def finalise(state, dead):
 
 def sample(rng_key, dead_map, n=1000):
     logw = log_weights(rng_key, dead_map).mean(axis=-1)
-    return dead_map.particles[
-        jax.random.choice(
-            rng_key,
-            dead_map.particles.shape[0],
-            p=jnp.exp(logw.squeeze()),
-            shape=(n,),
-            replace=False,
-        )
-    ]
+    indices = jax.random.choice(
+        rng_key,
+        dead_map.logL.shape[0],
+        p=jnp.exp(logw.squeeze()),
+        shape=(n,),
+        replace=True,
+    )
+    return jax.tree_util.tree_map(lambda leaf: leaf[indices], dead_map.particles)
