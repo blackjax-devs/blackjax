@@ -1,6 +1,7 @@
 from functools import partial
 from typing import Callable, Dict
 
+import jax
 import jax.numpy as jnp
 
 from blackjax import SamplingAlgorithm
@@ -8,7 +9,7 @@ from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import build_kernel as base_ns
 from blackjax.ns.base import delete_fn
 from blackjax.ns.base import init as init_base
-from blackjax.ns.vectorized_slice import build_kernel as slice_kernel
+from blackjax.ns.vectorized_slice import build_slice_kernel as slice_kernel
 from blackjax.ns.vectorized_slice import init as slice_init
 from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
 from blackjax.smc.tuning.from_particles import particles_covariance_matrix
@@ -168,18 +169,31 @@ def nss(
         A sampling algorithm object.
     """
     delete_func = partial(delete_fn, n_delete=n_delete)
-    mcmc_step_fn = slice_kernel
     mcmc_init_fn = slice_init
 
     def parameter_update_fn(state, _):
         cov = jnp.atleast_2d(particles_covariance_matrix(state.particles))
         return {"cov": cov}
 
+    def step(logprior, loglikelihood, logL0, cov):
+        "We need step to be vmappable over the parameter space, so we wrap it to make all parameter Jax Arrays or JaxTrees"
+        invcov = jnp.linalg.inv(cov)
+
+        def proposal_distribution(key, x0):
+            n = jax.random.multivariate_normal(
+                key, mean=jnp.zeros(x0.shape[1]), cov=cov, shape=(x0.shape[0],)
+            )
+            norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
+            n = n / norm[..., None]
+            return n
+
+        return slice_kernel(logprior, loglikelihood, logL0, proposal_distribution)
+
     kernel = build_kernel(
         logprior_fn,
         loglikelihood_fn,
         delete_func,
-        mcmc_step_fn,
+        step,
         mcmc_init_fn,
         parameter_update_fn,
         num_mcmc_steps,

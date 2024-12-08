@@ -22,7 +22,7 @@ __all__ = [
     "SliceState",
     "SliceInfo",
     "init",
-    "build_kernel",
+    "build_slice_kernel",
 ]
 
 
@@ -44,11 +44,11 @@ def init(position: ArrayTree, logdensity_fn: Callable, loglikelihood: Array):
     return SliceState(position, logdensity, loglikelihood)
 
 
-def build_kernel(
+def build_slice_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     logL0: Array,
-    cov: Array,
+    proposal_distribution: Callable,
 ) -> Callable:
     """Instantiate a (constrained) vectorized slice sampling kernel.
 
@@ -60,8 +60,8 @@ def build_kernel(
         Function to compute the log likelihood.
     logL0 : Array
         Initial log-likelihood values.
-    cov : Array
-        Covariance matrix for the proposal distribution.
+    proposal_distribution : Callable
+        Function to generate a proposal vector for slicing.
 
     Returns
     -------
@@ -73,14 +73,17 @@ def build_kernel(
     The Annals of Statistics, Ann. Statist. 31(3), 705-767, (June 2003)
     """
 
-    def one_step(rng_key: PRNGKey, state: SliceState):
+    def kernel(rng_key: PRNGKey, state: SliceState):
+        def proposal_generator(rng_key: PRNGKey, position: ArrayTree):
+            return proposal_distribution(rng_key, position)
+
         rng_key, vertical_slice_key = jax.random.split(rng_key)
         logpi0, _ = vertical_slice(vertical_slice_key, logprior_fn, state.position)
         rng_key, horizontal_slice_key = jax.random.split(rng_key)
         slice_state, slice_info = horizontal_slice_proposal(
             horizontal_slice_key,
             state.position,
-            cov,
+            proposal_generator,
             loglikelihood_fn,
             logL0,
             logprior_fn,
@@ -89,7 +92,7 @@ def build_kernel(
 
         return slice_state, slice_info
 
-    return one_step
+    return kernel
 
 
 def vertical_slice(rng, logdensity, positions):
@@ -98,22 +101,12 @@ def vertical_slice(rng, logdensity, positions):
     return logpi0, logpi
 
 
-def horizontal_slice_proposal(key, x0, cov, logL, logL0, logpi, logpi0):
-    # Ensure cov_ and x0 are JAX arrays
-    cov = jnp.asarray(cov)
+def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
     x0 = jnp.atleast_2d(x0)
+    key, proposal_key = jax.random.split(key)
+    n = proposal(proposal_key, x0)
 
-    # Random direction
-    key, subkey = jax.random.split(key)
-    n = jax.random.multivariate_normal(
-        subkey, jnp.zeros(x0.shape[1]), cov, shape=(x0.shape[0],)
-    )  # Standard normal samples
-
-    # Compute Mahalanobis norms and normalize n
-    invcov = jnp.linalg.inv(cov)
-    norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
-    n = n / norm[..., None]
-    # Initial bounds
+    # # Initial bounds
     key, subkey = jax.random.split(key)
     w = jax.random.uniform(subkey, shape=(x0.shape[0],))
     l = x0 + w[:, None] * n
