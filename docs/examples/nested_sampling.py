@@ -76,7 +76,7 @@ initial_particles = prior.sample(seed=init_key, sample_shape=(n_live,))
 state = algo.init(initial_particles, loglikelihood)
 
 
-@jax.jit
+# @jax.jit
 def one_step(carry, xs):
     state, k = carry
     k, subk = jax.random.split(k, 2)
@@ -99,13 +99,14 @@ def one_step(carry, xs):
 # and run it in a python loop
 
 dead = []
-for _ in tqdm.trange(1000):
-    # We track the estimate of the evidence in the live points as logZ_live, and the accumulated sum across all steps in logZ
-    # this gives a handy termination that allows us to stop early
-    if state.sampler_state.logZ_live - state.sampler_state.logZ < -3:  # type: ignore[attr-defined]
-        break
-    (state, rng_key), dead_info = one_step((state, rng_key), None)
-    dead.append(dead_info)
+with jax.disable_jit():
+    for _ in tqdm.trange(1000):
+        # We track the estimate of the evidence in the live points as logZ_live, and the accumulated sum across all steps in logZ
+        # this gives a handy termination that allows us to stop early
+        if state.sampler_state.logZ_live - state.sampler_state.logZ < -3:  # type: ignore[attr-defined]
+            break
+        (state, rng_key), dead_info = one_step((state, rng_key), None)
+        dead.append(dead_info)
 
 # It is now not too bad to remap the list of NSInfos into a single instance
 # note in theory we should include the live points, but assuming we have done things correctly and hit the termination criteria,

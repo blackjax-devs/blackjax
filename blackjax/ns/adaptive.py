@@ -180,9 +180,7 @@ def nss(
         invcov = jnp.linalg.inv(cov)
 
         def proposal_distribution(key, x0):
-            n = jax.random.multivariate_normal(
-                key, mean=jnp.zeros(x0.shape[1]), cov=cov, shape=(x0.shape[0],)
-            )
+            n = jax.random.multivariate_normal(key, mean=jnp.zeros(x0.shape), cov=cov)
             norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
             n = n / norm[..., None]
             return n

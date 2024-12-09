@@ -96,19 +96,37 @@ def build_kernel(
 
         kernel = mcmc_step_fn(logprior_fn, loglikelihood_fn, logL0, **mcmc_parameters)
 
-        def mcmc_step(carry, xs):
-            state, k = carry
-            k, subk = jax.random.split(k, 2)
-            state, info = kernel(subk, state)
-            return (state, k), info
+        # def mcmc_step(carry, xs):
+        #     state, k = carry
+        #     k, subk = jax.random.split(k, 2)
+        #     state, info = kernel(subk, state)
+        #     return (state, k), info
 
         rng_key, sample_key = jax.random.split(rng_key)
 
-        mcmc_state = mcmc_init_fn(new_pos, logprior_fn, new_logl)
+        def mcmc_kernel(rng_key, position, new_logl):
+            state = mcmc_init_fn(position, logprior_fn, new_logl)
 
-        (new_state, rng_key), new_state_info = jax.lax.scan(
-            mcmc_step, (mcmc_state, sample_key), length=num_mcmc_steps
+            def body_fn(state, rng_key):
+                new_state, info = kernel(rng_key, state)
+                return new_state, info
+
+            keys = jax.random.split(rng_key, num_mcmc_steps)
+            last_state, info = jax.lax.scan(body_fn, state, keys)
+            return last_state, info
+
+        sample_keys = jax.random.split(sample_key, dead_idx.shape[0])
+        new_state, new_state_info = jax.vmap(mcmc_kernel)(
+            sample_keys, new_pos, new_logl
         )
+        # mcmc_kernel(sample_keys[0], new_pos[0], new_logl[0])
+        # jax.vmap(mcmc_kernel)(sample_keys, new_pos)
+
+        # mcmc_state = mcmc_init_fn(new_pos, logprior_fn, new_logl)
+
+        # (new_state, rng_key), new_state_info = jax.lax.scan(
+        #     mcmc_step, (mcmc_state, sample_key), length=num_mcmc_steps
+        # )
 
         logL_births = logL0 * jnp.ones(dead_idx.shape)
 
