@@ -116,6 +116,7 @@ def build_kernel(
             return last_state, info
 
         sample_keys = jax.random.split(sample_key, dead_idx.shape[0])
+        # new_state, new_state_info = mcmc_kernel(sample_keys[0], new_pos[0], new_logl[0])
         new_state, new_state_info = jax.vmap(mcmc_kernel)(
             sample_keys, new_pos, new_logl
         )

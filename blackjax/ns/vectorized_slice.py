@@ -109,13 +109,13 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
     key, subkey = jax.random.split(key)
     w = jax.random.uniform(subkey)
     l = jax.tree_map(jnp.add, x0, jax.tree_map(jnp.multiply, n, w))
-    r = jax.tree_map(jnp.add, x0, jax.tree_map(jnp.multiply, n, 1 - w))
+    r = jax.tree_map(jnp.add, x0, jax.tree_map(jnp.multiply, n, w - 1))
 
     # Expand l
     def expand_l(carry):
         l0, within, counter = carry
         counter += 1
-        l = jax.tree_map(jnp.add, l0, jax.tree_map(jnp.multiply, n, counter))
+        l = jax.tree_map(jnp.add, l0, n)
         within = jnp.logical_and(logL(l) > logL0, logpi(l) >= logpi0)
         return l, within, counter
 
@@ -131,7 +131,7 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
     def expand_r(carry):
         r0, within, counter = carry
         counter += 1
-        r = jax.tree_map(jnp.add, r0, jax.tree_map(jnp.multiply, n, counter))
+        r = jax.tree_map(jnp.add, r0, -n)
         within = jnp.logical_and(logL(r) > logL0, logpi(r) >= logpi0)
         return r, within, counter
 
@@ -154,7 +154,7 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
         # x1 = l + u * (r - l)
         x1 = jax.tree_util.tree_map(lambda l, r: l + u * (r - l), l, r)
 
-        x1 = jnp.where(~within, x1, xminus1)
+        # x1 = jnp.where(~within, x1, xminus1)
 
         logLx1 = logL(x1)
         within_new = jnp.logical_and(logLx1 > logL0, logpi(x1) >= logpi0)
@@ -167,11 +167,16 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
             r,
             l,
         )
-        s = jax.tree_map(jnp.sum, s_vec) > 0
-        condition_l = (~within_new) & (~s)
-        l = jnp.where(condition_l, x1, l)
-        condition_r = (~within_new) & s
-        r = jnp.where(condition_r, x1, r)
+        s_flat, _ = jax.flatten_util.ravel_pytree(s_vec)
+        s = jnp.sum(s_flat) > 0
+        # s = jax.tree_map(jnp.sum, s_vec) > 0
+        # condition_l = (~within_new) & (~s)
+        # l = jnp.where(condition_l, x1, l)
+        # condition_r = (~within_new) & s
+        # r = jnp.where(condition_r, x1, r)
+        l = jnp.where(~s, x1, l)
+        r = jnp.where(s, x1, r)
+
         return l, r, x1, logLx1, key, within_new, counter
 
     def cond_fun(carry):
