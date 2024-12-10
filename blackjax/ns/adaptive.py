@@ -149,6 +149,7 @@ def nss(
     loglikelihood_fn: Callable,
     num_mcmc_steps: int,
     n_delete: int = 1,
+    ravel_fn: Callable = lambda x: x,
 ) -> SamplingAlgorithm:
     """Implements the a baseline Nested Slice Sampling kernel.
 
@@ -162,6 +163,8 @@ def nss(
         Number of MCMC steps to perform. Recommended is 5 times the dimension of the parameter space.
     n_delete: int, optional
         Number of particles to delete in each iteration. Default is 1.
+    ravel_fn: Callable, optional
+        Optional function to ravel the proposal to the same shape as the state space, if needed
 
     Returns
     -------
@@ -183,7 +186,7 @@ def nss(
             n = jax.random.multivariate_normal(key, mean=jnp.zeros(x0.shape), cov=cov)
             norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
             n = n / norm[..., None]
-            return n
+            return ravel_fn(n)
 
         return slice_kernel(logprior, loglikelihood, logL0, proposal_distribution)
 

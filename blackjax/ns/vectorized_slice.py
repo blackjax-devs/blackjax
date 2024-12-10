@@ -61,7 +61,7 @@ def build_slice_kernel(
     logL0 : Array
         Initial log-likelihood values.
     proposal_distribution : Callable
-        Function to generate a proposal vector for slicing.
+        Function to generate a proposal PyTree for slice stepping.
 
     Returns
     -------
@@ -151,15 +151,11 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
         key, subkey = jax.random.split(key)
         u = jax.random.uniform(subkey)
 
-        # x1 = l + u * (r - l)
         x1 = jax.tree_util.tree_map(lambda l, r: l + u * (r - l), l, r)
-
-        # x1 = jnp.where(~within, x1, xminus1)
 
         logLx1 = logL(x1)
         within_new = jnp.logical_and(logLx1 > logL0, logpi(x1) >= logpi0)
 
-        # s = jnp.sum((x1 - x0) * (r - l), axis=-1) > 0
         s_vec = jax.tree_util.tree_map(
             lambda x1, x0, r, l: (x1 - x0) * (r - l),
             x1,
@@ -169,11 +165,6 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
         )
         s_flat, _ = jax.flatten_util.ravel_pytree(s_vec)
         s = jnp.sum(s_flat) > 0
-        # s = jax.tree_map(jnp.sum, s_vec) > 0
-        # condition_l = (~within_new) & (~s)
-        # l = jnp.where(condition_l, x1, l)
-        # condition_r = (~within_new) & s
-        # r = jnp.where(condition_r, x1, r)
         l = jnp.where(~s, x1, l)
         r = jnp.where(s, x1, r)
 
