@@ -108,8 +108,8 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
     # # Initial bounds
     key, subkey = jax.random.split(key)
     w = jax.random.uniform(subkey)
-    l = jax.tree_map(jnp.add, x0, jax.tree_map(jnp.multiply, n, w))
-    r = jax.tree_map(jnp.add, x0, jax.tree_map(jnp.multiply, n, w - 1))
+    l = jax.tree_map(lambda x, y: x + w * y, x0, n)
+    r = jax.tree_map(lambda x, y: x + (w - 1) * y, x0, n)
 
     # Expand l
     def expand_l(carry):
@@ -131,7 +131,7 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
     def expand_r(carry):
         r0, within, counter = carry
         counter += 1
-        r = jax.tree_map(jnp.add, r0, -n)
+        r = jax.tree_map(lambda x, y: x - y, r0, n)
         within = jnp.logical_and(logL(r) > logL0, logpi(r) >= logpi0)
         return r, within, counter
 
@@ -165,9 +165,9 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
         )
         s_flat, _ = jax.flatten_util.ravel_pytree(s_vec)
         s = jnp.sum(s_flat) > 0
-        l = jnp.where(~s, x1, l)
-        r = jnp.where(s, x1, r)
-
+        # this is slow and should be optimized, dont need to check all the elements!
+        l = jax.tree_map(lambda l_i, x1_i: jnp.where(s, l_i, x1_i), l, x1)
+        r = jax.tree_map(lambda r_i, x1_i: jnp.where(s, x1_i, r_i), r, x1)
         return l, r, x1, logLx1, key, within_new, counter
 
     def cond_fun(carry):
