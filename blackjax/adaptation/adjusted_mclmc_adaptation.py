@@ -44,7 +44,6 @@ def adjusted_mclmc_find_L_and_step_size(
     max="avg",
     num_windows=1,
     tuning_factor=1.0,
-    logdensity_grad_fn=None,
 ):
     """
     Finds the optimal value of the parameters for the MH-MCHMC algorithm.
@@ -107,11 +106,9 @@ def adjusted_mclmc_find_L_and_step_size(
             diagonal_preconditioning=diagonal_preconditioning,
             max=max,
             tuning_factor=tuning_factor,
-            logdensity_grad_fn=logdensity_grad_fn
         )(
             state, params, num_steps, window_key
         )
-    # jax.debug.print("params after stage 2 {x}", x=params)
 
     if frac_tune3 != 0:
         for i in range(2):
@@ -122,7 +119,6 @@ def adjusted_mclmc_find_L_and_step_size(
                 mclmc_kernel, frac=frac_tune3, Lfactor=0.5, max=max, eigenvector=eigenvector,
             )(state, params, num_steps, part2_key1)
 
-            # jax.debug.print("params after stage 3 {x}", x=params)
             (
                 state,
                 params,
@@ -138,13 +134,11 @@ def adjusted_mclmc_find_L_and_step_size(
                 diagonal_preconditioning=diagonal_preconditioning,
                 max=max,
                 tuning_factor=tuning_factor,
-                logdensity_grad_fn=logdensity_grad_fn
             )(
                 state, params, num_steps, part2_key2
             )
 
         
-            # jax.debug.print("params after stage 1 (again) {x}", x=params)
         
 
     return state, params
@@ -160,7 +154,6 @@ def adjusted_mclmc_make_L_step_size_adaptation(
     fix_L_first_da=False,
     max='avg',
     tuning_factor=1.0,
-    logdensity_grad_fn=None,
 ):
     """Adapts the stepsize and L of the MCLMC kernel. Designed for the unadjusted MCLMC"""
 
@@ -171,8 +164,6 @@ def adjusted_mclmc_make_L_step_size_adaptation(
 
 
             mask, rng_key = weight_and_key
-            # kernel_key, num_steps_key = jax.random.split(rng_key, 2)
-            rng_key, nan_key = jax.random.split(rng_key, 2)
             (
                 previous_state,
                 params,
@@ -189,12 +180,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 step_size=params.step_size,
                 sqrt_diag_cov=params.sqrt_diag_cov,
             )
-            # jax.debug.print("{x}", x=(params.step_size))
-            # jax.debug.print(" acc rate {x}", x=(info.acceptance_rate))
-
-            # jax.debug.print("acceptance rate {x}", x=info.acceptance_rate)
-            # jax.debug.print("{x}", x=params.step_size)
-            # jax.debug.print("L {x}", x=params.L)
+            
 
             # step updating
             success, state, step_size_max, energy_change = handle_nans(
@@ -203,7 +189,6 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 params.step_size,
                 step_size_max,
                 info.energy,
-                nan_key
             )
 
             log_step_size, log_step_size_avg, step, avg_error, mu = update_da(
@@ -223,9 +208,9 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 1e-5, jnp.exp(adaptive_state.log_step_size), params.L / 1.1
             )
             adaptive_state = adaptive_state._replace(log_step_size=jnp.log(step_size))
-            # step_size = 1e-3
 
             x = ravel_pytree(state.position)[0]
+
             # update the running average of x, x^2
             previous_weight_and_average = incremental_value_update(
                 expectation=jnp.array([x, jnp.square(x)]),
@@ -308,9 +293,6 @@ def adjusted_mclmc_make_L_step_size_adaptation(
             initial_da=initial_da,
             update_da=update_da,
         )
-        
-
-        # jax.debug.print("state history {x}", x=state_history.position.shape)
 
 
         final_stepsize = final_da(dual_avg_state)
@@ -328,32 +310,18 @@ def adjusted_mclmc_make_L_step_size_adaptation(
             if max=='max':
                 contract = lambda x: jnp.sqrt(jnp.max(x)*dim)*tuning_factor
 
-                # fisher = jax.vmap(lambda x: logdensity_grad_fn(x)**2,in_axes=0)(position_samples).mean(axis=0)
-                # jax.debug.print("fisher {x}", x=jnp.sqrt(jnp.sum(1/(fisher))))
-                # # print(fisher.shape, "fisher shape")
-                # jax.debug.print("fisher \n")
+
             elif max=='avg':
-                # jax.debug.print("turning factor {x}", x=tuning_factor)
                 contract = lambda x: jnp.sqrt(jnp.sum(x))*tuning_factor
-            elif max=='max_svd':
-                position_samples = position_samples[num_steps1:]
-                svd = jnp.linalg.svd(position_samples / jnp.sqrt(num_steps2))
-                contract = lambda x : svd.S[0]*jnp.sqrt(dim)*tuning_factor
-                # contract = lambda x: jnp.sqrt(jnp.max(x)*dim)
-                # contract = lambda x: jnp.sqrt(jnp.sum(x))*tuning_factor
-                eigenvector = svd.Vh[0] / jnp.linalg.norm(svd.Vh[0])
-                # jax.debug.print("svd {x}", x=jnp.linalg.norm(eigenvector))
-                # L_dir = svd.Vh[0]
-                # jax.debug.print("svd {x}", x=jnp.sqrt(svd.S[0]))
+            
             else:
-                raise ValueError("max should be either 'max' or 'avg' or 'max_svd")
+                raise ValueError("max should be either 'max' or 'avg'")
 
             change = jax.lax.clamp(
                 Lratio_lowerbound,
                 contract(variances) / params.L,
                 Lratio_upperbound,
             )
-            # jax.debug.print("new L {x}", x=params.L * change)
             params = params._replace(
                 L=params.L * change, step_size=params.step_size * change
             )
@@ -377,24 +345,6 @@ def adjusted_mclmc_make_L_step_size_adaptation(
             )
 
             params = params._replace(step_size=final_da(dual_avg_state))
-
-            # jax.debug.print("info 2 {x}", x=info.acceptance_rate.mean())
-            # keys = jax.random.split(check_key, 1000)
-            # _, info = jax.lax.scan(
-            #     lambda state, key: kernel(
-            #         rng_key=key,
-            #         state=state,
-            #         # step_size=params.step_size,
-            #         step_size=params.step_size,
-            #         avg_num_integration_steps=params.L / params.step_size,
-            #         sqrt_diag_cov=params.sqrt_diag_cov,
-            #     ),
-            #     state,
-            #     keys
-            # )
-
-            # jax.debug.print("pst run {x}", x=info.acceptance_rate.mean())
-            # jax.debug.print("stepsize and L {x}", x=(params.step_size, params.L))
 
 
         return state, params, eigenvector
@@ -432,19 +382,13 @@ def adjusted_mclmc_make_adaptation_L(kernel, frac, Lfactor, max='avg', eigenvect
 
         flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
 
-        # jax.debug.print("flat samples {x}", x=flat_samples.shape)
 
         if eigenvector is not None:
 
-            # jax.debug.print("eigen {x}", x=eigenvector.shape)
             flat_samples = jnp.expand_dims(jnp.einsum('ij,j', flat_samples, eigenvector),1)
-            # jax.debug.print("flat samples 2 {x}", x=flat_samples.shape)
 
         # number of effective samples per 1 actual sample
         ess = contract(effective_sample_size(flat_samples[None, ...]))/num_steps
-
-        # jax.debug.print("{x}foo", x=jnp.mean(ess))
-        # jax.debug.print("{x}L and mean ess", x=(params.L, jnp.mean(ess)))
 
         return state, params._replace(L=jnp.clip(Lfactor * params.L / jnp.mean(ess), max=params.L*2))
 
@@ -452,7 +396,7 @@ def adjusted_mclmc_make_adaptation_L(kernel, frac, Lfactor, max='avg', eigenvect
 
 
 def handle_nans(
-    previous_state, next_state, step_size, step_size_max, kinetic_change, key
+    previous_state, next_state, step_size, step_size_max, kinetic_change
 ):
     """if there are nans, let's reduce the stepsize, and not update the state. The
     function returns the old state in this case."""

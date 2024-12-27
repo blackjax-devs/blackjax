@@ -220,7 +220,6 @@ def adjusted_mclmc_proposal(
             state, num_integration_steps, rng_key
         )
 
-        # note that this is the POTENTIAL energy only
         new_energy = -end_state.logdensity
         delta_energy = -state.logdensity + end_state.logdensity - kinetic_energy
         delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
