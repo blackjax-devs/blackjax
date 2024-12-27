@@ -1,5 +1,4 @@
 """Test the accuracy of the MCMC kernels."""
-
 import functools
 import itertools
 
@@ -183,8 +182,6 @@ class LinearRegressionTest(chex.TestCase):
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
-            params_history,
-            final_da,
         ) = blackjax.adjusted_mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
             num_steps=num_steps,
@@ -210,13 +207,12 @@ class LinearRegressionTest(chex.TestCase):
             sqrt_diag_cov=blackjax_mclmc_sampler_params.sqrt_diag_cov,
         )
 
-        _, out, info = run_inference_algorithm(
+        _, out = run_inference_algorithm(
             rng_key=run_key,
             initial_state=blackjax_state_after_tuning,
             inference_algorithm=alg,
             num_steps=num_steps,
-            transform=lambda x: x.position,
-            expectation=lambda x: x,
+            transform=lambda state, _: state.position,
             progress_bar=False,
         )
 
