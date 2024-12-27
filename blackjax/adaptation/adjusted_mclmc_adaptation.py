@@ -8,7 +8,7 @@ from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
 )
 from blackjax.diagnostics import effective_sample_size
-from blackjax.util import pytree_size, streaming_average_update
+from blackjax.util import pytree_size, incremental_value_update
 
 Lratio_lowerbound = 0.0
 Lratio_upperbound = 2.0
@@ -174,7 +174,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
 
             x = ravel_pytree(state.position)[0]
             # update the running average of x, x^2
-            previous_weight_and_average = streaming_average_update(
+            previous_weight_and_average = incremental_value_update(
                 current_value=jnp.array([x, jnp.square(x)]),
                 previous_weight_and_average=previous_weight_and_average,
                 weight=(1 - mask) * success * step_size,
