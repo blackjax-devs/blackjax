@@ -43,3 +43,7 @@ ArrayLikeTree = Union[
 
 #: JAX PRNGKey
 PRNGKey = jax.Array
+
+#: JAX Scalar types
+Scalar = Union[float, int]
+Numeric = Union[jax.Array, Scalar]

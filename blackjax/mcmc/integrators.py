@@ -443,6 +443,7 @@ def with_isokinetic_maruyama(integrator):
         )
         # one step of the deterministic dynamics
         state, info = integrator(state, step_size)
+
         # partial refreshment
         state = state._replace(
             momentum=partially_refresh_momentum(

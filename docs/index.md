@@ -41,7 +41,7 @@ rng_key = jax.random.key(0)
 step = jax.jit(nuts.step)
 for i in range(1_000):
     nuts_key = jax.random.fold_in(rng_key, i)
-    state, _ = nuts.step(nuts_key, state)
+    state, _ = step(nuts_key, state)
 ```
 
 :::{note}
@@ -57,13 +57,7 @@ If you want to use Blackjax with a model implemented with a PPL, go to the relat
 ```{code-block} bash
 pip install blackjax
 ```
-:::
 
-:::{tab-item} Nightly
-```{code-block} bash
-pip install blackjax-nightly
-```
-:::
 
 :::{tab-item} Conda
 ```{code-block} bash

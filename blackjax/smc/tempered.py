@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Optional
 
 import jax
 import jax.numpy as jnp
@@ -48,12 +48,42 @@ def init(particles: ArrayLikeTree):
     return TemperedSMCState(particles, weights, 0.0)
 
 
+def update_and_take_last(
+    mcmc_init_fn,
+    tempered_logposterior_fn,
+    shared_mcmc_step_fn,
+    num_mcmc_steps,
+    n_particles,
+):
+    """
+    Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and
+    returns the last values, waisting the previous num_mcmc_steps-1
+    samples per chain.
+    """
+
+    def mcmc_kernel(rng_key, position, step_parameters):
+        state = mcmc_init_fn(position, tempered_logposterior_fn)
+
+        def body_fn(state, rng_key):
+            new_state, info = shared_mcmc_step_fn(
+                rng_key, state, tempered_logposterior_fn, **step_parameters
+            )
+            return new_state, info
+
+        keys = jax.random.split(rng_key, num_mcmc_steps)
+        last_state, info = jax.lax.scan(body_fn, state, keys)
+        return last_state.position, info
+
+    return jax.vmap(mcmc_kernel), n_particles
+
+
 def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
+    update_strategy: Callable = update_and_take_last,
 ) -> Callable:
     """Build the base Tempered SMC kernel.
 
@@ -141,26 +171,23 @@ def build_kernel(
 
         shared_mcmc_step_fn = partial(mcmc_step_fn, **shared_mcmc_parameters)
 
-        def mcmc_kernel(rng_key, position, step_parameters):
-            state = mcmc_init_fn(position, tempered_logposterior_fn)
-
-            def body_fn(state, rng_key):
-                new_state, info = shared_mcmc_step_fn(
-                    rng_key, state, tempered_logposterior_fn, **step_parameters
-                )
-                return new_state, info
-
-            keys = jax.random.split(rng_key, num_mcmc_steps)
-            last_state, info = jax.lax.scan(body_fn, state, keys)
-            return last_state.position, info
+        update_fn, num_resampled = update_strategy(
+            mcmc_init_fn,
+            tempered_logposterior_fn,
+            shared_mcmc_step_fn,
+            n_particles=state.weights.shape[0],
+            num_mcmc_steps=num_mcmc_steps,
+        )
 
         smc_state, info = smc.base.step(
             rng_key,
             SMCState(state.particles, state.weights, unshared_mcmc_parameters),
-            jax.vmap(mcmc_kernel),
+            update_fn,
             jax.vmap(log_weights_fn),
             resampling_fn,
+            num_resampled,
         )
+
         tempered_state = TemperedSMCState(
             smc_state.particles, smc_state.weights, state.lmbda + delta
         )
@@ -177,7 +204,8 @@ def as_top_level_api(
     mcmc_init_fn: Callable,
     mcmc_parameters: dict,
     resampling_fn: Callable,
-    num_mcmc_steps: int = 10,
+    num_mcmc_steps: Optional[int] = 10,
+    update_strategy=update_and_take_last,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
 
@@ -204,12 +232,14 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
 
     """
+
     kernel = build_kernel(
         logprior_fn,
         loglikelihood_fn,
         mcmc_step_fn,
         mcmc_init_fn,
         resampling_fn,
+        update_strategy,
     )
 
     def init_fn(position: ArrayLikeTree, rng_key=None):
