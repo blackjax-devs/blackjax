@@ -1,4 +1,5 @@
 """Test the accuracy of the MCMC kernels."""
+
 import functools
 import itertools
 
