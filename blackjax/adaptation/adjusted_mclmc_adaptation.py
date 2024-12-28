@@ -93,7 +93,7 @@ def adjusted_mclmc_find_L_and_step_size(
         )(state, params, num_steps, window_key)
 
     if frac_tune3 != 0:
-        for i in range(2):
+        for i in range(num_windows):
             part2_key = jax.random.fold_in(part2_key, i)
             part2_key1, part2_key2 = jax.random.split(part2_key, 2)
 
