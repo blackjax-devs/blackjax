@@ -22,7 +22,7 @@ def adjusted_mclmc_find_L_and_step_size(
     target,
     frac_tune1=0.1,
     frac_tune2=0.1,
-    frac_tune3=0.1,
+    frac_tune3=0.0,
     diagonal_preconditioning=True,
     params=None,
     max="avg",
@@ -164,17 +164,18 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 info.energy,
             )
 
+            with_mask = lambda x, y: mask * x + (1 - mask) * y
+
             log_step_size, log_step_size_avg, step, avg_error, mu = update_da(
                 adaptive_state, info.acceptance_rate
             )
 
             adaptive_state = DualAveragingAdaptationState(
-                mask * log_step_size + (1 - mask) * adaptive_state.log_step_size,
-                mask * log_step_size_avg
-                + (1 - mask) * adaptive_state.log_step_size_avg,
-                mask * step + (1 - mask) * adaptive_state.step,
-                mask * avg_error + (1 - mask) * adaptive_state.avg_error,
-                mask * mu + (1 - mask) * adaptive_state.mu,
+                with_mask(log_step_size, adaptive_state.log_step_size),
+                with_mask(log_step_size_avg, adaptive_state.log_step_size_avg),
+                with_mask(step, adaptive_state.step),
+                with_mask(avg_error, adaptive_state.avg_error),
+                with_mask(mu, adaptive_state.mu),
             )
 
             step_size = jax.lax.clamp(
@@ -192,13 +193,10 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 zero_prevention=mask,
             )
 
-            params = params._replace(
-                step_size=mask * step_size + (1 - mask) * params.step_size,
-            )
+            params = params._replace(step_size=with_mask(step_size, params.step_size))
             if not fix_L:
                 params = params._replace(
-                    L=mask * (params.L * (step_size / params.step_size))
-                    + (1 - mask) * params.L,
+                    L=with_mask(params.L * (step_size / params.step_size), params.L),
                 )
 
             state_position = state.position
