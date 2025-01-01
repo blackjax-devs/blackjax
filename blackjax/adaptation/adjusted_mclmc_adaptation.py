@@ -192,14 +192,11 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 zero_prevention=mask,
             )
 
-            if fix_L:
+            params = params._replace(
+                step_size=mask * step_size + (1 - mask) * params.step_size,
+            )
+            if not fix_L:
                 params = params._replace(
-                    step_size=mask * step_size + (1 - mask) * params.step_size,
-                )
-
-            else:
-                params = params._replace(
-                    step_size=mask * step_size + (1 - mask) * params.step_size,
                     L=mask * (params.L * (step_size / params.step_size))
                     + (1 - mask) * params.L,
                 )
