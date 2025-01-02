@@ -15,8 +15,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!-- 
-    this give us a css class that will be invisible only if js is disabled 
+  <!--
+    this give us a css class that will be invisible only if js is disabled
   -->
   <noscript>
     <style>
@@ -26,8 +26,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=a3416100" />
@@ -37,10 +37,10 @@
     <link rel="stylesheet" type="text/css" href="_static/custom.css?v=e37d73aa" />
   
   <!-- So that users can add custom icons -->
-  <script src="_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g65ae00e" />
+  <meta name="docsearch:version" content="0.1.dev1+gdf87345" />
   </head>
   
   
@@ -174,6 +174,7 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1 has-children"><a class="reference internal" href="autoapi/blackjax/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="autoapi/blackjax/adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/adaptation/base/index.html">blackjax.adaptation.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
@@ -186,6 +187,7 @@
 </details></li>
 <li class="toctree-l2"><a class="reference internal" href="autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
@@ -251,9 +253,14 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
-  
-  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -406,6 +413,12 @@
 </li>
       <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.additive_step_random_walk">additive_step_random_walk() (in module blackjax.mcmc.random_walk)</a>
 </li>
+      <li><a href="autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_find_L_and_step_size">adjusted_mclmc_find_L_and_step_size() (in module blackjax.adaptation.adjusted_mclmc_adaptation)</a>
+</li>
+      <li><a href="autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_make_adaptation_L">adjusted_mclmc_make_adaptation_L() (in module blackjax.adaptation.adjusted_mclmc_adaptation)</a>
+</li>
+      <li><a href="autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_make_L_step_size_adaptation">adjusted_mclmc_make_L_step_size_adaptation() (in module blackjax.adaptation.adjusted_mclmc_adaptation)</a>
+</li>
       <li><a href="autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.alpha">alpha (MEADSAdaptationState attribute)</a>
 
       <ul>
@@ -418,9 +431,11 @@
 </li>
       <li><a href="autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.approximate">approximate() (in module blackjax.vi.pathfinder)</a>
 </li>
-      <li><a href="autoapi/blackjax/mcmc/barker/index.html#blackjax.mcmc.barker.as_top_level_api">as_top_level_api() (in module blackjax.mcmc.barker)</a>
+      <li><a href="autoapi/blackjax/mcmc/adjusted_mclmc/index.html#blackjax.mcmc.adjusted_mclmc.as_top_level_api">as_top_level_api() (in module blackjax.mcmc.adjusted_mclmc)</a>
 
       <ul>
+        <li><a href="autoapi/blackjax/mcmc/barker/index.html#blackjax.mcmc.barker.as_top_level_api">(in module blackjax.mcmc.barker)</a>
+</li>
         <li><a href="autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.as_top_level_api">(in module blackjax.mcmc.dynamic_hmc)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.as_top_level_api">(in module blackjax.mcmc.elliptical_slice)</a>
@@ -505,6 +520,13 @@
 </li>
       </ul></li>
       <li>
+    blackjax.adaptation.adjusted_mclmc_adaptation
+
+      <ul>
+        <li><a href="autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#module-blackjax.adaptation.adjusted_mclmc_adaptation">module</a>
+</li>
+      </ul></li>
+      <li>
     blackjax.adaptation.base
 
       <ul>
@@ -572,6 +594,13 @@
 
       <ul>
         <li><a href="autoapi/blackjax/mcmc/index.html#module-blackjax.mcmc">module</a>
+</li>
+      </ul></li>
+      <li>
+    blackjax.mcmc.adjusted_mclmc
+
+      <ul>
+        <li><a href="autoapi/blackjax/mcmc/adjusted_mclmc/index.html#module-blackjax.mcmc.adjusted_mclmc">module</a>
 </li>
       </ul></li>
       <li>
@@ -714,6 +743,8 @@
         <li><a href="autoapi/blackjax/sgmcmc/csgld/index.html#module-blackjax.sgmcmc.csgld">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blackjax.sgmcmc.diffusions
 
@@ -721,8 +752,6 @@
         <li><a href="autoapi/blackjax/sgmcmc/diffusions/index.html#module-blackjax.sgmcmc.diffusions">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blackjax.sgmcmc.gradients
 
@@ -890,9 +919,11 @@
 </li>
       <li><a href="autoapi/blackjax/mcmc/rmhmc/index.html#blackjax.mcmc.rmhmc.build_kernel">build_kernel (in module blackjax.mcmc.rmhmc)</a>
 </li>
-      <li><a href="autoapi/blackjax/mcmc/barker/index.html#blackjax.mcmc.barker.build_kernel">build_kernel() (in module blackjax.mcmc.barker)</a>
+      <li><a href="autoapi/blackjax/mcmc/adjusted_mclmc/index.html#blackjax.mcmc.adjusted_mclmc.build_kernel">build_kernel() (in module blackjax.mcmc.adjusted_mclmc)</a>
 
       <ul>
+        <li><a href="autoapi/blackjax/mcmc/barker/index.html#blackjax.mcmc.barker.build_kernel">(in module blackjax.mcmc.barker)</a>
+</li>
         <li><a href="autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.build_kernel">(in module blackjax.mcmc.dynamic_hmc)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.build_kernel">(in module blackjax.mcmc.elliptical_slice)</a>
@@ -1074,8 +1105,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.halton_sequence">halton_sequence() (in module blackjax.mcmc.dynamic_hmc)</a>
 </li>
-      <li><a href="autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.handle_nans">handle_nans() (in module blackjax.adaptation.mclmc_adaptation)</a>
+      <li><a href="autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.handle_nans">handle_nans() (in module blackjax.adaptation.adjusted_mclmc_adaptation)</a>
+
+      <ul>
+        <li><a href="autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.handle_nans">(in module blackjax.adaptation.mclmc_adaptation)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.hmc_energy">hmc_energy() (in module blackjax.mcmc.trajectory)</a>
@@ -1108,9 +1143,11 @@
         <li><a href="autoapi/blackjax/smc/adaptive_tempered/index.html#blackjax.smc.adaptive_tempered.init">(in module blackjax.smc.adaptive_tempered)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/blackjax/mcmc/barker/index.html#blackjax.mcmc.barker.init">init() (in module blackjax.mcmc.barker)</a>
+      <li><a href="autoapi/blackjax/mcmc/adjusted_mclmc/index.html#blackjax.mcmc.adjusted_mclmc.init">init() (in module blackjax.mcmc.adjusted_mclmc)</a>
 
       <ul>
+        <li><a href="autoapi/blackjax/mcmc/barker/index.html#blackjax.mcmc.barker.init">(in module blackjax.mcmc.barker)</a>
+</li>
         <li><a href="autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.init">(in module blackjax.mcmc.dynamic_hmc)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.init">(in module blackjax.mcmc.elliptical_slice)</a>
@@ -1266,6 +1303,10 @@
         <li><a href="autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.MarginalState.logdensity_grad">(MarginalState attribute)</a>
 </li>
       </ul></li>
+      <li><a href="autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.Lratio_lowerbound">Lratio_lowerbound (in module blackjax.adaptation.adjusted_mclmc_adaptation)</a>
+</li>
+      <li><a href="autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.Lratio_upperbound">Lratio_upperbound (in module blackjax.adaptation.adjusted_mclmc_adaptation)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -1322,6 +1363,8 @@
 </li>
         <li><a href="autoapi/blackjax/adaptation/index.html#module-blackjax.adaptation">blackjax.adaptation</a>
 </li>
+        <li><a href="autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#module-blackjax.adaptation.adjusted_mclmc_adaptation">blackjax.adaptation.adjusted_mclmc_adaptation</a>
+</li>
         <li><a href="autoapi/blackjax/adaptation/base/index.html#module-blackjax.adaptation.base">blackjax.adaptation.base</a>
 </li>
         <li><a href="autoapi/blackjax/adaptation/chees_adaptation/index.html#module-blackjax.adaptation.chees_adaptation">blackjax.adaptation.chees_adaptation</a>
@@ -1341,6 +1384,8 @@
         <li><a href="autoapi/blackjax/diagnostics/index.html#module-blackjax.diagnostics">blackjax.diagnostics</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/index.html#module-blackjax.mcmc">blackjax.mcmc</a>
+</li>
+        <li><a href="autoapi/blackjax/mcmc/adjusted_mclmc/index.html#module-blackjax.mcmc.adjusted_mclmc">blackjax.mcmc.adjusted_mclmc</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/barker/index.html#module-blackjax.mcmc.barker">blackjax.mcmc.barker</a>
 </li>
@@ -1888,7 +1933,7 @@ By The Blackjax developers
 
   <p class="copyright">
     
-      © Copyright 2024, The Blackjax developers.
+      © Copyright 2025, The Blackjax developers.
       <br/>
     
   </p>
@@ -1912,8 +1957,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 
   <footer class="bd-footer">
   </footer>

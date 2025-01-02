@@ -71,16 +71,17 @@ Module Contents
    :param desired_energy_va: The desired energy variance for the MCMC algorithm.
    :param trust_in_estimate: The trust in the estimate of optimal stepsize.
    :param num_effective_samples: The number of effective samples for the MCMC algorithm.
+   :param diagonal_preconditioning: Whether to do diagonal preconditioning (i.e. a mass matrix)
 
    :rtype: A tuple containing the final state of the MCMC algorithm and the final hyperparameters.
 
    .. rubric:: Example
 
    .. code::
-       kernel = lambda std_mat : blackjax.mcmc.mclmc.build_kernel(
+       kernel = lambda sqrt_diag_cov : blackjax.mcmc.mclmc.build_kernel(
        logdensity_fn=logdensity_fn,
        integrator=integrator,
-       std_mat=std_mat,
+       sqrt_diag_cov=sqrt_diag_cov,
        )
 
        (
@@ -97,7 +98,7 @@ Module Contents
 
 .. py:function:: make_L_step_size_adaptation(kernel, dim, frac_tune1, frac_tune2, diagonal_preconditioning, desired_energy_var=0.001, trust_in_estimate=1.5, num_effective_samples=150)
 
-   Adapts the stepsize and L of the MCLMC kernel. Designed for the unadjusted MCLMC
+   Adapts the stepsize and L of the MCLMC kernel. Designed for unadjusted MCLMC
 
 
 .. py:function:: make_adaptation_L(kernel, frac, Lfactor)

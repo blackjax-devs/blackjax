@@ -10,6 +10,7 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
+   /autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index
    /autoapi/blackjax/adaptation/base/index
    /autoapi/blackjax/adaptation/chees_adaptation/index
    /autoapi/blackjax/adaptation/mass_matrix/index
