@@ -138,7 +138,11 @@ def approximate(
         **lbfgs_kwargs,
     )
 
-    # Get postions and gradients of the optimization path (including the starting point).
+    # get the index where lbfgs converged
+    lbfgs_converged_idx = history.not_converged.sum()
+    # truncate history to the point of convergence
+    history = jax.tree.map(lambda x: x[:lbfgs_converged_idx], history)
+
     position = history.x
     grad_position = history.g
     alpha = history.alpha
@@ -172,18 +176,13 @@ def approximate(
     # Index and reshape S and Z to be sliding window view shape=(maxiter,
     # maxcor, param_dim), so we can vmap over all the iterations.
     # This is in effect numpy.lib.stride_tricks.sliding_window_view
-    path_size = maxiter + 1
+    path_size = lbfgs_converged_idx
     index = jnp.arange(path_size)[:, None] + jnp.arange(maxcor)[None, :]
     s_j = s_padded[index.reshape(path_size, maxcor)].reshape(path_size, maxcor, -1)
     z_j = z_padded[index.reshape(path_size, maxcor)].reshape(path_size, maxcor, -1)
     rng_keys = jax.random.split(rng_key, path_size)
     elbo, beta, gamma = jax.vmap(path_finder_body_fn)(
         rng_keys, s_j, z_j, alpha, position, grad_position
-    )
-    elbo = jnp.where(
-        (jnp.arange(path_size) < (status.iter_num)) & jnp.isfinite(elbo),
-        elbo,
-        -jnp.inf,
     )
 
     unravel_fn_mapped = jax.vmap(unravel_fn)
