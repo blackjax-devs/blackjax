@@ -50,7 +50,7 @@ def build_slice_kernel(
     logL0: Array,
     proposal_distribution: Callable,
 ) -> Callable:
-    """Instantiate a (constrained) vectorized slice sampling kernel.
+    """Instantiate a (constrained) hit and run slice sampling kernel.
 
     Parameters
     ----------

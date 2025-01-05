@@ -9,8 +9,8 @@ from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import build_kernel as base_ns
 from blackjax.ns.base import delete_fn
 from blackjax.ns.base import init as init_base
-from blackjax.ns.vectorized_slice import build_slice_kernel as slice_kernel
-from blackjax.ns.vectorized_slice import init as slice_init
+from blackjax.ns.hr_slice import build_slice_kernel as slice_kernel
+from blackjax.ns.hr_slice import init as slice_init
 from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
 from blackjax.smc.tuning.from_particles import particles_covariance_matrix
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
