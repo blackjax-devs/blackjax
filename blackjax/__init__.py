@@ -3,12 +3,7 @@ from typing import Callable
 
 from blackjax._version import __version__
 
-from .adaptation.adjusted_mclmc_adaptation import adjusted_mclmc_find_L_and_step_size
-from .adaptation.chees_adaptation import chees_adaptation
-from .adaptation.mclmc_adaptation import mclmc_find_L_and_step_size
-from .adaptation.meads_adaptation import meads_adaptation
-from .adaptation.pathfinder_adaptation import pathfinder_adaptation
-from .adaptation.window_adaptation import window_adaptation
+
 from .base import SamplingAlgorithm, VIAlgorithm
 from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
@@ -30,7 +25,7 @@ from .mcmc.random_walk import (
     normal_random_walk,
     rmh_as_top_level_api,
 )
-from .optimizers import dual_averaging, lbfgs
+#from .optimizers import dual_averaging, lbfgs
 from .sgmcmc import csgld as _csgld
 from .sgmcmc import sghmc as _sghmc
 from .sgmcmc import sgld as _sgld
@@ -39,11 +34,11 @@ from .smc import adaptive_tempered
 from .smc import inner_kernel_tuning as _inner_kernel_tuning
 from .smc import partial_posteriors_path as _partial_posteriors_smc
 from .smc import tempered
-from .vi import meanfield_vi as _meanfield_vi
-from .vi import pathfinder as _pathfinder
-from .vi import schrodinger_follmer as _schrodinger_follmer
-from .vi import svgd as _svgd
-from .vi.pathfinder import PathFinderAlgorithm
+#from .vi import meanfield_vi as _meanfield_vi
+#from .vi import pathfinder as _pathfinder
+#from .vi import schrodinger_follmer as _schrodinger_follmer
+#from .vi import svgd as _svgd
+#from .vi.pathfinder import PathFinderAlgorithm
 
 """
 The above three classes exist as a backwards compatible way of exposing both the high level, differentiable
@@ -74,17 +69,6 @@ class GenerateVariationalAPI:
 
     def __call__(self, *args, **kwargs) -> VIAlgorithm:
         return self.differentiable(*args, **kwargs)
-
-
-@dataclasses.dataclass
-class GeneratePathfinderAPI:
-    differentiable: Callable
-    approximate: Callable
-    sample: Callable
-
-    def __call__(self, *args, **kwargs) -> PathFinderAlgorithm:
-        return self.differentiable(*args, **kwargs)
-
 
 def generate_top_level_api_from(module):
     return GenerateSamplingAPI(
@@ -133,37 +117,3 @@ sgld = generate_top_level_api_from(_sgld)
 sghmc = generate_top_level_api_from(_sghmc)
 sgnht = generate_top_level_api_from(_sgnht)
 csgld = generate_top_level_api_from(_csgld)
-svgd = generate_top_level_api_from(_svgd)
-
-# variational inference
-meanfield_vi = GenerateVariationalAPI(
-    _meanfield_vi.as_top_level_api,
-    _meanfield_vi.init,
-    _meanfield_vi.step,
-    _meanfield_vi.sample,
-)
-schrodinger_follmer = GenerateVariationalAPI(
-    _schrodinger_follmer.as_top_level_api,
-    _schrodinger_follmer.init,
-    _schrodinger_follmer.step,
-    _schrodinger_follmer.sample,
-)
-
-pathfinder = GeneratePathfinderAPI(
-    _pathfinder.as_top_level_api, _pathfinder.approximate, _pathfinder.sample
-)
-
-
-__all__ = [
-    "__version__",
-    "dual_averaging",  # optimizers
-    "lbfgs",
-    "window_adaptation",  # mcmc adaptation
-    "meads_adaptation",
-    "chees_adaptation",
-    "pathfinder_adaptation",
-    "mclmc_find_L_and_step_size",  # mclmc adaptation
-    "adjusted_mclmc_find_L_and_step_size",  # adjusted mclmc adaptation
-    "ess",  # diagnostics
-    "rhat",
-]

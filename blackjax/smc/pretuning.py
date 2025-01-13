@@ -117,6 +117,7 @@ def build_pretune(
         alpha,
         sigma_parameters,
         parameters_to_pretune: List[str],
+        n_particles: int,
         performance_of_chain_measure_factory: Callable = lambda state: esjd(
             state.parameter_override["inverse_mass_matrix"]
         ),
@@ -145,11 +146,11 @@ def build_pretune(
         )
 
         one_step_fn, _ = update_and_take_last(
-            mcmc_init_fn, logposterior, shared_mcmc_step_fn, 1, 100
+            mcmc_init_fn, logposterior, shared_mcmc_step_fn, 1, n_particles
         )
 
         new_state, info = one_step_fn(
-            jax.random.split(key, 100),
+            jax.random.split(key, n_particles),
             state.sampler_state.particles,
             unshared_mcmc_parameters,
         )

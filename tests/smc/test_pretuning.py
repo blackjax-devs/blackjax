@@ -180,6 +180,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             blackjax.hmc.init,
             blackjax.hmc.build_kernel(),
             alpha=1,
+            n_particles=num_particles,
             sigma_parameters={"step_size": 0.01, "num_integration_steps": 2},
             parameters_to_pretune=["step_size", "num_integration_steps"],
             round_to_integer=["num_integration_steps"],
