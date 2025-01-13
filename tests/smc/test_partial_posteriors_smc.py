@@ -30,7 +30,7 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
 
         hmc_parameters = extend_params(
             {
-                "step_size": 10e-2,
+                "step_size": 10e-3,
                 "inverse_mass_matrix": jnp.eye(2),
                 "num_integration_steps": 50,
             },
@@ -38,12 +38,12 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
 
         dataset_size = 1000
 
-        def partial_logposterior_factory(selector):
+        def partial_logposterior_factory(data_mask):
             def partial_logposterior(x):
                 lp = logprior_fn(x)
                 return lp + jnp.sum(
                     self.logdensity_by_observation(**x, **observations)
-                    * selector.reshape(-1, 1)
+                    * data_mask.reshape(-1, 1)
                 )
 
             return jax.jit(partial_logposterior)
@@ -53,27 +53,32 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
             hmc_init,
             hmc_parameters,
             resampling.systematic,
-            30,
+            50,
             partial_logposterior_factory=partial_logposterior_factory,
         )
 
         init_state = init(init_particles, 1000)
         smc_kernel = self.variant(kernel)
 
-        selectors = jnp.array(
+        data_masks = jnp.array(
             [
-                jnp.concat([jnp.ones(selector), jnp.zeros(dataset_size - selector)])
-                for selector in np.arange(100, 1001, 50)
+                jnp.concat(
+                    [
+                        jnp.ones(datapoints_chosen),
+                        jnp.zeros(dataset_size - datapoints_chosen),
+                    ]
+                )
+                for datapoints_chosen in np.arange(100, 1001, 50)
             ]
         )
 
-        def body_fn(carry, selector):
+        def body_fn(carry, data_mask):
             i, state = carry
             subkey = jax.random.fold_in(self.key, i)
-            new_state, info = smc_kernel(subkey, state, selector)
+            new_state, info = smc_kernel(subkey, state, data_mask)
             return (i + 1, new_state), (new_state, info)
 
-        (steps, result), it = jax.lax.scan(body_fn, (0, init_state), selectors)
+        (steps, result), it = jax.lax.scan(body_fn, (0, init_state), data_masks)
         assert steps == 19
 
         self.assert_linear_regression_test_case(result)

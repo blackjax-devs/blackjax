@@ -414,11 +414,19 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     -------
     momentum with random change in angle
     """
+
     m, unravel_fn = ravel_pytree(momentum)
     dim = m.shape[0]
     nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
     z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
-    return unravel_fn((m + z) / jnp.linalg.norm(m + z))
+    new_momentum = unravel_fn((m + z) / jnp.linalg.norm(m + z))
+    # return new_momentum
+    return jax.lax.cond(
+        jnp.isinf(L),
+        lambda _: momentum,
+        lambda _: new_momentum,
+        operand=None,
+    )
 
 
 def with_isokinetic_maruyama(integrator):

@@ -77,6 +77,8 @@ def mclmc_find_L_and_step_size(
         The trust in the estimate of optimal stepsize.
     num_effective_samples
         The number of effective samples for the MCMC algorithm.
+    diagonal_preconditioning
+        Whether to do diagonal preconditioning (i.e. a mass matrix)
 
     Returns
     -------
@@ -85,10 +87,10 @@ def mclmc_find_L_and_step_size(
     Example
     -------
     .. code::
-        kernel = lambda std_mat : blackjax.mcmc.mclmc.build_kernel(
+        kernel = lambda sqrt_diag_cov : blackjax.mcmc.mclmc.build_kernel(
         logdensity_fn=logdensity_fn,
         integrator=integrator,
-        std_mat=std_mat,
+        sqrt_diag_cov=sqrt_diag_cov,
         )
 
         (
@@ -137,7 +139,7 @@ def make_L_step_size_adaptation(
     trust_in_estimate=1.5,
     num_effective_samples=150,
 ):
-    """Adapts the stepsize and L of the MCLMC kernel. Designed for the unadjusted MCLMC"""
+    """Adapts the stepsize and L of the MCLMC kernel. Designed for unadjusted MCLMC"""
 
     decay_rate = (num_effective_samples - 1.0) / (num_effective_samples + 1.0)
 
