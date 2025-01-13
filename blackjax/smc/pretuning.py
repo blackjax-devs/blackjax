@@ -7,17 +7,18 @@ from jax._src.flatten_util import ravel_pytree
 
 from blackjax import smc
 from blackjax.smc.base import update_and_take_last, SMCInfo, SMCState
-from blackjax.smc.from_mcmc import step_from_mcmc_parameters
+
 from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
 from blackjax.smc.resampling import stratified
 from blackjax.types import ArrayLikeTree, PRNGKey, ArrayTree, Array
 from blackjax.util import generate_gaussian_noise
+from blackjax.smc.from_mcmc import build_kernel as smc_from_mcmc, unshared_parameters_and_step_fn
 
 
 class SMCInfoWithParameterDistribution(NamedTuple):
     """
     Stores both the sampling status and also a dictionary
-    that contains an dictionary with parameter names as key
+    that contains a dictionary with parameter names as key
     and (n_particles, *) arrays as meanings. The latter
     represent a parameter per chain for the next mutation step.
     """
@@ -96,8 +97,8 @@ def update_parameter_distribution(
         sigma_parameters,
     )
     new_samples = jax.tree.map(lambda x, y: x + y, noises, previous_param_samples)
+    # TODO SHOULD WE ADD SOME CHECK HERE TO AVOID AN INSANE AMMOUNT OF NOISE
 
-    # TODO SHOULD WE ADD SOME CHECK HERE TO AVOID AN INSANE AMMOUNT OF NOISEx
     chain_mixing_measurement = measure_of_chain_mixing(
         previous_particles, latest_particles, acceptance_probability
     )
@@ -133,21 +134,19 @@ def build_pretune(
     if round_to_integer is None:
         round_to_integer_fn = lambda x: x
     else:
-
         def round_to_integer_fn(x):
             for k in round_to_integer:
                 x[k] = jax.tree.map(lambda a: jnp.round(a).astype(int), x[k])
             return x
 
     def pretune(key, state, logposterior):
-        unshared_mcmc_parameters, shared_mcmc_step_fn = step_from_mcmc_parameters(
+        unshared_mcmc_parameters, shared_mcmc_step_fn = unshared_parameters_and_step_fn(
             state.parameter_override, mcmc_step_fn
         )
+
         one_step_fn, _ = update_and_take_last(
             mcmc_init_fn, logposterior, shared_mcmc_step_fn, 1, 100
         )
-
-
 
         new_state, info = one_step_fn(
             jax.random.split(key, 100),
@@ -156,7 +155,6 @@ def build_pretune(
         )
 
         performance_of_chain_measure = performance_of_chain_measure_factory(state)
-
 
         (
             new_parameter_distribution,
@@ -193,7 +191,6 @@ def build_pretune(
     return pretune_and_update
 
 
-import blackjax.smc.from_mcmc as smc_from_mcmc
 
 
 def build_kernel(
@@ -215,7 +212,7 @@ def build_kernel(
     Parameters
     ----------
     smc_algorithm
-        c§Either blackjax.adaptive_tempered_smc or blackjax.tempered_smc (or any other implementation of
+        Either blackjax.adaptive_tempered_smc or blackjax.tempered_smc (or any other implementation of
         a sampling algorithm that returns an SMCState and SMCInfo pair).
     logprior_fn
         A function that computes the log density of the prior distribution
@@ -231,7 +228,7 @@ def build_kernel(
     extra_parameters:
         parameters to be used for the creation of the smc_algorithm.
     """
-    delegate = smc_from_mcmc.build_kernel(
+    delegate = smc_from_mcmc(
         mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy)
 
     def pretuned_step(

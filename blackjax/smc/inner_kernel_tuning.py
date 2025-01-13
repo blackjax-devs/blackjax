@@ -1,12 +1,8 @@
-from typing import Callable, Dict, NamedTuple, Optional, Tuple
-
+from typing import Callable, Dict, NamedTuple, Tuple
 import jax
-
 from blackjax.base import SamplingAlgorithm
 from blackjax.smc.base import SMCInfo, SMCState
 from blackjax.types import ArrayTree, PRNGKey
-
-InnerKernelTuningStrategy = Callable[[PRNGKey, SMCState, SMCInfo], Dict[str, ArrayTree]]
 
 
 class StateWithParameterOverride(NamedTuple):
@@ -32,9 +28,8 @@ def build_kernel(
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
-    mcmc_parameter_update_fn: InnerKernelTuningStrategy = lambda x, y, z: {},
+    mcmc_parameter_update_fn: Callable[[SMCState, SMCInfo], Dict[str, ArrayTree]],
     num_mcmc_steps: int = 10,
-    pretune_fn: Callable = lambda x, y, z: {},
     **extra_parameters,
 ) -> Callable:
     """In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
@@ -64,17 +59,6 @@ def build_kernel(
     def kernel(
         rng_key: PRNGKey, state: StateWithParameterOverride, **extra_step_parameters
     ) -> Tuple[StateWithParameterOverride, SMCInfo]:
-        pretune_key, parameter_update_key, step_key = jax.random.split(rng_key, 3)
-        pretuned_parameters = pretune_fn(
-            pretune_key,
-            state,
-            lambda x: logprior_fn(x)
-            + loglikelihood_fn(x) * extra_step_parameters["lmbda"],
-        )
-        # TODO WHAT TO DO HERE?
-
-        state.parameter_override.update(pretuned_parameters)
-
         step_fn = smc_algorithm(
             logprior_fn=logprior_fn,
             loglikelihood_fn=loglikelihood_fn,
@@ -85,16 +69,10 @@ def build_kernel(
             num_mcmc_steps=num_mcmc_steps,
             **extra_parameters,
         ).step
-
         parameter_update_key, step_key = jax.random.split(rng_key, 2)
-        new_state, info = step_fn(
-            step_key, state.sampler_state, **extra_step_parameters
-        )
-        tuned_parameters = mcmc_parameter_update_fn(
-            parameter_update_key, new_state, info
-        )
-        state.parameter_override.update(tuned_parameters)
-        return StateWithParameterOverride(new_state, state.parameter_override), info
+        new_state, info = step_fn(step_key, state.sampler_state, **extra_step_parameters)
+        new_parameter_override = mcmc_parameter_update_fn(parameter_update_key, new_state, info)
+        return StateWithParameterOverride(new_state, new_parameter_override), info
 
     return kernel
 
@@ -106,10 +84,9 @@ def as_top_level_api(
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
+    mcmc_parameter_update_fn: Callable[[SMCState, SMCInfo], Dict[str, ArrayTree]],
     initial_parameter_value,
-    mcmc_parameter_update_fn: Optional[InnerKernelTuningStrategy] = None,
     num_mcmc_steps: int = 10,
-    pretune_fn: Optional[Callable] = None,
     **extra_parameters,
 ) -> SamplingAlgorithm:
     """In the context of an SMC sampler (whose step_fn returning state
@@ -144,14 +121,6 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
 
     """
-    if pretune_fn is None and mcmc_parameter_update_fn is None:
-        raise ValueError(
-            "You must choose either a pretune (before SMC step) or a tune procedure (after completion of SMC step)."
-        )
-    if pretune_fn is None:
-        pretune_fn = lambda x, y, z: {}
-    if mcmc_parameter_update_fn is None:
-        mcmc_parameter_update_fn = lambda x, y, z: {}
 
     kernel = build_kernel(
         smc_algorithm,
@@ -162,7 +131,6 @@ def as_top_level_api(
         resampling_fn,
         mcmc_parameter_update_fn,
         num_mcmc_steps,
-        pretune_fn,
         **extra_parameters,
     )
 

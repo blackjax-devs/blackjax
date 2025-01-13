@@ -153,10 +153,6 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             loglikelihood_fn,
         ) = self.particles_prior_loglikelihood()
 
-        def logposterior(x):
-            return logprior_fn(x) + loglikelihood_fn(x)
-
-        # TODO CHARLY  when we have more than one step this needs to be non-static.
         num_particles = 100
         sampling_key, step_size_key, integration_steps_key = jax.random.split(
             self.key, 3
@@ -179,7 +175,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
         )
         assert initial_parameters["step_size"].shape == (num_particles,)
         assert initial_parameters["num_integration_steps"].shape == (num_particles,)
-        print(initial_parameters)
+
         pretune = build_pretune(
             blackjax.hmc.init,
             blackjax.hmc.build_kernel(),
@@ -188,21 +184,6 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             parameters_to_pretune=["step_size", "num_integration_steps"],
             round_to_integer=["num_integration_steps"],
         )
-
-        #init, step = blackjax.inner_kernel_tuning(
-        #    blackjax.tempered_smc,
-        #    logprior_fn,
-        #    loglikelihood_fn,
-        #    blackjax.hmc.build_kernel(),
-        #    blackjax.hmc.init,
-        #    resampling.systematic,
-        #    initial_parameter_value=initial_parameters,
-        #    num_mcmc_steps=10,
-        #    pretune_fn=pretune,
-        #)
-        #a = init(init_particles)
-        #assert a.parameter_override["num_integration_steps"] is not None
-        #step(sampling_key, a, lmbda=0.5)
 
         init2, step2 = blackjax.smc.pretuning.build_kernel(blackjax.tempered_smc,
             logprior_fn,
