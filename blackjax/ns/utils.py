@@ -21,6 +21,9 @@ def compute_nlive(info: NSInfo):
     birth = info.logL_birth
     death = info.logL
 
+    # #first sort by birth
+    # j = jnp.argsort(death)
+
     # Combine birth and death arrays
     combined = jnp.concatenate(
         [
@@ -102,8 +105,13 @@ def log_weights(key: jax.random.PRNGKey, dead: NSInfo, samples=100, beta=1.0):
     jnp.ndarray
         An array containing the log weights of the dead points.
     """
+    # sort by logL
+    j = jnp.argsort(dead.logL)
+    original_indices = jnp.arange(len(dead.logL))
+    dead = jax.tree_map(lambda x: x[j], dead)
     _, ldX = logX(key, dead, samples)
-    return ldX + beta * dead.logL[..., jnp.newaxis]
+    ln_w = ldX + beta * dead.logL[..., jnp.newaxis]
+    return ln_w[original_indices]
 
 
 def finalise(state, dead):
