@@ -137,7 +137,7 @@ def build_pretune(
     else:
         def round_to_integer_fn(x):
             for k in round_to_integer:
-                x[k] = jax.tree.map(lambda a: jnp.round(a).astype(int), x[k])
+                x[k] = jax.tree.map(lambda a: jnp.abs(jnp.round(a).astype(int)), x[k])
             return x
 
     def pretune(key, state, logposterior):
