@@ -21,9 +21,6 @@ def compute_nlive(info: NSInfo):
     birth = info.logL_birth
     death = info.logL
 
-    # #first sort by birth
-    # j = jnp.argsort(death)
-
     # Combine birth and death arrays
     combined = jnp.concatenate(
         [
