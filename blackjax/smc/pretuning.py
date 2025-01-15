@@ -289,7 +289,6 @@ def as_top_level_api(
     mcmc_step_fn,
     mcmc_init_fn,
     resampling_fn,
-    mcmc_parameter_update_fn,
     num_mcmc_steps,
     initial_parameter_value,
     pretune_fn,
@@ -326,7 +325,6 @@ def as_top_level_api(
         mcmc_step_fn,
         mcmc_init_fn,
         resampling_fn,
-        mcmc_parameter_update_fn,
         num_mcmc_steps,
         pretune_fn**extra_parameters,
     )
