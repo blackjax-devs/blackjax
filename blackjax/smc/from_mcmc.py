@@ -51,7 +51,9 @@ def build_kernel(
         logposterior_fn: Callable,
         log_weights_fn: Callable,
     ) -> tuple[smc.base.SMCState, smc.base.SMCInfo]:
-        unshared_mcmc_parameters, shared_mcmc_step_fn = unshared_parameters_and_step_fn(mcmc_parameters, mcmc_step_fn)
+        unshared_mcmc_parameters, shared_mcmc_step_fn = unshared_parameters_and_step_fn(
+            mcmc_parameters, mcmc_step_fn
+        )
 
         update_fn, num_resampled = update_strategy(
             mcmc_init_fn,

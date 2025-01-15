@@ -8,7 +8,12 @@ from absl.testing import absltest
 
 import blackjax
 from blackjax.smc import extend_params, resampling
-from blackjax.smc.pretuning import build_pretune, esjd, update_parameter_distribution, init
+from blackjax.smc.pretuning import (
+    build_pretune,
+    esjd,
+    init,
+    update_parameter_distribution,
+)
 from tests.smc import SMCLinearRegressionTestCase
 
 
@@ -185,17 +190,20 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             round_to_integer=["num_integration_steps"],
         )
 
-        step = blackjax.smc.pretuning.build_kernel(blackjax.tempered_smc,
+        step = blackjax.smc.pretuning.build_kernel(
+            blackjax.tempered_smc,
             logprior_fn,
             loglikelihood_fn,
             blackjax.hmc.build_kernel(),
             blackjax.hmc.init,
             resampling.systematic,
             num_mcmc_steps=10,
+            pretune_fn=pretune,
+        )
 
-            pretune_fn=pretune)
-
-        initial_state = init(blackjax.tempered_smc.init, init_particles, initial_parameters)
+        initial_state = init(
+            blackjax.tempered_smc.init, init_particles, initial_parameters
+        )
         smc_kernel = self.variant(step)
 
         def body_fn(carry, lmbda):
@@ -203,16 +211,21 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             subkey = jax.random.fold_in(self.key, i)
             new_state, info = smc_kernel(subkey, state, lmbda=lmbda)
             return (i + 1, new_state), (new_state, info)
+
         num_tempering_steps = 10
         lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
 
         (_, result), _ = jax.lax.scan(body_fn, (0, initial_state), lambda_schedule)
         self.assert_linear_regression_test_case(result.sampler_state)
-        assert set(result.parameter_override.keys()) == {"step_size",
-                                                         "num_integration_steps",
-                                                         "inverse_mass_matrix"}
+        assert set(result.parameter_override.keys()) == {
+            "step_size",
+            "num_integration_steps",
+            "inverse_mass_matrix",
+        }
         assert result.parameter_override["step_size"].shape == (num_particles,)
-        assert result.parameter_override["num_integration_steps"].shape == (num_particles,)
+        assert result.parameter_override["num_integration_steps"].shape == (
+            num_particles,
+        )
 
 
 if __name__ == "__main__":
