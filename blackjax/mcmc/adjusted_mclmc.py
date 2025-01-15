@@ -37,7 +37,7 @@ def init(position: ArrayLikeTree, logdensity_fn: Callable):
 
 
 def build_kernel(
-    num_integration_steps: int,
+    logdensity_fn: Callable,
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
     inverse_mass_matrix=1.0,
@@ -66,8 +66,8 @@ def build_kernel(
     def kernel(
         rng_key: PRNGKey,
         state: HMCState,
-        logdensity_fn: Callable,
         step_size: float,
+        num_integration_steps: int,
         L_proposal_factor: float = jnp.inf,
     ) -> tuple[HMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""

@@ -37,13 +37,13 @@ class AdaptationState(NamedTuple):
     
 
 
-def build_kernel(logdensity_fn, integrator, sqrt_diag_cov):
+def build_kernel(logdensity_fn, integrator, inverse_mass_matrix):
     """MCLMC kernel"""
     
-    kernel = build_kernel_malt(logdensity_fn, integrator, sqrt_diag_cov= sqrt_diag_cov, L_proposal_factor = 1.25)
+    kernel = build_kernel_malt(logdensity_fn=logdensity_fn, integrator=integrator, inverse_mass_matrix= inverse_mass_matrix,)
     
     def sequential_kernel(key, state, adap):
-        return kernel(key, state, step_size= adap.step_size, num_integration_steps= adap.steps_per_sample)
+        return kernel(key, state, step_size= adap.step_size, num_integration_steps= adap.steps_per_sample, L_proposal_factor = 1.25,)
     
     return sequential_kernel
 
@@ -200,16 +200,16 @@ def emaus(model, num_steps1, num_steps2, num_chains, mesh, rng_key,
     gradient_calls_per_step= len(_integrator_coefficients) // 2 #scheme = BABAB..AB scheme has len(scheme)//2 + 1 Bs. The last doesn't count because that gradient can be reused in the next step.
 
     if diagonal_preconditioning:
-        sqrt_diag_cov= final_adaptation_state.sqrt_diag_cov
+        inverse_mass_matrix= jnp.sqrt(final_adaptation_state.inverse_mass_matrix)
         
         # scale the stepsize so that it reflects averag scale change of the preconditioning
-        average_scale_change = jnp.sqrt(jnp.average(jnp.square(sqrt_diag_cov)))
+        average_scale_change = jnp.sqrt(jnp.average(inverse_mass_matrix))
         final_adaptation_state = final_adaptation_state._replace(step_size= final_adaptation_state.step_size / average_scale_change)
 
     else:
-        sqrt_diag_cov= 1.
+        inverse_mass_matrix= 1.
     
-    kernel = build_kernel(model.logdensity_fn, integrator, sqrt_diag_cov= sqrt_diag_cov)
+    kernel = build_kernel(model.logdensity_fn, integrator, inverse_mass_matrix= inverse_mass_matrix)
     initial_state= HMCState(final_state.position, final_state.logdensity, final_state.logdensity_grad)
     num_samples = num_steps2 // (gradient_calls_per_step * steps_per_sample)
     num_adaptation_samples = num_samples//2 # number of samples after which the stepsize is fixed.

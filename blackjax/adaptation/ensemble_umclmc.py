@@ -119,7 +119,7 @@ class History(NamedTuple):
 class AdaptationState(NamedTuple):
     
     L: float
-    sqrt_diag_cov: Any
+    inverse_mass_matrix: Any
     step_size: float
     
     step_count: int
@@ -189,7 +189,7 @@ class Adaptation:
                           weights= jnp.zeros(r_save_num))
 
         self.initial_state = AdaptationState(L= jnp.inf, # do not add noise for the first step
-                                             sqrt_diag_cov= jnp.ones(num_dims),
+                                             inverse_mass_matrix= jnp.ones(num_dims),
                                              step_size= 0.01 * jnp.sqrt(num_dims),
                                              step_count= 0, 
                                              EEVPD=1e-3, EEVPD_wanted=1e-3,
@@ -225,7 +225,7 @@ class Adaptation:
         history = History(history_observables, history_stopping, history_weights)
         
         L = self.alpha * jnp.sqrt(jnp.sum(Etheta['xsq'] - jnp.square(Etheta['x']))) # average over the ensemble, sum over parameters (to get sqrt(d))
-        sqrt_diag_cov = jnp.sqrt(Etheta['xsq'] - jnp.square(Etheta['x']))
+        inverse_mass_matrix = Etheta['xsq'] - jnp.square(Etheta['x'])
         EEVPD = (Etheta['Esq'] - jnp.square(Etheta['E'])) / self.num_dims        
         true_bias = self.contract(Etheta['observables_for_bias'])
         nans = (Etheta['rejection_rate_nans'] > 0.) #| (~jnp.isfinite(eps_factor))
@@ -254,7 +254,7 @@ class Adaptation:
                              'observables': Etheta['observables']}
     
         adaptation_state_new = AdaptationState(L, 
-                                               sqrt_diag_cov,
+                                               inverse_mass_matrix,
                                                adaptation_state.step_size * eps_factor, 
                                                adaptation_state.step_count + 1, 
                                                EEVPD, 

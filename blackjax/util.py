@@ -377,7 +377,10 @@ def run_eca(rng_key, initial_state, kernel, adaptation, num_steps, num_chains, m
                             )
     
     # produce all random keys that will be needed
+    # rng_key = rng_key if not isinstance(rng_key, jnp.ndarray) else rng_key[0]
+
     key_sampling, key_adaptation = split(rng_key)
+    num_steps = jnp.array(num_steps).item()
     keys_adaptation = split(key_adaptation, num_steps)
     distribute_keys = lambda key, shape: device_put(split(key, shape), NamedSharding(mesh, p)) # random keys, distributed across devices
     keys_sampling = distribute_keys(key_sampling, (num_chains, num_steps))
