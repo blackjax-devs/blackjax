@@ -9,11 +9,10 @@ from blackjax.types import PRNGKey
 
 
 def unshared_parameters_and_step_fn(mcmc_parameters, mcmc_step_fn):
-    """
-    splits mcmc parameters into two dictionaries. The shared dictionary
-    represents the parameters common to all particles, and the unshared are
-    different per particle.
-    binds the step fn using the shared parameters.
+    """Splits MCMC parameters into two dictionaries. The shared dictionary
+    represents the parameters common to all chains, and the unshared are
+    different per chain.
+    Binds the step fn using the shared parameters.
     """
     shared_mcmc_parameters = {}
     unshared_mcmc_parameters = {}

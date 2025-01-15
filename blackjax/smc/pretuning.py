@@ -16,11 +16,9 @@ from blackjax.smc.from_mcmc import build_kernel as smc_from_mcmc, unshared_param
 
 
 class SMCInfoWithParameterDistribution(NamedTuple):
-    """
-    Stores both the sampling status and also a dictionary
-    that contains a dictionary with parameter names as key
-    and (n_particles, *) arrays as meanings. The latter
-    represent a parameter per chain for the next mutation step.
+    """Stores both the sampling status and also a dictionary
+    with parameter names as keys and (n_particles, *) arrays as values.
+    The latter represents a parameter per chain for the next mutation step.
     """
     smc_info: SMCInfo
     parameter_override: Dict[str, ArrayTree]
@@ -29,9 +27,9 @@ class SMCInfoWithParameterDistribution(NamedTuple):
 def esjd(m):
     """Implements ESJD (expected squared jumping distance). Inner Mahalanobis distance
     is computed using the Cholesky decomposition of M=LLt, and then inverting L.
-    Whenever M is symmetrical definite positive then it must exist a Cholesky Decomposition. For example,
-     if M is the Covariance Matrix of Metropolis-Hastings or the Inverse Mass Matrix of Hamiltonian Monte
-    Carlo.
+    Whenever M is symmetrical definite positive then it must exist a Cholesky Decomposition.
+    For example, if M is the Covariance Matrix of Metropolis-Hastings or
+    the Inverse Mass Matrix of Hamiltonian Monte Carlo.
     """
     L = jnp.linalg.cholesky(m)
 
@@ -63,7 +61,7 @@ def update_parameter_distribution(
         sigma_parameters: ArrayLikeTree,
         acceptance_probability,
 ):
-    """Given an existing parameter distribution that were used to mutate previous_particles
+    """Given an existing parameter distribution that was used to mutate previous_particles
     into latest_particles, updates that parameter distribution by resampling from previous_param_samples after adding
     noise to those samples. The weights used are a linear function of the measure of chain mixing.
     Only works with float parameters, not integers.
@@ -81,8 +79,9 @@ def update_parameter_distribution(
         a callable that can compute a performance measure per chain
     alpha:
         a scalar to add to the weighting. See paper for details
-    sigma_parameters: noise to add to the population of parameters to mutate them. must have the same shape of
-     previous_param_samples.
+    sigma_parameters:
+        noise to add to the population of parameters to mutate them. must have the same shape of
+        previous_param_samples.
     acceptance_probability:
         the energy difference for each of the chains when taking a step from previous_particles
         into latest_particles.
@@ -113,16 +112,15 @@ def build_pretune(
         mcmc_step_fn,
         alpha,
         sigma_parameters,
-        parameters_to_pretune: List[str],
         n_particles: int,
         performance_of_chain_measure_factory: Callable = lambda state: esjd(
             state.parameter_override["inverse_mass_matrix"]
         ),
         round_to_integer: Optional[List[str]] = None,
 ):
-    """
-    Implements Buchholz et al https://arxiv.org/pdf/1808.07730 pretuning procedure. The goal is to maintain
-    a probability distribution of parameters, in order to assign different values to each inner MCMC chain.
+    """Implements Buchholz et al https://arxiv.org/pdf/1808.07730 pretuning procedure.
+    The goal is to maintain a probability distribution of parameters, in order
+    to assign different values to each inner MCMC chain.
     To have performant parameters for the distribution at step t, it takes a single step, measures
     the chain mixing, and reweights the probability distribution of parameters accordingly.
     Note that although similar, this strategy is different than inner_kernel_tuning. The latter updates
@@ -160,7 +158,7 @@ def build_pretune(
         ) = update_parameter_distribution(
             key,
             previous_param_samples={
-                key: state.parameter_override[key] for key in parameters_to_pretune
+                key: state.parameter_override[key] for key in sigma_parameters
             },
             previous_particles=state.sampler_state.particles,
             latest_particles=new_state,
@@ -219,8 +217,8 @@ def build_kernel(
         mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
     mcmc_init_fn
         A callable that initializes the inner kernel
-    mcmc_parameter_update_fn
-        A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the inner kernel in i+1 iteration.
+    pretune_fn:
+        A callable that can update the probability distribution of parameters.
     extra_parameters:
         parameters to be used for the creation of the smc_algorithm.
     """
@@ -235,10 +233,9 @@ def build_kernel(
             logposterior_fn: Callable,
             log_weights_fn: Callable,
     ) -> tuple[smc.base.SMCState, SMCInfoWithParameterDistribution]:
-        """
-        Wraps the output of smc.from_mcmc.build_kernel into a pretuning + step method.
+        """Wraps the output of smc.from_mcmc.build_kernel into a pretuning + step method.
         This one should be a subtype of the former, in the sense that a usage of the former
-        can be replaced with a instance of this one.
+        can be replaced with an instance of this one.
         """
 
         pretune_key, step_key = jax.random.split(rng_key, 2)
@@ -285,6 +282,30 @@ def as_top_level_api(smc_algorithm,
                      initial_parameter_value,
                      pretune_fn,
                      **extra_parameters):
+    """In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
+    MCMC that is used to perturbate/update each of the particles. This adaptation tunes some parameter of that MCMC,
+    based on particles. The parameter type must be a valid JAX type.
+
+    Parameters
+    ----------
+    smc_algorithm
+        Either blackjax.adaptive_tempered_smc or blackjax.tempered_smc (or any other implementation of
+        a sampling algorithm that returns an SMCState and SMCInfo pair).
+    logprior_fn
+        A function that computes the log density of the prior distribution
+    loglikelihood_fn
+        A function that returns the probability at a given position.
+    mcmc_step_fn:
+        The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
+        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
+    mcmc_init_fn
+        A callable that initializes the inner kernel
+    pretune_fn:
+        A callable that can update the probability distribution of parameters.
+    extra_parameters:
+        parameters to be used for the creation of the smc_algorithm.
+    """
+
     kernel = build_kernel(
         smc_algorithm,
         logprior_fn,
