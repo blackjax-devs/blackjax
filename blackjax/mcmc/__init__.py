@@ -1,5 +1,5 @@
 from . import (
-    adjusted_mclmc,
+    adjusted_mclmc_dynamic,
     barker,
     elliptical_slice,
     ghmc,
@@ -25,5 +25,5 @@ __all__ = [
     "marginal_latent_gaussian",
     "random_walk",
     "mclmc",
-    "adjusted_mclmc",
+    "adjusted_mclmc_dynamic",
 ]
