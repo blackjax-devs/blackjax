@@ -5,7 +5,7 @@ import jax.numpy as jnp
 import jax.random
 from jax._src.flatten_util import ravel_pytree
 
-from blackjax import smc
+from blackjax import smc, SamplingAlgorithm
 from blackjax.smc.base import update_and_take_last, SMCInfo, SMCState
 
 from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
@@ -276,3 +276,41 @@ def build_kernel(
         return StateWithParameterOverride(alg_init_fn(position), initial_parameter_value)
 
     return init, kernel
+
+
+def init(alg_init_fn, position, initial_parameter_value):
+    return StateWithParameterOverride(alg_init_fn(position), initial_parameter_value)
+
+def as_top_level_api(smc_algorithm,
+                     logprior_fn,
+                     loglikelihood_fn,
+                     mcmc_step_fn,
+                     mcmc_init_fn,
+                     resampling_fn,
+                     mcmc_parameter_update_fn,
+                     num_mcmc_steps,
+                     pretune_fn,
+                     **extra_parameters):
+    kernel = build_kernel(
+        smc_algorithm,
+        logprior_fn,
+        loglikelihood_fn,
+        mcmc_step_fn,
+        mcmc_init_fn,
+        resampling_fn,
+        mcmc_parameter_update_fn,
+        num_mcmc_steps,
+        pretune_fn
+        **extra_parameters,
+    )
+
+    def init_fn(position, rng_key=None):
+        del rng_key
+        return init(smc_algorithm.init, position, initial_parameter_value)
+
+    def step_fn(
+        rng_key: PRNGKey, state, **extra_step_parameters
+    ) -> Tuple[StateWithParameterOverride, SMCInfo]:
+        return kernel(rng_key, state, **extra_step_parameters)
+
+    return SamplingAlgorithm(init_fn, step_fn)
