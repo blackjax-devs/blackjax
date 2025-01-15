@@ -140,7 +140,7 @@ def as_top_level_api(
     """
 
     kernel = build_kernel(
-        num_integration_steps,
+        logdensity_fn=logdensity_fn,
         integrator=integrator,
         inverse_mass_matrix=inverse_mass_matrix,
         divergence_threshold=divergence_threshold,
@@ -152,11 +152,11 @@ def as_top_level_api(
 
     def update_fn(rng_key: PRNGKey, state):
         return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            step_size,
-            L_proposal_factor,
+            rng_key=rng_key,
+            state=state,
+            step_size=step_size,
+            num_integration_steps=num_integration_steps,
+            L_proposal_factor=L_proposal_factor,
         )
 
     return SamplingAlgorithm(init_fn, update_fn)  # type: ignore[arg-type]
