@@ -71,5 +71,4 @@ def build_kernel(
             num_resampled,
         )
 
-
     return step
