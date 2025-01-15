@@ -26,8 +26,6 @@ class SMCInfoWithParameterDistribution(NamedTuple):
     parameter_override: Dict[str, ArrayTree]
 
 
-
-
 def esjd(m):
     """Implements ESJD (expected squared jumping distance). Inner Mahalanobis distance
     is computed using the Cholesky decomposition of M=LLt, and then inverting L.
@@ -83,8 +81,8 @@ def update_parameter_distribution(
         a callable that can compute a performance measure per chain
     alpha:
         a scalar to add to the weighting. See paper for details
-    sigma_parameters:
-        must have the same shape of previous_param_samples.
+    sigma_parameters: noise to add to the population of parameters to mutate them. must have the same shape of
+     previous_param_samples.
     acceptance_probability:
         the energy difference for each of the chains when taking a step from previous_particles
         into latest_particles.
@@ -97,7 +95,6 @@ def update_parameter_distribution(
         sigma_parameters,
     )
     new_samples = jax.tree.map(lambda x, y: x + y, noises, previous_param_samples)
-    # TODO SHOULD WE ADD SOME CHECK HERE TO AVOID AN INSANE AMMOUNT OF NOISE
 
     chain_mixing_measurement = measure_of_chain_mixing(
         previous_particles, latest_particles, acceptance_probability
@@ -192,8 +189,6 @@ def build_pretune(
     return pretune_and_update
 
 
-
-
 def build_kernel(
         smc_algorithm,
         logprior_fn: Callable,
@@ -201,8 +196,8 @@ def build_kernel(
         mcmc_step_fn: Callable,
         mcmc_init_fn: Callable,
         resampling_fn: Callable,
+        pretune_fn,
         num_mcmc_steps: int = 10,
-        pretune_fn: Callable = lambda x, y, z: {},
         update_strategy=update_and_take_last,
         **extra_parameters,
 ) -> Callable:
@@ -265,21 +260,19 @@ def build_kernel(
             mcmc_parameters=state.parameter_override,
             resampling_fn=resampling_fn,
             num_mcmc_steps=num_mcmc_steps,
-            ** extra_parameters,
+            **extra_parameters,
         ).step
         new_state, info = step_fn(
             rng_key, state.sampler_state, **extra_step_parameters
         )
         return StateWithParameterOverride(new_state, info.parameter_override), info.smc_info
 
-    def init(alg_init_fn, position, initial_parameter_value):
-        return StateWithParameterOverride(alg_init_fn(position), initial_parameter_value)
-
-    return init, kernel
+    return kernel
 
 
 def init(alg_init_fn, position, initial_parameter_value):
     return StateWithParameterOverride(alg_init_fn(position), initial_parameter_value)
+
 
 def as_top_level_api(smc_algorithm,
                      logprior_fn,
@@ -289,6 +282,7 @@ def as_top_level_api(smc_algorithm,
                      resampling_fn,
                      mcmc_parameter_update_fn,
                      num_mcmc_steps,
+                     initial_parameter_value,
                      pretune_fn,
                      **extra_parameters):
     kernel = build_kernel(
@@ -301,7 +295,7 @@ def as_top_level_api(smc_algorithm,
         mcmc_parameter_update_fn,
         num_mcmc_steps,
         pretune_fn
-        **extra_parameters,
+        ** extra_parameters,
     )
 
     def init_fn(position, rng_key=None):
@@ -309,7 +303,7 @@ def as_top_level_api(smc_algorithm,
         return init(smc_algorithm.init, position, initial_parameter_value)
 
     def step_fn(
-        rng_key: PRNGKey, state, **extra_step_parameters
+            rng_key: PRNGKey, state, **extra_step_parameters
     ) -> Tuple[StateWithParameterOverride, SMCInfo]:
         return kernel(rng_key, state, **extra_step_parameters)
 

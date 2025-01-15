@@ -13,10 +13,7 @@ def update_waste_free(
     p: int,
     num_resampled,
     num_mcmc_steps=None,
-    paralelize=False,
 ):
-    apply = jax.pmap if paralelize else jax.vmap
-
     """
     Given M particles, mutates them using p-1 steps. Returns M*P-1 particles,
     consistent of the initial plus all the intermediate steps, thus implementing a
@@ -50,7 +47,7 @@ def update_waste_free(
         The combines the initial particles with all the particles generated
         at each step of each chain.
         """
-        states, infos = apply(mcmc_kernel)(rng_key, position, step_parameters)
+        states, infos = jax.vmap(mcmc_kernel)(rng_key, position, step_parameters)
 
         # step particles is num_resmapled, num_mcmc_steps, dimension_of_variable
         # want to transformed into num_resampled * num_mcmc_steps, dimension of variable
@@ -67,12 +64,7 @@ def update_waste_free(
     return update, num_resampled
 
 
-def waste_free_smc(n_particles, p, paralelize=False):
+def waste_free_smc(n_particles, p):
     if not n_particles % p == 0:
         raise ValueError("p must be a divider of n_particles ")
-    return functools.partial(
-        update_waste_free,
-        num_resampled=int(n_particles / p),
-        p=p,
-        paralelize=paralelize,
-    )
+    return functools.partial(update_waste_free, num_resampled=int(n_particles / p), p=p)

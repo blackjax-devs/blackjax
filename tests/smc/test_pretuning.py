@@ -8,7 +8,7 @@ from absl.testing import absltest
 
 import blackjax
 from blackjax.smc import extend_params, resampling
-from blackjax.smc.pretuning import build_pretune, esjd, update_parameter_distribution
+from blackjax.smc.pretuning import build_pretune, esjd, update_parameter_distribution, init
 from tests.smc import SMCLinearRegressionTestCase
 
 
@@ -146,7 +146,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
         self.key = jax.random.key(42)
 
     @chex.variants(with_jit=True)
-    def test_one_step(self):
+    def test_linear_regression(self):
         (
             init_particles,
             logprior_fn,
@@ -186,20 +186,18 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             round_to_integer=["num_integration_steps"],
         )
 
-        init2, step2 = blackjax.smc.pretuning.build_kernel(blackjax.tempered_smc,
+        step = blackjax.smc.pretuning.build_kernel(blackjax.tempered_smc,
             logprior_fn,
             loglikelihood_fn,
             blackjax.hmc.build_kernel(),
             blackjax.hmc.init,
             resampling.systematic,
             num_mcmc_steps=10,
+
             pretune_fn=pretune)
 
-        a = init2(blackjax.tempered_smc.init, init_particles, initial_parameters)
-        assert a.parameter_override["num_integration_steps"] is not None
-        step2(sampling_key, a, lmbda=0.5)
-
-        smc_kernel = self.variant(step2)
+        initial_state = init(blackjax.tempered_smc.init, init_particles, initial_parameters)
+        smc_kernel = self.variant(step)
 
         def body_fn(carry, lmbda):
             i, state = carry
@@ -209,7 +207,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
         num_tempering_steps = 10
         lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
 
-        (_, result), _ = jax.lax.scan(body_fn, (0, a), lambda_schedule)
+        (_, result), _ = jax.lax.scan(body_fn, (0, initial_state), lambda_schedule)
         self.assert_linear_regression_test_case(result.sampler_state)
         assert set(result.parameter_override.keys()) == {"step_size",
                                                          "num_integration_steps",
