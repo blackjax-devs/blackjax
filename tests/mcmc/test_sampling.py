@@ -237,13 +237,13 @@ class LinearRegressionTest(chex.TestCase):
 
         kernel = lambda rng_key, state, avg_num_integration_steps, step_size, inverse_mass_matrix: blackjax.mcmc.adjusted_mclmc.build_kernel(
             integrator=integrator,
-            num_integration_steps=avg_num_integration_steps,
             inverse_mass_matrix=inverse_mass_matrix,
+            logdensity_fn=logdensity_fn,
         )(
             rng_key=rng_key,
             state=state,
             step_size=step_size,
-            logdensity_fn=logdensity_fn,
+            num_integration_steps=avg_num_integration_steps,
         )
 
         target_acc_rate = 0.9
