@@ -144,8 +144,6 @@ class LinearRegressionTest(chex.TestCase):
             transform=lambda state, info: state.position,
         )
 
-        print(samples["coefs"][0].item())
-
         return samples
 
     def run_adjusted_mclmc_dynamic(
@@ -217,8 +215,6 @@ class LinearRegressionTest(chex.TestCase):
             transform=lambda state, _: state.position,
             progress_bar=False,
         )
-
-        print(blackjax_mclmc_sampler_params.inverse_mass_matrix[1].item())
 
         return out
 
