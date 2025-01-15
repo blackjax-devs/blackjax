@@ -1,5 +1,5 @@
 from typing import Callable, Dict, NamedTuple, Tuple
-import jax
+
 from blackjax.base import SamplingAlgorithm
 from blackjax.smc.base import SMCInfo, SMCState
 from blackjax.types import ArrayTree, PRNGKey
@@ -69,9 +69,8 @@ def build_kernel(
             num_mcmc_steps=num_mcmc_steps,
             **extra_parameters,
         ).step
-        parameter_update_key, step_key = jax.random.split(rng_key, 2)
-        new_state, info = step_fn(step_key, state.sampler_state, **extra_step_parameters)
-        new_parameter_override = mcmc_parameter_update_fn(parameter_update_key, new_state, info)
+        new_state, info = step_fn(rng_key, state.sampler_state, **extra_step_parameters)
+        new_parameter_override = mcmc_parameter_update_fn(new_state, info)
         return StateWithParameterOverride(new_state, new_parameter_override), info
 
     return kernel
