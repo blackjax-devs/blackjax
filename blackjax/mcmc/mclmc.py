@@ -60,7 +60,7 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
     )
 
 
-def build_kernel(logdensity_fn, inverse_mass_matrix, integrator):
+def build_kernel(logdensity_fn, inverse_mass_matrix=1.0, integrator=isokinetic_mclachlan):
     """Build a HMC kernel.
 
     Parameters
