@@ -5,6 +5,7 @@ blackjax.smc.tuning.from_kernel_info
 
 .. autoapi-nested-parse::
 
+   static (all particles get the same value)
    strategies to tune the parameters of mcmc kernels
    used within smc, based on MCMC states
 

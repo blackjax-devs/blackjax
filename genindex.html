@@ -29,7 +29,7 @@
   <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 <link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gdf87345" />
+  <meta name="docsearch:version" content="0.1.dev1+gfc539ca" />
   </head>
   
   
@@ -224,6 +224,7 @@
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
@@ -469,6 +470,8 @@
         <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.as_top_level_api">(in module blackjax.smc.inner_kernel_tuning)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.as_top_level_api">(in module blackjax.smc.partial_posteriors_path)</a>
+</li>
+        <li><a href="autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.as_top_level_api">(in module blackjax.smc.pretuning)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.as_top_level_api">(in module blackjax.smc.tempered)</a>
 </li>
@@ -743,8 +746,6 @@
         <li><a href="autoapi/blackjax/sgmcmc/csgld/index.html#module-blackjax.sgmcmc.csgld">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blackjax.sgmcmc.diffusions
 
@@ -752,6 +753,8 @@
         <li><a href="autoapi/blackjax/sgmcmc/diffusions/index.html#module-blackjax.sgmcmc.diffusions">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blackjax.sgmcmc.gradients
 
@@ -827,6 +830,13 @@
 
       <ul>
         <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#module-blackjax.smc.partial_posteriors_path">module</a>
+</li>
+      </ul></li>
+      <li>
+    blackjax.smc.pretuning
+
+      <ul>
+        <li><a href="autoapi/blackjax/smc/pretuning/index.html#module-blackjax.smc.pretuning">module</a>
 </li>
       </ul></li>
       <li>
@@ -958,11 +968,15 @@
 </li>
         <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.build_kernel">(in module blackjax.smc.partial_posteriors_path)</a>
 </li>
+        <li><a href="autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.build_kernel">(in module blackjax.smc.pretuning)</a>
+</li>
         <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.build_kernel">(in module blackjax.smc.tempered)</a>
 </li>
         <li><a href="autoapi/blackjax/vi/svgd/index.html#blackjax.vi.svgd.build_kernel">(in module blackjax.vi.svgd)</a>
 </li>
       </ul></li>
+      <li><a href="autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.build_pretune">build_pretune() (in module blackjax.smc.pretuning)</a>
+</li>
       <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_rmh">build_rmh() (in module blackjax.mcmc.random_walk)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_rmh_transition_energy">build_rmh_transition_energy() (in module blackjax.mcmc.random_walk)</a>
@@ -1058,6 +1072,8 @@
       <li><a href="autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.ContourSGLDState.energy_idx">energy_idx (ContourSGLDState attribute)</a>
 </li>
       <li><a href="autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.ContourSGLDState.energy_pdf">energy_pdf (ContourSGLDState attribute)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.esjd">esjd() (in module blackjax.smc.pretuning)</a>
 </li>
       <li><a href="autoapi/blackjax/smc/ess/index.html#blackjax.smc.ess.ess">ess() (in module blackjax.smc.ess)</a>
 </li>
@@ -1177,6 +1193,8 @@
         <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.init">(in module blackjax.smc.inner_kernel_tuning)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.init">(in module blackjax.smc.partial_posteriors_path)</a>
+</li>
+        <li><a href="autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.init">(in module blackjax.smc.pretuning)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.init">(in module blackjax.smc.tempered)</a>
 </li>
@@ -1451,6 +1469,8 @@
 </li>
         <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#module-blackjax.smc.partial_posteriors_path">blackjax.smc.partial_posteriors_path</a>
 </li>
+        <li><a href="autoapi/blackjax/smc/pretuning/index.html#module-blackjax.smc.pretuning">blackjax.smc.pretuning</a>
+</li>
         <li><a href="autoapi/blackjax/smc/resampling/index.html#module-blackjax.smc.resampling">blackjax.smc.resampling</a>
 </li>
         <li><a href="autoapi/blackjax/smc/solver/index.html#module-blackjax.smc.solver">blackjax.smc.solver</a>
@@ -1560,8 +1580,12 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.StateWithParameterOverride.parameter_override">parameter_override (StateWithParameterOverride attribute)</a>
+      <li><a href="autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.SMCInfoWithParameterDistribution.parameter_override">parameter_override (SMCInfoWithParameterDistribution attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.StateWithParameterOverride.parameter_override">(StateWithParameterOverride attribute)</a>
 </li>
+      </ul></li>
       <li><a href="autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.AdaptationResults.parameters">parameters (AdaptationResults attribute)</a>
 </li>
       <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.PartialPosteriorsSMCState">PartialPosteriorsSMCState (class in blackjax.smc.partial_posteriors_path)</a>
@@ -1708,7 +1732,11 @@
 </li>
       <li><a href="autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.slice">slice (GHMCState attribute)</a>
 </li>
+      <li><a href="autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.SMCInfoWithParameterDistribution.smc_info">smc_info (SMCInfoWithParameterDistribution attribute)</a>
+</li>
       <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo">SMCInfo (class in blackjax.smc.base)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.SMCInfoWithParameterDistribution">SMCInfoWithParameterDistribution (class in blackjax.smc.pretuning)</a>
 </li>
       <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState">SMCState (class in blackjax.smc.base)</a>
 </li>
@@ -1820,6 +1848,8 @@
 </li>
       <li><a href="autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.MarginalState.U_x">U_x (MarginalState attribute)</a>
 </li>
+      <li><a href="autoapi/blackjax/smc/from_mcmc/index.html#blackjax.smc.from_mcmc.unshared_parameters_and_step_fn">unshared_parameters_and_step_fn() (in module blackjax.smc.from_mcmc)</a>
+</li>
       <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.update_and_take_last">update_and_take_last() (in module blackjax.smc.base)</a>
 </li>
       <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.update_info">update_info (SMCInfo attribute)</a>
@@ -1827,6 +1857,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/vi/svgd/index.html#blackjax.vi.svgd.update_median_heuristic">update_median_heuristic() (in module blackjax.vi.svgd)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.update_parameter_distribution">update_parameter_distribution() (in module blackjax.smc.pretuning)</a>
 </li>
       <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState.update_parameters">update_parameters (SMCState attribute)</a>
 </li>

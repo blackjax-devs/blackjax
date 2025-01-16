@@ -29,7 +29,7 @@
   <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 <link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gdf87345" />
+  <meta name="docsearch:version" content="0.1.dev1+gfc539ca" />
   </head>
   
   
@@ -224,6 +224,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
@@ -374,18 +375,18 @@
 <span class="c1"># CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)</span>
 <span class="c1"># ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE</span>
 <span class="c1"># POSSIBILITY OF SUCH DAMAGE.</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span>
 
-<span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.mcmc.metrics</span> <span class="kn">import</span> <span class="n">CheckTurning</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">CheckTurning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
 
 
 <div class="viewcode-block" id="IterativeUTurnState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/termination/index.html#blackjax.mcmc.termination.IterativeUTurnState">[docs]</a>
-<span class="k">class</span> <span class="nc">IterativeUTurnState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IterativeUTurnState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <div class="viewcode-block" id="IterativeUTurnState.momentum">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/termination/index.html#blackjax.mcmc.termination.IterativeUTurnState.momentum">[docs]</a>
     <span class="n">momentum</span><span class="p">:</span> <span class="n">Array</span></div>
@@ -407,10 +408,10 @@
 
 <div class="viewcode-block" id="iterative_uturn_numpyro">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/termination/index.html#blackjax.mcmc.termination.iterative_uturn_numpyro">[docs]</a>
-<span class="k">def</span> <span class="nf">iterative_uturn_numpyro</span><span class="p">(</span><span class="n">is_turning</span><span class="p">:</span> <span class="n">CheckTurning</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">iterative_uturn_numpyro</span><span class="p">(</span><span class="n">is_turning</span><span class="p">:</span> <span class="n">CheckTurning</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Numpyro style dynamic U-Turn criterion.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">new_state</span><span class="p">(</span><span class="n">chain_state</span><span class="p">,</span> <span class="n">max_num_doublings</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IterativeUTurnState</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">new_state</span><span class="p">(</span><span class="n">chain_state</span><span class="p">,</span> <span class="n">max_num_doublings</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IterativeUTurnState</span><span class="p">:</span>
         <span class="n">flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">chain_state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
         <span class="n">num_dims</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">flat</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">IterativeUTurnState</span><span class="p">(</span>
@@ -420,7 +421,7 @@
             <span class="mi">0</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">update_criterion_state</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_criterion_state</span><span class="p">(</span>
         <span class="n">checkpoints</span><span class="p">:</span> <span class="n">IterativeUTurnState</span><span class="p">,</span>
         <span class="n">momentum_sum</span><span class="p">,</span>
         <span class="n">momentum</span><span class="p">,</span>
@@ -439,7 +440,7 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">IterativeUTurnState</span><span class="p">(</span><span class="n">r_ckpts</span><span class="p">,</span> <span class="n">r_sum_ckpts</span><span class="p">,</span> <span class="n">ckpt_idx_min</span><span class="p">,</span> <span class="n">ckpt_idx_max</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_leaf_idx_to_ckpt_idxs</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_leaf_idx_to_ckpt_idxs</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Find the checkpoint id from a step number.&quot;&quot;&quot;</span>
         <span class="c1"># computes the number of non-zero bits except the last bit</span>
         <span class="c1"># e.g. 6 -&gt; 2, 7 -&gt; 2, 13 -&gt; 2</span>
@@ -450,7 +451,7 @@
         <span class="n">idx_min</span> <span class="o">=</span> <span class="n">idx_max</span> <span class="o">-</span> <span class="n">num_subtrees</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">idx_min</span><span class="p">,</span> <span class="n">idx_max</span>
 
-    <span class="k">def</span> <span class="nf">_is_iterative_turning</span><span class="p">(</span><span class="n">checkpoints</span><span class="p">,</span> <span class="n">momentum_sum</span><span class="p">,</span> <span class="n">momentum</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_iterative_turning</span><span class="p">(</span><span class="n">checkpoints</span><span class="p">,</span> <span class="n">momentum_sum</span><span class="p">,</span> <span class="n">momentum</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks whether there is a U-turn in the iteratively built expanded trajectory.</span>
 
 <span class="sd">        These checks only need to be performed as specific points.</span>
@@ -460,7 +461,7 @@
         <span class="n">r_sum</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_sum</span><span class="p">)</span>
         <span class="n">r_ckpts</span><span class="p">,</span> <span class="n">r_sum_ckpts</span><span class="p">,</span> <span class="n">idx_min</span><span class="p">,</span> <span class="n">idx_max</span> <span class="o">=</span> <span class="n">checkpoints</span>
 
-        <span class="k">def</span> <span class="nf">_body_fn</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_body_fn</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
             <span class="n">i</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">state</span>
             <span class="n">subtree_r_sum</span> <span class="o">=</span> <span class="n">r_sum</span> <span class="o">-</span> <span class="n">r_sum_ckpts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">r_ckpts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
             <span class="k">return</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">(</span><span class="n">r_ckpts</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">r</span><span class="p">,</span> <span class="n">subtree_r_sum</span><span class="p">)</span>

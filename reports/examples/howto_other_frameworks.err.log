@@ -95,7 +95,7 @@ File [0;32m/opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages
 [1;32m   1714[0m linker_time [38;5;241m=[39m end_linker [38;5;241m-[39m start_linker
 
 File [0;32m/opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/aesara/link/basic.py:254[0m, in [0;36mLocalLinker.make_thunk[0;34m(self, input_storage, output_storage, storage_map, **kwargs)[0m
-[1;32m    247[0m [38;5;28;01mdef[39;00m [38;5;21mmake_thunk[39m(
+[1;32m    247[0m [38;5;28;01mdef[39;00m[38;5;250m [39m[38;5;21mmake_thunk[39m(
 [1;32m    248[0m     [38;5;28mself[39m,
 [1;32m    249[0m     input_storage: Optional[[38;5;124m"[39m[38;5;124mInputStorageType[39m[38;5;124m"[39m] [38;5;241m=[39m [38;5;28;01mNone[39;00m,
 [0;32m   (...)[0m
@@ -130,25 +130,25 @@ File [0;32m/opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages
 [1;32m    657[0m thunks [38;5;241m=[39m []
 
 File [0;32m/opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/aesara/link/numba/linker.py:25[0m, in [0;36mNumbaLinker.fgraph_convert[0;34m(self, fgraph, **kwargs)[0m
-[1;32m     24[0m [38;5;28;01mdef[39;00m [38;5;21mfgraph_convert[39m([38;5;28mself[39m, fgraph, [38;5;241m*[39m[38;5;241m*[39mkwargs):
-[0;32m---> 25[0m     [38;5;28;01mfrom[39;00m [38;5;21;01maesara[39;00m[38;5;21;01m.[39;00m[38;5;21;01mlink[39;00m[38;5;21;01m.[39;00m[38;5;21;01mnumba[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdispatch[39;00m [38;5;28;01mimport[39;00m numba_funcify
+[1;32m     24[0m [38;5;28;01mdef[39;00m[38;5;250m [39m[38;5;21mfgraph_convert[39m([38;5;28mself[39m, fgraph, [38;5;241m*[39m[38;5;241m*[39mkwargs):
+[0;32m---> 25[0m     [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01maesara[39;00m[38;5;21;01m.[39;00m[38;5;21;01mlink[39;00m[38;5;21;01m.[39;00m[38;5;21;01mnumba[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdispatch[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m numba_funcify
 [1;32m     27[0m     [38;5;28;01mreturn[39;00m numba_funcify(fgraph, [38;5;241m*[39m[38;5;241m*[39mkwargs)
 
 File [0;32m/opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/aesara/link/numba/dispatch/__init__.py:2[0m
 [1;32m      1[0m [38;5;66;03m# isort: off[39;00m
-[0;32m----> 2[0m [38;5;28;01mfrom[39;00m [38;5;21;01maesara[39;00m[38;5;21;01m.[39;00m[38;5;21;01mlink[39;00m[38;5;21;01m.[39;00m[38;5;21;01mnumba[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdispatch[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbasic[39;00m [38;5;28;01mimport[39;00m (
+[0;32m----> 2[0m [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;21;01maesara[39;00m[38;5;21;01m.[39;00m[38;5;21;01mlink[39;00m[38;5;21;01m.[39;00m[38;5;21;01mnumba[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdispatch[39;00m[38;5;21;01m.[39;00m[38;5;21;01mbasic[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m (
 [1;32m      3[0m     numba_funcify,
 [1;32m      4[0m     numba_const_convert,
 [1;32m      5[0m     numba_njit,
 [1;32m      6[0m )
 [1;32m      8[0m [38;5;66;03m# Load dispatch specializations[39;00m
-[1;32m      9[0m [38;5;28;01mimport[39;00m [38;5;21;01maesara[39;00m[38;5;21;01m.[39;00m[38;5;21;01mlink[39;00m[38;5;21;01m.[39;00m[38;5;21;01mnumba[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdispatch[39;00m[38;5;21;01m.[39;00m[38;5;21;01mscalar[39;00m
+[1;32m      9[0m [38;5;28;01mimport[39;00m[38;5;250m [39m[38;5;21;01maesara[39;00m[38;5;21;01m.[39;00m[38;5;21;01mlink[39;00m[38;5;21;01m.[39;00m[38;5;21;01mnumba[39;00m[38;5;21;01m.[39;00m[38;5;21;01mdispatch[39;00m[38;5;21;01m.[39;00m[38;5;21;01mscalar[39;00m
 
 File [0;32m/opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/aesara/link/numba/dispatch/basic.py:198[0m
 [1;32m    192[0m             [38;5;28;01mreturn[39;00m [38;5;28;01mlambda[39;00m x, y: [38;5;28;01mFalse[39;00m
 [1;32m    195[0m enable_slice_boxing()
 [0;32m--> 198[0m [38;5;129;43m@generated_jit[39;49m
-[1;32m    199[0m [38;5;28;43;01mdef[39;49;00m[43m [49m[38;5;21;43mto_scalar[39;49m[43m([49m[43mx[49m[43m)[49m[43m:[49m
+[1;32m    199[0m [38;5;28;43;01mdef[39;49;00m[38;5;250;43m [39;49m[38;5;21;43mto_scalar[39;49m[43m([49m[43mx[49m[43m)[49m[43m:[49m
 [1;32m    200[0m [43m    [49m[38;5;28;43;01mif[39;49;00m[43m [49m[38;5;28;43misinstance[39;49m[43m([49m[43mx[49m[43m,[49m[43m [49m[43m([49m[43mnumba[49m[38;5;241;43m.[39;49m[43mtypes[49m[38;5;241;43m.[39;49m[43mNumber[49m[43m,[49m[43m [49m[43mnumba[49m[38;5;241;43m.[39;49m[43mtypes[49m[38;5;241;43m.[39;49m[43mBoolean[49m[43m)[49m[43m)[49m[43m:[49m
 [1;32m    201[0m [43m        [49m[38;5;28;43;01mreturn[39;49;00m[43m [49m[38;5;28;43;01mlambda[39;49;00m[43m [49m[43mx[49m[43m:[49m[43m [49m[43mx[49m
 

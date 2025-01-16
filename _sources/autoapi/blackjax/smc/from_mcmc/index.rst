@@ -9,11 +9,20 @@ Functions
 
 .. autoapisummary::
 
+   blackjax.smc.from_mcmc.unshared_parameters_and_step_fn
    blackjax.smc.from_mcmc.build_kernel
 
 
 Module Contents
 ---------------
+
+.. py:function:: unshared_parameters_and_step_fn(mcmc_parameters, mcmc_step_fn)
+
+   Splits MCMC parameters into two dictionaries. The shared dictionary
+   represents the parameters common to all chains, and the unshared are
+   different per chain.
+   Binds the step fn using the shared parameters.
+
 
 .. py:function:: build_kernel(mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, update_strategy: Callable = update_and_take_last)
 

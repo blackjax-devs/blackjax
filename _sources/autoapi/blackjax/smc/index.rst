@@ -16,6 +16,7 @@ Submodules
    /autoapi/blackjax/smc/from_mcmc/index
    /autoapi/blackjax/smc/inner_kernel_tuning/index
    /autoapi/blackjax/smc/partial_posteriors_path/index
+   /autoapi/blackjax/smc/pretuning/index
    /autoapi/blackjax/smc/resampling/index
    /autoapi/blackjax/smc/solver/index
    /autoapi/blackjax/smc/tempered/index

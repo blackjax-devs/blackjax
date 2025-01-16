@@ -29,7 +29,7 @@
   <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 <link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gdf87345" />
+  <meta name="docsearch:version" content="0.1.dev1+gfc539ca" />
   </head>
   
   
@@ -224,6 +224,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
@@ -360,17 +361,17 @@
                 <article class="bd-article">
                   
   <h1>Source code for blackjax.adaptation.adjusted_mclmc_adaptation</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">from</span> <span class="nn">jax.flatten_util</span> <span class="kn">import</span> <span class="n">ravel_pytree</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.flatten_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">ravel_pytree</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.adaptation.mclmc_adaptation</span> <span class="kn">import</span> <span class="n">MCLMCAdaptationState</span>
-<span class="kn">from</span> <span class="nn">blackjax.adaptation.step_size</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.mclmc_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCLMCAdaptationState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.step_size</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DualAveragingAdaptationState</span><span class="p">,</span>
     <span class="n">dual_averaging_adaptation</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">blackjax.diagnostics</span> <span class="kn">import</span> <span class="n">effective_sample_size</span>
-<span class="kn">from</span> <span class="nn">blackjax.util</span> <span class="kn">import</span> <span class="n">incremental_value_update</span><span class="p">,</span> <span class="n">pytree_size</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.diagnostics</span><span class="w"> </span><span class="kn">import</span> <span class="n">effective_sample_size</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">incremental_value_update</span><span class="p">,</span> <span class="n">pytree_size</span>
 
 <div class="viewcode-block" id="Lratio_lowerbound">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.Lratio_lowerbound">[docs]</a>
@@ -384,7 +385,7 @@
 
 <div class="viewcode-block" id="adjusted_mclmc_find_L_and_step_size">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_find_L_and_step_size">[docs]</a>
-<span class="k">def</span> <span class="nf">adjusted_mclmc_find_L_and_step_size</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">adjusted_mclmc_find_L_and_step_size</span><span class="p">(</span>
     <span class="n">mclmc_kernel</span><span class="p">,</span>
     <span class="n">num_steps</span><span class="p">,</span>
     <span class="n">state</span><span class="p">,</span>
@@ -493,7 +494,7 @@
 
 <div class="viewcode-block" id="adjusted_mclmc_make_L_step_size_adaptation">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_make_L_step_size_adaptation">[docs]</a>
-<span class="k">def</span> <span class="nf">adjusted_mclmc_make_L_step_size_adaptation</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">adjusted_mclmc_make_L_step_size_adaptation</span><span class="p">(</span>
     <span class="n">kernel</span><span class="p">,</span>
     <span class="n">dim</span><span class="p">,</span>
     <span class="n">frac_tune1</span><span class="p">,</span>
@@ -506,10 +507,10 @@
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Adapts the stepsize and L of the MCLMC kernel. Designed for adjusted MCLMC&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">dual_avg_step</span><span class="p">(</span><span class="n">fix_L</span><span class="p">,</span> <span class="n">update_da</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dual_avg_step</span><span class="p">(</span><span class="n">fix_L</span><span class="p">,</span> <span class="n">update_da</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize&quot;&quot;&quot;</span>
 
-        <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="n">iteration_state</span><span class="p">,</span> <span class="n">weight_and_key</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">iteration_state</span><span class="p">,</span> <span class="n">weight_and_key</span><span class="p">):</span>
             <span class="n">mask</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">weight_and_key</span>
             <span class="p">(</span>
                 <span class="n">previous_state</span><span class="p">,</span>
@@ -586,7 +587,7 @@
 
         <span class="k">return</span> <span class="n">step</span>
 
-    <span class="k">def</span> <span class="nf">step_size_adaptation</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">fix_L</span><span class="p">,</span> <span class="n">initial_da</span><span class="p">,</span> <span class="n">update_da</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">step_size_adaptation</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">fix_L</span><span class="p">,</span> <span class="n">initial_da</span><span class="p">,</span> <span class="n">update_da</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
             <span class="n">dual_avg_step</span><span class="p">(</span><span class="n">fix_L</span><span class="p">,</span> <span class="n">update_da</span><span class="p">),</span>
             <span class="n">init</span><span class="o">=</span><span class="p">(</span>
@@ -598,7 +599,7 @@
             <span class="n">xs</span><span class="o">=</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">keys</span><span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">L_step_size_adaptation</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">L_step_size_adaptation</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
         <span class="n">num_steps1</span><span class="p">,</span> <span class="n">num_steps2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">*</span> <span class="n">frac_tune1</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span>
             <span class="n">num_steps</span> <span class="o">*</span> <span class="n">frac_tune2</span>
         <span class="p">)</span>
@@ -684,16 +685,16 @@
 
 <div class="viewcode-block" id="adjusted_mclmc_make_adaptation_L">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_make_adaptation_L">[docs]</a>
-<span class="k">def</span> <span class="nf">adjusted_mclmc_make_adaptation_L</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">adjusted_mclmc_make_adaptation_L</span><span class="p">(</span>
     <span class="n">kernel</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">Lfactor</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">,</span> <span class="n">eigenvector</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">adaptation_L</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">adaptation_L</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="n">num_steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">*</span> <span class="n">frac</span><span class="p">)</span>
         <span class="n">adaptation_L_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
             <span class="n">next_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
                 <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
@@ -736,7 +737,7 @@
 
 <div class="viewcode-block" id="handle_nans">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.handle_nans">[docs]</a>
-<span class="k">def</span> <span class="nf">handle_nans</span><span class="p">(</span><span class="n">previous_state</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">step_size_max</span><span class="p">,</span> <span class="n">kinetic_change</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">handle_nans</span><span class="p">(</span><span class="n">previous_state</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">step_size_max</span><span class="p">,</span> <span class="n">kinetic_change</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;if there are nans, let&#39;s reduce the stepsize, and not update the state. The</span>
 <span class="sd">    function returns the old state in this case.&quot;&quot;&quot;</span>
 

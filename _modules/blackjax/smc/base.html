@@ -29,7 +29,7 @@
   <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 <link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gdf87345" />
+  <meta name="docsearch:version" content="0.1.dev1+gfc539ca" />
   </head>
   
   
@@ -224,6 +224,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
@@ -373,17 +374,17 @@
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 
 <div class="viewcode-block" id="SMCState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState">[docs]</a>
-<span class="k">class</span> <span class="nc">SMCState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SMCState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the SMC sampler.</span>
 
 <span class="sd">    Particles must be a ArrayTree, each leave represents a variable from the posterior,</span>
@@ -419,7 +420,7 @@
 
 <div class="viewcode-block" id="SMCInfo">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo">[docs]</a>
-<span class="k">class</span> <span class="nc">SMCInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SMCInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on the tempered SMC step.</span>
 
 <span class="sd">    ancestors: Array</span>
@@ -448,7 +449,7 @@
 
 <div class="viewcode-block" id="init">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.init">[docs]</a>
-<span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">particles</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">init_update_params</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">particles</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">init_update_params</span><span class="p">):</span>
     <span class="c1"># Infer the number of particles from the size of the leading dimension of</span>
     <span class="c1"># the first leaf of the inputted PyTree.</span>
     <span class="n">num_particles</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">particles</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -459,7 +460,7 @@
 
 <div class="viewcode-block" id="step">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.step">[docs]</a>
-<span class="k">def</span> <span class="nf">step</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">SMCState</span><span class="p">,</span>
     <span class="n">update_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
@@ -544,7 +545,7 @@
 
 <div class="viewcode-block" id="extend_params">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.extend_params">[docs]</a>
-<span class="k">def</span> <span class="nf">extend_params</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">extend_params</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a dictionary of params, repeats them for every single particle. The expected</span>
 <span class="sd">    usage is in cases where the aim is to repeat the same parameters for all chains within SMC.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -555,7 +556,7 @@
 
 <div class="viewcode-block" id="update_and_take_last">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.update_and_take_last">[docs]</a>
-<span class="k">def</span> <span class="nf">update_and_take_last</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_and_take_last</span><span class="p">(</span>
     <span class="n">mcmc_init_fn</span><span class="p">,</span>
     <span class="n">tempered_logposterior_fn</span><span class="p">,</span>
     <span class="n">shared_mcmc_step_fn</span><span class="p">,</span>
@@ -567,10 +568,10 @@
 <span class="sd">    samples per chain.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">mcmc_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">step_parameters</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mcmc_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">step_parameters</span><span class="p">):</span>
         <span class="n">state</span> <span class="o">=</span> <span class="n">mcmc_init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">tempered_logposterior_fn</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">body_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">body_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
             <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">shared_mcmc_step_fn</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">tempered_logposterior_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">step_parameters</span>
             <span class="p">)</span>

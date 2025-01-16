@@ -5,7 +5,7 @@ blackjax.smc.tuning.from_particles
 
 .. autoapi-nested-parse::
 
-   strategies to tune the parameters of mcmc kernels
+   static (all particles get the same value) strategies to tune the parameters of mcmc kernels
    used within SMC, based on particles.
 
 

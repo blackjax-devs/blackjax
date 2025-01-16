@@ -29,7 +29,7 @@
   <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 <link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gdf87345" />
+  <meta name="docsearch:version" content="0.1.dev1+gfc539ca" />
   </head>
   
   
@@ -224,6 +224,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
@@ -373,16 +374,16 @@
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Set</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Set</span>
 
-<span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">ArrayTree</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayTree</span>
 
 
 <div class="viewcode-block" id="AdaptationResults">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.AdaptationResults">[docs]</a>
-<span class="k">class</span> <span class="nc">AdaptationResults</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdaptationResults</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <div class="viewcode-block" id="AdaptationResults.state">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.AdaptationResults.state">[docs]</a>
     <span class="n">state</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
@@ -396,7 +397,7 @@
 
 <div class="viewcode-block" id="AdaptationInfo">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.AdaptationInfo">[docs]</a>
-<span class="k">class</span> <span class="nc">AdaptationInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdaptationInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <div class="viewcode-block" id="AdaptationInfo.state">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.AdaptationInfo.state">[docs]</a>
     <span class="n">state</span><span class="p">:</span> <span class="n">NamedTuple</span></div>
@@ -414,7 +415,7 @@
 
 <div class="viewcode-block" id="return_all_adapt_info">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.return_all_adapt_info">[docs]</a>
-<span class="k">def</span> <span class="nf">return_all_adapt_info</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">return_all_adapt_info</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return fully populated AdaptationInfo.  Used for adaptation_info_fn</span>
 <span class="sd">    parameters of the adaptation algorithms.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -424,7 +425,7 @@
 
 <div class="viewcode-block" id="get_filter_adapt_info_fn">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.get_filter_adapt_info_fn">[docs]</a>
-<span class="k">def</span> <span class="nf">get_filter_adapt_info_fn</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_filter_adapt_info_fn</span><span class="p">(</span>
     <span class="n">state_keys</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(),</span>
     <span class="n">info_keys</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(),</span>
     <span class="n">adapt_state_keys</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(),</span>
@@ -434,11 +435,11 @@
 <span class="sd">    adaptation_info_fn=get_filter_adapt_info_fn() saves no auxiliary information</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">filter_tuple</span><span class="p">(</span><span class="n">tup</span><span class="p">,</span> <span class="n">key_set</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">filter_tuple</span><span class="p">(</span><span class="n">tup</span><span class="p">,</span> <span class="n">key_set</span><span class="p">):</span>
         <span class="n">mapfn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">key_set</span> <span class="k">else</span> <span class="n">val</span>
         <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">mapfn</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">tup</span><span class="p">)(</span><span class="o">*</span><span class="n">tup</span><span class="o">.</span><span class="n">_fields</span><span class="p">),</span> <span class="n">tup</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">filter_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">filter_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">):</span>
         <span class="n">sample_state</span> <span class="o">=</span> <span class="n">filter_tuple</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">state_keys</span><span class="p">)</span>
         <span class="n">new_info</span> <span class="o">=</span> <span class="n">filter_tuple</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">info_keys</span><span class="p">)</span>
         <span class="n">new_adapt_state</span> <span class="o">=</span> <span class="n">filter_tuple</span><span class="p">(</span><span class="n">adaptation_state</span><span class="p">,</span> <span class="n">adapt_state_keys</span><span class="p">)</span>

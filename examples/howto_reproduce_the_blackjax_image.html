@@ -30,7 +30,7 @@
   <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 <link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -56,7 +56,7 @@
     <link rel="prev" title="How to build a Metropolis-Within-Gibbs sampler?" href="howto_metropolis_within_gibbs.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gdf87345" />
+  <meta name="docsearch:version" content="0.1.dev1+gfc539ca" />
   </head>
   
   
@@ -226,6 +226,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
@@ -382,10 +383,10 @@
 <p>Here we show how we can sample from the uniform distribution corresponding to black pixels in the image.</p>
 <section id="make-the-image-into-a-numpy-array">
 <h2>Make the image into a numpy array<a class="headerlink" href="#make-the-image-into-a-numpy-array" title="Link to this heading">#</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib</span>
-<span class="kn">import</span> <span class="nn">matplotlib.image</span> <span class="k">as</span> <span class="nn">mpimg</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.image</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mpimg</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.spines.right&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.spines.top&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
@@ -407,9 +408,9 @@
 <h2>The sampling procedure<a class="headerlink" href="#the-sampling-procedure" title="Link to this heading">#</a></h2>
 <p>To sample from <strong>BlackJAX</strong>, we form a bridge between the uniform distribution over the full image, corresponding to a 2D domain of size (80, 250) and the uniform distribution over the black pixels.</p>
 <p>Formally, this corresponds to a prior distribution <span class="math notranslate nohighlight">\(p_0 \sim U([[0, 79]] \times [[0, 249]]\)</span> and a target distribution <span class="math notranslate nohighlight">\(p_1(x) \propto \mathbb{1}_{x \in \text{image}}\)</span>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
 
 <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)))</span>
 
@@ -429,11 +430,11 @@
 
 
 <span class="c1"># Set the prior and likelihood</span>
-<span class="k">def</span> <span class="nf">prior_logpdf</span><span class="p">(</span><span class="n">z</span><span class="p">):</span> <span class="k">return</span> <span class="mf">0.0</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">prior_logpdf</span><span class="p">(</span><span class="n">z</span><span class="p">):</span> <span class="k">return</span> <span class="mf">0.0</span>
 
 
 <span class="c1"># The pdf is uniform, so the logpdf is constant on the domain and negative infinite outside</span>
-<span class="k">def</span> <span class="nf">log_likelihood</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_likelihood</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
     <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">z</span>
     <span class="c1"># The pixel is black if x, y falls within the image, which means that their integer part is a valid index</span>
     <span class="n">floor_x</span><span class="p">,</span> <span class="n">floor_y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
@@ -453,8 +454,8 @@
 <h2>The sampling procedure<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p>We will a RWMH sampler within SMC routine to sample from the target distribution.
 For more information we refer to the <a class="reference external" href="https://blackjax-devs.github.io/sampling-book/algorithms/TemperedSMC.html">documentation</a> specific to SMC</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">blackjax</span>
-<span class="kn">import</span> <span class="nn">blackjax.smc.resampling</span> <span class="k">as</span> <span class="nn">resampling</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">blackjax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.smc.resampling</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">resampling</span>
 
 <span class="c1"># Temperature schedule</span>
 <span class="n">n_temperatures</span> <span class="o">=</span> <span class="mi">150</span>
@@ -486,11 +487,11 @@ For more information we refer to the <a class="reference external" href="https:/
 <section id="run-the-smc-sampler">
 <h2>Run the SMC sampler<a class="headerlink" href="#run-the-smc-sampler" title="Link to this heading">#</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define the loop</span>
-<span class="k">def</span> <span class="nf">smc_inference_loop</span><span class="p">(</span><span class="n">loop_key</span><span class="p">,</span> <span class="n">smc_kernel</span><span class="p">,</span> <span class="n">init_state</span><span class="p">,</span> <span class="n">schedule</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">smc_inference_loop</span><span class="p">(</span><span class="n">loop_key</span><span class="p">,</span> <span class="n">smc_kernel</span><span class="p">,</span> <span class="n">init_state</span><span class="p">,</span> <span class="n">schedule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the tempered SMC algorithm.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">body_fn</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">body_fn</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">):</span>
         <span class="n">i</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">carry</span>
         <span class="n">subkey</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">fold_in</span><span class="p">(</span><span class="n">loop_key</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
         <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">smc_kernel</span><span class="p">(</span><span class="n">subkey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">)</span>
@@ -513,8 +514,8 @@ For more information we refer to the <a class="reference external" href="https:/
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="kn">import</span> <span class="nn">matplotlib.animation</span> <span class="k">as</span> <span class="nn">animation</span>
-<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">HTML</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.animation</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">animation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTML</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;dark_background&#39;</span><span class="p">)</span>
 <span class="n">animation</span><span class="o">.</span><span class="n">embed_limit</span> <span class="o">=</span> <span class="mi">25</span>
@@ -530,7 +531,7 @@ For more information we refer to the <a class="reference external" href="https:/
 
 <span class="c1"># temp = ax.text(0.9, 0.9, r&#39;$\lambda$: 0&#39;, horizontalalignment=&#39;center&#39;, verticalalignment=&#39;center&#39;, transform=ax.transAxes, fontsize=15)</span>
 
-<span class="k">def</span> <span class="nf">animate</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">animate</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
     <span class="n">scat</span><span class="o">.</span><span class="n">set_offsets</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">samples</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">80</span> <span class="o">-</span> <span class="n">samples</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]])</span>
     <span class="n">scat</span><span class="o">.</span><span class="n">set_sizes</span><span class="p">(</span><span class="mi">1000</span> <span class="o">*</span> <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
     <span class="c1"># temp.set_text(r&#39;$\lambda$: {:.1e}&#39;.format(lambda_schedule[i]))</span>

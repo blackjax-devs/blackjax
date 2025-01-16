@@ -29,7 +29,7 @@
   <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 <link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gdf87345" />
+  <meta name="docsearch:version" content="0.1.dev1+gfc539ca" />
   </head>
   
   
@@ -224,6 +224,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
@@ -360,19 +361,39 @@
                 <article class="bd-article">
                   
   <h1>Source code for blackjax.smc.from_mcmc</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="kn">import</span> <span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 
-<span class="kn">from</span> <span class="nn">blackjax</span> <span class="kn">import</span> <span class="n">smc</span>
-<span class="kn">from</span> <span class="nn">blackjax.smc.base</span> <span class="kn">import</span> <span class="n">SMCState</span><span class="p">,</span> <span class="n">update_and_take_last</span>
-<span class="kn">from</span> <span class="nn">blackjax.types</span> <span class="kn">import</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax</span><span class="w"> </span><span class="kn">import</span> <span class="n">smc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.smc.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SMCState</span><span class="p">,</span> <span class="n">update_and_take_last</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">PRNGKey</span>
+
+
+<div class="viewcode-block" id="unshared_parameters_and_step_fn">
+<a class="viewcode-back" href="../../../autoapi/blackjax/smc/from_mcmc/index.html#blackjax.smc.from_mcmc.unshared_parameters_and_step_fn">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unshared_parameters_and_step_fn</span><span class="p">(</span><span class="n">mcmc_parameters</span><span class="p">,</span> <span class="n">mcmc_step_fn</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Splits MCMC parameters into two dictionaries. The shared dictionary</span>
+<span class="sd">    represents the parameters common to all chains, and the unshared are</span>
+<span class="sd">    different per chain.</span>
+<span class="sd">    Binds the step fn using the shared parameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shared_mcmc_parameters</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">unshared_mcmc_parameters</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">mcmc_parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">shared_mcmc_parameters</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">unshared_mcmc_parameters</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="n">shared_mcmc_step_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">mcmc_step_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">shared_mcmc_parameters</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">unshared_mcmc_parameters</span><span class="p">,</span> <span class="n">shared_mcmc_step_fn</span></div>
+
 
 
 <div class="viewcode-block" id="build_kernel">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/from_mcmc/index.html#blackjax.smc.from_mcmc.build_kernel">[docs]</a>
-<span class="k">def</span> <span class="nf">build_kernel</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span>
     <span class="n">mcmc_step_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
@@ -390,7 +411,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
         <span class="n">state</span><span class="p">,</span>
         <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -398,15 +419,9 @@
         <span class="n">logposterior_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">log_weights_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">smc</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">SMCState</span><span class="p">,</span> <span class="n">smc</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">SMCInfo</span><span class="p">]:</span>
-        <span class="n">shared_mcmc_parameters</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">unshared_mcmc_parameters</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">mcmc_parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">shared_mcmc_parameters</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">unshared_mcmc_parameters</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
-
-        <span class="n">shared_mcmc_step_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">mcmc_step_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">shared_mcmc_parameters</span><span class="p">)</span>
+        <span class="n">unshared_mcmc_parameters</span><span class="p">,</span> <span class="n">shared_mcmc_step_fn</span> <span class="o">=</span> <span class="n">unshared_parameters_and_step_fn</span><span class="p">(</span>
+            <span class="n">mcmc_parameters</span><span class="p">,</span> <span class="n">mcmc_step_fn</span>
+        <span class="p">)</span>
 
         <span class="n">update_fn</span><span class="p">,</span> <span class="n">num_resampled</span> <span class="o">=</span> <span class="n">update_strategy</span><span class="p">(</span>
             <span class="n">mcmc_init_fn</span><span class="p">,</span>

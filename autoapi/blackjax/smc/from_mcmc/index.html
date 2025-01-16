@@ -30,7 +30,7 @@
   <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 <link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=a3416100" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.smc.ess" href="../ess/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gdf87345" />
+  <meta name="docsearch:version" content="0.1.dev1+gfc539ca" />
   </head>
   
   
@@ -225,6 +225,7 @@
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">blackjax.smc.from_mcmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pretuning/index.html">blackjax.smc.pretuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../solver/index.html">blackjax.smc.solver</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../tempered/index.html">blackjax.smc.tempered</a></li>
@@ -360,6 +361,7 @@
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.from_mcmc.unshared_parameters_and_step_fn"><code class="docutils literal notranslate"><span class="pre">unshared_parameters_and_step_fn()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.from_mcmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
 </ul>
 </li>
@@ -380,7 +382,10 @@
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.from_mcmc.build_kernel" title="blackjax.smc.from_mcmc.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(mcmc_step_fn, mcmc_init_fn, resampling_fn)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.from_mcmc.unshared_parameters_and_step_fn" title="blackjax.smc.from_mcmc.unshared_parameters_and_step_fn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unshared_parameters_and_step_fn</span></code></a>(mcmc_parameters, ...)</p></td>
+<td><p>Splits MCMC parameters into two dictionaries. The shared dictionary</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.from_mcmc.build_kernel" title="blackjax.smc.from_mcmc.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(mcmc_step_fn, mcmc_init_fn, resampling_fn)</p></td>
 <td><p>SMC step from MCMC kernels.</p></td>
 </tr>
 </tbody>
@@ -389,6 +394,15 @@
 </section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.from_mcmc.unshared_parameters_and_step_fn">
+<span class="sig-name descname"><span class="pre">unshared_parameters_and_step_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcmc_parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_step_fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/from_mcmc.html#unshared_parameters_and_step_fn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.from_mcmc.unshared_parameters_and_step_fn" title="Link to this definition">#</a></dt>
+<dd><p>Splits MCMC parameters into two dictionaries. The shared dictionary
+represents the parameters common to all chains, and the unshared are
+different per chain.
+Binds the step fn using the shared parameters.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.smc.from_mcmc.build_kernel">
 <span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcmc_step_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_init_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resampling_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">update_and_take_last</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/from_mcmc.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.from_mcmc.build_kernel" title="Link to this definition">#</a></dt>
@@ -456,6 +470,7 @@ that depends on an update function over the set of particles.
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.from_mcmc.unshared_parameters_and_step_fn"><code class="docutils literal notranslate"><span class="pre">unshared_parameters_and_step_fn()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.from_mcmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
 </ul>
 </li>
