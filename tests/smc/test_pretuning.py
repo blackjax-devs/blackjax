@@ -187,7 +187,8 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             alpha=1,
             n_particles=num_particles,
             sigma_parameters={"step_size": 0.01, "num_integration_steps": 2},
-            round_to_integer=["num_integration_steps"],
+            natural_parameters=["num_integration_steps"],
+            positive_parameters=["step_size"],
         )
 
         step = blackjax.smc.pretuning.build_kernel(
@@ -226,6 +227,8 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
         assert result.parameter_override["num_integration_steps"].shape == (
             num_particles,
         )
+        assert all(result.parameter_override["step_size"] > 0)
+        assert all(result.parameter_override["num_integration_steps"] > 0)
 
 
 if __name__ == "__main__":

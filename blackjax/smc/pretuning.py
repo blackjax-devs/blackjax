@@ -11,7 +11,7 @@ from blackjax.smc.from_mcmc import build_kernel as smc_from_mcmc
 from blackjax.smc.from_mcmc import unshared_parameters_and_step_fn
 from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
 from blackjax.smc.resampling import stratified
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
 
@@ -35,32 +35,23 @@ def esjd(m):
     L = jnp.linalg.cholesky(m)
 
     def measure(previous_position, next_position, acceptance_probability):
-        return acceptance_probability * jnp.power(
-            jnp.linalg.norm(
-                jnp.matmul(
-                    L,
-                    (
-                        ravel_pytree(previous_position)[0]
-                        - ravel_pytree(next_position)[0]
-                    ),
-                ),
-                2,
-            ),
-            2,
-        )
+        difference = ravel_pytree(previous_position)[0] - ravel_pytree(next_position)[0]
+        difference_by_matrix = jnp.matmul(L, difference)
+        norm = jnp.linalg.norm(difference_by_matrix, 2)
+        return acceptance_probability * jnp.power(norm, 2)
 
     return jax.vmap(measure)
 
 
 def update_parameter_distribution(
-    key,
+    key: PRNGKey,
     previous_param_samples: ArrayLikeTree,
-    previous_particles,
-    latest_particles,
-    measure_of_chain_mixing,
-    alpha,
+    previous_particles: ArrayLikeTree,
+    latest_particles: ArrayLikeTree,
+    measure_of_chain_mixing: Callable,
+    alpha: float,
     sigma_parameters: ArrayLikeTree,
-    acceptance_probability,
+    acceptance_probability: Array,
 ):
     """Given an existing parameter distribution that was used to mutate previous_particles
     into latest_particles, updates that parameter distribution by resampling from previous_param_samples after adding
@@ -109,15 +100,16 @@ def update_parameter_distribution(
 
 
 def build_pretune(
-    mcmc_init_fn,
-    mcmc_step_fn,
-    alpha,
-    sigma_parameters,
+    mcmc_init_fn: Callable,
+    mcmc_step_fn: Callable,
+    alpha: float,
+    sigma_parameters: ArrayLikeTree,
     n_particles: int,
     performance_of_chain_measure_factory: Callable = lambda state: esjd(
         state.parameter_override["inverse_mass_matrix"]
     ),
-    round_to_integer: Optional[List[str]] = None,
+    natural_parameters: Optional[List[str]] = None,
+    positive_parameters: Optional[List[str]] = None,
 ):
     """Implements Buchholz et al https://arxiv.org/pdf/1808.07730 pretuning procedure.
     The goal is to maintain a probability distribution of parameters, in order
@@ -128,13 +120,22 @@ def build_pretune(
     the parameters based on the particles and transition information after the SMC step is executed. This
     implementation runs a single MCMC step which gets discarded, to then proceed with the SMC step execution.
     """
-    if round_to_integer is None:
+    if natural_parameters is None:
         round_to_integer_fn = lambda x: x
     else:
 
         def round_to_integer_fn(x):
-            for k in round_to_integer:
+            for k in natural_parameters:
                 x[k] = jax.tree.map(lambda a: jnp.abs(jnp.round(a).astype(int)), x[k])
+            return x
+
+    if positive_parameters is None:
+        make_positive_fn = lambda x: x
+    else:
+
+        def make_positive_fn(x):
+            for k in positive_parameters:
+                x[k] = jax.tree.map(jnp.abs, x[k])
             return x
 
     def pretune(key, state, logposterior):
@@ -170,7 +171,10 @@ def build_pretune(
             acceptance_probability=info.acceptance_rate,
         )
 
-        return round_to_integer_fn(new_parameter_distribution), chain_mixing_measurement
+        return (
+            make_positive_fn(round_to_integer_fn(new_parameter_distribution)),
+            chain_mixing_measurement,
+        )
 
     def pretune_and_update(key, state: StateWithParameterOverride, logposterior):
         """
@@ -196,7 +200,7 @@ def build_kernel(
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
-    pretune_fn,
+    pretune_fn: Callable,
     num_mcmc_steps: int = 10,
     update_strategy=update_and_take_last,
     **extra_parameters,
@@ -284,14 +288,14 @@ def init(alg_init_fn, position, initial_parameter_value):
 
 def as_top_level_api(
     smc_algorithm,
-    logprior_fn,
-    loglikelihood_fn,
-    mcmc_step_fn,
-    mcmc_init_fn,
-    resampling_fn,
-    num_mcmc_steps,
-    initial_parameter_value,
-    pretune_fn,
+    logprior_fn: Callable,
+    loglikelihood_fn: Callable,
+    mcmc_step_fn: Callable,
+    mcmc_init_fn: Callable,
+    resampling_fn: Callable,
+    num_mcmc_steps: int,
+    initial_parameter_value: ArrayLikeTree,
+    pretune_fn: Callable,
     **extra_parameters,
 ):
     """In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
@@ -325,8 +329,9 @@ def as_top_level_api(
         mcmc_step_fn,
         mcmc_init_fn,
         resampling_fn,
+        pretune_fn,
         num_mcmc_steps,
-        pretune_fn**extra_parameters,
+        **extra_parameters,
     )
 
     def init_fn(position, rng_key=None):
