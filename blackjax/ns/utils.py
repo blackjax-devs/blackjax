@@ -130,12 +130,21 @@ def finalise(state, dead):
     return dead_map
 
 
+def ess(rng_key, dead_map):
+    logw = log_weights(rng_key, dead_map).mean(axis=-1)
+    logw -= logw.max()
+    l_sum_w = jax.scipy.special.logsumexp(logw)
+    l_sum_w_sq = jax.scipy.special.logsumexp(2 * logw)
+    ess = jnp.exp(2 * l_sum_w - l_sum_w_sq)
+    return ess
+
+
 def sample(rng_key, dead_map, n=1000):
     logw = log_weights(rng_key, dead_map).mean(axis=-1)
     indices = jax.random.choice(
         rng_key,
         dead_map.logL.shape[0],
-        p=jnp.exp(logw.squeeze()),
+        p=jnp.exp(logw.squeeze() - jnp.max(logw)),
         shape=(n,),
         replace=True,
     )
