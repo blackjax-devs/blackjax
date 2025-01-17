@@ -43,7 +43,58 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
         self.key = jax.random.key(42)
 
     @chex.variants(with_jit=True)
-    def test_adaptive_tempered_smc(self):
+    def test_adaptive_tempered_smc_builder_api(self):
+        def sampler_provider(
+            target_ess,
+            logprior_fn,
+            loglikelihood_fn,
+            hmc_init,
+            hmc_kernel,
+            hmc_parameters,
+        ):
+            return (
+                SMCSamplerBuilder()
+                .adaptive_tempering(
+                    target_ess, solver.dichotomy, logprior_fn, loglikelihood_fn
+                )
+                .inner_kernel(hmc_init, hmc_kernel, hmc_parameters)
+                .mutate_and_take_last(5)
+                .build(resampling.systematic)
+            )
+
+        self.adaptive_tempered_test_case(sampler_provider)
+
+    @chex.variants(with_jit=True)
+    def test_adaptive_tempered_smc_top_level_api(self):
+        def sampler_provider(
+            target_ess,
+            logprior_fn,
+            loglikelihood_fn,
+            hmc_init,
+            hmc_kernel,
+            hmc_parameters,
+        ):
+            return adaptive_tempered_smc(
+                logprior_fn,
+                loglikelihood_fn,
+                hmc_kernel,
+                hmc_init,
+                hmc_parameters,
+                resampling.systematic,
+                target_ess,
+                solver.dichotomy,
+                5,
+            )
+
+        self.adaptive_tempered_test_case(sampler_provider)
+
+    def adaptive_tempered_test_case(self, sampler_provider):
+        """
+        extracting to a function instead of parametrizing
+        because the parallel testing framework
+        doesn't allow parametrization on functions
+        """
+
         num_particles = 100
 
         x_data = np.random.normal(0, 1, size=(1000, 1))
@@ -88,13 +139,14 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
         ]
 
         for target_ess, hmc_parameters in zip([0.5, 0.5, 0.75], hmc_parameters_list):
-            tempering = (
-                          SMCSamplerBuilder()
-                         .adaptive_tempering(target_ess, solver.dichotomy, logprior_fn, loglikelihood_fn)
-                         .inner_kernel(hmc_init, hmc_kernel, hmc_parameters)
-                         .mutate_and_take_last(5)
-                         .build(resampling.systematic)
-                         )
+            tempering = sampler_provider(
+                target_ess,
+                logprior_fn,
+                loglikelihood_fn,
+                hmc_init,
+                hmc_kernel,
+                hmc_parameters,
+            )
 
             init_state = tempering.init(smc_state_init)
 
@@ -112,7 +164,31 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
         assert iterates[1] >= iterates[0]
 
     @chex.variants(with_jit=True)
-    def test_fixed_schedule_tempered_smc(self):
+    def test_fixed_schedule_tempered_smc_top_level_api(self):
+        self.fixed_schedule_tempered_smc_test_case(tempered_smc)
+
+    @chex.variants(with_jit=True)
+    def test_fixed_schedule_tempered_smc_builder_api(self):
+        def sampler_provider(
+            logprior_fn,
+            loglikelihood_fn,
+            hmc_kernel,
+            hmc_init,
+            hmc_parameters,
+            resampling_fn,
+            num_mcmc_steps,
+        ):
+            return (
+                SMCSamplerBuilder()
+                .tempering_from_sequence(logprior_fn, loglikelihood_fn)
+                .inner_kernel(hmc_init, hmc_kernel, hmc_parameters)
+                .mutate_and_take_last(num_mcmc_steps)
+                .build(resampling_fn)
+            )
+
+        self.fixed_schedule_tempered_smc_test_case(sampler_provider)
+
+    def fixed_schedule_tempered_smc_test_case(self, sampler_provider):
         (
             init_particles,
             logprior_fn,
@@ -132,7 +208,7 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
             },
         )
 
-        tempering = tempered_smc(
+        tempering = sampler_provider(
             logprior_fn,
             loglikelihood_fn,
             hmc_kernel,

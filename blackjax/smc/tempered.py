@@ -91,7 +91,6 @@ def build_kernel(
 
     """
 
-
     def kernel(
         rng_key: PRNGKey,
         state: TemperedSMCState,
@@ -184,7 +183,9 @@ def as_top_level_api(
 
     if num_mcmc_steps is not None:
         # for backwards compatibility
-        update_strategy = functools.partial(update_and_take_last, num_mcmc_steps=num_mcmc_steps)
+        update_strategy = functools.partial(
+            update_and_take_last, num_mcmc_steps=num_mcmc_steps
+        )
 
     update_particles = (
         smc_from_mcmc.build_kernel(
@@ -194,11 +195,7 @@ def as_top_level_api(
         else update_particles_fn
     )
 
-    kernel = build_kernel(
-        logprior_fn,
-        loglikelihood_fn,
-        update_particles
-    )
+    kernel = build_kernel(logprior_fn, loglikelihood_fn, update_particles)
 
     def init_fn(position: ArrayLikeTree, rng_key=None):
         del rng_key

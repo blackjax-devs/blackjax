@@ -22,8 +22,8 @@ import blackjax.smc.ess as ess
 import blackjax.smc.solver as solver
 import blackjax.smc.tempered as tempered
 from blackjax.base import SamplingAlgorithm
-from blackjax.types import ArrayLikeTree, PRNGKey
 from blackjax.smc import from_mcmc as smc_from_mcmc
+from blackjax.types import ArrayLikeTree, PRNGKey
 
 __all__ = ["build_kernel", "init", "as_top_level_api"]
 
@@ -39,6 +39,7 @@ def build_kernel(loglikelihood_fn, target_ess, root_solver, tempered_kernel):
         Use ESS in log space to solve for delta, default is `True`.
         This is usually more stable when using gradient based solvers.
     """
+
     def compute_delta(state: tempered.TemperedSMCState) -> float:
         lmbda = state.lmbda
         max_delta = 1 - lmbda
@@ -63,6 +64,7 @@ def build_kernel(loglikelihood_fn, target_ess, root_solver, tempered_kernel):
 
     return kernel
 
+
 init = tempered.init
 
 
@@ -76,6 +78,7 @@ def as_top_level_api(
     target_ess: float,
     root_solver: Callable = solver.dichotomy,
     num_mcmc_steps: int = 10,
+    update_strategy=base.update_and_take_last,
     **extra_parameters,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
@@ -114,12 +117,12 @@ def as_top_level_api(
 
     if num_mcmc_steps is not None:
         # for backwards compatibility
-        update_strategy = functools.partial(base.update_and_take_last, num_mcmc_steps=num_mcmc_steps)
-
-    update_particles = (
-        smc_from_mcmc.build_kernel(
-            mcmc_step_fn, mcmc_init_fn, resampling_fn, mcmc_parameters, update_strategy
+        update_strategy = functools.partial(
+            base.update_and_take_last, num_mcmc_steps=num_mcmc_steps
         )
+
+    update_particles = smc_from_mcmc.build_kernel(
+        mcmc_step_fn, mcmc_init_fn, resampling_fn, mcmc_parameters, update_strategy
     )
 
     tempered_kernel = tempered.build_kernel(
@@ -128,21 +131,13 @@ def as_top_level_api(
         update_particles,
     )
 
-    kernel = build_kernel(
-        loglikelihood_fn,
-        target_ess,
-        root_solver,
-        tempered_kernel
-    )
+    kernel = build_kernel(loglikelihood_fn, target_ess, root_solver, tempered_kernel)
 
     def init_fn(position: ArrayLikeTree, rng_key=None):
         del rng_key
         return init(position)
 
     def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state
-        )
+        return kernel(rng_key, state)
 
     return SamplingAlgorithm(init_fn, step_fn)

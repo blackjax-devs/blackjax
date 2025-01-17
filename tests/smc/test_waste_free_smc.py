@@ -12,7 +12,8 @@ from absl.testing import absltest
 import blackjax
 import blackjax.smc.resampling as resampling
 from blackjax import adaptive_tempered_smc, tempered_smc
-from blackjax.smc import extend_params
+from blackjax.smc import extend_params, solver
+from blackjax.smc.builder_api import SMCSamplerBuilder
 from blackjax.smc.waste_free import update_waste_free, waste_free_smc
 from tests.smc import SMCLinearRegressionTestCase
 from tests.smc.test_tempered_smc import inference_loop
@@ -26,7 +27,51 @@ class WasteFreeSMCTest(SMCLinearRegressionTestCase):
         self.key = jax.random.key(42)
 
     @chex.variants(with_jit=True)
-    def test_fixed_schedule_tempered_smc(self):
+    def test_fixed_schedule_tempered_smc_top_level_api(self):
+        def sampler_provider(
+            logprior_fn,
+            loglikelihood_fn,
+            hmc_kernel,
+            hmc_init,
+            hmc_parameters,
+            n_particles,
+            p,
+        ):
+            return tempered_smc(
+                logprior_fn,
+                loglikelihood_fn,
+                hmc_kernel,
+                hmc_init,
+                hmc_parameters,
+                resampling.systematic,
+                None,
+                waste_free_smc(n_particles, p),
+            )
+
+        self.fixed_schedule_tempered_smc_test_case(sampler_provider)
+
+    @chex.variants(with_jit=True)
+    def test_fixed_schedule_tempered_smc_builder_api(self):
+        def sampler_provider(
+            logprior_fn,
+            loglikelihood_fn,
+            hmc_kernel,
+            hmc_init,
+            hmc_parameters,
+            n_particles,
+            p,
+        ):
+            return (
+                SMCSamplerBuilder()
+                .tempering_from_sequence(logprior_fn, loglikelihood_fn)
+                .inner_kernel(hmc_init, hmc_kernel, hmc_parameters)
+                .waste_free(n_particles, p)
+                .build(resampling.systematic)
+            )
+
+        self.fixed_schedule_tempered_smc_test_case(sampler_provider)
+
+    def fixed_schedule_tempered_smc_test_case(self, sampler_provider):
         (
             init_particles,
             logprior_fn,
@@ -46,16 +91,10 @@ class WasteFreeSMCTest(SMCLinearRegressionTestCase):
             },
         )
 
-        tempering = tempered_smc(
-            logprior_fn,
-            loglikelihood_fn,
-            hmc_kernel,
-            hmc_init,
-            hmc_parameters,
-            resampling.systematic,
-            None,
-            waste_free_smc(100, 4),
+        tempering = sampler_provider(
+            logprior_fn, loglikelihood_fn, hmc_kernel, hmc_init, hmc_parameters, 100, 4
         )
+
         init_state = tempering.init(init_particles)
         smc_kernel = self.variant(tempering.step)
 
@@ -69,7 +108,54 @@ class WasteFreeSMCTest(SMCLinearRegressionTestCase):
         self.assert_linear_regression_test_case(result)
 
     @chex.variants(with_jit=True)
-    def test_adaptive_tempered_smc(self):
+    def test_adaptive_tempered_smc_top_level_api(self):
+        def sampler_provider(
+            logprior_fn,
+            loglikelihood_fn,
+            hmc_kernel,
+            hmc_init,
+            hmc_parameters,
+            target_ess,
+            n_particles,
+            p,
+        ):
+            return adaptive_tempered_smc(
+                logprior_fn,
+                loglikelihood_fn,
+                hmc_kernel,
+                hmc_init,
+                hmc_parameters,
+                resampling.systematic,
+                target_ess,
+                update_strategy=waste_free_smc(n_particles, p),
+                num_mcmc_steps=None,
+            )
+
+        self.adaptive_tempered_smc_test_case(sampler_provider)
+
+    @chex.variants(with_jit=True)
+    def test_adaptive_tempered_smc_builder_api(self):
+        def sampler_provider(
+            logprior_fn,
+            loglikelihood_fn,
+            hmc_kernel,
+            hmc_init,
+            hmc_parameters,
+            target_ess,
+            n_particles,
+            p,
+        ):
+            return (
+                SMCSamplerBuilder()
+                .adaptive_tempering(target_ess, logprior_fn, loglikelihood_fn)
+                .inner_kernel(hmc_init, hmc_kernel, hmc_parameters)
+                .waste_free(n_particles, p)
+                .build(resampling.systematic)
+            )
+
+        self.adaptive_tempered_smc_test_case(sampler_provider)
+
+    def adaptive_tempered_smc_test_case(self, sampler_provider):
         (
             init_particles,
             logprior_fn,
@@ -86,16 +172,15 @@ class WasteFreeSMCTest(SMCLinearRegressionTestCase):
             },
         )
 
-        tempering = adaptive_tempered_smc(
+        tempering = sampler_provider(
             logprior_fn,
             loglikelihood_fn,
             hmc_kernel,
             hmc_init,
             hmc_parameters,
-            resampling.systematic,
             0.5,
-            update_strategy=waste_free_smc(100, 4),
-            num_mcmc_steps=None,
+            100,
+            4,
         )
         init_state = tempering.init(init_particles)
 

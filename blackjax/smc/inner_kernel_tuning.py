@@ -22,15 +22,8 @@ def init(alg_init_fn, position, initial_parameter_value):
 
 
 def build_kernel(
-    smc_algorithm,
-    logprior_fn: Callable,
-    loglikelihood_fn: Callable,
-    mcmc_step_fn: Callable,
-    mcmc_init_fn: Callable,
-    resampling_fn: Callable,
+    build_smc_algorithm: Callable,
     mcmc_parameter_update_fn: Callable[[SMCState, SMCInfo], Dict[str, ArrayTree]],
-    num_mcmc_steps: int = 10,
-    **extra_parameters,
 ) -> Callable:
     """In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
     MCMC that is used to perturbate/update each of the particles. This adaptation tunes some parameter of that MCMC,
@@ -59,16 +52,7 @@ def build_kernel(
     def kernel(
         rng_key: PRNGKey, state: StateWithParameterOverride, **extra_step_parameters
     ) -> Tuple[StateWithParameterOverride, SMCInfo]:
-        step_fn = smc_algorithm(
-            logprior_fn=logprior_fn,
-            loglikelihood_fn=loglikelihood_fn,
-            mcmc_step_fn=mcmc_step_fn,
-            mcmc_init_fn=mcmc_init_fn,
-            mcmc_parameters=state.parameter_override,
-            resampling_fn=resampling_fn,
-            num_mcmc_steps=num_mcmc_steps,
-            **extra_parameters,
-        ).step
+        step_fn = build_smc_algorithm(state.parameter_override)
         new_state, info = step_fn(rng_key, state.sampler_state, **extra_step_parameters)
         new_parameter_override = mcmc_parameter_update_fn(new_state, info)
         return StateWithParameterOverride(new_state, new_parameter_override), info
@@ -121,16 +105,21 @@ def as_top_level_api(
 
     """
 
+    def build_smc_algorithm(mcmc_parameters):
+        return smc_algorithm(
+                logprior_fn=logprior_fn,
+                loglikelihood_fn=loglikelihood_fn,
+                mcmc_step_fn=mcmc_step_fn,
+                mcmc_init_fn=mcmc_init_fn,
+                mcmc_parameters=mcmc_parameters,
+                resampling_fn=resampling_fn,
+                num_mcmc_steps=num_mcmc_steps,
+                **extra_parameters,
+            ).step
+
     kernel = build_kernel(
-        smc_algorithm,
-        logprior_fn,
-        loglikelihood_fn,
-        mcmc_step_fn,
-        mcmc_init_fn,
-        resampling_fn,
+        build_smc_algorithm,
         mcmc_parameter_update_fn,
-        num_mcmc_steps,
-        **extra_parameters,
     )
 
     def init_fn(position, rng_key=None):
