@@ -8,6 +8,23 @@ from blackjax.smc.base import SMCState, update_and_take_last
 from blackjax.types import PRNGKey
 
 
+def unshared_parameters_and_step_fn(mcmc_parameters, mcmc_step_fn):
+    """Splits MCMC parameters into two dictionaries. The shared dictionary
+    represents the parameters common to all chains, and the unshared are
+    different per chain.
+    Binds the step fn using the shared parameters.
+    """
+    shared_mcmc_parameters = {}
+    unshared_mcmc_parameters = {}
+    for k, v in mcmc_parameters.items():
+        if v.shape[0] == 1:
+            shared_mcmc_parameters[k] = v[0, ...]
+        else:
+            unshared_mcmc_parameters[k] = v
+    shared_mcmc_step_fn = partial(mcmc_step_fn, **shared_mcmc_parameters)
+    return unshared_mcmc_parameters, shared_mcmc_step_fn
+
+
 def build_kernel(
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
@@ -34,15 +51,9 @@ def build_kernel(
         logposterior_fn: Callable,
         log_weights_fn: Callable,
     ) -> tuple[smc.base.SMCState, smc.base.SMCInfo]:
-        shared_mcmc_parameters = {}
-        unshared_mcmc_parameters = {}
-        for k, v in mcmc_parameters.items():
-            if v.shape[0] == 1:
-                shared_mcmc_parameters[k] = v[0, ...]
-            else:
-                unshared_mcmc_parameters[k] = v
-
-        shared_mcmc_step_fn = partial(mcmc_step_fn, **shared_mcmc_parameters)
+        unshared_mcmc_parameters, shared_mcmc_step_fn = unshared_parameters_and_step_fn(
+            mcmc_parameters, mcmc_step_fn
+        )
 
         update_fn, num_resampled = update_strategy(
             mcmc_init_fn,
