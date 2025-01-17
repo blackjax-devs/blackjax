@@ -29,6 +29,7 @@ def build_kernel(
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
+    mcmc_parameters,
     update_strategy: Callable = update_and_take_last,
 ):
     """SMC step from MCMC kernels.
@@ -46,8 +47,6 @@ def build_kernel(
     def step(
         rng_key: PRNGKey,
         state,
-        num_mcmc_steps: int,
-        mcmc_parameters: dict,
         logposterior_fn: Callable,
         log_weights_fn: Callable,
     ) -> tuple[smc.base.SMCState, smc.base.SMCInfo]:
@@ -60,7 +59,6 @@ def build_kernel(
             logposterior_fn,
             shared_mcmc_step_fn,
             n_particles=state.weights.shape[0],
-            num_mcmc_steps=num_mcmc_steps,
         )
 
         return smc.base.step(

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 from typing import Callable, NamedTuple, Optional
 
 import jax
@@ -51,11 +52,7 @@ def init(particles: ArrayLikeTree):
 def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
-    mcmc_step_fn: Callable,
-    mcmc_init_fn: Callable,
-    resampling_fn: Callable,
-    update_strategy: Callable = update_and_take_last,
-    update_particles_fn: Optional[Callable] = None,
+    update_particles: Callable,
 ) -> Callable:
     """Build the base Tempered SMC kernel.
 
@@ -93,20 +90,12 @@ def build_kernel(
     information about the transition.
 
     """
-    update_particles = (
-        smc_from_mcmc.build_kernel(
-            mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy
-        )
-        if update_particles_fn is None
-        else update_particles_fn
-    )
+
 
     def kernel(
         rng_key: PRNGKey,
         state: TemperedSMCState,
-        num_mcmc_steps: int,
         lmbda: float,
-        mcmc_parameters: dict,
     ) -> tuple[TemperedSMCState, smc.base.SMCInfo]:
         """Move the particles one step using the Tempered SMC algorithm.
 
@@ -143,8 +132,6 @@ def build_kernel(
         smc_state, info = update_particles(
             rng_key,
             state,
-            num_mcmc_steps,
-            mcmc_parameters,
             tempered_logposterior_fn,
             log_weights_fn,
         )
@@ -195,14 +182,22 @@ def as_top_level_api(
 
     """
 
+    if num_mcmc_steps is not None:
+        # for backwards compatibility
+        update_strategy = functools.partial(update_and_take_last, num_mcmc_steps=num_mcmc_steps)
+
+    update_particles = (
+        smc_from_mcmc.build_kernel(
+            mcmc_step_fn, mcmc_init_fn, resampling_fn, mcmc_parameters, update_strategy
+        )
+        if update_particles_fn is None
+        else update_particles_fn
+    )
+
     kernel = build_kernel(
         logprior_fn,
         loglikelihood_fn,
-        mcmc_step_fn,
-        mcmc_init_fn,
-        resampling_fn,
-        update_strategy,
-        update_particles_fn,
+        update_particles
     )
 
     def init_fn(position: ArrayLikeTree, rng_key=None):
@@ -213,9 +208,7 @@ def as_top_level_api(
         return kernel(
             rng_key,
             state,
-            num_mcmc_steps,
             lmbda,
-            mcmc_parameters,
         )
 
     return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]

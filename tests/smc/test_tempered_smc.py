@@ -13,6 +13,7 @@ import blackjax.smc.resampling as resampling
 import blackjax.smc.solver as solver
 from blackjax import adaptive_tempered_smc, tempered_smc
 from blackjax.smc import extend_params
+from blackjax.smc.builder_api import SMCSamplerBuilder
 from tests.smc import SMCLinearRegressionTestCase
 
 
@@ -87,17 +88,14 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
         ]
 
         for target_ess, hmc_parameters in zip([0.5, 0.5, 0.75], hmc_parameters_list):
-            tempering = adaptive_tempered_smc(
-                logprior_fn,
-                loglikelihood_fn,
-                hmc_kernel,
-                hmc_init,
-                hmc_parameters,
-                resampling.systematic,
-                target_ess,
-                solver.dichotomy,
-                5,
-            )
+            tempering = (
+                          SMCSamplerBuilder()
+                         .adaptive_tempering(target_ess, solver.dichotomy, logprior_fn, loglikelihood_fn)
+                         .inner_kernel(hmc_init, hmc_kernel, hmc_parameters)
+                         .mutate_and_take_last(5)
+                         .build(resampling.systematic)
+                         )
+
             init_state = tempering.init(smc_state_init)
 
             n_iter, result, log_likelihood = self.variant(

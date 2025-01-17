@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 from typing import Callable
 
 import jax
@@ -22,36 +23,13 @@ import blackjax.smc.solver as solver
 import blackjax.smc.tempered as tempered
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import ArrayLikeTree, PRNGKey
+from blackjax.smc import from_mcmc as smc_from_mcmc
 
 __all__ = ["build_kernel", "init", "as_top_level_api"]
 
 
-def build_kernel(
-    logprior_fn: Callable,
-    loglikelihood_fn: Callable,
-    mcmc_step_fn: Callable,
-    mcmc_init_fn: Callable,
-    resampling_fn: Callable,
-    target_ess: float,
-    root_solver: Callable = solver.dichotomy,
-    **extra_parameters,
-) -> Callable:
-    r"""Build a Tempered SMC step using an adaptive schedule.
-
-    Parameters
-    ----------
-    logprior_fn: Callable
-        A function that computes the log-prior density.
-    loglikelihood_fn: Callable
-        A function that returns the log-likelihood density.
-    mcmc_kernel_factory: Callable
-        A callable function that creates a mcmc kernel from a log-probability
-        density function.
-    make_mcmc_state: Callable
-        A function that creates a new mcmc state from a position and a
-        log-probability density function.
-    resampling_fn: Callable
-        A random function that resamples generated particles based of weights
+def build_kernel(loglikelihood_fn, target_ess, root_solver, tempered_kernel):
+    """
     target_ess: float
         The target ESS for the adaptive MCMC tempering
     root_solver: Callable, optional
@@ -60,15 +38,7 @@ def build_kernel(
     use_log_ess: bool, optional
         Use ESS in log space to solve for delta, default is `True`.
         This is usually more stable when using gradient based solvers.
-
-    Returns
-    -------
-    A callable that takes a rng_key and a TemperedSMCState that contains the current state
-    of the chain and that returns a new state of the chain along with
-    information about the transition.
-
     """
-
     def compute_delta(state: tempered.TemperedSMCState) -> float:
         lmbda = state.lmbda
         max_delta = 1 - lmbda
@@ -83,27 +53,15 @@ def build_kernel(
 
         return delta
 
-    tempered_kernel = tempered.build_kernel(
-        logprior_fn,
-        loglikelihood_fn,
-        mcmc_step_fn,
-        mcmc_init_fn,
-        resampling_fn,
-        **extra_parameters,
-    )
-
     def kernel(
         rng_key: PRNGKey,
         state: tempered.TemperedSMCState,
-        num_mcmc_steps: int,
-        mcmc_parameters: dict,
     ) -> tuple[tempered.TemperedSMCState, base.SMCInfo]:
         delta = compute_delta(state)
         lmbda = delta + state.lmbda
-        return tempered_kernel(rng_key, state, num_mcmc_steps, lmbda, mcmc_parameters)
+        return tempered_kernel(rng_key, state, lmbda)
 
     return kernel
-
 
 init = tempered.init
 
@@ -149,16 +107,32 @@ def as_top_level_api(
     -------
     A ``SamplingAlgorithm``.
 
+
     """
-    kernel = build_kernel(
+
+    # TODO THIS WILL BREAK!
+
+    if num_mcmc_steps is not None:
+        # for backwards compatibility
+        update_strategy = functools.partial(base.update_and_take_last, num_mcmc_steps=num_mcmc_steps)
+
+    update_particles = (
+        smc_from_mcmc.build_kernel(
+            mcmc_step_fn, mcmc_init_fn, resampling_fn, mcmc_parameters, update_strategy
+        )
+    )
+
+    tempered_kernel = tempered.build_kernel(
         logprior_fn,
         loglikelihood_fn,
-        mcmc_step_fn,
-        mcmc_init_fn,
-        resampling_fn,
+        update_particles,
+    )
+
+    kernel = build_kernel(
+        loglikelihood_fn,
         target_ess,
         root_solver,
-        **extra_parameters,
+        tempered_kernel
     )
 
     def init_fn(position: ArrayLikeTree, rng_key=None):
@@ -168,9 +142,7 @@ def as_top_level_api(
     def step_fn(rng_key: PRNGKey, state):
         return kernel(
             rng_key,
-            state,
-            num_mcmc_steps,
-            mcmc_parameters,
+            state
         )
 
     return SamplingAlgorithm(init_fn, step_fn)
