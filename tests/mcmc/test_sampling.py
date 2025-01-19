@@ -518,11 +518,7 @@ class LinearRegressionTest(chex.TestCase):
                 inverse_mass_matrix=inverse_mass_matrix,
             )
 
-            (
-                _,
-                blackjax_mclmc_sampler_params,
-                _
-            ) = blackjax.mclmc_find_L_and_step_size(
+            (_, blackjax_mclmc_sampler_params, _) = blackjax.mclmc_find_L_and_step_size(
                 mclmc_kernel=kernel,
                 num_steps=num_steps,
                 state=initial_state,
