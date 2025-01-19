@@ -126,7 +126,7 @@ def mclmc_find_L_and_step_size(
             mclmc_kernel(params.inverse_mass_matrix), frac=frac_tune3, Lfactor=0.4
         )(state, params, num_steps, part2_key)
 
-    return state, params
+    return state, params, num_steps * (frac_tune1 + frac_tune2 + frac_tune3)
 
 
 def make_L_step_size_adaptation(
@@ -274,8 +274,8 @@ def make_adaptation_L(kernel, frac, Lfactor):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
     def adaptation_L(state, params, num_steps, key):
-        num_steps = int(num_steps * frac)
-        adaptation_L_keys = jax.random.split(key, num_steps)
+        num_steps_3 = int(num_steps * frac)
+        adaptation_L_keys = jax.random.split(key, num_steps_3)
 
         def step(state, key):
             next_state, _ = kernel(
@@ -297,7 +297,7 @@ def make_adaptation_L(kernel, frac, Lfactor):
         ess = effective_sample_size(flat_samples[None, ...])
 
         return state, params._replace(
-            L=Lfactor * params.step_size * jnp.mean(num_steps / ess)
+            L=Lfactor * params.step_size * jnp.mean(num_steps_3 / ess)
         )
 
     return adaptation_L
