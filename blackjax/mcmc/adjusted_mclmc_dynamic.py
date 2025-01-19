@@ -135,7 +135,6 @@ def as_top_level_api(
         Function that generates the next pseudo or quasi-random number of integration steps in the
         sequence, given the current `random_generator_arg`.
 
-
     Returns
     -------
     A ``SamplingAlgorithm``.
