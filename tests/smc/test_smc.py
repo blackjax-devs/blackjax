@@ -79,7 +79,7 @@ class SMCTest(chex.TestCase):
             {},
         )
         same_for_all_params = dict(
-            step_size=1e-2, inverse_mass_matrix=jnp.eye(1), num_integration_steps=50
+            step_size=1e-2, inverse_mass_matrix=jnp.eye(1), num_integration_steps=100
         )
         hmc_kernel = functools.partial(
             blackjax.hmc.build_kernel(), **same_for_all_params
