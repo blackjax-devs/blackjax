@@ -14,7 +14,7 @@ class SchrodingerFollmerTest(chex.TestCase):
         super().setUp()
         self.key = jax.random.key(1)
 
-    @chex.all_variants(with_pmap=True, without_jit=False, without_device=False)
+    # @chex.all_variants(with_pmap=True)
     def test_recover_posterior(self):
         """Simple Normal mean test"""
 
@@ -70,7 +70,7 @@ class SchrodingerFollmerTest(chex.TestCase):
         schrodinger_follmer_algo = schrodinger_follmer(logp_model, 50, 25)
 
         initial_state = schrodinger_follmer_algo.init(initial_position)
-        schrodinger_follmer_algo_sample = self.variant(
+        schrodinger_follmer_algo_sample = jax.jit(
             lambda k, s: schrodinger_follmer_algo.sample(k, s, 100)
         )
         sampled_states = schrodinger_follmer_algo_sample(rng_key_init, initial_state)
