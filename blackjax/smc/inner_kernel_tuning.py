@@ -22,7 +22,7 @@ def init(alg_init_fn, position, initial_parameter_value):
 
 
 def build_kernel(
-    build_smc_algorithm: Callable,
+    smc_step_from_mcmc_parameters: Callable,
     mcmc_parameter_update_fn: Callable[[SMCState, SMCInfo], Dict[str, ArrayTree]],
 ) -> Callable:
     """In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
@@ -31,28 +31,17 @@ def build_kernel(
 
     Parameters
     ----------
-    smc_algorithm
-        Either blackjax.adaptive_tempered_smc or blackjax.tempered_smc (or any other implementation of
-        a sampling algorithm that returns an SMCState and SMCInfo pair).
-    logprior_fn
-        A function that computes the log density of the prior distribution
-    loglikelihood_fn
-        A function that returns the probability at a given position.
-    mcmc_step_fn:
-        The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
-        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
-    mcmc_init_fn
-        A callable that initializes the inner kernel
+    smc_step_from_mcmc_parameters
+        A Callable that can return either blackjax.adaptive_tempered_smc.step or blackjax.tempered_smc.step (or any other implementation of
+        a sampling algorithm step that returns an SMCState and SMCInfo pair), out of a dictionary of parameters for MCMC inner chains.
     mcmc_parameter_update_fn
         A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the inner kernel in i+1 iteration.
-    extra_parameters:
-        parameters to be used for the creation of the smc_algorithm.
     """
 
     def kernel(
         rng_key: PRNGKey, state: StateWithParameterOverride, **extra_step_parameters
     ) -> Tuple[StateWithParameterOverride, SMCInfo]:
-        step_fn = build_smc_algorithm(state.parameter_override)
+        step_fn = smc_step_from_mcmc_parameters(state.parameter_override)
         new_state, info = step_fn(rng_key, state.sampler_state, **extra_step_parameters)
         new_parameter_override = mcmc_parameter_update_fn(new_state, info)
         return StateWithParameterOverride(new_state, new_parameter_override), info
@@ -105,20 +94,20 @@ def as_top_level_api(
 
     """
 
-    def build_smc_algorithm(mcmc_parameters):
+    def smc_step_from_mcmc_parameters(parameters):
         return smc_algorithm(
-                logprior_fn=logprior_fn,
-                loglikelihood_fn=loglikelihood_fn,
-                mcmc_step_fn=mcmc_step_fn,
-                mcmc_init_fn=mcmc_init_fn,
-                mcmc_parameters=mcmc_parameters,
-                resampling_fn=resampling_fn,
-                num_mcmc_steps=num_mcmc_steps,
-                **extra_parameters,
-            ).step
+            logprior_fn=logprior_fn,
+            loglikelihood_fn=loglikelihood_fn,
+            mcmc_step_fn=mcmc_step_fn,
+            mcmc_init_fn=mcmc_init_fn,
+            mcmc_parameters=parameters,
+            resampling_fn=resampling_fn,
+            num_mcmc_steps=num_mcmc_steps,
+            **extra_parameters,
+        ).step
 
     kernel = build_kernel(
-        build_smc_algorithm,
+        smc_step_from_mcmc_parameters,
         mcmc_parameter_update_fn,
     )
 

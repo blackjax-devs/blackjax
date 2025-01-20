@@ -55,7 +55,7 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
             return (
                 SMCSamplerBuilder()
                 .adaptive_tempering(
-                    target_ess, solver.dichotomy, logprior_fn, loglikelihood_fn
+                    target_ess, logprior_fn, loglikelihood_fn, solver.dichotomy
                 )
                 .inner_kernel(hmc_init, hmc_kernel, hmc_parameters)
                 .mutate_and_take_last(5)

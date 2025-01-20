@@ -1,3 +1,4 @@
+import functools
 from typing import Callable, NamedTuple, Optional, Tuple
 
 import jax
@@ -37,13 +38,9 @@ def init(particles: ArrayLikeTree, num_datapoints: int) -> PartialPosteriorsSMCS
 
 
 def build_kernel(
-    mcmc_step_fn: Callable,
-    mcmc_init_fn: Callable,
-    resampling_fn: Callable,
-    num_mcmc_steps: Optional[int],
-    mcmc_parameters: ArrayTree,
     partial_logposterior_factory: Callable[[Array], Callable],
-    update_strategy=update_and_take_last,
+    update_particles: Callable
+
 ) -> Callable:
     """Build the Partial Posteriors (data tempering) SMC kernel.
     The distribution's trajectory includes increasingly adding more
@@ -70,7 +67,6 @@ def build_kernel(
     A callable that takes a rng_key and PartialPosteriorsSMCState and selectors for
     the current and previous posteriors, and takes a data-tempered SMC state.
     """
-    delegate = smc_from_mcmc(mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy)
 
     def step(
         key, state: PartialPosteriorsSMCState, data_mask: Array
@@ -82,8 +78,8 @@ def build_kernel(
         def log_weights_fn(x):
             return logposterior_fn(x) - previous_logposterior_fn(x)
 
-        state, info = delegate(
-            key, state, num_mcmc_steps, mcmc_parameters, logposterior_fn, log_weights_fn
+        state, info = update_particles(
+            key, state, logposterior_fn, log_weights_fn
         )
 
         return (
@@ -106,15 +102,17 @@ def as_top_level_api(
     """A factory that wraps the kernel into a SamplingAlgorithm object.
     See build_kernel for full documentation on the parameters.
     """
+    if num_mcmc_steps is not None:
+        update_strategy = functools.partial(update_and_take_last, num_mcmc_steps=num_mcmc_steps)
 
+    update_particles = smc_from_mcmc(mcmc_step_fn,
+                                     mcmc_init_fn,
+                                     resampling_fn,
+                                     mcmc_parameters,
+                                     update_strategy)
     kernel = build_kernel(
-        mcmc_step_fn,
-        mcmc_init_fn,
-        resampling_fn,
-        num_mcmc_steps,
-        mcmc_parameters,
         partial_logposterior_factory,
-        update_strategy,
+        update_particles
     )
 
     def init_fn(position: ArrayLikeTree, num_observations, rng_key=None):

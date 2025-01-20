@@ -191,7 +191,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             positive_parameters=["step_size"],
         )
 
-        step = blackjax.smc.pretuning.build_kernel(
+        init, step = blackjax.smc.pretuning.as_top_level_api(
             blackjax.tempered_smc,
             logprior_fn,
             loglikelihood_fn,
@@ -200,11 +200,11 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             resampling.systematic,
             num_mcmc_steps=10,
             pretune_fn=pretune,
+            initial_parameter_value=initial_parameters
         )
 
-        initial_state = init(
-            blackjax.tempered_smc.init, init_particles, initial_parameters
-        )
+
+        initial_state = init(init_particles)
         smc_kernel = self.variant(step)
 
         def body_fn(carry, lmbda):

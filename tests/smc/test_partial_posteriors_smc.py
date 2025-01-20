@@ -7,6 +7,7 @@ from absl.testing import absltest
 import blackjax
 import blackjax.smc.resampling as resampling
 from blackjax.smc import extend_params
+from blackjax.smc.builder_api import SMCSamplerBuilder
 from tests.smc import SMCLinearRegressionTestCase
 
 
@@ -18,7 +19,26 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
         self.key = jax.random.key(42)
 
     @chex.variants(with_jit=True)
-    def test_partial_posteriors(self):
+    def test_partial_posteriors_top_level_api(self):
+        def sampler_provider(kernel, init, parameters, steps, partial_logposterior_factory):
+            return blackjax.partial_posteriors_smc(
+            kernel, init, parameters, resampling.systematic, steps, partial_logposterior_factory
+            )
+        self.partial_posteriors_test_case(sampler_provider)
+
+    @chex.variants(with_jit=True)
+    def test_partial_posteriors_builder_api(self):
+        def sampler_provider(kernel, init, parameters, steps, partial_logposterior_factory):
+            return (SMCSamplerBuilder()
+                    .partial_posteriors(partial_logposterior_factory)
+                    .inner_kernel(init, kernel, parameters)
+                    .mutate_and_take_last(steps)
+                    .build()
+                    )
+
+        self.partial_posteriors_test_case(sampler_provider)
+
+    def partial_posteriors_test_case(self, sampler_provider):
         (
             init_particles,
             logprior_fn,
@@ -48,13 +68,12 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
 
             return jax.jit(partial_logposterior)
 
-        init, kernel = blackjax.partial_posteriors_smc(
+        init, kernel = sampler_provider(
             hmc_kernel,
             hmc_init,
             hmc_parameters,
-            resampling.systematic,
             50,
-            partial_logposterior_factory=partial_logposterior_factory,
+            partial_logposterior_factory,
         )
 
         init_state = init(init_particles, 1000)
