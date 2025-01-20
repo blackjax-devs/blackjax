@@ -14,7 +14,7 @@ class SchrodingerFollmerTest(chex.TestCase):
         super().setUp()
         self.key = jax.random.key(1)
 
-    @chex.all_variants(with_pmap=True)
+    @chex.all_variants(with_pmap=True, without_jit=False, without_device=False)
     def test_recover_posterior(self):
         """Simple Normal mean test"""
 
