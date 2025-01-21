@@ -30,13 +30,13 @@ class MCLMCAdaptationState(NamedTuple):
         The momentum decoherent rate for the MCLMC algorithm.
     step_size
         The step size used for the MCLMC algorithm.
-    sqrt_diag_cov
+    inverse_mass_matrix
         A matrix used for preconditioning.
     """
 
     L: float
     step_size: float
-    sqrt_diag_cov: float
+    inverse_mass_matrix: float
 
 
 def mclmc_find_L_and_step_size(
@@ -87,10 +87,10 @@ def mclmc_find_L_and_step_size(
     Example
     -------
     .. code::
-        kernel = lambda sqrt_diag_cov : blackjax.mcmc.mclmc.build_kernel(
+        kernel = lambda inverse_mass_matrix : blackjax.mcmc.mclmc.build_kernel(
         logdensity_fn=logdensity_fn,
         integrator=integrator,
-        sqrt_diag_cov=sqrt_diag_cov,
+        inverse_mass_matrix=inverse_mass_matrix,
         )
 
         (
@@ -106,7 +106,7 @@ def mclmc_find_L_and_step_size(
     """
     dim = pytree_size(state.position)
     params = MCLMCAdaptationState(
-        jnp.sqrt(dim), jnp.sqrt(dim) * 0.25, sqrt_diag_cov=jnp.ones((dim,))
+        jnp.sqrt(dim), jnp.sqrt(dim) * 0.25, inverse_mass_matrix=jnp.ones((dim,))
     )
     part1_key, part2_key = jax.random.split(rng_key, 2)
 
@@ -123,10 +123,10 @@ def mclmc_find_L_and_step_size(
 
     if frac_tune3 != 0:
         state, params = make_adaptation_L(
-            mclmc_kernel(params.sqrt_diag_cov), frac=frac_tune3, Lfactor=0.4
+            mclmc_kernel(params.inverse_mass_matrix), frac=frac_tune3, Lfactor=0.4
         )(state, params, num_steps, part2_key)
 
-    return state, params
+    return state, params, num_steps * (frac_tune1 + frac_tune2 + frac_tune3)
 
 
 def make_L_step_size_adaptation(
@@ -152,7 +152,7 @@ def make_L_step_size_adaptation(
         rng_key, nan_key = jax.random.split(rng_key)
 
         # dynamics
-        next_state, info = kernel(params.sqrt_diag_cov)(
+        next_state, info = kernel(params.inverse_mass_matrix)(
             rng_key=rng_key,
             state=previous_state,
             L=params.L,
@@ -247,15 +247,15 @@ def make_L_step_size_adaptation(
 
         L = params.L
         # determine L
-        sqrt_diag_cov = params.sqrt_diag_cov
+        inverse_mass_matrix = params.inverse_mass_matrix
         if num_steps2 > 1:
             x_average, x_squared_average = average[0], average[1]
             variances = x_squared_average - jnp.square(x_average)
             L = jnp.sqrt(jnp.sum(variances))
 
             if diagonal_preconditioning:
-                sqrt_diag_cov = jnp.sqrt(variances)
-                params = params._replace(sqrt_diag_cov=sqrt_diag_cov)
+                inverse_mass_matrix = variances
+                params = params._replace(inverse_mass_matrix=inverse_mass_matrix)
                 L = jnp.sqrt(dim)
 
                 # readjust the stepsize
@@ -265,7 +265,7 @@ def make_L_step_size_adaptation(
                     xs=(jnp.ones(steps), keys), state=state, params=params
                 )
 
-        return state, MCLMCAdaptationState(L, params.step_size, sqrt_diag_cov)
+        return state, MCLMCAdaptationState(L, params.step_size, inverse_mass_matrix)
 
     return L_step_size_adaptation
 
@@ -274,8 +274,8 @@ def make_adaptation_L(kernel, frac, Lfactor):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
     def adaptation_L(state, params, num_steps, key):
-        num_steps = int(num_steps * frac)
-        adaptation_L_keys = jax.random.split(key, num_steps)
+        num_steps_3 = int(num_steps * frac)
+        adaptation_L_keys = jax.random.split(key, num_steps_3)
 
         def step(state, key):
             next_state, _ = kernel(
@@ -297,7 +297,7 @@ def make_adaptation_L(kernel, frac, Lfactor):
         ess = effective_sample_size(flat_samples[None, ...])
 
         return state, params._replace(
-            L=Lfactor * params.step_size * jnp.mean(num_steps / ess)
+            L=Lfactor * params.step_size * jnp.mean(num_steps_3 / ess)
         )
 
     return adaptation_L

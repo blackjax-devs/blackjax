@@ -251,7 +251,7 @@ class IntegratorTest(chex.TestCase):
 
         # Efficient implementation
         update_stable = self.variant(
-            esh_dynamics_momentum_update_one_step(sqrt_diag_cov=1.0)
+            esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0)
         )
         next_momentum1, *_ = update_stable(momentum, gradient, step_size, 1.0)
         np.testing.assert_array_almost_equal(next_momentum, next_momentum1)
@@ -276,7 +276,7 @@ class IntegratorTest(chex.TestCase):
         next_state, kinetic_energy_change = step(initial_state, step_size)
 
         # explicit integration
-        op1 = esh_dynamics_momentum_update_one_step(sqrt_diag_cov=1.0)
+        op1 = esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0)
         op2 = integrators.euclidean_position_update_fn(logdensity_fn)
         position, momentum, _, logdensity_grad = initial_state
         momentum, kinetic_grad, kinetic_energy_change0 = op1(
