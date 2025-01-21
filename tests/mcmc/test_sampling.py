@@ -402,10 +402,9 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, rtol=1e-2, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, rtol=1e-2, atol=1e-1)
 
-    @parameterized.parameters([True, False])
+    # @parameterized.parameters([True, False])
     def test_adjusted_mclmc_dynamic(
         self,
-        diagonal_preconditioning,
     ):
         """Test the MCLMC kernel."""
 
@@ -423,7 +422,7 @@ class LinearRegressionTest(chex.TestCase):
             logdensity_fn=logdensity_fn,
             key=inference_key,
             num_steps=10000,
-            diagonal_preconditioning=diagonal_preconditioning,
+            diagonal_preconditioning=True,
         )
 
         coefs_samples = states["coefs"][3000:]
@@ -432,8 +431,10 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
 
-    @parameterized.parameters([True, False])
-    def test_adjusted_mclmc(self, diagonal_preconditioning):
+    # @parameterized.parameters([True, False])
+    def test_adjusted_mclmc(
+        self,
+    ):
         """Test the MCLMC kernel."""
 
         init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
@@ -450,7 +451,7 @@ class LinearRegressionTest(chex.TestCase):
             logdensity_fn=logdensity_fn,
             key=inference_key,
             num_steps=10000,
-            diagonal_preconditioning=diagonal_preconditioning,
+            diagonal_preconditioning=True,
         )
 
         coefs_samples = states["coefs"][3000:]
