@@ -77,10 +77,23 @@ mvnormal_position_init = {
     "c": jnp.ones((2, 1)),
 }
 _, unravel_fn = ravel_pytree(mvnormal_position_init)
-key0, key1 = jax.random.split(jax.random.key(52))
-mvnormal_momentum_init = unravel_fn(jax.random.normal(key0, (6,)))
-a = jax.random.normal(key1, (6, 6))
-cov = jnp.matmul(a.T, a)
+mvnormal_momentum_init = {
+    "a": jnp.asarray(0.53288144),
+    "b": jnp.asarray([0.25310317, 1.3788314, -0.13486017]),
+    "c": jnp.asarray([[-0.59082425], [1.2088736]]),
+}
+
+cov = jnp.asarray(
+    [
+        [5.9959664, 1.1494889, -1.0420643, -0.6328479, -0.20363973, 2.1600752],
+        [1.1494889, 1.3504763, -0.3601517, -0.98311526, 1.1569028, -1.4185406],
+        [-1.0420643, -0.3601517, 6.3011055, -2.0662997, -0.10126236, 1.2898219],
+        [-0.6328479, -0.98311526, -2.0662997, 4.82699, -2.575554, 2.5724294],
+        [-0.20363973, 1.1569028, -0.10126236, -2.575554, 3.35319, -2.9411654],
+        [2.1600752, -1.4185406, 1.2898219, 2.5724294, -2.9411654, 6.3740206],
+    ]
+)
+
 # Validated numerically
 mvnormal_position_end = unravel_fn(
     jnp.asarray([0.38887993, 0.85231394, 2.7879136, 3.0339851, 0.5856687, 1.9291426])

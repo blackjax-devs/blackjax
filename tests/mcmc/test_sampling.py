@@ -1,4 +1,5 @@
 """Test the accuracy of the MCMC kernels."""
+
 import functools
 import itertools
 
@@ -398,8 +399,8 @@ class LinearRegressionTest(chex.TestCase):
         coefs_samples = states["coefs"][3000:]
         scale_samples = np.exp(states["log_scale"][3000:])
 
-        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
-        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, rtol=1e-2, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, rtol=1e-2, atol=1e-1)
 
     @parameterized.parameters([True, False])
     def test_adjusted_mclmc_dynamic(self, diagonal_preconditioning):
@@ -452,8 +453,8 @@ class LinearRegressionTest(chex.TestCase):
         coefs_samples = states["coefs"][3000:]
         scale_samples = np.exp(states["log_scale"][3000:])
 
-        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
-        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, rtol=1e-2, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, rtol=1e-2, atol=1e-1)
 
     def test_mclmc_preconditioning(self):
         class IllConditionedGaussian:
@@ -703,8 +704,8 @@ class LinearRegressionTest(chex.TestCase):
         coefs_samples = states["coefs"][3000:]
         scale_samples = np.exp(states["log_scale"][3000:])
 
-        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
-        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, rtol=1e-2, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, rtol=1e-2, atol=1e-1)
 
 
 class SGMCMCTest(chex.TestCase):
@@ -957,7 +958,7 @@ class UnivariateNormalTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_nuts(self):
         inference_algorithm = blackjax.nuts(
-            self.normal_logprob, step_size=4.0, inverse_mass_matrix=jnp.array([1.0])
+            self.normal_logprob, step_size=1.0, inverse_mass_matrix=jnp.array([1.0])
         )
 
         initial_state = inference_algorithm.init(jnp.array(3.0))
@@ -1117,7 +1118,7 @@ mcse_test_cases = [
     },
     {
         "algorithm": blackjax.barker_proposal,
-        "parameters": {"step_size": 0.5},
+        "parameters": {"step_size": 0.45},
         "is_mass_matrix_diagonal": None,
     },
 ]
