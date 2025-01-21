@@ -15,7 +15,7 @@ import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
-from blackjax.mcmc.adjusted_mclmc import rescale
+from blackjax.mcmc.adjusted_mclmc_dynamic import rescale
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
 
@@ -147,7 +147,7 @@ class LinearRegressionTest(chex.TestCase):
 
         return samples
 
-    def run_adjusted_mclmc(
+    def run_adjusted_mclmc_dynamic(
         self,
         logdensity_fn,
         num_steps,
@@ -159,13 +159,13 @@ class LinearRegressionTest(chex.TestCase):
 
         init_key, tune_key, run_key = jax.random.split(key, 3)
 
-        initial_state = blackjax.mcmc.adjusted_mclmc.init(
+        initial_state = blackjax.mcmc.adjusted_mclmc_dynamic.init(
             position=initial_position,
             logdensity_fn=logdensity_fn,
             random_generator_arg=init_key,
         )
 
-        kernel = lambda rng_key, state, avg_num_integration_steps, step_size, sqrt_diag_cov: blackjax.mcmc.adjusted_mclmc.build_kernel(
+        kernel = lambda rng_key, state, avg_num_integration_steps, step_size, sqrt_diag_cov: blackjax.mcmc.adjusted_mclmc_dynamic.build_kernel(
             integrator=integrator,
             integration_steps_fn=lambda k: jnp.ceil(
                 jax.random.uniform(k) * rescale(avg_num_integration_steps)
@@ -198,7 +198,7 @@ class LinearRegressionTest(chex.TestCase):
         step_size = blackjax_mclmc_sampler_params.step_size
         L = blackjax_mclmc_sampler_params.L
 
-        alg = blackjax.adjusted_mclmc(
+        alg = blackjax.adjusted_mclmc_dynamic(
             logdensity_fn=logdensity_fn,
             step_size=step_size,
             integration_steps_fn=lambda key: jnp.ceil(
@@ -347,7 +347,7 @@ class LinearRegressionTest(chex.TestCase):
         )
         logdensity_fn = lambda x: logposterior_fn_(**x)
 
-        states = self.run_adjusted_mclmc(
+        states = self.run_adjusted_mclmc_dynamic(
             initial_position={"coefs": 1.0, "log_scale": 1.0},
             logdensity_fn=logdensity_fn,
             key=inference_key,
